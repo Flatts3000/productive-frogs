@@ -1,10 +1,19 @@
 package com.flatts.productivefrogs.content.entity;
 
+import com.flatts.productivefrogs.content.entity.ai.LayCategoryFrogspawn;
 import com.flatts.productivefrogs.data.Category;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Dynamic;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.frog.Frog;
 import net.minecraft.world.level.Level;
@@ -76,6 +85,26 @@ public class ResourceFrog extends Frog {
                 // Unknown category in save data — leave default.
             }
         });
+    }
+
+    /**
+     * Override the brain setup to add a category-aware lay-spawn behavior at
+     * priority 2 of the LAY_SPAWN activity (vanilla's lay behavior runs at
+     * priority 3). When a Resource Frog completes love-mode, our behavior
+     * fires first, places a Primed Frog Egg block of the matching category,
+     * and erases IS_PREGNANT — preventing vanilla's behavior from placing
+     * a second (vanilla) frogspawn.
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        Brain<Frog> brain = (Brain<Frog>) super.makeBrain(dynamic);
+        brain.addActivityWithConditions(
+            Activity.LAY_SPAWN,
+            ImmutableList.of(Pair.of(2, LayCategoryFrogspawn.create())),
+            ImmutableSet.of(Pair.of(MemoryModuleType.IS_PREGNANT, MemoryStatus.VALUE_PRESENT))
+        );
+        return brain;
     }
 
     public static net.minecraft.world.entity.ai.attributes.AttributeSupplier.Builder createAttributes() {
