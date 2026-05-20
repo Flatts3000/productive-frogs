@@ -240,8 +240,9 @@ productive-frogs/
 │               ├── tags/item/primer/
 │               │   ├── metallic.json
 │               │   ├── mineral.json
-│               │   ├── infernal.json
 │               │   ├── gem.json
+│               │   ├── aquatic.json
+│               │   ├── infernal.json
 │               │   └── arcane.json
 │               ├── slime_variant/
 │               │   ├── iron.json
