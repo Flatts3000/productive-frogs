@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -72,10 +73,19 @@ public final class FrogspawnBottlingHandler {
         // Consume the frogspawn block.
         level.removeBlock(pos, false);
 
-        // Give the player a Frog Egg item; drop at block pos if inventory full.
+        // Give the player a Frog Egg item; drop as an item entity at the block
+        // position (centered on the cell) if inventory is full.
         ItemStack frogEgg = new ItemStack(PFItems.FROG_EGG.get());
         if (!player.addItem(frogEgg)) {
-            player.drop(frogEgg, false);
+            ItemEntity drop = new ItemEntity(
+                level,
+                pos.getX() + 0.5,
+                pos.getY() + 0.5,
+                pos.getZ() + 0.5,
+                frogEgg
+            );
+            drop.setDefaultPickUpDelay();
+            level.addFreshEntity(drop);
         }
 
         // Feedback — reuse vanilla bottle-fill sound for thematic consistency.

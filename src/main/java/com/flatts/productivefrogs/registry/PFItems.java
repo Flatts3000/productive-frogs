@@ -20,7 +20,11 @@ public final class PFItems {
 
     /**
      * The Frog Egg item. Obtained by right-clicking vanilla frogspawn with an
-     * empty glass bottle. Placeable on water to produce a Frog Egg block.
+     * empty glass bottle.
+     *
+     * <p>Currently a plain inventory item with no placement behavior — placing
+     * a Frog Egg on water (to produce the unprimed Frog Egg block) is wired up
+     * in a subsequent commit alongside the block registration.
      */
     public static final DeferredItem<Item> FROG_EGG = ITEMS.register(
         "frog_egg",
