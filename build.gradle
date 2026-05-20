@@ -28,8 +28,20 @@ neoForge {
         server {
             server()
         }
-        data {
-            data()
+        // The moddev plugin (2.0+) split the old `data()` run type into
+        // `clientData()` and `serverData()`. Available types in 2.0.141:
+        // [client, clientData, serverData, gameTestServer, server, junit].
+        // Using `data()` causes :prepareDataRun to fail during Gradle sync with
+        // "Trying to prepare unknown run: data".
+        clientData {
+            clientData()
+            programArguments.addAll '--mod', mod_id,
+                                    '--all',
+                                    '--output', file('src/generated/resources').absolutePath,
+                                    '--existing', file('src/main/resources').absolutePath
+        }
+        serverData {
+            serverData()
             programArguments.addAll '--mod', mod_id,
                                     '--all',
                                     '--output', file('src/generated/resources').absolutePath,
