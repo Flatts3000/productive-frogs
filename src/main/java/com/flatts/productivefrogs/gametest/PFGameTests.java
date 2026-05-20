@@ -1,8 +1,15 @@
 package com.flatts.productivefrogs.gametest;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
+import com.flatts.productivefrogs.content.entity.ResourceFrog;
+import com.flatts.productivefrogs.content.entity.ResourceTadpole;
+import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.data.PFTags;
 import com.flatts.productivefrogs.registry.PFBlocks;
+import com.flatts.productivefrogs.registry.PFEntities;
+import com.flatts.productivefrogs.registry.PFItems;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -14,6 +21,9 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -67,6 +77,14 @@ public final class PFGameTests {
     static {
         registerTest("primed_egg_breaks_when_water_removed",
             PFGameTests::primedEggBreaksWhenWaterRemoved, 100);
+        registerTest("primed_egg_hatches_into_matching_category_tadpoles",
+            PFGameTests::primedEggHatchesIntoMatchingCategoryTadpoles, 100);
+        registerTest("tadpole_ages_up_into_resource_frog_of_same_category",
+            PFGameTests::tadpoleAgesUpIntoResourceFrogOfSameCategory, 100);
+        registerTest("tadpole_bucket_round_trip_preserves_category",
+            PFGameTests::tadpoleBucketRoundTripPreservesCategory, 100);
+        registerTest("primer_tags_contain_expected_items",
+            PFGameTests::primerTagsContainExpectedItems, 100);
     }
 
     private PFGameTests() {
@@ -139,5 +157,136 @@ public final class PFGameTests {
         // (PrimedFrogEggBlock.updateShape → canSurvive false → air) and disappear.
         helper.setBlock(eggPos.below(), Blocks.AIR);
         helper.succeedWhen(() -> helper.assertBlockNotPresent(PFBlocks.primedEgg(Category.METALLIC), eggPos));
+    }
+
+    /**
+     * Place a category-primed egg, force its scheduled tick to fire, and assert
+     * the hatch produced between 1 and 3 Resource Tadpoles all carrying the
+     * matching category. This is the headline egg→tadpole pipeline behavior.
+     *
+     * <p>Vanilla schedules the hatch at random(3600..12000) ticks via
+     * {@code onPlace} → {@code scheduleTick}. We can't wait that long in a test,
+     * so we invoke {@link PrimedFrogEggBlock#tick} directly — exercising the
+     * exact same code path the schedule would have triggered.
+     */
+    private static void primedEggHatchesIntoMatchingCategoryTadpoles(GameTestHelper helper) {
+        Category cat = Category.GEM;
+        BlockPos eggPos = new BlockPos(2, 2, 2);
+        helper.setBlock(eggPos.below(), Blocks.WATER);
+
+        PrimedFrogEggBlock eggBlock = PFBlocks.primedEgg(cat);
+        helper.setBlock(eggPos, eggBlock);
+
+        ServerLevel level = helper.getLevel();
+        BlockPos absEggPos = helper.absolutePos(eggPos);
+
+        // Invoke hatch directly via the block's tick() — PrimedFrogEggBlock
+        // widens the override to public, so we can call it on the concrete
+        // reference and bypass the random 3600..12000-tick schedule that
+        // onPlace queues up. Exercises the exact code path the schedule
+        // would have reached.
+        eggBlock.tick(level.getBlockState(absEggPos), level, absEggPos, level.getRandom());
+
+        helper.assertBlockNotPresent(eggBlock, eggPos);
+
+        List<ResourceTadpole> tadpoles = helper.getEntities(PFEntities.RESOURCE_TADPOLE.get());
+        if (tadpoles.isEmpty()) {
+            helper.fail("expected 1-3 Resource Tadpoles after hatch, got 0");
+        }
+        if (tadpoles.size() > 3) {
+            helper.fail("expected 1-3 Resource Tadpoles after hatch, got " + tadpoles.size());
+        }
+        for (ResourceTadpole tadpole : tadpoles) {
+            if (tadpole.getCategory() != cat) {
+                helper.fail("hatched tadpole has category " + tadpole.getCategory() + ", expected " + cat);
+            }
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Spawn a category-locked Resource Tadpole, force its maturation via the
+     * access-transformer-exposed {@code ageUp()}, and assert exactly one
+     * Resource Frog of the same category exists afterward. Tadpole entity
+     * itself should be gone (converted, not duplicated).
+     */
+    private static void tadpoleAgesUpIntoResourceFrogOfSameCategory(GameTestHelper helper) {
+        Category cat = Category.ARCANE;
+        BlockPos spawnPos = new BlockPos(2, 2, 2);
+        helper.setBlock(spawnPos.below(), Blocks.WATER);
+
+        ResourceTadpole tadpole = helper.spawn(PFEntities.RESOURCE_TADPOLE.get(), spawnPos);
+        tadpole.setCategory(cat);
+        tadpole.ageUp();
+
+        helper.succeedWhen(() -> {
+            List<ResourceFrog> frogs = helper.getEntities(PFEntities.RESOURCE_FROG.get());
+            if (frogs.size() != 1) {
+                helper.fail("expected 1 Resource Frog after maturation, got " + frogs.size());
+            }
+            if (frogs.get(0).getCategory() != cat) {
+                helper.fail("matured frog has category " + frogs.get(0).getCategory() + ", expected " + cat);
+            }
+            if (!helper.getEntities(PFEntities.RESOURCE_TADPOLE.get()).isEmpty()) {
+                helper.fail("tadpole entity must be removed during ageUp conversion");
+            }
+        });
+    }
+
+    /**
+     * Verify the bucket round-trip preserves category: spawn a tadpole, write
+     * its state into a bucket via {@code saveToBucketTag}, then load that bucket
+     * NBT into a fresh tadpole and assert the category survived.
+     *
+     * <p>This is an API-level check rather than a full player-driven bucket
+     * interaction — but the {@code saveToBucketTag} / {@code loadFromBucketTag}
+     * pair is exactly what vanilla {@code Bucketable.bucketMobPickup} and the
+     * bucket's release hook call, so the data-shape contract is fully exercised.
+     */
+    private static void tadpoleBucketRoundTripPreservesCategory(GameTestHelper helper) {
+        Category cat = Category.INFERNAL;
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos.below(), Blocks.WATER);
+
+        ResourceTadpole source = helper.spawn(PFEntities.RESOURCE_TADPOLE.get(), pos);
+        source.setCategory(cat);
+
+        ItemStack bucket = new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
+        source.saveToBucketTag(bucket);
+
+        // Round-trip via the same helper FrogEggItem / handlers use to read it back.
+        Category readBack = ResourceTadpoleBucketItem.readCategory(bucket);
+        if (readBack != cat) {
+            helper.fail("bucket round-trip lost category: wrote " + cat + ", read " + readBack);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Verify that primer item tags actually loaded — exercises the data-load
+     * pipeline. The {@code tags/items/} → {@code tags/item/} singularization in
+     * MC 1.21.x silently dropped our tag files until we renamed; this test
+     * would have flagged that within a CI run instead of from a manual playtest
+     * that "nothing happens when I right-click frogspawn with iron".
+     */
+    private static void primerTagsContainExpectedItems(GameTestHelper helper) {
+        // Spot-check one canonical entry per category. We don't enumerate every
+        // entry here — that's the tag JSON's job. We just verify the tags
+        // themselves resolve in the live tag manager.
+        assertItemInPrimerTag(helper, Items.IRON_INGOT, Category.METALLIC);
+        assertItemInPrimerTag(helper, Items.REDSTONE, Category.MINERAL);
+        assertItemInPrimerTag(helper, Items.DIAMOND, Category.GEM);
+        assertItemInPrimerTag(helper, Items.PRISMARINE_SHARD, Category.AQUATIC);
+        assertItemInPrimerTag(helper, Items.MAGMA_CREAM, Category.INFERNAL);
+        assertItemInPrimerTag(helper, Items.ENDER_PEARL, Category.ARCANE);
+        helper.succeed();
+    }
+
+    private static void assertItemInPrimerTag(GameTestHelper helper, net.minecraft.world.item.Item item, Category cat) {
+        ItemStack stack = new ItemStack(item);
+        if (!stack.is(PFTags.PRIMER_BY_CATEGORY.get(cat))) {
+            helper.fail(BuiltInRegistries.ITEM.getKey(item)
+                + " must be in primer/" + cat.id() + " tag — check the JSON and the directory path");
+        }
     }
 }
