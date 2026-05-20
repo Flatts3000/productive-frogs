@@ -7,12 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
+import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.animal.frog.Tadpole;
+import net.minecraft.world.entity.monster.Slime;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -67,5 +69,29 @@ class PFEntitiesTest {
         // the "stay close to vanilla" rail.
         assertTrue(Tadpole.class.isAssignableFrom(ResourceTadpole.class),
             "ResourceTadpole must extend vanilla Tadpole to inherit its behavior");
+    }
+
+    @Test
+    void resourceSlimeIsRegistered() {
+        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_slime");
+        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getValue(id);
+        assertNotNull(type, id + " must be registered");
+        assertSame(PFEntities.RESOURCE_SLIME.get(), type, "DeferredHolder must resolve to the registered type");
+    }
+
+    @Test
+    void resourceSlimeIsMonsterCategory() {
+        EntityType<ResourceSlime> type = PFEntities.RESOURCE_SLIME.get();
+        assertEquals(MobCategory.MONSTER, type.getCategory(),
+            "ResourceSlime spawns as a monster (matches vanilla Slime mob category)");
+    }
+
+    @Test
+    void resourceSlimeExtendsVanillaSlime() {
+        // Same load-bearing inheritance argument as ResourceTadpole — we get
+        // vanilla split mechanics, movement, sounds, spawn-rule eligibility,
+        // and Bucketable behavior (for the future Slime Bucket) for free.
+        assertTrue(Slime.class.isAssignableFrom(ResourceSlime.class),
+            "ResourceSlime must extend vanilla Slime to inherit its behavior");
     }
 }

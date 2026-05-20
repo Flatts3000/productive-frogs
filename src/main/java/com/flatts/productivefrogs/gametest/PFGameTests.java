@@ -3,10 +3,12 @@ package com.flatts.productivefrogs.gametest;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
+import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.PFTags;
+import com.flatts.productivefrogs.event.SlimeInfusionHandler;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
@@ -85,6 +87,10 @@ public final class PFGameTests {
             PFGameTests::tadpoleBucketRoundTripPreservesCategory, 100);
         registerTest("primer_tags_contain_expected_items",
             PFGameTests::primerTagsContainExpectedItems, 100);
+        registerTest("slime_infusion_transforms_vanilla_into_resource_slime",
+            PFGameTests::slimeInfusionTransformsVanillaIntoResourceSlime, 100);
+        registerTest("resource_slime_split_preserves_category",
+            PFGameTests::resourceSlimeSplitPreservesCategory, 100);
     }
 
     private PFGameTests() {
@@ -288,5 +294,77 @@ public final class PFGameTests {
             helper.fail(BuiltInRegistries.ITEM.getKey(item)
                 + " must be in primer/" + cat.id() + " tag — check the JSON and the directory path");
         }
+    }
+
+    /**
+     * Spawn a vanilla Slime, run it through the infusion helper, and assert the
+     * source is gone and a ResourceSlime of the matching category sits at the
+     * same place with the same size. Exercises the data shape of the
+     * transformation independent of the player-interaction event.
+     */
+    private static void slimeInfusionTransformsVanillaIntoResourceSlime(GameTestHelper helper) {
+        Category cat = Category.METALLIC;
+        BlockPos spawnPos = new BlockPos(2, 2, 2);
+
+        net.minecraft.world.entity.monster.Slime vanilla =
+            helper.spawn(net.minecraft.world.entity.EntityType.SLIME, spawnPos);
+        vanilla.setSize(2, true);
+        int originalSize = vanilla.getSize();
+
+        ResourceSlime resource = SlimeInfusionHandler.transformInPlace(vanilla, cat);
+        if (resource == null) {
+            helper.fail("transformInPlace returned null");
+            return;
+        }
+        if (resource.getCategory() != cat) {
+            helper.fail("expected category " + cat + ", got " + resource.getCategory());
+        }
+        if (resource.getSize() != originalSize) {
+            helper.fail("expected size " + originalSize + ", got " + resource.getSize());
+        }
+        if (vanilla.isAlive()) {
+            helper.fail("source vanilla slime should be discarded after infusion");
+        }
+        if (helper.getEntities(net.minecraft.world.entity.EntityType.SLIME).size() != 0) {
+            helper.fail("no vanilla slimes should remain in the test plot after infusion");
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Spawn a size-3 ResourceSlime of one category, kill it, and assert the
+     * split children are also ResourceSlimes of the same category. Verifies
+     * the {@code Slime#remove} override propagates category through the
+     * convertTo lambda.
+     */
+    private static void resourceSlimeSplitPreservesCategory(GameTestHelper helper) {
+        Category cat = Category.INFERNAL;
+        BlockPos spawnPos = new BlockPos(2, 2, 2);
+
+        ResourceSlime parent = helper.spawn(PFEntities.RESOURCE_SLIME.get(), spawnPos);
+        parent.setSize(3, true);
+        parent.setCategory(cat);
+
+        // Trigger death + split. Setting health to 0 makes isDeadOrDying() true,
+        // and remove(KILLED) runs our override's split logic before delegating
+        // to super.
+        parent.setHealth(0.0F);
+        parent.remove(net.minecraft.world.entity.Entity.RemovalReason.KILLED);
+
+        helper.succeedWhen(() -> {
+            List<ResourceSlime> children = helper.getEntities(PFEntities.RESOURCE_SLIME.get());
+            // The parent has been removed; remaining entities are split children.
+            if (children.isEmpty()) {
+                helper.fail("expected 2-4 ResourceSlime split children, got 0");
+            }
+            for (ResourceSlime child : children) {
+                if (child.getCategory() != cat) {
+                    helper.fail("split child has category " + child.getCategory() + ", expected " + cat);
+                }
+                if (child.getSize() != 1) {
+                    helper.fail("split child has size " + child.getSize() + ", expected 1 (half of parent size 3 floor-divided)");
+                }
+            }
+        });
     }
 }
