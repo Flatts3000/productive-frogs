@@ -2,8 +2,6 @@ package com.flatts.productivefrogs.client.renderer;
 
 import com.flatts.productivefrogs.data.Category;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -12,7 +10,6 @@ import org.jspecify.annotations.Nullable;
  * — it doesn't define its own state subclass) and adds the category field
  * needed for tint rendering.
  */
-@OnlyIn(Dist.CLIENT)
 public class ResourceTadpoleRenderState extends LivingEntityRenderState {
     @Nullable
     public Category category;

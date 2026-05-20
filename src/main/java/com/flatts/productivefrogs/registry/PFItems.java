@@ -21,9 +21,12 @@ import org.jspecify.annotations.Nullable;
 /**
  * Centralized item registry for Productive Frogs.
  *
- * <p>Items are registered via {@link DeferredRegister.Items}. Each public field
- * is a {@link DeferredItem} holder — call {@code .get()} to retrieve the live
- * {@link Item} instance after registration.
+ * <p>Uses {@code registerItem(name, factory, properties)} and
+ * {@code registerSimpleBlockItem(name, blockHolder, properties)} (not the
+ * older {@code register(name, Supplier)}) because MC 1.21.x requires the
+ * {@code ResourceKey} to be set on Properties before the item constructor
+ * runs. The factory form lets DeferredRegister inject the ID and hand the
+ * properties to our constructor.
  */
 public final class PFItems {
 
@@ -36,9 +39,10 @@ public final class PFItems {
      * {@code productivefrogs:contained_category} data component:
      * absent = vanilla frogspawn, present = primed egg of that category.
      */
-    public static final DeferredItem<FrogEggItem> FROG_EGG = ITEMS.register(
+    public static final DeferredItem<FrogEggItem> FROG_EGG = ITEMS.registerItem(
         "frog_egg",
-        () -> new FrogEggItem(new Item.Properties().stacksTo(1))
+        FrogEggItem::new,
+        new Item.Properties().stacksTo(1)
     );
 
     /**
@@ -46,16 +50,17 @@ public final class PFItems {
      * preserves the tadpole's category across bucket-and-release. Display
      * name varies by the stored category.
      */
-    public static final DeferredItem<ResourceTadpoleBucketItem> RESOURCE_TADPOLE_BUCKET = ITEMS.register(
+    public static final DeferredItem<ResourceTadpoleBucketItem> RESOURCE_TADPOLE_BUCKET = ITEMS.registerItem(
         "resource_tadpole_bucket",
-        () -> new ResourceTadpoleBucketItem(
+        props -> new ResourceTadpoleBucketItem(
             PFEntities.RESOURCE_TADPOLE.get(),
             Fluids.WATER,
             SoundEvents.BUCKET_EMPTY_TADPOLE,
-            new Item.Properties()
-                .stacksTo(1)
-                .component(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY)
-        )
+            props
+        ),
+        new Item.Properties()
+            .stacksTo(1)
+            .component(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY)
     );
 
     /**
@@ -68,9 +73,10 @@ public final class PFItems {
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {
-            map.put(cat, ITEMS.register(
+            map.put(cat, ITEMS.registerSimpleBlockItem(
                 cat.primedEggItemName(),
-                () -> new BlockItem(PFBlocks.primedEgg(cat), new Item.Properties())
+                PFBlocks.PRIMED_FROG_EGGS.get(cat),
+                new Item.Properties()
             ));
         }
         return map;
