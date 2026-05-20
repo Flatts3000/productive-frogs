@@ -1,6 +1,6 @@
 # Productive Frogs
 
-A Minecraft content mod for **NeoForge** on **Minecraft 1.21** (targeting the loader/version used by All the Mods 10).
+A Minecraft content mod for **NeoForge** on **Minecraft 1.21.11** (latest 1.21.x at time of scaffold).
 
 ## Concept
 
@@ -46,9 +46,10 @@ Variety lives on the slime side; the frog roster stays small and manageable. Thi
 
 ## Target Platform
 
-- **Minecraft**: 1.21 (latest)
-- **Loader**: NeoForge **only** — no Fabric port planned, in V1 or ever
+- **Minecraft**: 1.21.11 (latest 1.21.x)
+- **Loader**: NeoForge 21.11.42 **only** — no Fabric port planned, in V1 or ever
 - **Java**: 21
+- **Gradle**: 9.5.1 with `net.neoforged.moddev` 2.0.141
 - **Cross-mod focus**: Mekanism, Create, Thermal (via common tags + conditional datapacks)
 
 ## Open Source

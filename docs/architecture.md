@@ -262,7 +262,7 @@ productive-frogs/
 
 ## Build Configuration
 
-- **Loader**: NeoForge MC 1.21.x
+- **Loader**: NeoForge 21.11.42 for MC 1.21.11
 - **Java**: 21
 - **Gradle**: NeoGradle plugin (latest)
 - **Mappings**: official (Mojang)
