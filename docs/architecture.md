@@ -152,7 +152,7 @@ productivefrogs:frog_category/arcane
 
 We ship our own tag JSON files. NeoForge's tag system natively supports conditional entries. Example:
 
-`data/productivefrogs/tags/items/primer/metallic.json`:
+`data/productivefrogs/tags/item/primer/metallic.json` (note: singular `item/` per MC 1.21.x — the directory was renamed from `items/`):
 
 ```json
 {
@@ -237,11 +237,12 @@ productive-frogs/
 │           │   ├── models/
 │           │   └── ...
 │           └── data/productivefrogs/
-│               ├── tags/items/primer/
+│               ├── tags/item/primer/
 │               │   ├── metallic.json
 │               │   ├── mineral.json
-│               │   ├── infernal.json
 │               │   ├── gem.json
+│               │   ├── aquatic.json
+│               │   ├── infernal.json
 │               │   └── arcane.json
 │               ├── slime_variant/
 │               │   ├── iron.json
