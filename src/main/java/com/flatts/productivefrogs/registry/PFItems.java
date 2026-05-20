@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.item.FrogEggItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -19,16 +20,25 @@ public final class PFItems {
         DeferredRegister.createItems(ProductiveFrogs.MOD_ID);
 
     /**
-     * The Frog Egg item. Obtained by right-clicking vanilla frogspawn with an
-     * empty glass bottle.
+     * The Frog Egg item — a glass bottle filled with frogspawn.
      *
-     * <p>Currently a plain inventory item with no placement behavior — placing
-     * a Frog Egg on water (to produce the unprimed Frog Egg block) is wired up
-     * in a subsequent commit alongside the block registration.
+     * <p>Obtained by right-clicking vanilla {@code minecraft:frogspawn} with an
+     * empty glass bottle: the held bottle transforms in-place into this item,
+     * mirroring the vanilla water-bottle / fish-bucket pattern (no separate
+     * consumption).
+     *
+     * <p>Right-clicking this item on a water source places a fresh
+     * {@code minecraft:frogspawn} block at the target and transforms the held
+     * stack back into an empty {@code minecraft:glass_bottle}. The placed
+     * frogspawn can be re-bottled, primed with a category material to become a
+     * Primed Frog Egg, or left to hatch into a vanilla tadpole.
+     *
+     * <p>Stack size is 1 (like vanilla water bottle / fish bucket) since the
+     * item carries a contained payload.
      */
-    public static final DeferredItem<Item> FROG_EGG = ITEMS.register(
+    public static final DeferredItem<FrogEggItem> FROG_EGG = ITEMS.register(
         "frog_egg",
-        () -> new Item(new Item.Properties().stacksTo(64))
+        () -> new FrogEggItem(new Item.Properties().stacksTo(1))
     );
 
     private PFItems() {

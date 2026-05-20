@@ -18,16 +18,23 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 /**
- * Handles the "right-click vanilla frogspawn with an empty glass bottle"
- * interaction that captures the frogspawn into a {@code productivefrogs:frog_egg}
- * item.
+ * Handles right-clicking vanilla {@code minecraft:frogspawn} with an empty
+ * glass bottle: the held bottle transforms in-place into a
+ * {@code productivefrogs:frog_egg} (a glass bottle filled with frogspawn),
+ * and the frogspawn block is consumed.
+ *
+ * <p>Mirrors the vanilla water-bottle / fish-bucket capture pattern — the
+ * glass bottle is NOT a separate consumed cost; it becomes the container.
+ * The reverse operation (placing the Frog Egg back to release vanilla
+ * frogspawn) lives on the {@link com.flatts.productivefrogs.content.item.FrogEggItem}
+ * item itself.
  *
  * <p>On match:
  * <ul>
- *   <li>One glass bottle is consumed from the held stack.</li>
+ *   <li>The held glass bottle stack shrinks by 1 (non-creative).</li>
  *   <li>The targeted frogspawn block is replaced with air.</li>
- *   <li>One {@code frog_egg} item is added to the player's inventory (or
- *       dropped at the block position if the inventory is full).</li>
+ *   <li>One Frog Egg item is added to the player's inventory (or dropped at
+ *       the block position if inventory is full).</li>
  *   <li>A bottle-fill sound plays at the block position.</li>
  *   <li>The event is consumed so vanilla doesn't double-process.</li>
  * </ul>
@@ -65,7 +72,7 @@ public final class FrogspawnBottlingHandler {
 
         Player player = event.getEntity();
 
-        // Consume one bottle from the stack (creative players keep their stack).
+        // Consume one empty bottle from the held stack (creative skips).
         if (!player.getAbilities().instabuild) {
             held.shrink(1);
         }
@@ -73,8 +80,8 @@ public final class FrogspawnBottlingHandler {
         // Consume the frogspawn block.
         level.removeBlock(pos, false);
 
-        // Give the player a Frog Egg item; drop as an item entity at the block
-        // position (centered on the cell) if inventory is full.
+        // Give the player a Frog Egg item (the "bottle of frogspawn"); drop as
+        // an item entity at the centered block position if inventory is full.
         ItemStack frogEgg = new ItemStack(PFItems.FROG_EGG.get());
         if (!player.addItem(frogEgg)) {
             ItemEntity drop = new ItemEntity(
