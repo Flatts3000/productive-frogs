@@ -83,5 +83,8 @@ jobs:
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
       - name: Run GameTest server
         run: ./gradlew runGameTestServer --stacktrace

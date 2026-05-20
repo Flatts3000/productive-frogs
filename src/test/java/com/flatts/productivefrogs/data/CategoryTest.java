@@ -11,6 +11,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import java.util.Locale;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -30,7 +31,10 @@ class CategoryTest {
     @ParameterizedTest
     @EnumSource(Category.class)
     void idIsLowercaseEnumName(Category cat) {
-        assertEquals(cat.name().toLowerCase(), cat.id());
+        // Use Locale.ROOT here to match Category.id()'s own conversion — without
+        // it, a Turkish-locale JVM would turn METALLIC.name() into "metallıc"
+        // (dotless ı) and the test would fail even though production code is fine.
+        assertEquals(cat.name().toLowerCase(Locale.ROOT), cat.id());
         assertEquals(cat.id(), cat.getSerializedName());
     }
 
@@ -72,10 +76,14 @@ class CategoryTest {
     @EnumSource(Category.class)
     void streamCodecRoundTrip(Category cat) {
         ByteBuf buf = Unpooled.buffer();
-        Category.STREAM_CODEC.encode(buf, cat);
-        Category decoded = Category.STREAM_CODEC.decode(buf);
-        assertEquals(cat, decoded);
-        assertEquals(0, buf.readableBytes(), "stream codec must consume every byte it produced");
+        try {
+            Category.STREAM_CODEC.encode(buf, cat);
+            Category decoded = Category.STREAM_CODEC.decode(buf);
+            assertEquals(cat, decoded);
+            assertEquals(0, buf.readableBytes(), "stream codec must consume every byte it produced");
+        } finally {
+            buf.release();
+        }
     }
 
     @Test

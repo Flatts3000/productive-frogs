@@ -97,8 +97,14 @@ public final class PFGameTests {
         );
 
         for (RegisteredTest test : REGISTERED_TESTS) {
+            // Fail fast — if a holder didn't bind it means the DeferredRegister
+            // pipeline broke somewhere, and silently skipping would let CI go
+            // green with zero of our tests actually running.
             if (!test.holder().isBound()) {
-                continue;
+                throw new IllegalStateException(
+                    "Test function holder " + test.holder().getId() + " is unbound at "
+                    + "RegisterGameTestsEvent time — DeferredRegister pipeline is broken"
+                );
             }
             TestData<Holder<TestEnvironmentDefinition>> testData = new TestData<>(
                 defaultEnv,
