@@ -40,6 +40,7 @@ Variety lives on the slime side; the frog roster stays small and manageable. Thi
 | [architecture.md](./docs/architecture.md) | Data-driven slime variant system, tag layout, JSON registries |
 | [cross_mod_compat.md](./docs/cross_mod_compat.md) | Strategy for Mekanism, Create, Thermal, Mythic Metals integration |
 | [versioning.md](./docs/versioning.md) | V1 / V2 scope split (V1 = base mechanics, V2 = automation) |
+
 | [open_source.md](./docs/open_source.md) | OSS structure, license, contributor conventions, CI |
 | [infrastructure.md](./docs/infrastructure.md) | gh CLI setup script for the GitHub repo (sibling `infra/` folder) |
 | [open_questions.md](./docs/open_questions.md) | Unresolved design decisions awaiting answers |

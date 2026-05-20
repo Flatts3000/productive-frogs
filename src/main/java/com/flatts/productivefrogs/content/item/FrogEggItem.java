@@ -1,7 +1,11 @@
 package com.flatts.productivefrogs.content.item;
 
+import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.registry.PFBlocks;
+import com.flatts.productivefrogs.registry.PFDataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
@@ -12,20 +16,27 @@ import net.minecraft.world.item.ItemUtils;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
 
 /**
- * The Frog Egg item — a glass bottle filled with frogspawn.
+ * The Frog Egg item — a glass bottle filled with frogspawn. Carries an
+ * optional {@link Category} via the {@link PFDataComponents#CONTAINED_CATEGORY}
+ * data component:
  *
- * <p>Right-clicking this item on a water source places a vanilla
- * {@code minecraft:frogspawn} block adjacent to that water (mirroring vanilla
- * frog behavior: frogspawn lives on water) and transforms the held stack back
- * into an empty {@code minecraft:glass_bottle}.
+ * <ul>
+ *   <li>Component absent → bottle contains vanilla frogspawn. Placing puts
+ *       down {@code minecraft:frogspawn}.</li>
+ *   <li>Component present → bottle contains a primed egg of that category.
+ *       Placing puts down the matching Primed Frog Egg block.</li>
+ * </ul>
  *
- * <p>The acquisition side (bottling vanilla frogspawn into a Frog Egg) is
- * handled by {@link com.flatts.productivefrogs.event.FrogspawnBottlingHandler}.
+ * <p>Either way, placement transforms the held stack back into an empty
+ * {@code minecraft:glass_bottle} via {@link ItemUtils#createFilledResult}, so
+ * the bottle/egg <-> empty-bottle round-trip matches vanilla water-bottle /
+ * fish-bucket semantics exactly.
  */
 public final class FrogEggItem extends Item {
 
@@ -38,23 +49,15 @@ public final class FrogEggItem extends Item {
         Level level = context.getLevel();
         BlockPos clicked = context.getClickedPos();
 
-        // Vanilla frogspawn sits on top of water source blocks. Two valid
-        // targets when the player clicks on a water block:
-        //   1. They clicked the top of a water source — place at clicked+up.
-        //   2. They clicked a face other than top — place at clicked+face.
         BlockPos placePos = context.getClickedFace() == Direction.UP
             ? clicked.above()
             : clicked.relative(context.getClickedFace());
 
-        // The block BELOW the placement position must be a full water source
-        // (vanilla FrogspawnBlock.mayPlaceOn behavior). And the placement
-        // position itself must be empty.
         BlockPos belowPlace = placePos.below();
         BlockState below = level.getBlockState(belowPlace);
         BlockState target = level.getBlockState(placePos);
 
-        boolean waterBelow = below.getFluidState().is(Fluids.WATER)
-            && below.getFluidState().isSource();
+        boolean waterBelow = below.getFluidState().is(Fluids.WATER) && below.getFluidState().isSource();
         boolean targetEmpty = target.isAir() || target.canBeReplaced();
 
         if (!waterBelow || !targetEmpty) {
@@ -62,22 +65,18 @@ public final class FrogEggItem extends Item {
         }
 
         if (!level.isClientSide()) {
-            level.setBlockAndUpdate(placePos, Blocks.FROGSPAWN.defaultBlockState());
-            level.playSound(
-                null,
-                placePos,
-                SoundEvents.FROGSPAWN_HATCH,
-                SoundSource.BLOCKS,
-                0.6F,
-                1.0F
-            );
+            ItemStack held = context.getItemInHand();
+            Category contained = held.get(PFDataComponents.CONTAINED_CATEGORY.get());
 
-            // Mirror vanilla water-bottle / fish-bucket pattern: shrink the
-            // filled stack, replace with an empty glass bottle. ItemUtils
-            // handles creative-mode preservation and held-slot placement.
+            Block placeBlock = contained == null
+                ? Blocks.FROGSPAWN
+                : PFBlocks.primedEgg(contained);
+
+            level.setBlockAndUpdate(placePos, placeBlock.defaultBlockState());
+            level.playSound(null, placePos, SoundEvents.FROGSPAWN_HATCH, SoundSource.BLOCKS, 0.6F, 1.0F);
+
             Player player = context.getPlayer();
             if (player != null) {
-                ItemStack held = context.getItemInHand();
                 ItemStack result = ItemUtils.createFilledResult(
                     held,
                     player,
@@ -88,5 +87,14 @@ public final class FrogEggItem extends Item {
         }
 
         return InteractionResult.SUCCESS;
+    }
+
+    @Override
+    public Component getName(ItemStack stack) {
+        Category contained = stack.get(PFDataComponents.CONTAINED_CATEGORY.get());
+        if (contained == null) {
+            return Component.translatable(getDescriptionId());
+        }
+        return Component.translatable("item.productivefrogs.frog_egg." + contained.id());
     }
 }

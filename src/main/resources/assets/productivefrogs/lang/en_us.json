@@ -1,7 +1,21 @@
 {
   "itemGroup.productivefrogs": "Productive Frogs",
 
-  "item.productivefrogs.frog_egg": "Bottle of Frog Eggs",
+  "item.productivefrogs.frog_egg":          "Bottle of Frog Eggs",
+  "item.productivefrogs.frog_egg.metallic": "Bottle of Metallic Frog Eggs",
+  "item.productivefrogs.frog_egg.mineral":  "Bottle of Mineral Frog Eggs",
+  "item.productivefrogs.frog_egg.gem":      "Bottle of Gem Frog Eggs",
+  "item.productivefrogs.frog_egg.aquatic":  "Bottle of Aquatic Frog Eggs",
+  "item.productivefrogs.frog_egg.infernal": "Bottle of Infernal Frog Eggs",
+  "item.productivefrogs.frog_egg.arcane":   "Bottle of Arcane Frog Eggs",
+
+  "item.productivefrogs.resource_tadpole_bucket":          "Bucket of Tadpole",
+  "item.productivefrogs.resource_tadpole_bucket.metallic": "Bucket of Metallic Tadpole",
+  "item.productivefrogs.resource_tadpole_bucket.mineral":  "Bucket of Mineral Tadpole",
+  "item.productivefrogs.resource_tadpole_bucket.gem":      "Bucket of Gem Tadpole",
+  "item.productivefrogs.resource_tadpole_bucket.aquatic":  "Bucket of Aquatic Tadpole",
+  "item.productivefrogs.resource_tadpole_bucket.infernal": "Bucket of Infernal Tadpole",
+  "item.productivefrogs.resource_tadpole_bucket.arcane":   "Bucket of Arcane Tadpole",
 
   "block.productivefrogs.metallic_frog_egg": "Metallic Frog Egg",
   "block.productivefrogs.mineral_frog_egg":  "Mineral Frog Egg",

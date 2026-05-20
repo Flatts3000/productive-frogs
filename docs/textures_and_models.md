@@ -1,6 +1,16 @@
 # Textures and Models
 
-How visual assets are organized in Productive Frogs, with a focus on **tint-based colorization** so we don't need a separate texture per slime variant.
+How visual assets are organized in Productive Frogs, with a focus on **tint-based colorization** so we don't need a separate texture per category variant.
+
+## V1 visual lock (decided in conversation)
+
+For V1 the visual story is intentionally lean:
+
+1. **Tint-based everywhere there are category variants.** Primed Frog Egg blocks, the Frog Egg bottle's contents layer, the Resource Tadpole bucket's tadpole layer, Resource Tadpole entities in the world, Resource Frog entities in the world — all share a single base texture (or vanilla texture, when subclassing) and apply the category's RGB tint at render time. No per-category bespoke textures.
+2. **Two-layer vanilla-bottle pattern for bottled / bucketed contents.** Layer 0 is the tinted content; Layer 1 is the static container exterior drawn on top (glass for bottles, iron for buckets). Mirrors vanilla `item/potion` exactly — `layer0` is `potion_overlay` (tinted) and `layer1` is `potion` (glass), in that order.
+3. **No emissive glow on eggs.** Primed Frog Eggs don't emit light — the dropped Froglight resources (eaten-by-frog drops) will be the emissive piece of the mod, mirroring vanilla froglights as the rewarding bright thing.
+
+**Single source of truth for tint color:** `Category.tintArgb()` returns the per-category ARGB int used by every rendering path. Changing a category's color anywhere is a one-line edit on the enum.
 
 ## Guiding Principles
 
@@ -25,6 +35,19 @@ For Productive Frogs, we use this for:
 - **Resource Slime inner core** — separate overlay layer, also tinted
 - **Slime Bucket contents** — bucket exterior is static; the slime-splash layer is tinted
 - **Slime Milk fluid** — one base lumpy-liquid texture, tinted per fluid variant
+
+## Entity tinting (Resource Tadpole, Resource Frog)
+
+Blocks and items have built-in tint hooks (`BlockColor`, `ItemColor`). Entities don't have a parallel hook — vanilla rendering uses `LivingEntityRenderer.getModelTint(state)` which returns `-1` (white, no tint) by default. To tint an entity we subclass its renderer:
+
+1. **Custom RenderState subclass.** `ResourceTadpoleRenderState extends LivingEntityRenderState` adds a `category` field. Same for `ResourceFrogRenderState extends FrogRenderState`. The render state is the snapshot passed to the renderer each frame — fields populated in `extractRenderState`.
+2. **Custom Renderer subclass.** `ResourceTadpoleRenderer extends TadpoleRenderer` (and `ResourceFrogRenderer extends FrogRenderer`):
+   - Override `createRenderState()` to return the subclass instance.
+   - Override `extractRenderState(entity, state, partialTick)` — call super, then cast the state and copy `entity.getCategory()` onto it.
+   - Override `getModelTint(state)` — return `state.category.tintArgb()` when present, else `-1` (no tint).
+3. **Register the custom renderers** in `PFClientEvents` instead of vanilla `TadpoleRenderer`/`FrogRenderer`.
+
+Vanilla textures stay as the base. With color-multiply tinting, the result is "vanilla green frog/tadpole multiplied by category color" — readable but not visually crisp until grayscale-base textures land. Acceptable for V1; the infrastructure is in place for cleaner art later.
 
 ## Per-Variant Color in JSON
 

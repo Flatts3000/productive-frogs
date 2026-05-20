@@ -2,14 +2,21 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.item.FrogEggItem;
+import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.data.Category;
 import java.util.EnumMap;
 import java.util.Map;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.level.material.Fluids;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Centralized item registry for Productive Frogs.
@@ -24,14 +31,31 @@ public final class PFItems {
         DeferredRegister.createItems(ProductiveFrogs.MOD_ID);
 
     /**
-     * The Frog Egg item — a glass bottle filled with frogspawn. Obtained by
-     * right-clicking vanilla frogspawn with an empty glass bottle; placing it
-     * back puts down vanilla frogspawn and returns an empty bottle. Mirrors
-     * vanilla water-bottle / fish-bucket semantics.
+     * The Frog Egg item — a glass bottle filled with frogspawn. Stack size 1.
+     * Carries an optional category via the
+     * {@code productivefrogs:contained_category} data component:
+     * absent = vanilla frogspawn, present = primed egg of that category.
      */
     public static final DeferredItem<FrogEggItem> FROG_EGG = ITEMS.register(
         "frog_egg",
         () -> new FrogEggItem(new Item.Properties().stacksTo(1))
+    );
+
+    /**
+     * Resource Tadpole bucket. Mirrors vanilla {@code tadpole_bucket} but
+     * preserves the tadpole's category across bucket-and-release. Display
+     * name varies by the stored category.
+     */
+    public static final DeferredItem<ResourceTadpoleBucketItem> RESOURCE_TADPOLE_BUCKET = ITEMS.register(
+        "resource_tadpole_bucket",
+        () -> new ResourceTadpoleBucketItem(
+            PFEntities.RESOURCE_TADPOLE.get(),
+            Fluids.WATER,
+            SoundEvents.BUCKET_EMPTY_TADPOLE,
+            new Item.Properties()
+                .stacksTo(1)
+                .component(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY)
+        )
     );
 
     /**
@@ -50,6 +74,16 @@ public final class PFItems {
             ));
         }
         return map;
+    }
+
+    /**
+     * Convenience helper for client tint code: pull the category out of a
+     * Resource Tadpole Bucket's NBT. Returns null when the bucket is empty
+     * or has no stored category.
+     */
+    @Nullable
+    public static Category tadpoleBucketCategory(ItemStack stack) {
+        return ResourceTadpoleBucketItem.readCategory(stack);
     }
 
     private PFItems() {

@@ -1,0 +1,9 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "productivefrogs:item/resource_tadpole_bucket",
+    "tints": [
+      { "type": "productivefrogs:tadpole_bucket_category", "default": [74, 124, 37] }
+    ]
+  }
+}

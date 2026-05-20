@@ -1,6 +1,9 @@
 package com.flatts.productivefrogs.event;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
+import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
@@ -19,26 +22,19 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 /**
- * Handles right-clicking vanilla {@code minecraft:frogspawn} with an empty
- * glass bottle: the held bottle transforms in-place into a
- * {@code productivefrogs:frog_egg} (a glass bottle filled with frogspawn),
- * and the frogspawn block is consumed.
+ * Handles right-clicking vanilla {@code minecraft:frogspawn} OR any
+ * {@link PrimedFrogEggBlock} with an empty glass bottle: the held bottle
+ * transforms in-place into a {@code productivefrogs:frog_egg}, and the target
+ * block is consumed.
  *
- * <p>Mirrors the vanilla water-bottle / fish-bucket capture pattern — the
- * glass bottle is NOT a separate consumed cost; it becomes the container.
- * The reverse operation (placing the Frog Egg back to release vanilla
- * frogspawn) lives on the {@link com.flatts.productivefrogs.content.item.FrogEggItem}
- * item itself.
+ * <p>When the target is a Primed Frog Egg block, the bottle's
+ * {@link PFDataComponents#CONTAINED_CATEGORY} data component is set to the
+ * block's category. Placing the bottle later places the matching primed block.
+ * Vanilla frogspawn produces a bottle with the component absent, which places
+ * back to {@code minecraft:frogspawn}.
  *
- * <p>On match:
- * <ul>
- *   <li>The held glass bottle stack shrinks by 1 (non-creative).</li>
- *   <li>The targeted frogspawn block is replaced with air.</li>
- *   <li>One Frog Egg item is added to the player's inventory (or dropped at
- *       the block position if inventory is full).</li>
- *   <li>A bottle-fill sound plays at the block position.</li>
- *   <li>The event is consumed so vanilla doesn't double-process.</li>
- * </ul>
+ * <p>Mirrors the vanilla water-bottle / fish-bucket capture pattern via
+ * {@link ItemUtils#createFilledResult}.
  */
 @EventBusSubscriber(modid = ProductiveFrogs.MOD_ID)
 public final class FrogspawnBottlingHandler {
@@ -57,16 +53,21 @@ public final class FrogspawnBottlingHandler {
         Level level = event.getLevel();
         BlockPos pos = event.getPos();
         BlockState state = level.getBlockState(pos);
-        if (!state.is(Blocks.FROGSPAWN)) {
+
+        // Two valid bottling targets: vanilla frogspawn (category null) or any
+        // of our Primed Frog Egg blocks (category set on the block instance).
+        Category category;
+        if (state.is(Blocks.FROGSPAWN)) {
+            category = null;
+        } else if (state.getBlock() instanceof PrimedFrogEggBlock primed) {
+            category = primed.getCategory();
+        } else {
             return;
         }
 
-        // We're going to handle this. Suppress vanilla behavior on both sides.
         event.setCancellationResult(InteractionResult.SUCCESS);
         event.setCanceled(true);
 
-        // Mechanics only run server-side. The client just gets the sound + a
-        // swing animation via the SUCCESS result.
         if (level.isClientSide()) {
             return;
         }
@@ -74,21 +75,15 @@ public final class FrogspawnBottlingHandler {
         Player player = event.getEntity();
         InteractionHand hand = event.getHand();
 
-        // Consume the frogspawn block.
         level.removeBlock(pos, false);
 
-        // Use vanilla ItemUtils.createFilledResult so the bottle-to-egg
-        // transition matches the water-bottle / fish-bucket pattern exactly:
-        //   - shrink the empty stack (skipped in creative)
-        //   - if the empty stack is now fully consumed, the held slot becomes
-        //     the new Frog Egg (the "transform in place" feel)
-        //   - otherwise, the new Frog Egg lands in the next free inventory
-        //     slot (or drops at the player's feet if full)
         ItemStack filled = new ItemStack(PFItems.FROG_EGG.get());
+        if (category != null) {
+            filled.set(PFDataComponents.CONTAINED_CATEGORY.get(), category);
+        }
         ItemStack result = ItemUtils.createFilledResult(held, player, filled);
         player.setItemInHand(hand, result);
 
-        // Feedback — reuse vanilla bottle-fill sound for thematic consistency.
         level.playSound(
             null,
             pos,

@@ -1,7 +1,7 @@
 {
   "variants": {
     "": {
-      "model": "productivefrogs:block/infernal_frog_egg"
+      "model": "productivefrogs:block/primed_frog_egg"
     }
   }
 }

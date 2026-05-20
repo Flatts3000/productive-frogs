@@ -28,15 +28,17 @@ There is **no dedicated Frog Net item**. Players use a vanilla **empty glass bot
 
 - **ID**: `productivefrogs:frog_egg`
 - **Role**: A glass bottle with one frog egg payload inside. The bottled form of frogspawn, mirroring the vanilla axolotl-bucket / fish-bucket pattern.
-- **Obtained from**: vanilla empty glass bottle used on `minecraft:frogspawn`, OR (future PR) on any Primed Frog Egg block. See [Frogspawn Bottling](#frogspawn-bottling-vanilla-glass-bottle) above.
+- **Obtained from**: vanilla empty glass bottle used on `minecraft:frogspawn` OR on any Primed Frog Egg block. See [Frogspawn Bottling](#frogspawn-bottling-vanilla-glass-bottle) above.
 - **Stack size**: 1 (matching vanilla water bottle / fish buckets — the item carries a contained payload).
-- **NBT contents**: `productivefrogs:contained_category` — empty/absent means vanilla frogspawn; otherwise one of `metallic`, `mineral`, `gem`, `aquatic`, `infernal`, `arcane`, indicating the bottled egg's category.
-- **Display name** varies by NBT: "Bottle of Frog Eggs" (vanilla), "Bottle of Metallic Frog Eggs", "Bottle of Gem Frog Eggs", etc. Single item ID, NBT-driven label.
-- **Use**: right-click on a water source. If NBT empty → places vanilla `minecraft:frogspawn`. If NBT set → places the matching Primed Frog Egg block. Either way, the held stack transforms back into an empty `minecraft:glass_bottle` via vanilla `ItemUtils.createFilledResult` semantics.
+- **Data component**: `productivefrogs:contained_category` (typed `Category`). Absent means vanilla frogspawn; present means a primed egg of that category.
+- **Display name** varies by data component: "Bottle of Frog Eggs" (vanilla), "Bottle of Metallic Frog Eggs", "Bottle of Gem Frog Eggs", etc. Single item ID, component-driven label via `getName(ItemStack)` override.
+- **Use**: right-click on a block adjacent to a water source. If component absent → places vanilla `minecraft:frogspawn`. If component set → places the matching Primed Frog Egg block. Either way, the held stack transforms back into an empty `minecraft:glass_bottle` via vanilla `ItemUtils.createFilledResult` semantics.
+- **Visual**: two-layer item model, matching the vanilla potion-bottle pattern (`layer0` is the tinted layer, `layer1` is drawn over it).
+  - Layer 0: gelatinous content tinted via the `productivefrogs:contained_category` ItemTintSource. Empty → vanilla-frogspawn-green default; present → `Category.tintArgb()`.
+  - Layer 1: glass bottle exterior (static, untinted, drawn on top of the content).
+  - Mirrors vanilla `item/potion` model exactly (layer0 = potion_overlay tinted, layer1 = potion glass static).
 
-**Why one item with NBT rather than 7 variant items**: matches vanilla `axolotl_bucket` exactly, keeps the creative tab uncluttered, and the bottling/placing handlers stay simple single-branch implementations rather than N near-identical clones.
-
-**Current V1 state**: only the vanilla-frogspawn branch is implemented (PR #6). The primed-category branches land when the Primed Frog Egg blocks are registered.
+**Why one item with a data component rather than 7 variant items**: matches vanilla `axolotl_bucket` and `potion` exactly, keeps the creative tab uncluttered, and the bottling/placing handlers stay simple single-branch implementations rather than N near-identical clones.
 
 ### Slime Milker (block)
 
@@ -57,6 +59,22 @@ See [farming.md](./farming.md) for the full milking-to-production loop.
 - **Spawning**: each milk **source block** rolls a spawn tick (default: 20s ± 10s jitter). On success, spawns a size-1 slime of the matching variant directly above. Won't overspawn — checks for occupied space.
 - **Depletion**: configurable (default ON, 16 spawns per source block). When depleted, the source block disappears.
 - **Player interactions**: walkable like vanilla liquids; harmless. An empty bucket scoops a source into a typed milk bucket. No other interaction.
+
+### Resource Tadpole Bucket
+
+- **ID**: `productivefrogs:resource_tadpole_bucket`
+- **Role**: Vanilla mob-in-bucket pattern (mirrors `minecraft:tadpole_bucket`) but carries the tadpole's category through bucketing.
+- **Class**: subclass of `MobBucketItem` so the player-water-source release flow inherits from vanilla.
+- **Obtained from**: right-click a Resource Tadpole while holding a water bucket — same gesture as vanilla fish/tadpole bucketing.
+- **Implementation hooks on `ResourceTadpole`**:
+  - `getBucketItemStack()` overridden to return this item (so vanilla `Bucketable.bucketMobPickup` picks the right type).
+  - `saveToBucketTag(ItemStack)` overridden to write `Category` into the bucket's `bucket_entity_data` component alongside the inherited `Age` field.
+  - `loadFromBucketTag(CompoundTag)` overridden to restore the category on the spawned entity when the bucket is released.
+- **Display name** varies by contained category: "Bucket of Metallic Tadpole", "Bucket of Gem Tadpole", etc. Singular, matching vanilla's "Bucket of Tadpole" / "Bucket of Salmon" pattern. Single item ID; name resolves from the bucket NBT via `getName(ItemStack)` override.
+- **Visual**: two-layer item model, matching the vanilla potion-bottle pattern (`layer0` tinted, `layer1` drawn over it).
+  - Layer 0: tadpole silhouette inside, tinted via the `productivefrogs:tadpole_bucket_category` ItemTintSource based on the bucket's stored category.
+  - Layer 1: iron bucket exterior (static, untinted).
+- **Stack size**: 1 (vanilla bucket constraint).
 
 ### Slime Bucket
 
@@ -156,12 +174,13 @@ Names are working titles — easy to rename before code lands.
 
 ### Resource Tadpoles & Frogs (entities)
 
-- One `ResourceTadpole` entity, one `ResourceFrog` entity, each with a `category` variant property (Metallic / Mineral / Gem / Aquatic / Infernal / Arcane).
+- One `ResourceTadpole` entity, one `ResourceFrog` entity, each with a `category` synced data parameter (Metallic / Mineral / Gem / Aquatic / Infernal / Arcane). Category is set by the egg-priming step and carries forward through hatch and maturation without ever consulting biome.
 - Tadpoles grow into frogs of the same category (mirrors vanilla tadpole → frog).
 - **AI inherits vanilla `Frog` behavior unchanged.** Tongue range, tongue cooldown, movement, water proximity, breeding behavior — all vanilla.
 - **Only behavioral override:** the "is this a valid prey entity?" check is filtered by category. A Metallic Frog only tongues slimes whose variant is in the metallic category tag. Vanilla magma cubes are not eaten by Metallic Frogs (they're infernal-category). Resource Slimes whose category doesn't match are ignored.
 - **Direct-feed interaction:** right-clicking a Resource Frog while holding a Slime Bucket containing a matching-category slime causes the frog to immediately tongue the bucketed slime; the bucket transforms to empty, and the frog drops the corresponding Froglight at its current position. Mismatched bucket → no-op (bucket retained). Tongue cooldown still applies.
 - Vanilla frog death/despawn rules apply — bred or player-hatched frogs are persistence-required and won't despawn naturally.
+- **Visual: per-category tint.** Both entities use custom renderers (`ResourceTadpoleRenderer extends TadpoleRenderer`, `ResourceFrogRenderer extends FrogRenderer`) with custom `LivingEntityRenderState` subclasses that carry the category. The renderers override `getModelTint(state)` to return `category.tintArgb()`, multiplied into the model color at render time. Vanilla textures are reused as the base; with grayscale-base textures (future) the tint will read cleanly. Same `Category.tintArgb()` value drives the bucketed-tadpole content layer.
 
 ### Frog Breeding
 
