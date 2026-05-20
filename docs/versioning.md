@@ -1,0 +1,67 @@
+# Versioning & Scope
+
+How features are split across releases. V1 is the foundation; V2 layers automation on top without breaking V1.
+
+## V1 — Base Mechanics + Appliances
+
+The "playable foundation" release. **Appliance blocks** (single-block hand-operated stations, like vanilla brewing stand or composter) are in scope. **Automation machinery** (power-fed, multi-block, hopper-integrated, pipe-fed) is not.
+
+**In scope:**
+
+- **Frog Net** (item, hand tool, no power)
+- **Frog Egg** (item + block, placed on water by hand)
+- **Slime Bucket** (item, transport mechanic)
+- **Primed Frog Eggs** (6 blocks, one per category) — primed by right-clicking with a category material
+- **Resource Tadpoles** and **Resource Frogs** (6 categories)
+- **Resource Slimes** (N data-driven variants)
+- **Parent slime species** for non-vanilla categories (Cave / Geode / Tide / Void Slime)
+- **Slime acquisition** via two paths: vanilla-slime-split random discovery + immediate-transformation infusion
+- **Slime Milker** (single appliance block, no power, hand-operated press) — converts a slime bucket to a typed milk bucket
+- **Slime Milk fluid** (lava-flow, source-block-spawns-slimes, configurable depletion)
+- **Froglight drops** (item entities — vanilla-hopper collectable)
+- **Smelting recipes** (universal across categories) and **crush compat recipes** (metallic, via Create/Mekanism/Thermal)
+- **Primer tags** and **slime category tags**
+- **Cross-mod compat** via JSON (Mekanism, Create, Thermal, Mythic Metals)
+
+**The V1 rule of thumb:** if vanilla has a single-block appliance equivalent (furnace, brewing stand, composter, cauldron) that's V1 scope. If we'd be adding power, pipes, or multiblocks, that's V2.
+
+**Why this scope:** establishes the entire mechanical loop the mod is "about" *with a working scalable economy*. The Milker is the production keystone — without it, the mod has no farming loop. V2 layers automation on top of an already-functional V1.
+
+## V2 — Automation
+
+Tools and blocks that let the player scale and automate the V1 loop. Built on top of V1; never replaces it.
+
+**In scope:**
+
+- **Auto-fed Slime Milker** — hopper-integrated variant of the V1 Milker, accepts slime buckets from a hopper and pushes milk buckets to an output side
+- **Frog Terrarium / Habitat** block — placeable frog housing with input/output inventory
+- **Auto-feeders** — hopper-fed slime delivery to nearby frogs (alternative to milk-spawn proximity)
+- **Capacity / efficiency upgrades** for habitat blocks
+- **Native crusher block** — optional in-house version (so the 2× crush path works without external mods)
+- **Pipe/hopper-aware fluid handling** for Slime Milk
+- Potentially: power compatibility (FE / NeoForge Energy)
+
+**Why deferred:** these are all "scaling solutions" — they make V1 faster, denser, hands-off. They don't change *what the mod is*. Building V1 first ensures the design holds up without machines propping it up.
+
+## V2 or V3 — Parked Ideas
+
+Features captured during V1 design that aren't in scope yet but should be remembered:
+
+- **Potion Slime / Alchemical category.** A 7th category (or a special variant within an existing one) tied to brewing. Possible mechanics: infuse with a potion item (instead of an ingot) → slime takes on that potion's effect → killing it drops the corresponding potion, or splashes its effect in an area. Parent could be a "Brew Slime" spawning near witch huts or nether wart. Worth scoping when V1 ships and we know how much hook-into-brewing the framework can support.
+
+## V3+ — Speculative
+
+Not committed. Possible future directions:
+
+- Deep genetics / breeding tree on the frog side (Forestry-style)
+- New dimensions (Frog Realm?)
+- Tinkers-style upgradable frogs (gold trim, diamond skin)
+- Quest/advancement integration
+
+**Explicitly NOT planned:** Fabric port. Productive Frogs is NeoForge-only by design. See [architecture.md](./architecture.md).
+
+## Compatibility Promise
+
+- V2 datapacks must not break V1 worlds.
+- V2 machines must remain optional — a player who never crafts a Slime Nursery in V2 still has every V1 capability.
+- Cross-mod compat datapacks are independent of V1/V2 split.

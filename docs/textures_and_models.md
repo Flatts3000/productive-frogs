@@ -1,0 +1,217 @@
+# Textures and Models
+
+How visual assets are organized in Productive Frogs, with a focus on **tint-based colorization** so we don't need a separate texture per slime variant.
+
+## Guiding Principles
+
+1. **Tint-based colorization for variants.** Resource Slime variants, Slime Buckets, and Slime Milk fluids all share base textures and differ only by per-variant color. Color is data; texture is shared.
+2. **JSON-driven.** Every variant's appearance is defined in its `data/productivefrogs/slime_variant/<name>.json` — no hard-coded colors in Java.
+3. **Modpack-overridable.** Pack authors recolor any slime by overriding the variant JSON. No Java needed.
+4. **Placeholder textures during development.** Mechanics-first. Replace placeholders with polished art before V1 release.
+
+## Tint-Based Colorization — How It Works
+
+Vanilla Minecraft has a built-in mechanism: the renderer multiplies a base texture's pixels by a per-instance color. This is how vanilla handles:
+
+- Water (biome-tinted)
+- Grass blocks and leaves (biome-tinted)
+- Wool / Concrete (single dye color, white base texture)
+- Spawn eggs (overlay-tinted by entity type)
+- Potions (liquid tinted by effect)
+
+For Productive Frogs, we use this for:
+
+- **Resource Slime body** — one grayscale-ish body texture, tinted per variant
+- **Resource Slime inner core** — separate overlay layer, also tinted
+- **Slime Bucket contents** — bucket exterior is static; the slime-splash layer is tinted
+- **Slime Milk fluid** — one base lumpy-liquid texture, tinted per fluid variant
+
+## Per-Variant Color in JSON
+
+The `color_rgb` field on each `slime_variant` JSON drives all rendering tint for that variant:
+
+```json
+{
+  "display_name": { "translate": "entity.productivefrogs.iron_slime" },
+  "category": "productivefrogs:metallic",
+  "color_rgb": [180, 180, 180],
+  "core_color_rgb": [120, 120, 120],
+  "loot_table": "productivefrogs:entities/slime/iron"
+}
+```
+
+Suggested colors for the base variants:
+
+| Variant | `color_rgb` (body) | `core_color_rgb` (inner) |
+|---|---|---|
+| Iron Slime | `[180, 180, 180]` | `[120, 120, 120]` |
+| Copper Slime | `[200, 130, 80]` | `[140, 90, 50]` |
+| Gold Slime | `[230, 200, 50]` | `[180, 150, 30]` |
+| Redstone Slime | `[200, 30, 30]` | `[130, 20, 20]` |
+| Lapis Slime | `[40, 80, 200]` | `[20, 50, 140]` |
+| Coal Slime | `[40, 40, 40]` | `[20, 20, 20]` |
+| Diamond Slime | `[120, 230, 220]` | `[80, 180, 170]` |
+| Emerald Slime | `[40, 200, 80]` | `[20, 140, 50]` |
+| Amethyst Slime | `[180, 100, 220]` | `[130, 60, 170]` |
+| Sponge Slime | `[230, 210, 80]` | `[180, 160, 60]` |
+| Prismarine Slime | `[100, 180, 150]` | `[60, 130, 110]` |
+| Coral Slime | `[230, 80, 130]` | `[180, 50, 90]` |
+| Kelp Slime | `[40, 100, 40]` | `[20, 70, 20]` |
+| Ink Slime | `[20, 20, 30]` | `[10, 10, 20]` |
+| Nautilus Slime | `[220, 200, 180]` | `[170, 150, 130]` |
+| Blaze Slime | `[230, 130, 30]` | `[180, 90, 20]` |
+| Ghast Slime | `[230, 230, 230]` | `[200, 200, 200]` |
+| Wither Slime | `[30, 30, 40]` | `[20, 20, 30]` |
+| Ender Slime | `[20, 150, 130]` | `[10, 100, 90]` |
+| Echo Slime | `[120, 130, 180]` | `[80, 90, 130]` |
+| Vanilla Slime | `[100, 200, 100]` | `[60, 140, 60]` (matches vanilla) |
+| Magma Cube | `[230, 80, 30]` | `[180, 50, 20]` (matches vanilla) |
+
+These are starting points — easily tunable via JSON without recompiling.
+
+## Data Flow at Render Time
+
+```
+data/productivefrogs/slime_variant/iron.json
+  { "color_rgb": [180, 180, 180], ... }
+              ↓  (loaded at world load / datapack reload)
+       SlimeVariant registry
+              ↓
+ResourceSlime entity instance — variant = "iron"
+              ↓
+Renderer asks: "what's my variant's color?"
+              ↓
+Binds shared body texture + applies tint [180, 180, 180]
+              ↓
+                  Draws an iron-tinted slime
+```
+
+Same flow applies to:
+- Slime Bucket item — variant stored in NBT, renderer looks up color
+- Slime Milk fluid block — fluid variant has its own color
+- Tadpole and adult Resource Frog — frog category has a color (defined separately from slime colors)
+
+## Texture Files Needed
+
+### Shared Base Textures (tintable, used across many variants)
+
+| File | Purpose |
+|---|---|
+| `textures/entity/resource_slime/body.png` | Slime body — grayscale or near-white, tintable |
+| `textures/entity/resource_slime/core.png` | Inner core overlay (the "cube inside" the slime) |
+| `textures/item/slime_bucket/contents.png` | Splash/liquid layer in the bucket item |
+| `textures/item/slime_bucket/exterior.png` | Bucket itself (vanilla bucket-style, NOT tinted) |
+| `textures/block/slime_milk_still.png` | Animated still fluid — lumpy slime texture |
+| `textures/block/slime_milk_flow.png` | Animated flowing fluid |
+| `textures/item/slime_milk_bucket.png` | Bucket of milk — exterior static, contents tinted |
+
+### Per-Block / Per-Item Textures (not tintable, unique designs)
+
+| File | Purpose | Style |
+|---|---|---|
+| `textures/block/slime_milker/top.png` | Milker top face — recessed slot for bucket | 16×16, industrial |
+| `textures/block/slime_milker/front.png` | Milker front face — visible press/piston | 16×16, industrial |
+| `textures/block/slime_milker/side.png` | Milker side panels | 16×16, industrial |
+| `textures/block/slime_milker/bottom.png` | Milker bottom | 16×16, plain |
+| `textures/item/frog_net.png` | Frog Net hand tool — stick + net loop | 16×16, fishing-rod-like |
+| `textures/item/frog_egg.png` | Frog Egg item (in inventory) | 16×16, slime-spawn-shape |
+| `textures/block/frog_egg.png` | Frog Egg block (placed) | 16×16, matching item but world-block |
+| `textures/block/primed_frog_egg_*.png` | 6 primed egg variants (per category) | 16×16 each, tinted overlay |
+| `textures/block/froglight_*.png` | Drop blocks per slime variant (decorative) | 16×16, glowing |
+
+### New Parent Slime Species (each is a unique entity, mostly using vanilla slime model)
+
+| Entity | Body texture | Notes |
+|---|---|---|
+| Cave Slime | `entity/cave_slime.png` | Gray/stony with dust speckles |
+| Geode Slime | `entity/geode_slime.png` | Translucent prismatic with faceted overlays |
+| Tide Slime | `entity/tide_slime.png` | Translucent ocean-blue with bubble pattern |
+| Void Slime | `entity/void_slime.png` | Dark purple with starfield speckles |
+
+These are *not* tintable — each parent slime species has a fully designed texture. They're a one-time art investment (4 entities), not a per-variant cost.
+
+## Item Models — JSON Format
+
+Items use vanilla-style JSON models. For the Frog Net (single-layer item):
+
+```json
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "productivefrogs:item/frog_net"
+  }
+}
+```
+
+For Slime Bucket (two-layer with tint on contents):
+
+```json
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "productivefrogs:item/slime_bucket/exterior",
+    "layer1": "productivefrogs:item/slime_bucket/contents"
+  }
+}
+```
+
+The mod registers an `ItemColor` provider for the `slime_bucket` item that returns the variant's `color_rgb` for `layer1` (tintindex 1) and white (no tint) for `layer0`.
+
+## Block Models — JSON Format
+
+Slime Milker uses the standard "all-sides" model template:
+
+```json
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "productivefrogs:block/slime_milker/top",
+    "bottom": "productivefrogs:block/slime_milker/bottom",
+    "side": "productivefrogs:block/slime_milker/side",
+    "front": "productivefrogs:block/slime_milker/front"
+  }
+}
+```
+
+(Vanilla doesn't have a "cube_4_face" template that supports a unique front; we'd write our own model JSON or use NeoForge's `cube_oriented` template.)
+
+## Texture Pipeline — Development Strategy
+
+**Phase 1: Placeholder textures.** Use a Python script (with PIL or Pillow) to generate simple shape-based 16×16 PNGs for every required file. Lets us build and test mechanics without commissioned art. Example placeholders:
+
+- Frog Net → green stick on diagonal, brown loop at top
+- Slime Milker top → gray cube with a small darker square (slot)
+- Slime body → off-white blob shape (will be tinted)
+- Frog Egg → small green oval
+
+**Phase 2: Hand-drawn replacements.** Pixel art done in Aseprite (the standard) or Piskel (free web alternative), Krita, or GIMP. ~30 minutes per item once the style is established.
+
+**Phase 3: Polished release art.** Either keep the hand-drawn versions or commission an artist if the project gains traction.
+
+## Animations (V1 Optional)
+
+Two places where animation pays for itself:
+
+1. **Slime Milker press animation.** When activated, the front-face texture cycles through 4-8 frames showing pistons descending. Trivial to add via vanilla `.mcmeta` animation format.
+2. **Slime Milk still+flowing animation.** Mandatory for fluids to feel right — water and lava animate; ours should too. ~8 frames at 4 ticks/frame is a good default.
+
+Both are static texture files with a `.mcmeta` sidecar:
+
+```json
+// textures/block/slime_milk_still.png.mcmeta
+{
+  "animation": {
+    "frametime": 4,
+    "interpolate": true
+  }
+}
+```
+
+## Resource Pack Compatibility
+
+Because the mod uses tint-based colorization driven by JSON variants, third-party resource packs can:
+
+- **Override the base body/core/bucket/milk textures** — change the *style* (rough vs smooth, pixel detail) across all variants
+- **NOT override per-variant colors** — those come from datapack JSON, not resource pack texture files
+
+If a pack author wants to recolor a single variant, they edit the variant's JSON via a datapack, not via resource pack. This is the right separation: resource packs = visual style, datapacks = balance/identity.

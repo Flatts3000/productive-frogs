@@ -1,0 +1,42 @@
+# Build artifacts
+build/
+.gradle/
+out/
+bin/
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.eclipse/
+*.launch
+.settings/
+.project
+.classpath
+
+# NeoForge dev runs
+run/
+runs/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+hs_err_*.log
+
+# Local environment / secrets
+.env
+.env.local
+*.local.properties
+
+# Generated docs (if any tooling auto-generates)
+docs/CODEMAPS/
