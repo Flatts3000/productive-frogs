@@ -35,13 +35,8 @@ For animated fluids, use `32x32` and drop "single-frame" (you'll get multiple fr
 
 ## Priority 1 — Core V1 Items (must-have for first build)
 
-### Frog Net (item)
+Note: there's no "Frog Net" texture. Players use a vanilla `minecraft:glass_bottle` to bottle frogspawn — no custom item, no new texture.
 
-```
-A Minecraft-style pixel art item icon of a small bug-catching net for a frog: short wooden stick handle on the diagonal lower-left to upper-right, with a small white mesh net loop attached at the top end. Wood handle is light brown with a darker grain pixel. Net mesh is white with visible cross-hatch pattern. Item viewed in standard inventory perspective.
-```
-
-+ style anchor
 
 ### Frog Egg (item)
 
@@ -261,7 +256,7 @@ These ship in the Resource Frog category JSONs alongside the slime variant JSONs
 
 ## Generation Workflow
 
-1. Start with **Priority 1** prompts. Get the Frog Net, Frog Egg, Slime Milker faces working. These are the "first-launch" blockers.
+1. Start with **Priority 1** prompts. Get the Frog Egg, Slime Milker faces, and Slime Bucket layers working. These are the "first-launch" blockers.
 2. Move to **Priority 2** — the shared tintable bases. These unlock ALL slime variants in one go.
 3. **Priority 3** — fluid animations. Trickier (multi-frame); save until you have a stable pixel-art pipeline.
 4. **Priority 4** — parent slime species. One-time investment, but each is a unique design.

@@ -4,22 +4,31 @@ This document enumerates every new item, block, and entity in the v0.1 scope.
 
 ## Items
 
-### Frog Net
+### Frogspawn Bottling (vanilla glass bottle)
 
-- **ID**: `productivefrogs:frog_net`
-- **Role**: The only way to obtain a `Frog Egg` item. Single-purpose tool — captures frogspawn from the world.
-- **Crafting recipe**: 3 string + 2 sticks (shape similar to a fishing rod).
-- **Use**: right-click on a vanilla `minecraft:frogspawn` block in the world.
-  - Block is consumed.
+There is **no dedicated Frog Net item**. Players use a vanilla **empty glass bottle** (`minecraft:glass_bottle`) to bottle frogspawn from the world:
+
+- **Use**: right-click on a vanilla `minecraft:frogspawn` block while holding an empty glass bottle.
+  - 1 glass bottle is consumed from the stack.
+  - The frogspawn block is consumed.
   - 1 `Frog Egg` item is added to the player's inventory.
-- **Durability**: 16 uses (cheap, intended to be re-crafted).
-- **Does NOT capture adult frogs.** Players relocate adult Resource Frogs via vanilla **leads** (canonical method), slimeball lure (short-distance herding), or boats (water crossing).
+- **No crafting recipe added** — vanilla glass bottle crafting (3 glass blocks) is unchanged.
+- **Stacking**: empty glass bottles stack to 64 in vanilla, so the player can carry many at once.
+- **Theme**: mirrors vanilla bottling interactions (water bottles, dragon's breath). The bottle is a generic "scoop" tool for organic material.
+
+**Why glass bottle instead of a custom tool:**
+- One fewer item to design, model, texture, and document.
+- Universally understood by players.
+- Reduces our item registry surface.
+- Frees the "Frog Net" name for nothing in particular (we don't need to claim it).
+
+**Does NOT capture adult frogs.** Players relocate adult Resource Frogs via vanilla **leads** (canonical method), slimeball lure (short-distance herding), or boats (water crossing).
 
 ### Frog Egg (item)
 
 - **ID**: `productivefrogs:frog_egg`
 - **Role**: Stackable, inventory-friendly representation of a frog egg.
-- **Obtained from**: Frog Net used on `minecraft:frogspawn`.
+- **Obtained from**: vanilla empty glass bottle used on `minecraft:frogspawn` (see [Frogspawn Bottling](#frogspawn-bottling-vanilla-glass-bottle) above).
 - **Stack size**: 64.
 - **Use**: right-click on water → places `productivefrogs:frog_egg` block.
 
@@ -154,8 +163,8 @@ Resource Frogs can breed with each other via the standard vanilla animal love-mo
 
 - **Breed item:** slimeball (1 per parent, consumed).
 - **Same-category only.** Two Metallic Resource Frogs produce a Metallic offspring. A Metallic Frog and a Gem Frog cannot breed together (different species in love-mode terms).
-- **Offspring:** the breeding pair places a **Primed Frog Egg block** of their shared category on a nearby water tile — the same block obtained by hand-priming a Frog Egg with the matching primer. Player can let it hatch normally into a Resource Tadpole of that category, or net it with the Frog Net to retrieve it as a `Primed Frog Egg` item.
-- **No primer cost on breeding offspring.** Once a player has two Resource Frogs of the same category, they can self-sustain that category's frog population indefinitely. The primer pipeline (Frog Net → Frog Egg → primer item) is the one-time cost to bootstrap each category.
+- **Offspring:** the breeding pair places a **Primed Frog Egg block** of their shared category on a nearby water tile — the same block obtained by hand-priming a Frog Egg with the matching primer. Player can let it hatch normally into a Resource Tadpole of that category, or bottle it with an empty glass bottle to retrieve it as a `Primed Frog Egg` item (placeholder behavior — the bottling logic for primed eggs may extend the same hook).
+- **No primer cost on breeding offspring.** Once a player has two Resource Frogs of the same category, they can self-sustain that category's frog population indefinitely. The primer pipeline (glass bottle → Frog Egg → primer item) is the one-time cost to bootstrap each category.
 - **Vanilla frogs still breed normally** (per [open_questions.md](./open_questions.md) Q3) — they produce vanilla frogspawn, which the player nets into vanilla Frog Eggs that need priming. Cross-breeding (vanilla frog × Resource Frog) is not supported.
 
 This subsumes the previously-open Q12 question.
@@ -166,11 +175,12 @@ The Slime Nursery is an automation block and explicitly **not in V1 scope**. See
 
 ## Summary roster (v0.1 target)
 
-**Items (3 + N new):**
-- Frog Net
+**Items (2 + N new):**
 - Frog Egg
 - Slime Bucket
 - N Bucket-of-Slime-Milk variants (one per slime variant)
+
+Vanilla `minecraft:glass_bottle` is used to bottle frogspawn — no custom tool item is added.
 
 **Blocks (7 + N drop blocks + N milk fluids):**
 - Frog Egg block (unprimed)

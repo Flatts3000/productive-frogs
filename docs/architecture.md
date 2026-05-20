@@ -9,6 +9,21 @@ How the mod is structured internally to support data-driven slime variants, cros
 3. **Category membership is tag-based.** Frog categories, slime categories, and primer tags all live in NeoForge's tag system. Lookups are O(1) tag membership checks.
 4. **Drops are vanilla loot tables.** No bespoke drop logic — leverage vanilla's `LootTable` system for full flexibility (random ranges, fortune scaling, enchantment effects all work for free).
 
+## Frogspawn Bottling Hook
+
+`minecraft:glass_bottle` right-clicked on `minecraft:frogspawn` produces a `productivefrogs:frog_egg` item:
+
+- Register a NeoForge `PlayerInteractEvent.RightClickBlock` listener.
+- If the held item is `minecraft:glass_bottle` AND the targeted block is `minecraft:frogspawn`:
+  - Shrink the held stack by 1 (consume one bottle).
+  - Set the block at the target position to air (consume the frogspawn).
+  - Give the player 1 `productivefrogs:frog_egg` item (or drop at the block position if inventory is full).
+  - Play a "bottle pop" sound (vanilla `entity.item.pickup` or `block.brewing_stand.brew`).
+  - Set the event result to `CONSUME` so vanilla doesn't double-process.
+- If either condition fails, the event is left alone (no interference with vanilla bottle behavior).
+
+No custom item, no new recipe — entirely event-driven.
+
 ## Slime Sourcing Hooks
 
 The slime sourcing mechanic (see [slime_sourcing.md](./slime_sourcing.md)) lives in two hook points:
@@ -184,7 +199,6 @@ productive-frogs/
 │       │   │   └── PFDataComponents.java
 │       │   ├── content/
 │       │   │   ├── item/
-│       │   │   │   ├── FrogNetItem.java
 │       │   │   │   ├── FrogEggItem.java
 │       │   │   │   ├── SlimeBucketItem.java
 │       │   │   │   └── SlimeMilkBucketItem.java
@@ -242,7 +256,7 @@ productive-frogs/
 │               │   ├── copper.json
 │               │   └── ...
 │               └── recipes/
-│                   └── frog_net.json
+│                   └── (no custom recipes for frogspawn capture — vanilla glass bottle handles it via event hook)
 └── .gitignore
 ```
 

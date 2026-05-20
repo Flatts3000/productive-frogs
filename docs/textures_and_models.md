@@ -113,7 +113,6 @@ Same flow applies to:
 | `textures/block/slime_milker/front.png` | Milker front face — visible press/piston | 16×16, industrial |
 | `textures/block/slime_milker/side.png` | Milker side panels | 16×16, industrial |
 | `textures/block/slime_milker/bottom.png` | Milker bottom | 16×16, plain |
-| `textures/item/frog_net.png` | Frog Net hand tool — stick + net loop | 16×16, fishing-rod-like |
 | `textures/item/frog_egg.png` | Frog Egg item (in inventory) | 16×16, slime-spawn-shape |
 | `textures/block/frog_egg.png` | Frog Egg block (placed) | 16×16, matching item but world-block |
 | `textures/block/primed_frog_egg_*.png` | 6 primed egg variants (per category) | 16×16 each, tinted overlay |
@@ -132,13 +131,13 @@ These are *not* tintable — each parent slime species has a fully designed text
 
 ## Item Models — JSON Format
 
-Items use vanilla-style JSON models. For the Frog Net (single-layer item):
+Items use vanilla-style JSON models. For the Frog Egg (single-layer item):
 
 ```json
 {
-  "parent": "minecraft:item/handheld",
+  "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "productivefrogs:item/frog_net"
+    "layer0": "productivefrogs:item/frog_egg"
   }
 }
 ```
@@ -179,7 +178,7 @@ Slime Milker uses the standard "all-sides" model template:
 
 **Phase 1: Placeholder textures.** Use a Python script (with PIL or Pillow) to generate simple shape-based 16×16 PNGs for every required file. Lets us build and test mechanics without commissioned art. Example placeholders:
 
-- Frog Net → green stick on diagonal, brown loop at top
+- Frog Egg → small green-jelly oval with a darker dot inside
 - Slime Milker top → gray cube with a small darker square (slot)
 - Slime body → off-white blob shape (will be tinted)
 - Frog Egg → small green oval

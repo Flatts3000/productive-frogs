@@ -8,7 +8,7 @@ The "playable foundation" release. **Appliance blocks** (single-block hand-opera
 
 **In scope:**
 
-- **Frog Net** (item, hand tool, no power)
+- **Frogspawn bottling via vanilla glass bottle** (no custom tool item — vanilla `minecraft:glass_bottle` is consumed on use against frogspawn)
 - **Frog Egg** (item + block, placed on water by hand)
 - **Slime Bucket** (item, transport mechanic)
 - **Primed Frog Eggs** (6 blocks, one per category) — primed by right-clicking with a category material

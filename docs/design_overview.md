@@ -49,7 +49,7 @@ This is a tag-driven model: frog categories and slime categories are tags in our
 ```
 1. Find vanilla frogs and breed them (vanilla mechanic, slimeball + slimeball).
 2. Resulting frogspawn placed by frogs over water.
-3. Use the Frog Net to bottle the frogspawn → Frog Egg item in inventory.
+3. Use an empty glass bottle on the frogspawn → Frog Egg item in inventory.
 4. Place Frog Egg on water → Frog Egg block.
 5. Right-click Frog Egg block with any material in a category's primer tag
    (e.g., iron ingot, copper ingot, osmium ingot, bronze ingot all prime
@@ -67,7 +67,7 @@ This is a tag-driven model: frog categories and slime categories are tags in our
 - **No bespoke processing machine.** Drops are usable directly (e.g. iron froglight breaks into iron nuggets). Centrifuge/press deferred.
 - **No new dimensions.** All content lives in vanilla dimensions + biomes.
 - **No mob-combat reframe.** Frogs are not pets/fighters.
-- **No changes to vanilla frog mechanics.** Vanilla `minecraft:frog` (warm/temperate/cold variants) and the vanilla magma-cube → froglight loop are untouched. Vanilla frogs serve our mod only as the source of frogspawn (which the Frog Net captures into Frog Eggs). Our Resource Frogs are a separate entity type.
+- **No changes to vanilla frog mechanics.** Vanilla `minecraft:frog` (warm/temperate/cold variants) and the vanilla magma-cube → froglight loop are untouched. Vanilla frogs serve our mod only as the source of frogspawn (which an empty glass bottle captures into Frog Eggs). Our Resource Frogs are a separate entity type.
 
 ## What's distinct vs. Productive Bees
 

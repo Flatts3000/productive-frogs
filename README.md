@@ -9,7 +9,7 @@ Productive Frogs is a predator/prey resource-generation mod inspired by the genr
 **Core loop:**
 
 ```
-Find frogspawn → bottle with Frog Net → prime egg with category material →
+Find frogspawn → bottle with a glass bottle → prime egg with category material →
 hatch into Resource Frog → feed it slime of the right category → drop resource
 ```
 
@@ -31,7 +31,7 @@ Variety lives on the slime side; the frog roster stays small and manageable. Thi
 |---|---|
 | [design_overview.md](./docs/design_overview.md) | The core model and gameplay loop |
 | [categories_and_tiers.md](./docs/categories_and_tiers.md) | The 5 categories, tier ladder, primer system |
-| [items_and_blocks.md](./docs/items_and_blocks.md) | Item and block roster: Frog Net, Frog Eggs, Resource Slimes, etc. |
+| [items_and_blocks.md](./docs/items_and_blocks.md) | Item and block roster: Frog Eggs, Resource Slimes, Slime Milker, etc. |
 | [slime_sourcing.md](./docs/slime_sourcing.md) | How players obtain Resource Slimes (split discovery + infusion) |
 | [farming.md](./docs/farming.md) | V1 farming loop: Slime Milker, Slime Milk fluid, Froglight processing |
 | [progression.md](./docs/progression.md) | Player journey from tier 0 to tier 6 |

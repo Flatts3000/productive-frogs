@@ -11,12 +11,12 @@ The player is doing normal early-game things. No mod intervention yet.
 
 ## Tier 1 — Metallic (gateway tier)
 
-**Unlock cost:** 3 string + 2 sticks (Frog Net) + 2 slimeballs (vanilla, to breed frogs) + 1 iron ingot (or any metallic primer).
+**Unlock cost:** 1 empty glass bottle + 2 slimeballs (vanilla, to breed frogs) + 1 iron ingot (or any metallic primer).
 
-1. Craft a **Frog Net** (3 string + 2 sticks).
+1. Make an empty **glass bottle** (vanilla recipe: 3 glass blocks).
 2. Find or trap two vanilla frogs and breed them with slimeballs (vanilla mechanic).
 3. Wait for them to lay frogspawn on water.
-4. Right-click the frogspawn with the Frog Net → get a **Frog Egg** item.
+4. Right-click the frogspawn with the empty glass bottle → bottle is consumed, get a **Frog Egg** item.
 5. Place the Frog Egg item on a water source → it becomes a Frog Egg block.
 6. Right-click the Frog Egg block with any **metallic primer** (iron ingot, copper ingot, gold ingot, or modded metals via tag).
    → Block becomes a **Metallic Frog Egg**, ingot consumed.

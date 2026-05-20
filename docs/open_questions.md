@@ -60,7 +60,7 @@ Design decisions that are still outstanding. Each has a current "lean" I'd recom
 
 **Decision:** **(A) Untouched.** Vanilla `minecraft:frog` (warm/temperate/cold) entity and its froglight-from-magma-cube mechanic are left exactly as in vanilla. They remain a parallel, decorative path for the three vanilla froglight colors.
 
-**Our Resource Frogs are a separate entity type** (`productivefrogs:resource_frog`) born from primed Frog Eggs via the Frog Net pipeline. Vanilla frogs serve our mod only as the source of frogspawn (which we net into Frog Eggs).
+**Our Resource Frogs are a separate entity type** (`productivefrogs:resource_frog`) born from primed Frog Eggs via the glass-bottle pipeline. Vanilla frogs serve our mod only as the source of frogspawn (which an empty glass bottle captures into Frog Eggs).
 
 **Rationale:**
 
@@ -81,17 +81,26 @@ Design decisions that are still outstanding. Each has a current "lean" I'd recom
 
 ---
 
-## 5. Frog Net — also captures adult Resource Frogs? — DECIDED ✅
+## 5. Frog Net — superseded by vanilla glass bottle ✅
 
-**Decision:** **(B) No.** The Frog Net is exclusively for picking up frogspawn from the world. It has a single, focused role.
+**Decision:** No custom "Frog Net" item is added. Players use a **vanilla empty glass bottle** to bottle frogspawn into a `Frog Egg` item. One fewer item to design, model, and texture.
 
-**How players move adult Resource Frogs:**
+**Original question** (preserved for history): Should the Frog Net double as a pickup tool for adult Resource Frogs?
 
-- **Leads** — the canonical method. Vanilla leads work on frogs, and Resource Frogs inherit this behavior. Players tie a lead to the frog and walk/sprint/boat them to the destination.
-- **Slimeball lure** — frogs follow players holding slimeballs (their breed item). Useful for short-distance herding without using a lead slot.
-- **Boats** — frogs can ride boats; useful for crossing water.
+**Original answer:** (B) No — bottling tool is frogspawn-only.
 
-**Rationale:** Keeps the Net mechanically pure (one tool, one job). Vanilla mechanics — especially leads — already provide adequate frog transport. Avoids feature creep on a hand tool meant for a single early-game interaction.
+**Current answer:** Question is moot. There IS no Frog Net. Adult Resource Frogs are moved via:
+
+- **Leads** — the canonical method. Vanilla leads work on frogs, and Resource Frogs inherit this behavior.
+- **Slimeball lure** — frogs follow players holding slimeballs.
+- **Boats** — frogs can ride boats.
+
+**Glass bottle implementation:**
+
+- Right-click handler on `minecraft:glass_bottle` checks for a `minecraft:frogspawn` block target.
+- Consumes 1 bottle from the stack + the frogspawn block.
+- Gives 1 `productivefrogs:frog_egg` item.
+- Empty bottles stack to 64 in vanilla, so players can carry many.
 
 ---
 
@@ -117,7 +126,7 @@ Design decisions that are still outstanding. Each has a current "lean" I'd recom
 - **Breed item:** slimeball (1 per parent, consumed). Vanilla frog breeding mechanic.
 - **Same-category only.** Two Metallic Frogs produce a Metallic offspring. Cross-category pairing (e.g. Metallic × Gem) is not supported.
 - **Offspring path:** the breeding pair places a Primed Frog Egg block of their shared category on a nearby water tile — same block as hand-primed eggs. Hatches into a Resource Tadpole of that category, or nettable into a Primed Frog Egg item.
-- **No primer cost on offspring.** Once a player has two same-category Resource Frogs, the population is self-sustaining. The primer pipeline (Frog Net → Frog Egg → primer item) is the one-time bootstrap per category.
+- **No primer cost on offspring.** Once a player has two same-category Resource Frogs, the population is self-sustaining. The primer pipeline (glass bottle → Frog Egg → primer item) is the one-time bootstrap per category.
 - **Slimes do NOT breed.** Slime breeding was earlier discussed but rejected; the breeding mechanic is exclusively on the frog side.
 
 **Subsumes Q12** (which asked the same question separately).
@@ -175,7 +184,7 @@ Once all questions are answered, the design is frozen and scaffolding begins:
   - [x] 2c. Non-vanilla category discovery: new parent slime entities (Cave / Geode / Tide / Void)
 - [x] 3. Vanilla variant mapping decided: Option A (vanilla frogs untouched, Resource Frogs are separate entity)
 - [x] 4. Org slug chosen: com.flatts.productivefrogs
-- [x] 5. Frog Net capture behavior: frogspawn only; adult frogs move via leads
+- [x] 5. Frogspawn capture: vanilla glass bottle (no custom tool); adult frogs move via leads
 - [x] 6. Loader scope confirmed: NeoForge-only, forever (no Fabric port)
 - [x] 7. Frog breeding: same-category → Primed Frog Egg of that category (slimes do NOT breed)
 - [x] 8. Frog AI: vanilla unchanged except category-match prey filter
