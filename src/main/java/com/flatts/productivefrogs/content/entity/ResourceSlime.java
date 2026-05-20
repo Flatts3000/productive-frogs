@@ -31,9 +31,11 @@ import net.minecraft.world.scores.PlayerTeam;
  * Frog Egg side.
  *
  * <p>Direct-kill drops (per design Q10): slimeballs only, vanilla parity.
- * {@code getDefaultLootTable} delegates to {@link EntityType#SLIME}'s loot
- * table, so we inherit vanilla's "only size-1 slimes drop slimeballs" behavior
- * without shipping our own JSON.
+ * Behavior lives in
+ * {@code data/productivefrogs/loot_table/entities/resource_slime.json}, which
+ * mirrors vanilla {@code minecraft:entities/slime}'s "size-1 only" condition.
+ * Loot table customization has to go through JSON in 1.21.x — {@code Mob#getLootTable}
+ * is {@code final}, so an override-by-subclass path isn't available.
  */
 public class ResourceSlime extends Slime {
 

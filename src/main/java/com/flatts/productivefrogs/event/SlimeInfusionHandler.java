@@ -8,14 +8,16 @@ import com.flatts.productivefrogs.registry.PFEntities;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.ConversionParams;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 /**
@@ -90,9 +92,16 @@ public final class SlimeInfusionHandler {
     }
 
     /**
-     * Spawn a {@link ResourceSlime} of {@code category} at {@code sourceSlime}'s
-     * position, copying size / HP / velocity, and discard the source. Returns
-     * the new entity, or {@code null} if entity creation failed.
+     * Convert {@code sourceSlime} in place into a {@link ResourceSlime} of the
+     * given {@code category}, copying size + HP + velocity. Returns the new
+     * entity, or {@code null} if conversion was rejected (event veto or entity
+     * already removed).
+     *
+     * <p>Uses vanilla {@code Mob#convertTo} + NeoForge {@code EventHooks} for the
+     * same reason {@link com.flatts.productivefrogs.content.entity.ResourceTadpole#ageUp}
+     * does: it preserves more entity state than a manual create+discard, fires
+     * the {@code LivingConvertEvent} hooks that other mods may listen on, and
+     * handles the source discard via {@code ConversionType.SINGLE} automatically.
      *
      * <p>Exposed as a static helper so both the event handler and tests can
      * exercise the transformation without duplicating positioning code.
@@ -100,26 +109,27 @@ public final class SlimeInfusionHandler {
      * guard.
      */
     public static ResourceSlime transformInPlace(Slime sourceSlime, Category category) {
-        Level level = sourceSlime.level();
-        ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level, EntitySpawnReason.CONVERSION);
-        if (resource == null) {
+        EntityType<ResourceSlime> target = PFEntities.RESOURCE_SLIME.get();
+        if (!EventHooks.canLivingConvert(sourceSlime, target, ignored -> {})) {
             return null;
         }
-        // Snap before setSize — setSize uses the entity's current position to
-        // refresh dimensions, so order matters slightly.
-        resource.snapTo(sourceSlime.getX(), sourceSlime.getY(), sourceSlime.getZ(),
-            sourceSlime.getYRot(), sourceSlime.getXRot());
-        resource.setSize(sourceSlime.getSize(), false);
-        resource.setCategory(category);
-        resource.setHealth(sourceSlime.getHealth());
-        resource.setDeltaMovement(sourceSlime.getDeltaMovement());
-        resource.setPersistenceRequired();
 
-        // Remove the source first to avoid both entities briefly occupying the
-        // same tile and triggering vanilla's stuck-entity nudge.
-        sourceSlime.discard();
-        level.addFreshEntity(resource);
-        return resource;
+        int size = sourceSlime.getSize();
+        float health = sourceSlime.getHealth();
+        Vec3 velocity = sourceSlime.getDeltaMovement();
+
+        return sourceSlime.convertTo(
+            target,
+            ConversionParams.single(sourceSlime, false, false),
+            resource -> {
+                EventHooks.onLivingConvert(sourceSlime, resource);
+                resource.setSize(size, false);
+                resource.setCategory(category);
+                resource.setHealth(health);
+                resource.setDeltaMovement(velocity);
+                resource.setPersistenceRequired();
+            }
+        );
     }
 
     /**
