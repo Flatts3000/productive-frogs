@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "category=metallic": { "model": "productivefrogs:block/metallic_frog_egg" },
+    "category=mineral":  { "model": "productivefrogs:block/mineral_frog_egg" },
+    "category=gem":      { "model": "productivefrogs:block/gem_frog_egg" },
+    "category=aquatic":  { "model": "productivefrogs:block/aquatic_frog_egg" },
+    "category=infernal": { "model": "productivefrogs:block/infernal_frog_egg" },
+    "category=arcane":   { "model": "productivefrogs:block/arcane_frog_egg" }
+  }
+}

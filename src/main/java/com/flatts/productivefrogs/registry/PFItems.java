@@ -2,6 +2,10 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.item.FrogEggItem;
+import com.flatts.productivefrogs.content.item.PrimedFrogEggBlockItem;
+import com.flatts.productivefrogs.data.Category;
+import java.util.EnumMap;
+import java.util.Map;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -40,6 +44,33 @@ public final class PFItems {
         "frog_egg",
         () -> new FrogEggItem(new Item.Properties().stacksTo(1))
     );
+
+    /**
+     * Per-category BlockItems for the Primed Frog Egg block. All six share the
+     * same underlying block ({@link PFBlocks#PRIMED_FROG_EGG}); the BlockItem
+     * subclass pre-sets the category state property on placement.
+     *
+     * <p>Survival players never craft these; they come from priming vanilla
+     * frogspawn with a category-tagged material. These items exist so each
+     * category appears as a distinct entry in the creative tab and JEI.
+     */
+    public static final Map<Category, DeferredItem<PrimedFrogEggBlockItem>> PRIMED_FROG_EGG_ITEMS =
+        buildPrimedEggItems();
+
+    private static Map<Category, DeferredItem<PrimedFrogEggBlockItem>> buildPrimedEggItems() {
+        EnumMap<Category, DeferredItem<PrimedFrogEggBlockItem>> map = new EnumMap<>(Category.class);
+        for (Category cat : Category.values()) {
+            map.put(cat, ITEMS.register(
+                cat.primedEggItemName(),
+                () -> new PrimedFrogEggBlockItem(
+                    PFBlocks.PRIMED_FROG_EGG.get(),
+                    new Item.Properties(),
+                    cat
+                )
+            ));
+        }
+        return map;
+    }
 
     private PFItems() {
         // utility class
