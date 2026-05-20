@@ -1,7 +1,7 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "productivefrogs:item/frog_egg_contents",
-    "layer1": "productivefrogs:item/frog_egg_bottle"
+    "layer0": "minecraft:block/frogspawn",
+    "layer1": "minecraft:item/glass_bottle"
   }
 }
