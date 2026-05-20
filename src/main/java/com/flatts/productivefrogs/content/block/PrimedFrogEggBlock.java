@@ -10,40 +10,34 @@ import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * The Primed Frog Egg block — a single block ID with a {@link Category} state
- * property covering all six categories.
+ * A Primed Frog Egg block — vanilla frogspawn that has been primed with a
+ * category-tagged material. One subclass instance per {@link Category} (six
+ * total), each registered as a distinct block ID. Matches vanilla's
+ * coral/sapling/wool pattern of "N visual variants → N block IDs".
  *
- * <p>Refactor of the original 6-blocks-per-category design: one registration,
- * one block class, six blockstate variants. Matches the "1 block, N variants
- * via state" pattern (compact registry, single class to maintain). Each
- * variant has its own model file referenced from the single blockstate JSON.
- *
- * <p>Behavior mirrors vanilla {@code minecraft:frogspawn}: lives on a water
- * source, frogspawn voxel shape, no collision, instant break, frogspawn sound
- * type. Does not yet hatch — that lands alongside the Resource Tadpole
- * entity in a future PR.
+ * <p>Behavior mirrors {@code minecraft:frogspawn}: must sit on a water source,
+ * frogspawn voxel shape, no collision, instant break, frogspawn sound type.
+ * Does not yet hatch — that lands alongside the Resource Tadpole entity in a
+ * future PR.
  */
 public final class PrimedFrogEggBlock extends Block {
 
-    public static final EnumProperty<Category> CATEGORY = EnumProperty.create("category", Category.class);
-
     private static final VoxelShape SHAPE = Block.box(0.0, 0.0, 0.0, 16.0, 1.5, 16.0);
 
-    public PrimedFrogEggBlock(Properties properties) {
+    private final Category category;
+
+    public PrimedFrogEggBlock(Category category, Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(CATEGORY, Category.METALLIC));
+        this.category = category;
     }
 
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(CATEGORY);
+    public Category getCategory() {
+        return category;
     }
 
     @Override

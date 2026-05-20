@@ -1,7 +1,6 @@
 package com.flatts.productivefrogs.event;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
-import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.PFTags;
 import com.flatts.productivefrogs.registry.PFBlocks;
@@ -68,13 +67,8 @@ public final class EggPrimerHandler {
 
         Player player = event.getEntity();
 
-        // Replace vanilla frogspawn with the primed egg block, state-bound to
-        // the matching category.
-        level.setBlockAndUpdate(
-            pos,
-            PFBlocks.PRIMED_FROG_EGG.get().defaultBlockState()
-                .setValue(PrimedFrogEggBlock.CATEGORY, category)
-        );
+        // Replace vanilla frogspawn with the matching category's primed egg.
+        level.setBlockAndUpdate(pos, PFBlocks.primedEgg(category).defaultBlockState());
 
         // Consume one primer (creative skips).
         if (!player.getAbilities().instabuild) {

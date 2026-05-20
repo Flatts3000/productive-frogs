@@ -1,19 +1,15 @@
 package com.flatts.productivefrogs.data;
 
 import java.util.Locale;
-import net.minecraft.util.StringRepresentable;
 
 /**
  * The six resource categories Productive Frogs is built around.
  *
- * <p>Implements {@link StringRepresentable} so the enum can be used directly
- * as a blockstate property value (lower-case name serialization, matching the
- * usual blockstate JSON convention).
- *
- * <p>Tier ordering follows {@code docs/categories_and_tiers.md} and matches
- * the natural pickaxe-progression curve.
+ * <p>Each category has a dedicated Primed Frog Egg block + item, a primer tag,
+ * and (eventually) Resource Frog / Resource Slime variants. Tier ordering
+ * follows {@code docs/categories_and_tiers.md}.
  */
-public enum Category implements StringRepresentable {
+public enum Category {
     METALLIC,
     MINERAL,
     GEM,
@@ -21,7 +17,7 @@ public enum Category implements StringRepresentable {
     INFERNAL,
     ARCANE;
 
-    /** Lowercase id used in registry paths, tag paths, lang keys, blockstate values. */
+    /** Lowercase id used in registry paths, tag paths, lang keys. */
     public String id() {
         return name().toLowerCase(Locale.ROOT);
     }
@@ -31,13 +27,8 @@ public enum Category implements StringRepresentable {
         return "primer/" + id();
     }
 
-    /** Item registry name for the BlockItem placing the primed egg of this category. */
+    /** Registry name for this category's Primed Frog Egg block / item. */
     public String primedEggItemName() {
         return id() + "_frog_egg";
-    }
-
-    @Override
-    public String getSerializedName() {
-        return id();
     }
 }
