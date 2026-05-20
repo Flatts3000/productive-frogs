@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.content.entity;
 
 import com.flatts.productivefrogs.content.entity.ai.LayCategoryFrogspawn;
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.registry.PFSensors;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.datafixers.util.Pair;
@@ -13,6 +14,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.ai.sensing.Sensor;
+import net.minecraft.world.entity.ai.sensing.SensorType;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.frog.Frog;
@@ -105,6 +108,26 @@ public class ResourceFrog extends Frog {
             ImmutableSet.of(Pair.of(MemoryModuleType.IS_PREGNANT, MemoryStatus.VALUE_PRESENT))
         );
         return brain;
+    }
+
+    /**
+     * Override the brain provider sensor list to swap vanilla's
+     * {@code FROG_ATTACKABLES} for our category-filtering equivalent. Everything
+     * else (memory types, other sensors) reuses vanilla {@link Frog}'s
+     * {@code protected static} lists verbatim — only the prey-detection sensor
+     * changes, matching the Q8 "vanilla AI except for prey eligibility filter"
+     * design constraint.
+     */
+    @Override
+    public Brain.Provider<Frog> brainProvider() {
+        ImmutableList<SensorType<? extends Sensor<? super Frog>>> sensors = ImmutableList.<SensorType<? extends Sensor<? super Frog>>>builder()
+            .add(SensorType.NEAREST_LIVING_ENTITIES)
+            .add(SensorType.HURT_BY)
+            .add(PFSensors.RESOURCE_FROG_ATTACKABLES.get())
+            .add(SensorType.FROG_TEMPTATIONS)
+            .add(SensorType.IS_IN_WATER)
+            .build();
+        return Brain.provider(MEMORY_TYPES, sensors);
     }
 
     public static net.minecraft.world.entity.ai.attributes.AttributeSupplier.Builder createAttributes() {

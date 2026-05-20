@@ -6,6 +6,7 @@ import com.flatts.productivefrogs.registry.PFCreativeTabs;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
+import com.flatts.productivefrogs.registry.PFSensors;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -33,6 +34,7 @@ public final class ProductiveFrogs {
         PFBlocks.register(modEventBus);
         PFItems.register(modEventBus);
         PFEntities.register(modEventBus);
+        PFSensors.register(modEventBus);
         PFCreativeTabs.register(modEventBus);
         PFGameTests.register(modEventBus);
 
