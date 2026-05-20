@@ -360,20 +360,38 @@ public final class PFGameTests {
         offCategory.setSize(1, true);
         offCategory.setCategory(Category.INFERNAL);
 
-        // The sensor scans every ~20 ticks; poll until the brain memory settles.
-        helper.succeedWhen(() -> {
+        // Track whether the off-category slime was ever selected across the
+        // entire polling window. succeedWhen alone retries past transient bad
+        // states — we need onEachTick to record sightings, then a single-shot
+        // succeedOnTickWhen at the end to assert "never off-category AND
+        // settled on matching."
+        java.util.concurrent.atomic.AtomicBoolean sawOffCategory = new java.util.concurrent.atomic.AtomicBoolean(false);
+        helper.onEachTick(() -> {
+            LivingEntity target = frog.getBrain()
+                .getMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.NEAREST_ATTACKABLE)
+                .orElse(null);
+            if (target == offCategory) {
+                sawOffCategory.set(true);
+            }
+        });
+        // Sensor scans every ~20 ticks; allow two full scan cycles plus headroom
+        // for the brain to absorb. Use runAfterDelay + explicit helper.succeed
+        // (not succeedOnTickWhen — that's a strict equality and would fail if
+        // the brain settles earlier than expected).
+        helper.runAfterDelay(60L, () -> {
+            if (sawOffCategory.get()) {
+                helper.fail("sensor targeted the off-category slime at some point during the polling window");
+            }
             LivingEntity target = frog.getBrain()
                 .getMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.NEAREST_ATTACKABLE)
                 .orElse(null);
             if (target == null) {
                 helper.fail("sensor never wrote NEAREST_ATTACKABLE — does the matching slime exist within range?");
             }
-            if (target == offCategory) {
-                helper.fail("sensor targeted the off-category slime instead of filtering it out");
-            }
             if (target != matching) {
-                helper.fail("sensor targeted an unexpected entity: " + target);
+                helper.fail("expected matching slime as target, got " + target);
             }
+            helper.succeed();
         });
     }
 
