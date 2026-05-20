@@ -63,8 +63,11 @@ public final class LayCategoryFrogspawn {
                             .getCollisionShape(level, waterPos)
                             .getFaceShape(Direction.UP)
                             .isEmpty();
-                        boolean isWater = level.getFluidState(waterPos).is(Fluids.WATER);
-                        if (!waterFaceOpen || !isWater) {
+                        // Source-water required — matches PrimedFrogEggBlock.canSurvive,
+                        // otherwise the placed block breaks on the next shape update.
+                        var fluid = level.getFluidState(waterPos);
+                        boolean isWaterSource = fluid.is(Fluids.WATER) && fluid.isSource();
+                        if (!waterFaceOpen || !isWaterSource) {
                             continue;
                         }
 

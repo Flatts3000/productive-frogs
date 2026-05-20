@@ -61,7 +61,7 @@ The legacy `RegisterColorHandlersEvent.Item` event is **gone** in vanilla and Ne
 
 ## Project Conventions
 
-- **Java 21, 4-space indent, no tabs, no wildcard imports.** Import order: `java.*`, `javax.*`, third-party, `net.minecraft.*` / `net.neoforged.*`, then `com.flatts.productivefrogs.*`. Records for value types; `@Nullable` (JetBrains, shipped with NeoForge) on ambiguous returns.
+- **Java 21, 4-space indent, no tabs, no wildcard imports.** Import order: **alphabetical, one block, no semantic groups** — matches both Mojang vanilla source style (e.g. `com.google.common.*` then `com.mojang.*` then `net.minecraft.*`) and what existing files in this repo do. Don't introduce semantic grouping; the IntelliJ / Google Java Format default is correct. Records for value types; `@Nullable` (JetBrains, shipped with NeoForge) on ambiguous returns.
 - **Conventional Commits** (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`, `ci:`, `perf:`). Body explains the *why*. One logical change per commit. `main` is protected; all changes via PR.
 - **Docs filenames are snake_case** (e.g. `categories_and_tiers.md`). Design changes update the relevant `docs/*.md` in the same PR.
 - **Line endings:** `.gitattributes` forces LF for `.java`/`.gradle`/`.json`/`.md`/`.yml` and CRLF for `.bat`/`.cmd`. Don't fight it.
