@@ -8,6 +8,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemUtils;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
@@ -71,17 +72,18 @@ public final class FrogEggItem extends Item {
                 1.0F
             );
 
-            // Transform the held stack back into an empty glass bottle.
+            // Mirror vanilla water-bottle / fish-bucket pattern: shrink the
+            // filled stack, replace with an empty glass bottle. ItemUtils
+            // handles creative-mode preservation and held-slot placement.
             Player player = context.getPlayer();
             if (player != null) {
                 ItemStack held = context.getItemInHand();
-                if (!player.getAbilities().instabuild) {
-                    held.shrink(1);
-                    ItemStack emptyBottle = new ItemStack(Items.GLASS_BOTTLE);
-                    if (!player.addItem(emptyBottle)) {
-                        player.drop(emptyBottle, false);
-                    }
-                }
+                ItemStack result = ItemUtils.createFilledResult(
+                    held,
+                    player,
+                    new ItemStack(Items.GLASS_BOTTLE)
+                );
+                player.setItemInHand(context.getHand(), result);
             }
         }
 

@@ -5,10 +5,11 @@ import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemUtils;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -71,29 +72,21 @@ public final class FrogspawnBottlingHandler {
         }
 
         Player player = event.getEntity();
-
-        // Consume one empty bottle from the held stack (creative skips).
-        if (!player.getAbilities().instabuild) {
-            held.shrink(1);
-        }
+        InteractionHand hand = event.getHand();
 
         // Consume the frogspawn block.
         level.removeBlock(pos, false);
 
-        // Give the player a Frog Egg item (the "bottle of frogspawn"); drop as
-        // an item entity at the centered block position if inventory is full.
-        ItemStack frogEgg = new ItemStack(PFItems.FROG_EGG.get());
-        if (!player.addItem(frogEgg)) {
-            ItemEntity drop = new ItemEntity(
-                level,
-                pos.getX() + 0.5,
-                pos.getY() + 0.5,
-                pos.getZ() + 0.5,
-                frogEgg
-            );
-            drop.setDefaultPickUpDelay();
-            level.addFreshEntity(drop);
-        }
+        // Use vanilla ItemUtils.createFilledResult so the bottle-to-egg
+        // transition matches the water-bottle / fish-bucket pattern exactly:
+        //   - shrink the empty stack (skipped in creative)
+        //   - if the empty stack is now fully consumed, the held slot becomes
+        //     the new Frog Egg (the "transform in place" feel)
+        //   - otherwise, the new Frog Egg lands in the next free inventory
+        //     slot (or drops at the player's feet if full)
+        ItemStack filled = new ItemStack(PFItems.FROG_EGG.get());
+        ItemStack result = ItemUtils.createFilledResult(held, player, filled);
+        player.setItemInHand(hand, result);
 
         // Feedback — reuse vanilla bottle-fill sound for thematic consistency.
         level.playSound(
