@@ -8,5 +8,8 @@
   "block.productivefrogs.gem_frog_egg":      "Gem Frog Egg",
   "block.productivefrogs.aquatic_frog_egg":  "Aquatic Frog Egg",
   "block.productivefrogs.infernal_frog_egg": "Infernal Frog Egg",
-  "block.productivefrogs.arcane_frog_egg":   "Arcane Frog Egg"
+  "block.productivefrogs.arcane_frog_egg":   "Arcane Frog Egg",
+
+  "entity.productivefrogs.resource_tadpole": "Resource Tadpole",
+  "entity.productivefrogs.resource_frog":    "Resource Frog"
 }
