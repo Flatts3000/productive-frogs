@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.client;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.client.renderer.ResourceFrogRenderer;
+import com.flatts.productivefrogs.client.renderer.ResourceSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
 import com.flatts.productivefrogs.client.tint.ContainedCategoryTint;
 import com.flatts.productivefrogs.client.tint.TadpoleBucketCategoryTint;
@@ -50,6 +51,7 @@ public final class PFClientEvents {
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(PFEntities.RESOURCE_TADPOLE.get(), ResourceTadpoleRenderer::new);
         event.registerEntityRenderer(PFEntities.RESOURCE_FROG.get(), ResourceFrogRenderer::new);
+        event.registerEntityRenderer(PFEntities.RESOURCE_SLIME.get(), ResourceSlimeRenderer::new);
     }
 
     @SubscribeEvent

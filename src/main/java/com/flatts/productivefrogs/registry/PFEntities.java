@@ -2,11 +2,13 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
+import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.animal.frog.Tadpole;
+import net.minecraft.world.entity.monster.Slime;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -45,6 +47,25 @@ public final class PFEntities {
                 .build(net.minecraft.resources.ResourceKey.create(
                     Registries.ENTITY_TYPE,
                     net.minecraft.resources.Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_frog")
+                ))
+        );
+
+    /**
+     * Single ResourceSlime entity type — category is carried as synced data,
+     * not encoded in the type. Sized to vanilla Slime's max (size-4) bounding
+     * box so the vanilla SlimeRenderer geometry is reusable; per-instance size
+     * is set via {@link Slime#setSize} as normal.
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<ResourceSlime>> RESOURCE_SLIME =
+        ENTITIES.register(
+            "resource_slime",
+            () -> EntityType.Builder.<ResourceSlime>of(ResourceSlime::new, MobCategory.MONSTER)
+                .sized(2.04F, 2.04F)
+                .eyeHeight(0.625F)
+                .clientTrackingRange(10)
+                .build(net.minecraft.resources.ResourceKey.create(
+                    Registries.ENTITY_TYPE,
+                    net.minecraft.resources.Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_slime")
                 ))
         );
 
