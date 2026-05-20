@@ -1,7 +1,7 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "minecraft:block/frogspawn",
-    "layer1": "minecraft:item/glass_bottle"
+    "layer0": "minecraft:item/potion_overlay",
+    "layer1": "minecraft:item/potion"
   }
 }
