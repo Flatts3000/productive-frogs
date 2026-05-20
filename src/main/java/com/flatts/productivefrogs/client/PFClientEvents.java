@@ -1,23 +1,43 @@
 package com.flatts.productivefrogs.client;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.client.renderer.ResourceFrogRenderer;
+import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
+import com.flatts.productivefrogs.client.tint.ContainedCategoryTint;
+import com.flatts.productivefrogs.client.tint.TadpoleBucketCategoryTint;
+import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFEntities;
-import net.minecraft.client.renderer.entity.FrogRenderer;
-import net.minecraft.client.renderer.entity.TadpoleRenderer;
+import net.minecraft.resources.Identifier;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 
 /**
- * Client-only setup. Registers entity renderers for our Resource Tadpole and
- * Resource Frog using vanilla's renderers — same models, same textures, same
- * animations. Per-category visual variation (tinting) lands with the texture
- * batch; for now both entities look exactly like their vanilla counterparts.
+ * Client-only setup. Registers:
  *
- * <p>Type-erasure note: vanilla renderers are parameterized on {@code Tadpole}
- * and {@code Frog} respectively. Since our entities subclass those, the
- * renderers work over our entities without modification.
+ * <ul>
+ *   <li>Custom {@link ResourceTadpoleRenderer} / {@link ResourceFrogRenderer}
+ *       so our entities pick up per-category tint at render time.</li>
+ *   <li>{@code BlockColor} handlers on each Primed Frog Egg block so
+ *       {@code tintindex 0} in the shared block model picks up the category
+ *       color in-world.</li>
+ *   <li>Custom {@link ContainedCategoryTint} and {@link TadpoleBucketCategoryTint}
+ *       ItemTintSources, referenced from item model JSONs to drive Frog Egg
+ *       bottle + Tadpole Bucket content-layer tinting.</li>
+ * </ul>
+ *
+ * <p>All tint values flow through {@link Category#tintArgb()} — single source
+ * of truth for category color.
+ *
+ * <p>Note on item color API in 1.21.x: vanilla and NeoForge removed the
+ * legacy {@code RegisterColorHandlersEvent.Item} event. Per-item runtime
+ * tinting is now declared in the item model JSON via a {@code "tints"} array,
+ * with each entry referencing a registered {@code ItemTintSource} type.
+ * Block-item inventory icons that reference a block model with
+ * {@code tintindex} still pick up tint via {@code BlockColor}.
  */
 @EventBusSubscriber(modid = ProductiveFrogs.MOD_ID, value = Dist.CLIENT)
 public final class PFClientEvents {
@@ -28,7 +48,29 @@ public final class PFClientEvents {
 
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerEntityRenderer(PFEntities.RESOURCE_TADPOLE.get(), TadpoleRenderer::new);
-        event.registerEntityRenderer(PFEntities.RESOURCE_FROG.get(), FrogRenderer::new);
+        event.registerEntityRenderer(PFEntities.RESOURCE_TADPOLE.get(), ResourceTadpoleRenderer::new);
+        event.registerEntityRenderer(PFEntities.RESOURCE_FROG.get(), ResourceFrogRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void onRegisterBlockColors(RegisterColorHandlersEvent.Block event) {
+        for (Category cat : Category.values()) {
+            event.register(
+                (state, level, pos, tintIndex) -> tintIndex == 0 ? cat.tintRgb() : -1,
+                PFBlocks.primedEgg(cat)
+            );
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRegisterItemTintSources(RegisterColorHandlersEvent.ItemTintSources event) {
+        event.register(
+            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "contained_category"),
+            ContainedCategoryTint.MAP_CODEC
+        );
+        event.register(
+            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tadpole_bucket_category"),
+            TadpoleBucketCategoryTint.MAP_CODEC
+        );
     }
 }

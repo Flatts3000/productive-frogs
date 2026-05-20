@@ -1,0 +1,9 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "productivefrogs:item/arcane_frog_egg",
+    "tints": [
+      { "type": "minecraft:constant", "value": [144, 112, 208] }
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "productivefrogs:item/resource_tadpole_bucket_contents",
+    "layer1": "productivefrogs:item/resource_tadpole_bucket_exterior"
+  }
+}

@@ -2,6 +2,9 @@ package com.flatts.productivefrogs.content.entity;
 
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFEntities;
+import com.flatts.productivefrogs.registry.PFItems;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -12,25 +15,30 @@ import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.fish.AbstractFish;
 import net.minecraft.world.entity.animal.frog.Tadpole;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.event.EventHooks;
 
 /**
- * The Resource Tadpole — a Productive Frogs tadpole that matures into a
+ * The Resource Tadpole — Productive Frogs' tadpole that matures into a
  * {@link ResourceFrog} of its locked {@link Category}, rather than into a
  * vanilla biome-determined Frog.
  *
  * <p>Inherits vanilla {@link Tadpole} behavior wholesale: brain, AI, bucket
- * tag, slimeball-acceleration, water-survival timer, sounds. The only override
- * is {@link #ageUp()} (exposed via access transformer) which spawns a
- * Resource Frog of the matching category at maturation instead of a vanilla
- * Frog.
- *
- * <p>Variant is locked at the egg-priming step. Unlike vanilla where biome
- * decides the frog variant on maturation, our category is carried from the
- * Primed Frog Egg → Tadpole → Frog without biome roulette.
+ * tag, slimeball-acceleration, water-survival timer, sounds. Overrides:
+ * <ul>
+ *   <li>{@link #ageUp()} — exposed via access transformer; converts into
+ *       ResourceFrog of matching category instead of vanilla Frog.</li>
+ *   <li>{@link #getBucketItemStack()} — returns our Resource Tadpole bucket
+ *       so vanilla {@code Bucketable.bucketMobPickup} routes through the
+ *       category-preserving path.</li>
+ *   <li>{@link #saveToBucketTag(ItemStack)} / {@link #loadFromBucketTag(CompoundTag)} —
+ *       extend vanilla bucket NBT with the category field so it survives
+ *       round-tripping through the bucket.</li>
+ * </ul>
  */
 public class ResourceTadpole extends Tadpole {
 
@@ -81,6 +89,32 @@ public class ResourceTadpole extends Tadpole {
                 setCategory(Category.valueOf(name));
             } catch (IllegalArgumentException ignored) {
                 // Unknown category in save data — leave default.
+            }
+        });
+    }
+
+    @Override
+    public ItemStack getBucketItemStack() {
+        return new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
+    }
+
+    @Override
+    public void saveToBucketTag(ItemStack stack) {
+        super.saveToBucketTag(stack);
+        Category category = getCategory();
+        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag ->
+            tag.putString("Category", category.name())
+        );
+    }
+
+    @Override
+    public void loadFromBucketTag(CompoundTag tag) {
+        super.loadFromBucketTag(tag);
+        tag.getString("Category").ifPresent(name -> {
+            try {
+                setCategory(Category.valueOf(name));
+            } catch (IllegalArgumentException ignored) {
+                // Unknown category in bucket NBT — leave default.
             }
         });
     }
