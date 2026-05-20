@@ -5,8 +5,6 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.TadpoleRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.world.entity.animal.frog.Tadpole;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 /**
  * Resource Tadpole renderer — extends vanilla {@link TadpoleRenderer} so it
@@ -19,7 +17,6 @@ import net.neoforged.api.distmarker.OnlyIn;
  * category field during {@link #extractRenderState(Tadpole, LivingEntityRenderState, float)},
  * and read it back in {@code getModelTint}.
  */
-@OnlyIn(Dist.CLIENT)
 public class ResourceTadpoleRenderer extends TadpoleRenderer {
 
     public ResourceTadpoleRenderer(EntityRendererProvider.Context ctx) {

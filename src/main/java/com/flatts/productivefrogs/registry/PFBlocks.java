@@ -19,6 +19,12 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  * coral, saplings, and wool. Each block pairs cleanly with one BlockItem,
  * so vanilla's Block↔Item bijection (used by pick-block, drops, getCloneItemStack)
  * works without overrides.
+ *
+ * <p>Uses {@code registerBlock(name, factory, properties)} (not the older
+ * {@code register(name, Supplier)}) because MC 1.21.x now requires the
+ * {@code ResourceKey} to be set on the Properties before the block's
+ * constructor runs. The factory form lets DeferredRegister inject the ID
+ * into the Properties and then hand them to our constructor.
  */
 public final class PFBlocks {
 
@@ -30,9 +36,10 @@ public final class PFBlocks {
     private static Map<Category, DeferredBlock<PrimedFrogEggBlock>> buildPrimedEggs() {
         EnumMap<Category, DeferredBlock<PrimedFrogEggBlock>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {
-            map.put(cat, BLOCKS.register(
+            map.put(cat, BLOCKS.registerBlock(
                 cat.primedEggItemName(),
-                () -> new PrimedFrogEggBlock(cat, primedEggProperties(cat))
+                props -> new PrimedFrogEggBlock(cat, props),
+                primedEggProperties(cat)
             ));
         }
         return map;

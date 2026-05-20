@@ -10,8 +10,6 @@ import net.minecraft.util.ARGB;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -29,7 +27,6 @@ import org.jspecify.annotations.Nullable;
  * ]
  * }</pre>
  */
-@OnlyIn(Dist.CLIENT)
 public record ContainedCategoryTint(int defaultColor) implements ItemTintSource {
 
     public static final MapCodec<ContainedCategoryTint> MAP_CODEC = RecordCodecBuilder.mapCodec(

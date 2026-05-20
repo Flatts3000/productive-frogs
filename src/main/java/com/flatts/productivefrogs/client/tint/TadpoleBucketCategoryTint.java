@@ -10,8 +10,6 @@ import net.minecraft.util.ARGB;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -23,7 +21,6 @@ import org.jspecify.annotations.Nullable;
  * different component for buckets (vanilla puts entity bucket data on
  * {@code BUCKET_ENTITY_DATA}, not our custom component).
  */
-@OnlyIn(Dist.CLIENT)
 public record TadpoleBucketCategoryTint(int defaultColor) implements ItemTintSource {
 
     public static final MapCodec<TadpoleBucketCategoryTint> MAP_CODEC = RecordCodecBuilder.mapCodec(

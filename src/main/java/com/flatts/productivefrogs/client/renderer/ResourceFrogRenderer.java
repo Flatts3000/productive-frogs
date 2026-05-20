@@ -5,8 +5,6 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.FrogRenderer;
 import net.minecraft.client.renderer.entity.state.FrogRenderState;
 import net.minecraft.world.entity.animal.frog.Frog;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 /**
  * Resource Frog renderer — extends vanilla {@link FrogRenderer} so it inherits
@@ -18,7 +16,6 @@ import net.neoforged.api.distmarker.OnlyIn;
  * substituted via {@link #createRenderState()} and populated in
  * {@link #extractRenderState(Frog, FrogRenderState, float)}.
  */
-@OnlyIn(Dist.CLIENT)
 public class ResourceFrogRenderer extends FrogRenderer {
 
     public ResourceFrogRenderer(EntityRendererProvider.Context ctx) {
