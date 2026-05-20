@@ -47,12 +47,44 @@ neoForge {
                                     '--output', file('src/generated/resources').absolutePath,
                                     '--existing', file('src/main/resources').absolutePath
         }
+        // Headless server that runs registered GameTests on boot, exits with
+        // non-zero on failure. Invoke via `./gradlew runGameTestServer`.
+        // moddev 2.0.141 doesn't ship a `gameTestServer()` convenience method
+        // (only client/clientData/data/server/serverData), but NeoForge's
+        // userdev config exposes `gameTestServer` as a valid run type — set
+        // it directly via `type.set(...)`.
+        gameTestServer {
+            type.set('gameTestServer')
+        }
     }
 
     mods {
         "${mod_id}" {
             sourceSet sourceSets.main
         }
+    }
+
+    // Enable moddev's JUnit integration so tests under src/test/java can
+    // reference Minecraft + our mod classes at runtime. Tests run against
+    // a real, loaded mod context — registries populated, tags resolvable —
+    // without booting a full server. Invoke via `./gradlew test`.
+    unitTest {
+        enable()
+        testedMod = mods.named("${mod_id}").get()
+    }
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        exceptionFormat 'full'
     }
 }
 

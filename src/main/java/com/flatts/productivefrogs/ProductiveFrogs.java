@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs;
 
+import com.flatts.productivefrogs.gametest.PFGameTests;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFCreativeTabs;
 import com.flatts.productivefrogs.registry.PFDataComponents;
@@ -33,6 +34,7 @@ public final class ProductiveFrogs {
         PFItems.register(modEventBus);
         PFEntities.register(modEventBus);
         PFCreativeTabs.register(modEventBus);
+        PFGameTests.register(modEventBus);
 
         modEventBus.addListener(this::onCommonSetup);
     }
