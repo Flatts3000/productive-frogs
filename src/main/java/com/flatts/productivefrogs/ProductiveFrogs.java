@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs;
 
+import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFCreativeTabs;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.neoforged.bus.api.IEventBus;
@@ -25,6 +26,7 @@ public final class ProductiveFrogs {
     public ProductiveFrogs(IEventBus modEventBus, ModContainer modContainer) {
         LOGGER.info("Productive Frogs initializing");
 
+        PFBlocks.register(modEventBus);
         PFItems.register(modEventBus);
         PFCreativeTabs.register(modEventBus);
 

@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:magma_cream",
+    "minecraft:blaze_powder",
+    "minecraft:ghast_tear",
+    "minecraft:wither_rose"
+  ]
+}

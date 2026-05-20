@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/frogspawn",
+  "textures": {
+    "pattern": "productivefrogs:block/infernal_frog_egg"
+  }
+}
