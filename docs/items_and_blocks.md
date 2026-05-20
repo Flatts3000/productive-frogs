@@ -33,10 +33,10 @@ There is **no dedicated Frog Net item**. Players use a vanilla **empty glass bot
 - **Data component**: `productivefrogs:contained_category` (typed `Category`). Absent means vanilla frogspawn; present means a primed egg of that category.
 - **Display name** varies by data component: "Bottle of Frog Eggs" (vanilla), "Bottle of Metallic Frog Eggs", "Bottle of Gem Frog Eggs", etc. Single item ID, component-driven label via `getName(ItemStack)` override.
 - **Use**: right-click on a block adjacent to a water source. If component absent → places vanilla `minecraft:frogspawn`. If component set → places the matching Primed Frog Egg block. Either way, the held stack transforms back into an empty `minecraft:glass_bottle` via vanilla `ItemUtils.createFilledResult` semantics.
-- **Visual**: two-layer item model.
-  - Layer 0: glass bottle exterior (static, untinted).
-  - Layer 1: gelatinous content tinted via `ItemColor` based on `contained_category`. Empty → vanilla-frogspawn-green; present → `Category.tintArgb()`.
-  - Mirrors vanilla potion-bottle rendering (clear glass + tinted liquid).
+- **Visual**: two-layer item model, matching the vanilla potion-bottle pattern (`layer0` is the tinted layer, `layer1` is drawn over it).
+  - Layer 0: gelatinous content tinted via the `productivefrogs:contained_category` ItemTintSource. Empty → vanilla-frogspawn-green default; present → `Category.tintArgb()`.
+  - Layer 1: glass bottle exterior (static, untinted, drawn on top of the content).
+  - Mirrors vanilla `item/potion` model exactly (layer0 = potion_overlay tinted, layer1 = potion glass static).
 
 **Why one item with a data component rather than 7 variant items**: matches vanilla `axolotl_bucket` and `potion` exactly, keeps the creative tab uncluttered, and the bottling/placing handlers stay simple single-branch implementations rather than N near-identical clones.
 
@@ -70,10 +70,10 @@ See [farming.md](./farming.md) for the full milking-to-production loop.
   - `getBucketItemStack()` overridden to return this item (so vanilla `Bucketable.bucketMobPickup` picks the right type).
   - `saveToBucketTag(ItemStack)` overridden to write `Category` into the bucket's `bucket_entity_data` component alongside the inherited `Age` field.
   - `loadFromBucketTag(CompoundTag)` overridden to restore the category on the spawned entity when the bucket is released.
-- **Display name** varies by contained category: "Bucket of Metallic Tadpoles", "Bucket of Gem Tadpoles", etc. Single item ID; name resolves from the bucket NBT via `getName(ItemStack)` override.
-- **Visual**: two-layer item model.
-  - Layer 0: iron bucket exterior (static, vanilla bucket palette).
-  - Layer 1: tadpole silhouette inside, tinted via `ItemColor` based on the bucket's stored category.
+- **Display name** varies by contained category: "Bucket of Metallic Tadpole", "Bucket of Gem Tadpole", etc. Singular, matching vanilla's "Bucket of Tadpole" / "Bucket of Salmon" pattern. Single item ID; name resolves from the bucket NBT via `getName(ItemStack)` override.
+- **Visual**: two-layer item model, matching the vanilla potion-bottle pattern (`layer0` tinted, `layer1` drawn over it).
+  - Layer 0: tadpole silhouette inside, tinted via the `productivefrogs:tadpole_bucket_category` ItemTintSource based on the bucket's stored category.
+  - Layer 1: iron bucket exterior (static, untinted).
 - **Stack size**: 1 (vanilla bucket constraint).
 
 ### Slime Bucket

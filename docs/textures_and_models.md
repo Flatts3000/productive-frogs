@@ -7,7 +7,7 @@ How visual assets are organized in Productive Frogs, with a focus on **tint-base
 For V1 the visual story is intentionally lean:
 
 1. **Tint-based everywhere there are category variants.** Primed Frog Egg blocks, the Frog Egg bottle's contents layer, the Resource Tadpole bucket's tadpole layer, Resource Tadpole entities in the world, Resource Frog entities in the world — all share a single base texture (or vanilla texture, when subclassing) and apply the category's RGB tint at render time. No per-category bespoke textures.
-2. **Two-layer vanilla-bottle pattern for bottled / bucketed contents.** Layer 0 is the static container exterior (glass for bottles, iron for buckets). Layer 1 is the tinted content. Mirrors vanilla potion bottles exactly.
+2. **Two-layer vanilla-bottle pattern for bottled / bucketed contents.** Layer 0 is the tinted content; Layer 1 is the static container exterior drawn on top (glass for bottles, iron for buckets). Mirrors vanilla `item/potion` exactly — `layer0` is `potion_overlay` (tinted) and `layer1` is `potion` (glass), in that order.
 3. **No emissive glow on eggs.** Primed Frog Eggs don't emit light — the dropped Froglight resources (eaten-by-frog drops) will be the emissive piece of the mod, mirroring vanilla froglights as the rewarding bright thing.
 
 **Single source of truth for tint color:** `Category.tintArgb()` returns the per-category ARGB int used by every rendering path. Changing a category's color anywhere is a one-line edit on the enum.
