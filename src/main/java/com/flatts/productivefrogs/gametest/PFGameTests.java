@@ -24,6 +24,7 @@ import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
@@ -91,6 +92,8 @@ public final class PFGameTests {
             PFGameTests::slimeInfusionTransformsVanillaIntoResourceSlime, 100);
         registerTest("resource_slime_split_preserves_category",
             PFGameTests::resourceSlimeSplitPreservesCategory, 100);
+        registerTest("frog_tongue_targets_only_matching_category_slime",
+            PFGameTests::frogTongueTargetsOnlyMatchingCategorySlime, 200);
     }
 
     private PFGameTests() {
@@ -329,6 +332,67 @@ public final class PFGameTests {
             helper.fail("no vanilla slimes should remain in the test plot after infusion");
         }
         helper.succeed();
+    }
+
+    /**
+     * Spawn a METALLIC ResourceFrog with both a METALLIC and an INFERNAL slime
+     * within tongue range. The category-filtered sensor should write only the
+     * METALLIC slime into {@code NEAREST_ATTACKABLE}; the INFERNAL one must be
+     * filtered out. Verifies {@link
+     * com.flatts.productivefrogs.content.entity.ai.ResourceFrogAttackablesSensor}
+     * is wired into ResourceFrog's brain provider and the category check
+     * actually fires.
+     */
+    private static void frogTongueTargetsOnlyMatchingCategorySlime(GameTestHelper helper) {
+        Category cat = Category.METALLIC;
+        BlockPos frogPos = new BlockPos(2, 2, 2);
+
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
+        frog.setCategory(cat);
+
+        // Same-category prey at one offset, off-category prey at the other.
+        // Both within the 10-block sensor radius.
+        ResourceSlime matching = helper.spawn(PFEntities.RESOURCE_SLIME.get(), frogPos.east());
+        matching.setSize(1, true);
+        matching.setCategory(cat);
+
+        ResourceSlime offCategory = helper.spawn(PFEntities.RESOURCE_SLIME.get(), frogPos.west());
+        offCategory.setSize(1, true);
+        offCategory.setCategory(Category.INFERNAL);
+
+        // Track whether the off-category slime was ever selected across the
+        // entire polling window. succeedWhen alone retries past transient bad
+        // states — we need onEachTick to record sightings, then a single-shot
+        // succeedOnTickWhen at the end to assert "never off-category AND
+        // settled on matching."
+        java.util.concurrent.atomic.AtomicBoolean sawOffCategory = new java.util.concurrent.atomic.AtomicBoolean(false);
+        helper.onEachTick(() -> {
+            LivingEntity target = frog.getBrain()
+                .getMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.NEAREST_ATTACKABLE)
+                .orElse(null);
+            if (target == offCategory) {
+                sawOffCategory.set(true);
+            }
+        });
+        // Sensor scans every ~20 ticks; allow two full scan cycles plus headroom
+        // for the brain to absorb. Use runAfterDelay + explicit helper.succeed
+        // (not succeedOnTickWhen — that's a strict equality and would fail if
+        // the brain settles earlier than expected).
+        helper.runAfterDelay(60L, () -> {
+            if (sawOffCategory.get()) {
+                helper.fail("sensor targeted the off-category slime at some point during the polling window");
+            }
+            LivingEntity target = frog.getBrain()
+                .getMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.NEAREST_ATTACKABLE)
+                .orElse(null);
+            if (target == null) {
+                helper.fail("sensor never wrote NEAREST_ATTACKABLE — does the matching slime exist within range?");
+            }
+            if (target != matching) {
+                helper.fail("expected matching slime as target, got " + target);
+            }
+            helper.succeed();
+        });
     }
 
     /**
