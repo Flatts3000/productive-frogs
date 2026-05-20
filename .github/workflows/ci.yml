@@ -55,3 +55,33 @@ jobs:
           path: build/libs/*.jar
           if-no-files-found: error
           retention-days: 14
+
+  # In-world GameTests — booted headless server runs each registered test
+  # in a scripted plot, exits non-zero on any failure. Independent of build
+  # so the two layers (unit tests inside build, in-world tests here) can
+  # report separately.
+  gameTest:
+    name: gameTest
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Run GameTest server
+        run: ./gradlew runGameTestServer --stacktrace
