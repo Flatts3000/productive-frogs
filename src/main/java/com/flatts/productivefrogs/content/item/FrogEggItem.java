@@ -82,6 +82,10 @@ public final class FrogEggItem extends Item {
         }
 
         BlockPos placePos = waterPos.above();
+        if (!player.mayUseItemAt(placePos, hit.getDirection(), held)) {
+            return InteractionResult.PASS;
+        }
+
         BlockState target = level.getBlockState(placePos);
         if (!target.isAir() && !target.canBeReplaced()) {
             return InteractionResult.PASS;
@@ -94,12 +98,15 @@ public final class FrogEggItem extends Item {
                 ? Blocks.FROGSPAWN
                 : PFBlocks.primedEgg(contained);
 
-            level.setBlockAndUpdate(placePos, placeBlock.defaultBlockState());
-            level.playSound(null, placePos, SoundEvents.FROGSPAWN_HATCH, SoundSource.BLOCKS, 0.6F, 1.0F);
-        }
+            if (!level.setBlockAndUpdate(placePos, placeBlock.defaultBlockState())) {
+                return InteractionResult.PASS;
+            }
 
-        ItemStack result = ItemUtils.createFilledResult(held, player, new ItemStack(Items.GLASS_BOTTLE));
-        player.setItemInHand(hand, result);
+            level.playSound(null, placePos, SoundEvents.FROGSPAWN_HATCH, SoundSource.BLOCKS, 0.6F, 1.0F);
+
+            ItemStack result = ItemUtils.createFilledResult(held, player, new ItemStack(Items.GLASS_BOTTLE));
+            player.setItemInHand(hand, result);
+        }
 
         return InteractionResult.SUCCESS;
     }
