@@ -17,6 +17,10 @@ java {
 neoForge {
     version = neoforge_version
 
+    accessTransformers {
+        from(file('src/main/resources/META-INF/accesstransformer.cfg'))
+    }
+
     runs {
         client {
             client()

@@ -2,6 +2,7 @@ package com.flatts.productivefrogs;
 
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFCreativeTabs;
+import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -28,6 +29,7 @@ public final class ProductiveFrogs {
 
         PFBlocks.register(modEventBus);
         PFItems.register(modEventBus);
+        PFEntities.register(modEventBus);
         PFCreativeTabs.register(modEventBus);
 
         modEventBus.addListener(this::onCommonSetup);
