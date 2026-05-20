@@ -23,7 +23,18 @@ Variety lives on the slime side; the frog roster stays small and manageable. Thi
 
 ## Status
 
-**Design phase.** No code yet. See [`docs/`](./docs/) for the in-progress design specification.
+**V1 in progress.** The core egg → tadpole → frog pipeline is in; the slime side is next.
+
+Landed so far:
+
+- **Frog Egg item** — vanilla glass bottle right-clicked on `minecraft:frogspawn` produces a bottled egg (event hook, no custom recipe).
+- **Primer system** — any item in a `productivefrogs:primer/<category>` tag converts vanilla frogspawn into the matching **Primed Frog Egg block** (one block per category).
+- **Hatching pipeline** — Primed Frog Eggs hatch into category-typed **Resource Tadpoles**, which mature into **Resource Frogs**. Resource Tadpole Bucket preserves category across bucket-and-release.
+- **V1 tint-based visuals** — every category variant (eggs, bottles, buckets, entities) shares one base texture and tints via `Category.tintArgb()` — single source of truth, no per-category artwork.
+
+Still to come for V1 (see [`docs/versioning.md`](./docs/versioning.md) for full scope): Resource Slimes + data-driven variants, parent slime species (Cave/Geode/Tide/Void), Slime Bucket, Slime Milker, Slime Milk fluid, Froglight drops, smelting/crush recipes, cross-mod compat datapacks.
+
+Full design specification lives in [`docs/`](./docs/).
 
 ## Documentation
 
