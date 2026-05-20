@@ -1,8 +1,8 @@
 {
   "ambientocclusion": false,
   "textures": {
-    "particle": "productivefrogs:block/primed_frog_egg",
-    "texture":  "productivefrogs:block/primed_frog_egg"
+    "particle": "minecraft:block/frogspawn",
+    "texture":  "minecraft:block/frogspawn"
   },
   "elements": [
     {
