@@ -47,6 +47,7 @@ One logical change per commit. Squash trivially-related work locally before PR.
 - **Docs**: design changes should update the relevant `/docs/*.md` file in the same PR. Lock decisions in `docs/open_questions.md` get marked DECIDED with a brief rationale.
 - **No silent dead code**: if a feature is incomplete or behind a feature flag, say so in the PR description.
 - **Cross-mod compat is JSON**: don't add hard dependencies on other mods. Use common tags + `neoforge:conditions → mod_loaded` patterns. See `docs/cross_mod_compat.md`.
+- **Stay close to vanilla**: this is a core project principle. When implementing a mechanic, use vanilla helpers (`ItemUtils.createFilledResult`, vanilla sounds, vanilla model parents), mirror vanilla UX patterns exactly (water-bottle / fish-bucket semantics, slimeball love-mode, lead-based mob transport), and reuse vanilla blocks/items as building blocks where they already fit the role. Only introduce mod-native content when vanilla has no equivalent at all — and when you do, echo vanilla idioms in the API shape.
 
 ### Java Style
 

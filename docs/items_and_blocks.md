@@ -27,10 +27,16 @@ There is **no dedicated Frog Net item**. Players use a vanilla **empty glass bot
 ### Frog Egg (item)
 
 - **ID**: `productivefrogs:frog_egg`
-- **Role**: Stackable, inventory-friendly representation of a frog egg.
-- **Obtained from**: vanilla empty glass bottle used on `minecraft:frogspawn` (see [Frogspawn Bottling](#frogspawn-bottling-vanilla-glass-bottle) above).
-- **Stack size**: 64.
-- **Use**: right-click on water → places `productivefrogs:frog_egg` block.
+- **Role**: A glass bottle with one frog egg payload inside. The bottled form of frogspawn, mirroring the vanilla axolotl-bucket / fish-bucket pattern.
+- **Obtained from**: vanilla empty glass bottle used on `minecraft:frogspawn`, OR (future PR) on any Primed Frog Egg block. See [Frogspawn Bottling](#frogspawn-bottling-vanilla-glass-bottle) above.
+- **Stack size**: 1 (matching vanilla water bottle / fish buckets — the item carries a contained payload).
+- **NBT contents**: `productivefrogs:contained_category` — empty/absent means vanilla frogspawn; otherwise one of `metallic`, `mineral`, `gem`, `aquatic`, `infernal`, `arcane`, indicating the bottled egg's category.
+- **Display name** varies by NBT: "Bottle of Frog Eggs" (vanilla), "Bottle of Metallic Frog Eggs", "Bottle of Gem Frog Eggs", etc. Single item ID, NBT-driven label.
+- **Use**: right-click on a water source. If NBT empty → places vanilla `minecraft:frogspawn`. If NBT set → places the matching Primed Frog Egg block. Either way, the held stack transforms back into an empty `minecraft:glass_bottle` via vanilla `ItemUtils.createFilledResult` semantics.
+
+**Why one item with NBT rather than 7 variant items**: matches vanilla `axolotl_bucket` exactly, keeps the creative tab uncluttered, and the bottling/placing handlers stay simple single-branch implementations rather than N near-identical clones.
+
+**Current V1 state**: only the vanilla-frogspawn branch is implemented (PR #6). The primed-category branches land when the Primed Frog Egg blocks are registered.
 
 ### Slime Milker (block)
 

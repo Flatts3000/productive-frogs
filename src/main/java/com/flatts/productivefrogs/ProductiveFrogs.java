@@ -1,5 +1,7 @@
 package com.flatts.productivefrogs;
 
+import com.flatts.productivefrogs.registry.PFCreativeTabs;
+import com.flatts.productivefrogs.registry.PFItems;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -10,8 +12,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Productive Frogs mod entry point.
  *
- * <p>For now this is a skeleton that proves the build pipeline produces a loadable mod jar.
- * Content registration (items, blocks, entities, fluids, etc.) lands in subsequent commits.
+ * <p>Wires up the DeferredRegisters for items and creative tabs against the
+ * mod event bus. Game-side event handlers (e.g. the frogspawn bottling hook)
+ * register themselves via {@code @EventBusSubscriber}.
  */
 @Mod(ProductiveFrogs.MOD_ID)
 public final class ProductiveFrogs {
@@ -20,7 +23,11 @@ public final class ProductiveFrogs {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     public ProductiveFrogs(IEventBus modEventBus, ModContainer modContainer) {
-        LOGGER.info("Productive Frogs initializing — mod skeleton loaded");
+        LOGGER.info("Productive Frogs initializing");
+
+        PFItems.register(modEventBus);
+        PFCreativeTabs.register(modEventBus);
+
         modEventBus.addListener(this::onCommonSetup);
     }
 
