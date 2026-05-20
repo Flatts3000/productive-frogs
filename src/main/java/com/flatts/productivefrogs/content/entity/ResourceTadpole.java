@@ -37,7 +37,11 @@ public class ResourceTadpole extends Tadpole {
     private static final EntityDataAccessor<Integer> DATA_CATEGORY =
         SynchedEntityData.defineId(ResourceTadpole.class, EntityDataSerializers.INT);
 
+    @SuppressWarnings("unchecked")
     public ResourceTadpole(EntityType<? extends ResourceTadpole> type, Level level) {
+        // Java generics can't see that EntityType<ResourceTadpole extends Tadpole
+        // extends AbstractFish> is a valid EntityType<? extends AbstractFish>;
+        // the double cast satisfies the type checker.
         super((EntityType<? extends AbstractFish>) (EntityType<?>) type, level);
     }
 
@@ -48,7 +52,15 @@ public class ResourceTadpole extends Tadpole {
     }
 
     public Category getCategory() {
-        return Category.values()[this.entityData.get(DATA_CATEGORY)];
+        // Defensive: synced data can be set to any int via modded packets or
+        // corrupted save data. Fall back to METALLIC (tier 1) rather than
+        // crashing if the ordinal is out of range.
+        int ordinal = this.entityData.get(DATA_CATEGORY);
+        Category[] values = Category.values();
+        if (ordinal < 0 || ordinal >= values.length) {
+            return Category.METALLIC;
+        }
+        return values[ordinal];
     }
 
     public void setCategory(Category category) {

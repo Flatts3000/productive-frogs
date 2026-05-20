@@ -30,7 +30,11 @@ public class ResourceFrog extends Frog {
     private static final EntityDataAccessor<Integer> DATA_CATEGORY =
         SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.INT);
 
+    @SuppressWarnings("unchecked")
     public ResourceFrog(EntityType<? extends ResourceFrog> type, Level level) {
+        // Java generics can't see that EntityType<ResourceFrog extends Frog
+        // extends Animal> is a valid EntityType<? extends Animal>; the double
+        // cast satisfies the type checker.
         super((EntityType<? extends Frog>) (EntityType<?>) type, level);
     }
 
@@ -41,7 +45,15 @@ public class ResourceFrog extends Frog {
     }
 
     public Category getCategory() {
-        return Category.values()[this.entityData.get(DATA_CATEGORY)];
+        // Defensive: synced data can be set to any int via modded packets or
+        // corrupted save data. Fall back to METALLIC (tier 1) rather than
+        // crashing if the ordinal is out of range.
+        int ordinal = this.entityData.get(DATA_CATEGORY);
+        Category[] values = Category.values();
+        if (ordinal < 0 || ordinal >= values.length) {
+            return Category.METALLIC;
+        }
+        return values[ordinal];
     }
 
     public void setCategory(Category category) {
