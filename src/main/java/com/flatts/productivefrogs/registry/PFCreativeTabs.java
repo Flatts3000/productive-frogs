@@ -27,6 +27,7 @@ public final class PFCreativeTabs {
                     output.accept(PFItems.FROG_EGG.get());
                     output.accept(PFItems.RESOURCE_TADPOLE_BUCKET.get());
                     output.accept(PFItems.SLIME_BUCKET.get());
+                    output.accept(PFItems.SLIME_MILKER.get());
                     for (var bucket : PFItems.MILK_BUCKETS.values()) {
                         output.accept(bucket.get());
                     }

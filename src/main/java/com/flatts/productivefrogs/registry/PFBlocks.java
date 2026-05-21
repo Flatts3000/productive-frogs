@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
+import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
 import com.flatts.productivefrogs.data.Category;
 import java.util.EnumMap;
 import java.util.Map;
@@ -52,6 +53,25 @@ public final class PFBlocks {
      * BlockState↔FluidState mapping from it.
      */
     public static final Map<String, DeferredBlock<LiquidBlock>> MILK_BLOCKS = buildMilkBlocks();
+
+    /**
+     * The Slime Milker — V1 production keystone block. Single appliance,
+     * no power, no GUI; right-click with a Slime Bucket → milk bucket out.
+     * See {@link SlimeMilkerBlock} for interaction details.
+     *
+     * <p>Strength chosen to match the brewing stand / composter feel —
+     * cheap to break with hand, sturdy enough to feel "built". Sound type
+     * METAL since the design is a "mechanical press" (themed asset still
+     * TODO; placeholder block model + texture for now).
+     */
+    public static final DeferredBlock<SlimeMilkerBlock> SLIME_MILKER = BLOCKS.registerBlock(
+        "slime_milker",
+        SlimeMilkerBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .strength(0.5F)
+            .sound(SoundType.METAL)
+    );
 
     /** Backwards-compatible alias for J1 callers. New code should use {@link #MILK_BLOCKS}. */
     public static final DeferredBlock<LiquidBlock> IRON_SLIME_MILK = MILK_BLOCKS.get("iron");

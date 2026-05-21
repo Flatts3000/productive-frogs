@@ -205,6 +205,17 @@ public final class PFItems {
     public static final DeferredItem<net.minecraft.world.item.BucketItem> IRON_SLIME_MILK_BUCKET =
         MILK_BUCKETS.get("iron");
 
+    /**
+     * Slime Milker BlockItem — places {@link PFBlocks#SLIME_MILKER}. The block
+     * is the V1 production keystone (right-click with slime bucket → milk
+     * bucket out). See {@link com.flatts.productivefrogs.content.block.SlimeMilkerBlock}.
+     */
+    public static final DeferredItem<BlockItem> SLIME_MILKER = ITEMS.registerSimpleBlockItem(
+        "slime_milker",
+        PFBlocks.SLIME_MILKER,
+        new Item.Properties()
+    );
+
     private static Map<String, DeferredItem<net.minecraft.world.item.BucketItem>> buildMilkBuckets() {
         java.util.LinkedHashMap<String, DeferredItem<net.minecraft.world.item.BucketItem>> map =
             new java.util.LinkedHashMap<>();
