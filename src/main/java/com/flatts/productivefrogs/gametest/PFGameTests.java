@@ -111,6 +111,10 @@ public final class PFGameTests {
             PFGameTests::slimeVariantDatapackRegistryLoadsInitialVariants, 100);
         registerTest("variant_slime_kill_drops_configurable_froglight",
             PFGameTests::variantSlimeKillDropsConfigurableFroglight, 100);
+        registerTest("infusion_with_variant_primer_sets_specific_variant",
+            PFGameTests::infusionWithVariantPrimerSetsSpecificVariant, 100);
+        registerTest("split_discovery_picks_variant_from_pool",
+            PFGameTests::splitDiscoveryPicksVariantFromPool, 100);
     }
 
     private PFGameTests() {
@@ -313,6 +317,92 @@ public final class PFGameTests {
         if (!stack.is(PFTags.PRIMER_BY_CATEGORY.get(cat))) {
             helper.fail(BuiltInRegistries.ITEM.getKey(item)
                 + " must be in primer/" + cat.id() + " tag — check the JSON and the directory path");
+        }
+    }
+
+    /**
+     * Verify {@link SlimeVariant#findByPrimerItem} resolves item ids to the
+     * correct variants — covers the path the slime infusion handler walks
+     * before calling {@code setVariant} on the transformed slime.
+     */
+    private static void infusionWithVariantPrimerSetsSpecificVariant(GameTestHelper helper) {
+        net.minecraft.core.Registry<SlimeVariant> registry =
+            helper.getLevel().registryAccess().lookupOrThrow(PFRegistries.SLIME_VARIANT);
+
+        java.util.Map.Entry<Identifier, SlimeVariant> ironEntry = SlimeVariant.findByPrimerItem(
+            registry, Identifier.fromNamespaceAndPath("minecraft", "iron_ingot"));
+        if (ironEntry == null) {
+            helper.fail("iron_ingot should resolve to a variant (productivefrogs:iron)");
+            return;
+        }
+        if (!ironEntry.getKey().equals(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"))) {
+            helper.fail("expected productivefrogs:iron, got " + ironEntry.getKey());
+        }
+
+        // A primer-tag item that ISN'T in the variant registry (e.g.,
+        // blaze_powder is in primer/infernal but not a variant primer) should
+        // miss the variant lookup so the handler falls back to category-only.
+        if (SlimeVariant.findByPrimerItem(registry,
+                Identifier.fromNamespaceAndPath("minecraft", "blaze_powder")) != null) {
+            helper.fail("blaze_powder is not a variant primer in V1 — lookup should miss");
+        }
+
+        // Stick is in NO primer tag — must miss too.
+        if (SlimeVariant.findByPrimerItem(registry,
+                Identifier.fromNamespaceAndPath("minecraft", "stick")) != null) {
+            helper.fail("stick is not a primer for any variant — lookup should miss");
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Force the discovery chance to 100% and split a vanilla green slime;
+     * assert every offspring is a Resource Slime carrying a METALLIC-pool
+     * variant (iron / copper / gold). Verifies the
+     * {@link SlimeVariant#pickWeighted} integration in
+     * {@code SlimeSplitDiscoveryHandler}.
+     */
+    private static void splitDiscoveryPicksVariantFromPool(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        float original = com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler.discoveryChancePerOffspring;
+        com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler.discoveryChancePerOffspring = 1.0f;
+        try {
+            net.minecraft.world.entity.monster.Slime parent =
+                helper.spawn(net.minecraft.world.entity.EntityType.SLIME, pos);
+            parent.setSize(3, true);
+            parent.setHealth(0.0F);
+            parent.remove(net.minecraft.world.entity.Entity.RemovalReason.KILLED);
+
+            helper.succeedWhen(() -> {
+                List<ResourceSlime> resources = helper.getEntities(PFEntities.RESOURCE_SLIME.get());
+                if (resources.isEmpty()) {
+                    helper.fail("expected at least one Resource Slime after forced discovery, got 0");
+                }
+                // At 100% chance every child must convert — no vanilla slimes
+                // should remain. Mirrors runSplitDiscoveryTest's check.
+                List<? extends net.minecraft.world.entity.monster.Slime> vanillaRemaining =
+                    helper.getEntities(net.minecraft.world.entity.EntityType.SLIME);
+                if (!vanillaRemaining.isEmpty()) {
+                    helper.fail("expected zero vanilla slime children at 100% discovery, got "
+                        + vanillaRemaining.size());
+                }
+                for (ResourceSlime s : resources) {
+                    Identifier variantId = s.getVariantId();
+                    if (variantId == null) {
+                        helper.fail("split-discovered slime should carry a variant (METALLIC pool is non-empty)");
+                        return;
+                    }
+                    if (s.getCategory() != Category.METALLIC) {
+                        helper.fail("variant sync should leave category METALLIC, got " + s.getCategory());
+                    }
+                    String path = variantId.getPath();
+                    if (!path.equals("iron") && !path.equals("copper") && !path.equals("gold")) {
+                        helper.fail("variant " + path + " is not in the METALLIC pool (iron/copper/gold)");
+                    }
+                }
+            });
+        } finally {
+            com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler.discoveryChancePerOffspring = original;
         }
     }
 

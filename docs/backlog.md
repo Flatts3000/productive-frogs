@@ -79,6 +79,7 @@ Items noted in commit messages or PR descriptions as known issues but not blocki
 - **GameTest for frog kill via actual tongue path.** `matching_frog_kill_drops_category_froglight` uses `hurtServer(level, source, 999.0F)` which bypasses the frog's `ATTACK_DAMAGE` attribute. PR #27 caught a damage=0 regression that this test couldn't see. A more realistic test would let the tongue actually drive the kill.
 - **GameTest for `loadFromBucketTag` from a fresh-spawned slime.** Currently we only call save→read on the bucket. PR #22's strengthening covered the slime bucket; verify the tadpole bucket has equivalent coverage.
 - **Visual rendering verification.** GameTest is headless — can't catch broken tints / missing textures / wrong UV alpha. The slime outer-shell solid-gray bug (PR #27) is the canonical example. Playtest is the only test layer for visuals; document this clearly in `docs/testing.md`.
+- **`frog_tongue_targets_only_matching_category_slime` is flaky.** Observed during PR #32 — failed once with "sensor never wrote NEAREST_ATTACKABLE on tick 60" then passed on retry. The 60-tick window I picked for the assertion is right at the edge of vanilla's `NearestVisibleLivingEntitySensor` scan cadence. Either bump the window to ~100 ticks or pre-warm the sensor by manually invoking it (`sensor.tick(level, frog)`) before polling.
 
 ### Visuals / assets
 - **Real (non-placeholder) textures** for every item/block. Currently using vanilla textures + per-category tints + placeholder PNGs (tadpole_silhouette, slime_silhouette).

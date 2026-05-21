@@ -2,7 +2,12 @@ package com.flatts.productivefrogs.data;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.RandomSource;
 
 /**
  * Per-resource subdivision within a {@link Category}. One {@code SlimeVariant}
@@ -62,4 +67,64 @@ public record SlimeVariant(
             Codec.intRange(1, Integer.MAX_VALUE).optionalFieldOf("weight", 1).forGetter(SlimeVariant::weight)
         ).apply(instance, SlimeVariant::new)
     );
+
+    /**
+     * Find the variant whose {@code primer_item} matches the given item id, or
+     * {@code null} if no variant maps to it. Used by the slime infusion handler
+     * to upgrade a primer-tag match from "category only" to "specific variant"
+     * when the held item matches a shipped variant's primer.
+     *
+     * <p>Linear scan over the registry. With ~12 variants V1-shipped (or even
+     * the future ~30-50 with cross-mod compat) the cost is trivial compared to
+     * the rest of the right-click handler.
+     */
+    public static Map.Entry<Identifier, SlimeVariant> findByPrimerItem(
+            Registry<SlimeVariant> registry, Identifier itemId) {
+        for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
+            if (entry.getValue().primerItem().equals(itemId)) {
+                return Map.entry(entry.getKey().identifier(), entry.getValue());
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Weighted random pick from all variants whose category matches the given
+     * one. Returns {@code null} when the registry has no variants for that
+     * category (e.g., during early development before variants for a category
+     * have been shipped, or when a datapack ships none for a category).
+     *
+     * <p>Used by {@code SlimeSplitDiscoveryHandler} to pick the specific
+     * variant a passively-discovered Resource Slime becomes — the parent
+     * species's default category determines the pool; {@code weight} biases
+     * the pick within it.
+     */
+    public static Map.Entry<Identifier, SlimeVariant> pickWeighted(
+            Registry<SlimeVariant> registry, Category category, RandomSource random) {
+        List<Map.Entry<Identifier, SlimeVariant>> pool = new ArrayList<>();
+        // Accumulate as long so a datapack with many high-weight variants
+        // (each capped at Integer.MAX_VALUE individually) can't overflow.
+        // RandomSource doesn't expose nextLong-with-bound directly, so cap
+        // total + roll at Integer.MAX_VALUE — anything beyond is silly anyway.
+        long totalWeight = 0L;
+        for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
+            if (entry.getValue().category() != category) continue;
+            pool.add(Map.entry(entry.getKey().identifier(), entry.getValue()));
+            totalWeight += entry.getValue().weight();
+        }
+        if (pool.isEmpty()) {
+            return null;
+        }
+        int cap = (int) Math.min(totalWeight, Integer.MAX_VALUE);
+        int roll = random.nextInt(cap);
+        long cumulative = 0L;
+        for (Map.Entry<Identifier, SlimeVariant> entry : pool) {
+            cumulative += entry.getValue().weight();
+            if (roll < cumulative) {
+                return entry;
+            }
+        }
+        // Shouldn't reach — defensive fallback to first.
+        return pool.get(0);
+    }
 }
