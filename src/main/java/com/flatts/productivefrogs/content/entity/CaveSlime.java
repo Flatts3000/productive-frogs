@@ -26,7 +26,7 @@ import net.minecraft.world.level.Level;
  */
 public class CaveSlime extends Slime {
 
-    public CaveSlime(EntityType<? extends Slime> type, Level level) {
+    public CaveSlime(EntityType<? extends CaveSlime> type, Level level) {
         super(type, level);
     }
 }
