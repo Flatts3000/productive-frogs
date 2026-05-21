@@ -17,8 +17,12 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.SpawnPlacementType;
+import net.minecraft.world.entity.SpawnPlacementTypes;
+import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.animal.frog.Tadpole;
 import net.minecraft.world.entity.monster.Slime;
+import net.minecraft.world.level.levelgen.Heightmap;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -183,5 +187,38 @@ class PFEntitiesTest {
     void voidSlimeExtendsVanillaSlime() {
         assertTrue(Slime.class.isAssignableFrom(VoidSlime.class),
             "VoidSlime must extend vanilla Slime so it splits like a slime");
+    }
+
+    @Test
+    void caveSlimeSpawnPlacementIsRegistered() {
+        assertParentSpawnPlacement(PFEntities.CAVE_SLIME.get(), Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
+    }
+
+    @Test
+    void geodeSlimeSpawnPlacementIsRegistered() {
+        assertParentSpawnPlacement(PFEntities.GEODE_SLIME.get(), Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
+    }
+
+    @Test
+    void tideSlimeSpawnPlacementIsRegistered() {
+        // Tide is the odd one — OCEAN_FLOOR heightmap so the spawn algorithm
+        // picks the topmost solid block ignoring water (i.e., actual sea floor),
+        // matching how vanilla Drowned spawns.
+        assertParentSpawnPlacement(PFEntities.TIDE_SLIME.get(), Heightmap.Types.OCEAN_FLOOR);
+    }
+
+    @Test
+    void voidSlimeSpawnPlacementIsRegistered() {
+        assertParentSpawnPlacement(PFEntities.VOID_SLIME.get(), Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
+    }
+
+    private static void assertParentSpawnPlacement(EntityType<?> type, Heightmap.Types expectedHeightmap) {
+        SpawnPlacementType placement = SpawnPlacements.getPlacementType(type);
+        assertNotNull(placement, type + " must have a registered SpawnPlacementType after the mod-bus event fires");
+        assertSame(SpawnPlacementTypes.ON_GROUND, placement,
+            "parent species spawn on solid ground (vanilla Slime placement)");
+        Heightmap.Types heightmap = SpawnPlacements.getHeightmapType(type);
+        assertNotNull(heightmap, type + " must have a registered Heightmap");
+        assertSame(expectedHeightmap, heightmap);
     }
 }
