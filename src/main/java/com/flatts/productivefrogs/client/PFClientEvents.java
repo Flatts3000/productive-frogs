@@ -7,6 +7,7 @@ import com.flatts.productivefrogs.client.renderer.ResourceFrogRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
 import com.flatts.productivefrogs.client.renderer.TideSlimeRenderer;
+import com.flatts.productivefrogs.client.renderer.VoidSlimeRenderer;
 import com.flatts.productivefrogs.client.tint.ContainedCategoryTint;
 import com.flatts.productivefrogs.client.tint.SlimeVariantTint;
 import com.flatts.productivefrogs.client.tint.TadpoleBucketCategoryTint;
@@ -59,6 +60,7 @@ public final class PFClientEvents {
         event.registerEntityRenderer(PFEntities.CAVE_SLIME.get(), CaveSlimeRenderer::new);
         event.registerEntityRenderer(PFEntities.GEODE_SLIME.get(), GeodeSlimeRenderer::new);
         event.registerEntityRenderer(PFEntities.TIDE_SLIME.get(), TideSlimeRenderer::new);
+        event.registerEntityRenderer(PFEntities.VOID_SLIME.get(), VoidSlimeRenderer::new);
     }
 
     @SubscribeEvent

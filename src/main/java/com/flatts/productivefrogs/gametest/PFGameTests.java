@@ -122,6 +122,8 @@ public final class PFGameTests {
             PFGameTests::geodeSlimeSplitDiscoveryConvertsToGemResourceSlime, 100);
         registerTest("tide_slime_split_discovery_converts_to_aquatic_resource_slime",
             PFGameTests::tideSlimeSplitDiscoveryConvertsToAquaticResourceSlime, 100);
+        registerTest("void_slime_split_discovery_converts_to_arcane_resource_slime",
+            PFGameTests::voidSlimeSplitDiscoveryConvertsToArcaneResourceSlime, 100);
     }
 
     private PFGameTests() {
@@ -761,6 +763,15 @@ public final class PFGameTests {
      */
     private static void tideSlimeSplitDiscoveryConvertsToAquaticResourceSlime(GameTestHelper helper) {
         runSplitDiscoveryTest(helper, PFEntities.TIDE_SLIME.get(), Category.AQUATIC);
+    }
+
+    /**
+     * Void Slime is the parent species for ARCANE — splitting one with 100%
+     * discovery should give ARCANE ResourceSlimes. Closes the parent-species
+     * test set (one per non-vanilla category).
+     */
+    private static void voidSlimeSplitDiscoveryConvertsToArcaneResourceSlime(GameTestHelper helper) {
+        runSplitDiscoveryTest(helper, PFEntities.VOID_SLIME.get(), Category.ARCANE);
     }
 
     /**
