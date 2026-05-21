@@ -33,6 +33,17 @@ public final class PFCreativeTabs {
                     for (var entry : PFItems.RESOURCE_FROGLIGHT_ITEMS.values()) {
                         output.accept(entry.get());
                     }
+                    // One configurable_froglight per shipped variant — each stack
+                    // carries its variant id in the SLIME_VARIANT data component so
+                    // creative testers can see what the production loop produces.
+                    for (String variantName : PFItems.RESOURCE_SLIME_SPAWN_EGGS.keySet()) {
+                        net.minecraft.world.item.ItemStack stack =
+                            new net.minecraft.world.item.ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
+                        stack.set(PFDataComponents.SLIME_VARIANT.get(),
+                            net.minecraft.resources.Identifier.fromNamespaceAndPath(
+                                com.flatts.productivefrogs.ProductiveFrogs.MOD_ID, variantName));
+                        output.accept(stack);
+                    }
                     // Spawn eggs grouped at the end so they read as a single block
                     // in the creative tab — frogs first, tadpoles after.
                     for (var entry : PFItems.RESOURCE_FROG_SPAWN_EGGS.values()) {
