@@ -58,10 +58,11 @@ public final class FrogTongueDropHandler {
             return;
         }
 
-        // Only size-1 slimes reach this handler in practice (the frog tongue
-        // only eats size-1 per Frog.canEat), but defend against future
-        // changes — bigger slimes shouldn't pop a froglight on death from
-        // category-mismatched frogs.
+        // The vanilla Frog.canEat predicate (which our sensor inherits via
+        // super) already restricts tongue targets to size-1 slimes, so this
+        // guard is defensive: skip the drop for any larger slime that somehow
+        // reached this handler (mod hook, manual /damage command, etc.) — the
+        // production loop is keyed to size-1 prey only.
         if (slime.getSize() != 1) {
             return;
         }
