@@ -35,5 +35,6 @@ public final class PFModBusEvents {
         // Cave Slime and all future parent species (Geode/Tide/Void) reuse
         // the same Monster baseline — they're vanilla-shaped Slime subclasses.
         event.put(PFEntities.CAVE_SLIME.get(), Monster.createMonsterAttributes().build());
+        event.put(PFEntities.GEODE_SLIME.get(), Monster.createMonsterAttributes().build());
     }
 }
