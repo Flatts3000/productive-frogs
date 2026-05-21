@@ -100,25 +100,30 @@ public final class PFClientEvents {
      * Wire each Slime Milk FluidType to its still + flowing block textures.
      * NeoForge keeps client-only fluid properties off the server by routing
      * them through {@link IClientFluidTypeExtensions} registered via this
-     * event. Without it the fluid renders as the purple-and-black "missing
+     * event. Without it each fluid renders as the purple-and-black "missing
      * texture" cube.
+     *
+     * <p>Iterates {@link PFFluidTypes#VARIANTS} so adding a new variant only
+     * requires editing that list — texture path follows
+     * {@code productivefrogs:block/<variant>_slime_milk_(still|flow)}.
      */
     @SubscribeEvent
     public static void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
-        event.registerFluidType(
-            new IClientFluidTypeExtensions() {
-                private static final Identifier STILL =
-                    Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "block/iron_slime_milk_still");
-                private static final Identifier FLOW =
-                    Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "block/iron_slime_milk_flow");
+        for (String variant : PFFluidTypes.VARIANTS) {
+            Identifier still = Identifier.fromNamespaceAndPath(
+                ProductiveFrogs.MOD_ID, "block/" + variant + "_slime_milk_still");
+            Identifier flow = Identifier.fromNamespaceAndPath(
+                ProductiveFrogs.MOD_ID, "block/" + variant + "_slime_milk_flow");
+            event.registerFluidType(
+                new IClientFluidTypeExtensions() {
+                    @Override
+                    public Identifier getStillTexture() { return still; }
 
-                @Override
-                public Identifier getStillTexture() { return STILL; }
-
-                @Override
-                public Identifier getFlowingTexture() { return FLOW; }
-            },
-            PFFluidTypes.IRON_SLIME_MILK.get()
-        );
+                    @Override
+                    public Identifier getFlowingTexture() { return flow; }
+                },
+                PFFluidTypes.BY_VARIANT.get(variant).get()
+            );
+        }
     }
 }

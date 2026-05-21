@@ -45,25 +45,36 @@ public final class PFBlocks {
     public static final Map<Category, DeferredBlock<RotatedPillarBlock>> RESOURCE_FROGLIGHTS = buildResourceFroglights();
 
     /**
-     * Iron Slime Milk LiquidBlock. The fluid's Source instance lives in
-     * {@link PFFluids#IRON_SLIME_MILK_SOURCE}; this is its in-world block
-     * representation. Vanilla {@link LiquidBlock} constructor takes the
-     * <em>source</em> fluid; LiquidBlock derives the BlockState↔FluidState
-     * mapping from it.
+     * Slime Milk LiquidBlocks keyed by variant name. One block per variant in
+     * {@link PFFluidTypes#VARIANTS}; each wraps its source fluid from
+     * {@link PFFluids#BY_VARIANT}. Vanilla {@link LiquidBlock} constructor
+     * takes the <em>source</em> fluid; LiquidBlock derives the
+     * BlockState↔FluidState mapping from it.
      */
-    public static final DeferredBlock<LiquidBlock> IRON_SLIME_MILK = BLOCKS.registerBlock(
-        "iron_slime_milk",
-        props -> new LiquidBlock(PFFluids.IRON_SLIME_MILK_SOURCE.get(), props),
-        BlockBehaviour.Properties.of()
-            .mapColor(MapColor.METAL)
-            .replaceable()
-            .noCollision()
-            .strength(100.0F)
-            .pushReaction(PushReaction.DESTROY)
-            .noLootTable()
-            .liquid()
-            .sound(SoundType.EMPTY)
-    );
+    public static final Map<String, DeferredBlock<LiquidBlock>> MILK_BLOCKS = buildMilkBlocks();
+
+    /** Backwards-compatible alias for J1 callers. New code should use {@link #MILK_BLOCKS}. */
+    public static final DeferredBlock<LiquidBlock> IRON_SLIME_MILK = MILK_BLOCKS.get("iron");
+
+    private static Map<String, DeferredBlock<LiquidBlock>> buildMilkBlocks() {
+        java.util.LinkedHashMap<String, DeferredBlock<LiquidBlock>> map = new java.util.LinkedHashMap<>();
+        for (String variant : PFFluidTypes.VARIANTS) {
+            map.put(variant, BLOCKS.registerBlock(
+                variant + "_slime_milk",
+                props -> new LiquidBlock(PFFluids.BY_VARIANT.get(variant).source().get(), props),
+                BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .replaceable()
+                    .noCollision()
+                    .strength(100.0F)
+                    .pushReaction(PushReaction.DESTROY)
+                    .noLootTable()
+                    .liquid()
+                    .sound(SoundType.EMPTY)
+            ));
+        }
+        return java.util.Collections.unmodifiableMap(map);
+    }
 
     private static Map<Category, DeferredBlock<PrimedFrogEggBlock>> buildPrimedEggs() {
         EnumMap<Category, DeferredBlock<PrimedFrogEggBlock>> map = new EnumMap<>(Category.class);

@@ -35,7 +35,7 @@ Single `configurable_froglight` item with a `slime_variant` data component (mirr
 [docs/farming.md](./farming.md) specifies the full design. Sub-PR plan (J-series):
 
 - **J1** ✅ — fluid framework (PFFluidTypes / PFFluids / BaseFlowingFluid plumbing) + iron_slime_milk variant + iron_slime_milk_bucket. Placeable fluid; no milker block or spawning yet. Placeholder iron-grey textures (real animated textures backlogged under polish).
-- **J2** — expand fluids to all 13 remaining variants (vanilla, magma, copper, gold, redstone, lapis, coal, diamond, emerald, prismarine, sponge, magma_cream, ender_pearl). Mechanical expansion of J1's pattern; per-variant tint texture.
+- **J2** ✅ — expanded to all 14 variants (iron, copper, gold, redstone, lapis, coal, diamond, emerald, prismarine, sponge, magma_cream, ender_pearl, vanilla, magma). Refactored PFFluidTypes/PFFluids/PFBlocks/PFItems to `Map<String, ...>` keyed by variant name; `PFFluidTypes.VARIANTS` is the single source of truth list. Tests parameterized so adding future variants auto-extends coverage.
 - **J3** — `SlimeMilkerBlock`: single appliance, no power, right-click with a Slime Bucket → consume slime, output typed milk bucket matching slime's variant/category.
 - **J4** — Source-block slime spawning (~20s interval ± 10s jitter, vanilla mob-cap check).
 - **J5** — Depletion counter (16 spawns default) + mod config wiring (depletion ON/OFF, interval, count, plus `discoveryChancePerOffspring` promotion from public-static hack).

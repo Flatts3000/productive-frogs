@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.registry;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -15,31 +16,44 @@ import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /**
- * Locks in the J1 fluid stack wiring for the iron_slime_milk variant. Asserts
- * the FluidType registration, the Source / Flowing pair, the LiquidBlock that
- * wraps the source, and the BucketItem — so a future refactor that drops any
- * one of these layers fails CI before a player runs into a "fluid is purple
- * and black" or "bucket can't scoop the fluid back" regression.
+ * Locks in the J-series fluid stack wiring across every shipped Slime Milk
+ * variant. Parameterized on {@link PFFluidTypes#VARIANTS} so adding a new
+ * variant only requires editing that list — the tests automatically extend
+ * coverage to the new entry.
  *
- * <p>J2 expansion to the other 13 variants should mirror this test shape so
- * the same coverage applies across the whole milk family.
+ * <p>Per-variant asserts: FluidType registration, Source / Flowing pair,
+ * source↔flowing pairing (so scoop + flow-decay work), LiquidBlock wrapping
+ * the source, BucketItem present.
+ *
+ * <p>J3+ (milker block, source-block spawning, depletion) gets its own test
+ * file; this one stays scoped to registration correctness.
  */
 class PFFluidsTest {
 
-    @Test
-    void ironSlimeMilkFluidTypeIsRegistered() {
-        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk");
-        FluidType type = NeoForgeRegistries.FLUID_TYPES.getValue(id);
-        assertNotNull(type, id + " must be registered as a FluidType");
-        assertSame(PFFluidTypes.IRON_SLIME_MILK.get(), type, "DeferredHolder must resolve to the registered FluidType");
+    /** Provides variant names for {@link ParameterizedTest} via {@link MethodSource}. */
+    static java.util.stream.Stream<String> variants() {
+        return PFFluidTypes.VARIANTS.stream();
     }
 
-    @Test
-    void ironSlimeMilkSourceAndFlowingFluidsAreRegistered() {
-        Identifier sourceId = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk");
-        Identifier flowingId = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk_flowing");
+    @ParameterizedTest
+    @MethodSource("variants")
+    void milkFluidTypeIsRegistered(String variant) {
+        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant + "_slime_milk");
+        FluidType type = NeoForgeRegistries.FLUID_TYPES.getValue(id);
+        assertNotNull(type, id + " must be registered as a FluidType");
+        assertSame(PFFluidTypes.BY_VARIANT.get(variant).get(), type,
+            "DeferredHolder must resolve to the registered FluidType");
+    }
+
+    @ParameterizedTest
+    @MethodSource("variants")
+    void sourceAndFlowingFluidsAreRegistered(String variant) {
+        Identifier sourceId = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant + "_slime_milk");
+        Identifier flowingId = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant + "_slime_milk_flowing");
 
         Fluid source = BuiltInRegistries.FLUID.getValue(sourceId);
         Fluid flowing = BuiltInRegistries.FLUID.getValue(flowingId);
@@ -47,20 +61,16 @@ class PFFluidsTest {
         assertNotNull(source, sourceId + " must be registered as a Fluid");
         assertNotNull(flowing, flowingId + " must be registered as a Fluid");
         assertTrue(source instanceof BaseFlowingFluid.Source,
-            "source must be a BaseFlowingFluid.Source (NeoForge helper for FlowingFluid wiring)");
+            "source must be a BaseFlowingFluid.Source");
         assertTrue(flowing instanceof BaseFlowingFluid.Flowing,
             "flowing must be a BaseFlowingFluid.Flowing");
     }
 
-    @Test
-    void sourceAndFlowingPointAtEachOther() {
-        // The BaseFlowingFluid.Properties wires getSource/getFlowing via lazy
-        // Suppliers — this asserts the two-way pairing landed correctly so a
-        // bucket scoop on the source produces the right fluid back, and a
-        // tick on the flowing variant resolves to the right source for the
-        // "flow back to source" decay logic.
-        FlowingFluid source = PFFluids.IRON_SLIME_MILK_SOURCE.get();
-        FlowingFluid flowing = PFFluids.IRON_SLIME_MILK_FLOWING.get();
+    @ParameterizedTest
+    @MethodSource("variants")
+    void sourceAndFlowingPointAtEachOther(String variant) {
+        FlowingFluid source = PFFluids.BY_VARIANT.get(variant).source().get();
+        FlowingFluid flowing = PFFluids.BY_VARIANT.get(variant).flowing().get();
 
         assertSame(source, source.getSource(), "source.getSource() must return itself");
         assertSame(flowing, source.getFlowing(), "source.getFlowing() must return the flowing variant");
@@ -68,19 +78,31 @@ class PFFluidsTest {
         assertSame(flowing, flowing.getFlowing(), "flowing.getFlowing() must return itself");
     }
 
-    @Test
-    void ironSlimeMilkLiquidBlockIsRegistered() {
-        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk");
+    @ParameterizedTest
+    @MethodSource("variants")
+    void liquidBlockIsRegistered(String variant) {
+        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant + "_slime_milk");
         assertNotNull(BuiltInRegistries.BLOCK.getValue(id), id + " must be registered as a Block");
-        assertTrue(PFBlocks.IRON_SLIME_MILK.get() instanceof LiquidBlock,
-            "iron_slime_milk block must be a LiquidBlock — that's the in-world wrapper for a fluid");
+        assertTrue(PFBlocks.MILK_BLOCKS.get(variant).get() instanceof LiquidBlock,
+            variant + " milk block must be a LiquidBlock");
+    }
+
+    @ParameterizedTest
+    @MethodSource("variants")
+    void bucketItemIsRegistered(String variant) {
+        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant + "_slime_milk_bucket");
+        assertNotNull(BuiltInRegistries.ITEM.getValue(id), id + " must be registered as an Item");
+        assertTrue(PFItems.MILK_BUCKETS.get(variant).get() instanceof BucketItem,
+            variant + " milk bucket must be a BucketItem");
     }
 
     @Test
-    void ironSlimeMilkBucketIsRegistered() {
-        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk_bucket");
-        assertNotNull(BuiltInRegistries.ITEM.getValue(id), id + " must be registered as an Item");
-        assertTrue(PFItems.IRON_SLIME_MILK_BUCKET.get() instanceof BucketItem,
-            "iron_slime_milk_bucket item must be a BucketItem so vanilla pickup/place behavior works");
+    void allShippedVariantsAreCovered() {
+        // Sanity-check the size of the variant family — if someone removes an
+        // entry from VARIANTS this catches it before the per-variant tests
+        // silently lose coverage. Update this count when intentionally adding
+        // a new variant; J2 ships exactly 14 (12 resource + vanilla + magma).
+        assertEquals(14, PFFluidTypes.VARIANTS.size(),
+            "Slime Milk family must have 14 variants — see docs/farming.md");
     }
 }
