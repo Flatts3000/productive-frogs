@@ -4,7 +4,13 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.PFTags;
+import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFEntities;
+import com.flatts.productivefrogs.registry.PFRegistries;
+import java.util.Map;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
@@ -19,6 +25,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Handles right-clicking a vanilla {@code Slime} (or {@code MagmaCube}, which
@@ -57,9 +64,20 @@ public final class SlimeInfusionHandler {
             return;
         }
 
-        Category category = matchPrimerCategory(held);
-        if (category == null) {
-            return;
+        // Variant lookup wins when the held item matches a shipped variant's
+        // primer_item. Falls back to category-only infusion when the item is
+        // in a primer tag but doesn't map to any specific variant (e.g.,
+        // blaze_powder is in primer/infernal but isn't a variant primer in
+        // V1 — gives a category-only INFERNAL slime).
+        Map.Entry<Identifier, SlimeVariant> variantEntry = findVariantForHeldItem(event.getLevel(), held);
+        Category category;
+        if (variantEntry != null) {
+            category = variantEntry.getValue().category();
+        } else {
+            category = matchPrimerCategory(held);
+            if (category == null) {
+                return;
+            }
         }
 
         // We're handling this. Suppress vanilla behavior and any other listeners.
@@ -73,6 +91,9 @@ public final class SlimeInfusionHandler {
         ResourceSlime resource = transformInPlace(sourceSlime, category);
         if (resource == null) {
             return;
+        }
+        if (variantEntry != null) {
+            resource.setVariant(variantEntry.getKey());
         }
 
         // Consume one primer (creative skips, matching EggPrimerHandler).
@@ -130,6 +151,21 @@ public final class SlimeInfusionHandler {
                 resource.setPersistenceRequired();
             }
         );
+    }
+
+    /**
+     * Look up the SlimeVariant whose {@code primer_item} matches the held
+     * item. Returns the (id, variant) entry on hit, {@code null} on miss
+     * (including when the registry isn't yet loaded — early init, missing
+     * datapack, etc).
+     */
+    private static Map.Entry<Identifier, SlimeVariant> findVariantForHeldItem(
+            net.minecraft.world.level.Level level, ItemStack stack) {
+        Registry<SlimeVariant> registry = level.registryAccess()
+            .lookup(PFRegistries.SLIME_VARIANT).orElse(null);
+        if (registry == null) return null;
+        Identifier itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        return SlimeVariant.findByPrimerItem(registry, itemId);
     }
 
     /**

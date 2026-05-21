@@ -3,8 +3,13 @@ package com.flatts.productivefrogs.event;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFEntities;
+import com.flatts.productivefrogs.registry.PFRegistries;
 import java.util.List;
+import java.util.Map;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.MagmaCube;
@@ -76,6 +81,9 @@ public final class SlimeSplitDiscoveryHandler {
         }
 
         Level level = parent.level();
+        Registry<SlimeVariant> variantRegistry = level.registryAccess()
+            .lookup(PFRegistries.SLIME_VARIANT).orElse(null);
+
         List<Mob> children = event.getChildren();
         for (int i = 0; i < children.size(); i++) {
             Mob child = children.get(i);
@@ -91,7 +99,17 @@ public final class SlimeSplitDiscoveryHandler {
             }
             resource.snapTo(child.getX(), child.getY(), child.getZ(), child.getYRot(), child.getXRot());
             resource.setSize(childSlime.getSize(), true);
+            // Category first (fallback when no variants in pool), then a
+            // weighted variant pick — setVariant re-syncs category from the
+            // registry so the two stay consistent when a variant is picked.
             resource.setCategory(category);
+            if (variantRegistry != null) {
+                Map.Entry<Identifier, SlimeVariant> picked =
+                    SlimeVariant.pickWeighted(variantRegistry, category, parent.getRandom());
+                if (picked != null) {
+                    resource.setVariant(picked.getKey());
+                }
+            }
             children.set(i, resource);
         }
     }
