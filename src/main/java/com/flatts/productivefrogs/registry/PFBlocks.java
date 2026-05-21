@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
+import com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
 import com.flatts.productivefrogs.data.Category;
 import java.util.EnumMap;
@@ -48,9 +49,10 @@ public final class PFBlocks {
     /**
      * Slime Milk LiquidBlocks keyed by variant name. One block per variant in
      * {@link PFFluidTypes#VARIANTS}; each wraps its source fluid from
-     * {@link PFFluids#BY_VARIANT}. Vanilla {@link LiquidBlock} constructor
-     * takes the <em>source</em> fluid; LiquidBlock derives the
-     * BlockState↔FluidState mapping from it.
+     * {@link PFFluids#BY_VARIANT}. The concrete type is {@link
+     * SlimeMilkSourceBlock} (a {@link LiquidBlock} subclass) — adds the J4
+     * periodic-spawn loop that turns each source block into a slime fountain
+     * for the matching variant.
      */
     public static final Map<String, DeferredBlock<LiquidBlock>> MILK_BLOCKS = buildMilkBlocks();
 
@@ -81,7 +83,7 @@ public final class PFBlocks {
         for (String variant : PFFluidTypes.VARIANTS) {
             map.put(variant, BLOCKS.registerBlock(
                 variant + "_slime_milk",
-                props -> new LiquidBlock(PFFluids.BY_VARIANT.get(variant).source().get(), props),
+                props -> new SlimeMilkSourceBlock(PFFluids.BY_VARIANT.get(variant).source().get(), variant, props),
                 BlockBehaviour.Properties.of()
                     .mapColor(MapColor.METAL)
                     .replaceable()
