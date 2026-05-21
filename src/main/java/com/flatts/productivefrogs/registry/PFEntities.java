@@ -6,6 +6,7 @@ import com.flatts.productivefrogs.content.entity.GeodeSlime;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
+import com.flatts.productivefrogs.content.entity.TideSlime;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -107,6 +108,25 @@ public final class PFEntities {
                 .build(net.minecraft.resources.ResourceKey.create(
                     Registries.ENTITY_TYPE,
                     net.minecraft.resources.Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "geode_slime")
+                ))
+        );
+
+    /**
+     * Tide Slime — the AQUATIC parent species. Same shape as the other parent
+     * species; differences are the registration name, the renderer texture,
+     * and the {@code instanceof TideSlime → AQUATIC} branch in
+     * {@link com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler}.
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<TideSlime>> TIDE_SLIME =
+        ENTITIES.register(
+            "tide_slime",
+            () -> EntityType.Builder.<TideSlime>of(TideSlime::new, MobCategory.MONSTER)
+                .sized(2.04F, 2.04F)
+                .eyeHeight(0.625F)
+                .clientTrackingRange(10)
+                .build(net.minecraft.resources.ResourceKey.create(
+                    Registries.ENTITY_TYPE,
+                    net.minecraft.resources.Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tide_slime")
                 ))
         );
 
