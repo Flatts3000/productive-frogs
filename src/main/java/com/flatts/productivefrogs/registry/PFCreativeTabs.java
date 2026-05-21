@@ -41,6 +41,9 @@ public final class PFCreativeTabs {
                     for (var entry : PFItems.RESOURCE_TADPOLE_SPAWN_EGGS.values()) {
                         output.accept(entry.get());
                     }
+                    for (var entry : PFItems.RESOURCE_SLIME_SPAWN_EGGS.values()) {
+                        output.accept(entry.get());
+                    }
                 })
                 .build()
         );

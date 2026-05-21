@@ -123,6 +123,22 @@ public final class PFItems {
     public static final Map<Category, DeferredItem<SpawnEggItem>> RESOURCE_TADPOLE_SPAWN_EGGS = buildSpawnEggs(
         "tadpole", () -> PFEntities.RESOURCE_TADPOLE.get());
 
+    /**
+     * Per-variant spawn eggs for Resource Slimes — one item per SlimeVariant
+     * shipped in PR H2's datapack registry. Each preset its variant via
+     * {@code ENTITY_DATA} NBT (key "Variant", value the variant's full id)
+     * and its broad category via {@code CONTAINED_CATEGORY} so the inventory
+     * tint uses the existing category palette. JEI surfaces each as a
+     * distinct entry → "Iron Slime Spawn Egg", "Copper Slime Spawn Egg", ...
+     *
+     * <p>Variants are hardcoded here matching the JSON files in
+     * {@code data/productivefrogs/productivefrogs/slime_variant/}. If a future
+     * PR makes this list datapack-driven (auto-spawn-eggs from variant
+     * registry), it'll need a different registration path since item
+     * registration happens at mod-init, before the datapack registry loads.
+     */
+    public static final Map<String, DeferredItem<SpawnEggItem>> RESOURCE_SLIME_SPAWN_EGGS = buildSlimeVariantSpawnEggs();
+
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {
@@ -178,6 +194,53 @@ public final class PFItems {
         nbt.putString("Category", category.name());
         return new Item.Properties()
             .component(DataComponents.ENTITY_DATA, TypedEntityData.of(type, nbt))
+            .component(PFDataComponents.CONTAINED_CATEGORY.get(), category);
+    }
+
+    /**
+     * One spawn egg per SlimeVariant shipped in PR H2. Each item presets
+     * both the variant id (via ENTITY_DATA NBT) and the parent category
+     * (for the inventory tint). The variant→category mapping here mirrors
+     * the JSON files in {@code data/.../slime_variant/}; if those move, this
+     * list moves with them.
+     */
+    private static Map<String, DeferredItem<SpawnEggItem>> buildSlimeVariantSpawnEggs() {
+        record VariantSpec(String name, Category category) {}
+        VariantSpec[] variants = new VariantSpec[]{
+            new VariantSpec("iron",        Category.METALLIC),
+            new VariantSpec("copper",      Category.METALLIC),
+            new VariantSpec("gold",        Category.METALLIC),
+            new VariantSpec("redstone",    Category.MINERAL),
+            new VariantSpec("lapis",       Category.MINERAL),
+            new VariantSpec("coal",        Category.MINERAL),
+            new VariantSpec("diamond",     Category.GEM),
+            new VariantSpec("emerald",     Category.GEM),
+            new VariantSpec("prismarine",  Category.AQUATIC),
+            new VariantSpec("sponge",      Category.AQUATIC),
+            new VariantSpec("magma_cream", Category.INFERNAL),
+            new VariantSpec("ender_pearl", Category.ARCANE),
+        };
+        java.util.LinkedHashMap<String, DeferredItem<SpawnEggItem>> map = new java.util.LinkedHashMap<>();
+        for (VariantSpec spec : variants) {
+            String itemName = spec.name() + "_slime_spawn_egg";
+            map.put(spec.name(), ITEMS.registerItem(
+                itemName,
+                SpawnEggItem::new,
+                () -> slimeVariantSpawnEggProperties(spec.name(), spec.category())
+            ));
+        }
+        return map;
+    }
+
+    private static Item.Properties slimeVariantSpawnEggProperties(String variantName, Category category) {
+        CompoundTag nbt = new CompoundTag();
+        // Variant first; readAdditionalSaveData treats Variant as overriding
+        // Category via the registry lookup, but the entity also reads Category
+        // as a fast-path / fallback so include both for safety.
+        nbt.putString("Variant", ProductiveFrogs.MOD_ID + ":" + variantName);
+        nbt.putString("Category", category.name());
+        return new Item.Properties()
+            .component(DataComponents.ENTITY_DATA, TypedEntityData.of(PFEntities.RESOURCE_SLIME.get(), nbt))
             .component(PFDataComponents.CONTAINED_CATEGORY.get(), category);
     }
 
