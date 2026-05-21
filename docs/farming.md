@@ -44,9 +44,9 @@ The end-to-end production loop a player runs in V1, centered on the **Slime Milk
 Each milk source block independently rolls a spawn tick:
 
 - **Default interval**: 20 seconds, ± uniform jitter in [-10s, +10s] (so spawns appear at irregular real times in [10s, 30s]).
-- **Cap**: 1 slime per source block per spawn event. Won't spawn if the area immediately adjacent (above the block) is occupied by another mob (vanilla-style mob-cap check around the source).
+- **Cap**: 1 slime per source block per spawn event. There is no mob-occupancy gate — entities (frogs, players, other slimes) standing on or near the source do NOT block the spawn. Production is intentionally insensitive to traffic so a frog mid-tongue can't stall a fountain.
 - **Spawned slime**: always size 1, matching the milk's variant. Vanilla milk spawns size-1 vanilla slimes; Iron Slime Milk spawns size-1 Iron Resource Slimes; etc.
-- **Spawn position**: directly above the source block, or adjacent if blocked.
+- **Spawn position**: scan the 26 surrounding blocks in the 3×3×3 cube around the source for any with a sturdy top face whose block-above is non-motion-blocking; the slime lands on top of the first match. Iteration order biases toward natural rim spawns (same-y cardinals → same-y diagonals → below plane → above plane), so a milk pool on solid ground produces horizontally-adjacent slimes by default. If no sturdy neighbour exists anywhere in the 3×3×3, the slime spawns inside the source block itself (the milk fluid is non-collision, so this fallback always succeeds — spawns never fail and never need to retry).
 
 ## Depletion
 

@@ -1001,9 +1001,9 @@ public final class PFGameTests {
                 helper.fail("spawned slime has variant " + slime.getVariantId() + ", expected " + expectedVariant);
             }
             // Position check: the slime should land on top of the stone
-            // neighbour. Use floor(y) so we don't fight bobbing physics —
-            // the slime's spawn Y is whole, but a tick or two of gravity
-            // may have settled it.
+            // neighbour. Floor X and Z only — we deliberately skip the Y
+            // assertion because gravity + bobbing physics move the slime
+            // down within the polling window, which would make Y flaky.
             BlockPos absExpected = helper.absolutePos(expectedSpawnPos);
             int sx = net.minecraft.util.Mth.floor(slime.getX());
             int sz = net.minecraft.util.Mth.floor(slime.getZ());
@@ -1050,8 +1050,9 @@ public final class PFGameTests {
                 helper.fail("spawned slime has variant " + slime.getVariantId() + ", expected " + expectedVariant);
             }
             // Position assertion: the fallback puts the slime AT the source
-            // position. Use floor() to avoid bobbing-physics flakiness on
-            // the Y axis but pin XZ tight.
+            // position. Floor X and Z only — Y is deliberately not checked
+            // because gravity may settle the slime within the polling
+            // window before the assertion runs.
             int sx = net.minecraft.util.Mth.floor(slime.getX());
             int sz = net.minecraft.util.Mth.floor(slime.getZ());
             if (sx != absSourcePos.getX() || sz != absSourcePos.getZ()) {
