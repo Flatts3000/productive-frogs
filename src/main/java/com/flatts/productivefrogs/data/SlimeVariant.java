@@ -2,9 +2,6 @@ package com.flatts.productivefrogs.data;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 
 /**
@@ -46,9 +43,15 @@ public record SlimeVariant(
 ) {
 
     /**
-     * Codec used by the datapack registry to load entries from JSON and by
-     * the network codec below for client sync. {@code weight} is optional
-     * and defaults to 1 so simple variants don't need to specify it.
+     * Codec used by the datapack registry for both JSON loading and client
+     * sync (NeoForge's {@code DataPackRegistryEvent.NewRegistry} takes a
+     * {@code Codec<T>} for the network side, not a separate StreamCodec —
+     * it wraps the codec with its own byte-level serialization).
+     *
+     * <p>{@code weight} is constrained to {@code [1, Integer.MAX_VALUE]} so
+     * datapack input can't produce zero or negative weights that would skew
+     * the discovery-pool random pick. The field is optional and defaults to
+     * 1 — simple variants don't need to specify it.
      */
     public static final Codec<SlimeVariant> CODEC = RecordCodecBuilder.create(
         instance -> instance.group(
@@ -56,22 +59,7 @@ public record SlimeVariant(
             Category.CODEC.fieldOf("category").forGetter(SlimeVariant::category),
             Codec.INT.fieldOf("primary_color").forGetter(SlimeVariant::primaryColor),
             Codec.INT.fieldOf("secondary_color").forGetter(SlimeVariant::secondaryColor),
-            Codec.INT.optionalFieldOf("weight", 1).forGetter(SlimeVariant::weight)
+            Codec.intRange(1, Integer.MAX_VALUE).optionalFieldOf("weight", 1).forGetter(SlimeVariant::weight)
         ).apply(instance, SlimeVariant::new)
     );
-
-    /**
-     * Network codec — required for the datapack registry to sync entries to
-     * connected clients. Without this, client-side rendering and tint code
-     * couldn't see the loaded variants.
-     */
-    public static final StreamCodec<RegistryFriendlyByteBuf, SlimeVariant> STREAM_CODEC =
-        StreamCodec.composite(
-            Identifier.STREAM_CODEC, SlimeVariant::primerItem,
-            Category.STREAM_CODEC, SlimeVariant::category,
-            ByteBufCodecs.INT, SlimeVariant::primaryColor,
-            ByteBufCodecs.INT, SlimeVariant::secondaryColor,
-            ByteBufCodecs.INT, SlimeVariant::weight,
-            SlimeVariant::new
-        );
 }
