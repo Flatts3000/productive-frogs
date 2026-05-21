@@ -98,6 +98,8 @@ public final class PFGameTests {
             PFGameTests::matchingFrogKillDropsCategoryFroglight, 100);
         registerTest("mismatched_frog_kill_drops_no_froglight",
             PFGameTests::mismatchedFrogKillDropsNoFroglight, 100);
+        registerTest("slime_bucket_round_trip_preserves_category",
+            PFGameTests::slimeBucketRoundTripPreservesCategory, 100);
     }
 
     private PFGameTests() {
@@ -465,6 +467,57 @@ public final class PFGameTests {
             }
             helper.succeed();
         });
+    }
+
+    /**
+     * Exercise the full bucket pickup→release contract: spawn a MINERAL slime,
+     * write its state into a bucket via {@code saveToBucketTag}, then load
+     * that bucket NBT into a fresh ResourceSlime via {@code loadFromBucketTag}.
+     * Verifies (1) the bucket carries the category, (2) the released slime
+     * decodes it correctly, and (3) the released slime is flagged
+     * {@code fromBucket} so it doesn't despawn on chunk reload.
+     *
+     * <p>Cross-bucket detail: ResourceTadpoleBucketItem.readCategory works for
+     * the slime bucket too because both bucket types write the same
+     * {@code BUCKET_ENTITY_DATA → "Category" string} shape. Candidate for a
+     * rename to {@code BucketedCategoryTint} as a follow-up since the reader
+     * now serves two surfaces.
+     */
+    private static void slimeBucketRoundTripPreservesCategory(GameTestHelper helper) {
+        Category cat = Category.MINERAL;
+        BlockPos pos = new BlockPos(2, 2, 2);
+
+        ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), pos);
+        source.setSize(1, true);
+        source.setCategory(cat);
+
+        ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
+        source.saveToBucketTag(bucket);
+
+        // Step 1: NBT round-trip via the tint-source reader.
+        Category readBack = ResourceTadpoleBucketItem.readCategory(bucket);
+        if (readBack != cat) {
+            helper.fail("slime bucket round-trip lost category: wrote " + cat + ", read " + readBack);
+        }
+
+        // Step 2: spawn a fresh slime and exercise loadFromBucketTag — same
+        // path vanilla MobBucketItem walks on release.
+        ResourceSlime released = helper.spawn(PFEntities.RESOURCE_SLIME.get(), pos.east());
+        net.minecraft.world.item.component.CustomData data =
+            bucket.get(net.minecraft.core.component.DataComponents.BUCKET_ENTITY_DATA);
+        if (data == null) {
+            helper.fail("bucket's BUCKET_ENTITY_DATA component is unexpectedly null after saveToBucketTag");
+            return;
+        }
+        released.loadFromBucketTag(data.copyTag());
+
+        if (released.getCategory() != cat) {
+            helper.fail("released slime has category " + released.getCategory() + ", expected " + cat);
+        }
+        if (!released.fromBucket()) {
+            helper.fail("released slime must be flagged fromBucket so it survives chunk reload");
+        }
+        helper.succeed();
     }
 
     /**

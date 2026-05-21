@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "productivefrogs:item/slime_silhouette",
+    "layer1": "minecraft:item/bucket"
+  }
+}
