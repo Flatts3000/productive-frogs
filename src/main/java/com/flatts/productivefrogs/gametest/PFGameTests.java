@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.gametest;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
+import com.flatts.productivefrogs.content.entity.CaveSlime;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
@@ -115,6 +116,8 @@ public final class PFGameTests {
             PFGameTests::infusionWithVariantPrimerSetsSpecificVariant, 100);
         registerTest("split_discovery_picks_variant_from_pool",
             PFGameTests::splitDiscoveryPicksVariantFromPool, 100);
+        registerTest("cave_slime_split_discovery_converts_to_mineral_resource_slime",
+            PFGameTests::caveSlimeSplitDiscoveryConvertsToMineralResourceSlime, 100);
     }
 
     private PFGameTests() {
@@ -724,6 +727,18 @@ public final class PFGameTests {
      */
     private static void vanillaMagmaCubeSplitDiscoveryConvertsToInfernalResourceSlime(GameTestHelper helper) {
         runSplitDiscoveryTest(helper, net.minecraft.world.entity.EntityType.MAGMA_CUBE, Category.INFERNAL);
+    }
+
+    /**
+     * Cave Slime is the parent species for the MINERAL category — splitting one
+     * with 100% discovery should give MINERAL ResourceSlimes. Mirrors the
+     * vanilla-slime / magma-cube tests, but exercises the {@code instanceof
+     * CaveSlime} branch in {@code SlimeSplitDiscoveryHandler#categoryForParent}
+     * which must be checked BEFORE the {@code getClass() == Slime.class} check
+     * (CaveSlime extends Slime, so the strict-equality check would miss it).
+     */
+    private static void caveSlimeSplitDiscoveryConvertsToMineralResourceSlime(GameTestHelper helper) {
+        runSplitDiscoveryTest(helper, PFEntities.CAVE_SLIME.get(), Category.MINERAL);
     }
 
     /**

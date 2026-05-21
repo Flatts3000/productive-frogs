@@ -157,6 +157,18 @@ public final class PFItems {
         new Item.Properties()
     );
 
+    /**
+     * Cave Slime spawn egg — vanilla parent species, not category-themed
+     * (which is why it isn't in a per-category Map like the frog/tadpole/slime
+     * spawn eggs). Single entry, no preset NBT beyond the standard
+     * {@code ENTITY_DATA} for the entity type.
+     */
+    public static final DeferredItem<SpawnEggItem> CAVE_SLIME_SPAWN_EGG = ITEMS.registerItem(
+        "cave_slime_spawn_egg",
+        SpawnEggItem::new,
+        () -> new Item.Properties().spawnEgg(PFEntities.CAVE_SLIME.get())
+    );
+
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {

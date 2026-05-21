@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.entity.CaveSlime;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
@@ -66,6 +67,26 @@ public final class PFEntities {
                 .build(net.minecraft.resources.ResourceKey.create(
                     Registries.ENTITY_TYPE,
                     net.minecraft.resources.Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_slime")
+                ))
+        );
+
+    /**
+     * Cave Slime — the MINERAL parent species. Vanilla-shaped bounding box +
+     * client tracking range; same {@code Slime}-derived behavior. The default
+     * discovery category MINERAL is set in
+     * {@link com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler}'s
+     * {@code categoryForParent} via an {@code instanceof CaveSlime} check.
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<CaveSlime>> CAVE_SLIME =
+        ENTITIES.register(
+            "cave_slime",
+            () -> EntityType.Builder.<CaveSlime>of(CaveSlime::new, MobCategory.MONSTER)
+                .sized(2.04F, 2.04F)
+                .eyeHeight(0.625F)
+                .clientTrackingRange(10)
+                .build(net.minecraft.resources.ResourceKey.create(
+                    Registries.ENTITY_TYPE,
+                    net.minecraft.resources.Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "cave_slime")
                 ))
         );
 

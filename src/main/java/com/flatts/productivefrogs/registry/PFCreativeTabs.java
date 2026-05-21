@@ -55,6 +55,10 @@ public final class PFCreativeTabs {
                     for (var entry : PFItems.RESOURCE_SLIME_SPAWN_EGGS.values()) {
                         output.accept(entry.get());
                     }
+                    // Parent species spawn eggs (Cave / Geode / Tide / Void) —
+                    // not category-themed, kept after the variant eggs so the
+                    // tab reads as: variants first, then upstream sources.
+                    output.accept(PFItems.CAVE_SLIME_SPAWN_EGG.get());
                 })
                 .build()
         );

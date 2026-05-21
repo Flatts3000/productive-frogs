@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.event;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.entity.CaveSlime;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.SlimeVariant;
@@ -116,14 +117,23 @@ public final class SlimeSplitDiscoveryHandler {
 
     /**
      * Default category pool for a parent slime species. Returns null if the
-     * parent isn't a known vanilla slime — modded slime species can register
+     * parent isn't a known parent species — modded slime species can register
      * their own categories via a future datapack registry (see {@code
      * docs/architecture.md} §Slime Sourcing Hooks).
+     *
+     * <p>{@link CaveSlime} and its siblings (Geode/Tide/Void in later PRs)
+     * are checked BEFORE the {@code parent.getClass() == Slime.class}
+     * vanilla-green check — they extend {@code Slime}, so that strict equality
+     * would otherwise miss them (instanceof Slime is true; getClass() is
+     * CaveSlime).
      */
     @Nullable
     private static Category categoryForParent(Mob parent) {
         if (parent instanceof MagmaCube) {
             return Category.INFERNAL;
+        }
+        if (parent instanceof CaveSlime) {
+            return Category.MINERAL;
         }
         if (parent.getClass() == Slime.class) {
             return Category.METALLIC;
