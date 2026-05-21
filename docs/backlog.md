@@ -9,11 +9,12 @@ The numbered checklist in [versioning.md](./versioning.md) is the **canonical V1
 What's left to land before "playable foundation + appliances" is complete. Each item is a PR-sized slice.
 
 ### Slime sourcing — non-vanilla categories
-- **Cave Slime entity** (MINERAL parent species) — new entity, spawn rules in dripstone caves / deep dark, splits feed the MINERAL discovery pool. [docs/open_questions.md#2c](./open_questions.md)
+- ~~**Cave Slime entity**~~ — entity, renderer, spawn egg, loot table, MINERAL discovery pool wired up in PR I1. **Natural spawn rules deferred** — currently spawnable via `/summon` or the spawn egg only. Biome-conditioned `SpawnPlacements` registration (dripstone caves / deep dark) tracked separately below. [docs/open_questions.md#2c](./open_questions.md)
 - **Geode Slime entity** (GEM) — spawn near amethyst geodes / mountains.
 - **Tide Slime entity** (AQUATIC) — spawn in deep / lukewarm / warm oceans.
 - **Void Slime entity** (ARCANE) — spawn on outer End islands.
 - Each PR adds one entity, registers its default discovery pool in `SlimeSplitDiscoveryHandler`, ships textures + spawn config + entity tag entries.
+- **Natural spawn rules for parent species** (deferred from I1–I4). Each parent species ships its entity + spawn egg + discovery wiring; biome-conditioned natural spawning (`RegisterSpawnPlacementsEvent`, `BiomeModifier` JSONs gating where they spawn in worldgen) lands in a follow-up so the entity/test layer ships clean of worldgen-data churn.
 
 ### SlimeVariant data registry (per-resource sub-categorization)
 Currently we're Category-keyed only (one METALLIC slime, one INFERNAL slime, etc). The full design has per-resource variants within each category (iron_slime, copper_slime, gold_slime within METALLIC). [docs/architecture.md#slime-variant-pattern](./architecture.md)

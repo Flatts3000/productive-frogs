@@ -32,5 +32,8 @@ public final class PFModBusEvents {
         // Per-size HP/movement scaling happens in Slime#setSize at runtime,
         // not via the attribute table itself.
         event.put(PFEntities.RESOURCE_SLIME.get(), Monster.createMonsterAttributes().build());
+        // Cave Slime and all future parent species (Geode/Tide/Void) reuse
+        // the same Monster baseline — they're vanilla-shaped Slime subclasses.
+        event.put(PFEntities.CAVE_SLIME.get(), Monster.createMonsterAttributes().build());
     }
 }

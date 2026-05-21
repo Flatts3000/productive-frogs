@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.entity.CaveSlime;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
@@ -93,5 +94,28 @@ class PFEntitiesTest {
         // and Bucketable behavior (for the future Slime Bucket) for free.
         assertTrue(Slime.class.isAssignableFrom(ResourceSlime.class),
             "ResourceSlime must extend vanilla Slime to inherit its behavior");
+    }
+
+    @Test
+    void caveSlimeIsRegistered() {
+        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "cave_slime");
+        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getValue(id);
+        assertNotNull(type, id + " must be registered");
+        assertSame(PFEntities.CAVE_SLIME.get(), type, "DeferredHolder must resolve to the registered type");
+    }
+
+    @Test
+    void caveSlimeIsMonsterCategory() {
+        EntityType<CaveSlime> type = PFEntities.CAVE_SLIME.get();
+        assertEquals(MobCategory.MONSTER, type.getCategory(),
+            "CaveSlime spawns as a monster (matches vanilla Slime)");
+    }
+
+    @Test
+    void caveSlimeExtendsVanillaSlime() {
+        // Load-bearing for SlimeSplitDiscoveryHandler#categoryForParent — the
+        // instanceof CaveSlime check assumes Slime split mechanics still fire.
+        assertTrue(Slime.class.isAssignableFrom(CaveSlime.class),
+            "CaveSlime must extend vanilla Slime so it splits like a slime");
     }
 }
