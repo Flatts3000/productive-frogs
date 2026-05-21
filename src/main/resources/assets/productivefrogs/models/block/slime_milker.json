@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top":    "productivefrogs:block/slime_milker_top",
+    "bottom": "productivefrogs:block/slime_milker_bottom",
+    "side":   "productivefrogs:block/slime_milker_side"
+  }
+}

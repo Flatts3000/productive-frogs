@@ -49,6 +49,8 @@
   "block.productivefrogs.vanilla_slime_milk":     "Slime Milk",
   "block.productivefrogs.magma_slime_milk":       "Magma Slime Milk",
 
+  "block.productivefrogs.slime_milker": "Slime Milker",
+
   "fluid_type.productivefrogs.iron_slime_milk":        "Iron Slime Milk",
   "fluid_type.productivefrogs.copper_slime_milk":      "Copper Slime Milk",
   "fluid_type.productivefrogs.gold_slime_milk":        "Gold Slime Milk",
