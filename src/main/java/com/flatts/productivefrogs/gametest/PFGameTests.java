@@ -94,6 +94,10 @@ public final class PFGameTests {
             PFGameTests::resourceSlimeSplitPreservesCategory, 100);
         registerTest("frog_tongue_targets_only_matching_category_slime",
             PFGameTests::frogTongueTargetsOnlyMatchingCategorySlime, 200);
+        registerTest("matching_frog_kill_drops_category_froglight",
+            PFGameTests::matchingFrogKillDropsCategoryFroglight, 100);
+        registerTest("mismatched_frog_kill_drops_no_froglight",
+            PFGameTests::mismatchedFrogKillDropsNoFroglight, 100);
     }
 
     private PFGameTests() {
@@ -390,6 +394,74 @@ public final class PFGameTests {
             }
             if (target != matching) {
                 helper.fail("expected matching slime as target, got " + target);
+            }
+            helper.succeed();
+        });
+    }
+
+    /**
+     * Place a matching-category frog and slime; deal lethal damage to the
+     * slime sourced from the frog (simulating the result of the tongue eat);
+     * assert a Froglight item entity of the correct category drops at the
+     * frog's position. Verifies the {@code LivingDeathEvent} handler runs.
+     */
+    private static void matchingFrogKillDropsCategoryFroglight(GameTestHelper helper) {
+        Category cat = Category.AQUATIC;
+        BlockPos frogPos = new BlockPos(2, 2, 2);
+        BlockPos slimePos = new BlockPos(3, 2, 2);
+
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
+        frog.setCategory(cat);
+
+        ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
+        slime.setSize(1, true);
+        slime.setCategory(cat);
+
+        // Damage from the frog — drives the LivingDeathEvent handler's
+        // source check.
+        slime.hurtServer(helper.getLevel(),
+            helper.getLevel().damageSources().mobAttack(frog), 999.0F);
+
+        helper.succeedWhen(() -> {
+            net.minecraft.world.item.Item expected = PFBlocks.resourceFroglight(cat).asItem();
+            boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                .anyMatch(itemEntity -> itemEntity.getItem().is(expected));
+            if (!found) {
+                helper.fail("expected " + expected + " to drop at frog position after kill");
+            }
+        });
+    }
+
+    /**
+     * Same setup but with mismatched categories — the slime dies but the
+     * handler must skip its drop because the frog/slime categories disagree.
+     * Asserts no Froglight item entities appear.
+     */
+    private static void mismatchedFrogKillDropsNoFroglight(GameTestHelper helper) {
+        BlockPos frogPos = new BlockPos(2, 2, 2);
+        BlockPos slimePos = new BlockPos(3, 2, 2);
+
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
+        frog.setCategory(Category.METALLIC);
+
+        ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
+        slime.setSize(1, true);
+        slime.setCategory(Category.INFERNAL);
+
+        slime.hurtServer(helper.getLevel(),
+            helper.getLevel().damageSources().mobAttack(frog), 999.0F);
+
+        // Wait a small window then assert: no Froglight items dropped from any
+        // category. The death event has already fired by the next tick, so 20
+        // ticks is generous headroom.
+        helper.runAfterDelay(20L, () -> {
+            for (Category cat : Category.values()) {
+                net.minecraft.world.item.Item froglight = PFBlocks.resourceFroglight(cat).asItem();
+                boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                    .anyMatch(itemEntity -> itemEntity.getItem().is(froglight));
+                if (found) {
+                    helper.fail("category mismatch should not drop Froglight, but found " + froglight);
+                }
             }
             helper.succeed();
         });
