@@ -11,6 +11,7 @@ import com.flatts.productivefrogs.content.entity.GeodeSlime;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
+import com.flatts.productivefrogs.content.entity.TideSlime;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
@@ -139,5 +140,26 @@ class PFEntitiesTest {
     void geodeSlimeExtendsVanillaSlime() {
         assertTrue(Slime.class.isAssignableFrom(GeodeSlime.class),
             "GeodeSlime must extend vanilla Slime so it splits like a slime");
+    }
+
+    @Test
+    void tideSlimeIsRegistered() {
+        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tide_slime");
+        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getValue(id);
+        assertNotNull(type, id + " must be registered");
+        assertSame(PFEntities.TIDE_SLIME.get(), type, "DeferredHolder must resolve to the registered type");
+    }
+
+    @Test
+    void tideSlimeIsMonsterCategory() {
+        EntityType<TideSlime> type = PFEntities.TIDE_SLIME.get();
+        assertEquals(MobCategory.MONSTER, type.getCategory(),
+            "TideSlime spawns as a monster (matches vanilla Slime)");
+    }
+
+    @Test
+    void tideSlimeExtendsVanillaSlime() {
+        assertTrue(Slime.class.isAssignableFrom(TideSlime.class),
+            "TideSlime must extend vanilla Slime so it splits like a slime");
     }
 }

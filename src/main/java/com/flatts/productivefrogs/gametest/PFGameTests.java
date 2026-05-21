@@ -120,6 +120,8 @@ public final class PFGameTests {
             PFGameTests::caveSlimeSplitDiscoveryConvertsToMineralResourceSlime, 100);
         registerTest("geode_slime_split_discovery_converts_to_gem_resource_slime",
             PFGameTests::geodeSlimeSplitDiscoveryConvertsToGemResourceSlime, 100);
+        registerTest("tide_slime_split_discovery_converts_to_aquatic_resource_slime",
+            PFGameTests::tideSlimeSplitDiscoveryConvertsToAquaticResourceSlime, 100);
     }
 
     private PFGameTests() {
@@ -750,6 +752,15 @@ public final class PFGameTests {
      */
     private static void geodeSlimeSplitDiscoveryConvertsToGemResourceSlime(GameTestHelper helper) {
         runSplitDiscoveryTest(helper, PFEntities.GEODE_SLIME.get(), Category.GEM);
+    }
+
+    /**
+     * Tide Slime is the parent species for AQUATIC — splitting one with 100%
+     * discovery should give AQUATIC ResourceSlimes. Same shape as the other
+     * parent-species tests.
+     */
+    private static void tideSlimeSplitDiscoveryConvertsToAquaticResourceSlime(GameTestHelper helper) {
+        runSplitDiscoveryTest(helper, PFEntities.TIDE_SLIME.get(), Category.AQUATIC);
     }
 
     /**

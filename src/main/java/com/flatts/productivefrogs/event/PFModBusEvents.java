@@ -36,5 +36,6 @@ public final class PFModBusEvents {
         // the same Monster baseline — they're vanilla-shaped Slime subclasses.
         event.put(PFEntities.CAVE_SLIME.get(), Monster.createMonsterAttributes().build());
         event.put(PFEntities.GEODE_SLIME.get(), Monster.createMonsterAttributes().build());
+        event.put(PFEntities.TIDE_SLIME.get(), Monster.createMonsterAttributes().build());
     }
 }
