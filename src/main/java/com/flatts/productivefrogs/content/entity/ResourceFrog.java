@@ -131,11 +131,13 @@ public class ResourceFrog extends Frog {
     }
 
     public static net.minecraft.world.entity.ai.attributes.AttributeSupplier.Builder createAttributes() {
-        // ATTACK_DAMAGE 10.0 matches vanilla Frog#createAttributes — anything
-        // less means the tongue's doHurtTarget() call doesn't drop the slime's
-        // HP enough to kill, the hurt animation plays but the slime survives,
-        // and our Froglight drop never fires. (0.0 was the original placeholder
-        // when ResourceSlimes didn't exist yet.)
+        // ATTACK_DAMAGE 10.0 matches vanilla Frog#createAttributes. The previous
+        // placeholder value of 0.0 (from before ResourceSlimes existed) meant
+        // doHurtTarget triggered the hurt animation but never reduced the slime's
+        // HP, so ShootTongue.eatEntity's isAlive() check never went false and the
+        // entire production loop stalled at the tongue grab. Any non-zero value
+        // would technically kill a 1-HP size-1 slime — we use the vanilla number
+        // so larger / armored future prey still die in one tongue eat.
         return Animal.createAnimalAttributes()
             .add(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, 1.0)
             .add(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, 10.0)
