@@ -49,12 +49,12 @@ Steps 1–2 are one-time setup; the jar stays in `run/mods/` across runs.
 3. **`./gradlew runGameTestServer`** — runs in-world GameTests headless. ~15s, catches behavior regressions.
 4. **`./gradlew runClient`** — full client for visual / interaction playtest.
 
-`./gradlew build` runs both test layers + assembles the jar. CI requires both `build` and `gameTest` to pass on PRs targeting `main`.
+`./gradlew build` runs `compileJava` + the JUnit suite + assembles the jar. It does NOT run the in-world GameTests — those live in `runGameTestServer`. CI runs both as separate required status checks (`build` and `gameTest`) on every PR targeting `main`.
 
 ## Other Gradle tasks
 
 - **`./gradlew runServer`** — dedicated server for testing multi-client scenarios.
-- **`./gradlew runData`** — regenerate datagen output into `src/generated/resources`.
+- **`./gradlew runClientData`** / **`./gradlew runServerData`** — regenerate datagen output into `src/generated/resources`. moddev 2.0.x split the old `data` task into client- and server-side variants (1.21.4+); use the matching variant for the asset/data you're regenerating.
 - **`./gradlew clean`** — wipe `build/`; useful when assets drift.
 
 `build/` and `run/` are git-ignored.
