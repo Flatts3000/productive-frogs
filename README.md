@@ -67,5 +67,5 @@ Full design specification lives in [`docs/`](./docs/).
 ## Open Source
 
 - **License**: MIT
-- **Repo management**: gh CLI script in sibling `D:\minecraft-repos\infra\` folder (no PAT needed, uses existing `gh auth login` session)
+- **Repo management**: gh CLI script in sibling `F:\minecraft-repos\infra\` folder (no PAT needed, uses existing `gh auth login` session)
 - See [docs/open_source.md](./docs/open_source.md) and [docs/infrastructure.md](./docs/infrastructure.md) for details.

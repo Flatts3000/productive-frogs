@@ -1,6 +1,6 @@
 # Infrastructure
 
-The Productive Frogs GitHub repository is configured via an idempotent **gh CLI script** in a sibling folder at `D:\minecraft-repos\infra\`. Operational details (commands, setup, day-to-day operations) live at `infra/README.md`. This doc covers the higher-level architecture.
+The Productive Frogs GitHub repository is configured via an idempotent **gh CLI script** in a sibling folder at `F:\minecraft-repos\infra\`. Operational details (commands, setup, day-to-day operations) live at `infra/README.md`. This doc covers the higher-level architecture.
 
 ## Tooling
 
@@ -9,7 +9,7 @@ The Productive Frogs GitHub repository is configured via an idempotent **gh CLI 
 | gh CLI | 2.0+ (latest stable) |
 | Auth | Existing gh CLI session (no PAT needed) |
 | Script language | PowerShell (Windows-native; Bash version can be added if needed) |
-| Location | `D:\minecraft-repos\infra\` (sibling to `productive-frogs/`) |
+| Location | `F:\minecraft-repos\infra\` (sibling to `productive-frogs/`) |
 
 ## Why gh CLI instead of Terraform
 
@@ -25,7 +25,7 @@ The trade-off: no declarative drift detection. For a single-operator project whe
 ## Layout
 
 ```
-D:\minecraft-repos\
+F:\minecraft-repos\
 ├── infra/                  # ← repo setup script lives here, OUTSIDE the project repo
 │   ├── README.md           — operational playbook
 │   ├── .gitignore          — excludes secrets / OS files
@@ -64,7 +64,7 @@ Because the setup script lives **outside** the productive-frogs repo, there's no
 2. **Edit `setup.ps1`** — set `$GitHubOwner` to your real GitHub handle.
 3. **Run the script** to create the empty repo:
    ```powershell
-   cd D:\minecraft-repos\infra
+   cd F:\minecraft-repos\infra
    ./setup.ps1
    ```
    Branch protection will be skipped on this first run because `main` doesn't exist yet.
