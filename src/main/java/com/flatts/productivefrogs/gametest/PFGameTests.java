@@ -33,6 +33,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
@@ -137,6 +138,12 @@ public final class PFGameTests {
             PFGameTests::magmaSlimeMilkSourceSpawnsMagmaCube, 100);
         registerTest("slime_milk_source_picks_solid_neighbour_below_when_no_horizontal_neighbour",
             PFGameTests::slimeMilkSourcePicksSolidNeighbourBelowWhenNoHorizontalNeighbour, 100);
+        registerTest("slime_milk_source_decrements_spawns_remaining_each_spawn",
+            PFGameTests::slimeMilkSourceDecrementsSpawnsRemainingEachSpawn, 100);
+        registerTest("slime_milk_source_drains_when_spawns_remaining_reaches_zero",
+            PFGameTests::slimeMilkSourceDrainsWhenSpawnsRemainingReachesZero, 100);
+        registerTest("slime_milk_source_default_state_has_max_spawns_remaining",
+            PFGameTests::slimeMilkSourceDefaultStateHasMaxSpawnsRemaining, 100);
     }
 
     private PFGameTests() {
@@ -386,8 +393,7 @@ public final class PFGameTests {
      */
     private static void splitDiscoveryPicksVariantFromPool(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 2, 2);
-        float original = com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler.discoveryChancePerOffspring;
-        com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler.discoveryChancePerOffspring = 1.0f;
+        SlimeSplitDiscoveryHandler.testOverride = 1.0f;
         try {
             net.minecraft.world.entity.monster.Slime parent =
                 helper.spawn(net.minecraft.world.entity.EntityType.SLIME, pos);
@@ -424,7 +430,7 @@ public final class PFGameTests {
                 }
             });
         } finally {
-            com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler.discoveryChancePerOffspring = original;
+            SlimeSplitDiscoveryHandler.testOverride = null;
         }
     }
 
@@ -797,8 +803,7 @@ public final class PFGameTests {
             net.minecraft.world.entity.EntityType<T> parentType,
             Category expectedCategory) {
         BlockPos pos = new BlockPos(2, 2, 2);
-        float original = SlimeSplitDiscoveryHandler.discoveryChancePerOffspring;
-        SlimeSplitDiscoveryHandler.discoveryChancePerOffspring = 1.0f;
+        SlimeSplitDiscoveryHandler.testOverride = 1.0f;
         try {
             T parent = helper.spawn(parentType, pos);
             parent.setSize(3, true);
@@ -826,7 +831,7 @@ public final class PFGameTests {
                 }
             });
         } finally {
-            SlimeSplitDiscoveryHandler.discoveryChancePerOffspring = original;
+            SlimeSplitDiscoveryHandler.testOverride = null;
         }
     }
 
@@ -1161,5 +1166,100 @@ public final class PFGameTests {
                     + "), got (" + sx + ", " + sz + ")");
             }
         });
+    }
+
+    // ---------------------------------------------------------------------
+    // J5 — Depletion counter
+    // ---------------------------------------------------------------------
+
+    /**
+     * Place an iron milk source with the depletion counter explicitly set to
+     * 5 (mid-life). Tick once and assert the resulting state's counter is
+     * 4 — confirms the decrement edge of the tick loop runs exactly once
+     * per successful spawn.
+     */
+    private static void slimeMilkSourceDecrementsSpawnsRemainingEachSpawn(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+        helper.setBlock(sourcePos.east(), Blocks.STONE);
+
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
+            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.MILK_BLOCKS.get("iron").get();
+        BlockState stateWithFive = block.defaultBlockState().setValue(
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.SPAWNS_REMAINING, 5);
+        helper.setBlock(sourcePos, stateWithFive);
+        ServerLevel level = helper.getLevel();
+        BlockPos absSourcePos = helper.absolutePos(sourcePos);
+
+        block.tick(level.getBlockState(absSourcePos), level, absSourcePos, level.getRandom());
+
+        BlockState after = level.getBlockState(absSourcePos);
+        int afterCount = after.getValue(
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.SPAWNS_REMAINING);
+        if (afterCount != 4) {
+            helper.fail("expected SPAWNS_REMAINING=4 after one tick (started at 5), got " + afterCount);
+            return;
+        }
+        // Sanity: the spawn itself still happened.
+        if (helper.getEntities(PFEntities.RESOURCE_SLIME.get()).size() != 1) {
+            helper.fail("expected 1 ResourceSlime to spawn during the decrementing tick");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Place an iron milk source with SPAWNS_REMAINING=0 (counter exhausted)
+     * and tick it. The tick must replace the block with air rather than
+     * spawning a slime — this is the drain path. Also asserts no slime
+     * appears, since the drain branch returns before {@code spawn()}.
+     */
+    private static void slimeMilkSourceDrainsWhenSpawnsRemainingReachesZero(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+        helper.setBlock(sourcePos.east(), Blocks.STONE);
+
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
+            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.MILK_BLOCKS.get("iron").get();
+        BlockState drainedState = block.defaultBlockState().setValue(
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.SPAWNS_REMAINING, 0);
+        helper.setBlock(sourcePos, drainedState);
+        ServerLevel level = helper.getLevel();
+        BlockPos absSourcePos = helper.absolutePos(sourcePos);
+
+        block.tick(level.getBlockState(absSourcePos), level, absSourcePos, level.getRandom());
+
+        // Block should be gone — removeBlock leaves air (or the next-flow
+        // state if a neighbour is feeding in; in an isolated test plot it's
+        // just air).
+        BlockState after = level.getBlockState(absSourcePos);
+        if (!after.isAir()) {
+            helper.fail("expected drained source pos to be air, got " + after);
+            return;
+        }
+        // Drain branch returns early — no slime should have spawned.
+        if (!helper.getEntities(PFEntities.RESOURCE_SLIME.get()).isEmpty()) {
+            helper.fail("drain tick must NOT produce a slime, but one appeared");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Sanity check: the block's default state has SPAWNS_REMAINING set to
+     * MAX_SPAWNS_REMAINING (16). Pins the {@code registerDefaultState}
+     * call in the constructor — if a refactor drops it, fresh placements
+     * via {@code setBlock(pos, block)} would default to 0 and drain
+     * immediately on first tick.
+     */
+    private static void slimeMilkSourceDefaultStateHasMaxSpawnsRemaining(GameTestHelper helper) {
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
+            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.MILK_BLOCKS.get("iron").get();
+        int defaultCount = block.defaultBlockState().getValue(
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.SPAWNS_REMAINING);
+        if (defaultCount != com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.MAX_SPAWNS_REMAINING) {
+            helper.fail("default state SPAWNS_REMAINING=" + defaultCount
+                + ", expected " + com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.MAX_SPAWNS_REMAINING);
+            return;
+        }
+        helper.succeed();
     }
 }

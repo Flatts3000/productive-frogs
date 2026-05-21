@@ -12,6 +12,7 @@ import com.flatts.productivefrogs.registry.PFSensors;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +45,13 @@ public final class ProductiveFrogs {
         PFSensors.register(modEventBus);
         PFCreativeTabs.register(modEventBus);
         PFGameTests.register(modEventBus);
+
+        // COMMON config — depletion + spawn cadence + discovery chance.
+        // Registered here so the config file is generated on first boot and
+        // values are available to {@code SlimeMilkSourceBlock} ticks and to
+        // {@code SlimeSplitDiscoveryHandler#onMobSplit} from the moment the
+        // mod loads.
+        modContainer.registerConfig(ModConfig.Type.COMMON, PFConfig.SPEC);
 
         modEventBus.addListener(this::onCommonSetup);
     }
