@@ -25,7 +25,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Handles right-clicking a vanilla {@code Slime} (or {@code MagmaCube}, which

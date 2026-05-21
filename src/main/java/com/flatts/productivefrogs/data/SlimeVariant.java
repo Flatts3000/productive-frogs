@@ -8,7 +8,6 @@ import java.util.Map;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Per-resource subdivision within a {@link Category}. One {@code SlimeVariant}
@@ -103,7 +102,11 @@ public record SlimeVariant(
     public static Map.Entry<Identifier, SlimeVariant> pickWeighted(
             Registry<SlimeVariant> registry, Category category, RandomSource random) {
         List<Map.Entry<Identifier, SlimeVariant>> pool = new ArrayList<>();
-        int totalWeight = 0;
+        // Accumulate as long so a datapack with many high-weight variants
+        // (each capped at Integer.MAX_VALUE individually) can't overflow.
+        // RandomSource doesn't expose nextLong-with-bound directly, so cap
+        // total + roll at Integer.MAX_VALUE — anything beyond is silly anyway.
+        long totalWeight = 0L;
         for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
             if (entry.getValue().category() != category) continue;
             pool.add(Map.entry(entry.getKey().identifier(), entry.getValue()));
@@ -112,8 +115,9 @@ public record SlimeVariant(
         if (pool.isEmpty()) {
             return null;
         }
-        int roll = random.nextInt(totalWeight);
-        int cumulative = 0;
+        int cap = (int) Math.min(totalWeight, Integer.MAX_VALUE);
+        int roll = random.nextInt(cap);
+        long cumulative = 0L;
         for (Map.Entry<Identifier, SlimeVariant> entry : pool) {
             cumulative += entry.getValue().weight();
             if (roll < cumulative) {

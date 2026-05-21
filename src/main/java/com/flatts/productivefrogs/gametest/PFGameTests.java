@@ -378,6 +378,14 @@ public final class PFGameTests {
                 if (resources.isEmpty()) {
                     helper.fail("expected at least one Resource Slime after forced discovery, got 0");
                 }
+                // At 100% chance every child must convert — no vanilla slimes
+                // should remain. Mirrors runSplitDiscoveryTest's check.
+                List<? extends net.minecraft.world.entity.monster.Slime> vanillaRemaining =
+                    helper.getEntities(net.minecraft.world.entity.EntityType.SLIME);
+                if (!vanillaRemaining.isEmpty()) {
+                    helper.fail("expected zero vanilla slime children at 100% discovery, got "
+                        + vanillaRemaining.size());
+                }
                 for (ResourceSlime s : resources) {
                     Identifier variantId = s.getVariantId();
                     if (variantId == null) {
