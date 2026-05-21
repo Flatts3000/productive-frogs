@@ -131,10 +131,15 @@ public class ResourceFrog extends Frog {
     }
 
     public static net.minecraft.world.entity.ai.attributes.AttributeSupplier.Builder createAttributes() {
+        // ATTACK_DAMAGE 10.0 matches vanilla Frog#createAttributes — anything
+        // less means the tongue's doHurtTarget() call doesn't drop the slime's
+        // HP enough to kill, the hurt animation plays but the slime survives,
+        // and our Froglight drop never fires. (0.0 was the original placeholder
+        // when ResourceSlimes didn't exist yet.)
         return Animal.createAnimalAttributes()
             .add(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, 1.0)
             .add(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, 10.0)
-            .add(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, 0.0)
+            .add(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, 10.0)
             .add(net.minecraft.world.entity.ai.attributes.Attributes.STEP_HEIGHT, 1.0);
     }
 }
