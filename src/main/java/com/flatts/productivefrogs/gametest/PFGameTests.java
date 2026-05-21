@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.FunctionGameTestInstance;
@@ -127,6 +128,16 @@ public final class PFGameTests {
             PFGameTests::voidSlimeSplitDiscoveryConvertsToArcaneResourceSlime, 100);
         registerTest("slime_milker_converts_iron_slime_bucket_into_iron_milk_bucket",
             PFGameTests::slimeMilkerConvertsIronSlimeBucketIntoIronMilkBucket, 100);
+        registerTest("slime_milk_source_spawns_iron_resource_slime_on_solid_neighbour",
+            PFGameTests::slimeMilkSourceSpawnsIronResourceSlimeOnSolidNeighbour, 100);
+        registerTest("slime_milk_source_falls_back_to_column_when_no_solid_neighbour",
+            PFGameTests::slimeMilkSourceFallsBackToColumnWhenNoSolidNeighbour, 100);
+        registerTest("vanilla_slime_milk_source_spawns_vanilla_slime",
+            PFGameTests::vanillaSlimeMilkSourceSpawnsVanillaSlime, 100);
+        registerTest("magma_slime_milk_source_spawns_magma_cube",
+            PFGameTests::magmaSlimeMilkSourceSpawnsMagmaCube, 100);
+        registerTest("slime_milk_source_skips_spawn_when_all_candidates_blocked",
+            PFGameTests::slimeMilkSourceSkipsSpawnWhenAllCandidatesBlocked, 100);
     }
 
     private PFGameTests() {
@@ -943,5 +954,198 @@ public final class PFGameTests {
         helper.assertBlockPresent(PFBlocks.SLIME_MILKER.get(), milkerPos);
 
         helper.succeed();
+    }
+
+    // ---------------------------------------------------------------------
+    // J4 — Slime Milk source-block spawning
+    // ---------------------------------------------------------------------
+
+    /**
+     * Happy path: an iron_slime_milk source block with a solid neighbour
+     * directly east should spawn one size-1 iron ResourceSlime on top of
+     * that neighbour when its tick fires.
+     *
+     * <p>Tick is invoked directly on the concrete block reference (same
+     * pattern as {@code primedEggHatchesIntoMatchingCategoryTadpoles}) so we
+     * don't sit through the 200–600-tick scheduled delay. The block widens
+     * {@code tick} to public specifically to enable this.
+     */
+    private static void slimeMilkSourceSpawnsIronResourceSlimeOnSolidNeighbour(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+        BlockPos neighbourPos = sourcePos.east();
+        BlockPos expectedSpawnPos = neighbourPos.above();
+
+        // Stone east of the source provides the solid landing pad. Other
+        // neighbours stay air so the candidate iteration short-circuits on
+        // the first hit and the spawn lands deterministically east-up.
+        helper.setBlock(neighbourPos, Blocks.STONE);
+
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
+            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.MILK_BLOCKS.get("iron").get();
+        helper.setBlock(sourcePos, block);
+        ServerLevel level = helper.getLevel();
+        BlockPos absSourcePos = helper.absolutePos(sourcePos);
+        block.tick(level.getBlockState(absSourcePos), level, absSourcePos, level.getRandom());
+
+        helper.succeedWhen(() -> {
+            List<ResourceSlime> slimes = helper.getEntities(PFEntities.RESOURCE_SLIME.get());
+            if (slimes.size() != 1) {
+                helper.fail("expected exactly 1 ResourceSlime, got " + slimes.size());
+                return;
+            }
+            ResourceSlime slime = slimes.get(0);
+            if (slime.getSize() != 1) {
+                helper.fail("spawned slime has size " + slime.getSize() + ", expected 1");
+            }
+            Identifier expectedVariant = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+            if (!expectedVariant.equals(slime.getVariantId())) {
+                helper.fail("spawned slime has variant " + slime.getVariantId() + ", expected " + expectedVariant);
+            }
+            // Position check: the slime should land on top of the stone
+            // neighbour. Use floor(y) so we don't fight bobbing physics —
+            // the slime's spawn Y is whole, but a tick or two of gravity
+            // may have settled it.
+            BlockPos absExpected = helper.absolutePos(expectedSpawnPos);
+            int sx = net.minecraft.util.Mth.floor(slime.getX());
+            int sz = net.minecraft.util.Mth.floor(slime.getZ());
+            if (sx != absExpected.getX() || sz != absExpected.getZ()) {
+                helper.fail("spawned slime at (" + sx + ", " + sz + "), expected ("
+                    + absExpected.getX() + ", " + absExpected.getZ() + ")");
+            }
+        });
+    }
+
+    /**
+     * No solid horizontal neighbour available — the spawn position picker
+     * falls back to the column directly above the source. Sanity-checks the
+     * fallback branch in {@code chooseSpawnPos}.
+     */
+    private static void slimeMilkSourceFallsBackToColumnWhenNoSolidNeighbour(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+
+        // All 4 horizontal neighbours stay air; the column above stays air.
+        // Only candidate the picker finds is sourcePos.above().
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
+            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.MILK_BLOCKS.get("copper").get();
+        helper.setBlock(sourcePos, block);
+        ServerLevel level = helper.getLevel();
+        BlockPos absSourcePos = helper.absolutePos(sourcePos);
+        block.tick(level.getBlockState(absSourcePos), level, absSourcePos, level.getRandom());
+
+        helper.succeedWhen(() -> {
+            List<ResourceSlime> slimes = helper.getEntities(PFEntities.RESOURCE_SLIME.get());
+            if (slimes.size() != 1) {
+                helper.fail("expected exactly 1 ResourceSlime from column fallback, got " + slimes.size());
+                return;
+            }
+            ResourceSlime slime = slimes.get(0);
+            Identifier expectedVariant = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
+            if (!expectedVariant.equals(slime.getVariantId())) {
+                helper.fail("spawned slime has variant " + slime.getVariantId() + ", expected " + expectedVariant);
+            }
+        });
+    }
+
+    /**
+     * vanilla_slime_milk maps to a vanilla {@code Slime} (no ResourceSlime
+     * wrapper, no SlimeVariant). The variant-name switch in
+     * {@code createSlimeForVariant} is what diverges here — if a refactor
+     * accidentally routes "vanilla" through the ResourceSlime path, this
+     * test catches it.
+     */
+    private static void vanillaSlimeMilkSourceSpawnsVanillaSlime(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+        helper.setBlock(sourcePos.east(), Blocks.STONE);
+
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
+            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.MILK_BLOCKS.get("vanilla").get();
+        helper.setBlock(sourcePos, block);
+        ServerLevel level = helper.getLevel();
+        BlockPos absSourcePos = helper.absolutePos(sourcePos);
+        block.tick(level.getBlockState(absSourcePos), level, absSourcePos, level.getRandom());
+
+        helper.succeedWhen(() -> {
+            if (!helper.getEntities(PFEntities.RESOURCE_SLIME.get()).isEmpty()) {
+                helper.fail("vanilla milk must NOT produce a ResourceSlime — the spawner should route through EntityType.SLIME");
+                return;
+            }
+            // getEntities for vanilla Slime catches our ResourceSlime too
+            // because ResourceSlime extends Slime — filter strictly by class
+            // so we're asserting a vanilla green slime specifically.
+            long vanillaCount = helper.getEntities(net.minecraft.world.entity.EntityType.SLIME).stream()
+                .filter(s -> s.getClass() == net.minecraft.world.entity.monster.Slime.class)
+                .count();
+            if (vanillaCount != 1) {
+                helper.fail("expected exactly 1 vanilla Slime, got " + vanillaCount);
+            }
+        });
+    }
+
+    /** magma_slime_milk → vanilla MagmaCube. Mirror of the vanilla-milk test. */
+    private static void magmaSlimeMilkSourceSpawnsMagmaCube(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+        helper.setBlock(sourcePos.east(), Blocks.STONE);
+
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
+            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.MILK_BLOCKS.get("magma").get();
+        helper.setBlock(sourcePos, block);
+        ServerLevel level = helper.getLevel();
+        BlockPos absSourcePos = helper.absolutePos(sourcePos);
+        block.tick(level.getBlockState(absSourcePos), level, absSourcePos, level.getRandom());
+
+        helper.succeedWhen(() -> {
+            List<net.minecraft.world.entity.monster.MagmaCube> cubes =
+                helper.getEntities(net.minecraft.world.entity.EntityType.MAGMA_CUBE);
+            if (cubes.size() != 1) {
+                helper.fail("expected exactly 1 MagmaCube, got " + cubes.size());
+            }
+        });
+    }
+
+    /**
+     * Box the source in: stone above (blocks the column fallback) plus stone
+     * directly above each horizontal neighbour (blocks the rim slots even
+     * though the horizontal neighbours themselves are solid). The picker
+     * returns null and no slime spawns. Tick still reschedules itself — we
+     * don't assert that here because the test plot tears down before the
+     * 40–80-tick retry would fire.
+     */
+    private static void slimeMilkSourceSkipsSpawnWhenAllCandidatesBlocked(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+
+        // Block the column fallback first — even one stone above the source
+        // makes that branch return null.
+        helper.setBlock(sourcePos.above(), Blocks.STONE);
+
+        // Each horizontal neighbour gets a stone at its OWN position (so it
+        // could serve as a sturdy support) but we also put stone in the rim
+        // slot one above. That way the picker sees a sturdy support but the
+        // rim is blocksMotion → fails the vacancy check → moves on.
+        for (Direction dir : Direction.Plane.HORIZONTAL) {
+            BlockPos lateral = sourcePos.relative(dir);
+            helper.setBlock(lateral, Blocks.STONE);
+            helper.setBlock(lateral.above(), Blocks.STONE);
+        }
+
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
+            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.MILK_BLOCKS.get("gold").get();
+        helper.setBlock(sourcePos, block);
+        ServerLevel level = helper.getLevel();
+        BlockPos absSourcePos = helper.absolutePos(sourcePos);
+        block.tick(level.getBlockState(absSourcePos), level, absSourcePos, level.getRandom());
+
+        // Give the world a beat to process any spawn that may have slipped
+        // through, then assert no slimes exist anywhere in the plot.
+        helper.runAfterDelay(5L, () -> {
+            if (!helper.getEntities(PFEntities.RESOURCE_SLIME.get()).isEmpty()) {
+                helper.fail("spawn should have been skipped (every candidate blocked), but a ResourceSlime appeared");
+                return;
+            }
+            if (!helper.getEntities(net.minecraft.world.entity.EntityType.SLIME).isEmpty()) {
+                helper.fail("spawn should have been skipped, but a vanilla Slime appeared");
+                return;
+            }
+            helper.succeed();
+        });
     }
 }
