@@ -9,14 +9,21 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.monster.Slime;
 
 /**
- * Resource Slime renderer. Extends vanilla {@link SlimeRenderer} so we reuse
- * the vanilla model, texture, and shadow size verbatim — the only difference
- * is a per-category color multiply via {@link #getModelTint}.
+ * Resource Slime renderer. Extends vanilla {@link SlimeRenderer} to reuse the
+ * vanilla model and shadow size, but swaps two things:
  *
- * <p>Same pattern as {@link com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer}:
+ * <ul>
+ *   <li>Inner body texture — points at our desaturated {@code resource_slime.png}
+ *       (see field doc below) so multiply-tinting renders as a clear category
+ *       color instead of darker-green.</li>
+ *   <li>Per-category color multiply via {@link #getModelTint}, driven by the
+ *       category stored on {@link ResourceSlimeRenderState}.</li>
+ * </ul>
+ *
+ * <p>Same render-state pattern as {@link com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer}:
  * substitute a {@link ResourceSlimeRenderState} for the base state via
  * {@link #createRenderState}, populate the category in
- * {@link #extractRenderState}, and read it back in {@code getModelTint}.
+ * {@link #extractRenderState}, read it back in {@code getModelTint}.
  */
 public class ResourceSlimeRenderer extends SlimeRenderer {
 
