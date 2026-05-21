@@ -3,7 +3,6 @@ package com.flatts.productivefrogs.content.block;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.flatts.productivefrogs.registry.PFFluidTypes;
 import com.flatts.productivefrogs.registry.PFItems;
@@ -114,12 +113,11 @@ class SlimeMilkerBlockTest {
         // VARIANTS.contains() check but then NPEs at MILK_BUCKETS.get(...).get().
         // This test is the canary for that drift.
         for (String variant : PFFluidTypes.VARIANTS) {
-            assertTrue(PFFluidTypes.VARIANTS.contains(variant),
-                "self-check: variant " + variant + " missing from VARIANTS list");
-            assertNotNull(PFItems.MILK_BUCKETS.get(variant),
+            var deferred = PFItems.MILK_BUCKETS.get(variant);
+            assertNotNull(deferred,
                 "variant " + variant + " has no entry in MILK_BUCKETS — "
                     + "PFFluidTypes.VARIANTS and PFItems.MILK_BUCKETS drifted");
-            assertNotNull(PFItems.MILK_BUCKETS.get(variant).get(),
+            assertNotNull(deferred.get(),
                 "MILK_BUCKETS[" + variant + "] deferred item never bound");
         }
     }

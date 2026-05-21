@@ -869,11 +869,11 @@ public final class PFGameTests {
      * server-side data flow that the JUnit test can't reach.
      *
      * <p>The Slime Milker block is also placed and asserted present, which
-     * exercises blockstate / model / texture JSON resolution at server boot
-     * (a missing asset file would log loudly but the block itself still
-     * places; a missing blockstate variant would log a warning but not
-     * fail this test — the asset side is best-checked by running the dev
-     * client, not by GameTest).
+     * confirms the block is registered and its default state is valid for
+     * world placement. Client-side asset resolution (blockstates, models,
+     * textures) is NOT exercised — the dedicated GameTest server doesn't
+     * load client resource packs, so missing or malformed asset JSON has
+     * to be caught by running {@code ./gradlew runClient} manually.
      */
     private static void slimeMilkerConvertsIronSlimeBucketIntoIronMilkBucket(GameTestHelper helper) {
         BlockPos milkerPos = new BlockPos(2, 2, 2);
@@ -939,8 +939,8 @@ public final class PFGameTests {
         // setBlock → BlockState resolution path. We do NOT invoke useItemOn
         // here — that requires a Player, and the JUnit test covers the
         // parser surface that drives useItemOn's branching.
-        helper.setBlock(milkerPos, com.flatts.productivefrogs.registry.PFBlocks.SLIME_MILKER.get());
-        helper.assertBlockPresent(com.flatts.productivefrogs.registry.PFBlocks.SLIME_MILKER.get(), milkerPos);
+        helper.setBlock(milkerPos, PFBlocks.SLIME_MILKER.get());
+        helper.assertBlockPresent(PFBlocks.SLIME_MILKER.get(), milkerPos);
 
         helper.succeed();
     }
