@@ -34,6 +34,7 @@ public class ResourceSlimeOuterLayer extends RenderLayer<SlimeRenderState, Slime
         this.model = new SlimeModel(modelSet.bakeLayer(ModelLayers.SLIME_OUTER));
     }
 
+    @Override
     public void submit(PoseStack pose, SubmitNodeCollector collector, int light, SlimeRenderState state,
                        float yRot, float xRot) {
         boolean glowingOutline = state.appearsGlowing() && state.isInvisible;

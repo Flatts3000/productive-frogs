@@ -17,24 +17,31 @@ import net.minecraft.world.entity.monster.Slime;
  * vanilla model + shadow, but swaps the texture per-category to give each
  * slime the "block-inside-a-translucent-shell" look.
  *
- * <p>Vanilla slime.png is a single 64×32 PNG with two UV regions baked into
- * the model (see {@code net.minecraft.client.model.monster.slime.SlimeModel}):
+ * <p>Vanilla slime.png is a single 64×32 PNG, but the SlimeModel cubes sample
+ * two distinct UV regions of it (see {@code net.minecraft.client.model.monster.slime.SlimeModel}):
  *
  * <ul>
  *   <li><b>Outer cube</b> ({@code texOffs(0, 0)}, 8×8×8) → samples pixels
  *       in the top-left {@code (0..32, 0..16)} region. Rendered with
- *       {@code entityTranslucent} by {@code SlimeOuterLayer}, so whatever
- *       color we put here shows up as a translucent shell.</li>
+ *       {@code entityTranslucent} by the outer layer, so whatever color we
+ *       put there shows up as a translucent shell.</li>
  *   <li><b>Inner cube</b> ({@code texOffs(0, 16)}, 6×6×6) → samples pixels
  *       in the lower-left {@code (0..24, 16..28)} region. Rendered solid.</li>
  *   <li>Eyes/mouth in the top-right corner.</li>
  * </ul>
  *
- * <p>Per-category textures (built by the generation script in PR #G) fill
- * the inner region with the category's representative vanilla block
- * (iron_block for METALLIC, redstone_block for MINERAL, etc.) and the outer
- * region with solid mid-gray. The single texture replacement handles both
- * cubes — no need to override {@code SlimeOuterLayer}.
+ * <p>Per-category textures fill the inner region with the category's
+ * representative vanilla block (iron_block for METALLIC, redstone_block for
+ * MINERAL, etc.) and the outer region with solid mid-gray. One file feeds
+ * both cubes via the same UV-segmented layout vanilla uses.
+ *
+ * <p>The constructor replaces vanilla's {@link SlimeOuterLayer} with our
+ * {@link ResourceSlimeOuterLayer}: the vanilla layer hardcodes
+ * {@code SlimeRenderer.SLIME_LOCATION} for the translucent shell, so without
+ * this swap the outer cube would still render the vanilla green slime
+ * texture even though our inner cube reads from the per-category file. The
+ * replacement layer routes through {@link #getTextureLocation} so both cubes
+ * read from the same per-category file.
  *
  * <p>No {@link #getModelTint} override: the texture itself carries the
  * category color, so a tint multiply would only mute the block textures.
