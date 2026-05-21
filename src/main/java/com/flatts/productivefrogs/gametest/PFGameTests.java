@@ -9,6 +9,7 @@ import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.PFTags;
 import com.flatts.productivefrogs.event.SlimeInfusionHandler;
+import com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
@@ -100,6 +101,10 @@ public final class PFGameTests {
             PFGameTests::mismatchedFrogKillDropsNoFroglight, 100);
         registerTest("slime_bucket_round_trip_preserves_category",
             PFGameTests::slimeBucketRoundTripPreservesCategory, 100);
+        registerTest("vanilla_slime_split_discovery_converts_to_metallic_resource_slime",
+            PFGameTests::vanillaSlimeSplitDiscoveryConvertsToMetallicResourceSlime, 100);
+        registerTest("vanilla_magma_cube_split_discovery_converts_to_infernal_resource_slime",
+            PFGameTests::vanillaMagmaCubeSplitDiscoveryConvertsToInfernalResourceSlime, 100);
     }
 
     private PFGameTests() {
@@ -518,6 +523,66 @@ public final class PFGameTests {
             helper.fail("released slime must be flagged fromBucket so it survives chunk reload");
         }
         helper.succeed();
+    }
+
+    /**
+     * Force the discovery chance to 100% and split a vanilla green slime —
+     * assert every child becomes a METALLIC {@link ResourceSlime} via
+     * {@link SlimeSplitDiscoveryHandler}'s {@link MobSplitEvent} hook.
+     */
+    private static void vanillaSlimeSplitDiscoveryConvertsToMetallicResourceSlime(GameTestHelper helper) {
+        runSplitDiscoveryTest(helper, net.minecraft.world.entity.EntityType.SLIME, Category.METALLIC);
+    }
+
+    /**
+     * Same shape as the slime test but for magma cubes — vanilla magma cube
+     * splits map to INFERNAL Resource Slimes.
+     */
+    private static void vanillaMagmaCubeSplitDiscoveryConvertsToInfernalResourceSlime(GameTestHelper helper) {
+        runSplitDiscoveryTest(helper, net.minecraft.world.entity.EntityType.MAGMA_CUBE, Category.INFERNAL);
+    }
+
+    /**
+     * Shared body for the discovery tests — force chance=1.0, split a size-3
+     * parent, assert all children are ResourceSlimes of the expected category.
+     * Restores chance via try/finally so subsequent tests aren't affected.
+     */
+    private static <T extends net.minecraft.world.entity.monster.Slime> void runSplitDiscoveryTest(
+            GameTestHelper helper,
+            net.minecraft.world.entity.EntityType<T> parentType,
+            Category expectedCategory) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        float original = SlimeSplitDiscoveryHandler.discoveryChancePerOffspring;
+        SlimeSplitDiscoveryHandler.discoveryChancePerOffspring = 1.0f;
+        try {
+            T parent = helper.spawn(parentType, pos);
+            parent.setSize(3, true);
+            // Force death + split. setHealth(0) flips isDeadOrDying, then
+            // remove(KILLED) runs vanilla's split which fires MobSplitEvent.
+            parent.setHealth(0.0F);
+            parent.remove(net.minecraft.world.entity.Entity.RemovalReason.KILLED);
+
+            helper.succeedWhen(() -> {
+                List<ResourceSlime> resources = helper.getEntities(PFEntities.RESOURCE_SLIME.get());
+                if (resources.isEmpty()) {
+                    helper.fail("expected at least one ResourceSlime from forced 100% discovery, got 0");
+                }
+                List<? extends net.minecraft.world.entity.monster.Slime> vanillaRemaining =
+                    helper.getEntities(parentType);
+                if (!vanillaRemaining.isEmpty()) {
+                    helper.fail("expected zero vanilla " + parentType + " children after 100% conversion, "
+                        + "got " + vanillaRemaining.size());
+                }
+                for (ResourceSlime slime : resources) {
+                    if (slime.getCategory() != expectedCategory) {
+                        helper.fail("discovered slime has category " + slime.getCategory()
+                            + ", expected " + expectedCategory);
+                    }
+                }
+            });
+        } finally {
+            SlimeSplitDiscoveryHandler.discoveryChancePerOffspring = original;
+        }
     }
 
     /**
