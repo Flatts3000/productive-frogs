@@ -8,6 +8,8 @@ import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.PFTags;
+import com.flatts.productivefrogs.data.SlimeVariant;
+import com.flatts.productivefrogs.registry.PFRegistries;
 import com.flatts.productivefrogs.event.SlimeInfusionHandler;
 import com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler;
 import com.flatts.productivefrogs.registry.PFBlocks;
@@ -105,6 +107,8 @@ public final class PFGameTests {
             PFGameTests::vanillaSlimeSplitDiscoveryConvertsToMetallicResourceSlime, 100);
         registerTest("vanilla_magma_cube_split_discovery_converts_to_infernal_resource_slime",
             PFGameTests::vanillaMagmaCubeSplitDiscoveryConvertsToInfernalResourceSlime, 100);
+        registerTest("slime_variant_datapack_registry_loads_initial_variants",
+            PFGameTests::slimeVariantDatapackRegistryLoadsInitialVariants, 100);
     }
 
     private PFGameTests() {
@@ -308,6 +312,51 @@ public final class PFGameTests {
             helper.fail(BuiltInRegistries.ITEM.getKey(item)
                 + " must be in primer/" + cat.id() + " tag — check the JSON and the directory path");
         }
+    }
+
+    /**
+     * Verify that the {@code productivefrogs:slime_variant} datapack registry
+     * is populated by server boot with our 12 shipped variants. Confirms three
+     * things end-to-end: (a) the {@code DataPackRegistryEvent.NewRegistry}
+     * listener actually fires and binds the codec, (b) NeoForge loads JSONs
+     * from the conventional {@code data/<ns>/productivefrogs/slime_variant/}
+     * path, and (c) the codec decodes them without throwing.
+     */
+    private static void slimeVariantDatapackRegistryLoadsInitialVariants(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        net.minecraft.core.Registry<SlimeVariant> registry =
+            level.registryAccess().lookupOrThrow(PFRegistries.SLIME_VARIANT);
+
+        String[] expected = {
+            "iron", "copper", "gold",
+            "redstone", "lapis", "coal",
+            "diamond", "emerald",
+            "prismarine", "sponge",
+            "magma_cream",
+            "ender_pearl"
+        };
+        for (String name : expected) {
+            Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, name);
+            SlimeVariant variant = registry.getValue(id);
+            if (variant == null) {
+                helper.fail("expected variant " + id + " to be loaded from datapack registry");
+            }
+        }
+
+        // Spot-check a specific variant's decoded fields so a codec regression
+        // (e.g., a field name typo) fails the test, not just "registry empty."
+        SlimeVariant iron = registry.getValue(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        if (iron == null) {
+            helper.fail("iron variant must be loaded");
+            return;
+        }
+        if (iron.category() != Category.METALLIC) {
+            helper.fail("iron variant should be METALLIC, got " + iron.category());
+        }
+        if (!iron.primerItem().equals(Identifier.fromNamespaceAndPath("minecraft", "iron_ingot"))) {
+            helper.fail("iron variant primer should be minecraft:iron_ingot, got " + iron.primerItem());
+        }
+        helper.succeed();
     }
 
     /**
