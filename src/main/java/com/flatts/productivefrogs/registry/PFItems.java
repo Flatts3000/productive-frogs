@@ -169,6 +169,13 @@ public final class PFItems {
         () -> new Item.Properties().spawnEgg(PFEntities.CAVE_SLIME.get())
     );
 
+    /** Geode Slime spawn egg — GEM parent species. Mirrors Cave Slime. */
+    public static final DeferredItem<SpawnEggItem> GEODE_SLIME_SPAWN_EGG = ITEMS.registerItem(
+        "geode_slime_spawn_egg",
+        SpawnEggItem::new,
+        () -> new Item.Properties().spawnEgg(PFEntities.GEODE_SLIME.get())
+    );
+
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {

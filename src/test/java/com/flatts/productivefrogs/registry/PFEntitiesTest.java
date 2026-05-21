@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.CaveSlime;
+import com.flatts.productivefrogs.content.entity.GeodeSlime;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
@@ -117,5 +118,26 @@ class PFEntitiesTest {
         // instanceof CaveSlime check assumes Slime split mechanics still fire.
         assertTrue(Slime.class.isAssignableFrom(CaveSlime.class),
             "CaveSlime must extend vanilla Slime so it splits like a slime");
+    }
+
+    @Test
+    void geodeSlimeIsRegistered() {
+        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "geode_slime");
+        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getValue(id);
+        assertNotNull(type, id + " must be registered");
+        assertSame(PFEntities.GEODE_SLIME.get(), type, "DeferredHolder must resolve to the registered type");
+    }
+
+    @Test
+    void geodeSlimeIsMonsterCategory() {
+        EntityType<GeodeSlime> type = PFEntities.GEODE_SLIME.get();
+        assertEquals(MobCategory.MONSTER, type.getCategory(),
+            "GeodeSlime spawns as a monster (matches vanilla Slime)");
+    }
+
+    @Test
+    void geodeSlimeExtendsVanillaSlime() {
+        assertTrue(Slime.class.isAssignableFrom(GeodeSlime.class),
+            "GeodeSlime must extend vanilla Slime so it splits like a slime");
     }
 }

@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.event;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.CaveSlime;
+import com.flatts.productivefrogs.content.entity.GeodeSlime;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.SlimeVariant;
@@ -134,6 +135,9 @@ public final class SlimeSplitDiscoveryHandler {
         }
         if (parent instanceof CaveSlime) {
             return Category.MINERAL;
+        }
+        if (parent instanceof GeodeSlime) {
+            return Category.GEM;
         }
         if (parent.getClass() == Slime.class) {
             return Category.METALLIC;

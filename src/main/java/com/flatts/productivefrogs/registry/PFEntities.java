@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.CaveSlime;
+import com.flatts.productivefrogs.content.entity.GeodeSlime;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
@@ -87,6 +88,25 @@ public final class PFEntities {
                 .build(net.minecraft.resources.ResourceKey.create(
                     Registries.ENTITY_TYPE,
                     net.minecraft.resources.Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "cave_slime")
+                ))
+        );
+
+    /**
+     * Geode Slime — the GEM parent species. Same shape as CaveSlime; the only
+     * differences are the EntityType registration name, the renderer texture,
+     * and the {@code instanceof GeodeSlime → GEM} branch in
+     * {@link com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler}.
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<GeodeSlime>> GEODE_SLIME =
+        ENTITIES.register(
+            "geode_slime",
+            () -> EntityType.Builder.<GeodeSlime>of(GeodeSlime::new, MobCategory.MONSTER)
+                .sized(2.04F, 2.04F)
+                .eyeHeight(0.625F)
+                .clientTrackingRange(10)
+                .build(net.minecraft.resources.ResourceKey.create(
+                    Registries.ENTITY_TYPE,
+                    net.minecraft.resources.Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "geode_slime")
                 ))
         );
 

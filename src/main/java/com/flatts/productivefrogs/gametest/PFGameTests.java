@@ -118,6 +118,8 @@ public final class PFGameTests {
             PFGameTests::splitDiscoveryPicksVariantFromPool, 100);
         registerTest("cave_slime_split_discovery_converts_to_mineral_resource_slime",
             PFGameTests::caveSlimeSplitDiscoveryConvertsToMineralResourceSlime, 100);
+        registerTest("geode_slime_split_discovery_converts_to_gem_resource_slime",
+            PFGameTests::geodeSlimeSplitDiscoveryConvertsToGemResourceSlime, 100);
     }
 
     private PFGameTests() {
@@ -739,6 +741,15 @@ public final class PFGameTests {
      */
     private static void caveSlimeSplitDiscoveryConvertsToMineralResourceSlime(GameTestHelper helper) {
         runSplitDiscoveryTest(helper, PFEntities.CAVE_SLIME.get(), Category.MINERAL);
+    }
+
+    /**
+     * Geode Slime is the parent species for GEM — splitting one with 100%
+     * discovery should give GEM ResourceSlimes. Same shape as the Cave Slime
+     * test, just hitting the {@code instanceof GeodeSlime} branch.
+     */
+    private static void geodeSlimeSplitDiscoveryConvertsToGemResourceSlime(GameTestHelper helper) {
+        runSplitDiscoveryTest(helper, PFEntities.GEODE_SLIME.get(), Category.GEM);
     }
 
     /**

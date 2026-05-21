@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.client;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.client.renderer.CaveSlimeRenderer;
+import com.flatts.productivefrogs.client.renderer.GeodeSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceFrogRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
@@ -55,6 +56,7 @@ public final class PFClientEvents {
         event.registerEntityRenderer(PFEntities.RESOURCE_FROG.get(), ResourceFrogRenderer::new);
         event.registerEntityRenderer(PFEntities.RESOURCE_SLIME.get(), ResourceSlimeRenderer::new);
         event.registerEntityRenderer(PFEntities.CAVE_SLIME.get(), CaveSlimeRenderer::new);
+        event.registerEntityRenderer(PFEntities.GEODE_SLIME.get(), GeodeSlimeRenderer::new);
     }
 
     @SubscribeEvent
