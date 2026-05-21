@@ -15,6 +15,7 @@ import com.flatts.productivefrogs.event.SlimeInfusionHandler;
 import com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFEntities;
+import com.flatts.productivefrogs.registry.PFFluidTypes;
 import com.flatts.productivefrogs.registry.PFItems;
 import java.util.ArrayList;
 import java.util.List;
@@ -124,6 +125,8 @@ public final class PFGameTests {
             PFGameTests::tideSlimeSplitDiscoveryConvertsToAquaticResourceSlime, 100);
         registerTest("void_slime_split_discovery_converts_to_arcane_resource_slime",
             PFGameTests::voidSlimeSplitDiscoveryConvertsToArcaneResourceSlime, 100);
+        registerTest("slime_milker_converts_iron_slime_bucket_into_iron_milk_bucket",
+            PFGameTests::slimeMilkerConvertsIronSlimeBucketIntoIronMilkBucket, 100);
     }
 
     private PFGameTests() {
@@ -852,5 +855,93 @@ public final class PFGameTests {
                 }
             }
         });
+    }
+
+    /**
+     * In-world integration check for the Slime Milker's variant pipeline.
+     * Capture an iron-variant Resource Slime to a slime bucket, place the
+     * milker, and verify the chain the block's {@code useItemOn} walks:
+     * the bucket's {@code BUCKET_ENTITY_DATA} carries the variant identifier,
+     * {@link PFFluidTypes#VARIANTS} recognizes the parsed path, and
+     * {@link PFItems#MILK_BUCKETS} resolves it to the matching milk bucket
+     * item. Parsing-edge cases (empty bucket, missing Variant tag, malformed
+     * id) are covered by {@code SlimeMilkerBlockTest}; this test pins the
+     * server-side data flow that the JUnit test can't reach.
+     *
+     * <p>The Slime Milker block is also placed and asserted present, which
+     * confirms the block is registered and its default state is valid for
+     * world placement. Client-side asset resolution (blockstates, models,
+     * textures) is NOT exercised — the dedicated GameTest server doesn't
+     * load client resource packs, so missing or malformed asset JSON has
+     * to be caught by running {@code ./gradlew runClient} manually.
+     */
+    private static void slimeMilkerConvertsIronSlimeBucketIntoIronMilkBucket(GameTestHelper helper) {
+        BlockPos milkerPos = new BlockPos(2, 2, 2);
+        BlockPos slimePos = new BlockPos(3, 2, 2);
+
+        // Capture an iron-variant slime — saveToBucketTag is the same write
+        // path mobInteract walks when a player right-clicks the slime with
+        // an empty slime bucket. Mirrors the slime_bucket_round_trip test's
+        // setup but with a registered Variant so the milker has work to do.
+        ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
+        source.setSize(1, true);
+        Identifier ironVariant = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        source.setVariant(ironVariant);
+        if (source.getCategory() != Category.METALLIC) {
+            helper.fail("setVariant(iron) should sync category to METALLIC, got " + source.getCategory());
+            return;
+        }
+
+        ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
+        source.saveToBucketTag(bucket);
+
+        // Pin the wire format the milker depends on: Variant is written as
+        // the full Identifier string. If saveToBucketTag is ever refactored
+        // to write the bare path (or some struct shape), the milker silently
+        // stops resolving variants — this assertion is the canary.
+        net.minecraft.world.item.component.CustomData data =
+            bucket.get(net.minecraft.core.component.DataComponents.BUCKET_ENTITY_DATA);
+        if (data == null) {
+            helper.fail("slime bucket BUCKET_ENTITY_DATA is null after saveToBucketTag");
+            return;
+        }
+        String storedVariant = data.copyTag().getString("Variant").orElse(null);
+        if (!ironVariant.toString().equals(storedVariant)) {
+            helper.fail("expected Variant=" + ironVariant + " in bucket NBT, got " + storedVariant);
+            return;
+        }
+
+        // Variant-resolution chain — the exact lookups SlimeMilkerBlock.useItemOn
+        // performs after readBucketVariant returns. Stays in lockstep with
+        // PFFluidTypes.VARIANTS + PFItems.MILK_BUCKETS so a drift between
+        // either of those data structures and the milker's expectations
+        // surfaces here.
+        String variantPath = ironVariant.getPath();
+        if (!PFFluidTypes.VARIANTS.contains(variantPath)) {
+            helper.fail("PFFluidTypes.VARIANTS missing iron — milker would no-op on iron slimes");
+            return;
+        }
+        if (PFItems.MILK_BUCKETS.get(variantPath) == null
+            || PFItems.MILK_BUCKETS.get(variantPath).get() == null) {
+            helper.fail("PFItems.MILK_BUCKETS.iron unbound — milker would NPE on iron slimes");
+            return;
+        }
+        net.minecraft.world.item.Item ironMilkBucket = PFItems.MILK_BUCKETS.get(variantPath).get();
+        Identifier expected = BuiltInRegistries.ITEM.getKey(ironMilkBucket);
+        Identifier actual = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk_bucket");
+        if (!expected.equals(actual)) {
+            helper.fail("expected MILK_BUCKETS.iron to resolve to productivefrogs:iron_slime_milk_bucket, got " + expected);
+            return;
+        }
+
+        // Place the milker block in-world. Catches any registry boot failure
+        // (e.g. the block somehow not being registered) and exercises the
+        // setBlock → BlockState resolution path. We do NOT invoke useItemOn
+        // here — that requires a Player, and the JUnit test covers the
+        // parser surface that drives useItemOn's branching.
+        helper.setBlock(milkerPos, PFBlocks.SLIME_MILKER.get());
+        helper.assertBlockPresent(PFBlocks.SLIME_MILKER.get(), milkerPos);
+
+        helper.succeed();
     }
 }
