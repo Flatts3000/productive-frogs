@@ -470,12 +470,18 @@ public final class PFGameTests {
     }
 
     /**
-     * Spawn a category-locked size-1 ResourceSlime, write its state into a
-     * Slime Bucket via {@code saveToBucketTag}, then load that bucket NBT into
-     * a fresh slime and assert the category survived the round-trip. Mirrors
-     * the existing {@code tadpole_bucket_round_trip_preserves_category} test
-     * pattern at the API level — same {@code Bucketable} hooks that vanilla's
-     * pickup/release flow drives.
+     * Exercise the full bucket pickup→release contract: spawn a MINERAL slime,
+     * write its state into a bucket via {@code saveToBucketTag}, then load
+     * that bucket NBT into a fresh ResourceSlime via {@code loadFromBucketTag}.
+     * Verifies (1) the bucket carries the category, (2) the released slime
+     * decodes it correctly, and (3) the released slime is flagged
+     * {@code fromBucket} so it doesn't despawn on chunk reload.
+     *
+     * <p>Cross-bucket detail: ResourceTadpoleBucketItem.readCategory works for
+     * the slime bucket too because both bucket types write the same
+     * {@code BUCKET_ENTITY_DATA → "Category" string} shape. Candidate for a
+     * rename to {@code BucketedCategoryTint} as a follow-up since the reader
+     * now serves two surfaces.
      */
     private static void slimeBucketRoundTripPreservesCategory(GameTestHelper helper) {
         Category cat = Category.MINERAL;
@@ -488,13 +494,28 @@ public final class PFGameTests {
         ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
         source.saveToBucketTag(bucket);
 
-        // Reuse ResourceTadpoleBucketItem.readCategory — same NBT key ("Category"
-        // string on BUCKET_ENTITY_DATA component) is used by both bucket types,
-        // so the same reader works. PR will note the cross-bucket reuse as a
-        // candidate for a rename to BucketedCategoryTint later.
+        // Step 1: NBT round-trip via the tint-source reader.
         Category readBack = ResourceTadpoleBucketItem.readCategory(bucket);
         if (readBack != cat) {
             helper.fail("slime bucket round-trip lost category: wrote " + cat + ", read " + readBack);
+        }
+
+        // Step 2: spawn a fresh slime and exercise loadFromBucketTag — same
+        // path vanilla MobBucketItem walks on release.
+        ResourceSlime released = helper.spawn(PFEntities.RESOURCE_SLIME.get(), pos.east());
+        net.minecraft.world.item.component.CustomData data =
+            bucket.get(net.minecraft.core.component.DataComponents.BUCKET_ENTITY_DATA);
+        if (data == null) {
+            helper.fail("bucket's BUCKET_ENTITY_DATA component is unexpectedly null after saveToBucketTag");
+            return;
+        }
+        released.loadFromBucketTag(data.copyTag());
+
+        if (released.getCategory() != cat) {
+            helper.fail("released slime has category " + released.getCategory() + ", expected " + cat);
+        }
+        if (!released.fromBucket()) {
+            helper.fail("released slime must be flagged fromBucket so it survives chunk reload");
         }
         helper.succeed();
     }

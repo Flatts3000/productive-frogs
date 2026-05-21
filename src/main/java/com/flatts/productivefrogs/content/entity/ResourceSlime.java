@@ -200,6 +200,10 @@ public class ResourceSlime extends Slime implements Bucketable {
                 // Unknown category in bucket NBT — leave default.
             }
         });
+        // Flag the slime as bucket-originated so it survives chunk reloads
+        // without despawning — bucket-released mobs are conceptually
+        // player-placed and need persistence parity with named mobs.
+        setFromBucket(true);
     }
 
     @Override
