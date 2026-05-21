@@ -1,9 +1,6 @@
 package com.flatts.productivefrogs.content.item;
 
 import com.flatts.productivefrogs.registry.PFDataComponents;
-import com.flatts.productivefrogs.registry.PFRegistries;
-import net.minecraft.client.Minecraft;
-import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
@@ -30,33 +27,26 @@ public final class ConfigurableFroglightItem extends Item {
     }
 
     /**
-     * Display name: when the variant resolves in the registry, builds
-     * {@code item.productivefrogs.configurable_froglight.<variant_path>}
-     * — e.g. "Iron Froglight". Falls back to the base item name otherwise.
+     * Display name resolution: builds
+     * {@code item.productivefrogs.configurable_froglight.<variant_path>} from
+     * the {@code SLIME_VARIANT} data component when present, else falls back
+     * to the base item name.
+     *
+     * <p>This runs on both client and server (server uses it for things like
+     * advancement display, F3+B), so it can't touch client-only classes like
+     * {@code Minecraft}. We deliberately don't validate the variant against
+     * the registry here — when a lang entry is missing (third-party datapack
+     * adds variants without lang strings), vanilla's translation fallback
+     * surfaces the raw key, which is the right "fix your datapack" signal.
      */
     @Override
     public Component getName(ItemStack stack) {
         Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
-        if (variantId != null && variantLoaded(variantId)) {
+        if (variantId != null) {
             return Component.translatable(
                 getDescriptionId() + "." + variantId.getPath()
             );
         }
         return Component.translatable(getDescriptionId());
-    }
-
-    /**
-     * Cheap client-side check: does the variant id resolve in the loaded
-     * registry? If not, we don't want to surface a raw translation key as
-     * the display name. Same defensive pattern as
-     * {@code ResourceSlime#getName} — datapack/mod may have been removed.
-     */
-    private static boolean variantLoaded(Identifier id) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) {
-            return false;
-        }
-        Registry<?> registry = mc.level.registryAccess().lookup(PFRegistries.SLIME_VARIANT).orElse(null);
-        return registry != null && registry.containsKey(id);
     }
 }

@@ -11,6 +11,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.ExtraCodecs;
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
@@ -33,13 +34,20 @@ import org.jspecify.annotations.Nullable;
  */
 public record SlimeVariantTint(Layer layer, int defaultColor) implements ItemTintSource {
 
-    public enum Layer {
-        PRIMARY, SECONDARY;
+    public enum Layer implements StringRepresentable {
+        PRIMARY("primary"), SECONDARY("secondary");
+
+        private final String name;
+        Layer(String name) { this.name = name; }
+
+        @Override
+        public String getSerializedName() { return name; }
+
+        // Codec via StringRepresentable.fromEnum returns a DataResult error on
+        // unknown values instead of throwing — datapack typos surface as a
+        // decode log line rather than a crash.
         public static final com.mojang.serialization.Codec<Layer> CODEC =
-            com.mojang.serialization.Codec.STRING.xmap(
-                s -> Layer.valueOf(s.toUpperCase(java.util.Locale.ROOT)),
-                l -> l.name().toLowerCase(java.util.Locale.ROOT)
-            );
+            StringRepresentable.fromEnum(Layer::values);
     }
 
     public static final MapCodec<SlimeVariantTint> MAP_CODEC = RecordCodecBuilder.mapCodec(
