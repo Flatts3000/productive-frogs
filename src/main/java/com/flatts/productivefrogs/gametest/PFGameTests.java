@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.FunctionGameTestInstance;
@@ -130,14 +129,14 @@ public final class PFGameTests {
             PFGameTests::slimeMilkerConvertsIronSlimeBucketIntoIronMilkBucket, 100);
         registerTest("slime_milk_source_spawns_iron_resource_slime_on_solid_neighbour",
             PFGameTests::slimeMilkSourceSpawnsIronResourceSlimeOnSolidNeighbour, 100);
-        registerTest("slime_milk_source_falls_back_to_column_when_no_solid_neighbour",
-            PFGameTests::slimeMilkSourceFallsBackToColumnWhenNoSolidNeighbour, 100);
+        registerTest("slime_milk_source_falls_back_to_liquid_when_no_solid_neighbour",
+            PFGameTests::slimeMilkSourceFallsBackToLiquidWhenNoSolidNeighbour, 100);
         registerTest("vanilla_slime_milk_source_spawns_vanilla_slime",
             PFGameTests::vanillaSlimeMilkSourceSpawnsVanillaSlime, 100);
         registerTest("magma_slime_milk_source_spawns_magma_cube",
             PFGameTests::magmaSlimeMilkSourceSpawnsMagmaCube, 100);
-        registerTest("slime_milk_source_skips_spawn_when_all_candidates_blocked",
-            PFGameTests::slimeMilkSourceSkipsSpawnWhenAllCandidatesBlocked, 100);
+        registerTest("slime_milk_source_picks_solid_neighbour_below_when_no_horizontal_neighbour",
+            PFGameTests::slimeMilkSourcePicksSolidNeighbourBelowWhenNoHorizontalNeighbour, 100);
     }
 
     private PFGameTests() {
@@ -1016,15 +1015,22 @@ public final class PFGameTests {
     }
 
     /**
-     * No solid horizontal neighbour available — the spawn position picker
-     * falls back to the column directly above the source. Sanity-checks the
-     * fallback branch in {@code chooseSpawnPos}.
+     * No solid neighbour anywhere in the 3×3×3 cube around the source —
+     * spawn picker falls back to the source's own position so the slime
+     * appears inside the milk fluid. The milk block has noCollision, so
+     * spawning the entity there always succeeds.
+     *
+     * <p>This pins the fallback branch in {@code chooseSpawnPos}: every
+     * candidate in {@code NEIGHBOUR_OFFSETS} fails the sturdy check, the
+     * loop exits, and the source position is returned.
      */
-    private static void slimeMilkSourceFallsBackToColumnWhenNoSolidNeighbour(GameTestHelper helper) {
+    private static void slimeMilkSourceFallsBackToLiquidWhenNoSolidNeighbour(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
 
-        // All 4 horizontal neighbours stay air; the column above stays air.
-        // Only candidate the picker finds is sourcePos.above().
+        // No neighbour blocks set — the empty 5x5x5 test plot is pure air
+        // everywhere except the source itself. Every NEIGHBOUR_OFFSETS entry
+        // points to an air block (not sturdy), so the picker exhausts the
+        // list and returns source.
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
             (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.MILK_BLOCKS.get("copper").get();
         helper.setBlock(sourcePos, block);
@@ -1035,13 +1041,22 @@ public final class PFGameTests {
         helper.succeedWhen(() -> {
             List<ResourceSlime> slimes = helper.getEntities(PFEntities.RESOURCE_SLIME.get());
             if (slimes.size() != 1) {
-                helper.fail("expected exactly 1 ResourceSlime from column fallback, got " + slimes.size());
+                helper.fail("expected exactly 1 ResourceSlime from liquid fallback, got " + slimes.size());
                 return;
             }
             ResourceSlime slime = slimes.get(0);
             Identifier expectedVariant = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
             if (!expectedVariant.equals(slime.getVariantId())) {
                 helper.fail("spawned slime has variant " + slime.getVariantId() + ", expected " + expectedVariant);
+            }
+            // Position assertion: the fallback puts the slime AT the source
+            // position. Use floor() to avoid bobbing-physics flakiness on
+            // the Y axis but pin XZ tight.
+            int sx = net.minecraft.util.Mth.floor(slime.getX());
+            int sz = net.minecraft.util.Mth.floor(slime.getZ());
+            if (sx != absSourcePos.getX() || sz != absSourcePos.getZ()) {
+                helper.fail("liquid-fallback spawn at (" + sx + ", " + sz + "), expected ("
+                    + absSourcePos.getX() + ", " + absSourcePos.getZ() + ")");
             }
         });
     }
@@ -1103,29 +1118,24 @@ public final class PFGameTests {
     }
 
     /**
-     * Box the source in: stone above (blocks the column fallback) plus stone
-     * directly above each horizontal neighbour (blocks the rim slots even
-     * though the horizontal neighbours themselves are solid). The picker
-     * returns null and no slime spawns. Tick still reschedules itself — we
-     * don't assert that here because the test plot tears down before the
-     * 40–80-tick retry would fire.
+     * Block every horizontal neighbour at y=0 with non-sturdy blocks (no
+     * rim candidate) but put a solid block directly below the source. The
+     * picker should iterate past the y=0 plane and pick the y=-1 center
+     * neighbour, returning {@code source} as the spawn pos (i.e. the slime
+     * spawns at the source's coordinates, inside the milk).
+     *
+     * <p>This exercises the deeper iteration order — same-y plane fails
+     * first, then y=-1 plane gets considered. Pins the algorithm's
+     * "rim-first" priority without conflating it with the no-solid-anywhere
+     * fallback (which is the previous test).
      */
-    private static void slimeMilkSourceSkipsSpawnWhenAllCandidatesBlocked(GameTestHelper helper) {
+    private static void slimeMilkSourcePicksSolidNeighbourBelowWhenNoHorizontalNeighbour(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
 
-        // Block the column fallback first — even one stone above the source
-        // makes that branch return null.
-        helper.setBlock(sourcePos.above(), Blocks.STONE);
-
-        // Each horizontal neighbour gets a stone at its OWN position (so it
-        // could serve as a sturdy support) but we also put stone in the rim
-        // slot one above. That way the picker sees a sturdy support but the
-        // rim is blocksMotion → fails the vacancy check → moves on.
-        for (Direction dir : Direction.Plane.HORIZONTAL) {
-            BlockPos lateral = sourcePos.relative(dir);
-            helper.setBlock(lateral, Blocks.STONE);
-            helper.setBlock(lateral.above(), Blocks.STONE);
-        }
+        // Solid floor directly beneath the source. The y=-1 center neighbour
+        // is sturdy; its .above() = source itself is non-blocking (milk has
+        // noCollision). Picker returns source.
+        helper.setBlock(sourcePos.below(), Blocks.STONE);
 
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
             (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.MILK_BLOCKS.get("gold").get();
@@ -1134,18 +1144,21 @@ public final class PFGameTests {
         BlockPos absSourcePos = helper.absolutePos(sourcePos);
         block.tick(level.getBlockState(absSourcePos), level, absSourcePos, level.getRandom());
 
-        // Give the world a beat to process any spawn that may have slipped
-        // through, then assert no slimes exist anywhere in the plot.
-        helper.runAfterDelay(5L, () -> {
-            if (!helper.getEntities(PFEntities.RESOURCE_SLIME.get()).isEmpty()) {
-                helper.fail("spawn should have been skipped (every candidate blocked), but a ResourceSlime appeared");
+        helper.succeedWhen(() -> {
+            List<ResourceSlime> slimes = helper.getEntities(PFEntities.RESOURCE_SLIME.get());
+            if (slimes.size() != 1) {
+                helper.fail("expected exactly 1 ResourceSlime from below-floor pick, got " + slimes.size());
                 return;
             }
-            if (!helper.getEntities(net.minecraft.world.entity.EntityType.SLIME).isEmpty()) {
-                helper.fail("spawn should have been skipped, but a vanilla Slime appeared");
-                return;
+            // Slime should land at source XZ (because the picked neighbour
+            // is directly below the source).
+            ResourceSlime slime = slimes.get(0);
+            int sx = net.minecraft.util.Mth.floor(slime.getX());
+            int sz = net.minecraft.util.Mth.floor(slime.getZ());
+            if (sx != absSourcePos.getX() || sz != absSourcePos.getZ()) {
+                helper.fail("expected spawn at source XZ (" + absSourcePos.getX() + ", " + absSourcePos.getZ()
+                    + "), got (" + sx + ", " + sz + ")");
             }
-            helper.succeed();
         });
     }
 }

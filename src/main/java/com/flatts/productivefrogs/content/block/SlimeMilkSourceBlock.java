@@ -32,28 +32,55 @@ import org.jspecify.annotations.Nullable;
  * so this override does not interfere with flow.
  *
  * <p>Spawn cadence (per {@code docs/farming.md} §Slime spawning from milk):
- * uniform random in {@code [200, 600]} ticks (10–30s) on a successful spawn,
- * uniform random in {@code [40, 80]} ticks (2–4s) when the slot is blocked.
- * The short retry is to recover quickly once a transient blocker (player or
- * frog briefly stepping on the spawn slot) clears; the long cadence keeps
- * the steady-state production rate honest.
+ * uniform random in {@code [200, 600]} ticks (10–30s) per spawn. No retry
+ * cadence — every tick produces a slime; see the spawn-position picker
+ * below for why this always succeeds.
  *
- * <p>Spawn position selection: prefer the top of a solid horizontal
- * neighbour so the slime lands on a block rather than splashing back into
- * the pool. Only when no such neighbour exists does the slime spawn in the
- * column above the source itself. Existing entities in the slot don't
- * block the spawn — overlapping is fine; the new slime simply appears at
- * the same coordinates and the physics engine separates them within a
- * tick or two.
+ * <p>Spawn position selection: scan all 26 blocks in the 3×3×3 cube
+ * surrounding the source. The first one whose top face is sturdy AND whose
+ * block-above is non-motion-blocking becomes the landing slot; the slime
+ * appears on top of that solid neighbour. If no eligible solid neighbour
+ * exists (source floating in pure air), the slime spawns at the source's
+ * own position — the milk fluid itself is non-collision, so this fallback
+ * always works. Entity overlap is never a blocker.
+ *
+ * <p>Iteration order biases toward natural "rim" spawns: same-y plane
+ * first (cardinals then diagonals), then the below plane (so a typical
+ * milk pool on solid ground spills slimes horizontally adjacent to the
+ * source instead of two blocks up), then the above plane.
  *
  * <p>Depletion is J5; this class spawns indefinitely.
  */
 public class SlimeMilkSourceBlock extends LiquidBlock {
 
-    private static final int SUCCESS_MIN_TICKS = 200;
-    private static final int SUCCESS_MAX_TICKS = 600;
-    private static final int RETRY_MIN_TICKS = 40;
-    private static final int RETRY_MAX_TICKS = 80;
+    private static final int MIN_DELAY_TICKS = 200;
+    private static final int MAX_DELAY_TICKS = 600;
+
+    /**
+     * Offsets to the 26 neighbours of the source block, ordered so the
+     * picker prefers natural-looking spawn positions: same-y plane first
+     * (cardinals → diagonals), then the below plane, then above. A typical
+     * milk-pool-on-solid-ground placement matches a same-y cardinal first
+     * (rim spawn), so the deeper iteration rarely runs.
+     */
+    private static final int[][] NEIGHBOUR_OFFSETS = {
+        // y=0 cardinals — rim of the pool
+        {1, 0, 0}, {-1, 0, 0}, {0, 0, 1}, {0, 0, -1},
+        // y=0 diagonals — corners of the rim
+        {1, 0, 1}, {1, 0, -1}, {-1, 0, 1}, {-1, 0, -1},
+        // y=-1 cardinals — floor of the pool; their .above() is the source's horizontal neighbour
+        {1, -1, 0}, {-1, -1, 0}, {0, -1, 1}, {0, -1, -1},
+        // y=-1 center — directly below the source; .above() is the source itself
+        {0, -1, 0},
+        // y=-1 diagonals
+        {1, -1, 1}, {1, -1, -1}, {-1, -1, 1}, {-1, -1, -1},
+        // y=+1 cardinals — above the rim
+        {1, 1, 0}, {-1, 1, 0}, {0, 1, 1}, {0, 1, -1},
+        // y=+1 center — directly above the source
+        {0, 1, 0},
+        // y=+1 diagonals
+        {1, 1, 1}, {1, 1, -1}, {-1, 1, 1}, {-1, 1, -1},
+    };
 
     private final String variant;
 
@@ -74,7 +101,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
         // the real gate. Don't schedule on the client — block-tick scheduling
         // is server-only.
         if (level instanceof ServerLevel serverLevel && level.getFluidState(pos).isSource()) {
-            scheduleNextSpawnTick(serverLevel, pos, level.getRandom(), true);
+            scheduleNextSpawnTick(serverLevel, pos, level.getRandom());
         }
     }
 
@@ -94,30 +121,23 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
         if (!level.getFluidState(pos).isSource()) {
             return;
         }
-        boolean spawned = attemptSpawn(level, pos, random);
-        scheduleNextSpawnTick(level, pos, random, spawned);
+        spawn(level, pos, random);
+        scheduleNextSpawnTick(level, pos, random);
     }
 
-    private static void scheduleNextSpawnTick(ServerLevel level, BlockPos pos, RandomSource random, boolean spawned) {
-        int min = spawned ? SUCCESS_MIN_TICKS : RETRY_MIN_TICKS;
-        int max = spawned ? SUCCESS_MAX_TICKS : RETRY_MAX_TICKS;
-        int delay = min + random.nextInt(max - min + 1);
+    private static void scheduleNextSpawnTick(ServerLevel level, BlockPos pos, RandomSource random) {
+        int delay = MIN_DELAY_TICKS + random.nextInt(MAX_DELAY_TICKS - MIN_DELAY_TICKS + 1);
         level.scheduleTick(pos, level.getBlockState(pos).getBlock(), delay);
     }
 
-    /**
-     * Returns true if a slime spawned; false if no eligible position was
-     * found. Caller uses the result to decide whether to apply the long
-     * (success) or short (retry) reschedule cadence.
-     */
-    private boolean attemptSpawn(ServerLevel level, BlockPos pos, RandomSource random) {
+    private void spawn(ServerLevel level, BlockPos pos, RandomSource random) {
         BlockPos spawnPos = chooseSpawnPos(level, pos);
-        if (spawnPos == null) {
-            return false;
-        }
         Slime slime = createSlimeForVariant(level);
         if (slime == null) {
-            return false;
+            // Defensive — EntityType.create returns null only when the
+            // entity-type registry is in a broken state. Skip the spawn but
+            // don't fail loud; reschedule normally so the next tick retries.
+            return;
         }
         slime.setSize(1, true);
         // Center on the block's XZ; sit on top of whatever's at spawnPos.below()
@@ -127,7 +147,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
                      spawnPos.getZ() + 0.5,
                      random.nextFloat() * 360F,
                      0F);
-        return level.addFreshEntity(slime);
+        level.addFreshEntity(slime);
     }
 
     @Nullable
@@ -152,28 +172,26 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
     }
 
     /**
-     * Pick the spawn slot. Prefer the top of a solid horizontal neighbour
-     * so the slime lands on the rim of the pool. Fall back to the column
-     * above the source itself (which is typically more milk, but slimes
-     * survive in liquid so this is a sane default).
+     * Pick the spawn slot by scanning the 3×3×3 cube around the source.
+     * For each of the 26 neighbours, if that neighbour's top face is
+     * sturdy AND the position directly above it is non-motion-blocking,
+     * the spawn lands on top of that neighbour.
      *
-     * <p>Returns null only when every candidate position contains a
-     * motion-blocking block (terrain, doors, etc.) — entities already at
-     * the position are NOT a blocker; the new slime just spawns on top of
-     * them. In the null case the caller skips the spawn and reschedules
-     * with the short-retry cadence.
+     * <p>If no solid neighbour exists (source floating in air, or buried
+     * in liquid with no solid edges), falls back to the source's own
+     * position — the milk fluid block has noCollision, so spawning the
+     * slime inside it always succeeds. Entity overlap is never a blocker.
      */
-    @Nullable
     private static BlockPos chooseSpawnPos(ServerLevel level, BlockPos source) {
-        for (Direction dir : Direction.Plane.HORIZONTAL) {
-            BlockPos rim = source.relative(dir).above();
-            BlockPos support = rim.below();
-            if (level.getBlockState(support).isFaceSturdy(level, support, Direction.UP)
-                && !level.getBlockState(rim).blocksMotion()) {
-                return rim;
+        for (int[] off : NEIGHBOUR_OFFSETS) {
+            BlockPos neighbour = source.offset(off[0], off[1], off[2]);
+            BlockPos above = neighbour.above();
+            if (level.getBlockState(neighbour).isFaceSturdy(level, neighbour, Direction.UP)
+                && !level.getBlockState(above).blocksMotion()) {
+                return above;
             }
         }
-        BlockPos column = source.above();
-        return level.getBlockState(column).blocksMotion() ? null : column;
+        // No eligible solid neighbour — spawn inside the liquid itself.
+        return source;
     }
 }
