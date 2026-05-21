@@ -74,7 +74,26 @@ neoForge {
     }
 }
 
+repositories {
+    // JEI (Just Enough Items) — published by mezz to BlameJared's maven.
+    maven {
+        name = 'BlameJared'
+        url = 'https://maven.blamejared.com'
+    }
+}
+
 dependencies {
+    // Runtime-only QoL mod for the dev client / playtest sessions. Lets the
+    // playtest see every registered item in JEI's sidebar (no plugin code on
+    // our side — JEI auto-discovers items via the BuiltInRegistries.ITEM
+    // entries our DeferredRegister populates). When we ship recipes later
+    // (smelting Froglights → ingots), JEI will auto-show those too.
+    //
+    // Jade (the WAILA fork) for in-world entity/block ID overlay isn't on a
+    // public maven we depend on cleanly — see docs/dev_setup.md for the
+    // drop-in-run-mods install path.
+    runtimeOnly "mezz.jei:jei-1.21.11-neoforge:27.4.0.22"
+
     testImplementation platform('org.junit:junit-bom:5.11.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
