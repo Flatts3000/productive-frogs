@@ -47,14 +47,15 @@ public final class PFFluids {
         LinkedHashMap<String, Pair> map = new LinkedHashMap<>();
         for (String variant : PFFluidTypes.VARIANTS) {
             // Forward references: the Properties object needs Supplier<Fluid>
-            // for both Source and Flowing, but neither holder exists yet at this
-            // point in the loop. We materialize the holders inside the lambda
-            // (via map.get) — by the time the lambda runs at registry-build
-            // time, both holders have been added to the map.
+            // for both Source and Flowing, but neither holder exists yet at
+            // this point in the loop. We close over the local `map` (NOT the
+            // BY_VARIANT static field, which is still null during this
+            // static-init pass) — by the time the lambdas fire at registry-
+            // build time, both entries have been put() into `map`.
             BaseFlowingFluid.Properties props = new BaseFlowingFluid.Properties(
                 PFFluidTypes.BY_VARIANT.get(variant),
-                () -> BY_VARIANT.get(variant).source().get(),
-                () -> BY_VARIANT.get(variant).flowing().get()
+                () -> map.get(variant).source().get(),
+                () -> map.get(variant).flowing().get()
             )
                 .bucket(() -> PFItems.MILK_BUCKETS.get(variant).get())
                 .block(() -> (LiquidBlock) PFBlocks.MILK_BLOCKS.get(variant).get())
