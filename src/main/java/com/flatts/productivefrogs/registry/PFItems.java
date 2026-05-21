@@ -11,6 +11,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.MobBucketItem;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.bus.api.IEventBus;
@@ -43,6 +44,31 @@ public final class PFItems {
         "frog_egg",
         FrogEggItem::new,
         new Item.Properties().stacksTo(1)
+    );
+
+    /**
+     * Slime Bucket — the V1 transport mechanism for size-1 Resource Slimes
+     * (per {@code docs/slime_sourcing.md}). Vanilla {@link MobBucketItem}
+     * handles the actual capture/release flow; the slime's category is
+     * preserved via {@code BUCKET_ENTITY_DATA} NBT written/read by
+     * {@link com.flatts.productivefrogs.content.entity.ResourceSlime}'s
+     * {@code saveToBucketTag} / {@code loadFromBucketTag} overrides.
+     *
+     * <p>Larger slimes split per vanilla mechanics; players bucket the size-1
+     * offspring. {@code mobInteract} on ResourceSlime gates the pickup at
+     * size==1.
+     */
+    public static final DeferredItem<MobBucketItem> SLIME_BUCKET = ITEMS.registerItem(
+        "slime_bucket",
+        props -> new MobBucketItem(
+            PFEntities.RESOURCE_SLIME.get(),
+            Fluids.WATER,
+            SoundEvents.BUCKET_EMPTY_FISH,
+            props
+        ),
+        new Item.Properties()
+            .stacksTo(1)
+            .component(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY)
     );
 
     /**
