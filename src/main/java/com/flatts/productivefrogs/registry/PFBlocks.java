@@ -6,6 +6,7 @@ import com.flatts.productivefrogs.data.Category;
 import java.util.EnumMap;
 import java.util.Map;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -42,6 +43,27 @@ public final class PFBlocks {
      * properties — only the map color and (client-side) tint differ per category.
      */
     public static final Map<Category, DeferredBlock<RotatedPillarBlock>> RESOURCE_FROGLIGHTS = buildResourceFroglights();
+
+    /**
+     * Iron Slime Milk LiquidBlock. The fluid's Source instance lives in
+     * {@link PFFluids#IRON_SLIME_MILK_SOURCE}; this is its in-world block
+     * representation. Vanilla {@link LiquidBlock} constructor takes the
+     * <em>source</em> fluid; LiquidBlock derives the BlockState↔FluidState
+     * mapping from it.
+     */
+    public static final DeferredBlock<LiquidBlock> IRON_SLIME_MILK = BLOCKS.registerBlock(
+        "iron_slime_milk",
+        props -> new LiquidBlock(PFFluids.IRON_SLIME_MILK_SOURCE.get(), props),
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .replaceable()
+            .noCollision()
+            .strength(100.0F)
+            .pushReaction(PushReaction.DESTROY)
+            .noLootTable()
+            .liquid()
+            .sound(SoundType.EMPTY)
+    );
 
     private static Map<Category, DeferredBlock<PrimedFrogEggBlock>> buildPrimedEggs() {
         EnumMap<Category, DeferredBlock<PrimedFrogEggBlock>> map = new EnumMap<>(Category.class);

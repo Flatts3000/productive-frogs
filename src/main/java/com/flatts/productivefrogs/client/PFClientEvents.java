@@ -14,12 +14,15 @@ import com.flatts.productivefrogs.client.tint.TadpoleBucketCategoryTint;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFEntities;
+import com.flatts.productivefrogs.registry.PFFluidTypes;
 import net.minecraft.resources.Identifier;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
+import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 
 /**
  * Client-only setup. Registers:
@@ -90,6 +93,32 @@ public final class PFClientEvents {
         event.register(
             Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tadpole_bucket_category"),
             TadpoleBucketCategoryTint.MAP_CODEC
+        );
+    }
+
+    /**
+     * Wire each Slime Milk FluidType to its still + flowing block textures.
+     * NeoForge keeps client-only fluid properties off the server by routing
+     * them through {@link IClientFluidTypeExtensions} registered via this
+     * event. Without it the fluid renders as the purple-and-black "missing
+     * texture" cube.
+     */
+    @SubscribeEvent
+    public static void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
+        event.registerFluidType(
+            new IClientFluidTypeExtensions() {
+                private static final Identifier STILL =
+                    Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "block/iron_slime_milk_still");
+                private static final Identifier FLOW =
+                    Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "block/iron_slime_milk_flow");
+
+                @Override
+                public Identifier getStillTexture() { return STILL; }
+
+                @Override
+                public Identifier getFlowingTexture() { return FLOW; }
+            },
+            PFFluidTypes.IRON_SLIME_MILK.get()
         );
     }
 }

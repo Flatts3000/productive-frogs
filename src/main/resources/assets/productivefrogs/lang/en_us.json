@@ -19,6 +19,10 @@
 
   "item.productivefrogs.slime_bucket": "Bucket of Slime",
 
+  "item.productivefrogs.iron_slime_milk_bucket":  "Bucket of Iron Slime Milk",
+  "block.productivefrogs.iron_slime_milk":        "Iron Slime Milk",
+  "fluid_type.productivefrogs.iron_slime_milk":   "Iron Slime Milk",
+
   "item.productivefrogs.configurable_froglight":             "Froglight",
   "item.productivefrogs.configurable_froglight.iron":        "Iron Froglight",
   "item.productivefrogs.configurable_froglight.copper":      "Copper Froglight",

@@ -190,6 +190,25 @@ public final class PFItems {
         () -> new Item.Properties().spawnEgg(PFEntities.VOID_SLIME.get())
     );
 
+    /**
+     * Bucket of Iron Slime Milk. Vanilla {@link net.minecraft.world.item.BucketItem}
+     * with our iron_slime_milk Source as the contained fluid. Right-click on a
+     * block places the source; right-click on a milk source block scoops it
+     * back into the bucket. Stack size 1, same as vanilla water/lava buckets.
+     *
+     * <p>This is the first of 14 milk-bucket variants planned for V1 (J1 ships
+     * iron only; J2 expands to the rest). The {@link com.flatts.productivefrogs.content.block.SlimeMilkerBlock}
+     * (J3) consumes a Slime Bucket and outputs the matching variant's milk
+     * bucket — so this item is what Iron Resource Slimes become when milked.
+     */
+    public static final DeferredItem<net.minecraft.world.item.BucketItem> IRON_SLIME_MILK_BUCKET = ITEMS.registerItem(
+        "iron_slime_milk_bucket",
+        props -> new net.minecraft.world.item.BucketItem(PFFluids.IRON_SLIME_MILK_SOURCE.get(), props),
+        new Item.Properties()
+            .stacksTo(1)
+            .craftRemainder(net.minecraft.world.item.Items.BUCKET)
+    );
+
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {

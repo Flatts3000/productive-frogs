@@ -32,13 +32,13 @@ Single `configurable_froglight` item with a `slime_variant` data component (mirr
 - Frog tongue picks the configurable variant when the slime carries a SlimeVariant, falls back to the category Froglight otherwise
 
 ### Slime Milker block + Slime Milk fluid (V1 production keystone)
-[docs/farming.md](./farming.md) specifies the full design. Sub-PRs:
+[docs/farming.md](./farming.md) specifies the full design. Sub-PR plan (J-series):
 
-- `SlimeMilkerBlock` — single appliance, no power, right-click with a Slime Bucket
-- `SlimeMilkFluid` family — one fluid per slime variant (lava-like flow, source blocks spawn slimes)
-- Spawn behavior on milk source blocks (~20s interval, configurable, depletion counter)
-- Per-variant milk bucket items
-- Default depletion = 16 spawns per source block; config toggle for off
+- **J1** ✅ — fluid framework (PFFluidTypes / PFFluids / BaseFlowingFluid plumbing) + iron_slime_milk variant + iron_slime_milk_bucket. Placeable fluid; no milker block or spawning yet. Placeholder iron-grey textures (real animated textures backlogged under polish).
+- **J2** — expand fluids to all 13 remaining variants (vanilla, magma, copper, gold, redstone, lapis, coal, diamond, emerald, prismarine, sponge, magma_cream, ender_pearl). Mechanical expansion of J1's pattern; per-variant tint texture.
+- **J3** — `SlimeMilkerBlock`: single appliance, no power, right-click with a Slime Bucket → consume slime, output typed milk bucket matching slime's variant/category.
+- **J4** — Source-block slime spawning (~20s interval ± 10s jitter, vanilla mob-cap check).
+- **J5** — Depletion counter (16 spawns default) + mod config wiring (depletion ON/OFF, interval, count, plus `discoveryChancePerOffspring` promotion from public-static hack).
 
 ### Smelting + crush recipes
 - Froglight → base resource smelt recipes (6 recipes, one per category for V1)

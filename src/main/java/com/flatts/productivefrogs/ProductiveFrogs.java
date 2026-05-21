@@ -5,6 +5,8 @@ import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFCreativeTabs;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
+import com.flatts.productivefrogs.registry.PFFluidTypes;
+import com.flatts.productivefrogs.registry.PFFluids;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFSensors;
 import net.neoforged.bus.api.IEventBus;
@@ -31,6 +33,11 @@ public final class ProductiveFrogs {
         LOGGER.info("Productive Frogs initializing");
 
         PFDataComponents.register(modEventBus);
+        // FluidTypes before Fluids — BaseFlowingFluid.Properties references the
+        // FluidType holder at fluid-build time, so the FluidType register pass
+        // must complete first.
+        PFFluidTypes.register(modEventBus);
+        PFFluids.register(modEventBus);
         PFBlocks.register(modEventBus);
         PFItems.register(modEventBus);
         PFEntities.register(modEventBus);
