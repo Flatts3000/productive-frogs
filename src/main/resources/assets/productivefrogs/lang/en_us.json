@@ -19,6 +19,20 @@
 
   "item.productivefrogs.slime_bucket": "Bucket of Slime",
 
+  "item.productivefrogs.metallic_frog_spawn_egg": "Metallic Frog Spawn Egg",
+  "item.productivefrogs.mineral_frog_spawn_egg":  "Mineral Frog Spawn Egg",
+  "item.productivefrogs.gem_frog_spawn_egg":      "Gem Frog Spawn Egg",
+  "item.productivefrogs.aquatic_frog_spawn_egg":  "Aquatic Frog Spawn Egg",
+  "item.productivefrogs.infernal_frog_spawn_egg": "Infernal Frog Spawn Egg",
+  "item.productivefrogs.arcane_frog_spawn_egg":   "Arcane Frog Spawn Egg",
+
+  "item.productivefrogs.metallic_tadpole_spawn_egg": "Metallic Tadpole Spawn Egg",
+  "item.productivefrogs.mineral_tadpole_spawn_egg":  "Mineral Tadpole Spawn Egg",
+  "item.productivefrogs.gem_tadpole_spawn_egg":      "Gem Tadpole Spawn Egg",
+  "item.productivefrogs.aquatic_tadpole_spawn_egg":  "Aquatic Tadpole Spawn Egg",
+  "item.productivefrogs.infernal_tadpole_spawn_egg": "Infernal Tadpole Spawn Egg",
+  "item.productivefrogs.arcane_tadpole_spawn_egg":   "Arcane Tadpole Spawn Egg",
+
   "block.productivefrogs.metallic_frog_egg": "Metallic Frog Egg",
   "block.productivefrogs.mineral_frog_egg":  "Mineral Frog Egg",
   "block.productivefrogs.gem_frog_egg":      "Gem Frog Egg",
@@ -33,7 +47,21 @@
   "block.productivefrogs.infernal_froglight": "Infernal Froglight",
   "block.productivefrogs.arcane_froglight":   "Arcane Froglight",
 
-  "entity.productivefrogs.resource_tadpole": "Resource Tadpole",
-  "entity.productivefrogs.resource_frog":    "Resource Frog",
+  "entity.productivefrogs.resource_tadpole":          "Resource Tadpole",
+  "entity.productivefrogs.resource_tadpole.metallic": "Metallic Tadpole",
+  "entity.productivefrogs.resource_tadpole.mineral":  "Mineral Tadpole",
+  "entity.productivefrogs.resource_tadpole.gem":      "Gem Tadpole",
+  "entity.productivefrogs.resource_tadpole.aquatic":  "Aquatic Tadpole",
+  "entity.productivefrogs.resource_tadpole.infernal": "Infernal Tadpole",
+  "entity.productivefrogs.resource_tadpole.arcane":   "Arcane Tadpole",
+
+  "entity.productivefrogs.resource_frog":          "Resource Frog",
+  "entity.productivefrogs.resource_frog.metallic": "Metallic Frog",
+  "entity.productivefrogs.resource_frog.mineral":  "Mineral Frog",
+  "entity.productivefrogs.resource_frog.gem":      "Gem Frog",
+  "entity.productivefrogs.resource_frog.aquatic":  "Aquatic Frog",
+  "entity.productivefrogs.resource_frog.infernal": "Infernal Frog",
+  "entity.productivefrogs.resource_frog.arcane":   "Arcane Frog",
+
   "entity.productivefrogs.resource_slime":   "Resource Slime"
 }

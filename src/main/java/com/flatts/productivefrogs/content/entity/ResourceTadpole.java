@@ -75,6 +75,20 @@ public class ResourceTadpole extends Tadpole {
         this.entityData.set(DATA_CATEGORY, category.ordinal());
     }
 
+    /**
+     * Category-aware display name. See {@code ResourceFrog#getName} for the
+     * rationale — same pattern, different entity type id.
+     */
+    @Override
+    public net.minecraft.network.chat.Component getName() {
+        if (this.hasCustomName()) {
+            return super.getName();
+        }
+        return net.minecraft.network.chat.Component.translatable(
+            getType().getDescriptionId() + "." + getCategory().id()
+        );
+    }
+
     @Override
     protected void addAdditionalSaveData(ValueOutput out) {
         super.addAdditionalSaveData(out);

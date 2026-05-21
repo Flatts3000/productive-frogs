@@ -26,10 +26,21 @@ public final class PFCreativeTabs {
                 .displayItems((parameters, output) -> {
                     output.accept(PFItems.FROG_EGG.get());
                     output.accept(PFItems.RESOURCE_TADPOLE_BUCKET.get());
+                    output.accept(PFItems.SLIME_BUCKET.get());
                     for (var entry : PFItems.PRIMED_FROG_EGG_ITEMS.values()) {
                         output.accept(entry.get());
                     }
-                    // More items added in subsequent commits.
+                    for (var entry : PFItems.RESOURCE_FROGLIGHT_ITEMS.values()) {
+                        output.accept(entry.get());
+                    }
+                    // Spawn eggs grouped at the end so they read as a single block
+                    // in the creative tab — frogs first, tadpoles after.
+                    for (var entry : PFItems.RESOURCE_FROG_SPAWN_EGGS.values()) {
+                        output.accept(entry.get());
+                    }
+                    for (var entry : PFItems.RESOURCE_TADPOLE_SPAWN_EGGS.values()) {
+                        output.accept(entry.get());
+                    }
                 })
                 .build()
         );
