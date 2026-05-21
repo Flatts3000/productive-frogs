@@ -13,7 +13,7 @@ What's left to land before "playable foundation + appliances" is complete. Each 
 - ~~**Geode Slime entity**~~ — shipped in PR I2 (GEM).
 - ~~**Tide Slime entity**~~ — shipped in PR I3 (AQUATIC).
 - ~~**Void Slime entity**~~ — shipped in PR I4 (ARCANE).
-- **Natural spawn rules for parent species** (deferred from I1–I4). Each parent species ships its entity + spawn egg + discovery wiring; biome-conditioned natural spawning (`RegisterSpawnPlacementsEvent`, `BiomeModifier` JSONs gating where they spawn in worldgen) lands in a follow-up so the entity/test layer ships clean of worldgen-data churn. Target biomes: Cave→dripstone caves / deep dark, Geode→amethyst geodes / mountains, Tide→deep/lukewarm/warm oceans, Void→outer End islands. [docs/open_questions.md#2c](./open_questions.md)
+- ~~**Natural spawn rules for parent species**~~ — shipped. `SpawnPlacements` registered via `RegisterSpawnPlacementsEvent` in `PFModBusEvents`; biome-conditioned spawning gated by four `neoforge:add_spawns` BiomeModifier JSONs at `data/productivefrogs/neoforge/biome_modifier/`. Cave→dripstone_caves+deep_dark, Geode→stony/jagged/frozen peaks, Tide→deep/lukewarm/warm oceans (OCEAN_FLOOR heightmap so they land on the sea floor like Drowned), Void→small_end_islands. Spawn check is a Mob-typed mirror of `Monster.checkMonsterSpawnRules` (peaceful=no, dark enough, vanilla mob position checks).
 
 ### SlimeVariant data registry (per-resource sub-categorization)
 Currently we're Category-keyed only (one METALLIC slime, one INFERNAL slime, etc). The full design has per-resource variants within each category (iron_slime, copper_slime, gold_slime within METALLIC). [docs/architecture.md#slime-variant-pattern](./architecture.md)
