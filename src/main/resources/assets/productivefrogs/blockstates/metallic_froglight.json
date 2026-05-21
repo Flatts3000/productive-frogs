@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "productivefrogs:block/resource_froglight"
+    },
+    "axis=z": {
+      "model": "productivefrogs:block/resource_froglight",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "productivefrogs:block/resource_froglight",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

@@ -1,0 +1,80 @@
+package com.flatts.productivefrogs.event;
+
+import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.entity.ResourceFrog;
+import com.flatts.productivefrogs.content.entity.ResourceSlime;
+import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.registry.PFBlocks;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+
+/**
+ * When a {@link ResourceFrog} kills a {@link ResourceSlime} of its matching
+ * category — i.e., it just ate it via tongue — drop a category-matching
+ * Resource Froglight at the frog's position. Vanilla hoppers under the frog
+ * can collect the item entity, mirroring the vanilla "frog eats magma cube
+ * → froglight" production loop.
+ *
+ * <p>Implementation note: vanilla wires the magma-cube → froglight drop
+ * through the magma cube's loot table with a {@code source_entity → frog/variant}
+ * predicate. We can't use that pattern here because our frog's category lives
+ * on a SynchedEntityData accessor, not on a {@code minecraft:frog/variant}
+ * component the predicate registry can read. {@link LivingDeathEvent} runs
+ * in code where we have full access to the entity state and can branch on
+ * the actual category — simpler than registering a custom entity sub-predicate
+ * for a single use site.
+ *
+ * <p>The category-match check in this handler is technically redundant given
+ * the {@link com.flatts.productivefrogs.content.entity.ai.ResourceFrogAttackablesSensor}
+ * already prevents frogs from targeting off-category slimes. We keep it as a
+ * defensive guard against future code paths that might bypass the sensor
+ * (player direct-feeding via the Slime Bucket, mod compat).
+ */
+@EventBusSubscriber(modid = ProductiveFrogs.MOD_ID)
+public final class FrogTongueDropHandler {
+
+    private FrogTongueDropHandler() {
+        // event handler, not instantiable
+    }
+
+    @SubscribeEvent
+    public static void onResourceSlimeKilled(LivingDeathEvent event) {
+        if (!(event.getEntity() instanceof ResourceSlime slime)) {
+            return;
+        }
+        Entity killer = event.getSource().getEntity();
+        if (!(killer instanceof ResourceFrog frog)) {
+            return;
+        }
+
+        Category slimeCat = slime.getCategory();
+        if (frog.getCategory() != slimeCat) {
+            return;
+        }
+
+        // Only size-1 slimes reach this handler in practice (the frog tongue
+        // only eats size-1 per Frog.canEat), but defend against future
+        // changes — bigger slimes shouldn't pop a froglight on death from
+        // category-mismatched frogs.
+        if (slime.getSize() != 1) {
+            return;
+        }
+
+        Level level = frog.level();
+        if (level.isClientSide()) {
+            return;
+        }
+
+        ItemStack froglight = new ItemStack(PFBlocks.resourceFroglight(slimeCat));
+        Vec3 pos = frog.position();
+        ItemEntity drop = new ItemEntity(level, pos.x, pos.y, pos.z, froglight);
+        drop.setDefaultPickUpDelay();
+        level.addFreshEntity(drop);
+    }
+}

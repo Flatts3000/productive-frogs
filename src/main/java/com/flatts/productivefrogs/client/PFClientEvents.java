@@ -61,6 +61,10 @@ public final class PFClientEvents {
                 (state, level, pos, tintIndex) -> tintIndex == 0 ? cat.tintRgb() : -1,
                 PFBlocks.primedEgg(cat)
             );
+            event.register(
+                (state, level, pos, tintIndex) -> tintIndex == 0 ? cat.tintRgb() : -1,
+                PFBlocks.resourceFroglight(cat)
+            );
         }
     }
 
