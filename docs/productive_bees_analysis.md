@@ -1,6 +1,6 @@
 # Productive Bees Architecture Analysis
 
-Reference analysis of [JDKDigital/productive-bees](https://github.com/JDKDigital/productive-bees) (`dev-1.21.0`), the mod that directly inspired Productive Frogs. Clone of their source lives locally at `D:\minecraft-repos\productive-bees-reference\` for cross-referencing during V1/V2 work on the slime side.
+Reference analysis of [JDKDigital/productive-bees](https://github.com/JDKDigital/productive-bees) (`dev-1.21.0`), the mod that directly inspired Productive Frogs. Clone of their source lives locally at `F:\minecraft-repos\productive-bees-reference\` for cross-referencing during V1/V2 work on the slime side.
 
 This is a survey, not a copy-paste catalog — every section ends with **how it maps to our design** and whether we should mirror, diverge, or skip.
 
@@ -111,7 +111,7 @@ Vanilla beehives still drop vanilla honeycomb — Productive Bees produce only f
 ## 6. Key file paths (for cross-referencing later)
 
 ```
-D:\minecraft-repos\productive-bees-reference\src\main\java\cy\jdkdigital\productivebees\
+F:\minecraft-repos\productive-bees-reference\src\main\java\cy\jdkdigital\productivebees\
 ├── common\entity\bee\ConfigurableBee.java         — single-entity + JSON-driven
 ├── common\item\Honeycomb.java                     — single-item + data-component
 ├── common\recipe\AdvancedBeehiveRecipe.java       — recipe-driven production
@@ -121,7 +121,7 @@ D:\minecraft-repos\productive-bees-reference\src\main\java\cy\jdkdigital\product
 ├── init\ModDataComponents.java                    — bee_type component shape
 └── client\render\entity\ProductiveBeeRenderer.java — tint-by-JSON renderer
 
-D:\minecraft-repos\productive-bees-reference\pb_datapack\data\productivebees\
+F:\minecraft-repos\productive-bees-reference\pb_datapack\data\productivebees\
 ├── productivebees\example.json                    — annotated bee JSON template
 ├── productivebees\coal.json                       — simple bee example
 ├── productivebees\ae2\fluix.json                  — mod_loaded compat example
