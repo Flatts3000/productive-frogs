@@ -5,6 +5,9 @@ import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFBlocks;
+import com.flatts.productivefrogs.registry.PFDataComponents;
+import com.flatts.productivefrogs.registry.PFItems;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
@@ -72,7 +75,20 @@ public final class FrogTongueDropHandler {
             return;
         }
 
-        ItemStack froglight = new ItemStack(PFBlocks.resourceFroglight(slimeCat));
+        // Prefer the variant-keyed configurable_froglight when the slime
+        // carries a SlimeVariant — it preserves the per-resource identity
+        // for downstream smelting recipes. Fall back to the broad-category
+        // Froglight block for category-only slimes (split children of an
+        // older save, infused-but-not-variant slimes, etc).
+        Identifier variantId = slime.getVariantId();
+        ItemStack froglight;
+        if (variantId != null) {
+            froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
+            froglight.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
+        } else {
+            froglight = new ItemStack(PFBlocks.resourceFroglight(slimeCat));
+        }
+
         Vec3 pos = frog.position();
         ItemEntity drop = new ItemEntity(level, pos.x, pos.y, pos.z, froglight);
         drop.setDefaultPickUpDelay();

@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.client.renderer.ResourceFrogRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
 import com.flatts.productivefrogs.client.tint.ContainedCategoryTint;
+import com.flatts.productivefrogs.client.tint.SlimeVariantTint;
 import com.flatts.productivefrogs.client.tint.TadpoleBucketCategoryTint;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFBlocks;
@@ -73,6 +74,10 @@ public final class PFClientEvents {
         event.register(
             Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "contained_category"),
             ContainedCategoryTint.MAP_CODEC
+        );
+        event.register(
+            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "slime_variant"),
+            SlimeVariantTint.MAP_CODEC
         );
         event.register(
             Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tadpole_bucket_category"),

@@ -109,6 +109,8 @@ public final class PFGameTests {
             PFGameTests::vanillaMagmaCubeSplitDiscoveryConvertsToInfernalResourceSlime, 100);
         registerTest("slime_variant_datapack_registry_loads_initial_variants",
             PFGameTests::slimeVariantDatapackRegistryLoadsInitialVariants, 100);
+        registerTest("variant_slime_kill_drops_configurable_froglight",
+            PFGameTests::variantSlimeKillDropsConfigurableFroglight, 100);
     }
 
     private PFGameTests() {
@@ -312,6 +314,49 @@ public final class PFGameTests {
             helper.fail(BuiltInRegistries.ITEM.getKey(item)
                 + " must be in primer/" + cat.id() + " tag — check the JSON and the directory path");
         }
+    }
+
+    /**
+     * Mirror of {@code matching_frog_kill_drops_category_froglight} for the
+     * variant-aware drop path: spawn a METALLIC frog, an IRON-variant slime,
+     * deal damage from the frog → assert a {@code configurable_froglight}
+     * item entity drops carrying the {@code productivefrogs:iron}
+     * SLIME_VARIANT component. The original category-Froglight test still
+     * covers the fallback path (slime without a variant).
+     */
+    private static void variantSlimeKillDropsConfigurableFroglight(GameTestHelper helper) {
+        BlockPos frogPos = new BlockPos(2, 2, 2);
+        BlockPos slimePos = new BlockPos(3, 2, 2);
+
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
+        frog.setCategory(Category.METALLIC);
+
+        ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
+        slime.setSize(1, true);
+        Identifier ironVariant = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        slime.setVariant(ironVariant);
+        // setVariant syncs category from the registry, but assert just in case.
+        if (slime.getCategory() != Category.METALLIC) {
+            helper.fail("setVariant(iron) should have synced category to METALLIC, got " + slime.getCategory());
+        }
+
+        slime.hurtServer(helper.getLevel(),
+            helper.getLevel().damageSources().mobAttack(frog), 999.0F);
+
+        helper.succeedWhen(() -> {
+            net.minecraft.world.item.Item expected = PFItems.CONFIGURABLE_FROGLIGHT.get();
+            boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                .anyMatch(itemEntity -> {
+                    ItemStack stack = itemEntity.getItem();
+                    if (!stack.is(expected)) return false;
+                    Identifier variant = stack.get(
+                        com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get());
+                    return ironVariant.equals(variant);
+                });
+            if (!found) {
+                helper.fail("expected configurable_froglight stamped with iron variant to drop at frog");
+            }
+        });
     }
 
     /**

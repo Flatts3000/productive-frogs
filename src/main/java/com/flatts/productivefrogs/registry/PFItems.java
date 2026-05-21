@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.item.ConfigurableFroglightItem;
 import com.flatts.productivefrogs.content.item.FrogEggItem;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.data.Category;
@@ -138,6 +139,23 @@ public final class PFItems {
      * registration happens at mod-init, before the datapack registry loads.
      */
     public static final Map<String, DeferredItem<SpawnEggItem>> RESOURCE_SLIME_SPAWN_EGGS = buildSlimeVariantSpawnEggs();
+
+    /**
+     * Variant-keyed Froglight item — the per-resource production currency,
+     * stamped with a {@code SLIME_VARIANT} component when dropped by a frog
+     * eating a variant-locked slime (see {@code FrogTongueDropHandler}).
+     * Display name and inventory tint resolve at runtime from the
+     * registry-loaded {@link com.flatts.productivefrogs.data.SlimeVariant}.
+     *
+     * <p>Distinct from the six broad-category {@code <cat>_froglight} blocks —
+     * those stay as placeable decorative blocks; this item is the per-variant
+     * input to (future) smelting recipes that produce the underlying resource.
+     */
+    public static final DeferredItem<ConfigurableFroglightItem> CONFIGURABLE_FROGLIGHT = ITEMS.registerItem(
+        "configurable_froglight",
+        ConfigurableFroglightItem::new,
+        new Item.Properties()
+    );
 
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
