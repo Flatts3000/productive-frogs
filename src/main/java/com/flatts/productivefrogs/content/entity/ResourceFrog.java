@@ -72,6 +72,24 @@ public class ResourceFrog extends Frog {
         this.entityData.set(DATA_CATEGORY, category.ordinal());
     }
 
+    /**
+     * Category-aware display name — so Jade, the F3 entity readout, and any
+     * other client surface that calls {@code getName()} reads "Metallic Frog"
+     * instead of the generic "Resource Frog". Falls back to the custom name
+     * (player-set via name tag) when present.
+     *
+     * <p>Lang key: {@code entity.productivefrogs.resource_frog.<id>}.
+     */
+    @Override
+    public net.minecraft.network.chat.Component getName() {
+        if (this.hasCustomName()) {
+            return super.getName();
+        }
+        return net.minecraft.network.chat.Component.translatable(
+            getType().getDescriptionId() + "." + getCategory().id()
+        );
+    }
+
     @Override
     protected void addAdditionalSaveData(ValueOutput out) {
         super.addAdditionalSaveData(out);

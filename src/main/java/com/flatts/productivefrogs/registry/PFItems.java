@@ -7,12 +7,16 @@ import com.flatts.productivefrogs.data.Category;
 import java.util.EnumMap;
 import java.util.Map;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.MobBucketItem;
+import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.TypedEntityData;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -99,6 +103,26 @@ public final class PFItems {
     /** Per-category BlockItems for the six Resource Froglight blocks. */
     public static final Map<Category, DeferredItem<BlockItem>> RESOURCE_FROGLIGHT_ITEMS = buildResourceFroglightItems();
 
+    /**
+     * Per-category spawn eggs for Resource Frogs. Each item carries two default
+     * components: {@code ENTITY_DATA} (preset NBT seeding the spawned entity's
+     * Category) and {@code CONTAINED_CATEGORY} (drives the inventory tint via
+     * the existing {@code productivefrogs:contained_category} ItemTintSource).
+     *
+     * <p>Vanilla {@link SpawnEggItem}'s {@code BY_ID} map only stores one egg per
+     * EntityType (it overwrites on each registration with the same type), so its
+     * {@code byId} static lookup will resolve to whichever egg registered last.
+     * That's a vanilla-only convenience for chunk-spawn / breeding flows we
+     * don't use — per-stack {@code getType(ItemStack)} reads from the stack's
+     * ENTITY_DATA component and works correctly for every egg.
+     */
+    public static final Map<Category, DeferredItem<SpawnEggItem>> RESOURCE_FROG_SPAWN_EGGS = buildSpawnEggs(
+        "frog", () -> PFEntities.RESOURCE_FROG.get());
+
+    /** Per-category spawn eggs for Resource Tadpoles. Same shape as the frog eggs above. */
+    public static final Map<Category, DeferredItem<SpawnEggItem>> RESOURCE_TADPOLE_SPAWN_EGGS = buildSpawnEggs(
+        "tadpole", () -> PFEntities.RESOURCE_TADPOLE.get());
+
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {
@@ -121,6 +145,40 @@ public final class PFItems {
             ));
         }
         return map;
+    }
+
+    private static Map<Category, DeferredItem<SpawnEggItem>> buildSpawnEggs(
+            String entitySuffix,
+            java.util.function.Supplier<EntityType<?>> entityTypeSupplier) {
+        EnumMap<Category, DeferredItem<SpawnEggItem>> map = new EnumMap<>(Category.class);
+        for (Category cat : Category.values()) {
+            String name = cat.id() + "_" + entitySuffix + "_spawn_egg";
+            // Use the Supplier<Item.Properties> overload so the EntityType
+            // lookup is deferred until registry-build time. The Function
+            // overload (Item.Properties) would force entityTypeSupplier.get()
+            // at PFItems class-init, when PFEntities holders are still unbound.
+            map.put(cat, ITEMS.registerItem(
+                name,
+                SpawnEggItem::new,
+                () -> spawnEggProperties(entityTypeSupplier.get(), cat)
+            ));
+        }
+        return map;
+    }
+
+    /**
+     * Build properties for a category-locked spawn egg: presets the
+     * {@code ENTITY_DATA} NBT with {@code Category=&lt;name&gt;} so the spawned
+     * entity's {@code readAdditionalSaveData} picks up the right category, and
+     * sets {@code CONTAINED_CATEGORY} so the inventory tint reads it via the
+     * existing {@code productivefrogs:contained_category} ItemTintSource.
+     */
+    private static Item.Properties spawnEggProperties(EntityType<?> type, Category category) {
+        CompoundTag nbt = new CompoundTag();
+        nbt.putString("Category", category.name());
+        return new Item.Properties()
+            .component(DataComponents.ENTITY_DATA, TypedEntityData.of(type, nbt))
+            .component(PFDataComponents.CONTAINED_CATEGORY.get(), category);
     }
 
     /**

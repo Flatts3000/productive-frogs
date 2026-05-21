@@ -1,0 +1,16 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "productivefrogs:item/category_spawn_egg",
+    "tints": [
+      {
+        "type": "productivefrogs:contained_category",
+        "default": [
+          144,
+          112,
+          208
+        ]
+      }
+    ]
+  }
+}
