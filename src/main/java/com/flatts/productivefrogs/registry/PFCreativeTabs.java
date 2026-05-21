@@ -61,6 +61,7 @@ public final class PFCreativeTabs {
                     output.accept(PFItems.CAVE_SLIME_SPAWN_EGG.get());
                     output.accept(PFItems.GEODE_SLIME_SPAWN_EGG.get());
                     output.accept(PFItems.TIDE_SLIME_SPAWN_EGG.get());
+                    output.accept(PFItems.VOID_SLIME_SPAWN_EGG.get());
                 })
                 .build()
         );

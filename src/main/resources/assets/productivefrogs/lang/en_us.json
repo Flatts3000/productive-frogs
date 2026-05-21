@@ -66,6 +66,8 @@
   "entity.productivefrogs.geode_slime":         "Geode Slime",
   "item.productivefrogs.tide_slime_spawn_egg":  "Tide Slime Spawn Egg",
   "entity.productivefrogs.tide_slime":          "Tide Slime",
+  "item.productivefrogs.void_slime_spawn_egg":  "Void Slime Spawn Egg",
+  "entity.productivefrogs.void_slime":          "Void Slime",
 
   "block.productivefrogs.metallic_frog_egg": "Metallic Frog Egg",
   "block.productivefrogs.mineral_frog_egg":  "Mineral Frog Egg",

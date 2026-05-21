@@ -37,5 +37,6 @@ public final class PFModBusEvents {
         event.put(PFEntities.CAVE_SLIME.get(), Monster.createMonsterAttributes().build());
         event.put(PFEntities.GEODE_SLIME.get(), Monster.createMonsterAttributes().build());
         event.put(PFEntities.TIDE_SLIME.get(), Monster.createMonsterAttributes().build());
+        event.put(PFEntities.VOID_SLIME.get(), Monster.createMonsterAttributes().build());
     }
 }

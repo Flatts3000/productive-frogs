@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.content.entity.CaveSlime;
 import com.flatts.productivefrogs.content.entity.GeodeSlime;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.TideSlime;
+import com.flatts.productivefrogs.content.entity.VoidSlime;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFEntities;
@@ -142,6 +143,9 @@ public final class SlimeSplitDiscoveryHandler {
         }
         if (parent instanceof TideSlime) {
             return Category.AQUATIC;
+        }
+        if (parent instanceof VoidSlime) {
+            return Category.ARCANE;
         }
         if (parent.getClass() == Slime.class) {
             return Category.METALLIC;

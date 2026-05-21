@@ -183,6 +183,13 @@ public final class PFItems {
         () -> new Item.Properties().spawnEgg(PFEntities.TIDE_SLIME.get())
     );
 
+    /** Void Slime spawn egg — ARCANE parent species. Mirrors Cave Slime. */
+    public static final DeferredItem<SpawnEggItem> VOID_SLIME_SPAWN_EGG = ITEMS.registerItem(
+        "void_slime_spawn_egg",
+        SpawnEggItem::new,
+        () -> new Item.Properties().spawnEgg(PFEntities.VOID_SLIME.get())
+    );
+
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {

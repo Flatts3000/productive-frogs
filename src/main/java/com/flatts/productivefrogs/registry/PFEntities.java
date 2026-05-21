@@ -7,6 +7,7 @@ import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import com.flatts.productivefrogs.content.entity.TideSlime;
+import com.flatts.productivefrogs.content.entity.VoidSlime;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -127,6 +128,25 @@ public final class PFEntities {
                 .build(net.minecraft.resources.ResourceKey.create(
                     Registries.ENTITY_TYPE,
                     net.minecraft.resources.Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tide_slime")
+                ))
+        );
+
+    /**
+     * Void Slime — the ARCANE parent species. Closes the parent-species set
+     * (Cave/Geode/Tide/Void cover the four non-vanilla categories MINERAL /
+     * GEM / AQUATIC / ARCANE). The {@code instanceof VoidSlime → ARCANE}
+     * branch lives in {@link com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler}.
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<VoidSlime>> VOID_SLIME =
+        ENTITIES.register(
+            "void_slime",
+            () -> EntityType.Builder.<VoidSlime>of(VoidSlime::new, MobCategory.MONSTER)
+                .sized(2.04F, 2.04F)
+                .eyeHeight(0.625F)
+                .clientTrackingRange(10)
+                .build(net.minecraft.resources.ResourceKey.create(
+                    Registries.ENTITY_TYPE,
+                    net.minecraft.resources.Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "void_slime")
                 ))
         );
 
