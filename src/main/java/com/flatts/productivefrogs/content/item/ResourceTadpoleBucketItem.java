@@ -5,6 +5,7 @@ import java.util.Optional;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -66,5 +67,29 @@ public final class ResourceTadpoleBucketItem extends MobBucketItem {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    /**
+     * Pull the stored slime variant id out of the bucket's
+     * {@code BUCKET_ENTITY_DATA} payload. Returns {@code null} if the bucket
+     * is empty, the entity didn't store a Variant tag (Tadpole Buckets
+     * never do; only Slime Buckets that captured a variant-stamped
+     * ResourceSlime), or the stored id is malformed.
+     *
+     * <p>Used by the bucket tint sources to prefer the variant's primary
+     * color over the broader category tint when both are present.
+     */
+    @Nullable
+    public static Identifier readVariant(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
+        if (data == null) {
+            return null;
+        }
+        CompoundTag tag = data.copyTag();
+        Optional<String> raw = tag.getString("Variant");
+        if (raw.isEmpty() || raw.get().isEmpty()) {
+            return null;
+        }
+        return Identifier.tryParse(raw.get());
     }
 }
