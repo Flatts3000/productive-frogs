@@ -76,4 +76,36 @@ class PFRegistryTest {
             );
         }
     }
+
+    /**
+     * Each of the 12 variant slime spawn eggs must carry the {@code SLIME_VARIANT}
+     * data component on its default stack so the {@code slime_variant} ItemTintSource
+     * can resolve the variant's primary colour from the datapack registry. Without
+     * this component the spawn eggs would all render the (gray) JSON-default
+     * fallback — the bug captured in {@code docs/known_issues.md} under the
+     * "Per-variant + per-category items need JEI subtype interpreters" entry
+     * (tint half).
+     */
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {
+        "iron", "copper", "gold",
+        "redstone", "lapis", "coal",
+        "diamond", "emerald",
+        "prismarine", "sponge",
+        "magma_cream", "ender_pearl"
+    })
+    void variantSlimeSpawnEggCarriesSlimeVariantComponent(String variantName) {
+        net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.SpawnEggItem> holder =
+            PFItems.RESOURCE_SLIME_SPAWN_EGGS.get(variantName);
+        assertNotNull(holder, variantName + " variant spawn egg must be registered");
+        net.minecraft.world.item.ItemStack stack = holder.get().getDefaultInstance();
+        Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+        assertNotNull(variantId,
+            variantName + " spawn egg's default stack must carry SLIME_VARIANT");
+        assertEquals(
+            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName),
+            variantId,
+            variantName + " spawn egg's SLIME_VARIANT id must match the variant"
+        );
+    }
 }

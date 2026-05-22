@@ -4,7 +4,8 @@
     "model": "productivefrogs:item/category_spawn_egg",
     "tints": [
       {
-        "type": "productivefrogs:contained_category",
+        "type": "productivefrogs:slime_variant",
+        "layer": "primary",
         "default": [
           120,
           220,
