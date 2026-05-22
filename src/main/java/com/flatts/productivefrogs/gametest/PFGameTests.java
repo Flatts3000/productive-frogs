@@ -324,14 +324,18 @@ public final class PFGameTests {
     }
 
     /**
-     * Verify the bucket round-trip preserves category: spawn a tadpole, write
-     * its state into a bucket via {@code saveToBucketTag}, then load that bucket
-     * NBT into a fresh tadpole and assert the category survived.
+     * Verify the full bucket round-trip preserves category: spawn a tadpole,
+     * write its state into a bucket via {@code saveToBucketTag}, read the
+     * category back from the NBT, then spawn a fresh tadpole of a different
+     * default category and call {@code loadFromBucketTag} on it. The fresh
+     * tadpole must end up with the source's category — that's the path
+     * vanilla {@code Bucketable.bucketMobPickup} → release hook takes.
      *
-     * <p>This is an API-level check rather than a full player-driven bucket
-     * interaction — but the {@code saveToBucketTag} / {@code loadFromBucketTag}
-     * pair is exactly what vanilla {@code Bucketable.bucketMobPickup} and the
-     * bucket's release hook call, so the data-shape contract is fully exercised.
+     * <p>The pre-PR-#60 version of this test only verified the save→read half
+     * (the bucket NBT contains the category). Extending to cover
+     * {@code loadFromBucketTag} closes the gap flagged in backlog.md against
+     * PR #22's slime-bucket strengthening — the tadpole bucket now has the
+     * same coverage shape.
      */
     private static void tadpoleBucketRoundTripPreservesCategory(GameTestHelper helper) {
         Category cat = Category.INFERNAL;
@@ -344,10 +348,31 @@ public final class PFGameTests {
         ItemStack bucket = new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
         source.saveToBucketTag(bucket);
 
-        // Round-trip via the same helper FrogEggItem / handlers use to read it back.
+        // 1. Save → read half: bucket NBT carries the category.
         Category readBack = ResourceTadpoleBucketItem.readCategory(bucket);
         if (readBack != cat) {
-            helper.fail("bucket round-trip lost category: wrote " + cat + ", read " + readBack);
+            helper.fail("bucket NBT lost category: wrote " + cat + ", read " + readBack);
+            return;
+        }
+
+        // 2. loadFromBucketTag half: a fresh tadpole of a DIFFERENT category
+        //    has its category overwritten when the bucket is released. Picking
+        //    METALLIC as the starting state so the assertion fails loudly if
+        //    loadFromBucketTag silently no-ops.
+        ResourceTadpole released = helper.spawn(PFEntities.RESOURCE_TADPOLE.get(), pos.east());
+        released.setCategory(Category.METALLIC);
+        net.minecraft.world.item.component.CustomData data =
+            bucket.get(net.minecraft.core.component.DataComponents.BUCKET_ENTITY_DATA);
+        if (data == null) {
+            helper.fail("bucket's BUCKET_ENTITY_DATA is unexpectedly null after saveToBucketTag");
+            return;
+        }
+        released.loadFromBucketTag(data.copyTag());
+
+        if (released.getCategory() != cat) {
+            helper.fail("released tadpole category was " + released.getCategory()
+                + ", expected " + cat + " (loadFromBucketTag did not restore the bucket's category)");
+            return;
         }
         helper.succeed();
     }
