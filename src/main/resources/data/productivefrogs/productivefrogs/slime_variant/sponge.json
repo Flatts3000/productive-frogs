@@ -2,5 +2,6 @@
   "primer_item": "minecraft:sponge",
   "category": "aquatic",
   "primary_color": 14867800,
-  "secondary_color": 11578160
+  "secondary_color": 11578160,
+  "texture": "productivefrogs:textures/entity/slime/sponge_resource_slime.png"
 }

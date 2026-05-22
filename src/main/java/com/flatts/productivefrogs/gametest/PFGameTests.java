@@ -553,6 +553,20 @@ public final class PFGameTests {
         if (!iron.primerItem().equals(Identifier.fromNamespaceAndPath("minecraft", "iron_ingot"))) {
             helper.fail("iron variant primer should be minecraft:iron_ingot, got " + iron.primerItem());
         }
+        // PR-F wires per-variant inner-cube PNGs: every shipped variant JSON
+        // declares a `texture` pointing at its generated PNG. Spot-check that
+        // the codec round-tripped the field rather than silently dropping it.
+        if (iron.texture().isEmpty()) {
+            helper.fail("iron variant must declare a `texture` field after the per-variant PNG ship");
+            return;
+        }
+        Identifier expectedTexture = Identifier.fromNamespaceAndPath(
+            ProductiveFrogs.MOD_ID, "textures/entity/slime/iron_resource_slime.png");
+        if (!expectedTexture.equals(iron.texture().get())) {
+            helper.fail("iron texture path should be " + expectedTexture
+                + ", got " + iron.texture().get());
+            return;
+        }
         helper.succeed();
     }
 

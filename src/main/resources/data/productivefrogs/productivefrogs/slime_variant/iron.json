@@ -2,5 +2,6 @@
   "primer_item": "minecraft:iron_ingot",
   "category": "metallic",
   "primary_color": 14211288,
-  "secondary_color": 12632256
+  "secondary_color": 12632256,
+  "texture": "productivefrogs:textures/entity/slime/iron_resource_slime.png"
 }
