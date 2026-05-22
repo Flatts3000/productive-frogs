@@ -47,9 +47,19 @@ public class SlimeMilkerInventory extends ItemStacksResourceHandler {
 
     private final Runnable onChanged;
 
+    // Cached views, returned from inputView() / outputView(). The block
+    // capability provider in PFModBusEvents resolves these every time
+    // a hopper queries the BE — caching the two SidedView instances on
+    // construction keeps the hot path allocation-free and lets external
+    // callers hold a stable handler reference for the lifetime of the BE.
+    private final ResourceHandler<ItemResource> inputView;
+    private final ResourceHandler<ItemResource> outputView;
+
     public SlimeMilkerInventory(Runnable onChanged) {
         super(SLOT_COUNT);
         this.onChanged = onChanged;
+        this.inputView = new SidedView(this, INPUT_SLOT, true, false);
+        this.outputView = new SidedView(this, OUTPUT_SLOT, false, true);
     }
 
     @Override
@@ -92,19 +102,21 @@ public class SlimeMilkerInventory extends ItemStacksResourceHandler {
     /**
      * Insert-only view of the input slot. Returned for any side except
      * {@link net.minecraft.core.Direction#DOWN} — hoppers above and on
-     * the horizontal faces use this to push Slime Buckets in.
+     * the horizontal faces use this to push Slime Buckets in. Cached
+     * (one instance per BE), see the field comment.
      */
     public ResourceHandler<ItemResource> inputView() {
-        return new SidedView(this, INPUT_SLOT, true, false);
+        return inputView;
     }
 
     /**
      * Extract-only view of the output slot. Returned for
      * {@link net.minecraft.core.Direction#DOWN} — a hopper below the
-     * milker pulls finished Slime Milk buckets through this.
+     * milker pulls finished Slime Milk buckets through this. Cached
+     * (one instance per BE), see the field comment.
      */
     public ResourceHandler<ItemResource> outputView() {
-        return new SidedView(this, OUTPUT_SLOT, false, true);
+        return outputView;
     }
 
     /**
