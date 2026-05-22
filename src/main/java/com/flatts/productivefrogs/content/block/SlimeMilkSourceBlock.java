@@ -109,6 +109,18 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
         {1, 1, 1}, {1, 1, -1}, {-1, 1, 1}, {-1, 1, -1},
     };
 
+    /**
+     * Test-only override for {@link PFConfig#DEPLETION_ENABLED}. When
+     * non-null, takes precedence over the config — GameTests set this so
+     * their assertions don't depend on whatever the developer has in
+     * {@code productivefrogs-common.toml}. Always null in production.
+     * Volatile so the test thread's write is visible to the server thread
+     * that runs the block tick. Mirrors the {@code testOverride} pattern
+     * on {@link com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler}.
+     */
+    @Nullable
+    public static volatile Boolean depletionEnabledOverride = null;
+
     private final String variant;
 
     public SlimeMilkSourceBlock(FlowingFluid fluid, String variant, Properties properties) {
@@ -174,7 +186,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
             return;
         }
 
-        if (PFConfig.DEPLETION_ENABLED.get()) {
+        if (depletionEnabled()) {
             int remaining = state.getValue(SPAWNS_REMAINING);
             if (remaining <= 0) {
                 // Counter exhausted — drain the pool. Set air explicitly
@@ -192,6 +204,12 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
             spawn(level, pos, random);
         }
         scheduleNextSpawnTick(level, pos, random);
+    }
+
+    /** Effective depletionEnabled value — {@link #depletionEnabledOverride} wins when set, else config. */
+    private static boolean depletionEnabled() {
+        Boolean override = depletionEnabledOverride;
+        return override != null ? override : PFConfig.DEPLETION_ENABLED.get();
     }
 
     private static void scheduleNextSpawnTick(ServerLevel level, BlockPos pos, RandomSource random) {

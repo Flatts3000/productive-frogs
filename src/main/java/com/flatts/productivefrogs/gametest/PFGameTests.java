@@ -393,6 +393,11 @@ public final class PFGameTests {
      */
     private static void splitDiscoveryPicksVariantFromPool(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 2, 2);
+        // Capture-and-restore in case another harness mid-run has set its own
+        // override — blindly clearing to null would clobber it. Unconditional
+        // null was correct for V1 (only this test family writes the field),
+        // but the restore pattern is cheap insurance against future nesting.
+        Float originalOverride = SlimeSplitDiscoveryHandler.testOverride;
         SlimeSplitDiscoveryHandler.testOverride = 1.0f;
         try {
             net.minecraft.world.entity.monster.Slime parent =
@@ -430,7 +435,7 @@ public final class PFGameTests {
                 }
             });
         } finally {
-            SlimeSplitDiscoveryHandler.testOverride = null;
+            SlimeSplitDiscoveryHandler.testOverride = originalOverride;
         }
     }
 
@@ -803,6 +808,7 @@ public final class PFGameTests {
             net.minecraft.world.entity.EntityType<T> parentType,
             Category expectedCategory) {
         BlockPos pos = new BlockPos(2, 2, 2);
+        Float originalOverride = SlimeSplitDiscoveryHandler.testOverride;
         SlimeSplitDiscoveryHandler.testOverride = 1.0f;
         try {
             T parent = helper.spawn(parentType, pos);
@@ -831,7 +837,7 @@ public final class PFGameTests {
                 }
             });
         } finally {
-            SlimeSplitDiscoveryHandler.testOverride = null;
+            SlimeSplitDiscoveryHandler.testOverride = originalOverride;
         }
     }
 
@@ -1177,6 +1183,11 @@ public final class PFGameTests {
      * 5 (mid-life). Tick once and assert the resulting state's counter is
      * 4 — confirms the decrement edge of the tick loop runs exactly once
      * per successful spawn.
+     *
+     * <p>Forces {@code depletionEnabledOverride=true} so the test result is
+     * stable regardless of whether the developer has flipped
+     * {@code depletionEnabled} off in their local
+     * {@code productivefrogs-common.toml}.
      */
     private static void slimeMilkSourceDecrementsSpawnsRemainingEachSpawn(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
@@ -1190,21 +1201,28 @@ public final class PFGameTests {
         ServerLevel level = helper.getLevel();
         BlockPos absSourcePos = helper.absolutePos(sourcePos);
 
-        block.tick(level.getBlockState(absSourcePos), level, absSourcePos, level.getRandom());
+        Boolean originalOverride =
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride;
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = true;
+        try {
+            block.tick(level.getBlockState(absSourcePos), level, absSourcePos, level.getRandom());
 
-        BlockState after = level.getBlockState(absSourcePos);
-        int afterCount = after.getValue(
-            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.SPAWNS_REMAINING);
-        if (afterCount != 4) {
-            helper.fail("expected SPAWNS_REMAINING=4 after one tick (started at 5), got " + afterCount);
-            return;
+            BlockState after = level.getBlockState(absSourcePos);
+            int afterCount = after.getValue(
+                com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.SPAWNS_REMAINING);
+            if (afterCount != 4) {
+                helper.fail("expected SPAWNS_REMAINING=4 after one tick (started at 5), got " + afterCount);
+                return;
+            }
+            // Sanity: the spawn itself still happened.
+            if (helper.getEntities(PFEntities.RESOURCE_SLIME.get()).size() != 1) {
+                helper.fail("expected 1 ResourceSlime to spawn during the decrementing tick");
+                return;
+            }
+            helper.succeed();
+        } finally {
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = originalOverride;
         }
-        // Sanity: the spawn itself still happened.
-        if (helper.getEntities(PFEntities.RESOURCE_SLIME.get()).size() != 1) {
-            helper.fail("expected 1 ResourceSlime to spawn during the decrementing tick");
-            return;
-        }
-        helper.succeed();
     }
 
     /**
@@ -1212,6 +1230,10 @@ public final class PFGameTests {
      * and tick it. The tick must replace the block with air rather than
      * spawning a slime — this is the drain path. Also asserts no slime
      * appears, since the drain branch returns before {@code spawn()}.
+     *
+     * <p>Forces {@code depletionEnabledOverride=true} so a developer who
+     * has flipped {@code depletionEnabled} off in their local config can
+     * still run this suite.
      */
     private static void slimeMilkSourceDrainsWhenSpawnsRemainingReachesZero(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
@@ -1225,22 +1247,29 @@ public final class PFGameTests {
         ServerLevel level = helper.getLevel();
         BlockPos absSourcePos = helper.absolutePos(sourcePos);
 
-        block.tick(level.getBlockState(absSourcePos), level, absSourcePos, level.getRandom());
+        Boolean originalOverride =
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride;
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = true;
+        try {
+            block.tick(level.getBlockState(absSourcePos), level, absSourcePos, level.getRandom());
 
-        // Block should be gone — removeBlock leaves air (or the next-flow
-        // state if a neighbour is feeding in; in an isolated test plot it's
-        // just air).
-        BlockState after = level.getBlockState(absSourcePos);
-        if (!after.isAir()) {
-            helper.fail("expected drained source pos to be air, got " + after);
-            return;
+            // Block should be gone — the drain branch calls
+            // level.setBlock(pos, AIR) explicitly (not removeBlock, which
+            // would round-trip the fluid back to a default-state source).
+            BlockState after = level.getBlockState(absSourcePos);
+            if (!after.isAir()) {
+                helper.fail("expected drained source pos to be air, got " + after);
+                return;
+            }
+            // Drain branch returns early — no slime should have spawned.
+            if (!helper.getEntities(PFEntities.RESOURCE_SLIME.get()).isEmpty()) {
+                helper.fail("drain tick must NOT produce a slime, but one appeared");
+                return;
+            }
+            helper.succeed();
+        } finally {
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = originalOverride;
         }
-        // Drain branch returns early — no slime should have spawned.
-        if (!helper.getEntities(PFEntities.RESOURCE_SLIME.get()).isEmpty()) {
-            helper.fail("drain tick must NOT produce a slime, but one appeared");
-            return;
-        }
-        helper.succeed();
     }
 
     /**
