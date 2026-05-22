@@ -64,18 +64,18 @@ Wiring is centralized in `ProductiveFrogs.java`'s constructor — `PFDataCompone
 
 Entities reuse vanilla hitboxes (`Tadpole.HITBOX_WIDTH`/`HITBOX_HEIGHT`) and vanilla attribute tables (`Tadpole.createAttributes()`) so vanilla renderers/AI work without per-mod tuning. Custom renderers (`ResourceTadpoleRenderer`, `ResourceFrogRenderer`, the four parent-species renderers) subclass the vanilla ones and override `getModelTint(state)` — they don't reimplement the model.
 
-### Slime species → category mapping (split-discovery ordering footgun)
+### Slime species → category mapping (datapack registry)
 
-Six parent species exist, one per category, and they all funnel through `SlimeSplitDiscoveryHandler.categoryForParent`:
+Six parent species exist, one per category, mapped via the `productivefrogs:parent_species` datapack registry (`PFRegistries.PARENT_SPECIES`). Six defaults ship at `data/productivefrogs/productivefrogs/parent_species/`:
 
-- vanilla `Slime` → METALLIC
-- vanilla `MagmaCube` → INFERNAL
-- `CaveSlime` (PF) → MINERAL
-- `GeodeSlime` (PF) → GEM
-- `TideSlime` (PF) → AQUATIC
-- `VoidSlime` (PF) → ARCANE
+- `minecraft:slime` → METALLIC
+- `minecraft:magma_cube` → INFERNAL
+- `productivefrogs:cave_slime` → MINERAL
+- `productivefrogs:geode_slime` → GEM
+- `productivefrogs:tide_slime` → AQUATIC
+- `productivefrogs:void_slime` → ARCANE
 
-**The `instanceof CaveSlime` / `GeodeSlime` / `TideSlime` / `VoidSlime` checks MUST come before the `parent.getClass() == Slime.class` strict-equality check** — all four PF parent species extend `Slime`, so a polymorphic `instanceof Slime` test would mis-route them to METALLIC. The handler relies on strict-equality for vanilla Slime specifically to keep the PF subclasses from being captured. If you add a new parent species, slot its `instanceof` check above the Slime strict-equality line.
+`SlimeSplitDiscoveryHandler.categoryForParent` does an EntityType-id lookup against the registry — no `instanceof` chain, no subclass-ordering footgun (each PF parent species has its own EntityType id, so `minecraft:slime` and `productivefrogs:cave_slime` are inherently distinct). Add a modded slime to the discovery loop by dropping a JSON at `data/<datapack_ns>/productivefrogs/parent_species/<name>.json` with `{ "entity_type": "...", "category": "..." }`.
 
 ### Custom brain sensor for category-filtered tongue targeting
 
