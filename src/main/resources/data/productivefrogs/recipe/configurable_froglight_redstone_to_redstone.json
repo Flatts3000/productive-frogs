@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": {
+    "neoforge:ingredient_type": "neoforge:components",
+    "items": "productivefrogs:configurable_froglight",
+    "components": {
+      "productivefrogs:slime_variant": "productivefrogs:redstone"
+    }
+  },
+  "result": {"id": "minecraft:redstone"},
+  "experience": 0.2,
+  "cookingtime": 200,
+  "category": "misc",
+  "group": "productivefrogs_froglight"
+}

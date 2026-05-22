@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": "productivefrogs:arcane_froglight",
+  "result": {"id": "minecraft:ender_pearl"},
+  "experience": 1.0,
+  "cookingtime": 200,
+  "category": "misc",
+  "group": "productivefrogs_froglight"
+}
