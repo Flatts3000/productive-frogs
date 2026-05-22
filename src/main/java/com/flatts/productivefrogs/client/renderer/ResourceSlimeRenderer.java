@@ -126,15 +126,17 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
             //                       still read distinctly from one another
             //                       without going full-saturation. See
             //                       Category.shellTintArgb javadoc.
-            //   neither          -> -1 (white, no tint). Only happens in
-            //                       the defensive path where the entity
-            //                       isn't actually a ResourceSlime (this
-            //                       branch can't run from here, but the
-            //                       state default of -1 covers it anyway).
             //
             // Variant lookup is null-tolerant: unknown-variant-id slimes
             // (datapack removed since save, modded variant whose mod isn't
-            // loaded) hit the category branch via the null check below.
+            // loaded) hit the category branch and get the shell tint.
+            //
+            // The defensive `category != null` fallback to -1 is
+            // belt-and-suspenders: ResourceSlime.getCategory() defaults to
+            // METALLIC for out-of-range ordinals, so it never actually
+            // returns null. Leaving the check in costs nothing and keeps
+            // the renderer robust against future Slime subclasses that
+            // might not share that defensiveness.
             SlimeVariant variant = resource.getVariant();
             if (variant != null) {
                 rState.variantTexture = variant.texture().orElse(null);

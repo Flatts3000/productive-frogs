@@ -65,10 +65,13 @@ public enum Category implements StringRepresentable {
     /**
      * Subtly tinted gray ARGB for surfaces where the full {@link #tintArgb()}
      * would be too saturated — currently the variant-less Resource Slime
-     * outer shell. Blends the category colour with light gray
-     * ({@value SHELL_GRAY_R}, {@value SHELL_GRAY_G}, {@value SHELL_GRAY_B})
-     * at the {@value SHELL_TINT_WEIGHT_PERCENT}% / {@value SHELL_GRAY_WEIGHT_PERCENT}%
-     * weight, so AQUATIC slimes look cooler-gray, INFERNAL slimes look
+     * outer shell. Each channel is a weighted blend:
+     * <pre>
+     *   channel = (light_gray * {@value SHELL_GRAY_WEIGHT_PERCENT}%
+     *              + category  * {@value SHELL_TINT_WEIGHT_PERCENT}%) / 100
+     * </pre>
+     * where {@code light_gray} = ({@value SHELL_GRAY_R}, {@value SHELL_GRAY_G},
+     * {@value SHELL_GRAY_B}). So AQUATIC slimes look cooler-gray, INFERNAL
      * warmer-gray, etc., without going full red/orange/cyan.
      *
      * <p>Per the polish item in {@code docs/backlog.md}: <i>"Could tighten
