@@ -6,7 +6,6 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -33,8 +32,11 @@ class SlimeBucketItemTest {
     @Test
     void emptyBucketUsesBaseDescriptionId() {
         ItemStack stack = new ItemStack(PFItems.SLIME_BUCKET.get());
-        // No BUCKET_ENTITY_DATA written → readVariant and readCategory both
-        // return null → name resolves to the base key.
+        // The BUCKET_ENTITY_DATA component is set to CustomData.EMPTY by
+        // PFItems.SLIME_BUCKET's default properties — present but empty.
+        // readVariant / readCategory return null because the inner tag has
+        // no "Variant" / "Category" entry, so the resolver falls through
+        // to the base description key.
         assertKey("item.productivefrogs.slime_bucket", stack);
     }
 
