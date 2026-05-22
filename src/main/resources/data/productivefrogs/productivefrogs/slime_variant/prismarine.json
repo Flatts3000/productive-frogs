@@ -2,5 +2,6 @@
   "primer_item": "minecraft:prismarine_shard",
   "category": "aquatic",
   "primary_color": 7582624,
-  "secondary_color": 5277048
+  "secondary_color": 5277048,
+  "texture": "productivefrogs:textures/entity/slime/prismarine_resource_slime.png"
 }
