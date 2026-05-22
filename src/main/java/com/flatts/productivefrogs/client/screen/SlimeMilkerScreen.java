@@ -1,0 +1,74 @@
+package com.flatts.productivefrogs.client.screen;
+
+import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
+import com.flatts.productivefrogs.content.menu.SlimeMilkerMenu;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.player.Inventory;
+
+/**
+ * Client screen for the {@link com.flatts.productivefrogs.content.block.SlimeMilkerBlock}.
+ * Mirrors vanilla's furnace screen shape — input slot + progress arrow +
+ * output slot + standard 27 + 9 player inventory grid — but minus the
+ * fuel slot and burn-flame indicator.
+ *
+ * <p>Background texture lives at
+ * {@code assets/productivefrogs/textures/gui/container/slime_milker.png}.
+ * The blit arrow uses a fixed 24×17 sprite drawn relative to the
+ * cook-progress fraction from the menu's synced {@link
+ * net.minecraft.world.inventory.ContainerData}.
+ */
+public class SlimeMilkerScreen extends AbstractContainerScreen<SlimeMilkerMenu> {
+
+    private static final Identifier BACKGROUND = Identifier.fromNamespaceAndPath(
+        ProductiveFrogs.MOD_ID, "textures/gui/container/slime_milker.png");
+
+    // Progress-arrow sprite layout on the background texture. (X1, Y1) is
+    // the screen position; (X2, Y2) the source position on the PNG.
+    // Width 24 / height 17 matches vanilla's furnace arrow.
+    private static final int ARROW_BG_X = 79;
+    private static final int ARROW_BG_Y = 34;
+    private static final int ARROW_SRC_X = 176;
+    private static final int ARROW_SRC_Y = 14;
+    private static final int ARROW_WIDTH = 24;
+    private static final int ARROW_HEIGHT = 17;
+
+    // Background PNG is the standard 256x256 image with the 176x166 GUI
+    // region in the top-left, matching vanilla furnace conventions.
+    private static final int BG_TEX_WIDTH = 256;
+    private static final int BG_TEX_HEIGHT = 256;
+
+    public SlimeMilkerScreen(SlimeMilkerMenu menu, Inventory playerInv, Component title) {
+        super(menu, playerInv, title);
+        // Vanilla container size: 176x166 PNG region.
+        this.imageWidth = 176;
+        this.imageHeight = 166;
+    }
+
+    @Override
+    protected void renderBg(GuiGraphics gui, float partialTick, int mouseX, int mouseY) {
+        int x = (this.width - this.imageWidth) / 2;
+        int y = (this.height - this.imageHeight) / 2;
+        gui.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED,
+                 BACKGROUND, x, y, 0.0F, 0.0F, this.imageWidth, this.imageHeight,
+                 BG_TEX_WIDTH, BG_TEX_HEIGHT);
+
+        // Cook-progress arrow — width scales linearly with cookProgress
+        // / cookTotal so the arrow "fills" left-to-right as the cook
+        // approaches completion.
+        int progress = this.menu.getCookProgress();
+        int total = this.menu.getCookTotal();
+        if (progress > 0 && total > 0) {
+            int filled = Math.min(ARROW_WIDTH, (progress * ARROW_WIDTH) / total);
+            gui.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED,
+                     BACKGROUND,
+                     x + ARROW_BG_X, y + ARROW_BG_Y,
+                     ARROW_SRC_X, ARROW_SRC_Y,
+                     filled, ARROW_HEIGHT,
+                     BG_TEX_WIDTH, BG_TEX_HEIGHT);
+        }
+    }
+}

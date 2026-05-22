@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs;
 
 import com.flatts.productivefrogs.gametest.PFGameTests;
+import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFCreativeTabs;
 import com.flatts.productivefrogs.registry.PFDataComponents;
@@ -8,6 +9,7 @@ import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFFluidTypes;
 import com.flatts.productivefrogs.registry.PFFluids;
 import com.flatts.productivefrogs.registry.PFItems;
+import com.flatts.productivefrogs.registry.PFMenuTypes;
 import com.flatts.productivefrogs.registry.PFSensors;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -41,6 +43,11 @@ public final class ProductiveFrogs {
         PFFluids.register(modEventBus);
         PFBlocks.register(modEventBus);
         PFItems.register(modEventBus);
+        // BlockEntities + MenuTypes after Blocks because SLIME_MILKER's
+        // BlockEntityType.Builder.of references PFBlocks.SLIME_MILKER at
+        // BE registration time.
+        PFBlockEntities.register(modEventBus);
+        PFMenuTypes.register(modEventBus);
         PFEntities.register(modEventBus);
         PFSensors.register(modEventBus);
         PFCreativeTabs.register(modEventBus);

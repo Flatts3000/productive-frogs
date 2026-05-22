@@ -161,6 +161,10 @@ public final class PFGameTests {
             PFGameTests::directFeedMismatchedCategoryIsANoOp, 100);
         registerTest("milk_bucket_exposes_fluid_capability_for_tank_mods",
             PFGameTests::milkBucketExposesFluidCapabilityForTankMods, 100);
+        registerTest("slime_milker_be_cooks_iron_bucket_to_iron_milk_after_100_ticks",
+            PFGameTests::slimeMilkerBeCooksIronBucketToIronMilkAfter100Ticks, 200);
+        registerTest("slime_milker_be_resets_progress_when_input_lacks_variant",
+            PFGameTests::slimeMilkerBeResetsProgressWhenInputLacksVariant, 100);
     }
 
     private PFGameTests() {
@@ -1733,5 +1737,111 @@ public final class PFGameTests {
                 + BuiltInRegistries.FLUID.getKey(resource.getFluid())
                 + ", expected " + BuiltInRegistries.FLUID.getKey(expectedFluid));
         }
+    }
+
+    // ---------------------------------------------------------------------
+    // Slime Milker furnace-style BE (Q9b — known_issues.md redesign)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Happy path: place a Slime Milker, drop an iron-variant Slime Bucket
+     * into its input slot, drive the server-tick by hand 100 times, and
+     * assert the output slot holds an iron Slime Milk bucket and the
+     * input slot is empty.
+     */
+    private static void slimeMilkerBeCooksIronBucketToIronMilkAfter100Ticks(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos, PFBlocks.SLIME_MILKER.get());
+
+        ServerLevel level = helper.getLevel();
+        BlockPos absPos = helper.absolutePos(pos);
+        net.minecraft.world.level.block.entity.BlockEntity be = level.getBlockEntity(absPos);
+        if (!(be instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity milker)) {
+            helper.fail("expected SlimeMilkerBlockEntity at " + absPos + ", got "
+                + (be == null ? "null" : be.getClass().getSimpleName()));
+            return;
+        }
+
+        // Build the iron-variant Slime Bucket via the real saveToBucketTag
+        // path so the test pins the same NBT shape the in-world capture
+        // flow produces.
+        ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(4, 2, 4));
+        source.setSize(1, true);
+        source.setVariant(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
+        source.saveToBucketTag(bucket);
+        source.discard();
+
+        milker.getInventory().setStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity.INPUT_SLOT, bucket);
+
+        // Drive the cook loop. serverTick is a no-op on client; on server
+        // it advances cookProgress by one per call. After exactly
+        // COOK_TIME_TOTAL invocations the input should be consumed and
+        // the output should be set.
+        int total = com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity.COOK_TIME_TOTAL;
+        for (int i = 0; i < total; i++) {
+            com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity.serverTick(
+                level, absPos, level.getBlockState(absPos), milker);
+        }
+
+        ItemStack input = milker.getInventory().getStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity.INPUT_SLOT);
+        ItemStack output = milker.getInventory().getStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity.OUTPUT_SLOT);
+        if (!input.isEmpty()) {
+            helper.fail("expected input slot empty after cook, got "
+                + BuiltInRegistries.ITEM.getKey(input.getItem()));
+            return;
+        }
+        if (!output.is(PFItems.MILK_BUCKETS.get("iron").get())) {
+            helper.fail("expected output to be iron_slime_milk_bucket, got "
+                + (output.isEmpty() ? "EMPTY" : BuiltInRegistries.ITEM.getKey(output.getItem())));
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Negative case: an empty Slime Bucket (no Variant component) sitting
+     * in the input slot should NOT advance cook progress. Pins the
+     * "fail-closed" semantic — a category-only or vanilla bucket can sit
+     * in the input forever without producing a default-milk output.
+     */
+    private static void slimeMilkerBeResetsProgressWhenInputLacksVariant(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos, PFBlocks.SLIME_MILKER.get());
+
+        ServerLevel level = helper.getLevel();
+        BlockPos absPos = helper.absolutePos(pos);
+        net.minecraft.world.level.block.entity.BlockEntity be = level.getBlockEntity(absPos);
+        if (!(be instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity milker)) {
+            helper.fail("expected SlimeMilkerBlockEntity at " + absPos);
+            return;
+        }
+
+        // Empty Slime Bucket — no BUCKET_ENTITY_DATA at all.
+        milker.getInventory().setStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity.INPUT_SLOT,
+            new ItemStack(PFItems.SLIME_BUCKET.get()));
+
+        // Tick 20 times — should never advance progress.
+        for (int i = 0; i < 20; i++) {
+            com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity.serverTick(
+                level, absPos, level.getBlockState(absPos), milker);
+        }
+
+        if (milker.getCookProgress() != 0) {
+            helper.fail("expected cookProgress=0 with empty bucket input, got " + milker.getCookProgress());
+            return;
+        }
+        ItemStack output = milker.getInventory().getStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity.OUTPUT_SLOT);
+        if (!output.isEmpty()) {
+            helper.fail("output slot must remain empty when input has no variant, got "
+                + BuiltInRegistries.ITEM.getKey(output.getItem()));
+            return;
+        }
+        helper.succeed();
     }
 }

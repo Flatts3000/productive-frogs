@@ -115,4 +115,5 @@ public final class PFModBusEvents {
             && Monster.isDarkEnoughToSpawn(level, pos, random)
             && Mob.checkMobSpawnRules(type, level, reason, pos, random);
     }
+
 }

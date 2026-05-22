@@ -8,6 +8,7 @@ import com.flatts.productivefrogs.client.renderer.ResourceSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
 import com.flatts.productivefrogs.client.renderer.TideSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.VoidSlimeRenderer;
+import com.flatts.productivefrogs.client.screen.SlimeMilkerScreen;
 import com.flatts.productivefrogs.client.tint.ContainedCategoryTint;
 import com.flatts.productivefrogs.client.tint.SlimeVariantTint;
 import com.flatts.productivefrogs.client.tint.TadpoleBucketCategoryTint;
@@ -15,12 +16,14 @@ import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFFluidTypes;
+import com.flatts.productivefrogs.registry.PFMenuTypes;
 import net.minecraft.resources.Identifier;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 
@@ -107,6 +110,17 @@ public final class PFClientEvents {
      * requires editing that list — texture path follows
      * {@code productivefrogs:block/<variant>_slime_milk_(still|flow)}.
      */
+    /**
+     * Bind the Slime Milker's MenuType to its client screen. Without this,
+     * opening the menu server-side would log a warning and fall back to
+     * vanilla's blank container screen — players would see the slot layout
+     * but no progress arrow or our custom background.
+     */
+    @SubscribeEvent
+    public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
+        event.register(PFMenuTypes.SLIME_MILKER.get(), SlimeMilkerScreen::new);
+    }
+
     @SubscribeEvent
     public static void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
         for (String variant : PFFluidTypes.VARIANTS) {
