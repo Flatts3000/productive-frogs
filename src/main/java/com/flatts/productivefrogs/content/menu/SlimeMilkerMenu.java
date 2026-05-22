@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.content.menu;
 
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.SlimeMilkerInventory;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
@@ -16,7 +17,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
 /**
  * Container menu for the {@link SlimeMilkerBlockEntity}. Two slot widgets
@@ -24,12 +25,12 @@ import net.neoforged.neoforge.items.SlotItemHandler;
  * cook-progress arrow on the screen reads from the BE's
  * {@link ContainerData} via {@code addDataSlots}.
  *
- * <p>Slot validity is enforced at two layers: {@link SlotItemHandler}'s
- * {@code mayPlace} delegates to {@link SlimeMilkerBlockEntity}'s inventory
- * {@code isItemValid}, which only accepts SLIME_BUCKET in the input slot
- * and never in the output. Quick-move (shift-click) routes follow the
- * vanilla furnace pattern: input from hotbar/main → input slot, output
- * → main inventory/hotbar.
+ * <p>Slot validity is enforced at two layers: {@link ResourceHandlerSlot}'s
+ * {@code mayPlace} delegates to {@link SlimeMilkerInventory#isValid},
+ * which only accepts SLIME_BUCKET in the input slot and never in the
+ * output. Quick-move (shift-click) routes follow the vanilla furnace
+ * pattern: input from hotbar/main → input slot, output → main
+ * inventory/hotbar.
  *
  * <p>Both constructors exist because NeoForge's
  * {@code IMenuTypeExtension.create} expects the network-side ctor
@@ -68,14 +69,16 @@ public class SlimeMilkerMenu extends AbstractContainerMenu {
         this.dataAccess = data;
 
         if (be != null) {
-            // Input slot — Slime Bucket only; isItemValid in the BE's
-            // ItemStackHandler enforces this.
-            addSlot(new SlotItemHandler(be.getInventory(),
+            SlimeMilkerInventory inv = be.getInventory();
+            // Input slot — Slime Bucket only; isValid on the inventory
+            // enforces this via ResourceHandlerSlot.mayPlace.
+            addSlot(new ResourceHandlerSlot(inv, inv::set,
                 SlimeMilkerBlockEntity.INPUT_SLOT, INPUT_SLOT_X, INPUT_SLOT_Y));
-            // Output slot — Slime Milk Bucket. mayPlace returns false so
-            // players can't shove things in directly; only the cook loop
-            // and hopper-extract touch it.
-            addSlot(new SlotItemHandler(be.getInventory(),
+            // Output slot — Slime Milk Bucket. The inventory's isValid
+            // already returns false for OUTPUT, so mayPlace would block
+            // inserts anyway; the explicit override is belt-and-suspenders
+            // documentation of intent.
+            addSlot(new ResourceHandlerSlot(inv, inv::set,
                 SlimeMilkerBlockEntity.OUTPUT_SLOT, OUTPUT_SLOT_X, OUTPUT_SLOT_Y) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {

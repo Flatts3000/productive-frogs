@@ -119,8 +119,8 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
         if (!level.isClientSide()) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof SlimeMilkerBlockEntity milker) {
-                net.neoforged.neoforge.items.IItemHandlerModifiable inv = milker.getInventory();
-                for (int i = 0; i < inv.getSlots(); i++) {
+                com.flatts.productivefrogs.content.block.entity.SlimeMilkerInventory inv = milker.getInventory();
+                for (int i = 0; i < inv.size(); i++) {
                     ItemStack stack = inv.getStackInSlot(i);
                     if (!stack.isEmpty()) {
                         net.minecraft.world.Containers.dropItemStack(
