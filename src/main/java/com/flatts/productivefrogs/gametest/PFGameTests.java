@@ -842,7 +842,7 @@ public final class PFGameTests {
      *
      * <p>This pins the precondition for the variant-aware Slime Bucket tint:
      * if the bucket doesn't carry the Variant id after capture, the
-     * {@code TadpoleBucketCategoryTint} resolution-order would skip the
+     * {@code BucketedCategoryTint} resolution-order would skip the
      * variant lookup and fall back to the broader category colour.
      */
     private static void slimeBucketRoundTripPreservesVariant(GameTestHelper helper) {

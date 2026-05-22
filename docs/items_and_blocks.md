@@ -72,7 +72,7 @@ See [farming.md](./farming.md) for the full milking-to-production loop.
   - `loadFromBucketTag(CompoundTag)` overridden to restore the category on the spawned entity when the bucket is released.
 - **Display name** varies by contained category: "Bucket of Metallic Tadpole", "Bucket of Gem Tadpole", etc. Singular, matching vanilla's "Bucket of Tadpole" / "Bucket of Salmon" pattern. Single item ID; name resolves from the bucket NBT via `getName(ItemStack)` override.
 - **Visual**: two-layer item model, matching the vanilla potion-bottle pattern (`layer0` tinted, `layer1` drawn over it).
-  - Layer 0: tadpole silhouette inside, tinted via the `productivefrogs:tadpole_bucket_category` ItemTintSource based on the bucket's stored category.
+  - Layer 0: tadpole silhouette inside, tinted via the `productivefrogs:bucketed_category` ItemTintSource based on the bucket's stored category.
   - Layer 1: iron bucket exterior (static, untinted).
 - **Stack size**: 1 (vanilla bucket constraint).
 

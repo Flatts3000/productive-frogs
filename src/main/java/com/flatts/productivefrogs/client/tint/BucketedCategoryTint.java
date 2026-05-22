@@ -35,16 +35,16 @@ import org.jspecify.annotations.Nullable;
  *       icon outside a world, etc.).</li>
  * </ol>
  *
- * <p>The class name still says "TadpoleBucket" for historical reasons —
- * see {@code docs/backlog.md} §Code hygiene for the rename TODO. The
- * implementation is bucket-agnostic; both bucket item models reference it.
+ * <p>Implementation is bucket-agnostic; both the Resource Tadpole Bucket
+ * and the Slime Bucket item models reference it via the
+ * {@code productivefrogs:bucketed_category} item-tint-source registry id.
  */
-public record TadpoleBucketCategoryTint(int defaultColor) implements ItemTintSource {
+public record BucketedCategoryTint(int defaultColor) implements ItemTintSource {
 
-    public static final MapCodec<TadpoleBucketCategoryTint> MAP_CODEC = RecordCodecBuilder.mapCodec(
+    public static final MapCodec<BucketedCategoryTint> MAP_CODEC = RecordCodecBuilder.mapCodec(
         instance -> instance.group(
-            ExtraCodecs.RGB_COLOR_CODEC.fieldOf("default").forGetter(TadpoleBucketCategoryTint::defaultColor)
-        ).apply(instance, TadpoleBucketCategoryTint::new)
+            ExtraCodecs.RGB_COLOR_CODEC.fieldOf("default").forGetter(BucketedCategoryTint::defaultColor)
+        ).apply(instance, BucketedCategoryTint::new)
     );
 
     @Override
@@ -73,7 +73,7 @@ public record TadpoleBucketCategoryTint(int defaultColor) implements ItemTintSou
     }
 
     @Override
-    public MapCodec<TadpoleBucketCategoryTint> type() {
+    public MapCodec<BucketedCategoryTint> type() {
         return MAP_CODEC;
     }
 }
