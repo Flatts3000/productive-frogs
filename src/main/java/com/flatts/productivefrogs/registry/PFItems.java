@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.item.ConfigurableFroglightItem;
 import com.flatts.productivefrogs.content.item.FrogEggItem;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
+import com.flatts.productivefrogs.content.item.SlimeBucketItem;
 import com.flatts.productivefrogs.data.Category;
 import java.util.EnumMap;
 import java.util.Map;
@@ -63,9 +64,9 @@ public final class PFItems {
      * offspring. {@code mobInteract} on ResourceSlime gates the pickup at
      * size==1.
      */
-    public static final DeferredItem<MobBucketItem> SLIME_BUCKET = ITEMS.registerItem(
+    public static final DeferredItem<SlimeBucketItem> SLIME_BUCKET = ITEMS.registerItem(
         "slime_bucket",
-        props -> new MobBucketItem(
+        props -> new SlimeBucketItem(
             PFEntities.RESOURCE_SLIME.get(),
             Fluids.WATER,
             SoundEvents.BUCKET_EMPTY_FISH,
