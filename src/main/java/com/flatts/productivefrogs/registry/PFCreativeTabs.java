@@ -1,9 +1,14 @@
 package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.data.Category;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -24,9 +29,32 @@ public final class PFCreativeTabs {
                 .title(Component.translatable("itemGroup.productivefrogs"))
                 .icon(() -> PFItems.FROG_EGG.get().getDefaultInstance())
                 .displayItems((parameters, output) -> {
+                    // Default (unprimed) Frog Egg bottle, then one primed bottle
+                    // per category. The JEI plugin (client/jei/ProductiveFrogs-
+                    // JeiPlugin) subtypes Frog Egg by CONTAINED_CATEGORY, so
+                    // each stamped stack here becomes a distinct JEI entry.
                     output.accept(PFItems.FROG_EGG.get());
+                    for (Category cat : Category.values()) {
+                        ItemStack primed = new ItemStack(PFItems.FROG_EGG.get());
+                        primed.set(PFDataComponents.CONTAINED_CATEGORY.get(), cat);
+                        output.accept(primed);
+                    }
+                    // Default empty Resource Tadpole Bucket, then one stamped
+                    // with each category. The bucket's category lives inside
+                    // BUCKET_ENTITY_DATA NBT (the JEI plugin keys the subtype
+                    // off that component).
                     output.accept(PFItems.RESOURCE_TADPOLE_BUCKET.get());
+                    for (Category cat : Category.values()) {
+                        output.accept(makeCategoryTadpoleBucket(cat));
+                    }
+                    // Default empty Slime Bucket, then one stamped per variant.
+                    // Variant stamping mirrors what ResourceSlime.saveToBucketTag
+                    // writes when a player buckets a variant-locked slime
+                    // (Category + Variant strings in BUCKET_ENTITY_DATA).
                     output.accept(PFItems.SLIME_BUCKET.get());
+                    for (String variantName : PFItems.RESOURCE_SLIME_SPAWN_EGGS.keySet()) {
+                        output.accept(makeVariantSlimeBucket(variantName));
+                    }
                     output.accept(PFItems.SLIME_MILKER.get());
                     for (var bucket : PFItems.MILK_BUCKETS.values()) {
                         output.accept(bucket.get());
@@ -41,11 +69,9 @@ public final class PFCreativeTabs {
                     // carries its variant id in the SLIME_VARIANT data component so
                     // creative testers can see what the production loop produces.
                     for (String variantName : PFItems.RESOURCE_SLIME_SPAWN_EGGS.keySet()) {
-                        net.minecraft.world.item.ItemStack stack =
-                            new net.minecraft.world.item.ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
+                        ItemStack stack = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
                         stack.set(PFDataComponents.SLIME_VARIANT.get(),
-                            net.minecraft.resources.Identifier.fromNamespaceAndPath(
-                                com.flatts.productivefrogs.ProductiveFrogs.MOD_ID, variantName));
+                            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName));
                         output.accept(stack);
                     }
                     // Spawn eggs grouped at the end so they read as a single block
@@ -69,6 +95,45 @@ public final class PFCreativeTabs {
                 })
                 .build()
         );
+
+    /**
+     * Build a Slime Bucket stamped with the given variant's BUCKET_ENTITY_DATA
+     * NBT — mirrors what {@code ResourceSlime.saveToBucketTag} writes when a
+     * player buckets a variant-locked slime. Both {@code Category} and
+     * {@code Variant} go into the tag so the tint pipeline (variant-first,
+     * category fallback) lights up either way.
+     *
+     * <p>Category is looked up from the matching spawn egg's
+     * {@code CONTAINED_CATEGORY} component to avoid hardcoding a second copy
+     * of the variant→category map.
+     */
+    private static ItemStack makeVariantSlimeBucket(String variantName) {
+        ItemStack stack = new ItemStack(PFItems.SLIME_BUCKET.get());
+        Category category = PFItems.RESOURCE_SLIME_SPAWN_EGGS.get(variantName)
+            .get().getDefaultInstance().get(PFDataComponents.CONTAINED_CATEGORY.get());
+        Identifier variantId = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName);
+        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
+            if (category != null) {
+                tag.putString("Category", category.name());
+            }
+            tag.putString("Variant", variantId.toString());
+        });
+        return stack;
+    }
+
+    /**
+     * Build a Resource Tadpole Bucket stamped with a category — mirrors
+     * {@code ResourceTadpole.saveToBucketTag}. Tadpole buckets only carry
+     * Category (no variant); the dynamic display name in
+     * {@code ResourceTadpoleBucketItem.getName} reads this tag too.
+     */
+    private static ItemStack makeCategoryTadpoleBucket(Category category) {
+        ItemStack stack = new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
+        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
+            tag.putString("Category", category.name());
+        });
+        return stack;
+    }
 
     private PFCreativeTabs() {
         // utility class
