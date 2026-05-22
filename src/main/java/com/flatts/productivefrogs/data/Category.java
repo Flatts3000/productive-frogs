@@ -62,6 +62,35 @@ public enum Category implements StringRepresentable {
         return this.rgb;
     }
 
+    /**
+     * Subtly tinted gray ARGB for surfaces where the full {@link #tintArgb()}
+     * would be too saturated — currently the variant-less Resource Slime
+     * outer shell. Blends the category colour with light gray
+     * ({@value SHELL_GRAY_R}, {@value SHELL_GRAY_G}, {@value SHELL_GRAY_B})
+     * at the {@value SHELL_TINT_WEIGHT_PERCENT}% / {@value SHELL_GRAY_WEIGHT_PERCENT}%
+     * weight, so AQUATIC slimes look cooler-gray, INFERNAL slimes look
+     * warmer-gray, etc., without going full red/orange/cyan.
+     *
+     * <p>Per the polish item in {@code docs/backlog.md}: <i>"Could tighten
+     * the gray tone per-category (cooler gray for AQUATIC, warmer for
+     * INFERNAL) for visual variety."</i>
+     */
+    public int shellTintArgb() {
+        int r = (SHELL_GRAY_R * SHELL_GRAY_WEIGHT_PERCENT + ((this.rgb >> 16) & 0xFF) * SHELL_TINT_WEIGHT_PERCENT) / 100;
+        int g = (SHELL_GRAY_G * SHELL_GRAY_WEIGHT_PERCENT + ((this.rgb >>  8) & 0xFF) * SHELL_TINT_WEIGHT_PERCENT) / 100;
+        int b = (SHELL_GRAY_B * SHELL_GRAY_WEIGHT_PERCENT +  (this.rgb        & 0xFF) * SHELL_TINT_WEIGHT_PERCENT) / 100;
+        return 0xFF000000 | (r << 16) | (g << 8) | b;
+    }
+
+    // Anchor for shellTintArgb's blend. 200,200,200 reads as light-gray —
+    // close enough to vanilla's slime-jelly tone that the per-category
+    // shift stays subtle.
+    private static final int SHELL_GRAY_R = 200;
+    private static final int SHELL_GRAY_G = 200;
+    private static final int SHELL_GRAY_B = 200;
+    private static final int SHELL_GRAY_WEIGHT_PERCENT = 70;
+    private static final int SHELL_TINT_WEIGHT_PERCENT = 30;
+
     @Override
     public String getSerializedName() {
         return id();

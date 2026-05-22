@@ -113,21 +113,35 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
     public void extractRenderState(Slime entity, SlimeRenderState state, float partialTick) {
         super.extractRenderState(entity, state, partialTick);
         if (entity instanceof ResourceSlime resource && state instanceof ResourceSlimeRenderState rState) {
-            rState.category = resource.getCategory();
+            Category category = resource.getCategory();
+            rState.category = category;
 
-            // Variant lookup is null-tolerant: category-only slimes (no
-            // variant id) or variant ids that don't resolve in the registry
-            // (datapack removed, modded variant whose mod isn't loaded)
-            // both land at "no per-variant texture, no per-variant tint" —
-            // the broader category texture from the resolution chain above
-            // covers them.
+            // Tint resolution:
+            //   variant present  -> full-saturation variant primary colour
+            //                       (iron-silver, copper-orange, gold-yellow,
+            //                       etc. — distinguishes the 12 variants).
+            //   variant absent   -> per-category subtly-tinted gray
+            //                       (cooler for AQUATIC, warmer for INFERNAL,
+            //                       etc.) so the six category-only slimes
+            //                       still read distinctly from one another
+            //                       without going full-saturation. See
+            //                       Category.shellTintArgb javadoc.
+            //   neither          -> -1 (white, no tint). Only happens in
+            //                       the defensive path where the entity
+            //                       isn't actually a ResourceSlime (this
+            //                       branch can't run from here, but the
+            //                       state default of -1 covers it anyway).
+            //
+            // Variant lookup is null-tolerant: unknown-variant-id slimes
+            // (datapack removed since save, modded variant whose mod isn't
+            // loaded) hit the category branch via the null check below.
             SlimeVariant variant = resource.getVariant();
             if (variant != null) {
                 rState.variantTexture = variant.texture().orElse(null);
                 rState.outerTint = ARGB.opaque(variant.primaryColor());
             } else {
                 rState.variantTexture = null;
-                rState.outerTint = -1;
+                rState.outerTint = category != null ? category.shellTintArgb() : -1;
             }
         }
     }
