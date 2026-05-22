@@ -1391,9 +1391,10 @@ public final class PFGameTests {
         ServerLevel level = helper.getLevel();
         net.minecraft.world.item.crafting.RecipeManager rm = level.getServer().getRecipeManager();
 
-        // Sample of representative variants — one per category to keep the
-        // test snappy without skipping coverage of the
-        // component-ingredient pipeline for any group.
+        // Full coverage — all 12 variants. The component-ingredient pipeline
+        // is the load-bearing piece here (one bad codec name and every
+        // variant silently stops matching), so it's cheap insurance to
+        // exercise the whole roster rather than rely on a sample.
         assertVariantSmelts(helper, rm, level, "iron", net.minecraft.world.item.Items.IRON_INGOT);
         assertVariantSmelts(helper, rm, level, "copper", net.minecraft.world.item.Items.COPPER_INGOT);
         assertVariantSmelts(helper, rm, level, "gold", net.minecraft.world.item.Items.GOLD_INGOT);
