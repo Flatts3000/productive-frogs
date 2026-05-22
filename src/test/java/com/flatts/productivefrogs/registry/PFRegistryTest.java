@@ -82,8 +82,9 @@ class PFRegistryTest {
      * data component on its default stack so the {@code slime_variant} ItemTintSource
      * can resolve the variant's primary colour from the datapack registry. Without
      * this component the spawn eggs would all render the (gray) JSON-default
-     * fallback — the bug captured in {@code docs/known_issues.md} §"Per-variant
-     * items missing their resource colour".
+     * fallback — the bug captured in {@code docs/known_issues.md} under the
+     * "Per-variant + per-category items need JEI subtype interpreters" entry
+     * (tint half).
      */
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(strings = {
