@@ -20,10 +20,14 @@ import net.minecraft.resources.Identifier;
  *
  * <p>Datapack-driven so modpacks can remap modded slime mobs into the
  * discovery loop (e.g. point Mythic Metals' Pyrite Slime at METALLIC) by
- * dropping a single JSON into their pack. The default 6 ship at
- * {@code data/<ns>/productivefrogs/parent_species/<name>.json}, with the
- * "minecraft" namespace used for the two vanilla entries so they live
- * alongside other minecraft datapack files.
+ * dropping a single JSON into their pack. All six defaults ship under this
+ * mod's own namespace at
+ * {@code data/productivefrogs/productivefrogs/parent_species/<name>.json};
+ * the two vanilla parents are encoded by setting {@code entity_type} to
+ * {@code minecraft:slime} / {@code minecraft:magma_cube} inside those files,
+ * not by relocating the JSONs into a {@code data/minecraft/...} tree.
+ * Modpacks override or extend the table by dropping JSONs at
+ * {@code data/<their_ns>/productivefrogs/parent_species/<name>.json}.
  *
  * <p>Schema:
  * <pre>{@code
