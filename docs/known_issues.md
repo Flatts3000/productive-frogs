@@ -15,19 +15,30 @@ Living tracker of playtest bugs, limitations, and workarounds for Productive Fro
 
 ## Open issues
 
-### 🟡 Per-variant + per-category items need JEI subtype interpreters
+### 🟢 Per-variant + per-category items — tints + JEI subtypes shipped
 
-**Tint half — shipped.** Every variant/category surface now resolves its colour from the data-component pipeline:
+**Tint pipeline.** Every variant/category surface resolves its colour from the data-component chain:
 
-- **Variant Slime Spawn Eggs** (12 items) carry the `slime_variant` data component on their default `Item.Properties` and their JSON tint source is `productivefrogs:slime_variant` (layer = `primary`) — each variant renders its resource colour (iron-silver, copper-orange, gold-yellow, …) instead of the broader category gray. Pinned by 12 `PFRegistryTest#variantSlimeSpawnEggCarriesSlimeVariantComponent` parameterized cases.
-- **Slime Bucket** uses `TadpoleBucketCategoryTint`, which prefers the variant lookup (via `ResourceTadpoleBucketItem.readVariant` → `PFRegistries.SLIME_VARIANT`) and falls back to the broader category. `ResourceSlime.saveToBucketTag` writes both `Category` and `Variant` to `BUCKET_ENTITY_DATA`, pinned by the new `slime_bucket_round_trip_preserves_variant` GameTest.
-- **Configurable Froglight** uses `SlimeVariantTint` reading `SLIME_VARIANT` directly — variant-aware since shipped.
-- **Frog / Tadpole / Primed Frog Egg / Frog Egg bottle / Resource Tadpole Bucket** all use `ContainedCategoryTint` (or per-category `BlockColor`) — category-aware since shipped.
-- **Broad-strokes Froglight blocks** (`<category>_froglight`) get a category `BlockColor` registered in `PFClientEvents.onRegisterBlockColors`.
+- **Variant Slime Spawn Eggs** (12 items) carry `SLIME_VARIANT` on default properties; JSON tint source is `productivefrogs:slime_variant` (layer = `primary`). Each variant renders its resource colour (iron-silver, copper-orange, gold-yellow, …). Pinned by 12 `PFRegistryTest#variantSlimeSpawnEggCarriesSlimeVariantComponent` cases.
+- **Slime Bucket** uses `TadpoleBucketCategoryTint` (variant-first lookup via `ResourceTadpoleBucketItem.readVariant` → `PFRegistries.SLIME_VARIANT`, broader category fallback). `ResourceSlime.saveToBucketTag` writes both `Category` and `Variant` to `BUCKET_ENTITY_DATA`; pinned by `slime_bucket_round_trip_preserves_variant` GameTest.
+- **Configurable Froglight** uses `SlimeVariantTint` reading `SLIME_VARIANT` directly.
+- **Frog / Tadpole spawn eggs**, **Primed Frog Egg blocks**, **Frog Egg bottle**, **Resource Tadpole Bucket** — all use `ContainedCategoryTint` (or per-category `BlockColor`).
+- **Broad-strokes Froglight blocks** (`<category>_froglight`) — per-category `BlockColor` in `PFClientEvents.onRegisterBlockColors`.
 
-**Expected colours** (variant primary) come from each `data/productivefrogs/productivefrogs/slime_variant/<name>.json`'s `primary_color`. Category colours come from `Category.tintArgb()` in `data/Category.java`.
+Variant primary colours come from each `data/productivefrogs/productivefrogs/slime_variant/<name>.json`'s `primary_color`. Category colours come from `Category.tintArgb()`.
 
-**JEI half — pending.** Items that vary purely by data component (Slime Bucket, Configurable Froglight) currently collapse into a single JEI entry. Goal: searching `iron` should return distinct lines for `Iron Slime Bucket`, `Iron Froglight`, etc. — implemented via an `IIngredientSubtypeInterpreter` registered in a new `@JeiPlugin` class. Tracked as PR-B in the active backlog.
+**JEI subtype plugin.** `ProductiveFrogsJeiPlugin` (under `client/jei/`, auto-discovered via `@JeiPlugin`) calls `registerFromDataComponentTypes` for the four items that share a single registry id but vary by component:
+
+| Item | Subtype key |
+|---|---|
+| Slime Bucket | `BUCKET_ENTITY_DATA` (Variant + Category NBT) |
+| Resource Tadpole Bucket | `BUCKET_ENTITY_DATA` (Category NBT) |
+| Configurable Froglight | `SLIME_VARIANT` |
+| Frog Egg bottle | `CONTAINED_CATEGORY` |
+
+The creative tab in `PFCreativeTabs.PRODUCTIVE_FROGS_TAB.displayItems` emits one stamped stack per variant/category for each of these (12 variant slime buckets, 6 category tadpole buckets, 6 primed frog egg bottles, 12 configurable froglight stacks), so JEI surfaces them as distinct entries. JEI is `compileOnly` at build time + `runtimeOnly` at play time — the plugin class is dead code if a player runs without JEI.
+
+**Follow-up (low priority):** per-variant display names on Slime Bucket / Resource Tadpole Bucket / Frog Egg bottle. Currently all variants share "Bucket of Slime" / "Bucket of Tadpole" / "Frog Egg" so JEI text search for `iron` won't find the stamped variants — only the spawn eggs. Either a custom `MobBucketItem` subclass with a variant-aware `getName(ItemStack)`, or JEI's `IIngredientAliasRegistration` for per-variant search aliases.
 
 ### 🟢 Slime Milker furnace-style GUI + hopper I/O shipped
 
@@ -127,4 +138,4 @@ Listed for searchability — useful when a playtest report references an issue t
 
 ---
 
-*Last updated: 2026-05-22 (variant + category tints unified; JEI subtype plugin pending)*
+*Last updated: 2026-05-22 (JEI subtype plugin shipped; per-variant display names tracked as polish follow-up)*
