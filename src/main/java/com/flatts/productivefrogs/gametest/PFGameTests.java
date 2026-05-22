@@ -165,6 +165,12 @@ public final class PFGameTests {
             PFGameTests::slimeMilkerBeCooksIronBucketToIronMilkAfter100Ticks, 200);
         registerTest("slime_milker_be_resets_progress_when_input_lacks_variant",
             PFGameTests::slimeMilkerBeResetsProgressWhenInputLacksVariant, 100);
+        registerTest("slime_milker_capability_routes_input_view_to_top_and_output_view_to_bottom",
+            PFGameTests::slimeMilkerCapabilityRoutesInputViewToTopAndOutputViewToBottom, 100);
+        registerTest("hopper_above_slime_milker_pushes_slime_bucket_into_input_slot",
+            PFGameTests::hopperAboveSlimeMilkerPushesSlimeBucketIntoInputSlot, 100);
+        registerTest("hopper_below_slime_milker_pulls_milk_bucket_from_output_slot",
+            PFGameTests::hopperBelowSlimeMilkerPullsMilkBucketFromOutputSlot, 100);
     }
 
     private PFGameTests() {
@@ -1843,5 +1849,194 @@ public final class PFGameTests {
             return;
         }
         helper.succeed();
+    }
+
+    // ---------------------------------------------------------------------
+    // Slime Milker hopper compat (Capabilities.Item.BLOCK migration)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Sanity-check the side-aware {@code Capabilities.Item.BLOCK} provider:
+     * querying with {@link net.minecraft.core.Direction#DOWN} returns the
+     * output view (sees OUTPUT_SLOT contents, refuses inserts); querying
+     * with any other side returns the input view (sees INPUT_SLOT contents,
+     * accepts only SLIME_BUCKET inserts). Pins the routing in
+     * {@code PFModBusEvents#onRegisterCapabilities} without spinning up a
+     * real hopper.
+     */
+    private static void slimeMilkerCapabilityRoutesInputViewToTopAndOutputViewToBottom(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos, PFBlocks.SLIME_MILKER.get());
+        ServerLevel level = helper.getLevel();
+        BlockPos absPos = helper.absolutePos(pos);
+        net.minecraft.world.level.block.entity.BlockEntity be = level.getBlockEntity(absPos);
+        if (!(be instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity milker)) {
+            helper.fail("expected SlimeMilkerBlockEntity at " + absPos);
+            return;
+        }
+
+        // Seed: a primed Slime Bucket in INPUT, a finished iron milk bucket in OUTPUT.
+        ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(4, 2, 4));
+        source.setSize(1, true);
+        source.setVariant(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        ItemStack primedBucket = new ItemStack(PFItems.SLIME_BUCKET.get());
+        source.saveToBucketTag(primedBucket);
+        source.discard();
+        milker.getInventory().setStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity.INPUT_SLOT, primedBucket);
+        ItemStack ironMilk = new ItemStack(PFItems.MILK_BUCKETS.get("iron").get());
+        milker.getInventory().setStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity.OUTPUT_SLOT, ironMilk);
+
+        net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> downView =
+            level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, absPos, net.minecraft.core.Direction.DOWN);
+        net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> upView =
+            level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, absPos, net.minecraft.core.Direction.UP);
+        if (downView == null || upView == null) {
+            helper.fail("capability not registered for SLIME_MILKER (downView="
+                + downView + ", upView=" + upView + ")");
+            return;
+        }
+        if (downView.size() != 1 || upView.size() != 1) {
+            helper.fail("expected single-slot views, got downView.size=" + downView.size()
+                + ", upView.size=" + upView.size());
+            return;
+        }
+        // DOWN view sees the OUTPUT slot's iron milk bucket.
+        if (!downView.getResource(0).is(PFItems.MILK_BUCKETS.get("iron").get())) {
+            helper.fail("down view should see OUTPUT slot's iron milk bucket, got "
+                + downView.getResource(0));
+            return;
+        }
+        // UP view sees the INPUT slot's primed Slime Bucket.
+        if (!upView.getResource(0).is(PFItems.SLIME_BUCKET.get())) {
+            helper.fail("up view should see INPUT slot's slime bucket, got "
+                + upView.getResource(0));
+            return;
+        }
+        // DOWN view refuses insert (it's extract-only).
+        if (downView.isValid(0, net.neoforged.neoforge.transfer.item.ItemResource.of(PFItems.SLIME_BUCKET.get()))) {
+            helper.fail("down view must reject inserts (extract-only)");
+            return;
+        }
+        // UP view accepts SLIME_BUCKET insert.
+        if (!upView.isValid(0, net.neoforged.neoforge.transfer.item.ItemResource.of(PFItems.SLIME_BUCKET.get()))) {
+            helper.fail("up view must accept SLIME_BUCKET inserts");
+            return;
+        }
+        // UP view refuses unrelated items even though the underlying slot would accept SLIME_BUCKET.
+        if (upView.isValid(0, net.neoforged.neoforge.transfer.item.ItemResource.of(Items.IRON_INGOT))) {
+            helper.fail("up view must reject non-SLIME_BUCKET items");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Hopper directly above the milker pushes an iron-variant Slime Bucket
+     * into INPUT_SLOT via the capability. Verifies the side=UP routing in
+     * {@code PFModBusEvents} actually works against a real vanilla
+     * {@code HopperBlockEntity} — not just a synthetic capability query.
+     */
+    private static void hopperAboveSlimeMilkerPushesSlimeBucketIntoInputSlot(GameTestHelper helper) {
+        BlockPos milkerPos = new BlockPos(2, 2, 2);
+        BlockPos hopperPos = new BlockPos(2, 3, 2);
+        helper.setBlock(milkerPos, PFBlocks.SLIME_MILKER.get());
+        // Default hopper state faces DOWN — the orientation we want, since
+        // the hopper at (2,3,2) needs to push down into the milker below.
+        helper.setBlock(hopperPos, Blocks.HOPPER.defaultBlockState());
+
+        ServerLevel level = helper.getLevel();
+        BlockPos absHopper = helper.absolutePos(hopperPos);
+        net.minecraft.world.level.block.entity.BlockEntity hopperBe = level.getBlockEntity(absHopper);
+        if (!(hopperBe instanceof net.minecraft.world.level.block.entity.HopperBlockEntity hopper)) {
+            helper.fail("expected HopperBlockEntity at " + absHopper);
+            return;
+        }
+
+        ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(4, 2, 4));
+        source.setSize(1, true);
+        source.setVariant(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
+        source.saveToBucketTag(bucket);
+        source.discard();
+        hopper.setItem(0, bucket);
+
+        // Hopper transfer cooldown is 8 ticks by default; 30 ticks is
+        // safely past one transfer cycle. succeedWhen retries every tick.
+        helper.succeedWhen(() -> {
+            net.minecraft.world.level.block.entity.BlockEntity be =
+                level.getBlockEntity(helper.absolutePos(milkerPos));
+            if (!(be instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity milker)) {
+                helper.fail("milker BE went missing at " + helper.absolutePos(milkerPos));
+                return;
+            }
+            ItemStack input = milker.getInventory().getStackInSlot(
+                com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity.INPUT_SLOT);
+            if (input.isEmpty() || !input.is(PFItems.SLIME_BUCKET.get())) {
+                helper.fail("hopper has not yet pushed Slime Bucket into INPUT_SLOT (input="
+                    + (input.isEmpty() ? "EMPTY" : BuiltInRegistries.ITEM.getKey(input.getItem())) + ")");
+                return;
+            }
+            // Re-resolve the hopper BE (it can be unloaded/reloaded
+            // mid-test in some test rigs; safe to re-fetch each retry).
+            if (level.getBlockEntity(absHopper) instanceof net.minecraft.world.level.block.entity.HopperBlockEntity h
+                && !h.getItem(0).isEmpty()) {
+                helper.fail("hopper slot 0 should be drained after the push, still has "
+                    + BuiltInRegistries.ITEM.getKey(h.getItem(0).getItem()));
+            }
+        });
+    }
+
+    /**
+     * Hopper directly below the milker pulls the finished iron milk bucket
+     * out of OUTPUT_SLOT via the side=DOWN capability route. Pre-populates
+     * the OUTPUT slot directly (the full cook is covered by the existing
+     * BE tick test); this scenario isolates the extract path.
+     */
+    private static void hopperBelowSlimeMilkerPullsMilkBucketFromOutputSlot(GameTestHelper helper) {
+        BlockPos milkerPos = new BlockPos(2, 3, 2);
+        BlockPos hopperPos = new BlockPos(2, 2, 2);
+        helper.setBlock(milkerPos, PFBlocks.SLIME_MILKER.get());
+        // Hopper below the milker; default-facing DOWN means it'll try to
+        // push into air below it — fine, the relevant behavior is the pull
+        // from the milker above, which happens regardless of facing.
+        helper.setBlock(hopperPos, Blocks.HOPPER.defaultBlockState());
+
+        ServerLevel level = helper.getLevel();
+        BlockPos absMilker = helper.absolutePos(milkerPos);
+        BlockPos absHopper = helper.absolutePos(hopperPos);
+        net.minecraft.world.level.block.entity.BlockEntity milkerBe = level.getBlockEntity(absMilker);
+        if (!(milkerBe instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity milker)) {
+            helper.fail("expected SlimeMilkerBlockEntity at " + absMilker);
+            return;
+        }
+        ItemStack ironMilk = new ItemStack(PFItems.MILK_BUCKETS.get("iron").get());
+        milker.getInventory().setStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity.OUTPUT_SLOT, ironMilk);
+
+        helper.succeedWhen(() -> {
+            net.minecraft.world.level.block.entity.BlockEntity hopperBe = level.getBlockEntity(absHopper);
+            if (!(hopperBe instanceof net.minecraft.world.level.block.entity.HopperBlockEntity hopper)) {
+                helper.fail("hopper BE went missing at " + absHopper);
+                return;
+            }
+            ItemStack pulled = hopper.getItem(0);
+            if (pulled.isEmpty() || !pulled.is(PFItems.MILK_BUCKETS.get("iron").get())) {
+                helper.fail("hopper has not yet pulled iron milk bucket (slot0="
+                    + (pulled.isEmpty() ? "EMPTY" : BuiltInRegistries.ITEM.getKey(pulled.getItem())) + ")");
+                return;
+            }
+            // Milker OUTPUT must have been drained by the same transfer.
+            net.minecraft.world.level.block.entity.BlockEntity be = level.getBlockEntity(absMilker);
+            if (be instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity m) {
+                ItemStack output = m.getInventory().getStackInSlot(
+                    com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity.OUTPUT_SLOT);
+                if (!output.isEmpty()) {
+                    helper.fail("milker OUTPUT should be drained after pull, still has "
+                        + BuiltInRegistries.ITEM.getKey(output.getItem()));
+                }
+            }
+        });
     }
 }
