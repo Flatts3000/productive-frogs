@@ -15,8 +15,10 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  *
  * <p>Productive Bees' centrifuge is the closest reference shape, but they
  * lean heavily on their {@code productivelib} utility module. We register
- * the BE directly here with vanilla {@link BlockEntityType.Builder} for a
- * lighter footprint.
+ * the BE directly here through the NeoForge-added convenience constructor
+ * {@code new BlockEntityType<>(factory, Block...)} — vanilla 1.21.11 dropped
+ * the older {@code BlockEntityType.Builder.of(...).build(...)} entry point,
+ * so the Builder reference that used to live here was stale.
  */
 public final class PFBlockEntities {
 

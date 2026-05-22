@@ -100,17 +100,6 @@ public final class PFClientEvents {
     }
 
     /**
-     * Wire each Slime Milk FluidType to its still + flowing block textures.
-     * NeoForge keeps client-only fluid properties off the server by routing
-     * them through {@link IClientFluidTypeExtensions} registered via this
-     * event. Without it each fluid renders as the purple-and-black "missing
-     * texture" cube.
-     *
-     * <p>Iterates {@link PFFluidTypes#VARIANTS} so adding a new variant only
-     * requires editing that list — texture path follows
-     * {@code productivefrogs:block/<variant>_slime_milk_(still|flow)}.
-     */
-    /**
      * Bind the Slime Milker's MenuType to its client screen. Without this,
      * opening the menu server-side would log a warning and fall back to
      * vanilla's blank container screen — players would see the slot layout
@@ -121,6 +110,17 @@ public final class PFClientEvents {
         event.register(PFMenuTypes.SLIME_MILKER.get(), SlimeMilkerScreen::new);
     }
 
+    /**
+     * Wire each Slime Milk FluidType to its still + flowing block textures.
+     * NeoForge keeps client-only fluid properties off the server by routing
+     * them through {@link IClientFluidTypeExtensions} registered via this
+     * event. Without it each fluid renders as the purple-and-black "missing
+     * texture" cube.
+     *
+     * <p>Iterates {@link PFFluidTypes#VARIANTS} so adding a new variant only
+     * requires editing that list — texture path follows
+     * {@code productivefrogs:block/<variant>_slime_milk_(still|flow)}.
+     */
     @SubscribeEvent
     public static void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
         for (String variant : PFFluidTypes.VARIANTS) {

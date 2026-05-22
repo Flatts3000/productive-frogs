@@ -106,7 +106,7 @@ Substantial visual upgrade — needs the schema extension AND a renderer rework.
 These are intentional V1 scope cuts. Each is on the V2 roadmap unless noted otherwise.
 
 ### 🟢 Automated Slime Milker — shipped (GUI), hopper I/O pending
-The Milker is now a furnace-shaped GUI block with input + output slots, a 100-tick cook progress, and fail-closed variant-bucket validation. Hopper compat is still pending pending the NeoForge `ResourceHandler<ItemResource>` migration — see the entry above for details.
+The Milker is now a furnace-shaped GUI block with input + output slots, a 100-tick cook progress, and fail-closed variant-bucket validation. Hopper compat is still pending the NeoForge `ResourceHandler<ItemResource>` migration — see the entry above for details.
 
 ### 🔵 No Frog Terrarium / Habitat block
 Frogs in V1 live where you place them, near water. A placeable housing block with I/O inventory is V2.

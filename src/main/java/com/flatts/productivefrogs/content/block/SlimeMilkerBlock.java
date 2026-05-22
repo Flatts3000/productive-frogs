@@ -28,9 +28,12 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>Two-slot inventory (input Slime Bucket, output Slime Milk bucket) plus
  * a 100-tick cook timer; right-click opens a {@link SlimeMilkerBlockEntity}-
- * backed GUI rather than the legacy hand-swap. Hopper-aware: a hopper on
- * top inserts Slime Buckets into the input slot, a hopper below extracts
- * finished milk buckets from the output. Matches vanilla furnace I/O.
+ * backed GUI rather than the legacy hand-swap. Hopper I/O is not exposed in
+ * this PR — the BlockEntity ships without a {@code Capabilities.Item.BLOCK}
+ * provider, so vanilla hoppers can't push into INPUT_SLOT or pull from
+ * OUTPUT_SLOT yet. The follow-up that wires up the new
+ * {@code ResourceHandler<ItemResource>} API is tracked in
+ * {@code docs/known_issues.md}.
  *
  * <p>Variant resolution still goes through {@link #readBucketVariant} →
  * {@code PFFluidTypes.VARIANTS} → {@code PFItems.MILK_BUCKETS}: the cook
@@ -94,10 +97,11 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
         if (!(be instanceof MenuProvider provider) || !(player instanceof ServerPlayer serverPlayer)) {
             return InteractionResult.PASS;
         }
-        // openMenu writes the BE's BlockPos to the network buffer (via the
-        // ContainerData factory wired in PFMenuTypes) so the client can
-        // resolve the same BlockEntity and read its inventory + progress
-        // counter.
+        // The lambda passed to openMenu writes the BE's BlockPos into the
+        // extra-data buffer. The client-side menu ctor (wired via
+        // IMenuTypeExtension.create in PFMenuTypes) then reads that
+        // position back out to resolve the same BlockEntity and pick up
+        // its inventory + progress counter.
         serverPlayer.openMenu(provider, buf -> buf.writeBlockPos(pos));
         return InteractionResult.SUCCESS;
     }

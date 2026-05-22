@@ -67,17 +67,18 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
             // Players can only place a Slime Bucket in the input slot via
-            // the GUI; the output slot is pickup-only. Hopper-insert is
-            // routed through the side-aware capability wrapper below, which
-            // also only allows insert into INPUT_SLOT.
+            // the GUI; the output slot is pickup-only. The hopper-aware
+            // capability wrapper that will pin this rule for automation is
+            // tracked as a follow-up in docs/known_issues.md.
             return slot == INPUT_SLOT && stack.is(PFItems.SLIME_BUCKET.get());
         }
 
         @Override
         protected void onContentsChanged(int slot) {
-            // The cook loop reads slot contents every tick, but persisting
-            // setChanged() here ensures the level marks the chunk dirty
-            // when a hopper inserts or a player swaps the input bucket.
+            // setChanged() marks the chunk dirty when the GUI mutates a
+            // slot — without this the BE save can lag a tick or two behind
+            // the visible state, which shows up in QA as "I put a bucket
+            // in, /reload, my bucket is gone".
             setChanged();
         }
     };

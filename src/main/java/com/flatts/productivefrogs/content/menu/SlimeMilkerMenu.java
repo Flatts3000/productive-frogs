@@ -74,7 +74,8 @@ public class SlimeMilkerMenu extends AbstractContainerMenu {
                 SlimeMilkerBlockEntity.INPUT_SLOT, INPUT_SLOT_X, INPUT_SLOT_Y));
             // Output slot — Slime Milk Bucket. mayPlace returns false so
             // players can't shove things in directly; only the cook loop
-            // and hopper-extract touch it.
+            // writes to it. Hopper-extract will use the same slot once
+            // the capability follow-up tracked in known_issues.md lands.
             addSlot(new SlotItemHandler(be.getInventory(),
                 SlimeMilkerBlockEntity.OUTPUT_SLOT, OUTPUT_SLOT_X, OUTPUT_SLOT_Y) {
                 @Override
@@ -86,8 +87,16 @@ public class SlimeMilkerMenu extends AbstractContainerMenu {
             // Defensive fallback for the network-side ctor when the BE
             // hasn't synced yet — fill with a dummy container so the slot
             // indexes stay consistent and quick-move math doesn't blow up.
+            // Mirror the real input filter (SLIME_BUCKET only) and the
+            // OUTPUT slot's reject-all so the client doesn't briefly flash
+            // a ghost item the server would then reject.
             SimpleContainer dummy = new SimpleContainer(SlimeMilkerBlockEntity.SLOT_COUNT);
-            addSlot(new Slot(dummy, SlimeMilkerBlockEntity.INPUT_SLOT, INPUT_SLOT_X, INPUT_SLOT_Y));
+            addSlot(new Slot(dummy, SlimeMilkerBlockEntity.INPUT_SLOT, INPUT_SLOT_X, INPUT_SLOT_Y) {
+                @Override
+                public boolean mayPlace(ItemStack stack) {
+                    return stack.is(PFItems.SLIME_BUCKET.get());
+                }
+            });
             addSlot(new Slot(dummy, SlimeMilkerBlockEntity.OUTPUT_SLOT, OUTPUT_SLOT_X, OUTPUT_SLOT_Y) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
