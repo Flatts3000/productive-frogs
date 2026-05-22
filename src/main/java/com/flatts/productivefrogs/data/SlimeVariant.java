@@ -45,8 +45,16 @@ import net.minecraft.util.RandomSource;
  *       render distinctly with their respective resource block inside the
  *       translucent shell rather than sharing one iron-themed look. Absent
  *       in V1's shipped variants — the framework is in place for whenever
- *       per-variant PNGs (iron_resource_slime.png, copper_resource_slime.png,
- *       …) land in a follow-up.</li>
+ *       per-variant PNGs land in a follow-up.
+ *       <br><b>Identifier format:</b> the value must be the full
+ *       {@code RenderType.entityTranslucent}-compatible texture location —
+ *       namespace, {@code textures/} prefix, and {@code .png} suffix
+ *       included. Mirrors how the per-category fallback paths are built in
+ *       {@code ResourceSlimeRenderer.buildTextureMap} (and how vanilla's
+ *       {@code SlimeRenderer.SLIME_LOCATION} is shaped). Example:
+ *       {@code "productivefrogs:textures/entity/slime/iron_resource_slime.png"}.
+ *       Anything shorter (e.g. {@code "productivefrogs:entity/slime/iron"})
+ *       resolves to a missing-texture binding at render time.</li>
  * </ul>
  */
 public record SlimeVariant(

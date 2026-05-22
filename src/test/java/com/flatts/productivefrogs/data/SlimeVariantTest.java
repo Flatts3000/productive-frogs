@@ -34,7 +34,7 @@ class SlimeVariantTest {
           "category": "metallic",
           "primary_color": 12895428,
           "secondary_color": 14211288,
-          "texture": "productivefrogs:textures/entity/slime/iron_resource_slime"
+          "texture": "productivefrogs:textures/entity/slime/iron_resource_slime.png"
         }
         """;
 
@@ -56,7 +56,7 @@ class SlimeVariantTest {
         Optional<Identifier> texture = decoded.texture();
         assertTrue(texture.isPresent(), "texture must be present when the JSON includes the field");
         assertEquals(
-            Identifier.parse("productivefrogs:textures/entity/slime/iron_resource_slime"),
+            Identifier.parse("productivefrogs:textures/entity/slime/iron_resource_slime.png"),
             texture.get()
         );
     }
@@ -69,7 +69,7 @@ class SlimeVariantTest {
             14188339,
             16432204,
             1,
-            Optional.of(Identifier.parse("productivefrogs:textures/entity/slime/copper_resource_slime"))
+            Optional.of(Identifier.parse("productivefrogs:textures/entity/slime/copper_resource_slime.png"))
         );
         JsonElement encoded = SlimeVariant.CODEC.encodeStart(JsonOps.INSTANCE, original)
             .result()

@@ -72,7 +72,7 @@ The outer translucent shell is tinted from the variant's `primary_color` via `Re
 
 Schema + renderer round-trip covered by `SlimeVariantTest` (codec accepts JSONs with and without the field; both shapes round-trip cleanly).
 
-**PNGs pending.** None of the 12 shipped variant JSONs sets a `texture`; the entire roster currently uses the six per-category PNGs. Per-variant PNGs (e.g. `productivefrogs:textures/entity/slime/iron_resource_slime.png` with iron_block in the inner UV region) are an asset-PR follow-up — once shipped, each variant JSON gets a `"texture": "productivefrogs:textures/entity/slime/<variant>_resource_slime"` line and the renderer picks them up with no code change. Tracked here so future asset work has a one-step integration path.
+**PNGs pending.** None of the 12 shipped variant JSONs sets a `texture`; the entire roster currently uses the six per-category PNGs. Per-variant PNGs (e.g. `productivefrogs:textures/entity/slime/iron_resource_slime.png` with iron_block in the inner UV region) are an asset-PR follow-up — once shipped, each variant JSON gets a `"texture": "productivefrogs:textures/entity/slime/<variant>_resource_slime.png"` line and the renderer picks them up with no code change. The `textures/` prefix and `.png` suffix are required (matches `RenderType.entityTranslucent` and how the per-category fallback paths are built in `ResourceSlimeRenderer.buildTextureMap`); shorter forms resolve to a missing-texture binding. Tracked here so future asset work has a one-step integration path.
 
 ---
 
