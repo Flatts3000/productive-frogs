@@ -16,6 +16,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import org.jspecify.annotations.Nullable;
 
 /**
  * When a {@link ResourceFrog} kills a {@link ResourceSlime} of its matching
@@ -70,25 +71,36 @@ public final class FrogTongueDropHandler {
             return;
         }
 
+        if (frog.level().isClientSide()) {
+            return;
+        }
+
+        dropFroglightAtFrog(frog, slimeCat, slime.getVariantId());
+    }
+
+    /**
+     * Spawn the correct Froglight item entity at the frog's position. Used by
+     * both the tongue-kill path above and the player direct-feed path in
+     * {@link ResourceFrog#mobInteract}. Variant-keyed
+     * {@code configurable_froglight} wins when the slime (or bucket) carried
+     * a {@code SlimeVariant}; otherwise the broad-strokes category Froglight
+     * block falls back.
+     *
+     * <p>No category-match check here — callers verify that. This method
+     * just emits the drop.
+     */
+    public static void dropFroglightAtFrog(ResourceFrog frog, Category category, @Nullable Identifier variantId) {
         Level level = frog.level();
         if (level.isClientSide()) {
             return;
         }
-
-        // Prefer the variant-keyed configurable_froglight when the slime
-        // carries a SlimeVariant — it preserves the per-resource identity
-        // for downstream smelting recipes. Fall back to the broad-category
-        // Froglight block for category-only slimes (split children of an
-        // older save, infused-but-not-variant slimes, etc).
-        Identifier variantId = slime.getVariantId();
         ItemStack froglight;
         if (variantId != null) {
             froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
             froglight.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
         } else {
-            froglight = new ItemStack(PFBlocks.resourceFroglight(slimeCat));
+            froglight = new ItemStack(PFBlocks.resourceFroglight(category));
         }
-
         Vec3 pos = frog.position();
         ItemEntity drop = new ItemEntity(level, pos.x, pos.y, pos.z, froglight);
         drop.setDefaultPickUpDelay();

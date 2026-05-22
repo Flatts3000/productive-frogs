@@ -1,7 +1,10 @@
 package com.flatts.productivefrogs.content.entity;
 
 import com.flatts.productivefrogs.content.entity.ai.LayCategoryFrogspawn;
+import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.event.FrogTongueDropHandler;
+import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFSensors;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -10,15 +13,21 @@ import com.mojang.serialization.Dynamic;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.sensing.Sensor;
 import net.minecraft.world.entity.ai.sensing.SensorType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.frog.Frog;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -106,6 +115,65 @@ public class ResourceFrog extends Frog {
                 // Unknown category in save data — leave default.
             }
         });
+    }
+
+    /**
+     * Player direct-feeding per design Q9: right-click a Resource Frog with
+     * a category-matching Slime Bucket → frog instantly converts the bucketed
+     * slime to a Froglight drop, the bucket transforms back to empty, and
+     * the player effectively shortcuts the milk-fountain step.
+     *
+     * <p>Category-match check applies. Mismatched (or non-Slime-Bucket)
+     * interactions fall through to {@code super.mobInteract} — i.e. vanilla
+     * {@link Frog#mobInteract} → {@link Animal#mobInteract}. That preserves
+     * slimeball-driven love-mode, name-tag application, lead attachment,
+     * and every other vanilla animal interaction without our handler
+     * having to enumerate them. The bucket is not consumed on mismatch.
+     *
+     * <p>Variant carries through when the bucketed slime carried one —
+     * iron-variant slime → iron configurable_froglight drop, exactly like
+     * the in-world tongue-eat path produces. Category-only slimes (no
+     * variant) drop the broad-strokes category Froglight, again matching
+     * the tongue-eat behavior.
+     *
+     * <p>The Slime Bucket is replaced with a vanilla empty bucket in
+     * survival; creative players keep the slime bucket. After a successful
+     * match we write {@link MemoryModuleType#IS_TEMPTED} into the frog's
+     * brain with a 40-tick expiry — mirrors the brain state vanilla Frog
+     * uses to gate repeat tongue activity, so spamming direct-feed can't
+     * outrun the natural tongue-eat pacing. (Players are also rate-limited
+     * by needing to re-bucket each slime, but the brain gate adds a hard
+     * sub-second cooldown.)
+     */
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (!stack.is(PFItems.SLIME_BUCKET.get())) {
+            return super.mobInteract(player, hand);
+        }
+        Category bucketCategory = ResourceTadpoleBucketItem.readCategory(stack);
+        if (bucketCategory == null || bucketCategory != this.getCategory()) {
+            // Bucket has no category (empty / vanilla slime bucket) or the
+            // categories disagree — fail closed, defer to vanilla
+            // mobInteract so slimeballs, name tags, etc. still work normally.
+            return super.mobInteract(player, hand);
+        }
+        if (this.level().isClientSide()) {
+            // Client-side returns SUCCESS so the player's swing arm animates
+            // and the inventory updates roundtrip from the server's mutation.
+            return InteractionResult.SUCCESS;
+        }
+        Identifier variantId = ResourceTadpoleBucketItem.readVariant(stack);
+        FrogTongueDropHandler.dropFroglightAtFrog(this, bucketCategory, variantId);
+        // Apply the same brain memory vanilla Frog uses to gate repeated
+        // tongue use — keeps direct-feed cadence consistent with the natural
+        // tongue cooldown so a player can't out-feed the tongue path's
+        // pacing just by spamming buckets.
+        this.getBrain().setMemoryWithExpiry(MemoryModuleType.IS_TEMPTED, true, 40L);
+        if (!player.getAbilities().instabuild) {
+            player.setItemInHand(hand, new ItemStack(Items.BUCKET));
+        }
+        return InteractionResult.SUCCESS;
     }
 
     /**

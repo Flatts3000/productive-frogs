@@ -152,6 +152,12 @@ public final class PFGameTests {
             PFGameTests::variantConfigurableFroglightSmeltRecipesResolvePerVariant, 100);
         registerTest("configurable_froglight_without_variant_does_not_smelt",
             PFGameTests::configurableFroglightWithoutVariantDoesNotSmelt, 100);
+        registerTest("direct_feed_matching_category_drops_froglight_and_empties_bucket",
+            PFGameTests::directFeedMatchingCategoryDropsFroglightAndEmptiesBucket, 100);
+        registerTest("direct_feed_variant_slime_drops_configurable_froglight",
+            PFGameTests::directFeedVariantSlimeDropsConfigurableFroglight, 100);
+        registerTest("direct_feed_mismatched_category_is_a_no_op",
+            PFGameTests::directFeedMismatchedCategoryIsANoOp, 100);
     }
 
     private PFGameTests() {
@@ -1483,5 +1489,186 @@ public final class PFGameTests {
                 + BuiltInRegistries.ITEM.getKey(output.getItem())
                 + ", expected " + BuiltInRegistries.ITEM.getKey(expectedOutput));
         }
+    }
+
+    // ---------------------------------------------------------------------
+    // Q9 — Player direct-feeding
+    // ---------------------------------------------------------------------
+
+    /**
+     * Happy path: matching-category Slime Bucket fed to the right Resource
+     * Frog. Captures a METALLIC ResourceSlime (no variant) into a Slime
+     * Bucket, spawns a METALLIC ResourceFrog, then simulates a right-click
+     * by calling {@code frog.mobInteract(player, MAIN_HAND)} with the
+     * bucket in the player's hand.
+     *
+     * <p>Asserts: SUCCESS result, broad-strokes metallic_froglight item
+     * dropped at frog position, player's main hand now holds an empty
+     * vanilla bucket (Slime Bucket consumed).
+     */
+    private static void directFeedMatchingCategoryDropsFroglightAndEmptiesBucket(GameTestHelper helper) {
+        BlockPos frogPos = new BlockPos(2, 2, 2);
+
+        // Build the bucket the same way the slime mob-interact path does —
+        // saveToBucketTag on a sized-1 slime writes the canonical NBT shape.
+        ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(4, 2, 4));
+        source.setSize(1, true);
+        source.setCategory(Category.METALLIC);
+        ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
+        source.saveToBucketTag(bucket);
+        source.discard();
+
+        com.flatts.productivefrogs.content.entity.ResourceFrog frog =
+            helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
+        frog.setCategory(Category.METALLIC);
+
+        net.minecraft.world.entity.player.Player player =
+            helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, bucket);
+
+        net.minecraft.world.InteractionResult result =
+            frog.mobInteract(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (result != net.minecraft.world.InteractionResult.SUCCESS) {
+            helper.fail("expected SUCCESS interaction, got " + result);
+            return;
+        }
+
+        helper.succeedWhen(() -> {
+            // Hand should now hold an empty vanilla bucket.
+            ItemStack heldNow = player.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND);
+            if (!heldNow.is(net.minecraft.world.item.Items.BUCKET)) {
+                helper.fail("expected hand to hold an empty bucket after direct-feed, got "
+                    + BuiltInRegistries.ITEM.getKey(heldNow.getItem()));
+                return;
+            }
+            // A broad-strokes metallic_froglight should have dropped at the
+            // frog's position.
+            net.minecraft.world.item.Item expected = PFBlocks.resourceFroglight(Category.METALLIC).asItem();
+            boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                .anyMatch(itemEntity -> itemEntity.getItem().is(expected));
+            if (!found) {
+                helper.fail("expected " + BuiltInRegistries.ITEM.getKey(expected)
+                    + " to drop at frog position after direct-feed");
+            }
+        });
+    }
+
+    /**
+     * Variant path: an iron-variant Slime Bucket fed to a METALLIC Resource
+     * Frog drops a {@code configurable_froglight} stamped with the iron
+     * variant id (NOT the broad-strokes {@code metallic_froglight}). Mirrors
+     * the variant_slime_kill_drops_configurable_froglight test but for the
+     * player-driven path instead of the tongue-kill path.
+     */
+    private static void directFeedVariantSlimeDropsConfigurableFroglight(GameTestHelper helper) {
+        BlockPos frogPos = new BlockPos(2, 2, 2);
+
+        ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(4, 2, 4));
+        source.setSize(1, true);
+        Identifier ironVariant = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        source.setVariant(ironVariant);
+        ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
+        source.saveToBucketTag(bucket);
+        source.discard();
+
+        com.flatts.productivefrogs.content.entity.ResourceFrog frog =
+            helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
+        frog.setCategory(Category.METALLIC);
+
+        net.minecraft.world.entity.player.Player player =
+            helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, bucket);
+
+        net.minecraft.world.InteractionResult result =
+            frog.mobInteract(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (result != net.minecraft.world.InteractionResult.SUCCESS) {
+            helper.fail("expected SUCCESS interaction for variant direct-feed, got " + result);
+            return;
+        }
+
+        helper.succeedWhen(() -> {
+            net.minecraft.world.item.Item expected = PFItems.CONFIGURABLE_FROGLIGHT.get();
+            boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                .anyMatch(itemEntity -> {
+                    ItemStack stack = itemEntity.getItem();
+                    if (!stack.is(expected)) return false;
+                    Identifier variant = stack.get(
+                        com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get());
+                    return ironVariant.equals(variant);
+                });
+            if (!found) {
+                helper.fail("expected configurable_froglight stamped with iron variant to drop");
+            }
+        });
+    }
+
+    /**
+     * Mismatch path: a METALLIC slime bucket fed to an AQUATIC Resource
+     * Frog must be a no-op. The bucket is NOT consumed, no froglight drops,
+     * and the result returns PASS (so vanilla Animal#mobInteract continues
+     * — slimeballs and name-tag still work as before).
+     */
+    private static void directFeedMismatchedCategoryIsANoOp(GameTestHelper helper) {
+        BlockPos frogPos = new BlockPos(2, 2, 2);
+
+        ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(4, 2, 4));
+        source.setSize(1, true);
+        source.setCategory(Category.METALLIC);
+        ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
+        source.saveToBucketTag(bucket);
+        source.discard();
+
+        com.flatts.productivefrogs.content.entity.ResourceFrog frog =
+            helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
+        frog.setCategory(Category.AQUATIC);
+
+        net.minecraft.world.entity.player.Player player =
+            helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, bucket);
+
+        net.minecraft.world.InteractionResult mismatchResult =
+            frog.mobInteract(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+
+        // Pin the mismatch contract: result must NOT be SUCCESS, otherwise
+        // a refactor could silently swallow the interaction (treating it as
+        // handled) without actually consuming the bucket or producing a
+        // drop. The fall-through to super.mobInteract → Animal.mobInteract
+        // with a non-breeding item returns PASS in vanilla 1.21.x, but
+        // accept TRY_WITH_EMPTY_HAND too — both encode "not handled here".
+        if (mismatchResult == net.minecraft.world.InteractionResult.SUCCESS
+            || mismatchResult == net.minecraft.world.InteractionResult.CONSUME) {
+            helper.fail("mismatched direct-feed returned " + mismatchResult
+                + " — expected PASS or TRY_WITH_EMPTY_HAND from the super.mobInteract fallthrough");
+            return;
+        }
+
+        // Allow a short window for any erroneous spawns to appear, then
+        // assert nothing happened.
+        helper.runAfterDelay(5L, () -> {
+            // Bucket should still be a Slime Bucket — not consumed.
+            ItemStack heldNow = player.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND);
+            if (!heldNow.is(PFItems.SLIME_BUCKET.get())) {
+                helper.fail("mismatched direct-feed consumed the bucket — expected SLIME_BUCKET retained, got "
+                    + BuiltInRegistries.ITEM.getKey(heldNow.getItem()));
+                return;
+            }
+            // No Froglight items should have dropped.
+            for (Category cat : Category.values()) {
+                net.minecraft.world.item.Item froglight = PFBlocks.resourceFroglight(cat).asItem();
+                boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                    .anyMatch(itemEntity -> itemEntity.getItem().is(froglight));
+                if (found) {
+                    helper.fail("mismatched direct-feed dropped a " + cat.id() + " Froglight — should have been a no-op");
+                    return;
+                }
+            }
+            boolean configurableDropped = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                .anyMatch(itemEntity -> itemEntity.getItem().is(PFItems.CONFIGURABLE_FROGLIGHT.get()));
+            if (configurableDropped) {
+                helper.fail("mismatched direct-feed dropped a configurable_froglight — should have been a no-op");
+                return;
+            }
+            helper.succeed();
+        });
     }
 }

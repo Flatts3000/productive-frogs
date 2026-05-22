@@ -35,8 +35,8 @@ Datapack registry at `PFRegistries.SLIME_VARIANT` (created via `DataPackRegistry
 - ✅ Crush tag `productivefrogs:crushable/metallic` ships with `metallic_froglight` as its only entry; cross-mod recipes will reference the tag once they land.
 - Cross-mod crush 2× recipes for metallic Froglights via Create / Mekanism / Thermal — **still pending**. Deferred until we have a test environment that can validate the cross-mod recipe shape against each target mod. Players smelt directly for 1× yield in the meantime.
 
-### Player direct-feeding (Q9)
-[docs/open_questions.md#9](./open_questions.md) — right-click a Resource Frog while holding a matching-category Slime Bucket. Bucket transforms back to empty, frog drops Froglight at its position. Category-match check applies; mismatch is a no-op.
+### ~~Player direct-feeding (Q9)~~ — shipped
+[docs/open_questions.md#9](./open_questions.md). `ResourceFrog.mobInteract` checks for a Slime Bucket, reads the bucket's stored Category + Variant via `ResourceTadpoleBucketItem.readCategory` / `readVariant`, and if the category matches the frog's, calls `FrogTongueDropHandler.dropFroglightAtFrog` to emit the matching Froglight (variant-stamped configurable_froglight when the bucket carried a Variant, broad-strokes category Froglight otherwise) and replaces the held bucket with vanilla `Items.BUCKET`. Mismatch falls through to `super.mobInteract` (vanilla `Frog.mobInteract` → `Animal.mobInteract` — slimeballs / name-tag still work). Covered by 3 GameTests (matching no-variant, matching iron-variant, mismatched category).
 
 ### ~~Mod config wiring~~ — landed alongside J5
 - ✅ `discoveryChancePerOffspring` promoted to `PFConfig.DISCOVERY_CHANCE_PER_OFFSPRING` (GameTests override via `SlimeSplitDiscoveryHandler.testOverride`).
