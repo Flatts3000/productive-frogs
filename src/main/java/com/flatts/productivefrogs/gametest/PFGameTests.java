@@ -107,6 +107,8 @@ public final class PFGameTests {
             PFGameTests::mismatchedFrogKillDropsNoFroglight, 100);
         registerTest("slime_bucket_round_trip_preserves_category",
             PFGameTests::slimeBucketRoundTripPreservesCategory, 100);
+        registerTest("slime_bucket_round_trip_preserves_variant",
+            PFGameTests::slimeBucketRoundTripPreservesVariant, 100);
         registerTest("vanilla_slime_split_discovery_converts_to_metallic_resource_slime",
             PFGameTests::vanillaSlimeSplitDiscoveryConvertsToMetallicResourceSlime, 100);
         registerTest("vanilla_magma_cube_split_discovery_converts_to_infernal_resource_slime",
@@ -765,6 +767,54 @@ public final class PFGameTests {
         }
         if (!released.fromBucket()) {
             helper.fail("released slime must be flagged fromBucket so it survives chunk reload");
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Bucket a variant-stamped Resource Slime, then assert the
+     * {@code BUCKET_ENTITY_DATA} payload carries the {@code Variant} NBT
+     * (read via {@code ResourceTadpoleBucketItem.readVariant}) AND that
+     * releasing the bucket restores the variant on the spawned slime.
+     *
+     * <p>This pins the precondition for the variant-aware Slime Bucket tint:
+     * if the bucket doesn't carry the Variant id after capture, the
+     * {@code TadpoleBucketCategoryTint} resolution-order would skip the
+     * variant lookup and fall back to the broader category colour.
+     */
+    private static void slimeBucketRoundTripPreservesVariant(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        Identifier variantId =
+            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
+
+        ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), pos);
+        source.setSize(1, true);
+        source.setVariant(variantId);
+
+        ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
+        source.saveToBucketTag(bucket);
+
+        Identifier readBack =
+            com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem.readVariant(bucket);
+        if (readBack == null || !readBack.equals(variantId)) {
+            helper.fail("slime bucket round-trip lost variant: wrote " + variantId
+                + ", read " + readBack);
+            return;
+        }
+
+        ResourceSlime released = helper.spawn(PFEntities.RESOURCE_SLIME.get(), pos.east());
+        net.minecraft.world.item.component.CustomData data =
+            bucket.get(net.minecraft.core.component.DataComponents.BUCKET_ENTITY_DATA);
+        if (data == null) {
+            helper.fail("bucket's BUCKET_ENTITY_DATA is unexpectedly null after saveToBucketTag");
+            return;
+        }
+        released.loadFromBucketTag(data.copyTag());
+
+        if (!variantId.equals(released.getVariantId())) {
+            helper.fail("released slime variant was " + released.getVariantId()
+                + ", expected " + variantId);
+            return;
         }
         helper.succeed();
     }

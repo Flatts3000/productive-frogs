@@ -73,7 +73,7 @@ Items noted in commit messages or PR descriptions as known issues but not blocki
 
 ### Visuals / assets
 - **Real (non-placeholder) textures** for every item/block. Currently using vanilla textures + per-category tints + placeholder PNGs (tadpole_silhouette, slime_silhouette).
-- **Spawn eggs for ResourceFrog / ResourceSlime / ResourceTadpole.** Currently accessible via `/summon` only — fine for dev but blocks survival creative-tab use.
+- ~~**Spawn eggs for ResourceFrog / ResourceSlime / ResourceTadpole.**~~ — shipped. 6 frog + 6 tadpole + 12 variant slime + 4 parent-species (Cave / Geode / Tide / Void) spawn eggs are registered in `PFItems` and exposed via `PFCreativeTabs.PRODUCTIVE_FROGS_TAB`. Variant slime eggs carry the `slime_variant` data component so each renders its resource colour rather than the broader category tint; pinned by `PFRegistryTest#variantSlimeSpawnEggCarriesSlimeVariantComponent` (12 parameterized cases).
 - **Per-category SlimeOuterLayer tweaks.** PR #26 + #27 fixed the basic shell rendering. Could tighten the gray tone per-category (cooler gray for AQUATIC, warmer for INFERNAL) for visual variety. Low priority.
 
 ### Tooling

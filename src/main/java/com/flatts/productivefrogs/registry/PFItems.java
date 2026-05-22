@@ -326,14 +326,24 @@ public final class PFItems {
     }
 
     private static Item.Properties slimeVariantSpawnEggProperties(String variantName, Category category) {
+        net.minecraft.resources.Identifier variantId =
+            net.minecraft.resources.Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName);
         CompoundTag nbt = new CompoundTag();
         // Variant first; readAdditionalSaveData treats Variant as overriding
         // Category via the registry lookup, but the entity also reads Category
         // as a fast-path / fallback so include both for safety.
-        nbt.putString("Variant", ProductiveFrogs.MOD_ID + ":" + variantName);
+        nbt.putString("Variant", variantId.toString());
         nbt.putString("Category", category.name());
         return new Item.Properties()
             .component(DataComponents.ENTITY_DATA, TypedEntityData.of(PFEntities.RESOURCE_SLIME.get(), nbt))
+            // SLIME_VARIANT drives the spawn egg's inventory tint via the
+            // slime_variant ItemTintSource — picks up the variant's primary
+            // colour from the datapack registry (iron-silver, copper-orange,
+            // etc.) so each variant egg renders distinctly instead of all
+            // metallic eggs sharing the broader category tint. CONTAINED_CATEGORY
+            // is kept as a fallback signal for any UI surface that wants the
+            // broader category (currently unused on this item, but cheap).
+            .component(PFDataComponents.SLIME_VARIANT.get(), variantId)
             .component(PFDataComponents.CONTAINED_CATEGORY.get(), category);
     }
 
