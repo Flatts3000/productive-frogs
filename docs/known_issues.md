@@ -66,16 +66,17 @@ The six-category roster (`METALLIC`, `MINERAL`, `GEM`, `AQUATIC`, `INFERNAL`, `A
 
 **JEI**: each of the six categories should appear as its own line per item family (e.g. six `Metallic / Mineral / Gem / Aquatic / Infernal / Arcane Frog Spawn Egg` entries, not one combined `Resource Frog Spawn Egg`).
 
-### 🔴 Slime Milker should be a furnace-style block, not a right-click appliance
+### 🟡 Slime Milker furnace-style GUI shipped — hopper I/O pending
 
-Redesign the Slime Milker from "right-click while holding a Slime Bucket" to a furnace-shaped automation primitive:
+**Shipped**: the right-click-to-instant-convert appliance is replaced with a `SlimeMilkerBlockEntity`-backed furnace-shaped block:
 
-- GUI with one **input slot** (accepts a Slime Bucket), one **output slot** (the resulting variant-typed Slime Milk bucket), and a **progress bar**.
+- GUI with one **input slot** (accepts a Slime Bucket only), one **output slot** (filled with the matching variant-typed Slime Milk bucket on cook completion), and a **progress bar**.
 - **Cook time: 100 ticks (5 s)** per conversion. No fuel — the slime IS the input.
-- **Hopper-aware**: hopper on top pushes Slime Buckets into the input slot, hopper below pulls finished Slime Milk buckets from the output slot. Matches vanilla furnace I/O direction semantics.
-- Reuses the existing variant lookup (`SlimeMilkerBlock.readBucketVariant` → `PFFluidTypes.VARIANTS` → `PFItems.MILK_BUCKETS`) — only the trigger changes from a player click to the cook-progress timer.
+- Variant lookup unchanged: `SlimeMilkerBlock.readBucketVariant` → `PFFluidTypes.VARIANTS` → `PFItems.MILK_BUCKETS`. Fail-closed semantic: if the input bucket has no `Variant` component, cook progress stays at zero and no output appears. Covered by 2 new GameTests.
+- Inventory drops on break via `playerWillDestroy` so a broken milker doesn't swallow buckets.
+- Placeholder GUI background ships at `assets/productivefrogs/textures/gui/container/slime_milker.png` — basic grey container with slot wells highlighted. Polish texture (full Productive Frogs theming) tracked separately.
 
-Supersedes the existing "No automated Slime Milker" V1 cut: the Milker IS the automation primitive; no separate "auto-fed" variant in V2.
+**Pending — hopper I/O.** NeoForge 1.21.11 deprecated the legacy `Capabilities.ItemHandler.BLOCK` (returning `IItemHandler`) in favour of `Capabilities.Item.BLOCK` (returning `ResourceHandler<ItemResource>`). Per [NeoForge's transfer-rework notes](https://neoforged.net/news/21.9-transfer-rework/), no adapter wraps the old handler as the new one — the BE's storage needs to migrate to a new `ResourceStacksResourceHandler<ItemResource>` (or equivalent) before hopper compatibility lands. Substantial enough to ship as its own PR; tracked here so it's not forgotten.
 
 ### 🟢 Slime Milk integrates with tank mods — confirmed working
 
@@ -104,8 +105,8 @@ Substantial visual upgrade — needs the schema extension AND a renderer rework.
 
 These are intentional V1 scope cuts. Each is on the V2 roadmap unless noted otherwise.
 
-### 🔵 No automated Slime Milker — *superseded; see [open issue](#-slime-milker-should-be-a-furnace-style-block-not-a-right-click-appliance) above*
-The Milker is a hand-operated appliance today — right-click with a Slime Bucket to convert to a milk bucket. Will become a furnace-shaped GUI block with hopper I/O per the open-issue redesign.
+### 🟢 Automated Slime Milker — shipped (GUI), hopper I/O pending
+The Milker is now a furnace-shaped GUI block with input + output slots, a 100-tick cook progress, and fail-closed variant-bucket validation. Hopper compat is still pending the NeoForge `ResourceHandler<ItemResource>` migration — see the entry above for details.
 
 ### 🔵 No Frog Terrarium / Habitat block
 Frogs in V1 live where you place them, near water. A placeable housing block with I/O inventory is V2.
