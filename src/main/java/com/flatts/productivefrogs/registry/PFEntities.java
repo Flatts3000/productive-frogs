@@ -56,9 +56,11 @@ public final class PFEntities {
 
     /**
      * Single ResourceSlime entity type — category is carried as synced data,
-     * not encoded in the type. Sized to vanilla Slime's max (size-4) bounding
-     * box so the vanilla SlimeRenderer geometry is reusable; per-instance size
-     * is set via {@link Slime#setSize} as normal.
+     * not encoded in the type. Base dimensions match vanilla Slime's size-1
+     * hitbox (0.52F × 0.52F); the actual in-world hitbox is computed at
+     * runtime by {@code Slime#getDefaultDimensions(...).scale(getSize())},
+     * so the vanilla SlimeRenderer geometry is reusable across sizes 1-127.
+     * Per-instance size is set via {@link Slime#setSize} as normal.
      */
     public static final DeferredHolder<EntityType<?>, EntityType<ResourceSlime>> RESOURCE_SLIME =
         ENTITIES.register(
