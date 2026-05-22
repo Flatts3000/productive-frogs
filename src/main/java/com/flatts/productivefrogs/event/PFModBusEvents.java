@@ -2,8 +2,10 @@ package com.flatts.productivefrogs.event;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
+import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -16,6 +18,8 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 
@@ -96,6 +100,36 @@ public final class PFModBusEvents {
             Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
             PFModBusEvents::checkParentSlimeSpawnRules,
             RegisterSpawnPlacementsEvent.Operation.REPLACE
+        );
+    }
+
+    /**
+     * Register block-side capabilities — currently just the Slime Milker's
+     * {@code Capabilities.Item.BLOCK} so hoppers can push Slime Buckets into
+     * the input slot and pull finished Slime Milk buckets from the output.
+     *
+     * <p>Side-aware view, mirroring vanilla furnace conventions:
+     * <ul>
+     *   <li>{@link Direction#DOWN} → extract-only OUTPUT view (a hopper
+     *       below the milker queries side=DOWN to pull items).</li>
+     *   <li>top + horizontal faces (and {@code null} for non-sided access)
+     *       → insert-only INPUT view restricted to SLIME_BUCKET.</li>
+     * </ul>
+     *
+     * <p>The views themselves live on {@link com.flatts.productivefrogs.content.block.entity.SlimeMilkerInventory};
+     * this listener just routes by side.
+     */
+    @SubscribeEvent
+    public static void onRegisterCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(
+            Capabilities.Item.BLOCK,
+            PFBlockEntities.SLIME_MILKER.get(),
+            (be, side) -> {
+                if (side == Direction.DOWN) {
+                    return be.getInventory().outputView();
+                }
+                return be.getInventory().inputView();
+            }
         );
     }
 

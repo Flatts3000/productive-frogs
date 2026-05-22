@@ -21,8 +21,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
-import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
  * BlockEntity backing the {@link SlimeMilkerBlock}. Two-slot inventory
@@ -38,13 +36,13 @@ import net.neoforged.neoforge.items.ItemStackHandler;
  * (100 ticks = 5 s). On completion the input bucket is consumed and the
  * matching variant-typed Slime Milk bucket is written to the output slot.
  *
- * <p>Hopper I/O is deferred. NeoForge 1.21.11 replaced the legacy
- * {@code Capabilities.ItemHandler.BLOCK} (returning {@code IItemHandler})
- * with {@code Capabilities.Item.BLOCK} (returning
- * {@code ResourceHandler<ItemResource>}), and per NeoForge's transfer-
- * rework notes there is no adapter that wraps the legacy handler as the
- * new one. Migrating the BE's storage to the new API is its own PR;
- * tracked as a follow-up in {@code docs/known_issues.md}.
+ * <p>Hopper I/O is wired via {@link SlimeMilkerInventory}, an
+ * {@link net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler}
+ * subclass exposed as {@code Capabilities.Item.BLOCK} in
+ * {@code PFModBusEvents}. The side-aware capability provider returns the
+ * insert-only INPUT view for the top + horizontal faces and the
+ * extract-only OUTPUT view for the bottom face, mirroring the vanilla
+ * furnace's "input from above, output from below" hopper convention.
  */
 public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider {
 
@@ -63,25 +61,10 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
 
     private int cookProgress = 0;
 
-    private final ItemStackHandler inventory = new ItemStackHandler(SLOT_COUNT) {
-        @Override
-        public boolean isItemValid(int slot, ItemStack stack) {
-            // Players can only place a Slime Bucket in the input slot via
-            // the GUI; the output slot is pickup-only. The hopper-aware
-            // capability wrapper that will pin this rule for automation is
-            // tracked as a follow-up in docs/known_issues.md.
-            return slot == INPUT_SLOT && stack.is(PFItems.SLIME_BUCKET.get());
-        }
-
-        @Override
-        protected void onContentsChanged(int slot) {
-            // setChanged() marks the chunk dirty when the GUI mutates a
-            // slot — without this the BE save can lag a tick or two behind
-            // the visible state, which shows up in QA as "I put a bucket
-            // in, /reload, my bucket is gone".
-            setChanged();
-        }
-    };
+    // Slot validity (input = SLIME_BUCKET, output = reject all) and the
+    // setChanged() hook live on SlimeMilkerInventory; this BE just owns
+    // the lifecycle and the cook loop.
+    private final SlimeMilkerInventory inventory = new SlimeMilkerInventory(this::setChanged);
 
     private final ContainerData dataAccess = new ContainerData() {
         @Override
@@ -110,8 +93,12 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
         super(PFBlockEntities.SLIME_MILKER.get(), pos, state);
     }
 
-    /** Inventory accessor for hoppers / capability wrappers. */
-    public IItemHandlerModifiable getInventory() {
+    /**
+     * Inventory accessor for the menu, the drop-on-break loop in
+     * {@link SlimeMilkerBlock#playerWillDestroy}, the capability provider
+     * in {@code PFModBusEvents}, and GameTests.
+     */
+    public SlimeMilkerInventory getInventory() {
         return inventory;
     }
 
@@ -150,7 +137,10 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
         be.setChanged();
         if (be.cookProgress >= COOK_TIME_TOTAL) {
             BucketItem outputBucket = PFItems.MILK_BUCKETS.get(variant).get();
-            be.inventory.extractItem(INPUT_SLOT, 1, false);
+            // SLIME_BUCKET stacksTo(1) so consuming one always empties the
+            // input slot; explicit EMPTY write is shorter than extractItem
+            // and avoids the now-removed legacy IItemHandler API.
+            be.inventory.setStackInSlot(INPUT_SLOT, ItemStack.EMPTY);
             be.inventory.setStackInSlot(OUTPUT_SLOT, new ItemStack(outputBucket));
             be.cookProgress = 0;
             level.playSound(
