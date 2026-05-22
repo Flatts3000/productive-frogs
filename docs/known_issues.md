@@ -83,6 +83,18 @@ Slime Milk should behave like any other NeoForge fluid for tank / pipe / pump mo
 
 Supersedes the existing "Slime Milk only in buckets" V1 cut for the fluid-mechanics half: bucket-only stays our shipped UI, but the fluid is accessible to any mod that talks to the standard capability.
 
+### 🔴 Resource Slime inner texture should be the resource's block texture
+
+Replace the current flat-tint inner sprite on each Resource Slime with the **vanilla block texture of the variant's canonical resource** — iron block for iron variant, copper block for copper, diamond block for diamond, etc. The **outer translucent shell** keeps the vanilla slime jelly look (same model + translucent layer as today) but tints to a translucent version of the inner texture so the visual reads as "you can see the resource inside the slime".
+
+Likely implementation:
+
+- Extend the `SlimeVariant` codec to declare an inner texture path (e.g. `inner_texture: "minecraft:block/iron_block"`).
+- Resolve that path in `ResourceSlimeRenderer` (or its `RenderState`) and bind it as the inner layer's texture.
+- Outer shell uses the existing translucent overlay and reads its tint from the variant's primary colour for cohesion.
+
+Substantial visual upgrade — needs the schema extension AND a renderer rework. Track as one larger task; will not slip into V1 ship without its own PR.
+
 ---
 
 ## V1 limitations (by design)
