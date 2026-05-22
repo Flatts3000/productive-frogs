@@ -123,11 +123,12 @@ public class ResourceFrog extends Frog {
      * slime to a Froglight drop, the bucket transforms back to empty, and
      * the player effectively shortcuts the milk-fountain step.
      *
-     * <p>Category-match check applies. Feeding a Gem Slime to a Metallic
-     * Frog returns {@link InteractionResult#PASS} unchanged — the bucket is
-     * not consumed, the frog ignores the interaction, vanilla
-     * {@code Animal.mobInteract} runs (love-mode breeding via slimeballs,
-     * name-tag, etc.).
+     * <p>Category-match check applies. Mismatched (or non-Slime-Bucket)
+     * interactions fall through to {@code super.mobInteract} — i.e. vanilla
+     * {@link Frog#mobInteract} → {@link Animal#mobInteract}. That preserves
+     * slimeball-driven love-mode, name-tag application, lead attachment,
+     * and every other vanilla animal interaction without our handler
+     * having to enumerate them. The bucket is not consumed on mismatch.
      *
      * <p>Variant carries through when the bucketed slime carried one —
      * iron-variant slime → iron configurable_froglight drop, exactly like
@@ -136,9 +137,13 @@ public class ResourceFrog extends Frog {
      * the tongue-eat behavior.
      *
      * <p>The Slime Bucket is replaced with a vanilla empty bucket in
-     * survival; creative players keep the slime bucket. No explicit tongue
-     * cooldown is set — the player's natural action speed and the cost of
-     * re-bucketing each slime gates throughput.
+     * survival; creative players keep the slime bucket. After a successful
+     * match we write {@link MemoryModuleType#IS_TEMPTED} into the frog's
+     * brain with a 40-tick expiry — mirrors the brain state vanilla Frog
+     * uses to gate repeat tongue activity, so spamming direct-feed can't
+     * outrun the natural tongue-eat pacing. (Players are also rate-limited
+     * by needing to re-bucket each slime, but the brain gate adds a hard
+     * sub-second cooldown.)
      */
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {

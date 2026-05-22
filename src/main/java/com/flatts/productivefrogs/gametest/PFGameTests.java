@@ -1626,7 +1626,21 @@ public final class PFGameTests {
             helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
         player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, bucket);
 
-        frog.mobInteract(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        net.minecraft.world.InteractionResult mismatchResult =
+            frog.mobInteract(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+
+        // Pin the mismatch contract: result must NOT be SUCCESS, otherwise
+        // a refactor could silently swallow the interaction (treating it as
+        // handled) without actually consuming the bucket or producing a
+        // drop. The fall-through to super.mobInteract → Animal.mobInteract
+        // with a non-breeding item returns PASS in vanilla 1.21.x, but
+        // accept TRY_WITH_EMPTY_HAND too — both encode "not handled here".
+        if (mismatchResult == net.minecraft.world.InteractionResult.SUCCESS
+            || mismatchResult == net.minecraft.world.InteractionResult.CONSUME) {
+            helper.fail("mismatched direct-feed returned " + mismatchResult
+                + " — expected PASS or TRY_WITH_EMPTY_HAND from the super.mobInteract fallthrough");
+            return;
+        }
 
         // Allow a short window for any erroneous spawns to appear, then
         // assert nothing happened.
