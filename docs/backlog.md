@@ -31,9 +31,9 @@ Datapack registry at `PFRegistries.SLIME_VARIANT` (created via `DataPackRegistry
 - **J5** ✅ — Depletion counter + mod config wiring. `SlimeMilkSourceBlock` carries a `spawns_remaining` IntegerProperty (range [0, 16]); decrements on each successful spawn, drains to air on zero. New `PFConfig` (COMMON `ModConfigSpec`) exposes `depletionEnabled`, `depletionCount`, `minSpawnIntervalTicks`, `maxSpawnIntervalTicks`, `discoveryChancePerOffspring`. `SlimeSplitDiscoveryHandler.discoveryChancePerOffspring` promoted from public-static hack to a config read with a test-only override field (`testOverride`) that GameTests set in try/finally. Covered by 3 GameTests (decrement, drain on zero, default-state-is-max).
 
 ### Smelting + crush recipes
-- Froglight → base resource smelt recipes (6 recipes, one per category for V1)
-- Cross-mod crush 2× recipes for metallic Froglights via Create / Mekanism / Thermal compat
-- Crush tag: `productivefrogs:crushable/metallic`
+- ✅ Froglight → base resource smelt recipes. 18 recipes shipped: 6 broad-strokes category Froglights (each → canonical resource: iron, redstone, diamond, prismarine_shard, magma_cream, ender_pearl) plus 12 variant configurable_froglight recipes that match via NeoForge's `neoforge:components` ingredient on the `slime_variant` data component. Covered by 3 GameTests (category lookup × 6, variant lookup × 12, negative case for unstamped configurable_froglight).
+- ✅ Crush tag `productivefrogs:crushable/metallic` ships with `metallic_froglight` as its only entry; cross-mod recipes will reference the tag once they land.
+- Cross-mod crush 2× recipes for metallic Froglights via Create / Mekanism / Thermal — **still pending**. Deferred until we have a test environment that can validate the cross-mod recipe shape against each target mod. Players smelt directly for 1× yield in the meantime.
 
 ### Player direct-feeding (Q9)
 [docs/open_questions.md#9](./open_questions.md) — right-click a Resource Frog while holding a matching-category Slime Bucket. Bucket transforms back to empty, frog drops Froglight at its position. Category-match check applies; mismatch is a no-op.

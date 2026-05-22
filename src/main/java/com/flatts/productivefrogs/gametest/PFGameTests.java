@@ -146,6 +146,12 @@ public final class PFGameTests {
             PFGameTests::slimeMilkSourceDefaultStateHasMaxSpawnsRemaining, 100);
         registerTest("custom_slimes_size_1_hitbox_matches_vanilla_slime",
             PFGameTests::customSlimesSize1HitboxMatchesVanillaSlime, 100);
+        registerTest("category_froglight_smelt_recipes_resolve_to_canonical_resource",
+            PFGameTests::categoryFroglightSmeltRecipesResolveToCanonicalResource, 100);
+        registerTest("variant_configurable_froglight_smelt_recipes_resolve_per_variant",
+            PFGameTests::variantConfigurableFroglightSmeltRecipesResolvePerVariant, 100);
+        registerTest("configurable_froglight_without_variant_does_not_smelt",
+            PFGameTests::configurableFroglightWithoutVariantDoesNotSmelt, 100);
     }
 
     private PFGameTests() {
@@ -1346,6 +1352,136 @@ public final class PFGameTests {
         }
         if (Math.abs(h - expectedHeight) > 0.001f) {
             helper.fail(name + " size-1 height " + h + " != vanilla " + expectedHeight);
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Smelting recipes
+    // ---------------------------------------------------------------------
+
+    /**
+     * Every broad-strokes (category) Froglight should smelt to its canonical
+     * resource. Pins the 6 plain-item smelting recipes — if a recipe JSON
+     * is renamed, deleted, or has a wrong output, this catches it before
+     * playtest.
+     */
+    private static void categoryFroglightSmeltRecipesResolveToCanonicalResource(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        net.minecraft.world.item.crafting.RecipeManager rm = level.getServer().getRecipeManager();
+
+        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.METALLIC).asItem(), net.minecraft.world.item.Items.IRON_INGOT);
+        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.MINERAL).asItem(), net.minecraft.world.item.Items.REDSTONE);
+        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.GEM).asItem(), net.minecraft.world.item.Items.DIAMOND);
+        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.AQUATIC).asItem(), net.minecraft.world.item.Items.PRISMARINE_SHARD);
+        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.INFERNAL).asItem(), net.minecraft.world.item.Items.MAGMA_CREAM);
+        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.ARCANE).asItem(), net.minecraft.world.item.Items.ENDER_PEARL);
+
+        helper.succeed();
+    }
+
+    /**
+     * configurable_froglight stamped with a {@code slime_variant} component
+     * should smelt to the variant's canonical resource. Pins the 12
+     * component-ingredient smelting recipes against the
+     * {@code neoforge:components} ingredient codec — if NeoForge ever
+     * renames the discriminator (e.g. {@code neoforge:data_components}),
+     * the recipes silently stop matching and this test catches it.
+     */
+    private static void variantConfigurableFroglightSmeltRecipesResolvePerVariant(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        net.minecraft.world.item.crafting.RecipeManager rm = level.getServer().getRecipeManager();
+
+        // Full coverage — all 12 variants. The component-ingredient pipeline
+        // is the load-bearing piece here (one bad codec name and every
+        // variant silently stops matching), so it's cheap insurance to
+        // exercise the whole roster rather than rely on a sample.
+        assertVariantSmelts(helper, rm, level, "iron", net.minecraft.world.item.Items.IRON_INGOT);
+        assertVariantSmelts(helper, rm, level, "copper", net.minecraft.world.item.Items.COPPER_INGOT);
+        assertVariantSmelts(helper, rm, level, "gold", net.minecraft.world.item.Items.GOLD_INGOT);
+        assertVariantSmelts(helper, rm, level, "redstone", net.minecraft.world.item.Items.REDSTONE);
+        assertVariantSmelts(helper, rm, level, "lapis", net.minecraft.world.item.Items.LAPIS_LAZULI);
+        assertVariantSmelts(helper, rm, level, "coal", net.minecraft.world.item.Items.COAL);
+        assertVariantSmelts(helper, rm, level, "diamond", net.minecraft.world.item.Items.DIAMOND);
+        assertVariantSmelts(helper, rm, level, "emerald", net.minecraft.world.item.Items.EMERALD);
+        assertVariantSmelts(helper, rm, level, "prismarine", net.minecraft.world.item.Items.PRISMARINE_SHARD);
+        assertVariantSmelts(helper, rm, level, "sponge", net.minecraft.world.item.Items.SPONGE);
+        assertVariantSmelts(helper, rm, level, "magma_cream", net.minecraft.world.item.Items.MAGMA_CREAM);
+        assertVariantSmelts(helper, rm, level, "ender_pearl", net.minecraft.world.item.Items.ENDER_PEARL);
+
+        helper.succeed();
+    }
+
+    /**
+     * Negative: a configurable_froglight stack with no slime_variant
+     * component should not match any of the 12 variant smelting recipes —
+     * each recipe's ingredient is strict on the component. This pins the
+     * "fail closed" semantic: no variant → no recipe → no spurious smelt
+     * output. Without this, a refactor that loosens the ingredient's
+     * strict flag would silently let bare configurable_froglights smelt
+     * to whatever variant happens to sort first.
+     */
+    private static void configurableFroglightWithoutVariantDoesNotSmelt(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        net.minecraft.world.item.crafting.RecipeManager rm = level.getServer().getRecipeManager();
+
+        ItemStack stack = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
+        net.minecraft.world.item.crafting.SingleRecipeInput input =
+            new net.minecraft.world.item.crafting.SingleRecipeInput(stack);
+        java.util.Optional<net.minecraft.world.item.crafting.RecipeHolder<net.minecraft.world.item.crafting.SmeltingRecipe>> match =
+            rm.getRecipeFor(net.minecraft.world.item.crafting.RecipeType.SMELTING, input, level);
+        if (match.isPresent()) {
+            helper.fail("configurable_froglight without slime_variant component must NOT match any smelt recipe, but matched "
+                + match.get().id() + " → " + match.get().value().assemble(input, level.registryAccess()));
+            return;
+        }
+        helper.succeed();
+    }
+
+    private static void assertSmelts(
+            GameTestHelper helper,
+            net.minecraft.world.item.crafting.RecipeManager rm,
+            ServerLevel level,
+            net.minecraft.world.item.Item input,
+            net.minecraft.world.item.Item expectedOutput) {
+        ItemStack stack = new ItemStack(input);
+        net.minecraft.world.item.crafting.SingleRecipeInput recipeInput =
+            new net.minecraft.world.item.crafting.SingleRecipeInput(stack);
+        java.util.Optional<net.minecraft.world.item.crafting.RecipeHolder<net.minecraft.world.item.crafting.SmeltingRecipe>> match =
+            rm.getRecipeFor(net.minecraft.world.item.crafting.RecipeType.SMELTING, recipeInput, level);
+        if (match.isEmpty()) {
+            helper.fail("no smelting recipe matches " + BuiltInRegistries.ITEM.getKey(input));
+            return;
+        }
+        ItemStack output = match.get().value().assemble(recipeInput, level.registryAccess());
+        if (!output.is(expectedOutput)) {
+            helper.fail("smelt(" + BuiltInRegistries.ITEM.getKey(input) + ") = "
+                + BuiltInRegistries.ITEM.getKey(output.getItem())
+                + ", expected " + BuiltInRegistries.ITEM.getKey(expectedOutput));
+        }
+    }
+
+    private static void assertVariantSmelts(
+            GameTestHelper helper,
+            net.minecraft.world.item.crafting.RecipeManager rm,
+            ServerLevel level,
+            String variant,
+            net.minecraft.world.item.Item expectedOutput) {
+        ItemStack stack = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
+        stack.set(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get(),
+            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant));
+        net.minecraft.world.item.crafting.SingleRecipeInput recipeInput =
+            new net.minecraft.world.item.crafting.SingleRecipeInput(stack);
+        java.util.Optional<net.minecraft.world.item.crafting.RecipeHolder<net.minecraft.world.item.crafting.SmeltingRecipe>> match =
+            rm.getRecipeFor(net.minecraft.world.item.crafting.RecipeType.SMELTING, recipeInput, level);
+        if (match.isEmpty()) {
+            helper.fail("no smelting recipe matches configurable_froglight[variant=" + variant + "]");
+            return;
+        }
+        ItemStack output = match.get().value().assemble(recipeInput, level.registryAccess());
+        if (!output.is(expectedOutput)) {
+            helper.fail("smelt(configurable_froglight[variant=" + variant + "]) = "
+                + BuiltInRegistries.ITEM.getKey(output.getItem())
+                + ", expected " + BuiltInRegistries.ITEM.getKey(expectedOutput));
         }
     }
 }
