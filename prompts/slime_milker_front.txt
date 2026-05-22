@@ -1,0 +1,9 @@
+A 16x16 Minecraft block texture file, viewed at 1024x1024 with each ship-pixel rendered as a 64x64 chunk. The image MUST fill the entire 1024x1024 canvas edge-to-edge with NO transparent areas.
+
+Subject: front (player-facing) face of a rustic stone press machine.
+
+Composition: a thick cobblestone frame runs around the perimeter, about 2 ship-pixels thick on all four sides (vanilla Minecraft cobblestone palette - mid-gray irregular stones with darker mortar). The center 12x12 ship-pixel area is a wooden door panel made of vertical oak planks (vanilla Minecraft oak_planks palette - warm light brown with darker vertical grain lines). In the middle of the wooden door panel is a SMALL DARK WINDOW - a rectangular opening about 4 ship-pixels wide and 3 ship-pixels tall, very dark interior (nearly black), with no fluid visible inside (the machine is currently idle / not running). Two small dark dots on the wooden door panel as iron hinges or studs.
+
+Style: vanilla Minecraft 1.21 block texture. SHARP 1-pixel hard edges, NO anti-aliasing, NO smooth gradients. Limited palette: mid-gray + dark-gray + black for stone; light-brown + warm-brown + dark-brown for wood; pure black for the empty window; small dark dots for hinges. Tiles edge-aligned with adjacent block faces.
+
+Critical: this is a TILEABLE BLOCK FACE. The cobblestone+wood covers EVERY pixel of the canvas. The image is fully opaque. No transparent background.

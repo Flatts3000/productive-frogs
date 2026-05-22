@@ -15,6 +15,67 @@ Living tracker of playtest bugs, limitations, and workarounds for Productive Fro
 
 ## Open issues
 
+### 🔴 Frog / Slime / Tadpole spawn eggs share one silhouette and can't be told apart
+All Productive Frogs spawn eggs (6 Resource Frog + 6 Resource Tadpole + 12 variant Resource Slime + 4 parent-species) currently share **one base texture** (`textures/item/category_spawn_egg.png` — the vanilla egg-shape silhouette) and are differentiated only by per-item tint via the `SLIME_VARIANT` / `CONTAINED_CATEGORY` data components. Result: at-rest the eggs read as "tinted vanilla spawn eggs" — the iron Slime egg and the iron Frog egg are visually identical apart from being on different inventory slots.
+
+**Symptom**: Open creative tab → see ~28 spawn eggs that look like color-tinted variants of the same shape. Can't tell a Frog egg from a Tadpole egg from a Slime egg at a glance; the name tooltip is the only signal.
+
+**Fix path**: Generate three distinct base PNGs (grayscale, tintable at runtime via the existing `slime_variant` / `contained_category` `ItemTintSource`):
+- `frog_spawn_egg_base.png` — frog-silhouette shape with two visible eye dots
+- `tadpole_spawn_egg_base.png` — egg shape with a small tadpole tail wisp
+- `slime_spawn_egg_base.png` — egg shape with a small blob / squish detail
+
+Each grayscale; tinting stays the per-variant runtime path. Then update the three item-model JSONs to reference their distinct base instead of the shared `category_spawn_egg.png`. PixelLab `create_map_object` is the right pipeline for these.
+
+### 🔴 Slime Milk fluids don't animate (static surface)
+The 14 per-variant Slime Milk still/flow PNGs (shipped in PR #64 by `scripts/generate_slime_milk_textures.ps1`) are all **single-frame** images derived from the top 16×16 frame of vanilla `water_still.png` / `water_flow.png`. Vanilla water has 16/32-frame animation strips driven by `.mcmeta` companions; our slime milk has none, so the fluid surface is frozen in-world.
+
+**Symptom**: Place a slime milk source block via creative or a depleted milker overflow → the liquid surface never moves. Reads as "puddle of paint" instead of "fluid."
+
+**Fix path**: Extend `generate_slime_milk_textures.ps1` to:
+1. Tint the **full vanilla `water_still.png` vertical strip** (not just the top frame) — preserves all 16 animation frames.
+2. Same for `water_flow.png` (32 frames).
+3. Emit a sibling `.mcmeta` for each PNG with `{"animation": {"frametime": 2}}` (matches vanilla water cadence).
+
+The PR description flagged this as "deferred to polish so J5 could ship without animation"; now tracked as a known issue with explicit fix path.
+
+### 🔴 Resource Froglights appear twice in the creative tab (3D block + 2D item)
+Each resource Froglight shows up as **two distinct entries** in the creative inventory: a 3D block icon AND a 2D item icon, both sharing the same display name (e.g., "Iron Froglight"). The tooltip also shows "Productive Frogs" twice, suggesting the duplicate spans multiple creative tabs.
+
+**Symptom**: Open creative inventory → search "Iron Froglight" → two visually distinct items with the same name. One is the broad-strokes category Froglight block (3D), the other is the variant-stamped `configurable_froglight` item (2D, same name resolved from `slime_variant` data component). Hovering either shows the duplicate "Productive Frogs / Productive Frogs" tab attribution.
+
+**Root cause** (suspected): the broad-strokes category Froglight (e.g., `metallic_froglight`) and the variant-stamped `configurable_froglight` with `slime_variant=iron` both resolve to the display name "Iron Froglight" — but they're different registry IDs and different surfaces (BlockItem vs Item). Per PR #43 the category Froglight display names were renamed to the canonical resource (Iron / Redstone / etc.) so they now collide with the variant names.
+
+**Fix path** (under consideration):
+1. **Drop the broad-strokes category Froglight BlockItems from the creative tab** — they're effectively superseded by the variant-stamped configurable Froglight. Block registry stays so existing worlds load; only the BlockItem-in-tab listing goes away. Cleanest.
+2. OR rename one set to disambiguate — e.g., "Iron Froglight (Block)" vs "Iron Froglight" — but this is a user-facing wart.
+3. OR collapse to one surface: have all Froglights go through `configurable_froglight` and retire the broad-strokes BlockItems. Bigger refactor.
+
+Option 1 is the V1 path; option 3 belongs in V2 if at all.
+
+### 🔴 Bucket of Tadpole + Bucket of Slime render as empty buckets
+The Resource Tadpole Bucket and Slime Bucket items use a two-layer model: layer 0 is the contents (tadpole/slime silhouette inside the bucket), layer 1 is the iron-bucket exterior. The contents layer references `textures/item/tadpole_silhouette.png` and `textures/item/slime_silhouette.png` — both of which are currently **blank/transparent PNGs**. Result: held / dropped buckets show only the iron exterior, no critter visible inside.
+
+**Symptom**: Right-click a Resource Tadpole with a water bucket → get a "Bucket of <Category> Tadpole" item with the correct display name and category tint applied to nothing visible (since the silhouette layer is empty). Same for the Slime Bucket.
+
+**Fix path**: Generate real `tadpole_silhouette.png` and `slime_silhouette.png` (16×16 grayscale silhouettes designed to tint at runtime via `BucketedCategoryTint`). PixelLab `create_map_object` workflow is in flight (see `gen/tadpole_silhouette-*/`); needs review + ship.
+
+### 🔴 Slime Milk bucket textures should show slime eyes in the liquid
+The 14 variant Slime Milk bucket textures (shipped by `scripts/generate_slime_milk_textures.ps1` — PR #64) are produced by tinting the vanilla `milk_bucket.png` cream-white pixels per variant `primary_color`. The result is a clean bucket-of-tinted-fluid, but it's missing a Productive Frogs signature visual cue: **two small dark slime eyes** in the bucket's liquid surface, as if the bucketed slime is peeking out at the player.
+
+**Symptom**: Held iron / copper / gold / etc. slime milk bucket reads as "bucket of colored liquid" — visually indistinguishable from any other category-tinted fluid bucket (e.g., a hypothetical dye bucket). Doesn't communicate "there's a slime in there."
+
+**Fix path**: Extend `generate_slime_milk_textures.ps1` to overlay a small 2-pixel-wide eyes mask onto the milk surface region after the tint pass. Eyes stay near-black across all variants (don't get tinted), so they read consistently. Mirror vanilla slime eye placement / spacing for visual consistency.
+
+### 🔴 Slime splash particle uses vanilla green regardless of slime variant
+The slime splash animation (the particle burst that fires when a slime jumps / lands) renders with vanilla green coloring on **every** slime type — Resource Slimes (all 12 variants + 6 category fallbacks), Cave / Geode / Tide / Void parent species, and the magma cube variant.
+
+**Symptom**: An iron Resource Slime, a Void Slime, or any non-green slime jumping in-world emits the same green-tinted slime splash particles as a vanilla Minecraft slime. Breaks the visual identity of the per-category / per-variant pipeline.
+
+**Root cause** (suspected): vanilla `Slime#jumpFromGround` / `Slime#updateSquishing` (or whichever fires the particle) uses the hardcoded `ParticleTypes.ITEM_SLIME` particle, which carries the vanilla-slimeball color baked into its texture. Our `ResourceSlime` doesn't override that path, so it inherits the green burst.
+
+**Fix path**: either (a) override the particle emission in `ResourceSlime` to use a category/variant-tinted particle, OR (b) register a custom particle type with a runtime tint argument and swap the call site. Option (b) is the cleaner story since it generalises to magma cubes (which also currently inherit vanilla magma-cream particles even when they're our typed variant).
+
 ### 🟢 Per-variant + per-category items — tints + JEI subtypes shipped
 
 **Tint pipeline.** Every variant/category surface resolves its colour from the data-component chain:

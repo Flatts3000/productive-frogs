@@ -1,0 +1,9 @@
+A 16x16 Minecraft block texture file, viewed at 1024x1024 with each ship-pixel rendered as a 64x64 chunk. The image MUST fill the entire 1024x1024 canvas edge-to-edge with NO transparent areas, NO empty corners, NO background showing through.
+
+Subject: side face of a rustic stone press machine.
+
+Composition: the lower 60% of the canvas is uneven gray cobblestone (vanilla Minecraft cobblestone palette - small irregular stones with darker mortar between them, slight variation in stone shapes). The upper 40% is three vertical oak plank boards (vanilla Minecraft oak_planks palette - warm light brown with darker vertical wood-grain lines). A single thick horizontal oak beam runs left-to-right across the boundary between the cobblestone and the planks. Two small dark dots (iron studs) on the wooden beam.
+
+Style: vanilla Minecraft 1.21 block texture. SHARP 1-pixel hard edges, NO anti-aliasing, NO smooth gradients, NO soft shadows. Limited palette of about 6-8 colors (mid-gray + dark-gray + black for stone; light-brown + warm-brown + dark-brown for wood; black for studs). Every pixel boundary is a hard nearest-neighbor step. The composition tiles seamlessly when placed next to identical copies of itself (left edge color matches right edge color, top edge matches bottom edge).
+
+Critical: this is a TILEABLE BLOCK FACE. The entire 1024x1024 canvas must be opaque and filled. No empty corners, no transparent background, no centered object on empty space. The cobblestone and wood cover EVERY pixel of the canvas.
