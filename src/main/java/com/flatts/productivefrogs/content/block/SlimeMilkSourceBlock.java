@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.content.block;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.registry.PFEntities;
@@ -14,8 +15,12 @@ import net.minecraft.world.entity.monster.MagmaCube;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.material.FlowingFluid;
 import org.jspecify.annotations.Nullable;
 
@@ -32,9 +37,17 @@ import org.jspecify.annotations.Nullable;
  * so this override does not interfere with flow.
  *
  * <p>Spawn cadence (per {@code docs/farming.md} §Slime spawning from milk):
- * uniform random in {@code [200, 600]} ticks (10–30s) per spawn. No retry
- * cadence — every tick produces a slime; see the spawn-position picker
- * below for why this always succeeds.
+ * uniform random in {@code [PFConfig.MIN_SPAWN_INTERVAL_TICKS, PFConfig.MAX_SPAWN_INTERVAL_TICKS]}
+ * (defaults 200–600 ticks = 10–30s) per spawn. No retry cadence — every
+ * tick produces a slime; see the spawn-position picker below for why
+ * this always succeeds.
+ *
+ * <p>Depletion (J5): when {@link PFConfig#DEPLETION_ENABLED} is true (the
+ * default), each source block carries a {@link #SPAWNS_REMAINING}
+ * blockstate that starts at {@link PFConfig#DEPLETION_COUNT} on placement
+ * and decrements by one per spawn. When it reaches zero the next tick
+ * removes the block (drains the pool). When depletion is disabled the
+ * counter is ignored entirely and the block spawns indefinitely.
  *
  * <p>Spawn position selection: scan all 26 blocks in the 3×3×3 cube
  * surrounding the source. The first one whose top face is sturdy AND whose
@@ -48,13 +61,27 @@ import org.jspecify.annotations.Nullable;
  * first (cardinals then diagonals), then the below plane (so a typical
  * milk pool on solid ground spills slimes horizontally adjacent to the
  * source instead of two blocks up), then the above plane.
- *
- * <p>Depletion is J5; this class spawns indefinitely.
  */
 public class SlimeMilkSourceBlock extends LiquidBlock {
 
-    private static final int MIN_DELAY_TICKS = 200;
-    private static final int MAX_DELAY_TICKS = 600;
+    /**
+     * Max value of the depletion counter blockstate property. Capped at 16
+     * because the property's range is fixed at compile time — see the
+     * comment on {@link PFConfig#DEPLETION_COUNT} for the trade-off.
+     */
+    public static final int MAX_SPAWNS_REMAINING = 16;
+
+    /**
+     * Depletion counter persisted into the blockstate. {@code N} means
+     * "{@code N} more spawns until this source drains". On a fresh
+     * placement the block's default state is {@code MAX_SPAWNS_REMAINING};
+     * each successful spawn decrements by one; reaching zero removes the
+     * block on the next tick. Read only when {@link PFConfig#DEPLETION_ENABLED}
+     * is true; when disabled the counter is left untouched on the state
+     * but ignored by the tick logic.
+     */
+    public static final IntegerProperty SPAWNS_REMAINING =
+        IntegerProperty.create("spawns_remaining", 0, MAX_SPAWNS_REMAINING);
 
     /**
      * Offsets to the 26 neighbours of the source block, ordered so the
@@ -82,15 +109,39 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
         {1, 1, 1}, {1, 1, -1}, {-1, 1, 1}, {-1, 1, -1},
     };
 
+    /**
+     * Test-only override for {@link PFConfig#DEPLETION_ENABLED}. When
+     * non-null, takes precedence over the config — GameTests set this so
+     * their assertions don't depend on whatever the developer has in
+     * {@code productivefrogs-common.toml}. Always null in production.
+     * Volatile so the test thread's write is visible to the server thread
+     * that runs the block tick. Mirrors the {@code testOverride} pattern
+     * on {@link com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler}.
+     */
+    @Nullable
+    public static volatile Boolean depletionEnabledOverride = null;
+
     private final String variant;
 
     public SlimeMilkSourceBlock(FlowingFluid fluid, String variant, Properties properties) {
         super(fluid, properties);
         this.variant = variant;
+        // Default state starts at the max counter — placements via item
+        // (bucket use), /setblock without explicit properties, fluid placer,
+        // etc. all use this default. Config-driven start values lower than
+        // MAX are applied in onPlace by overwriting the property before
+        // scheduling the first tick.
+        registerDefaultState(defaultBlockState().setValue(SPAWNS_REMAINING, MAX_SPAWNS_REMAINING));
     }
 
     public String variant() {
         return variant;
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(SPAWNS_REMAINING);
     }
 
     @Override
@@ -100,9 +151,22 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
         // class but have a non-source FluidState, so the FluidState check is
         // the real gate. Don't schedule on the client — block-tick scheduling
         // is server-only.
-        if (level instanceof ServerLevel serverLevel && level.getFluidState(pos).isSource()) {
-            scheduleNextSpawnTick(serverLevel, pos, level.getRandom());
+        if (!(level instanceof ServerLevel serverLevel) || !level.getFluidState(pos).isSource()) {
+            return;
         }
+        // Honour the config's depletionCount even when it's lower than
+        // MAX_SPAWNS_REMAINING (the property's max). Placement through item
+        // use or /setblock-without-properties leaves the state at the
+        // default (MAX); overwrite it here. If the existing state already
+        // carries a lower counter (e.g. /setblock with explicit
+        // spawns_remaining=5, or block-load from a saved chunk), keep it.
+        int configured = PFConfig.DEPLETION_COUNT.get();
+        if (oldState.getBlock() != state.getBlock()
+            && state.getValue(SPAWNS_REMAINING) == MAX_SPAWNS_REMAINING
+            && configured < MAX_SPAWNS_REMAINING) {
+            serverLevel.setBlock(pos, state.setValue(SPAWNS_REMAINING, configured), Block.UPDATE_CLIENTS);
+        }
+        scheduleNextSpawnTick(serverLevel, pos, level.getRandom());
     }
 
     /**
@@ -121,12 +185,40 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
         if (!level.getFluidState(pos).isSource()) {
             return;
         }
-        spawn(level, pos, random);
+
+        if (depletionEnabled()) {
+            int remaining = state.getValue(SPAWNS_REMAINING);
+            if (remaining <= 0) {
+                // Counter exhausted — drain the pool. Set air explicitly
+                // rather than calling level.removeBlock: vanilla's
+                // removeBlock for a fluid block routes through
+                // fluidState.createLegacyBlock(), which puts the source
+                // block right back at its default state (counter resets
+                // to MAX). We need a true air swap to drain.
+                level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+                return;
+            }
+            spawn(level, pos, random);
+            level.setBlock(pos, state.setValue(SPAWNS_REMAINING, remaining - 1), Block.UPDATE_CLIENTS);
+        } else {
+            spawn(level, pos, random);
+        }
         scheduleNextSpawnTick(level, pos, random);
     }
 
+    /** Effective depletionEnabled value — {@link #depletionEnabledOverride} wins when set, else config. */
+    private static boolean depletionEnabled() {
+        Boolean override = depletionEnabledOverride;
+        return override != null ? override : PFConfig.DEPLETION_ENABLED.get();
+    }
+
     private static void scheduleNextSpawnTick(ServerLevel level, BlockPos pos, RandomSource random) {
-        int delay = MIN_DELAY_TICKS + random.nextInt(MAX_DELAY_TICKS - MIN_DELAY_TICKS + 1);
+        int min = PFConfig.MIN_SPAWN_INTERVAL_TICKS.get();
+        int max = PFConfig.MAX_SPAWN_INTERVAL_TICKS.get();
+        // Defensive: if an operator inverted min/max in the config, fall back
+        // to a single deterministic delay rather than throwing on the
+        // negative-range nextInt call.
+        int delay = max <= min ? min : min + random.nextInt(max - min + 1);
         level.scheduleTick(pos, level.getBlockState(pos).getBlock(), delay);
     }
 

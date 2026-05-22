@@ -15,21 +15,11 @@ What's left to land before "playable foundation + appliances" is complete. Each 
 - ~~**Void Slime entity**~~ — shipped in PR I4 (ARCANE).
 - ~~**Natural spawn rules for parent species**~~ — shipped. `SpawnPlacements` registered via `RegisterSpawnPlacementsEvent` in `PFModBusEvents`; biome-conditioned spawning gated by four `neoforge:add_spawns` BiomeModifier JSONs at `data/productivefrogs/neoforge/biome_modifier/`. Cave→dripstone_caves+deep_dark, Geode→stony/jagged/frozen peaks, Tide→deep/lukewarm/warm oceans (OCEAN_FLOOR heightmap so they land on the sea floor like Drowned), Void→small_end_islands. Spawn check is a Mob-typed mirror of `Monster.checkMonsterSpawnRules` (peaceful=no, dark enough, vanilla mob position checks).
 
-### SlimeVariant data registry (per-resource sub-categorization)
-Currently we're Category-keyed only (one METALLIC slime, one INFERNAL slime, etc). The full design has per-resource variants within each category (iron_slime, copper_slime, gold_slime within METALLIC). [docs/architecture.md#slime-variant-pattern](./architecture.md)
+### ~~SlimeVariant data registry (per-resource sub-categorization)~~ — shipped
+Datapack registry at `PFRegistries.SLIME_VARIANT` (created via `DataPackRegistryEvent.NewRegistry` in `PFDataPackRegistryEvents`). Entries live at `data/<ns>/productivefrogs/slime_variant/<name>.json`, codec-decoded by `SlimeVariant`. 12 variants ship (iron, copper, gold, redstone, lapis, coal, diamond, emerald, prismarine, sponge, magma_cream, ender_pearl). Lookups via `SlimeVariant.findByPrimerItem` (infusion) and `SlimeVariant.pickWeighted` (split discovery). `ResourceSlime` carries the variant as a SynchedEntityData id and resyncs category from the registry on load.
 
-- New `SlimeVariant` data class with a `MapCodec` (NOT hand-rolled JSON→CompoundTag — see [productive_bees_analysis.md §5a](./productive_bees_analysis.md))
-- `SimpleJsonResourceReloadListener` scanning `data/<ns>/slime_variant/*.json`
-- Cache decoded records on `ResourceSlime` entities — don't re-parse on every getter
-- Schema includes: category, display name, color, parent species pool, weight, optional `neoforge:conditions`
-- Cross-mod variants ship via JSON with `mod_loaded` conditions; no Java compat code
-
-### Configurable Froglight item
-Single `configurable_froglight` item with a `slime_variant` data component (mirroring [productive_bees_analysis.md §2](./productive_bees_analysis.md)). Keep the 6 hand-registered category Froglights alongside as the broad-strokes look.
-
-- `slime_variant` data component on the item
-- Tint + display name resolve at runtime from the SlimeVariant registry
-- Frog tongue picks the configurable variant when the slime carries a SlimeVariant, falls back to the category Froglight otherwise
+### ~~Configurable Froglight item~~ — shipped
+`PFItems.CONFIGURABLE_FROGLIGHT` is registered with the `slime_variant` data component. Tint resolves via the `SlimeVariantTint` `ItemTintSource`. `FrogTongueDropHandler` emits the configurable Froglight stamped with the variant when the consumed slime carries a SlimeVariant, falling back to the category Froglight otherwise. Covered by the `variant_slime_kill_drops_configurable_froglight` GameTest.
 
 ### Slime Milker block + Slime Milk fluid (V1 production keystone)
 [docs/farming.md](./farming.md) specifies the full design. Sub-PR plan (J-series):
@@ -38,7 +28,7 @@ Single `configurable_froglight` item with a `slime_variant` data component (mirr
 - **J2** ✅ — expanded to all 14 variants (iron, copper, gold, redstone, lapis, coal, diamond, emerald, prismarine, sponge, magma_cream, ender_pearl, vanilla, magma). Refactored PFFluidTypes/PFFluids/PFBlocks/PFItems to `Map<String, ...>` keyed by variant name; `PFFluidTypes.VARIANTS` is the single source of truth list. Tests parameterized so adding future variants auto-extends coverage.
 - **J3** ✅ — `SlimeMilkerBlock`: single appliance, no power, right-click with a Slime Bucket → consume slime, output typed milk bucket matching slime's variant. Fails closed (CONSUME, player keeps bucket) when the bucket has no Variant tag or the variant isn't in `PFFluidTypes.VARIANTS`. Covered by `SlimeMilkerBlockTest` (parser edge cases) + `slime_milker_converts_iron_slime_bucket_into_iron_milk_bucket` GameTest (in-world variant-pipeline + block placement).
 - **J4** ✅ — Source-block slime spawning. `SlimeMilkSourceBlock extends LiquidBlock` overrides `onPlace` + `tick` to drive a self-scheduling block-tick loop independent of the fluid's flow-tick. Cadence uniform [200, 600] ticks (10–30s) per spawn. Spawn-position picker scans all 26 blocks in the 3×3×3 cube around the source (rim cardinals first, then diagonals, then below plane, then above) and lands the slime on top of the first sturdy neighbour. If no sturdy neighbour exists, falls back to spawning inside the source (the milk fluid is non-collision). Entity overlap is allowed; spawns never fail. Variant mapping: `"vanilla"` → vanilla Slime, `"magma"` → vanilla MagmaCube, other 12 → `ResourceSlime` with the matching SlimeVariant. Covered by 5 GameTests (iron rim spawn, copper no-solid-anywhere fallback, gold solid-floor-below pick, vanilla-slime mapping, magma-cube mapping).
-- **J5** — Depletion counter (16 spawns default) + mod config wiring (depletion ON/OFF, interval, count, plus `discoveryChancePerOffspring` promotion from public-static hack).
+- **J5** ✅ — Depletion counter + mod config wiring. `SlimeMilkSourceBlock` carries a `spawns_remaining` IntegerProperty (range [0, 16]); decrements on each successful spawn, drains to air on zero. New `PFConfig` (COMMON `ModConfigSpec`) exposes `depletionEnabled`, `depletionCount`, `minSpawnIntervalTicks`, `maxSpawnIntervalTicks`, `discoveryChancePerOffspring`. `SlimeSplitDiscoveryHandler.discoveryChancePerOffspring` promoted from public-static hack to a config read with a test-only override field (`testOverride`) that GameTests set in try/finally. Covered by 3 GameTests (decrement, drain on zero, default-state-is-max).
 
 ### Smelting + crush recipes
 - Froglight → base resource smelt recipes (6 recipes, one per category for V1)
@@ -48,11 +38,11 @@ Single `configurable_froglight` item with a `slime_variant` data component (mirr
 ### Player direct-feeding (Q9)
 [docs/open_questions.md#9](./open_questions.md) — right-click a Resource Frog while holding a matching-category Slime Bucket. Bucket transforms back to empty, frog drops Froglight at its position. Category-match check applies; mismatch is a no-op.
 
-### Mod config wiring
-- `discoveryChancePerOffspring` is currently a `public static float` for GameTest access — promote to a proper mod config (`net.neoforged.neoforge.common.ModConfigSpec`)
-- Per-parent-species default categories (config or datapack)
-- Milk source depletion count
-- Milk spawn interval
+### ~~Mod config wiring~~ — landed alongside J5
+- ✅ `discoveryChancePerOffspring` promoted to `PFConfig.DISCOVERY_CHANCE_PER_OFFSPRING` (GameTests override via `SlimeSplitDiscoveryHandler.testOverride`).
+- ✅ Milk source depletion count: `PFConfig.DEPLETION_COUNT` + `PFConfig.DEPLETION_ENABLED`.
+- ✅ Milk spawn interval: `PFConfig.MIN_SPAWN_INTERVAL_TICKS` + `PFConfig.MAX_SPAWN_INTERVAL_TICKS`.
+- Per-parent-species default categories (config or datapack) — still TODO. Currently hardcoded in `SlimeSplitDiscoveryHandler.categoryForParent`. Move to datapack if a player-facing override becomes useful.
 
 ## V2 — automation
 
@@ -73,7 +63,7 @@ Items noted in commit messages or PR descriptions as known issues but not blocki
 ### Code hygiene
 - **Rename `TadpoleBucketCategoryTint` → `BucketedCategoryTint`.** Originally tadpole-specific; now serves the Slime Bucket too (PR #22). The class name is misleading. Touch the registration site + 2 client-item-info JSONs.
 - **`ResourceFrog#brainProvider` duplicates vanilla constants.** We rebuild the sensor list inline because `Frog.SENSOR_TYPES` is `protected static`. If we add a few more sensors a cleaner approach is access-transforming `Frog.SENSOR_TYPES` and `Frog.MEMORY_TYPES` to public so we can reference them directly.
-- **`SlimeSplitDiscoveryHandler.discoveryChancePerOffspring` is `public static`.** Necessary for the GameTest to force 1.0; needs to move to mod config (see V1 §Mod config wiring above).
+- ~~**`SlimeSplitDiscoveryHandler.discoveryChancePerOffspring` is `public static`.**~~ — resolved in J5. Now backed by `PFConfig.DISCOVERY_CHANCE_PER_OFFSPRING` with a separate `testOverride` field for GameTest force-conversion.
 
 ### Tests
 - **GameTest for frog kill via actual tongue path.** `matching_frog_kill_drops_category_froglight` uses `hurtServer(level, source, 999.0F)` which bypasses the frog's `ATTACK_DAMAGE` attribute. PR #27 caught a damage=0 regression that this test couldn't see. A more realistic test would let the tongue actually drive the kill.

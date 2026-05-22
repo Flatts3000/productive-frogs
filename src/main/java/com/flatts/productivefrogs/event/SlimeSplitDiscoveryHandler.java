@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.event;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.CaveSlime;
 import com.flatts.productivefrogs.content.entity.GeodeSlime;
@@ -55,11 +56,25 @@ import org.jspecify.annotations.Nullable;
 public final class SlimeSplitDiscoveryHandler {
 
     /**
-     * Per-offspring discovery chance. Exposed for the GameTest harness to
-     * force deterministic conversion. V2 may make this a per-parent-entity
-     * config value (see {@code docs/slime_sourcing.md} §V1 Configurability).
+     * Test-only override for the discovery chance. When non-null, takes
+     * precedence over {@link PFConfig#DISCOVERY_CHANCE_PER_OFFSPRING} —
+     * GameTests set this to {@code 1.0f} in a try/finally so split outcomes
+     * are deterministic. Always null in production. Volatile so the test
+     * thread's write is visible to the server thread that runs the event
+     * handler.
      */
-    public static float discoveryChancePerOffspring = 0.05f;
+    @Nullable
+    public static volatile Float testOverride = null;
+
+    /**
+     * Effective discovery chance — test override wins when present,
+     * otherwise reads the mod config. Production code calls this; only
+     * GameTest setup writes {@link #testOverride}.
+     */
+    public static float discoveryChancePerOffspring() {
+        Float override = testOverride;
+        return override != null ? override : PFConfig.DISCOVERY_CHANCE_PER_OFFSPRING.get().floatValue();
+    }
 
     private SlimeSplitDiscoveryHandler() {
         // event handler, not instantiable
@@ -94,7 +109,7 @@ public final class SlimeSplitDiscoveryHandler {
             if (!(child instanceof Slime childSlime)) {
                 continue;
             }
-            if (parent.getRandom().nextFloat() >= discoveryChancePerOffspring) {
+            if (parent.getRandom().nextFloat() >= discoveryChancePerOffspring()) {
                 continue;
             }
             ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level, EntitySpawnReason.TRIGGERED);
