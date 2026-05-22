@@ -19,9 +19,9 @@ The "playable foundation" release. **Appliance blocks** (single-block hand-opera
 - **Slime Milker** (single appliance block, no power, hand-operated press) — converts a slime bucket to a typed milk bucket
 - **Slime Milk fluid** (lava-flow, source-block-spawns-slimes, configurable depletion)
 - **Froglight drops** (item entities — vanilla-hopper collectable)
-- **Smelting recipes** (universal across categories) and **crush compat recipes** (metallic, via Create/Mekanism/Thermal)
+- **Smelting recipes** (universal across categories) — players get 1× resource yield from any Froglight via vanilla furnace
 - **Primer tags** and **slime category tags**
-- **Cross-mod compat** via JSON (Mekanism, Create, Thermal, Mythic Metals)
+- **Cross-mod compat** via JSON for variant pools (Mekanism, Create, Thermal, Mythic Metals slime-variant entries gated by `mod_loaded`). Cross-mod *recipe* compat (crush 2× yields) lives in V2.
 
 **The V1 rule of thumb:** if vanilla has a single-block appliance equivalent (furnace, brewing stand, composter, cauldron) that's V1 scope. If we'd be adding power, pipes, or multiblocks, that's V2.
 
@@ -38,6 +38,7 @@ Tools and blocks that let the player scale and automate the V1 loop. Built on to
 - **Auto-feeders** — hopper-fed slime delivery to nearby frogs (alternative to milk-spawn proximity)
 - **Capacity / efficiency upgrades** for habitat blocks
 - **Native crusher block** — optional in-house version (so the 2× crush path works without external mods)
+- **Cross-mod crush 2× recipes** for metallic Froglights via Create / Mekanism / Thermal — conditional `mod_loaded` JSON recipes. The `productivefrogs:crushable/metallic` item tag is already reserved in V1; the recipes themselves wait on a multi-mod test environment that can validate each target mod's recipe shape.
 - **Pipe/hopper-aware fluid handling** for Slime Milk
 - Potentially: power compatibility (FE / NeoForge Energy)
 

@@ -32,8 +32,7 @@ Datapack registry at `PFRegistries.SLIME_VARIANT` (created via `DataPackRegistry
 
 ### Smelting + crush recipes
 - ✅ Froglight → base resource smelt recipes. 18 recipes shipped: 6 broad-strokes category Froglights (each → canonical resource: iron, redstone, diamond, prismarine_shard, magma_cream, ender_pearl) plus 12 variant configurable_froglight recipes that match via NeoForge's `neoforge:components` ingredient on the `slime_variant` data component. Covered by 3 GameTests (category lookup × 6, variant lookup × 12, negative case for unstamped configurable_froglight).
-- ✅ Crush tag `productivefrogs:crushable/metallic` ships with `metallic_froglight` as its only entry; cross-mod recipes will reference the tag once they land.
-- Cross-mod crush 2× recipes for metallic Froglights via Create / Mekanism / Thermal — **still pending**. Deferred until we have a test environment that can validate the cross-mod recipe shape against each target mod. Players smelt directly for 1× yield in the meantime.
+- ✅ Crush tag `productivefrogs:crushable/metallic` ships with `metallic_froglight` as its only entry. Tag is reserved for V2; cross-mod crush recipes themselves are V2 scope (see V2 section).
 
 ### ~~Player direct-feeding (Q9)~~ — shipped
 [docs/open_questions.md#9](./open_questions.md). `ResourceFrog.mobInteract` checks for a Slime Bucket, reads the bucket's stored Category + Variant via `ResourceTadpoleBucketItem.readCategory` / `readVariant`, and if the category matches the frog's, calls `FrogTongueDropHandler.dropFroglightAtFrog` to emit the matching Froglight (variant-stamped configurable_froglight when the bucket carried a Variant, broad-strokes category Froglight otherwise) and replaces the held bucket with vanilla `Items.BUCKET`. Mismatch falls through to `super.mobInteract` (vanilla `Frog.mobInteract` → `Animal.mobInteract` — slimeballs / name-tag still work). Covered by 3 GameTests (matching no-variant, matching iron-variant, mismatched category).
@@ -53,6 +52,7 @@ Out of scope until V1 ships. [docs/versioning.md#v2--automation](./versioning.md
 - Auto-feeders (hopper-fed slime delivery)
 - Capacity / efficiency upgrades for habitat blocks
 - Native crusher block (in-house 2× path so we don't depend on Create/Mekanism/Thermal)
+- Cross-mod crush 2× recipes for metallic Froglights via Create / Mekanism / Thermal — conditional `mod_loaded` JSON recipes. The `productivefrogs:crushable/metallic` tag is already reserved in V1; the recipes wait on a multi-mod test environment.
 - Pipe/hopper-aware fluid handling for Slime Milk
 - FE / NeoForge Energy compat (optional)
 
