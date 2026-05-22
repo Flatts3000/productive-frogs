@@ -92,4 +92,49 @@ class CategoryTest {
         assertNull(decoded.result().orElse(null), "unknown id must not decode");
         assertNotNull(decoded.error().orElse(null), "unknown id must produce a codec error");
     }
+
+    /**
+     * {@link Category#shellTintArgb()} blends the category colour with light
+     * gray (200,200,200) at 70/30 to produce a subtly-tinted gray that drives
+     * the variant-less ResourceSlime outer shell. Pin the math so a future
+     * weight tweak shows up here, and assert the result is always opaque
+     * (the shell layer wants a full-alpha tint multiply, not a transparent
+     * one).
+     */
+    @ParameterizedTest
+    @EnumSource(Category.class)
+    void shellTintArgbIsOpaque(Category cat) {
+        assertEquals(0xFF, (cat.shellTintArgb() >>> 24) & 0xFF,
+            "shellTintArgb must be fully opaque so the shell layer can multiply through it");
+    }
+
+    @ParameterizedTest
+    @EnumSource(Category.class)
+    void shellTintArgbBlendsTowardLightGray(Category cat) {
+        // 70% × 200 + 30% × <component> per channel. Recomputed here so a
+        // weight or anchor change in Category.java requires updating the
+        // expected math here (not silently passing).
+        int argb = cat.shellTintArgb();
+        int rgb = cat.tintRgb();
+        int expectedR = (200 * 70 + ((rgb >> 16) & 0xFF) * 30) / 100;
+        int expectedG = (200 * 70 + ((rgb >>  8) & 0xFF) * 30) / 100;
+        int expectedB = (200 * 70 +  (rgb        & 0xFF) * 30) / 100;
+        assertEquals(expectedR, (argb >> 16) & 0xFF, cat + " red channel");
+        assertEquals(expectedG, (argb >>  8) & 0xFF, cat + " green channel");
+        assertEquals(expectedB,  argb        & 0xFF, cat + " blue channel");
+    }
+
+    @Test
+    void shellTintArgbIsDistinctAcrossCategories() {
+        // The whole point of the per-category shell tint is visual variety —
+        // every category must produce a distinct value. (If a future colour
+        // tweak collides two categories the eye won't notice, but the test
+        // forces a conscious choice.)
+        java.util.Set<Integer> tints = new java.util.HashSet<>();
+        for (Category cat : Category.values()) {
+            assertTrue(tints.add(cat.shellTintArgb()),
+                "duplicate shellTintArgb across categories: " + cat);
+        }
+        assertEquals(Category.values().length, tints.size());
+    }
 }
