@@ -16,6 +16,7 @@ import com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFFluidTypes;
+import com.flatts.productivefrogs.registry.PFFluids;
 import com.flatts.productivefrogs.registry.PFItems;
 import java.util.ArrayList;
 import java.util.List;
@@ -158,6 +159,8 @@ public final class PFGameTests {
             PFGameTests::directFeedVariantSlimeDropsConfigurableFroglight, 100);
         registerTest("direct_feed_mismatched_category_is_a_no_op",
             PFGameTests::directFeedMismatchedCategoryIsANoOp, 100);
+        registerTest("milk_bucket_exposes_fluid_capability_for_tank_mods",
+            PFGameTests::milkBucketExposesFluidCapabilityForTankMods, 100);
     }
 
     private PFGameTests() {
@@ -1670,5 +1673,65 @@ public final class PFGameTests {
             }
             helper.succeed();
         });
+    }
+
+    // ---------------------------------------------------------------------
+    // Tank-mod compatibility (IFluidHandler via NeoForge capability)
+    // ---------------------------------------------------------------------
+
+    /**
+     * NeoForge auto-registers {@link
+     * net.neoforged.neoforge.capabilities.Capabilities.Fluid#ITEM} on every
+     * vanilla {@link net.minecraft.world.item.BucketItem} subclass (see
+     * {@code CapabilityHooks.registerVanillaProviders}). Our Slime Milk
+     * buckets are vanilla BucketItems with our source fluid attached, so
+     * tank-mod compatibility for the bucket form should work out of the box.
+     *
+     * <p>This test verifies it: spot-check three representative variants
+     * (iron, magma_cream, vanilla) and assert each exposes a non-null
+     * {@code ResourceHandler<FluidResource>} whose contents match the
+     * variant's source fluid. If NeoForge ever drops the auto-registration
+     * or our buckets stop being recognized as BucketItem subclasses, this
+     * test catches it before a downstream modpack ships broken.
+     *
+     * <p>The block-level fluid capability ({@code Capabilities.Fluid.BLOCK})
+     * is NOT registered by us — Productive Bees ships the same way for its
+     * honey LiquidBlock. Tank mods that want to pump from a milk source
+     * block use vanilla bucket-pickup mechanics on {@link
+     * net.minecraft.world.level.block.LiquidBlock}, which our
+     * {@link com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock}
+     * inherits unchanged.
+     */
+    private static void milkBucketExposesFluidCapabilityForTankMods(GameTestHelper helper) {
+        assertBucketExposesFluid(helper, "iron");
+        assertBucketExposesFluid(helper, "magma_cream");
+        assertBucketExposesFluid(helper, "vanilla");
+        helper.succeed();
+    }
+
+    private static void assertBucketExposesFluid(GameTestHelper helper, String variant) {
+        net.minecraft.world.item.BucketItem bucketItem = PFItems.MILK_BUCKETS.get(variant).get();
+        ItemStack stack = new ItemStack(bucketItem);
+        net.neoforged.neoforge.transfer.access.ItemAccess access =
+            net.neoforged.neoforge.transfer.access.ItemAccess.forStack(stack);
+        net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> handler =
+            access.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.ITEM);
+        if (handler == null) {
+            helper.fail(variant + "_slime_milk_bucket exposes no Fluid.ITEM capability — "
+                + "NeoForge's auto-registration on BucketItem broke");
+            return;
+        }
+        if (handler.size() < 1) {
+            helper.fail(variant + " bucket handler reports size " + handler.size() + ", expected >= 1");
+            return;
+        }
+        net.neoforged.neoforge.transfer.fluid.FluidResource resource = handler.getResource(0);
+        net.minecraft.world.level.material.Fluid expectedFluid =
+            PFFluids.BY_VARIANT.get(variant).source().get();
+        if (resource.getFluid() != expectedFluid) {
+            helper.fail(variant + " bucket handler reports fluid "
+                + BuiltInRegistries.FLUID.getKey(resource.getFluid())
+                + ", expected " + BuiltInRegistries.FLUID.getKey(expectedFluid));
+        }
     }
 }
