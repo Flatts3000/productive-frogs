@@ -144,6 +144,8 @@ public final class PFGameTests {
             PFGameTests::slimeMilkSourceDrainsWhenSpawnsRemainingReachesZero, 100);
         registerTest("slime_milk_source_default_state_has_max_spawns_remaining",
             PFGameTests::slimeMilkSourceDefaultStateHasMaxSpawnsRemaining, 100);
+        registerTest("custom_slimes_size_1_hitbox_matches_vanilla_slime",
+            PFGameTests::customSlimesSize1HitboxMatchesVanillaSlime, 100);
     }
 
     private PFGameTests() {
@@ -1290,5 +1292,60 @@ public final class PFGameTests {
             return;
         }
         helper.succeed();
+    }
+
+    /**
+     * Regression pin for the 1.21.11 slime sizing migration. Vanilla
+     * {@code EntityType.SLIME} uses {@code sized(0.52F, 0.52F)} +
+     * {@code Slime#getDefaultDimensions(...).scale(getSize())} — the older
+     * {@code sized(2.04F, 2.04F)} base with the historical {@code 0.255*size}
+     * internal multiplier no longer holds, so reusing the old base value
+     * produces hitboxes ~4× too large at every size. Caught in playtest;
+     * this test stops it from happening again.
+     *
+     * <p>Spawn one of every custom slime species at size 1, snapshot
+     * {@code getBbWidth()}, and assert it matches vanilla {@code Slime} at
+     * size 1 within a tight tolerance (floating-point arithmetic on the
+     * scale chain). If any custom slime diverges, the size of the base
+     * dimensions in {@code PFEntities} drifted from vanilla.
+     */
+    private static void customSlimesSize1HitboxMatchesVanillaSlime(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+
+        net.minecraft.world.entity.monster.Slime vanilla =
+            helper.spawn(net.minecraft.world.entity.EntityType.SLIME, pos);
+        vanilla.setSize(1, true);
+        float expectedWidth = vanilla.getBbWidth();
+        float expectedHeight = vanilla.getBbHeight();
+
+        assertSize1HitboxMatches(helper, PFEntities.RESOURCE_SLIME.get(), "ResourceSlime", expectedWidth, expectedHeight);
+        assertSize1HitboxMatches(helper, PFEntities.CAVE_SLIME.get(), "CaveSlime", expectedWidth, expectedHeight);
+        assertSize1HitboxMatches(helper, PFEntities.GEODE_SLIME.get(), "GeodeSlime", expectedWidth, expectedHeight);
+        assertSize1HitboxMatches(helper, PFEntities.TIDE_SLIME.get(), "TideSlime", expectedWidth, expectedHeight);
+        assertSize1HitboxMatches(helper, PFEntities.VOID_SLIME.get(), "VoidSlime", expectedWidth, expectedHeight);
+
+        helper.succeed();
+    }
+
+    private static <T extends net.minecraft.world.entity.monster.Slime> void assertSize1HitboxMatches(
+            GameTestHelper helper,
+            net.minecraft.world.entity.EntityType<T> type,
+            String name,
+            float expectedWidth,
+            float expectedHeight) {
+        BlockPos pos = new BlockPos(3, 2, 3);
+        T slime = helper.spawn(type, pos);
+        slime.setSize(1, true);
+        float w = slime.getBbWidth();
+        float h = slime.getBbHeight();
+        // Tolerance handles the float-scale chain (base × size). 0.001 is
+        // tight enough to catch any 4× regression while staying ahead of
+        // legitimate float rounding.
+        if (Math.abs(w - expectedWidth) > 0.001f) {
+            helper.fail(name + " size-1 width " + w + " != vanilla " + expectedWidth);
+        }
+        if (Math.abs(h - expectedHeight) > 0.001f) {
+            helper.fail(name + " size-1 height " + h + " != vanilla " + expectedHeight);
+        }
     }
 }
