@@ -115,6 +115,8 @@ public final class PFGameTests {
             PFGameTests::vanillaMagmaCubeSplitDiscoveryConvertsToInfernalResourceSlime, 100);
         registerTest("slime_variant_datapack_registry_loads_initial_variants",
             PFGameTests::slimeVariantDatapackRegistryLoadsInitialVariants, 100);
+        registerTest("parent_species_datapack_registry_loads_six_defaults",
+            PFGameTests::parentSpeciesDatapackRegistryLoadsSixDefaults, 100);
         registerTest("variant_slime_kill_drops_configurable_froglight",
             PFGameTests::variantSlimeKillDropsConfigurableFroglight, 100);
         registerTest("infusion_with_variant_primer_sets_specific_variant",
@@ -566,6 +568,53 @@ public final class PFGameTests {
             helper.fail("iron texture path should be " + expectedTexture
                 + ", got " + iron.texture().get());
             return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Verify that the {@code productivefrogs:parent_species} datapack registry
+     * is populated by server boot with the 6 default entries (vanilla slime +
+     * magma_cube + 4 PF parent species). Confirms the {@link
+     * com.flatts.productivefrogs.data.ParentSpeciesEntry} codec decodes the
+     * shipped JSONs without throwing AND that each entry maps the expected
+     * entity type to the expected category. Regression-pins
+     * {@code SlimeSplitDiscoveryHandler.categoryForParent}'s registry lookup —
+     * if any default JSON is dropped, renamed, or has a category typo, the
+     * existing 6 split-discovery GameTests would also fail, but this one
+     * surfaces the registry-load failure directly without the indirection.
+     */
+    private static void parentSpeciesDatapackRegistryLoadsSixDefaults(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        net.minecraft.core.Registry<com.flatts.productivefrogs.data.ParentSpeciesEntry> registry =
+            level.registryAccess().lookupOrThrow(
+                com.flatts.productivefrogs.registry.PFRegistries.PARENT_SPECIES);
+
+        // entity_type id -> expected category
+        java.util.Map<Identifier, Category> expected = new java.util.LinkedHashMap<>();
+        expected.put(Identifier.parse("minecraft:slime"),              Category.METALLIC);
+        expected.put(Identifier.parse("minecraft:magma_cube"),         Category.INFERNAL);
+        expected.put(Identifier.parse("productivefrogs:cave_slime"),   Category.MINERAL);
+        expected.put(Identifier.parse("productivefrogs:geode_slime"),  Category.GEM);
+        expected.put(Identifier.parse("productivefrogs:tide_slime"),   Category.AQUATIC);
+        expected.put(Identifier.parse("productivefrogs:void_slime"),   Category.ARCANE);
+
+        java.util.Map<Identifier, Category> actual = new java.util.HashMap<>();
+        for (com.flatts.productivefrogs.data.ParentSpeciesEntry entry : registry) {
+            actual.put(entry.entityType(), entry.category());
+        }
+
+        for (var e : expected.entrySet()) {
+            Category got = actual.get(e.getKey());
+            if (got == null) {
+                helper.fail("parent_species registry is missing " + e.getKey());
+                return;
+            }
+            if (got != e.getValue()) {
+                helper.fail("parent_species " + e.getKey() + " maps to " + got
+                    + ", expected " + e.getValue());
+                return;
+            }
         }
         helper.succeed();
     }

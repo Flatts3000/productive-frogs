@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.event;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.data.ParentSpeciesEntry;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFRegistries;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -31,6 +32,11 @@ public final class PFDataPackRegistryEvents {
             PFRegistries.SLIME_VARIANT,
             SlimeVariant.CODEC,
             SlimeVariant.CODEC
+        );
+        event.dataPackRegistry(
+            PFRegistries.PARENT_SPECIES,
+            ParentSpeciesEntry.CODEC,
+            ParentSpeciesEntry.CODEC
         );
     }
 }

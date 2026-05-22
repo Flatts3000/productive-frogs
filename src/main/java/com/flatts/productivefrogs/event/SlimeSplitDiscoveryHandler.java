@@ -2,22 +2,19 @@ package com.flatts.productivefrogs.event;
 
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
-import com.flatts.productivefrogs.content.entity.CaveSlime;
-import com.flatts.productivefrogs.content.entity.GeodeSlime;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
-import com.flatts.productivefrogs.content.entity.TideSlime;
-import com.flatts.productivefrogs.content.entity.VoidSlime;
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.data.ParentSpeciesEntry;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFRegistries;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.monster.MagmaCube;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -31,15 +28,12 @@ import org.jspecify.annotations.Nullable;
  * chance to become a category-locked {@link ResourceSlime} drawn from the
  * parent species's default category pool.
  *
- * <p>Default pools (V1 simplification, no per-resource variants yet):
- * <ul>
- *   <li>{@code minecraft:slime} → {@link Category#METALLIC}</li>
- *   <li>{@code minecraft:magma_cube} → {@link Category#INFERNAL}</li>
- * </ul>
- *
- * <p>Categories not covered by vanilla parent species (MINERAL / GEM / AQUATIC
- * / ARCANE) wait for the parent-species PRs (Cave / Geode / Tide / Void Slime)
- * to land — they'll each register their own default pool here.
+ * <p>Per-parent-species category mapping is driven by the
+ * {@link PFRegistries#PARENT_SPECIES} datapack registry — six default JSONs
+ * at {@code data/productivefrogs/productivefrogs/parent_species/} ship with
+ * the mod (vanilla {@code Slime}/{@code MagmaCube} → METALLIC/INFERNAL plus
+ * the four PF parent species), and modpacks can override individual entries
+ * or wire new modded slimes into the discovery loop without recompiling.
  *
  * <p>{@link MobSplitEvent} is the right hook for this: NeoForge fires it
  * synchronously from {@code Slime#remove(RemovalReason)} after the children
@@ -94,12 +88,12 @@ public final class SlimeSplitDiscoveryHandler {
             return;
         }
 
-        Category category = categoryForParent(parent);
+        Level level = parent.level();
+        Category category = categoryForParent(parent, level);
         if (category == null) {
             return;
         }
 
-        Level level = parent.level();
         Registry<SlimeVariant> variantRegistry = level.registryAccess()
             .lookup(PFRegistries.SLIME_VARIANT).orElse(null);
 
@@ -134,36 +128,44 @@ public final class SlimeSplitDiscoveryHandler {
     }
 
     /**
-     * Default category pool for a parent slime species. Returns null if the
-     * parent isn't a known parent species — modded slime species can register
-     * their own categories via a future datapack registry (see {@code
-     * docs/architecture.md} §Slime Sourcing Hooks).
+     * Default category pool for a parent slime species, resolved through the
+     * {@link PFRegistries#PARENT_SPECIES} datapack registry: look up the
+     * parent's EntityType id and return the matching entry's category, or
+     * {@code null} if the registry has no mapping for that type (a modded
+     * slime nobody's wired into the discovery loop).
      *
-     * <p>{@link CaveSlime} and its siblings (Geode/Tide/Void in later PRs)
-     * are checked BEFORE the {@code parent.getClass() == Slime.class}
-     * vanilla-green check — they extend {@code Slime}, so that strict equality
-     * would otherwise miss them (instanceof Slime is true; getClass() is
-     * CaveSlime).
+     * <p>The mapping was previously a hardcoded {@code instanceof} chain
+     * in Java. Six default JSONs ship at
+     * {@code data/productivefrogs/productivefrogs/parent_species/} so the
+     * mod's own out-of-the-box behavior is unchanged; datapacks can override
+     * any entry or add new ones to wire modded slimes (e.g. Mythic Metals'
+     * Pyrite Slime → METALLIC) without recompiling.
+     *
+     * <p>The {@code EntityType} lookup is the cleaner formulation: each of
+     * our PF parent species is its own {@link net.minecraft.world.entity.EntityType},
+     * so we no longer need the "check subclasses before vanilla {@code Slime}
+     * via getClass() strict equality" footgun that the legacy {@code instanceof}
+     * chain had — entity-type ids are inherently unique per species.
+     *
+     * <p>Linear scan over the registry is fine at V1 scale (6 entries); if
+     * the registry ever grows past a couple dozen, materialize a cache
+     * elsewhere rather than on this hot path.
      */
     @Nullable
-    private static Category categoryForParent(Mob parent) {
-        if (parent instanceof MagmaCube) {
-            return Category.INFERNAL;
+    private static Category categoryForParent(Mob parent, Level level) {
+        Identifier parentTypeId = BuiltInRegistries.ENTITY_TYPE.getKey(parent.getType());
+        if (parentTypeId == null) {
+            return null;
         }
-        if (parent instanceof CaveSlime) {
-            return Category.MINERAL;
+        Registry<ParentSpeciesEntry> registry = level.registryAccess()
+            .lookup(PFRegistries.PARENT_SPECIES).orElse(null);
+        if (registry == null) {
+            return null;
         }
-        if (parent instanceof GeodeSlime) {
-            return Category.GEM;
-        }
-        if (parent instanceof TideSlime) {
-            return Category.AQUATIC;
-        }
-        if (parent instanceof VoidSlime) {
-            return Category.ARCANE;
-        }
-        if (parent.getClass() == Slime.class) {
-            return Category.METALLIC;
+        for (ParentSpeciesEntry entry : registry) {
+            if (entry.entityType().equals(parentTypeId)) {
+                return entry.category();
+            }
         }
         return null;
     }
