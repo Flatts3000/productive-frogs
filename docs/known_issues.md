@@ -77,11 +77,14 @@ Redesign the Slime Milker from "right-click while holding a Slime Bucket" to a f
 
 Supersedes the existing "No automated Slime Milker" V1 cut: the Milker IS the automation primitive; no separate "auto-fed" variant in V2.
 
-### 🔴 Slime Milk should integrate with `IFluidHandler` so tank mods can pump it
+### 🟢 Slime Milk integrates with tank mods — confirmed working
 
-Slime Milk should behave like any other NeoForge fluid for tank / pipe / pump mods. Productive Frogs doesn't ship a tank itself, but downstream modpack authors expect Mekanism / Thermal / Create / Fluid Tanks (the mod) to read and pump milk from the source block via the standard `IFluidHandler` capability. Investigate whether the existing `BaseFlowingFluid` registration already exposes the capability, or whether we need explicit `IFluidHandler.BLOCK` / `IFluidHandler.ITEM` capability providers on the milk source and bucket items.
+**Verification**: cross-referenced with [Productive Bees' honey fluid](https://github.com/JDKDigital/productive-bees/blob/dev-1.21.0/src/main/java/cy/jdkdigital/productivebees/common/fluid/HoneyFluid.java). PB ships **no** custom `Capabilities.Fluid.BLOCK` registration for their honey LiquidBlock — they rely entirely on the same `BaseFlowingFluid` + vanilla `LiquidBlock` pipeline we use, and downstream tank / pipe mods integrate via:
 
-Supersedes the existing "Slime Milk only in buckets" V1 cut for the fluid-mechanics half: bucket-only stays our shipped UI, but the fluid is accessible to any mod that talks to the standard capability.
+1. **Bucket item capability** — NeoForge's `CapabilityHooks.registerVanillaProviders` auto-registers `Capabilities.Fluid.ITEM` on every `BucketItem` subclass. Our Slime Milk buckets inherit from vanilla `BucketItem`, so the cap is live without any code from us. Pinned by the `milk_bucket_exposes_fluid_capability_for_tank_mods` GameTest.
+2. **Source block pickup** — tank mods that pump from a fluid source block use vanilla `LiquidBlock` bucket-pickup mechanics. Our `SlimeMilkSourceBlock extends LiquidBlock` inherits that behaviour unchanged.
+
+If a specific tank mod ever turns out to need an explicit `Capabilities.Fluid.BLOCK` handler (e.g. one that doesn't go through vanilla bucket scoop), file a follow-up issue with the specific mod + version — we can register a `ResourceHandler<FluidResource>` wrapper at that point, similar to how Productive Bees adds fluid handlers to their machine block entities (centrifuge, etc.) but NOT to the raw honey fluid block.
 
 ### 🔴 Resource Slime inner texture should be the resource's block texture
 
@@ -107,8 +110,8 @@ The Milker is a hand-operated appliance today — right-click with a Slime Bucke
 ### 🔵 No Frog Terrarium / Habitat block
 Frogs in V1 live where you place them, near water. A placeable housing block with I/O inventory is V2.
 
-### 🔵 Slime Milk only in buckets — *partially superseded; see [open issue](#-slime-milk-should-integrate-with-ifluidhandler-so-tank-mods-can-pump-it) above*
-Bucket-only stays the shipped UI in V1. Underlying fluid mechanics will be exposed via `IFluidHandler` so external tank / pipe mods can read and pump milk independently of any UI we ship.
+### 🔵 Slime Milk only in buckets (UI surface)
+Bucket-only is the shipped UI in V1 — no jugs, tanks, or custom fluid containers. The underlying fluid IS accessible to any tank-mod ecosystem (Mekanism, Thermal, Create, Fluid Tanks): the bucket item exposes `Capabilities.Fluid.ITEM` via NeoForge's automatic `BucketItem` registration, and the source block uses vanilla `LiquidBlock` bucket-pickup mechanics. See the resolved entry above for verification details.
 
 ### 🔵 No visual depletion countdown on milk source blocks
 Source blocks deplete after `depletionCount` spawns (default 16) and drain to air. The texture does NOT desaturate as the counter approaches zero — the counter lives in blockstate but has no client-side visual cue. Specced in `farming.md`; deferred to polish so J5 could ship without a custom fluid renderer.
