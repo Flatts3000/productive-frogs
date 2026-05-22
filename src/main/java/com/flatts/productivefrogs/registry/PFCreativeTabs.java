@@ -30,9 +30,10 @@ public final class PFCreativeTabs {
                 .icon(() -> PFItems.FROG_EGG.get().getDefaultInstance())
                 .displayItems((parameters, output) -> {
                     // Default (unprimed) Frog Egg bottle, then one primed bottle
-                    // per category. The JEI plugin (client/jei/ProductiveFrogs-
-                    // JeiPlugin) subtypes Frog Egg by CONTAINED_CATEGORY, so
-                    // each stamped stack here becomes a distinct JEI entry.
+                    // per category. The JEI plugin
+                    // (client/jei/ProductiveFrogsJeiPlugin) subtypes Frog Egg
+                    // by CONTAINED_CATEGORY, so each stamped stack here becomes
+                    // a distinct JEI entry.
                     output.accept(PFItems.FROG_EGG.get());
                     for (Category cat : Category.values()) {
                         ItemStack primed = new ItemStack(PFItems.FROG_EGG.get());
@@ -101,21 +102,27 @@ public final class PFCreativeTabs {
      * NBT — mirrors what {@code ResourceSlime.saveToBucketTag} writes when a
      * player buckets a variant-locked slime. Both {@code Category} and
      * {@code Variant} go into the tag so the tint pipeline (variant-first,
-     * category fallback) lights up either way.
+     * category fallback) lights up either way AND the canonical bucket NBT
+     * shape stays consistent with real captured buckets.
      *
      * <p>Category is looked up from the matching spawn egg's
      * {@code CONTAINED_CATEGORY} component to avoid hardcoding a second copy
-     * of the variant→category map.
+     * of the variant→category map. The egg is built by
+     * {@code PFItems.slimeVariantSpawnEggProperties}, which always sets the
+     * component — a missing category here means the variant id was wrong
+     * (typo, dropped variant), which is a fail-fast bug rather than a
+     * silently degraded creative-tab stack.
      */
     private static ItemStack makeVariantSlimeBucket(String variantName) {
         ItemStack stack = new ItemStack(PFItems.SLIME_BUCKET.get());
-        Category category = PFItems.RESOURCE_SLIME_SPAWN_EGGS.get(variantName)
-            .get().getDefaultInstance().get(PFDataComponents.CONTAINED_CATEGORY.get());
+        Category category = java.util.Objects.requireNonNull(
+            PFItems.RESOURCE_SLIME_SPAWN_EGGS.get(variantName)
+                .get().getDefaultInstance().get(PFDataComponents.CONTAINED_CATEGORY.get()),
+            "variant spawn egg for '" + variantName + "' must carry CONTAINED_CATEGORY"
+        );
         Identifier variantId = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName);
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
-            if (category != null) {
-                tag.putString("Category", category.name());
-            }
+            tag.putString("Category", category.name());
             tag.putString("Variant", variantId.toString());
         });
         return stack;
