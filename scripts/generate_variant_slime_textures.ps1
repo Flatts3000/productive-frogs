@@ -8,9 +8,10 @@
 # Inputs:
 # - Existing category templates already in the repo (preserves the outer
 #   translucent shell + eyes/mouth region of the existing PNGs)
-# - Vanilla minecraft block textures extracted from the NeoForge dev
-#   artifact at build/moddev/artifacts/neoforge-21.11.42-client-extra-aka-
-#   minecraft-resources.jar
+# - Vanilla minecraft block textures, auto-extracted at runtime from the
+#   NeoForge dev artifact found via glob at
+#   build/moddev/artifacts/neoforge-*-client-extra-aka-minecraft-resources.jar
+#   so the script keeps working across NeoForge version bumps.
 #
 # UV layout (SlimeModel inner cube, texOffs(0, 16), size 6x6x6, on a 64x32
 # texture -- vanilla slime.png shape):
@@ -28,18 +29,39 @@
 # Re-run whenever a variant's canonical block texture changes upstream, or
 # when adding a new variant -- drop the new entry into the $variants list at
 # the bottom and re-run.
+#
+# Platform: Windows only. Depends on System.Drawing (which on .NET Core /
+# PowerShell 7+ requires libgdiplus on Linux/macOS — easier to just run
+# this on Windows where the assembly ships in-box). The cross-platform
+# temp-path helper is here just to fail with a clear message if anyone
+# tries it elsewhere.
 
 Add-Type -AssemblyName System.Drawing
 
 $repoRoot = (Resolve-Path "$PSScriptRoot\..").Path
 $textureDir = Join-Path $repoRoot "src\main\resources\assets\productivefrogs\textures\entity\slime"
-$mcExtract = "$env:TEMP\mc-extra"
+$mcExtract = Join-Path ([System.IO.Path]::GetTempPath()) "mc-extra"
+$artifactsDir = Join-Path $repoRoot "build\moddev\artifacts"
 
-if (-not (Test-Path "$mcExtract\assets\minecraft\textures\block")) {
-    Write-Error "Minecraft assets not extracted at $mcExtract. Run:`n" +
-        "  jar --extract --file=build\moddev\artifacts\neoforge-21.11.42-client-extra-aka-minecraft-resources.jar`n" +
-        "from a fresh directory, or update this script's `$mcExtract path."
-    exit 1
+# Auto-extract: if the cache directory doesn't already have the minecraft
+# block textures, find the NeoForge minecraft-resources jar via glob and
+# unpack it. Jar files are zips under the hood, so we use the .NET
+# ZipFile API rather than depending on a working `jar.exe` (which would
+# require a valid JAVA_HOME — and on this machine the system JAVA_HOME
+# is known-stale per docs and memory notes).
+if (-not (Test-Path (Join-Path $mcExtract "assets\minecraft\textures\block"))) {
+    $jarMatches = @(Get-ChildItem -Path $artifactsDir -Filter "neoforge-*-client-extra-aka-minecraft-resources.jar" -ErrorAction SilentlyContinue)
+    if ($jarMatches.Count -eq 0) {
+        Write-Error ("No NeoForge minecraft-resources jar found under $artifactsDir.`n" +
+            "Run ``./gradlew createMinecraftArtifacts`` (or any task that pulls deps) to populate it, then re-run this script.")
+        exit 1
+    }
+    # Most-recently-modified wins on version bumps.
+    $jar = ($jarMatches | Sort-Object LastWriteTime -Descending | Select-Object -First 1).FullName
+    New-Item -ItemType Directory -Force -Path $mcExtract | Out-Null
+    Write-Output "extracting $(Split-Path $jar -Leaf) -> $mcExtract"
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($jar, $mcExtract)
 }
 
 # Inner-cube face anchors: { x, y } of each 6x6 face's top-left corner on

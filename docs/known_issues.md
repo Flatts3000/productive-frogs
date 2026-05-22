@@ -78,7 +78,7 @@ To regenerate the PNGs after a vanilla block texture changes upstream, or when a
 .\scripts\generate_variant_slime_textures.ps1
 ```
 
-The script extracts minecraft block textures from the NeoForge dev artifact (one-time `jar --extract` against `build/moddev/artifacts/neoforge-21.11.42-client-extra-aka-minecraft-resources.jar` into `$env:TEMP\mc-extra`) and writes the 12 outputs back to `src/main/resources/assets/productivefrogs/textures/entity/slime/`.
+The script auto-discovers the NeoForge minecraft-resources jar via glob under `build/moddev/artifacts/neoforge-*-client-extra-aka-minecraft-resources.jar` (so it survives NeoForge version bumps) and extracts it to a cache dir using the .NET `ZipFile` API (no `jar.exe` / JAVA_HOME dependency). Outputs land in `src/main/resources/assets/productivefrogs/textures/entity/slime/`. Windows-only — System.Drawing is in-box on Windows but needs libgdiplus on Linux/macOS.
 
 ---
 
