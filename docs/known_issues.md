@@ -61,17 +61,18 @@ The creative tab in `PFCreativeTabs.PRODUCTIVE_FROGS_TAB.displayItems` emits one
 
 If a specific tank mod ever turns out to need an explicit `Capabilities.Fluid.BLOCK` handler (e.g. one that doesn't go through vanilla bucket scoop), file a follow-up issue with the specific mod + version — we can register a `ResourceHandler<FluidResource>` wrapper at that point, similar to how Productive Bees adds fluid handlers to their machine block entities (centrifuge, etc.) but NOT to the raw honey fluid block.
 
-### 🔴 Resource Slime inner texture should be the resource's block texture
+### 🟡 Resource Slime per-variant texture — framework shipped, PNGs pending
 
-Replace the current flat-tint inner sprite on each Resource Slime with the **vanilla block texture of the variant's canonical resource** — iron block for iron variant, copper block for copper, diamond block for diamond, etc. The **outer translucent shell** keeps the vanilla slime jelly look (same model + translucent layer as today) but tints to a translucent version of the inner texture so the visual reads as "you can see the resource inside the slime".
+**Framework shipped.** `SlimeVariant` carries an optional `texture` field (`Optional<Identifier>`); the codec accepts both legacy variant JSONs (no field) and ones that declare a path. `ResourceSlimeRenderer.getTextureLocation` resolves in order:
 
-Likely implementation:
+1. Per-variant `texture` from the variant's datapack entry, when set.
+2. Per-category fallback PNG (`<category>_resource_slime.png`) for variants without a custom texture and for category-only slimes.
 
-- Extend the `SlimeVariant` codec to declare an inner texture path (e.g. `inner_texture: "minecraft:block/iron_block"`).
-- Resolve that path in `ResourceSlimeRenderer` (or its `RenderState`) and bind it as the inner layer's texture.
-- Outer shell uses the existing translucent overlay and reads its tint from the variant's primary colour for cohesion.
+The outer translucent shell is tinted from the variant's `primary_color` via `ResourceSlimeRenderState.outerTint` → `ResourceSlimeOuterLayer.submit`, so an iron slime shows a silver shell, a copper one shows an orange shell, etc., **even before per-variant PNGs ship** — visible differentiation across the three METALLIC variants today.
 
-Substantial visual upgrade — needs the schema extension AND a renderer rework. Track as one larger task; will not slip into V1 ship without its own PR.
+Schema + renderer round-trip covered by `SlimeVariantTest` (codec accepts JSONs with and without the field; both shapes round-trip cleanly).
+
+**PNGs pending.** None of the 12 shipped variant JSONs sets a `texture`; the entire roster currently uses the six per-category PNGs. Per-variant PNGs (e.g. `productivefrogs:textures/entity/slime/iron_resource_slime.png` with iron_block in the inner UV region) are an asset-PR follow-up — once shipped, each variant JSON gets a `"texture": "productivefrogs:textures/entity/slime/<variant>_resource_slime.png"` line and the renderer picks them up with no code change. The `textures/` prefix and `.png` suffix are required (matches `RenderType.entityTranslucent` and how the per-category fallback paths are built in `ResourceSlimeRenderer.buildTextureMap`); shorter forms resolve to a missing-texture binding. Tracked here so future asset work has a one-step integration path.
 
 ---
 
@@ -138,4 +139,4 @@ Listed for searchability — useful when a playtest report references an issue t
 
 ---
 
-*Last updated: 2026-05-22 (JEI subtype plugin shipped; per-variant display names tracked as polish follow-up)*
+*Last updated: 2026-05-22 (per-variant Slime texture framework + outer-shell tint shipped; PNG assets pending as a separate asset PR)*

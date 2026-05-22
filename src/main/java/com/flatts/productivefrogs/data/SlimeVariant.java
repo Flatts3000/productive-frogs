@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
@@ -37,6 +38,23 @@ import net.minecraft.util.RandomSource;
  *   <li>{@code weight} — relative weight for random discovery pool picks
  *       (per {@code docs/slime_sourcing.md} §V1 Configurability). Higher
  *       weight = more likely to spawn. Default 1.</li>
+ *   <li>{@code texture} — optional per-variant entity texture path. When set,
+ *       {@code ResourceSlimeRenderer} binds this texture for the slime's
+ *       inner + outer cubes instead of falling back to the broad-category
+ *       texture. Lets all three METALLIC variants (iron / copper / gold)
+ *       render distinctly with their respective resource block inside the
+ *       translucent shell rather than sharing one iron-themed look. Absent
+ *       in V1's shipped variants — the framework is in place for whenever
+ *       per-variant PNGs land in a follow-up.
+ *       <br><b>Identifier format:</b> the value must be the full
+ *       {@code RenderType.entityTranslucent}-compatible texture location —
+ *       namespace, {@code textures/} prefix, and {@code .png} suffix
+ *       included. Mirrors how the per-category fallback paths are built in
+ *       {@code ResourceSlimeRenderer.buildTextureMap} (and how vanilla's
+ *       {@code SlimeRenderer.SLIME_LOCATION} is shaped). Example:
+ *       {@code "productivefrogs:textures/entity/slime/iron_resource_slime.png"}.
+ *       Anything shorter (e.g. {@code "productivefrogs:entity/slime/iron"})
+ *       resolves to a missing-texture binding at render time.</li>
  * </ul>
  */
 public record SlimeVariant(
@@ -44,7 +62,8 @@ public record SlimeVariant(
     Category category,
     int primaryColor,
     int secondaryColor,
-    int weight
+    int weight,
+    Optional<Identifier> texture
 ) {
 
     /**
@@ -64,7 +83,8 @@ public record SlimeVariant(
             Category.CODEC.fieldOf("category").forGetter(SlimeVariant::category),
             Codec.INT.fieldOf("primary_color").forGetter(SlimeVariant::primaryColor),
             Codec.INT.fieldOf("secondary_color").forGetter(SlimeVariant::secondaryColor),
-            Codec.intRange(1, Integer.MAX_VALUE).optionalFieldOf("weight", 1).forGetter(SlimeVariant::weight)
+            Codec.intRange(1, Integer.MAX_VALUE).optionalFieldOf("weight", 1).forGetter(SlimeVariant::weight),
+            Identifier.CODEC.optionalFieldOf("texture").forGetter(SlimeVariant::texture)
         ).apply(instance, SlimeVariant::new)
     );
 
