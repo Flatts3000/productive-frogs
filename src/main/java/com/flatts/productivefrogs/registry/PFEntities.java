@@ -56,16 +56,29 @@ public final class PFEntities {
 
     /**
      * Single ResourceSlime entity type — category is carried as synced data,
-     * not encoded in the type. Sized to vanilla Slime's max (size-4) bounding
-     * box so the vanilla SlimeRenderer geometry is reusable; per-instance size
-     * is set via {@link Slime#setSize} as normal.
+     * not encoded in the type. Base dimensions match vanilla Slime's size-1
+     * hitbox (0.52F × 0.52F); the actual in-world hitbox is computed at
+     * runtime by {@code Slime#getDefaultDimensions(...).scale(getSize())},
+     * so the vanilla SlimeRenderer geometry is reusable across sizes 1-127.
+     * Per-instance size is set via {@link Slime#setSize} as normal.
      */
     public static final DeferredHolder<EntityType<?>, EntityType<ResourceSlime>> RESOURCE_SLIME =
         ENTITIES.register(
             "resource_slime",
             () -> EntityType.Builder.<ResourceSlime>of(ResourceSlime::new, MobCategory.MONSTER)
-                .sized(2.04F, 2.04F)
-                .eyeHeight(0.625F)
+                // Match vanilla EntityType.SLIME's 1.21.11 sizing: base is the
+                // size-1 hitbox (0.52F), and Slime#getDefaultDimensions scales
+                // by getSize() directly. Pre-1.21.x used a 2.04F base + an
+                // internal 0.255*size scale — using that combo here gave us
+                // hitboxes 4× too big at every size (caught in playtest).
+                // spawnDimensionsScale(4.0F) matches vanilla and gates
+                // natural-spawn position checks against the largest possible
+                // runtime hitbox. The Cave/Geode/Tide/Void registrations below
+                // reuse the same sizing; they all inherit vanilla Slime's
+                // getDefaultDimensions and only diverge on category/renderer.
+                .sized(0.52F, 0.52F)
+                .eyeHeight(0.325F)
+                .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
                 .build(net.minecraft.resources.ResourceKey.create(
                     Registries.ENTITY_TYPE,
@@ -84,8 +97,9 @@ public final class PFEntities {
         ENTITIES.register(
             "cave_slime",
             () -> EntityType.Builder.<CaveSlime>of(CaveSlime::new, MobCategory.MONSTER)
-                .sized(2.04F, 2.04F)
-                .eyeHeight(0.625F)
+                .sized(0.52F, 0.52F)
+                .eyeHeight(0.325F)
+                .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
                 .build(net.minecraft.resources.ResourceKey.create(
                     Registries.ENTITY_TYPE,
@@ -103,8 +117,9 @@ public final class PFEntities {
         ENTITIES.register(
             "geode_slime",
             () -> EntityType.Builder.<GeodeSlime>of(GeodeSlime::new, MobCategory.MONSTER)
-                .sized(2.04F, 2.04F)
-                .eyeHeight(0.625F)
+                .sized(0.52F, 0.52F)
+                .eyeHeight(0.325F)
+                .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
                 .build(net.minecraft.resources.ResourceKey.create(
                     Registries.ENTITY_TYPE,
@@ -122,8 +137,9 @@ public final class PFEntities {
         ENTITIES.register(
             "tide_slime",
             () -> EntityType.Builder.<TideSlime>of(TideSlime::new, MobCategory.MONSTER)
-                .sized(2.04F, 2.04F)
-                .eyeHeight(0.625F)
+                .sized(0.52F, 0.52F)
+                .eyeHeight(0.325F)
+                .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
                 .build(net.minecraft.resources.ResourceKey.create(
                     Registries.ENTITY_TYPE,
@@ -141,8 +157,9 @@ public final class PFEntities {
         ENTITIES.register(
             "void_slime",
             () -> EntityType.Builder.<VoidSlime>of(VoidSlime::new, MobCategory.MONSTER)
-                .sized(2.04F, 2.04F)
-                .eyeHeight(0.625F)
+                .sized(0.52F, 0.52F)
+                .eyeHeight(0.325F)
+                .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
                 .build(net.minecraft.resources.ResourceKey.create(
                     Registries.ENTITY_TYPE,

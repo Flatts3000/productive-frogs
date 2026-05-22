@@ -123,12 +123,12 @@
   "block.productivefrogs.infernal_frog_egg": "Infernal Frog Egg",
   "block.productivefrogs.arcane_frog_egg":   "Arcane Frog Egg",
 
-  "block.productivefrogs.metallic_froglight": "Metallic Froglight",
-  "block.productivefrogs.mineral_froglight":  "Mineral Froglight",
-  "block.productivefrogs.gem_froglight":      "Gem Froglight",
-  "block.productivefrogs.aquatic_froglight":  "Aquatic Froglight",
-  "block.productivefrogs.infernal_froglight": "Infernal Froglight",
-  "block.productivefrogs.arcane_froglight":   "Arcane Froglight",
+  "block.productivefrogs.metallic_froglight": "Iron Froglight",
+  "block.productivefrogs.mineral_froglight":  "Redstone Froglight",
+  "block.productivefrogs.gem_froglight":      "Diamond Froglight",
+  "block.productivefrogs.aquatic_froglight":  "Prismarine Froglight",
+  "block.productivefrogs.infernal_froglight": "Magma Cream Froglight",
+  "block.productivefrogs.arcane_froglight":   "Ender Pearl Froglight",
 
   "entity.productivefrogs.resource_tadpole":          "Resource Tadpole",
   "entity.productivefrogs.resource_tadpole.metallic": "Metallic Tadpole",
