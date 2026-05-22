@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.client.renderer;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.data.SlimeVariant;
 import java.util.EnumMap;
 import java.util.Map;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -10,6 +11,7 @@ import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.client.renderer.entity.layers.SlimeOuterLayer;
 import net.minecraft.client.renderer.entity.state.SlimeRenderState;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.monster.Slime;
 
 /**
@@ -35,16 +37,32 @@ import net.minecraft.world.entity.monster.Slime;
  * MINERAL, etc.) and the outer region with solid mid-gray. One file feeds
  * both cubes via the same UV-segmented layout vanilla uses.
  *
+ * <p>Texture resolution (see {@link #getTextureLocation}):
+ * <ol>
+ *   <li>If the slime's variant declares a {@code texture} field, that
+ *       per-variant PNG is used. Lets all three METALLIC variants
+ *       (iron / copper / gold) render distinctly with their resource block
+ *       inside the translucent shell instead of sharing the broader
+ *       category PNG. Per-variant PNGs are an asset follow-up — see
+ *       {@code docs/known_issues.md}.</li>
+ *   <li>Otherwise the broad-category PNG is used. Every shipped variant
+ *       currently lands here; the per-variant slot is the schema
+ *       extension that lets the asset PR drop in cleanly.</li>
+ * </ol>
+ *
  * <p>The constructor replaces vanilla's {@link SlimeOuterLayer} with our
  * {@link ResourceSlimeOuterLayer}: the vanilla layer hardcodes
  * {@code SlimeRenderer.SLIME_LOCATION} for the translucent shell, so without
  * this swap the outer cube would still render the vanilla green slime
  * texture even though our inner cube reads from the per-category file. The
  * replacement layer routes through {@link #getTextureLocation} so both cubes
- * read from the same per-category file.
+ * read from the same file, and additionally applies a per-variant tint
+ * (from {@code SlimeVariant.primaryColor}) to the translucent shell so
+ * variants are visually distinguishable even before per-variant PNGs ship.
  *
- * <p>No {@link #getModelTint} override: the texture itself carries the
- * category color, so a tint multiply would only mute the block textures.
+ * <p>No {@link #getModelTint} override on the inner cube: the texture
+ * itself carries the category/variant color, so a tint multiply would only
+ * mute the block textures.
  */
 public class ResourceSlimeRenderer extends SlimeRenderer {
 
@@ -75,8 +93,13 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
 
     @Override
     public Identifier getTextureLocation(SlimeRenderState state) {
-        if (state instanceof ResourceSlimeRenderState rState && rState.category != null) {
-            return TEXTURES.get(rState.category);
+        if (state instanceof ResourceSlimeRenderState rState) {
+            if (rState.variantTexture != null) {
+                return rState.variantTexture;
+            }
+            if (rState.category != null) {
+                return TEXTURES.get(rState.category);
+            }
         }
         return TEXTURES.get(Category.METALLIC);
     }
@@ -91,6 +114,21 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
         super.extractRenderState(entity, state, partialTick);
         if (entity instanceof ResourceSlime resource && state instanceof ResourceSlimeRenderState rState) {
             rState.category = resource.getCategory();
+
+            // Variant lookup is null-tolerant: category-only slimes (no
+            // variant id) or variant ids that don't resolve in the registry
+            // (datapack removed, modded variant whose mod isn't loaded)
+            // both land at "no per-variant texture, no per-variant tint" —
+            // the broader category texture from the resolution chain above
+            // covers them.
+            SlimeVariant variant = resource.getVariant();
+            if (variant != null) {
+                rState.variantTexture = variant.texture().orElse(null);
+                rState.outerTint = ARGB.opaque(variant.primaryColor());
+            } else {
+                rState.variantTexture = null;
+                rState.outerTint = -1;
+            }
         }
     }
 }

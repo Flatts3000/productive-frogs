@@ -12,16 +12,28 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.resources.Identifier;
 
 /**
- * Drop-in replacement for vanilla {@code SlimeOuterLayer}. Identical in
- * behavior except the texture comes from the parent renderer's
- * {@code getTextureLocation(state)} instead of being hardcoded to
- * {@code SlimeRenderer.SLIME_LOCATION} — that hardcode is the reason the
- * outer translucent shell would otherwise still show the vanilla green slime
- * texture even when we swap the inner cube to a per-category texture.
+ * Drop-in replacement for vanilla {@code SlimeOuterLayer} with two changes:
+ *
+ * <ol>
+ *   <li>Texture comes from the parent renderer's
+ *       {@code getTextureLocation(state)} instead of being hardcoded to
+ *       {@code SlimeRenderer.SLIME_LOCATION} — that hardcode is the reason
+ *       the outer translucent shell would otherwise still show the vanilla
+ *       green slime texture even when we swap the inner cube to a
+ *       per-category texture.</li>
+ *   <li>The shell is tinted with
+ *       {@link ResourceSlimeRenderState#outerTint} (the variant's primary
+ *       colour, or {@code -1} = white for category-only slimes). This gives
+ *       visible per-variant differentiation even before the per-variant
+ *       inner-texture PNGs ship — an iron slime gets a silvery shell, a
+ *       copper one gets an orange shell, etc., on top of whatever inner
+ *       texture the resolution chain picked.</li>
+ * </ol>
  *
  * <p>The model itself still uses {@code ModelLayers.SLIME_OUTER} so the
  * cube geometry is the vanilla outer cube (8×8×8, slightly larger than the
- * inner 6×6×6 inner cube). Only the texture lookup changes.
+ * inner 6×6×6 inner cube). Only the texture lookup and the shell tint
+ * change.
  */
 public class ResourceSlimeOuterLayer extends RenderLayer<SlimeRenderState, SlimeModel> {
 
@@ -44,6 +56,11 @@ public class ResourceSlimeOuterLayer extends RenderLayer<SlimeRenderState, Slime
 
         int overlay = LivingEntityRenderer.getOverlayCoords(state, 0.0F);
         Identifier texture = parentRenderer.getTextureLocation(state);
+        // Variant-driven shell tint: ResourceSlimeRenderer.extractRenderState
+        // writes ARGB.opaque(variant.primaryColor()) for variant-locked
+        // slimes, -1 (white) for category-only slimes. The outline pass
+        // ignores the tint argument so we keep -1 there to mirror vanilla.
+        int shellTint = state instanceof ResourceSlimeRenderState rState ? rState.outerTint : -1;
 
         if (glowingOutline) {
             collector.order(1).submitModel(
@@ -55,7 +72,7 @@ public class ResourceSlimeOuterLayer extends RenderLayer<SlimeRenderState, Slime
             collector.order(1).submitModel(
                 this.model, state, pose,
                 RenderTypes.entityTranslucent(texture),
-                light, overlay, -1, null, state.outlineColor, null
+                light, overlay, shellTint, null, state.outlineColor, null
             );
         }
     }
