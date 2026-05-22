@@ -38,7 +38,7 @@ Variant primary colours come from each `data/productivefrogs/productivefrogs/sli
 
 The creative tab in `PFCreativeTabs.PRODUCTIVE_FROGS_TAB.displayItems` emits one stamped stack per variant/category for each of these (12 variant slime buckets, 6 category tadpole buckets, 6 primed frog egg bottles, 12 configurable froglight stacks), so JEI surfaces them as distinct entries. JEI is `compileOnly` at build time + `runtimeOnly` at play time — the plugin class is dead code if a player runs without JEI.
 
-**Follow-up (low priority):** per-variant display names on Slime Bucket / Resource Tadpole Bucket / Frog Egg bottle. Currently all variants share "Bucket of Slime" / "Bucket of Tadpole" / "Frog Egg" so JEI text search for `iron` won't find the stamped variants — only the spawn eggs. Either a custom `MobBucketItem` subclass with a variant-aware `getName(ItemStack)`, or JEI's `IIngredientAliasRegistration` for per-variant search aliases.
+**Follow-up — display names shipped.** Slime Bucket now resolves via `SlimeBucketItem` (subclasses `MobBucketItem`, `getName(ItemStack)` reads Variant > Category > base from `BUCKET_ENTITY_DATA`). Resource Tadpole Bucket already had category-aware names since `ResourceTadpoleBucketItem`; Frog Egg bottle has category-aware names via `FrogEggItem.getName`. So JEI text-search for `iron` now finds the iron Slime Bucket in addition to the iron Slime Spawn Egg. Lang file ships all 6 category + 12 variant keys per surface; missing translations surface as the raw key (Minecraft's standard fallback).
 
 ### 🟢 Slime Milker furnace-style GUI + hopper I/O shipped
 
