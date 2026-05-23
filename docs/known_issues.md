@@ -19,18 +19,23 @@ Living tracker of playtest bugs, limitations, and workarounds for Productive Fro
 ### 🟢 Coal Resource Slime's eye dots are nearly invisible (dark on dark) — resolved
 Took option 2 from the fix-path discussion: bumped `data/.../slime_variant/coal.json` `primary_color` from `0x2A2A2A` (near-black) to `0x585858` (charcoal grey), and `secondary_color` from `0x101010` to `0x202020`. Body tint now multiplies silhouette body pixels to a charcoal value while the preserved eye dots stay near-black — visible contrast restored. Coal variant still reads as "coal" but no longer flattens against its own eye dots.
 
-### 🔴 Bucket of Slime + Bucket of Tadpole render as plain empty iron buckets
-Per the screenshot, the rows of Resource Tadpole Buckets and Slime Buckets across all 6 categories + 12 variants render as **plain unadorned iron buckets** — the silhouette layer that PR #66 (`tadpole_silhouette.png` / `slime_silhouette.png`) was supposed to provide isn't visible. The earlier resolved entry for "Bucket of Tadpole + Bucket of Slime render as empty buckets" claimed this was fixed; playtest shows the fix didn't actually land in the live render. The Slime Milk buckets (variant rim colour visible) are rendering correctly, so the tint pipeline works on at least one surface.
+### 🔴 World-spawned parent slime species render with default green textures
+The four custom parent slime species — Cave Slime (MINERAL), Geode Slime (GEM), Tide Slime (AQUATIC), Void Slime (ARCANE) — render with placeholder near-vanilla-green textures when spawned in the world. Per the category mapping these should pick up category-themed colours that read at a glance: Cave Slime → stone grey, Geode Slime → diamond cyan, Tide Slime → blue, Void Slime → end purple. METALLIC (`minecraft:slime`) and INFERNAL (`minecraft:magma_cube`) reuse vanilla textures and are correct as-is — only the four custom species need rework.
 
-**Symptom**: Open the creative tab → every Resource Tadpole Bucket and every Slime Bucket (across 6 categories + 12 variants) shows as a vanilla iron bucket with empty interior. The tadpole / slime silhouette inside is missing entirely.
+**Symptom**: Spawn a Cave / Geode / Tide / Void Slime via its spawn egg or `/summon`. The body reads as a generic green slime cube — visually indistinguishable from a vanilla slime except in subtle ways. Players cannot tell which category a parent slime belongs to from across the room.
 
-**Possible causes** (need diagnosis):
-1. The shipped PNG paths in `assets/productivefrogs/textures/item/{tadpole,slime}_silhouette.png` aren't matching what the item-model JSONs reference — quick grep to verify.
-2. The two-layer model has `layer0` (silhouette) and `layer1` (iron bucket) but the silhouette is being completely covered by the bucket layer — either layer-ordering wrong, or the silhouette pixels are landing where the bucket interior is solid metal rather than transparent (so they're hidden behind the bucket).
-3. The `BucketedCategoryTint` runtime tint is multiplying the silhouette layer to a colour that matches the bucket interior, making it invisible even though it's there.
-4. The silhouettes shipped from PR #66 are actually transparent / near-empty (the tone-mapping wrote out too few pixels).
+**Fix path**: Repaint the four PNGs at `src/main/resources/assets/productivefrogs/textures/entity/slime/{cave,geode,tide,void}_slime.png`. Keep the vanilla slime UV layout (renderers subclass `SlimeRenderer` and reuse the vanilla `LayerDefinition`); only the colour palette changes. Suggested target colours per `Category.tintArgb()` semantics:
+- Cave Slime → stone grey (~`#7F7F7F` mid + darker shading)
+- Geode Slime → diamond cyan (~`#5DECF5` highlight + teal mid)
+- Tide Slime → ocean blue (~`#3568D8` body + lighter highlight)
+- Void Slime → end purple (~`#7B3E9B` body + darker outline)
 
-**Fix path**: Diagnose with `/data` on a held bucket, inspect the actual PNG file pixels, and view the item with F3+H (advanced tooltips) to confirm which model JSON is being applied. The resolved 🟢 entry should be flipped back to 🟠 REOPENED once the cause is identified.
+Note the existing renderer comment on `CaveSlimeRenderer.java`: the outer translucent shell still pulls from `SlimeRenderer.SLIME_LOCATION` (vanilla green) — accepted limitation since parent slimes are transient (they split into `ResourceSlime` on death via `SlimeSplitDiscoveryHandler`). Recolouring only the inner cube texture is sufficient for the at-a-glance fix.
+
+### 🟢 Bucket of Slime + Bucket of Tadpole silhouettes positioned outside the bucket — resolved
+**Original symptom (PR #66 era)**: silhouettes were invisible — buckets rendered as plain iron buckets. PR #73 wrote the silhouette PNGs and they became visible, but at the wrong position: the body-shaped silhouettes painted onto the bucket body (rows 5-10 in the 16×16 frame) rather than peeking from the bucket's mouth opening (rows 1-5, cols 5-10), so creatures read as "stuck on the front of the bucket" instead of "contained inside it."
+
+**Resolution**: Redrew `slime_silhouette.png` and `tadpole_silhouette.png` as small head sprites positioned in the bucket's natural mouth interior (cols 5-10, rows 1-5). Slime is a 6×4 cube with 2 eyes at row 3 (cols 6, 9) whose crown rises one row above the rim back. Tadpole is a 4-6 wide rounded head with 2 eyes at row 4 (cols 6, 9) sitting fully inside the bucket. Body pixels at (220,220,220) so `BucketedCategoryTint` multiplies cleanly to category colour; eye pixels at (32,32,32) preserved dark across all 12 variants. Bucket rim sides at cols 3-4 + 11-13 and front rim at row 6 stay intact (silhouette pixels only occupy cols 5-10 of the rim region), framing the head naturally.
 
 ### 🔴 Slime Milker progress bar / arrow doesn't animate
 The Slime Milker GUI shows the static furnace-style arrow between input and output slots, but it doesn't animate during the milking operation. Vanilla furnace UIs draw a progress-filled arrow (the recipe-cook progress bar) that fills left-to-right as the operation advances. The Slime Milker arrow is just static art.
