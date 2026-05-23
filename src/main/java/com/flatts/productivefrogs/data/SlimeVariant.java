@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 
 /**
@@ -46,7 +46,7 @@ import net.minecraft.util.RandomSource;
  *       translucent shell rather than sharing one iron-themed look. Absent
  *       in V1's shipped variants — the framework is in place for whenever
  *       per-variant PNGs land in a follow-up.
- *       <br><b>Identifier format:</b> the value must be the full
+ *       <br><b>ResourceLocation format:</b> the value must be the full
  *       {@code RenderType.entityTranslucent}-compatible texture location —
  *       namespace, {@code textures/} prefix, and {@code .png} suffix
  *       included. Mirrors how the per-category fallback paths are built in
@@ -58,12 +58,12 @@ import net.minecraft.util.RandomSource;
  * </ul>
  */
 public record SlimeVariant(
-    Identifier primerItem,
+    ResourceLocation primerItem,
     Category category,
     int primaryColor,
     int secondaryColor,
     int weight,
-    Optional<Identifier> texture
+    Optional<ResourceLocation> texture
 ) {
 
     /**
@@ -79,12 +79,12 @@ public record SlimeVariant(
      */
     public static final Codec<SlimeVariant> CODEC = RecordCodecBuilder.create(
         instance -> instance.group(
-            Identifier.CODEC.fieldOf("primer_item").forGetter(SlimeVariant::primerItem),
+            ResourceLocation.CODEC.fieldOf("primer_item").forGetter(SlimeVariant::primerItem),
             Category.CODEC.fieldOf("category").forGetter(SlimeVariant::category),
             Codec.INT.fieldOf("primary_color").forGetter(SlimeVariant::primaryColor),
             Codec.INT.fieldOf("secondary_color").forGetter(SlimeVariant::secondaryColor),
             Codec.intRange(1, Integer.MAX_VALUE).optionalFieldOf("weight", 1).forGetter(SlimeVariant::weight),
-            Identifier.CODEC.optionalFieldOf("texture").forGetter(SlimeVariant::texture)
+            ResourceLocation.CODEC.optionalFieldOf("texture").forGetter(SlimeVariant::texture)
         ).apply(instance, SlimeVariant::new)
     );
 
@@ -98,8 +98,8 @@ public record SlimeVariant(
      * the future ~30-50 with cross-mod compat) the cost is trivial compared to
      * the rest of the right-click handler.
      */
-    public static Map.Entry<Identifier, SlimeVariant> findByPrimerItem(
-            Registry<SlimeVariant> registry, Identifier itemId) {
+    public static Map.Entry<ResourceLocation, SlimeVariant> findByPrimerItem(
+            Registry<SlimeVariant> registry, ResourceLocation itemId) {
         for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
             if (entry.getValue().primerItem().equals(itemId)) {
                 return Map.entry(entry.getKey().identifier(), entry.getValue());
@@ -119,9 +119,9 @@ public record SlimeVariant(
      * species's default category determines the pool; {@code weight} biases
      * the pick within it.
      */
-    public static Map.Entry<Identifier, SlimeVariant> pickWeighted(
+    public static Map.Entry<ResourceLocation, SlimeVariant> pickWeighted(
             Registry<SlimeVariant> registry, Category category, RandomSource random) {
-        List<Map.Entry<Identifier, SlimeVariant>> pool = new ArrayList<>();
+        List<Map.Entry<ResourceLocation, SlimeVariant>> pool = new ArrayList<>();
         // Accumulate as long so a datapack with many high-weight variants
         // (each capped at Integer.MAX_VALUE individually) can't overflow.
         // RandomSource doesn't expose nextLong-with-bound directly, so cap
@@ -138,7 +138,7 @@ public record SlimeVariant(
         int cap = (int) Math.min(totalWeight, Integer.MAX_VALUE);
         int roll = random.nextInt(cap);
         long cumulative = 0L;
-        for (Map.Entry<Identifier, SlimeVariant> entry : pool) {
+        for (Map.Entry<ResourceLocation, SlimeVariant> entry : pool) {
             cumulative += entry.getValue().weight();
             if (roll < cumulative) {
                 return entry;

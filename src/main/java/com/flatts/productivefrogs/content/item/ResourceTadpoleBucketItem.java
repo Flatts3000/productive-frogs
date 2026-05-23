@@ -5,7 +5,7 @@ import java.util.Optional;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -13,7 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.MobBucketItem;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.material.Fluid;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Bucket variant for Resource Tadpoles — same release-on-water-block behavior
@@ -80,7 +80,7 @@ public final class ResourceTadpoleBucketItem extends MobBucketItem {
      * color over the broader category tint when both are present.
      */
     @Nullable
-    public static Identifier readVariant(ItemStack stack) {
+    public static ResourceLocation readVariant(ItemStack stack) {
         CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
         if (data == null) {
             return null;
@@ -90,6 +90,6 @@ public final class ResourceTadpoleBucketItem extends MobBucketItem {
         if (raw.isEmpty() || raw.get().isEmpty()) {
             return null;
         }
-        return Identifier.tryParse(raw.get());
+        return ResourceLocation.tryParse(raw.get());
     }
 }

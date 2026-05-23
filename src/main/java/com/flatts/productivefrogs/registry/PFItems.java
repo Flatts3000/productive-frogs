@@ -23,7 +23,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Centralized item registry for Productive Frogs.
@@ -327,8 +327,8 @@ public final class PFItems {
     }
 
     private static Item.Properties slimeVariantSpawnEggProperties(String variantName, Category category) {
-        net.minecraft.resources.Identifier variantId =
-            net.minecraft.resources.Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName);
+        net.minecraft.resources.ResourceLocation variantId =
+            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName);
         CompoundTag nbt = new CompoundTag();
         // Variant first; readAdditionalSaveData treats Variant as overriding
         // Category via the registry lookup, but the entity also reads Category

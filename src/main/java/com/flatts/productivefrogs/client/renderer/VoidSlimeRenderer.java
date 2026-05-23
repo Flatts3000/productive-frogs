@@ -5,7 +5,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.client.renderer.entity.layers.SlimeOuterLayer;
 import net.minecraft.client.renderer.entity.state.SlimeRenderState;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Vanilla {@link SlimeRenderer} with a Void-Slime-specific texture and an
@@ -17,8 +17,8 @@ import net.minecraft.resources.Identifier;
  */
 public class VoidSlimeRenderer extends SlimeRenderer {
 
-    private static final Identifier TEXTURE =
-        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "textures/entity/slime/void_slime.png");
+    private static final ResourceLocation TEXTURE =
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "textures/entity/slime/void_slime.png");
 
     private static final int OUTER_TINT_ARGB = 0xFF5E3782;
 
@@ -29,7 +29,7 @@ public class VoidSlimeRenderer extends SlimeRenderer {
     }
 
     @Override
-    public Identifier getTextureLocation(SlimeRenderState state) {
+    public ResourceLocation getTextureLocation(SlimeRenderState state) {
         return TEXTURE;
     }
 }

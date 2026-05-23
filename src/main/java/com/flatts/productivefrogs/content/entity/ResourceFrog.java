@@ -13,7 +13,7 @@ import com.mojang.serialization.Dynamic;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -163,7 +163,7 @@ public class ResourceFrog extends Frog {
             // and the inventory updates roundtrip from the server's mutation.
             return InteractionResult.SUCCESS;
         }
-        Identifier variantId = ResourceTadpoleBucketItem.readVariant(stack);
+        ResourceLocation variantId = ResourceTadpoleBucketItem.readVariant(stack);
         FrogTongueDropHandler.dropFroglightAtFrog(this, bucketCategory, variantId);
         // Apply the same brain memory vanilla Frog uses to gate repeated
         // tongue use — keeps direct-feed cadence consistent with the natural

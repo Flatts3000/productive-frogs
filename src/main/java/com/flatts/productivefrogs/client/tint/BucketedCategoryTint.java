@@ -9,12 +9,12 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * ItemTintSource for the bucket items (Resource Tadpole Bucket + Slime
@@ -52,7 +52,7 @@ public record BucketedCategoryTint(int defaultColor) implements ItemTintSource {
         // 1. Variant wins when present — most specific colour. The client
         //    level can be null (rendering an item out of world), in which
         //    case we can't reach the registry; skip to category.
-        Identifier variantId = ResourceTadpoleBucketItem.readVariant(stack);
+        ResourceLocation variantId = ResourceTadpoleBucketItem.readVariant(stack);
         if (variantId != null && level != null) {
             Registry<SlimeVariant> registry = level.registryAccess().lookup(PFRegistries.SLIME_VARIANT).orElse(null);
             if (registry != null) {

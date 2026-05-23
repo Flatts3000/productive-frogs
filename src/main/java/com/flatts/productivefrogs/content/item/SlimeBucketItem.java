@@ -2,7 +2,7 @@ package com.flatts.productivefrogs.content.item;
 
 import com.flatts.productivefrogs.data.Category;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -57,7 +57,7 @@ public final class SlimeBucketItem extends MobBucketItem {
 
     @Override
     public Component getName(ItemStack stack) {
-        Identifier variantId = ResourceTadpoleBucketItem.readVariant(stack);
+        ResourceLocation variantId = ResourceTadpoleBucketItem.readVariant(stack);
         if (variantId != null) {
             return Component.translatable(
                 "item.productivefrogs.slime_bucket." + variantId.getPath());

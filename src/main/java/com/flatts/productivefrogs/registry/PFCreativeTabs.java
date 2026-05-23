@@ -5,7 +5,7 @@ import com.flatts.productivefrogs.data.Category;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
@@ -81,7 +81,7 @@ public final class PFCreativeTabs {
                     for (String variantName : PFItems.RESOURCE_SLIME_SPAWN_EGGS.keySet()) {
                         ItemStack stack = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
                         stack.set(PFDataComponents.SLIME_VARIANT.get(),
-                            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName));
+                            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName));
                         output.accept(stack);
                     }
                     // Spawn eggs grouped at the end so they read as a single block
@@ -129,7 +129,7 @@ public final class PFCreativeTabs {
                 .get().getDefaultInstance().get(PFDataComponents.CONTAINED_CATEGORY.get()),
             "variant spawn egg for '" + variantName + "' must carry CONTAINED_CATEGORY"
         );
-        Identifier variantId = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName);
+        ResourceLocation variantId = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName);
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
             tag.putString("Category", category.name());
             tag.putString("Variant", variantId.toString());

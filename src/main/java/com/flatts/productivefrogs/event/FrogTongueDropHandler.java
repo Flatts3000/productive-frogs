@@ -7,7 +7,7 @@ import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFItems;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
@@ -16,7 +16,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * When a {@link ResourceFrog} kills a {@link ResourceSlime} of its matching
@@ -89,7 +89,7 @@ public final class FrogTongueDropHandler {
      * <p>No category-match check here — callers verify that. This method
      * just emits the drop.
      */
-    public static void dropFroglightAtFrog(ResourceFrog frog, Category category, @Nullable Identifier variantId) {
+    public static void dropFroglightAtFrog(ResourceFrog frog, Category category, @Nullable ResourceLocation variantId) {
         Level level = frog.level();
         if (level.isClientSide()) {
             return;

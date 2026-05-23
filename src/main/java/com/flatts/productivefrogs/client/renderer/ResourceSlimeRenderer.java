@@ -10,7 +10,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.client.renderer.entity.layers.SlimeOuterLayer;
 import net.minecraft.client.renderer.entity.state.SlimeRenderState;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.monster.Slime;
 
@@ -66,12 +66,12 @@ import net.minecraft.world.entity.monster.Slime;
  */
 public class ResourceSlimeRenderer extends SlimeRenderer {
 
-    private static final Map<Category, Identifier> TEXTURES = buildTextureMap();
+    private static final Map<Category, ResourceLocation> TEXTURES = buildTextureMap();
 
-    private static Map<Category, Identifier> buildTextureMap() {
-        EnumMap<Category, Identifier> map = new EnumMap<>(Category.class);
+    private static Map<Category, ResourceLocation> buildTextureMap() {
+        EnumMap<Category, ResourceLocation> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {
-            map.put(cat, Identifier.fromNamespaceAndPath(
+            map.put(cat, ResourceLocation.fromNamespaceAndPath(
                 ProductiveFrogs.MOD_ID,
                 "textures/entity/slime/" + cat.id() + "_resource_slime.png"
             ));
@@ -92,7 +92,7 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
     }
 
     @Override
-    public Identifier getTextureLocation(SlimeRenderState state) {
+    public ResourceLocation getTextureLocation(SlimeRenderState state) {
         if (state instanceof ResourceSlimeRenderState rState) {
             if (rState.variantTexture != null) {
                 return rState.variantTexture;

@@ -8,13 +8,13 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Item tint source that reads {@link PFDataComponents#SLIME_VARIANT} off the
@@ -59,7 +59,7 @@ public record SlimeVariantTint(Layer layer, int defaultColor) implements ItemTin
 
     @Override
     public int calculate(ItemStack stack, @Nullable ClientLevel level, @Nullable LivingEntity holder) {
-        Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+        ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
         if (variantId != null && level != null) {
             Registry<SlimeVariant> registry = level.registryAccess().lookup(PFRegistries.SLIME_VARIANT).orElse(null);
             if (registry != null) {

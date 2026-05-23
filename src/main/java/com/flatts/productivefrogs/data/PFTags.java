@@ -4,7 +4,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import java.util.EnumMap;
 import java.util.Map;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 
@@ -27,7 +27,7 @@ public final class PFTags {
         for (Category cat : Category.values()) {
             map.put(cat, TagKey.create(
                 Registries.ITEM,
-                Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, cat.primerTagPath())
+                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, cat.primerTagPath())
             ));
         }
         return map;

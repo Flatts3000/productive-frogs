@@ -10,7 +10,7 @@ import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.state.SlimeRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Generic drop-in replacement for vanilla {@code SlimeOuterLayer} that paints
@@ -53,7 +53,7 @@ public class TintedSlimeOuterLayer extends RenderLayer<SlimeRenderState, SlimeMo
         }
 
         int overlay = LivingEntityRenderer.getOverlayCoords(state, 0.0F);
-        Identifier texture = parentRenderer.getTextureLocation(state);
+        ResourceLocation texture = parentRenderer.getTextureLocation(state);
 
         if (glowingOutline) {
             collector.order(1).submitModel(

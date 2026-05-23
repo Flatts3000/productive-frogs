@@ -9,7 +9,7 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.state.SlimeRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Drop-in replacement for vanilla {@code SlimeOuterLayer} with two changes:
@@ -55,7 +55,7 @@ public class ResourceSlimeOuterLayer extends RenderLayer<SlimeRenderState, Slime
         }
 
         int overlay = LivingEntityRenderer.getOverlayCoords(state, 0.0F);
-        Identifier texture = parentRenderer.getTextureLocation(state);
+        ResourceLocation texture = parentRenderer.getTextureLocation(state);
         // Variant-driven shell tint: ResourceSlimeRenderer.extractRenderState
         // writes ARGB.opaque(variant.primaryColor()) for variant-locked
         // slimes, -1 (white) for category-only slimes. The outline pass

@@ -28,7 +28,7 @@ import net.minecraft.gametest.framework.FunctionGameTestInstance;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -68,8 +68,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  */
 public final class PFGameTests {
 
-    private static final Identifier EMPTY_STRUCTURE =
-        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "empty_5x5x5");
+    private static final ResourceLocation EMPTY_STRUCTURE =
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "empty_5x5x5");
 
     public static final DeferredRegister<Consumer<GameTestHelper>> TEST_FUNCTIONS =
         DeferredRegister.create(BuiltInRegistries.TEST_FUNCTION, ProductiveFrogs.MOD_ID);
@@ -205,7 +205,7 @@ public final class PFGameTests {
         testInstancesRegistered = true;
 
         Holder<TestEnvironmentDefinition> defaultEnv = event.registerEnvironment(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "default")
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "default")
         );
 
         for (RegisteredTest test : REGISTERED_TESTS) {
@@ -418,13 +418,13 @@ public final class PFGameTests {
         net.minecraft.core.Registry<SlimeVariant> registry =
             helper.getLevel().registryAccess().lookupOrThrow(PFRegistries.SLIME_VARIANT);
 
-        java.util.Map.Entry<Identifier, SlimeVariant> ironEntry = SlimeVariant.findByPrimerItem(
-            registry, Identifier.fromNamespaceAndPath("minecraft", "iron_ingot"));
+        java.util.Map.Entry<ResourceLocation, SlimeVariant> ironEntry = SlimeVariant.findByPrimerItem(
+            registry, ResourceLocation.fromNamespaceAndPath("minecraft", "iron_ingot"));
         if (ironEntry == null) {
             helper.fail("iron_ingot should resolve to a variant (productivefrogs:iron)");
             return;
         }
-        if (!ironEntry.getKey().equals(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"))) {
+        if (!ironEntry.getKey().equals(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"))) {
             helper.fail("expected productivefrogs:iron, got " + ironEntry.getKey());
         }
 
@@ -432,13 +432,13 @@ public final class PFGameTests {
         // blaze_powder is in primer/infernal but not a variant primer) should
         // miss the variant lookup so the handler falls back to category-only.
         if (SlimeVariant.findByPrimerItem(registry,
-                Identifier.fromNamespaceAndPath("minecraft", "blaze_powder")) != null) {
+                ResourceLocation.fromNamespaceAndPath("minecraft", "blaze_powder")) != null) {
             helper.fail("blaze_powder is not a variant primer in V1 — lookup should miss");
         }
 
         // Stick is in NO primer tag — must miss too.
         if (SlimeVariant.findByPrimerItem(registry,
-                Identifier.fromNamespaceAndPath("minecraft", "stick")) != null) {
+                ResourceLocation.fromNamespaceAndPath("minecraft", "stick")) != null) {
             helper.fail("stick is not a primer for any variant — lookup should miss");
         }
         helper.succeed();
@@ -480,7 +480,7 @@ public final class PFGameTests {
                         + vanillaRemaining.size());
                 }
                 for (ResourceSlime s : resources) {
-                    Identifier variantId = s.getVariantId();
+                    ResourceLocation variantId = s.getVariantId();
                     if (variantId == null) {
                         helper.fail("split-discovered slime should carry a variant (METALLIC pool is non-empty)");
                         return;
@@ -516,7 +516,7 @@ public final class PFGameTests {
 
         ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
         slime.setSize(1, true);
-        Identifier ironVariant = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        ResourceLocation ironVariant = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
         slime.setVariant(ironVariant);
         // setVariant syncs category from the registry, but assert just in case.
         if (slime.getCategory() != Category.METALLIC) {
@@ -532,7 +532,7 @@ public final class PFGameTests {
                 .anyMatch(itemEntity -> {
                     ItemStack stack = itemEntity.getItem();
                     if (!stack.is(expected)) return false;
-                    Identifier variant = stack.get(
+                    ResourceLocation variant = stack.get(
                         com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get());
                     return ironVariant.equals(variant);
                 });
@@ -564,7 +564,7 @@ public final class PFGameTests {
             "ender_pearl"
         };
         for (String name : expected) {
-            Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, name);
+            ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, name);
             SlimeVariant variant = registry.getValue(id);
             if (variant == null) {
                 helper.fail("expected variant " + id + " to be loaded from datapack registry");
@@ -573,7 +573,7 @@ public final class PFGameTests {
 
         // Spot-check a specific variant's decoded fields so a codec regression
         // (e.g., a field name typo) fails the test, not just "registry empty."
-        SlimeVariant iron = registry.getValue(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        SlimeVariant iron = registry.getValue(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
         if (iron == null) {
             helper.fail("iron variant must be loaded");
             return;
@@ -581,7 +581,7 @@ public final class PFGameTests {
         if (iron.category() != Category.METALLIC) {
             helper.fail("iron variant should be METALLIC, got " + iron.category());
         }
-        if (!iron.primerItem().equals(Identifier.fromNamespaceAndPath("minecraft", "iron_ingot"))) {
+        if (!iron.primerItem().equals(ResourceLocation.fromNamespaceAndPath("minecraft", "iron_ingot"))) {
             helper.fail("iron variant primer should be minecraft:iron_ingot, got " + iron.primerItem());
         }
         // PR-F wires per-variant inner-cube PNGs: every shipped variant JSON
@@ -591,7 +591,7 @@ public final class PFGameTests {
             helper.fail("iron variant must declare a `texture` field after the per-variant PNG ship");
             return;
         }
-        Identifier expectedTexture = Identifier.fromNamespaceAndPath(
+        ResourceLocation expectedTexture = ResourceLocation.fromNamespaceAndPath(
             ProductiveFrogs.MOD_ID, "textures/entity/slime/iron_resource_slime.png");
         if (!expectedTexture.equals(iron.texture().get())) {
             helper.fail("iron texture path should be " + expectedTexture
@@ -620,15 +620,15 @@ public final class PFGameTests {
                 com.flatts.productivefrogs.registry.PFRegistries.PARENT_SPECIES);
 
         // entity_type id -> expected category
-        java.util.Map<Identifier, Category> expected = new java.util.LinkedHashMap<>();
-        expected.put(Identifier.parse("minecraft:slime"),              Category.METALLIC);
-        expected.put(Identifier.parse("minecraft:magma_cube"),         Category.INFERNAL);
-        expected.put(Identifier.parse("productivefrogs:cave_slime"),   Category.MINERAL);
-        expected.put(Identifier.parse("productivefrogs:geode_slime"),  Category.GEM);
-        expected.put(Identifier.parse("productivefrogs:tide_slime"),   Category.AQUATIC);
-        expected.put(Identifier.parse("productivefrogs:void_slime"),   Category.ARCANE);
+        java.util.Map<ResourceLocation, Category> expected = new java.util.LinkedHashMap<>();
+        expected.put(ResourceLocation.parse("minecraft:slime"),              Category.METALLIC);
+        expected.put(ResourceLocation.parse("minecraft:magma_cube"),         Category.INFERNAL);
+        expected.put(ResourceLocation.parse("productivefrogs:cave_slime"),   Category.MINERAL);
+        expected.put(ResourceLocation.parse("productivefrogs:geode_slime"),  Category.GEM);
+        expected.put(ResourceLocation.parse("productivefrogs:tide_slime"),   Category.AQUATIC);
+        expected.put(ResourceLocation.parse("productivefrogs:void_slime"),   Category.ARCANE);
 
-        java.util.Map<Identifier, Category> actual = new java.util.HashMap<>();
+        java.util.Map<ResourceLocation, Category> actual = new java.util.HashMap<>();
         for (com.flatts.productivefrogs.data.ParentSpeciesEntry entry : registry) {
             actual.put(entry.entityType(), entry.category());
         }
@@ -938,8 +938,8 @@ public final class PFGameTests {
      */
     private static void slimeBucketRoundTripPreservesVariant(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 2, 2);
-        Identifier variantId =
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
+        ResourceLocation variantId =
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
 
         ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), pos);
         source.setSize(1, true);
@@ -948,7 +948,7 @@ public final class PFGameTests {
         ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
         source.saveToBucketTag(bucket);
 
-        Identifier readBack =
+        ResourceLocation readBack =
             com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem.readVariant(bucket);
         if (readBack == null || !readBack.equals(variantId)) {
             helper.fail("slime bucket round-trip lost variant: wrote " + variantId
@@ -1137,7 +1137,7 @@ public final class PFGameTests {
         // setup but with a registered Variant so the milker has work to do.
         ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
         source.setSize(1, true);
-        Identifier ironVariant = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        ResourceLocation ironVariant = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
         source.setVariant(ironVariant);
         if (source.getCategory() != Category.METALLIC) {
             helper.fail("setVariant(iron) should sync category to METALLIC, got " + source.getCategory());
@@ -1148,7 +1148,7 @@ public final class PFGameTests {
         source.saveToBucketTag(bucket);
 
         // Pin the wire format the milker depends on: Variant is written as
-        // the full Identifier string. If saveToBucketTag is ever refactored
+        // the full ResourceLocation string. If saveToBucketTag is ever refactored
         // to write the bare path (or some struct shape), the milker silently
         // stops resolving variants — this assertion is the canary.
         net.minecraft.world.item.component.CustomData data =
@@ -1179,8 +1179,8 @@ public final class PFGameTests {
             return;
         }
         net.minecraft.world.item.Item ironMilkBucket = PFItems.MILK_BUCKETS.get(variantPath).get();
-        Identifier expected = BuiltInRegistries.ITEM.getKey(ironMilkBucket);
-        Identifier actual = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk_bucket");
+        ResourceLocation expected = BuiltInRegistries.ITEM.getKey(ironMilkBucket);
+        ResourceLocation actual = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk_bucket");
         if (!expected.equals(actual)) {
             helper.fail("expected MILK_BUCKETS.iron to resolve to productivefrogs:iron_slime_milk_bucket, got " + expected);
             return;
@@ -1238,7 +1238,7 @@ public final class PFGameTests {
             if (slime.getSize() != 1) {
                 helper.fail("spawned slime has size " + slime.getSize() + ", expected 1");
             }
-            Identifier expectedVariant = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+            ResourceLocation expectedVariant = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
             if (!expectedVariant.equals(slime.getVariantId())) {
                 helper.fail("spawned slime has variant " + slime.getVariantId() + ", expected " + expectedVariant);
             }
@@ -1287,7 +1287,7 @@ public final class PFGameTests {
                 return;
             }
             ResourceSlime slime = slimes.get(0);
-            Identifier expectedVariant = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
+            ResourceLocation expectedVariant = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
             if (!expectedVariant.equals(slime.getVariantId())) {
                 helper.fail("spawned slime has variant " + slime.getVariantId() + ", expected " + expectedVariant);
             }
@@ -1693,7 +1693,7 @@ public final class PFGameTests {
      */
     private static void variantFroglightRoundTripPreservesVariantThroughPlaceAndBreak(GameTestHelper helper) {
         BlockPos blockPos = new BlockPos(2, 2, 2);
-        Identifier ironVariant = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        ResourceLocation ironVariant = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
 
         ServerLevel level = helper.getLevel();
         BlockPos absPos = helper.absolutePos(blockPos);
@@ -1728,7 +1728,7 @@ public final class PFGameTests {
                 helper.fail("expected configurable_froglight to drop after break");
                 return;
             }
-            Identifier droppedVariant = match.getItem().get(
+            ResourceLocation droppedVariant = match.getItem().get(
                 com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get());
             if (!ironVariant.equals(droppedVariant)) {
                 helper.fail("dropped variant=" + droppedVariant + ", expected " + ironVariant);
@@ -1767,7 +1767,7 @@ public final class PFGameTests {
             net.minecraft.world.item.Item expectedOutput) {
         ItemStack stack = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
         stack.set(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get(),
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant));
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant));
         net.minecraft.world.item.crafting.SingleRecipeInput recipeInput =
             new net.minecraft.world.item.crafting.SingleRecipeInput(stack);
         java.util.Optional<net.minecraft.world.item.crafting.RecipeHolder<net.minecraft.world.item.crafting.SmeltingRecipe>> match =
@@ -1858,7 +1858,7 @@ public final class PFGameTests {
 
         ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(4, 2, 4));
         source.setSize(1, true);
-        Identifier ironVariant = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        ResourceLocation ironVariant = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
         source.setVariant(ironVariant);
         ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
         source.saveToBucketTag(bucket);
@@ -1885,7 +1885,7 @@ public final class PFGameTests {
                 .anyMatch(itemEntity -> {
                     ItemStack stack = itemEntity.getItem();
                     if (!stack.is(expected)) return false;
-                    Identifier variant = stack.get(
+                    ResourceLocation variant = stack.get(
                         com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get());
                     return ironVariant.equals(variant);
                 });
@@ -2053,7 +2053,7 @@ public final class PFGameTests {
         // flow produces.
         ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(4, 2, 4));
         source.setSize(1, true);
-        source.setVariant(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        source.setVariant(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
         ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
         source.saveToBucketTag(bucket);
         source.discard();
@@ -2158,7 +2158,7 @@ public final class PFGameTests {
         // Seed: a primed Slime Bucket in INPUT, a finished iron milk bucket in OUTPUT.
         ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(4, 2, 4));
         source.setSize(1, true);
-        source.setVariant(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        source.setVariant(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
         ItemStack primedBucket = new ItemStack(PFItems.SLIME_BUCKET.get());
         source.saveToBucketTag(primedBucket);
         source.discard();
@@ -2236,7 +2236,7 @@ public final class PFGameTests {
 
         ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(4, 2, 4));
         source.setSize(1, true);
-        source.setVariant(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        source.setVariant(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
         ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
         source.saveToBucketTag(bucket);
         source.discard();

@@ -1,0 +1,920 @@
+> Task :createMinecraftArtifacts UP-TO-DATE
+
+> Task :compileJava FAILED
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\PFClientEvents.java:130: error: cannot find symbol
+    public static void onRegisterItemTintSources(RegisterColorHandlersEvent.ItemTintSources event) {
+                                                                           ^
+  symbol:   class ItemTintSources
+  location: class RegisterColorHandlersEvent
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\CaveSlimeRenderer.java:7: error: package net.minecraft.client.renderer.entity.state does not exist
+import net.minecraft.client.renderer.entity.state.SlimeRenderState;
+                                                 ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\CaveSlimeRenderer.java:33: error: cannot find symbol
+    public ResourceLocation getTextureLocation(SlimeRenderState state) {
+                                               ^
+  symbol:   class SlimeRenderState
+  location: class CaveSlimeRenderer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\GeodeSlimeRenderer.java:7: error: package net.minecraft.client.renderer.entity.state does not exist
+import net.minecraft.client.renderer.entity.state.SlimeRenderState;
+                                                 ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\GeodeSlimeRenderer.java:33: error: cannot find symbol
+    public ResourceLocation getTextureLocation(SlimeRenderState state) {
+                                               ^
+  symbol:   class SlimeRenderState
+  location: class GeodeSlimeRenderer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceFrogRenderer.java:6: error: package net.minecraft.client.renderer.entity.state does not exist
+import net.minecraft.client.renderer.entity.state.FrogRenderState;
+                                                 ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceFrogRenderer.java:26: error: cannot find symbol
+    public FrogRenderState createRenderState() {
+           ^
+  symbol:   class FrogRenderState
+  location: class ResourceFrogRenderer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceFrogRenderer.java:31: error: cannot find symbol
+    public void extractRenderState(Frog entity, FrogRenderState state, float partialTick) {
+                                                ^
+  symbol:   class FrogRenderState
+  location: class ResourceFrogRenderer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceFrogRenderer.java:39: error: cannot find symbol
+    protected int getModelTint(FrogRenderState state) {
+                               ^
+  symbol:   class FrogRenderState
+  location: class ResourceFrogRenderer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceFrogRenderState.java:4: error: package net.minecraft.client.renderer.entity.state does not exist
+import net.minecraft.client.renderer.entity.state.FrogRenderState;
+                                                 ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceFrogRenderState.java:12: error: cannot find symbol
+public class ResourceFrogRenderState extends FrogRenderState {
+                                             ^
+  symbol: class FrogRenderState
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:6: error: package net.minecraft.client.model.monster.slime does not exist
+import net.minecraft.client.model.monster.slime.SlimeModel;
+                                               ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:7: error: cannot find symbol
+import net.minecraft.client.renderer.SubmitNodeCollector;
+                                    ^
+  symbol:   class SubmitNodeCollector
+  location: package net.minecraft.client.renderer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:10: error: package net.minecraft.client.renderer.entity.state does not exist
+import net.minecraft.client.renderer.entity.state.SlimeRenderState;
+                                                 ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:11: error: package net.minecraft.client.renderer.rendertype does not exist
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+                                               ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:38: error: cannot find symbol
+public class ResourceSlimeOuterLayer extends RenderLayer<SlimeRenderState, SlimeModel> {
+                                                         ^
+  symbol: class SlimeRenderState
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:38: error: cannot find symbol
+public class ResourceSlimeOuterLayer extends RenderLayer<SlimeRenderState, SlimeModel> {
+                                                                           ^
+  symbol: class SlimeModel
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:40: error: cannot find symbol
+    private final SlimeModel model;
+                  ^
+  symbol:   class SlimeModel
+  location: class ResourceSlimeOuterLayer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeRenderer.java:12: error: package net.minecraft.client.renderer.entity.state does not exist
+import net.minecraft.client.renderer.entity.state.SlimeRenderState;
+                                                 ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeRenderer.java:14: error: cannot find symbol
+import net.minecraft.util.ARGB;
+                         ^
+  symbol:   class ARGB
+  location: package net.minecraft.util
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:50: error: cannot find symbol
+    public void submit(PoseStack pose, SubmitNodeCollector collector, int light, SlimeRenderState state,
+                                       ^
+  symbol:   class SubmitNodeCollector
+  location: class ResourceSlimeOuterLayer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:50: error: cannot find symbol
+    public void submit(PoseStack pose, SubmitNodeCollector collector, int light, SlimeRenderState state,
+                                                                                 ^
+  symbol:   class SlimeRenderState
+  location: class ResourceSlimeOuterLayer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeRenderer.java:95: error: cannot find symbol
+    public ResourceLocation getTextureLocation(SlimeRenderState state) {
+                                               ^
+  symbol:   class SlimeRenderState
+  location: class ResourceSlimeRenderer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeRenderer.java:108: error: cannot find symbol
+    public SlimeRenderState createRenderState() {
+           ^
+  symbol:   class SlimeRenderState
+  location: class ResourceSlimeRenderer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeRenderer.java:113: error: cannot find symbol
+    public void extractRenderState(Slime entity, SlimeRenderState state, float partialTick) {
+                                                 ^
+  symbol:   class SlimeRenderState
+  location: class ResourceSlimeRenderer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeRenderState.java:4: error: package net.minecraft.client.renderer.entity.state does not exist
+import net.minecraft.client.renderer.entity.state.SlimeRenderState;
+                                                 ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeRenderState.java:40: error: cannot find symbol
+public class ResourceSlimeRenderState extends SlimeRenderState {
+                                              ^
+  symbol: class SlimeRenderState
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceTadpoleRenderer.java:6: error: package net.minecraft.client.renderer.entity.state does not exist
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+                                                 ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceTadpoleRenderer.java:27: error: cannot find symbol
+    public LivingEntityRenderState createRenderState() {
+           ^
+  symbol:   class LivingEntityRenderState
+  location: class ResourceTadpoleRenderer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceTadpoleRenderer.java:32: error: cannot find symbol
+    public void extractRenderState(Tadpole entity, LivingEntityRenderState state, float partialTick) {
+                                                   ^
+  symbol:   class LivingEntityRenderState
+  location: class ResourceTadpoleRenderer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceTadpoleRenderer.java:40: error: cannot find symbol
+    protected int getModelTint(LivingEntityRenderState state) {
+                               ^
+  symbol:   class LivingEntityRenderState
+  location: class ResourceTadpoleRenderer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceTadpoleRenderState.java:4: error: package net.minecraft.client.renderer.entity.state does not exist
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+                                                 ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceTadpoleRenderState.java:13: error: cannot find symbol
+public class ResourceTadpoleRenderState extends LivingEntityRenderState {
+                                                ^
+  symbol: class LivingEntityRenderState
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TideSlimeRenderer.java:7: error: package net.minecraft.client.renderer.entity.state does not exist
+import net.minecraft.client.renderer.entity.state.SlimeRenderState;
+                                                 ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TideSlimeRenderer.java:32: error: cannot find symbol
+    public ResourceLocation getTextureLocation(SlimeRenderState state) {
+                                               ^
+  symbol:   class SlimeRenderState
+  location: class TideSlimeRenderer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:6: error: package net.minecraft.client.model.monster.slime does not exist
+import net.minecraft.client.model.monster.slime.SlimeModel;
+                                               ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:7: error: cannot find symbol
+import net.minecraft.client.renderer.SubmitNodeCollector;
+                                    ^
+  symbol:   class SubmitNodeCollector
+  location: package net.minecraft.client.renderer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:11: error: package net.minecraft.client.renderer.entity.state does not exist
+import net.minecraft.client.renderer.entity.state.SlimeRenderState;
+                                                 ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:12: error: package net.minecraft.client.renderer.rendertype does not exist
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+                                               ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:34: error: cannot find symbol
+public class TintedSlimeOuterLayer extends RenderLayer<SlimeRenderState, SlimeModel> {
+                                                       ^
+  symbol: class SlimeRenderState
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:34: error: cannot find symbol
+public class TintedSlimeOuterLayer extends RenderLayer<SlimeRenderState, SlimeModel> {
+                                                                         ^
+  symbol: class SlimeModel
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:36: error: cannot find symbol
+    private final SlimeModel model;
+                  ^
+  symbol:   class SlimeModel
+  location: class TintedSlimeOuterLayer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:48: error: cannot find symbol
+    public void submit(PoseStack pose, SubmitNodeCollector collector, int light, SlimeRenderState state,
+                                       ^
+  symbol:   class SubmitNodeCollector
+  location: class TintedSlimeOuterLayer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:48: error: cannot find symbol
+    public void submit(PoseStack pose, SubmitNodeCollector collector, int light, SlimeRenderState state,
+                                                                                 ^
+  symbol:   class SlimeRenderState
+  location: class TintedSlimeOuterLayer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\VoidSlimeRenderer.java:7: error: package net.minecraft.client.renderer.entity.state does not exist
+import net.minecraft.client.renderer.entity.state.SlimeRenderState;
+                                                 ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\VoidSlimeRenderer.java:32: error: cannot find symbol
+    public ResourceLocation getTextureLocation(SlimeRenderState state) {
+                                               ^
+  symbol:   class SlimeRenderState
+  location: class VoidSlimeRenderer
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\menu\SlimeMilkerMenu.java:20: error: package net.neoforged.neoforge.transfer.item does not exist
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
+                                           ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerBlockEntity.java:22: error: cannot find symbol
+import net.minecraft.world.level.storage.ValueInput;
+                                        ^
+  symbol:   class ValueInput
+  location: package net.minecraft.world.level.storage
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerBlockEntity.java:23: error: cannot find symbol
+import net.minecraft.world.level.storage.ValueOutput;
+                                        ^
+  symbol:   class ValueOutput
+  location: package net.minecraft.world.level.storage
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:6: error: package net.neoforged.neoforge.transfer does not exist
+import net.neoforged.neoforge.transfer.ResourceHandler;
+                                      ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:7: error: package net.neoforged.neoforge.transfer.item does not exist
+import net.neoforged.neoforge.transfer.item.ItemResource;
+                                           ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:8: error: package net.neoforged.neoforge.transfer.item does not exist
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+                                           ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:9: error: package net.neoforged.neoforge.transfer.transaction does not exist
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
+                                                  ^
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:42: error: cannot find symbol
+public class SlimeMilkerInventory extends ItemStacksResourceHandler {
+                                          ^
+  symbol: class ItemStacksResourceHandler
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerBlockEntity.java:191: error: cannot find symbol
+    protected void saveAdditional(ValueOutput out) {
+                                  ^
+  symbol:   class ValueOutput
+  location: class SlimeMilkerBlockEntity
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerBlockEntity.java:198: error: cannot find symbol
+    protected void loadAdditional(ValueInput in) {
+                                  ^
+  symbol:   class ValueInput
+  location: class SlimeMilkerBlockEntity
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:55: error: cannot find symbol
+    private final ResourceHandler<ItemResource> inputView;
+                  ^
+  symbol:   class ResourceHandler
+  location: class SlimeMilkerInventory
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:55: error: cannot find symbol
+    private final ResourceHandler<ItemResource> inputView;
+                                  ^
+  symbol:   class ItemResource
+  location: class SlimeMilkerInventory
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:56: error: cannot find symbol
+    private final ResourceHandler<ItemResource> outputView;
+                  ^
+  symbol:   class ResourceHandler
+  location: class SlimeMilkerInventory
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:56: error: cannot find symbol
+    private final ResourceHandler<ItemResource> outputView;
+                                  ^
+  symbol:   class ItemResource
+  location: class SlimeMilkerInventory
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:66: error: cannot find symbol
+    public boolean isValid(int index, ItemResource resource) {
+                                      ^
+  symbol:   class ItemResource
+  location: class SlimeMilkerInventory
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:108: error: cannot find symbol
+    public ResourceHandler<ItemResource> inputView() {
+           ^
+  symbol:   class ResourceHandler
+  location: class SlimeMilkerInventory
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:108: error: cannot find symbol
+    public ResourceHandler<ItemResource> inputView() {
+                           ^
+  symbol:   class ItemResource
+  location: class SlimeMilkerInventory
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:118: error: cannot find symbol
+    public ResourceHandler<ItemResource> outputView() {
+           ^
+  symbol:   class ResourceHandler
+  location: class SlimeMilkerInventory
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:118: error: cannot find symbol
+    public ResourceHandler<ItemResource> outputView() {
+                           ^
+  symbol:   class ItemResource
+  location: class SlimeMilkerInventory
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\BucketedCategoryTint.java:9: error: cannot find symbol
+import net.minecraft.client.color.item.ItemTintSource;
+                                      ^
+  symbol:   class ItemTintSource
+  location: package net.minecraft.client.color.item
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\BucketedCategoryTint.java:13: error: cannot find symbol
+import net.minecraft.util.ARGB;
+                         ^
+  symbol:   class ARGB
+  location: package net.minecraft.util
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\BucketedCategoryTint.java:42: error: cannot find symbol
+public record BucketedCategoryTint(int defaultColor) implements ItemTintSource {
+                                                                ^
+  symbol: class ItemTintSource
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\ContainedCategoryTint.java:7: error: cannot find symbol
+import net.minecraft.client.color.item.ItemTintSource;
+                                      ^
+  symbol:   class ItemTintSource
+  location: package net.minecraft.client.color.item
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\ContainedCategoryTint.java:9: error: cannot find symbol
+import net.minecraft.util.ARGB;
+                         ^
+  symbol:   class ARGB
+  location: package net.minecraft.util
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\ContainedCategoryTint.java:30: error: cannot find symbol
+public record ContainedCategoryTint(int defaultColor) implements ItemTintSource {
+                                                                 ^
+  symbol: class ItemTintSource
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\SlimeVariantTint.java:8: error: cannot find symbol
+import net.minecraft.client.color.item.ItemTintSource;
+                                      ^
+  symbol:   class ItemTintSource
+  location: package net.minecraft.client.color.item
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\SlimeVariantTint.java:12: error: cannot find symbol
+import net.minecraft.util.ARGB;
+                         ^
+  symbol:   class ARGB
+  location: package net.minecraft.util
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\SlimeVariantTint.java:35: error: cannot find symbol
+public record SlimeVariantTint(Layer layer, int defaultColor) implements ItemTintSource {
+                                                                         ^
+  symbol: class ItemTintSource
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\ConfigurableFroglightBlockEntity.java:7: error: cannot find symbol
+import net.minecraft.core.component.DataComponentGetter;
+                                   ^
+  symbol:   class DataComponentGetter
+  location: package net.minecraft.core.component
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\ConfigurableFroglightBlockEntity.java:16: error: cannot find symbol
+import net.minecraft.world.level.storage.ValueInput;
+                                        ^
+  symbol:   class ValueInput
+  location: package net.minecraft.world.level.storage
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\ConfigurableFroglightBlockEntity.java:17: error: cannot find symbol
+import net.minecraft.world.level.storage.ValueOutput;
+                                        ^
+  symbol:   class ValueOutput
+  location: package net.minecraft.world.level.storage
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\ConfigurableFroglightBlockEntity.java:114: error: cannot find symbol
+    protected void applyImplicitComponents(DataComponentGetter components) {
+                                           ^
+  symbol:   class DataComponentGetter
+  location: class ConfigurableFroglightBlockEntity
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\ConfigurableFroglightBlockEntity.java:120: error: cannot find symbol
+    protected void saveAdditional(ValueOutput out) {
+                                  ^
+  symbol:   class ValueOutput
+  location: class ConfigurableFroglightBlockEntity
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\ConfigurableFroglightBlockEntity.java:128: error: cannot find symbol
+    protected void loadAdditional(ValueInput in) {
+                                  ^
+  symbol:   class ValueInput
+  location: class ConfigurableFroglightBlockEntity
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:128: error: cannot find symbol
+    private static final class SidedView implements ResourceHandler<ItemResource> {
+                                                    ^
+  symbol:   class ResourceHandler
+  location: class SlimeMilkerInventory
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:128: error: cannot find symbol
+    private static final class SidedView implements ResourceHandler<ItemResource> {
+                                                                    ^
+  symbol:   class ItemResource
+  location: class SlimeMilkerInventory
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:148: error: cannot find symbol
+        public ItemResource getResource(int index) {
+               ^
+  symbol:   class ItemResource
+  location: class SidedView
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:160: error: cannot find symbol
+        public long getCapacityAsLong(int index, ItemResource resource) {
+                                                 ^
+  symbol:   class ItemResource
+  location: class SidedView
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:166: error: cannot find symbol
+        public boolean isValid(int index, ItemResource resource) {
+                                          ^
+  symbol:   class ItemResource
+  location: class SidedView
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:173: error: cannot find symbol
+        public int insert(int index, ItemResource resource, int amount, TransactionContext transaction) {
+                                     ^
+  symbol:   class ItemResource
+  location: class SidedView
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:173: error: cannot find symbol
+        public int insert(int index, ItemResource resource, int amount, TransactionContext transaction) {
+                                                                        ^
+  symbol:   class TransactionContext
+  location: class SidedView
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:182: error: cannot find symbol
+        public int extract(int index, ItemResource resource, int amount, TransactionContext transaction) {
+                                      ^
+  symbol:   class ItemResource
+  location: class SidedView
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:182: error: cannot find symbol
+        public int extract(int index, ItemResource resource, int amount, TransactionContext transaction) {
+                                                                         ^
+  symbol:   class TransactionContext
+  location: class SidedView
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\PrimedFrogEggBlock.java:12: error: cannot find symbol
+import net.minecraft.world.entity.EntitySpawnReason;
+                                 ^
+  symbol:   class EntitySpawnReason
+  location: package net.minecraft.world.entity
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\PrimedFrogEggBlock.java:16: error: cannot find symbol
+import net.minecraft.world.level.ScheduledTickAccess;
+                                ^
+  symbol:   class ScheduledTickAccess
+  location: package net.minecraft.world.level
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\PrimedFrogEggBlock.java:82: error: cannot find symbol
+    public BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess ticks,
+                                                                       ^
+  symbol:   class ScheduledTickAccess
+  location: class PrimedFrogEggBlock
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\SlimeMilkSourceBlock.java:12: error: cannot find symbol
+import net.minecraft.world.entity.EntitySpawnReason;
+                                 ^
+  symbol:   class EntitySpawnReason
+  location: package net.minecraft.world.entity
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\entity\ResourceFrog.java:32: error: cannot find symbol
+import net.minecraft.world.level.storage.ValueInput;
+                                        ^
+  symbol:   class ValueInput
+  location: package net.minecraft.world.level.storage
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\entity\ResourceFrog.java:33: error: cannot find symbol
+import net.minecraft.world.level.storage.ValueOutput;
+                                        ^
+  symbol:   class ValueOutput
+  location: package net.minecraft.world.level.storage
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\entity\ResourceFrog.java:103: error: cannot find symbol
+    protected void addAdditionalSaveData(ValueOutput out) {
+                                         ^
+  symbol:   class ValueOutput
+  location: class ResourceFrog
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\entity\ResourceFrog.java:109: error: cannot find symbol
+    protected void readAdditionalSaveData(ValueInput in) {
+                                          ^
+  symbol:   class ValueInput
+  location: class ResourceFrog
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\entity\ResourceSlime.java:18: error: cannot find symbol
+import net.minecraft.world.entity.ConversionParams;
+                                 ^
+  symbol:   class ConversionParams
+  location: package net.minecraft.world.entity
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\entity\ResourceSlime.java:19: error: cannot find symbol
+import net.minecraft.world.entity.ConversionType;
+                                 ^
+  symbol:   class ConversionType
+  location: package net.minecraft.world.entity
+F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\entity\ResourceSlime.java:21: error: cannot find symbol
+import net.minecraft.world.entity.EntitySpawnReason;
+                                 ^
+  symbol:   class EntitySpawnReason
+  location: package net.minecraft.world.entity
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+100 errors
+
+[Incubating] Problems report is available at: file:///F:/minecraft-repos/productive-frogs/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
+> Compilation failed; see the compiler output below.
+  Note: Recompile with -Xlint:deprecation for details.
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\PFClientEvents.java:130: error: cannot find symbol
+      public static void onRegisterItemTintSources(RegisterColorHandlersEvent.ItemTintSources event) {
+                                                                             ^
+    symbol:   class ItemTintSources
+    location: class RegisterColorHandlersEvent
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\CaveSlimeRenderer.java:33: error: cannot find symbol
+      public ResourceLocation getTextureLocation(SlimeRenderState state) {
+                                                 ^
+    symbol:   class SlimeRenderState
+    location: class CaveSlimeRenderer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\GeodeSlimeRenderer.java:33: error: cannot find symbol
+      public ResourceLocation getTextureLocation(SlimeRenderState state) {
+                                                 ^
+    symbol:   class SlimeRenderState
+    location: class GeodeSlimeRenderer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceFrogRenderer.java:26: error: cannot find symbol
+      public FrogRenderState createRenderState() {
+             ^
+    symbol:   class FrogRenderState
+    location: class ResourceFrogRenderer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceFrogRenderer.java:31: error: cannot find symbol
+      public void extractRenderState(Frog entity, FrogRenderState state, float partialTick) {
+                                                  ^
+    symbol:   class FrogRenderState
+    location: class ResourceFrogRenderer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceFrogRenderer.java:39: error: cannot find symbol
+      protected int getModelTint(FrogRenderState state) {
+                                 ^
+    symbol:   class FrogRenderState
+    location: class ResourceFrogRenderer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:7: error: cannot find symbol
+  import net.minecraft.client.renderer.SubmitNodeCollector;
+                                      ^
+    symbol:   class SubmitNodeCollector
+    location: package net.minecraft.client.renderer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:40: error: cannot find symbol
+      private final SlimeModel model;
+                    ^
+    symbol:   class SlimeModel
+    location: class ResourceSlimeOuterLayer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeRenderer.java:14: error: cannot find symbol
+  import net.minecraft.util.ARGB;
+                           ^
+    symbol:   class ARGB
+    location: package net.minecraft.util
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:50: error: cannot find symbol
+      public void submit(PoseStack pose, SubmitNodeCollector collector, int light, SlimeRenderState state,
+                                         ^
+    symbol:   class SubmitNodeCollector
+    location: class ResourceSlimeOuterLayer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:50: error: cannot find symbol
+      public void submit(PoseStack pose, SubmitNodeCollector collector, int light, SlimeRenderState state,
+                                                                                   ^
+    symbol:   class SlimeRenderState
+    location: class ResourceSlimeOuterLayer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeRenderer.java:95: error: cannot find symbol
+      public ResourceLocation getTextureLocation(SlimeRenderState state) {
+                                                 ^
+    symbol:   class SlimeRenderState
+    location: class ResourceSlimeRenderer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeRenderer.java:108: error: cannot find symbol
+      public SlimeRenderState createRenderState() {
+             ^
+    symbol:   class SlimeRenderState
+    location: class ResourceSlimeRenderer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeRenderer.java:113: error: cannot find symbol
+      public void extractRenderState(Slime entity, SlimeRenderState state, float partialTick) {
+                                                   ^
+    symbol:   class SlimeRenderState
+    location: class ResourceSlimeRenderer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceTadpoleRenderer.java:27: error: cannot find symbol
+      public LivingEntityRenderState createRenderState() {
+             ^
+    symbol:   class LivingEntityRenderState
+    location: class ResourceTadpoleRenderer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceTadpoleRenderer.java:32: error: cannot find symbol
+      public void extractRenderState(Tadpole entity, LivingEntityRenderState state, float partialTick) {
+                                                     ^
+    symbol:   class LivingEntityRenderState
+    location: class ResourceTadpoleRenderer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceTadpoleRenderer.java:40: error: cannot find symbol
+      protected int getModelTint(LivingEntityRenderState state) {
+                                 ^
+    symbol:   class LivingEntityRenderState
+    location: class ResourceTadpoleRenderer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TideSlimeRenderer.java:32: error: cannot find symbol
+      public ResourceLocation getTextureLocation(SlimeRenderState state) {
+                                                 ^
+    symbol:   class SlimeRenderState
+    location: class TideSlimeRenderer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:7: error: cannot find symbol
+  import net.minecraft.client.renderer.SubmitNodeCollector;
+                                      ^
+    symbol:   class SubmitNodeCollector
+    location: package net.minecraft.client.renderer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:36: error: cannot find symbol
+      private final SlimeModel model;
+                    ^
+    symbol:   class SlimeModel
+    location: class TintedSlimeOuterLayer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:48: error: cannot find symbol
+      public void submit(PoseStack pose, SubmitNodeCollector collector, int light, SlimeRenderState state,
+                                         ^
+    symbol:   class SubmitNodeCollector
+    location: class TintedSlimeOuterLayer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:48: error: cannot find symbol
+      public void submit(PoseStack pose, SubmitNodeCollector collector, int light, SlimeRenderState state,
+                                                                                   ^
+    symbol:   class SlimeRenderState
+    location: class TintedSlimeOuterLayer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\VoidSlimeRenderer.java:32: error: cannot find symbol
+      public ResourceLocation getTextureLocation(SlimeRenderState state) {
+                                                 ^
+    symbol:   class SlimeRenderState
+    location: class VoidSlimeRenderer
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerBlockEntity.java:22: error: cannot find symbol
+  import net.minecraft.world.level.storage.ValueInput;
+                                          ^
+    symbol:   class ValueInput
+    location: package net.minecraft.world.level.storage
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerBlockEntity.java:23: error: cannot find symbol
+  import net.minecraft.world.level.storage.ValueOutput;
+                                          ^
+    symbol:   class ValueOutput
+    location: package net.minecraft.world.level.storage
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerBlockEntity.java:191: error: cannot find symbol
+      protected void saveAdditional(ValueOutput out) {
+                                    ^
+    symbol:   class ValueOutput
+    location: class SlimeMilkerBlockEntity
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerBlockEntity.java:198: error: cannot find symbol
+      protected void loadAdditional(ValueInput in) {
+                                    ^
+    symbol:   class ValueInput
+    location: class SlimeMilkerBlockEntity
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:55: error: cannot find symbol
+      private final ResourceHandler<ItemResource> inputView;
+                    ^
+    symbol:   class ResourceHandler
+    location: class SlimeMilkerInventory
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:55: error: cannot find symbol
+      private final ResourceHandler<ItemResource> inputView;
+                                    ^
+    symbol:   class ItemResource
+    location: class SlimeMilkerInventory
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:56: error: cannot find symbol
+      private final ResourceHandler<ItemResource> outputView;
+                    ^
+    symbol:   class ResourceHandler
+    location: class SlimeMilkerInventory
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:56: error: cannot find symbol
+      private final ResourceHandler<ItemResource> outputView;
+                                    ^
+    symbol:   class ItemResource
+    location: class SlimeMilkerInventory
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:66: error: cannot find symbol
+      public boolean isValid(int index, ItemResource resource) {
+                                        ^
+    symbol:   class ItemResource
+    location: class SlimeMilkerInventory
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:108: error: cannot find symbol
+      public ResourceHandler<ItemResource> inputView() {
+             ^
+    symbol:   class ResourceHandler
+    location: class SlimeMilkerInventory
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:108: error: cannot find symbol
+      public ResourceHandler<ItemResource> inputView() {
+                             ^
+    symbol:   class ItemResource
+    location: class SlimeMilkerInventory
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:118: error: cannot find symbol
+      public ResourceHandler<ItemResource> outputView() {
+             ^
+    symbol:   class ResourceHandler
+    location: class SlimeMilkerInventory
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:118: error: cannot find symbol
+      public ResourceHandler<ItemResource> outputView() {
+                             ^
+    symbol:   class ItemResource
+    location: class SlimeMilkerInventory
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\BucketedCategoryTint.java:9: error: cannot find symbol
+  import net.minecraft.client.color.item.ItemTintSource;
+                                        ^
+    symbol:   class ItemTintSource
+    location: package net.minecraft.client.color.item
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\BucketedCategoryTint.java:13: error: cannot find symbol
+  import net.minecraft.util.ARGB;
+                           ^
+    symbol:   class ARGB
+    location: package net.minecraft.util
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\ContainedCategoryTint.java:7: error: cannot find symbol
+  import net.minecraft.client.color.item.ItemTintSource;
+                                        ^
+    symbol:   class ItemTintSource
+    location: package net.minecraft.client.color.item
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\ContainedCategoryTint.java:9: error: cannot find symbol
+  import net.minecraft.util.ARGB;
+                           ^
+    symbol:   class ARGB
+    location: package net.minecraft.util
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\SlimeVariantTint.java:8: error: cannot find symbol
+  import net.minecraft.client.color.item.ItemTintSource;
+                                        ^
+    symbol:   class ItemTintSource
+    location: package net.minecraft.client.color.item
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\SlimeVariantTint.java:12: error: cannot find symbol
+  import net.minecraft.util.ARGB;
+                           ^
+    symbol:   class ARGB
+    location: package net.minecraft.util
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\ConfigurableFroglightBlockEntity.java:7: error: cannot find symbol
+  import net.minecraft.core.component.DataComponentGetter;
+                                     ^
+    symbol:   class DataComponentGetter
+    location: package net.minecraft.core.component
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\ConfigurableFroglightBlockEntity.java:16: error: cannot find symbol
+  import net.minecraft.world.level.storage.ValueInput;
+                                          ^
+    symbol:   class ValueInput
+    location: package net.minecraft.world.level.storage
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\ConfigurableFroglightBlockEntity.java:17: error: cannot find symbol
+  import net.minecraft.world.level.storage.ValueOutput;
+                                          ^
+    symbol:   class ValueOutput
+    location: package net.minecraft.world.level.storage
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\ConfigurableFroglightBlockEntity.java:114: error: cannot find symbol
+      protected void applyImplicitComponents(DataComponentGetter components) {
+                                             ^
+    symbol:   class DataComponentGetter
+    location: class ConfigurableFroglightBlockEntity
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\ConfigurableFroglightBlockEntity.java:120: error: cannot find symbol
+      protected void saveAdditional(ValueOutput out) {
+                                    ^
+    symbol:   class ValueOutput
+    location: class ConfigurableFroglightBlockEntity
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\ConfigurableFroglightBlockEntity.java:128: error: cannot find symbol
+      protected void loadAdditional(ValueInput in) {
+                                    ^
+    symbol:   class ValueInput
+    location: class ConfigurableFroglightBlockEntity
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:128: error: cannot find symbol
+      private static final class SidedView implements ResourceHandler<ItemResource> {
+                                                      ^
+    symbol:   class ResourceHandler
+    location: class SlimeMilkerInventory
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:128: error: cannot find symbol
+      private static final class SidedView implements ResourceHandler<ItemResource> {
+                                                                      ^
+    symbol:   class ItemResource
+    location: class SlimeMilkerInventory
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:148: error: cannot find symbol
+          public ItemResource getResource(int index) {
+                 ^
+    symbol:   class ItemResource
+    location: class SidedView
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:160: error: cannot find symbol
+          public long getCapacityAsLong(int index, ItemResource resource) {
+                                                   ^
+    symbol:   class ItemResource
+    location: class SidedView
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:166: error: cannot find symbol
+          public boolean isValid(int index, ItemResource resource) {
+                                            ^
+    symbol:   class ItemResource
+    location: class SidedView
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:173: error: cannot find symbol
+          public int insert(int index, ItemResource resource, int amount, TransactionContext transaction) {
+                                       ^
+    symbol:   class ItemResource
+    location: class SidedView
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:173: error: cannot find symbol
+          public int insert(int index, ItemResource resource, int amount, TransactionContext transaction) {
+                                                                          ^
+    symbol:   class TransactionContext
+    location: class SidedView
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:182: error: cannot find symbol
+          public int extract(int index, ItemResource resource, int amount, TransactionContext transaction) {
+                                        ^
+    symbol:   class ItemResource
+    location: class SidedView
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:182: error: cannot find symbol
+          public int extract(int index, ItemResource resource, int amount, TransactionContext transaction) {
+                                                                           ^
+    symbol:   class TransactionContext
+    location: class SidedView
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\PrimedFrogEggBlock.java:12: error: cannot find symbol
+  import net.minecraft.world.entity.EntitySpawnReason;
+                                   ^
+    symbol:   class EntitySpawnReason
+    location: package net.minecraft.world.entity
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\PrimedFrogEggBlock.java:16: error: cannot find symbol
+  import net.minecraft.world.level.ScheduledTickAccess;
+                                  ^
+    symbol:   class ScheduledTickAccess
+    location: package net.minecraft.world.level
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\PrimedFrogEggBlock.java:82: error: cannot find symbol
+      public BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess ticks,
+                                                                         ^
+    symbol:   class ScheduledTickAccess
+    location: class PrimedFrogEggBlock
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\SlimeMilkSourceBlock.java:12: error: cannot find symbol
+  import net.minecraft.world.entity.EntitySpawnReason;
+                                   ^
+    symbol:   class EntitySpawnReason
+    location: package net.minecraft.world.entity
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\entity\ResourceFrog.java:32: error: cannot find symbol
+  import net.minecraft.world.level.storage.ValueInput;
+                                          ^
+    symbol:   class ValueInput
+    location: package net.minecraft.world.level.storage
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\entity\ResourceFrog.java:33: error: cannot find symbol
+  import net.minecraft.world.level.storage.ValueOutput;
+                                          ^
+    symbol:   class ValueOutput
+    location: package net.minecraft.world.level.storage
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\entity\ResourceFrog.java:103: error: cannot find symbol
+      protected void addAdditionalSaveData(ValueOutput out) {
+                                           ^
+    symbol:   class ValueOutput
+    location: class ResourceFrog
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\entity\ResourceFrog.java:109: error: cannot find symbol
+      protected void readAdditionalSaveData(ValueInput in) {
+                                            ^
+    symbol:   class ValueInput
+    location: class ResourceFrog
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\entity\ResourceSlime.java:18: error: cannot find symbol
+  import net.minecraft.world.entity.ConversionParams;
+                                   ^
+    symbol:   class ConversionParams
+    location: package net.minecraft.world.entity
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\entity\ResourceSlime.java:19: error: cannot find symbol
+  import net.minecraft.world.entity.ConversionType;
+                                   ^
+    symbol:   class ConversionType
+    location: package net.minecraft.world.entity
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\entity\ResourceSlime.java:21: error: cannot find symbol
+  import net.minecraft.world.entity.EntitySpawnReason;
+                                   ^
+    symbol:   class EntitySpawnReason
+    location: package net.minecraft.world.entity
+  Note: Some input files use or override a deprecated API.
+  Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceFrogRenderState.java:12: error: cannot find symbol
+  public class ResourceFrogRenderState extends FrogRenderState {
+                                               ^
+    symbol: class FrogRenderState
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:38: error: cannot find symbol
+  public class ResourceSlimeOuterLayer extends RenderLayer<SlimeRenderState, SlimeModel> {
+                                                           ^
+    symbol: class SlimeRenderState
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:38: error: cannot find symbol
+  public class ResourceSlimeOuterLayer extends RenderLayer<SlimeRenderState, SlimeModel> {
+                                                                             ^
+    symbol: class SlimeModel
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeRenderState.java:40: error: cannot find symbol
+  public class ResourceSlimeRenderState extends SlimeRenderState {
+                                                ^
+    symbol: class SlimeRenderState
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceTadpoleRenderState.java:13: error: cannot find symbol
+  public class ResourceTadpoleRenderState extends LivingEntityRenderState {
+                                                  ^
+    symbol: class LivingEntityRenderState
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:34: error: cannot find symbol
+  public class TintedSlimeOuterLayer extends RenderLayer<SlimeRenderState, SlimeModel> {
+                                                         ^
+    symbol: class SlimeRenderState
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:34: error: cannot find symbol
+  public class TintedSlimeOuterLayer extends RenderLayer<SlimeRenderState, SlimeModel> {
+                                                                           ^
+    symbol: class SlimeModel
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:42: error: cannot find symbol
+  public class SlimeMilkerInventory extends ItemStacksResourceHandler {
+                                            ^
+    symbol: class ItemStacksResourceHandler
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\BucketedCategoryTint.java:42: error: cannot find symbol
+  public record BucketedCategoryTint(int defaultColor) implements ItemTintSource {
+                                                                  ^
+    symbol: class ItemTintSource
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\ContainedCategoryTint.java:30: error: cannot find symbol
+  public record ContainedCategoryTint(int defaultColor) implements ItemTintSource {
+                                                                   ^
+    symbol: class ItemTintSource
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\tint\SlimeVariantTint.java:35: error: cannot find symbol
+  public record SlimeVariantTint(Layer layer, int defaultColor) implements ItemTintSource {
+                                                                           ^
+    symbol: class ItemTintSource
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\CaveSlimeRenderer.java:7: error: package net.minecraft.client.renderer.entity.state does not exist
+  import net.minecraft.client.renderer.entity.state.SlimeRenderState;
+                                                   ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\GeodeSlimeRenderer.java:7: error: package net.minecraft.client.renderer.entity.state does not exist
+  import net.minecraft.client.renderer.entity.state.SlimeRenderState;
+                                                   ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceFrogRenderer.java:6: error: package net.minecraft.client.renderer.entity.state does not exist
+  import net.minecraft.client.renderer.entity.state.FrogRenderState;
+                                                   ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceFrogRenderState.java:4: error: package net.minecraft.client.renderer.entity.state does not exist
+  import net.minecraft.client.renderer.entity.state.FrogRenderState;
+                                                   ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:6: error: package net.minecraft.client.model.monster.slime does not exist
+  import net.minecraft.client.model.monster.slime.SlimeModel;
+                                                 ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:10: error: package net.minecraft.client.renderer.entity.state does not exist
+  import net.minecraft.client.renderer.entity.state.SlimeRenderState;
+                                                   ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeOuterLayer.java:11: error: package net.minecraft.client.renderer.rendertype does not exist
+  import net.minecraft.client.renderer.rendertype.RenderTypes;
+                                                 ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeRenderer.java:12: error: package net.minecraft.client.renderer.entity.state does not exist
+  import net.minecraft.client.renderer.entity.state.SlimeRenderState;
+                                                   ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceSlimeRenderState.java:4: error: package net.minecraft.client.renderer.entity.state does not exist
+  import net.minecraft.client.renderer.entity.state.SlimeRenderState;
+                                                   ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceTadpoleRenderer.java:6: error: package net.minecraft.client.renderer.entity.state does not exist
+  import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+                                                   ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\ResourceTadpoleRenderState.java:4: error: package net.minecraft.client.renderer.entity.state does not exist
+  import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+                                                   ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TideSlimeRenderer.java:7: error: package net.minecraft.client.renderer.entity.state does not exist
+  import net.minecraft.client.renderer.entity.state.SlimeRenderState;
+                                                   ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:6: error: package net.minecraft.client.model.monster.slime does not exist
+  import net.minecraft.client.model.monster.slime.SlimeModel;
+                                                 ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:11: error: package net.minecraft.client.renderer.entity.state does not exist
+  import net.minecraft.client.renderer.entity.state.SlimeRenderState;
+                                                   ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\TintedSlimeOuterLayer.java:12: error: package net.minecraft.client.renderer.rendertype does not exist
+  import net.minecraft.client.renderer.rendertype.RenderTypes;
+                                                 ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\client\renderer\VoidSlimeRenderer.java:7: error: package net.minecraft.client.renderer.entity.state does not exist
+  import net.minecraft.client.renderer.entity.state.SlimeRenderState;
+                                                   ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\menu\SlimeMilkerMenu.java:20: error: package net.neoforged.neoforge.transfer.item does not exist
+  import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
+                                             ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:6: error: package net.neoforged.neoforge.transfer does not exist
+  import net.neoforged.neoforge.transfer.ResourceHandler;
+                                        ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:7: error: package net.neoforged.neoforge.transfer.item does not exist
+  import net.neoforged.neoforge.transfer.item.ItemResource;
+                                             ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:8: error: package net.neoforged.neoforge.transfer.item does not exist
+  import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+                                             ^
+  F:\minecraft-repos\productive-frogs\src\main\java\com\flatts\productivefrogs\content\block\entity\SlimeMilkerInventory.java:9: error: package net.neoforged.neoforge.transfer.transaction does not exist
+  import net.neoforged.neoforge.transfer.transaction.TransactionContext;
+                                                    ^
+  100 errors
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 1s
+2 actionable tasks: 1 executed, 1 up-to-date

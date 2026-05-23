@@ -4,7 +4,7 @@ import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBloc
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -12,7 +12,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Variant-keyed Froglight item. Carries its variant identity in a
@@ -60,7 +60,7 @@ public final class ConfigurableFroglightItem extends BlockItem {
      */
     @Override
     protected boolean updateCustomBlockEntityTag(BlockPos pos, Level level, @Nullable Player player, ItemStack stack, BlockState state) {
-        Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+        ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
         if (variantId == null) {
             return false;
         }
@@ -83,7 +83,7 @@ public final class ConfigurableFroglightItem extends BlockItem {
      */
     @Override
     public Component getName(ItemStack stack) {
-        Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+        ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
         if (variantId != null) {
             return Component.translatable(
                 getDescriptionId() + "." + variantId.getPath()

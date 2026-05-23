@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Slime;
@@ -20,7 +20,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.MobSplitEvent;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Random-discovery path from {@code docs/slime_sourcing.md} (Path 1) — when a
@@ -117,7 +117,7 @@ public final class SlimeSplitDiscoveryHandler {
             // registry so the two stay consistent when a variant is picked.
             resource.setCategory(category);
             if (variantRegistry != null) {
-                Map.Entry<Identifier, SlimeVariant> picked =
+                Map.Entry<ResourceLocation, SlimeVariant> picked =
                     SlimeVariant.pickWeighted(variantRegistry, category, parent.getRandom());
                 if (picked != null) {
                     resource.setVariant(picked.getKey());
@@ -153,7 +153,7 @@ public final class SlimeSplitDiscoveryHandler {
      */
     @Nullable
     private static Category categoryForParent(Mob parent, Level level) {
-        Identifier parentTypeId = BuiltInRegistries.ENTITY_TYPE.getKey(parent.getType());
+        ResourceLocation parentTypeId = BuiltInRegistries.ENTITY_TYPE.getKey(parent.getType());
         if (parentTypeId == null) {
             return null;
         }

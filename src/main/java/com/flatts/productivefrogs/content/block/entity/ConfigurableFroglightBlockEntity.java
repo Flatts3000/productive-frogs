@@ -10,12 +10,12 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * BlockEntity for {@link com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock}.
@@ -47,14 +47,14 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * configurable-froglight model + the default tint.
      */
     @Nullable
-    private Identifier variantId;
+    private ResourceLocation variantId;
 
     public ConfigurableFroglightBlockEntity(BlockPos pos, BlockState state) {
         super(PFBlockEntities.CONFIGURABLE_FROGLIGHT.get(), pos, state);
     }
 
     @Nullable
-    public Identifier getVariantId() {
+    public ResourceLocation getVariantId() {
         return variantId;
     }
 
@@ -64,7 +64,7 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * be on the server — client-side mutations would be overwritten by the
      * next sync.
      */
-    public void setVariantId(@Nullable Identifier variantId) {
+    public void setVariantId(@Nullable ResourceLocation variantId) {
         if (java.util.Objects.equals(this.variantId, variantId)) {
             return;
         }
@@ -128,7 +128,7 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
     protected void loadAdditional(ValueInput in) {
         super.loadAdditional(in);
         variantId = in.getString("Variant")
-            .map(Identifier::tryParse)
+            .map(ResourceLocation::tryParse)
             .orElse(null);
     }
 

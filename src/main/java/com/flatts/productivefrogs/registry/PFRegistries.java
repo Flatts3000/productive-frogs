@@ -4,7 +4,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.data.ParentSpeciesEntry;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 
 /**
@@ -26,7 +26,7 @@ public final class PFRegistries {
 
     public static final ResourceKey<Registry<SlimeVariant>> SLIME_VARIANT =
         ResourceKey.createRegistryKey(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "slime_variant")
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "slime_variant")
         );
 
     /**
@@ -38,7 +38,7 @@ public final class PFRegistries {
      */
     public static final ResourceKey<Registry<ParentSpeciesEntry>> PARENT_SPECIES =
         ResourceKey.createRegistryKey(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "parent_species")
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "parent_species")
         );
 
     private PFRegistries() {

@@ -2,8 +2,8 @@ package com.flatts.productivefrogs.client.renderer;
 
 import com.flatts.productivefrogs.data.Category;
 import net.minecraft.client.renderer.entity.state.SlimeRenderState;
-import net.minecraft.resources.Identifier;
-import org.jspecify.annotations.Nullable;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Per-frame render state for {@link com.flatts.productivefrogs.content.entity.ResourceSlime}.
@@ -42,7 +42,7 @@ public class ResourceSlimeRenderState extends SlimeRenderState {
     public Category category;
 
     @Nullable
-    public Identifier variantTexture;
+    public ResourceLocation variantTexture;
 
     /** ARGB tint for the outer translucent shell. {@code -1} = no tint (white). */
     public int outerTint = -1;

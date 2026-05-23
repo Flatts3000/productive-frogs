@@ -2,7 +2,7 @@ package com.flatts.productivefrogs.data;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Maps an EntityType identifier to the {@link Category} its offspring inherit
@@ -44,11 +44,11 @@ import net.minecraft.resources.Identifier;
  * {@code PFRegistries.PARENT_SPECIES} lookups, but at V1 scale a fold is
  * cheaper than the indirection.
  */
-public record ParentSpeciesEntry(Identifier entityType, Category category) {
+public record ParentSpeciesEntry(ResourceLocation entityType, Category category) {
 
     public static final Codec<ParentSpeciesEntry> CODEC = RecordCodecBuilder.create(
         instance -> instance.group(
-            Identifier.CODEC.fieldOf("entity_type").forGetter(ParentSpeciesEntry::entityType),
+            ResourceLocation.CODEC.fieldOf("entity_type").forGetter(ParentSpeciesEntry::entityType),
             Category.CODEC.fieldOf("category").forGetter(ParentSpeciesEntry::category)
         ).apply(instance, ParentSpeciesEntry::new)
     );

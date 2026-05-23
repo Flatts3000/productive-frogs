@@ -10,7 +10,7 @@ import com.flatts.productivefrogs.registry.PFRegistries;
 import java.util.Map;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
@@ -68,7 +68,7 @@ public final class SlimeInfusionHandler {
         // in a primer tag but doesn't map to any specific variant (e.g.,
         // blaze_powder is in primer/infernal but isn't a variant primer in
         // V1 — gives a category-only INFERNAL slime).
-        Map.Entry<Identifier, SlimeVariant> variantEntry = findVariantForHeldItem(event.getLevel(), held);
+        Map.Entry<ResourceLocation, SlimeVariant> variantEntry = findVariantForHeldItem(event.getLevel(), held);
         Category category;
         if (variantEntry != null) {
             category = variantEntry.getValue().category();
@@ -158,12 +158,12 @@ public final class SlimeInfusionHandler {
      * (including when the registry isn't yet loaded — early init, missing
      * datapack, etc).
      */
-    private static Map.Entry<Identifier, SlimeVariant> findVariantForHeldItem(
+    private static Map.Entry<ResourceLocation, SlimeVariant> findVariantForHeldItem(
             net.minecraft.world.level.Level level, ItemStack stack) {
         Registry<SlimeVariant> registry = level.registryAccess()
             .lookup(PFRegistries.SLIME_VARIANT).orElse(null);
         if (registry == null) return null;
-        Identifier itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
         return SlimeVariant.findByPrimerItem(registry, itemId);
     }
 

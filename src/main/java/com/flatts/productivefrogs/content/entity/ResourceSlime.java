@@ -10,7 +10,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
@@ -62,7 +62,7 @@ public class ResourceSlime extends Slime implements Bucketable {
      * Variant id (e.g. {@code productivefrogs:iron}) or empty string for
      * "category-only" slimes that pre-date the {@link SlimeVariant} registry.
      * Stored as String so it works without a custom EntityDataSerializer for
-     * Identifier. Category is still kept as fast-path on {@link #DATA_CATEGORY};
+     * ResourceLocation. Category is still kept as fast-path on {@link #DATA_CATEGORY};
      * the variant is the source of truth when present.
      */
     private static final EntityDataAccessor<String> DATA_VARIANT_ID =
@@ -101,11 +101,11 @@ public class ResourceSlime extends Slime implements Bucketable {
      * pre-date the {@link SlimeVariant} registry (still valid — they fall
      * back to the broad category visuals + name).
      */
-    @org.jspecify.annotations.Nullable
-    public Identifier getVariantId() {
+    @org.jetbrains.annotations.Nullable
+    public ResourceLocation getVariantId() {
         String s = this.entityData.get(DATA_VARIANT_ID);
         if (s.isEmpty()) return null;
-        return Identifier.tryParse(s);
+        return ResourceLocation.tryParse(s);
     }
 
     /**
@@ -113,7 +113,7 @@ public class ResourceSlime extends Slime implements Bucketable {
      * by looking up the variant's parent — keeps the two synced data fields
      * consistent and lets cheap getCategory() callers skip a registry lookup.
      */
-    public void setVariant(@org.jspecify.annotations.Nullable Identifier variantId) {
+    public void setVariant(@org.jetbrains.annotations.Nullable ResourceLocation variantId) {
         if (variantId == null) {
             this.entityData.set(DATA_VARIANT_ID, "");
             return;
@@ -134,14 +134,14 @@ public class ResourceSlime extends Slime implements Bucketable {
      * {@code null} when the variant id isn't in the registry — datapack
      * removed since save, or modded variant whose mod is no longer loaded.
      */
-    @org.jspecify.annotations.Nullable
+    @org.jetbrains.annotations.Nullable
     public SlimeVariant getVariant() {
-        Identifier id = getVariantId();
+        ResourceLocation id = getVariantId();
         return id == null ? null : lookupVariant(id);
     }
 
-    @org.jspecify.annotations.Nullable
-    private SlimeVariant lookupVariant(Identifier id) {
+    @org.jetbrains.annotations.Nullable
+    private SlimeVariant lookupVariant(ResourceLocation id) {
         Registry<SlimeVariant> registry = this.level().registryAccess().lookup(PFRegistries.SLIME_VARIANT).orElse(null);
         return registry == null ? null : registry.getValue(id);
     }
@@ -173,7 +173,7 @@ public class ResourceSlime extends Slime implements Bucketable {
     @Override
     protected net.minecraft.core.particles.ParticleOptions getParticleType() {
         int rgb;
-        Identifier variantId = getVariantId();
+        ResourceLocation variantId = getVariantId();
         SlimeVariant variant = variantId == null ? null : lookupVariant(variantId);
         if (variant != null) {
             rgb = variant.primaryColor();
@@ -201,7 +201,7 @@ public class ResourceSlime extends Slime implements Bucketable {
         String descriptionId = getType().getDescriptionId();
         SlimeVariant variant = getVariant();
         if (variant != null) {
-            Identifier variantId = getVariantId();
+            ResourceLocation variantId = getVariantId();
             // variantId is non-null when getVariant() is non-null (the lookup
             // started from the id), but the explicit null-check makes the
             // contract obvious to readers.
@@ -230,7 +230,7 @@ public class ResourceSlime extends Slime implements Bucketable {
         // Variant load: read AFTER Category so setVariant's category sync
         // overrides the Category field with the registry's authoritative value.
         in.getString("Variant").ifPresent(s -> {
-            Identifier id = Identifier.tryParse(s);
+            ResourceLocation id = ResourceLocation.tryParse(s);
             if (id != null) {
                 setVariant(id);
             }
@@ -262,7 +262,7 @@ public class ResourceSlime extends Slime implements Bucketable {
         int childCount = 2 + this.random.nextInt(3);
         PlayerTeam team = this.getTeam();
         Category category = getCategory();
-        Identifier variantId = getVariantId();
+        ResourceLocation variantId = getVariantId();
 
         for (int l = 0; l < childCount; l++) {
             float xOff = (l % 2 - 0.5F) * halfWidth;
@@ -342,7 +342,7 @@ public class ResourceSlime extends Slime implements Bucketable {
         // forRemoval, so suppress is the cheaper path.
         Bucketable.saveDefaultDataToBucketTag(this, stack);
         Category category = getCategory();
-        Identifier variantId = getVariantId();
+        ResourceLocation variantId = getVariantId();
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
             tag.putString("Category", category.name());
             if (variantId != null) {
@@ -367,7 +367,7 @@ public class ResourceSlime extends Slime implements Bucketable {
         // the variant resolves in the registry, but the category fallback
         // remains correct if the variant id is unknown.
         tag.getString("Variant").ifPresent(s -> {
-            Identifier id = Identifier.tryParse(s);
+            ResourceLocation id = ResourceLocation.tryParse(s);
             if (id != null) {
                 setVariant(id);
             }
@@ -395,7 +395,7 @@ public class ResourceSlime extends Slime implements Bucketable {
         // The category save is handled above; persist the fromBucket flag too
         // so a slime released from a bucket doesn't despawn on chunk reload.
         out.putBoolean("FromBucket", fromBucket());
-        Identifier variantId = getVariantId();
+        ResourceLocation variantId = getVariantId();
         if (variantId != null) {
             out.putString("Variant", variantId.toString());
         }

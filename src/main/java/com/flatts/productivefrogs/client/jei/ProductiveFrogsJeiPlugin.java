@@ -7,7 +7,7 @@ import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.registration.ISubtypeRegistration;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * JEI plugin for Productive Frogs.
@@ -61,11 +61,11 @@ import net.minecraft.resources.Identifier;
 @JeiPlugin
 public final class ProductiveFrogsJeiPlugin implements IModPlugin {
 
-    private static final Identifier PLUGIN_UID =
-        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "jei_plugin");
+    private static final ResourceLocation PLUGIN_UID =
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "jei_plugin");
 
     @Override
-    public Identifier getPluginUid() {
+    public ResourceLocation getPluginUid() {
         return PLUGIN_UID;
     }
 

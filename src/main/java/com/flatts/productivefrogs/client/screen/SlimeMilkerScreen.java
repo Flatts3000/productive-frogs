@@ -6,7 +6,7 @@ import com.flatts.productivefrogs.content.menu.SlimeMilkerMenu;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
@@ -23,7 +23,7 @@ import net.minecraft.world.entity.player.Inventory;
  */
 public class SlimeMilkerScreen extends AbstractContainerScreen<SlimeMilkerMenu> {
 
-    private static final Identifier BACKGROUND = Identifier.fromNamespaceAndPath(
+    private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath(
         ProductiveFrogs.MOD_ID, "textures/gui/container/slime_milker.png");
 
     // Progress-arrow sprite layout on the background texture. (X1, Y1) is

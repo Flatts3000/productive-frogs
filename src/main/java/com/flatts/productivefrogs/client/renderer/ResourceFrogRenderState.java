@@ -2,7 +2,7 @@ package com.flatts.productivefrogs.client.renderer;
 
 import com.flatts.productivefrogs.data.Category;
 import net.minecraft.client.renderer.entity.state.FrogRenderState;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Per-frame snapshot data for a Resource Frog. Extends the vanilla

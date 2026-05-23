@@ -17,7 +17,7 @@ import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFFluidTypes;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -106,7 +106,7 @@ public final class PFClientEvents {
                 if (!(be instanceof com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity froglightBe)) {
                     return -1;
                 }
-                Identifier variantId = froglightBe.getVariantId();
+                ResourceLocation variantId = froglightBe.getVariantId();
                 if (variantId == null) {
                     return -1;
                 }
@@ -129,15 +129,15 @@ public final class PFClientEvents {
     @SubscribeEvent
     public static void onRegisterItemTintSources(RegisterColorHandlersEvent.ItemTintSources event) {
         event.register(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "contained_category"),
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "contained_category"),
             ContainedCategoryTint.MAP_CODEC
         );
         event.register(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "slime_variant"),
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "slime_variant"),
             SlimeVariantTint.MAP_CODEC
         );
         event.register(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "bucketed_category"),
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "bucketed_category"),
             BucketedCategoryTint.MAP_CODEC
         );
     }
@@ -167,17 +167,17 @@ public final class PFClientEvents {
     @SubscribeEvent
     public static void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
         for (String variant : PFFluidTypes.VARIANTS) {
-            Identifier still = Identifier.fromNamespaceAndPath(
+            ResourceLocation still = ResourceLocation.fromNamespaceAndPath(
                 ProductiveFrogs.MOD_ID, "block/" + variant + "_slime_milk_still");
-            Identifier flow = Identifier.fromNamespaceAndPath(
+            ResourceLocation flow = ResourceLocation.fromNamespaceAndPath(
                 ProductiveFrogs.MOD_ID, "block/" + variant + "_slime_milk_flow");
             event.registerFluidType(
                 new IClientFluidTypeExtensions() {
                     @Override
-                    public Identifier getStillTexture() { return still; }
+                    public ResourceLocation getStillTexture() { return still; }
 
                     @Override
-                    public Identifier getFlowingTexture() { return flow; }
+                    public ResourceLocation getFlowingTexture() { return flow; }
                 },
                 PFFluidTypes.BY_VARIANT.get(variant).get()
             );
