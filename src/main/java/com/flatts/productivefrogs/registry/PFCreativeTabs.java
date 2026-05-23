@@ -63,9 +63,18 @@ public final class PFCreativeTabs {
                     for (var entry : PFItems.PRIMED_FROG_EGG_ITEMS.values()) {
                         output.accept(entry.get());
                     }
-                    for (var entry : PFItems.RESOURCE_FROGLIGHT_ITEMS.values()) {
-                        output.accept(entry.get());
-                    }
+                    // NOTE: PFItems.RESOURCE_FROGLIGHT_ITEMS (the 6 broad-strokes
+                    // category Froglight BlockItems) is intentionally NOT listed
+                    // here. After the PR #43 display-name renames, the broad-
+                    // strokes "Iron Froglight" (METALLIC category) collides with
+                    // the variant-stamped configurable_froglight (variant=iron),
+                    // and they appeared side-by-side as two creative-tab entries
+                    // sharing one name. The BlockItems stay registered (existing
+                    // worlds load fine, FrogTongueDropHandler still emits them
+                    // as the no-variant fallback drop) — only the tab listing is
+                    // dropped. Creative testers wanting a specific category block
+                    // can /give productivefrogs:metallic_froglight etc.
+                    //
                     // One configurable_froglight per shipped variant — each stack
                     // carries its variant id in the SLIME_VARIANT data component so
                     // creative testers can see what the production loop produces.

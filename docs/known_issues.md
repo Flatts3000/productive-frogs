@@ -30,19 +30,8 @@ Each grayscale; tinting stays the per-variant runtime path. Then update the thre
 ### 🟢 Slime Milk fluids don't animate (static surface) — resolved
 `scripts/generate_slime_milk_textures.ps1` now tints the **full vanilla water_still / water_flow vertical strips** (32 frames each) instead of just the top frame. Output: `<variant>_slime_milk_still.png` is now 16×512 (32 frames), `<variant>_slime_milk_flow.png` is 32×1024 (32 frames). Each PNG ships a sibling `.mcmeta` with `{"animation": {"frametime": 2}}` matching vanilla water cadence. Source-block fluid surface now moves like vanilla water in the variant's tinted hue.
 
-### 🔴 Resource Froglights appear twice in the creative tab (3D block + 2D item)
-Each resource Froglight shows up as **two distinct entries** in the creative inventory: a 3D block icon AND a 2D item icon, both sharing the same display name (e.g., "Iron Froglight"). The tooltip also shows "Productive Frogs" twice, suggesting the duplicate spans multiple creative tabs.
-
-**Symptom**: Open creative inventory → search "Iron Froglight" → two visually distinct items with the same name. One is the broad-strokes category Froglight block (3D), the other is the variant-stamped `configurable_froglight` item (2D, same name resolved from `slime_variant` data component). Hovering either shows the duplicate "Productive Frogs / Productive Frogs" tab attribution.
-
-**Root cause** (suspected): the broad-strokes category Froglight (e.g., `metallic_froglight`) and the variant-stamped `configurable_froglight` with `slime_variant=iron` both resolve to the display name "Iron Froglight" — but they're different registry IDs and different surfaces (BlockItem vs Item). Per PR #43 the category Froglight display names were renamed to the canonical resource (Iron / Redstone / etc.) so they now collide with the variant names.
-
-**Fix path** (under consideration):
-1. **Drop the broad-strokes category Froglight BlockItems from the creative tab** — they're effectively superseded by the variant-stamped configurable Froglight. Block registry stays so existing worlds load; only the BlockItem-in-tab listing goes away. Cleanest.
-2. OR rename one set to disambiguate — e.g., "Iron Froglight (Block)" vs "Iron Froglight" — but this is a user-facing wart.
-3. OR collapse to one surface: have all Froglights go through `configurable_froglight` and retire the broad-strokes BlockItems. Bigger refactor.
-
-Option 1 is the V1 path; option 3 belongs in V2 if at all.
+### 🟢 Resource Froglights appear twice in the creative tab — resolved
+Dropped the `for (var entry : PFItems.RESOURCE_FROGLIGHT_ITEMS.values())` loop from `PFCreativeTabs.PRODUCTIVE_FROGS_TAB.displayItems`. The 6 broad-strokes category Froglight BlockItems stay registered (existing worlds load fine; `FrogTongueDropHandler` still emits them as the no-variant fallback drop) — only their creative-tab listing was removed. The variant-stamped `configurable_froglight` stacks remain in the tab and read with their canonical resource names, so no Froglight appears twice. Creative testers wanting a specific category block can use `/give productivefrogs:metallic_froglight` etc.
 
 ### 🟢 Bucket of Tadpole + Bucket of Slime render as empty buckets — resolved
 The two silhouette PNGs (`textures/item/tadpole_silhouette.png` and `textures/item/slime_silhouette.png`) were blank/transparent placeholders, so the layered bucket items rendered as iron exteriors with empty contents. Resolved by generating both via PixelLab MCP (`create_map_object`, transparent BG), then tone-mapping with `scripts/process_silhouette.ps1`: non-transparent body pixels brighten to near-white (220,220,220) so the runtime `BucketedCategoryTint` multiplication renders the category color, while dark accent pixels (eyes) stay below the 64 threshold and are preserved as-is so they remain visible at every variant tint.
