@@ -169,5 +169,22 @@
   "entity.productivefrogs.resource_slime.prismarine": "Prismarine Slime",
   "entity.productivefrogs.resource_slime.sponge": "Sponge Slime",
   "entity.productivefrogs.resource_slime.magma_cream": "Magma Cream Slime",
-  "entity.productivefrogs.resource_slime.ender_pearl": "Ender Pearl Slime"
+  "entity.productivefrogs.resource_slime.ender_pearl": "Ender Pearl Slime",
+  "productivefrogs.jei.variant_slime.info": "A %1$s. Killed by a %2$s, drops a Configurable Froglight stamped with this variant. Use the Slime Milker to convert into a Slime Milk bucket for infinite renewable production.",
+  "productivefrogs.jei.variant_froglight.info": "Dropped when a %1$s eats a %2$s. Smelts in a furnace to the resource it represents.",
+  "productivefrogs.jei.frog.info": "Eats %1$s variants. When fed a variant Resource Slime (e.g. an Iron Slime), drops a Configurable Froglight stamped with that variant. Category-only slimes are intermediates and produce nothing.",
+  "productivefrogs.jei.tadpole.info": "Matures into a %1$s while in water.",
+  "productivefrogs.jei.frog_egg.info": "Place on water to spawn a Primed Frog Egg block. After a delay, hatches into 1-3 Tadpoles that mature into %1$s.",
+  "productivefrogs.jei.primed_egg.info": "Hatches after a delay into 1-3 Tadpoles that mature into %1$s. Must be placed on a water source.",
+  "productivefrogs.jei.slime_milk.info": "Place in the world to create a Slime Milk source block. Periodically spawns a %1$s on a solid adjacent block. The output of feeding a variant Slime Bucket into the Slime Milker.",
+  "productivefrogs.jei.parent_species.bog.info": "Spawns in swamps and mangrove swamps. Infuse with a variant primer (bone, gunpowder, clay, slime ball, etc.) to convert into a variant Resource Slime that frogs can eat.",
+  "productivefrogs.jei.parent_species.cave.info": "Spawns in dripstone caves, deep dark, and lush caves. Infuse with a variant primer (iron ingot, copper ingot, gold ingot, redstone, lapis, coal, diamond, etc.) to convert into a variant Resource Slime.",
+  "productivefrogs.jei.parent_species.geode.info": "Spawns in mountain peaks (stony, jagged, frozen) and snowy slopes. Infuse with an emerald (and other geode-themed primers, post-V1.1) to convert into a variant Resource Slime.",
+  "productivefrogs.jei.parent_species.tide.info": "Spawns in oceans (deep, warm, lukewarm). Infuse with a prismarine shard or sponge to convert into a variant Resource Slime.",
+  "productivefrogs.jei.parent_species.infernal.info": "Spawns in the Nether (nether wastes, basalt deltas, soul sand valley). Infuse with magma cream to convert into a variant Resource Slime.",
+  "productivefrogs.jei.parent_species.void.info": "Spawns in the End (outer islands). Infuse with an ender pearl to convert into a variant Resource Slime.",
+  "productivefrogs.jei.empty_frog_egg.info": "Bottle a vanilla frogspawn block (right-click with a glass bottle) to fill this. Prime the resulting filled bottle with a variant primer item to assign a species.",
+  "productivefrogs.jei.slime_milker.info": "Furnace-style production block. Right-click to open. Place a Slime Bucket containing a variant Resource Slime in the input slot — after 100 ticks, it converts to the matching Slime Milk bucket. Hopper-compatible.",
+  "productivefrogs.jei.empty_slime_bucket.info": "Right-click a size-1 Resource Slime to capture it. The bucket records the slime's variant (or species, for category-only slimes) and can be released elsewhere or fed into the Slime Milker.",
+  "productivefrogs.jei.empty_tadpole_bucket.info": "Right-click a Resource Tadpole to capture it. The bucket records the tadpole's species and can be released elsewhere — released tadpoles will continue maturing into a Resource Frog."
 }
