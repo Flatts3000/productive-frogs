@@ -30,14 +30,16 @@ The two silhouette PNGs (`textures/item/tadpole_silhouette.png` and `textures/it
 ### 🟢 Slime Milk bucket textures should show slime eyes in the liquid — resolved
 `scripts/generate_slime_milk_textures.ps1` now overlays two dark pixel dots at (6,3) and (9,3) on the milk surface — eye positions chosen against the vanilla `milk_bucket.png` milk region (y=3 is the top of the widest milk band; x=6 and x=9 give vanilla-slime-style 2-pixel eye spacing). The eyes are written **after** the tint loop has finished, so they bypass `Apply-Tint` entirely and ship at their literal (28,28,28) value on every variant. Held / dropped slime milk buckets now read as "slime peering out of an iron bucket" instead of "tinted dye."
 
-### 🔴 Slime splash particle uses vanilla green regardless of slime variant
-The slime splash animation (the particle burst that fires when a slime jumps / lands) renders with vanilla green coloring on **every** slime type — Resource Slimes (all 12 variants + 6 category fallbacks), Cave / Geode / Tide / Void parent species, and the magma cube variant.
+### 🟢 Slime splash particle uses vanilla green regardless of slime variant — resolved
+Vanilla's `Slime#tick` reads `getParticleType()` once per particle in its jump-landing splash loop, so overriding that single method swaps the colour without touching the spawn cadence or count. Each PF slime now returns `new DustParticleOptions(<tint>, 1.0F)` in place of `ParticleTypes.ITEM_SLIME`:
 
-**Symptom**: An iron Resource Slime, a Void Slime, or any non-green slime jumping in-world emits the same green-tinted slime splash particles as a vanilla Minecraft slime. Breaks the visual identity of the per-category / per-variant pipeline.
+- `ResourceSlime#getParticleType` reads the variant's `primary_color` when present, falls back to `Category.tintRgb()` otherwise — so iron Resource Slimes spray silver, redstone slimes spray red, etc.
+- `CaveSlime`, `GeodeSlime`, `TideSlime`, `VoidSlime` each pin their respective category colour (MINERAL / GEM / AQUATIC / ARCANE).
+- The vanilla magma cube keeps its vanilla orange splash since we don't subclass it.
 
-**Root cause** (suspected): vanilla `Slime#jumpFromGround` / `Slime#updateSquishing` (or whichever fires the particle) uses the hardcoded `ParticleTypes.ITEM_SLIME` particle, which carries the vanilla-slimeball color baked into its texture. Our `ResourceSlime` doesn't override that path, so it inherits the green burst.
+The particle shape changes from `ITEM_SLIME` (slimeball icon) to `DUST` (colored speck) — slightly different from vanilla but each variant now carries its own visual signal in-world.
 
-**Fix path**: either (a) override the particle emission in `ResourceSlime` to use a category/variant-tinted particle, OR (b) register a custom particle type with a runtime tint argument and swap the call site. Option (b) is the cleaner story since it generalises to magma cubes (which also currently inherit vanilla magma-cream particles even when they're our typed variant).
+Follow-up (deferred): the vanilla magma cube also inherits a hardcoded particle that doesn't match the magma_cream Resource Slime variant. To fix it without subclassing MagmaCube would require a custom registered particle type with a runtime tint argument plus a swap at the call site. Left open since the per-variant signal is delivered for the primary surface (Resource Slimes + 4 parent species), and players rarely confuse magma cubes with their resource analogue.
 
 ### 🟢 Per-variant + per-category items — tints + JEI subtypes shipped
 
