@@ -15,6 +15,44 @@ Living tracker of playtest bugs, limitations, and workarounds for Productive Fro
 
 ## Open issues
 
+### 🔴 Coal Resource Slime's eye dots are nearly invisible (dark on dark)
+The coal SlimeVariant's `primary_color` is near-black (it's coal), and the slime body model + spawn-egg silhouette + bucket silhouette all carry the dark accent pixels (eyes) at their preserved low-channel values (~RGB 32,32,32 or below the tone-map threshold of 64). When the variant tint multiplies the body to coal-black, the contrast between body and eye-dots collapses — both are very dark — and the eyes effectively disappear.
+
+**Symptom**: Spawn a coal Resource Slime in-world or look at the coal slime spawn egg / coal slime bucket in inventory → it reads as a featureless black blob with no visible face. Compare against e.g. an iron variant (silver body + visible black eyes) where the contrast works.
+
+**Fix path**: Special-case the eye colour for very-dark variants. Either:
+1. In the silhouette tone-mapping / slime body texture overlay path, pick an eye colour that contrasts against the variant's tint — e.g. a fixed light-grey overlay for any variant whose `primary_color` has max(R,G,B) below some threshold (~64).
+2. OR re-tone the coal variant specifically so the body isn't *quite* black — bump the primary_color from near-black to a dark charcoal grey (still reads as "coal") so the eye dots stay legible against it.
+
+Option 1 is the general fix (covers any future near-black variants); option 2 is the quick coal-only fix.
+
+### 🔴 Bucket of Slime + Bucket of Tadpole render as plain empty iron buckets
+Per the screenshot, the rows of Resource Tadpole Buckets and Slime Buckets across all 6 categories + 12 variants render as **plain unadorned iron buckets** — the silhouette layer that PR #66 (`tadpole_silhouette.png` / `slime_silhouette.png`) was supposed to provide isn't visible. The earlier resolved entry for "Bucket of Tadpole + Bucket of Slime render as empty buckets" claimed this was fixed; playtest shows the fix didn't actually land in the live render. The Slime Milk buckets (variant rim colour visible) are rendering correctly, so the tint pipeline works on at least one surface.
+
+**Symptom**: Open the creative tab → every Resource Tadpole Bucket and every Slime Bucket (across 6 categories + 12 variants) shows as a vanilla iron bucket with empty interior. The tadpole / slime silhouette inside is missing entirely.
+
+**Possible causes** (need diagnosis):
+1. The shipped PNG paths in `assets/productivefrogs/textures/item/{tadpole,slime}_silhouette.png` aren't matching what the item-model JSONs reference — quick grep to verify.
+2. The two-layer model has `layer0` (silhouette) and `layer1` (iron bucket) but the silhouette is being completely covered by the bucket layer — either layer-ordering wrong, or the silhouette pixels are landing where the bucket interior is solid metal rather than transparent (so they're hidden behind the bucket).
+3. The `BucketedCategoryTint` runtime tint is multiplying the silhouette layer to a colour that matches the bucket interior, making it invisible even though it's there.
+4. The silhouettes shipped from PR #66 are actually transparent / near-empty (the tone-mapping wrote out too few pixels).
+
+**Fix path**: Diagnose with `/data` on a held bucket, inspect the actual PNG file pixels, and view the item with F3+H (advanced tooltips) to confirm which model JSON is being applied. The resolved 🟢 entry should be flipped back to 🟠 REOPENED once the cause is identified.
+
+### 🔴 Slime Milker progress bar / arrow doesn't animate
+The Slime Milker GUI shows the static furnace-style arrow between input and output slots, but it doesn't animate during the milking operation. Vanilla furnace UIs draw a progress-filled arrow (the recipe-cook progress bar) that fills left-to-right as the operation advances. The Slime Milker arrow is just static art.
+
+**Symptom**: Place a Slime Bucket in the input slot, wait for the milking to complete → the arrow stays grey and unchanging throughout. No visual indication that anything is happening. Output appears suddenly with no progress feedback.
+
+**Fix path**: `SlimeMilkerMenu` should expose a `progress` ContainerData int (current cook ticks) and a `totalProgress` int (max ticks for the recipe), the same shape as vanilla `FurnaceMenu`. `SlimeMilkerScreen.render` reads them and blits the progress-arrow texture at the appropriate width based on the ratio. `SlimeMilkerBlockEntity` already drives `cookProgress` per server-tick (see CLAUDE.md notes); wire it through to the menu via ContainerData sync.
+
+### 🔴 Slime Milker input slot is not vertically centered relative to the output
+The input slot sits in the top-left of the GUI's recipe area while the output slot (and the arrow) are vertically centered lower down. The vanilla furnace pattern has input above + fuel below the input column with the output centered to the right; the Slime Milker doesn't use a fuel slot (it's hand-operated), so the input should be vertically centered next to the output rather than top-aligned.
+
+**Symptom**: Open the Slime Milker GUI → the input slot is visibly higher than the output slot. The arrow points from somewhere below the input to the output, creating an awkward visual hierarchy.
+
+**Fix path**: Bump `SlimeMilkerMenu.INPUT_SLOT` Y position from its current value (56,17 per CLAUDE.md) to align vertically with `OUTPUT_SLOT` at y=30 — set input Y to 30 (or whatever centers it against the output). Also bump the input slot frame in `textures/gui/container/slime_milker.png` so the visual slot box matches the new Y. The GUI was modelled on vanilla furnace (which has 2 input slots stacked + 1 output centred); since we only need 1 input + 1 output, recentering is the right move.
+
 ### 🔴 Slime Milker output slot doesn't center its item
 In the Slime Milker GUI the output milk bucket renders **offset to the left** within its output slot rather than centered. Vanilla furnace-style GUIs center the result item; the Slime Milker's output slot is a furnace-derived menu (`SlimeMilkerMenu`) so it should inherit the centering, but doesn't — the bucket sits flush against the left edge of the slot frame.
 

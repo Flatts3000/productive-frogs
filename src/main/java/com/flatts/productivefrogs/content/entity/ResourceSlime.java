@@ -332,7 +332,14 @@ public class ResourceSlime extends Slime implements Bucketable {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void saveToBucketTag(ItemStack stack) {
+        // Bucketable.saveDefaultDataToBucketTag is @Deprecated (1.21.11) but
+        // still functional and is the vanilla source-of-truth for the standard
+        // mob-bucket NBT shape (NoAI, Silent, NoGravity, Glowing, Invulnerable,
+        // Health, plus the CUSTOM_NAME copy). Inlining would diverge from
+        // vanilla's set whenever Mojang adjusts it. The deprecation isn't
+        // forRemoval, so suppress is the cheaper path.
         Bucketable.saveDefaultDataToBucketTag(this, stack);
         Category category = getCategory();
         Identifier variantId = getVariantId();
@@ -345,7 +352,9 @@ public class ResourceSlime extends Slime implements Bucketable {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void loadFromBucketTag(CompoundTag tag) {
+        // See saveToBucketTag — same deprecation rationale.
         Bucketable.loadDefaultDataFromBucketTag(this, tag);
         tag.getString("Category").ifPresent(name -> {
             try {

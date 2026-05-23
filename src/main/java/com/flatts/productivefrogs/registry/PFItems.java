@@ -49,7 +49,7 @@ public final class PFItems {
     public static final DeferredItem<FrogEggItem> FROG_EGG = ITEMS.registerItem(
         "frog_egg",
         FrogEggItem::new,
-        new Item.Properties().stacksTo(1)
+        () -> new Item.Properties().stacksTo(1)
     );
 
     /**
@@ -72,7 +72,7 @@ public final class PFItems {
             SoundEvents.BUCKET_EMPTY_FISH,
             props
         ),
-        new Item.Properties()
+        () -> new Item.Properties()
             .stacksTo(1)
             .component(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY)
     );
@@ -90,7 +90,7 @@ public final class PFItems {
             SoundEvents.BUCKET_EMPTY_TADPOLE,
             props
         ),
-        new Item.Properties()
+        () -> new Item.Properties()
             .stacksTo(1)
             .component(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY)
     );
@@ -155,7 +155,7 @@ public final class PFItems {
     public static final DeferredItem<ConfigurableFroglightItem> CONFIGURABLE_FROGLIGHT = ITEMS.registerItem(
         "configurable_froglight",
         ConfigurableFroglightItem::new,
-        new Item.Properties()
+        () -> new Item.Properties()
     );
 
     /**
@@ -214,7 +214,7 @@ public final class PFItems {
     public static final DeferredItem<BlockItem> SLIME_MILKER = ITEMS.registerSimpleBlockItem(
         "slime_milker",
         PFBlocks.SLIME_MILKER,
-        new Item.Properties()
+        () -> new Item.Properties()
     );
 
     private static Map<String, DeferredItem<net.minecraft.world.item.BucketItem>> buildMilkBuckets() {
@@ -225,7 +225,7 @@ public final class PFItems {
                 variant + "_slime_milk_bucket",
                 props -> new net.minecraft.world.item.BucketItem(
                     PFFluids.BY_VARIANT.get(variant).source().get(), props),
-                new Item.Properties()
+                () -> new Item.Properties()
                     .stacksTo(1)
                     .craftRemainder(net.minecraft.world.item.Items.BUCKET)
             ));
@@ -239,7 +239,7 @@ public final class PFItems {
             map.put(cat, ITEMS.registerSimpleBlockItem(
                 cat.primedEggItemName(),
                 PFBlocks.PRIMED_FROG_EGGS.get(cat),
-                new Item.Properties()
+                () -> new Item.Properties()
             ));
         }
         return map;
@@ -251,7 +251,7 @@ public final class PFItems {
             map.put(cat, ITEMS.registerSimpleBlockItem(
                 cat.id() + "_froglight",
                 PFBlocks.RESOURCE_FROGLIGHTS.get(cat),
-                new Item.Properties()
+                () -> new Item.Properties()
             ));
         }
         return map;
