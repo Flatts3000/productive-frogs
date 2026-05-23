@@ -48,20 +48,64 @@ Promoted `configurable_froglight` from a plain Item to a `BlockItem` backed by `
 
 ## V1.1 — vanilla resource coverage
 
-Single thrust: complete the canonical vanilla resource coverage per [categories_and_tiers.md](./categories_and_tiers.md). JSON-only — no Java edits, no schema changes. Full design in [v1_1_scope.md](./v1_1_scope.md).
+Add every vanilla item fitting cleanly into one of the existing 6 categories. JSON-only — no Java edits, no schema changes. Full design in [v1_1_scope.md](./v1_1_scope.md). 16 new variants → 28 total post-V1.1.
 
-### Tier A — locked scope (4 variants)
-- ☐ `quartz` (GEM) — variant JSON + inner-cube PNG + primer tag entry + smelting recipe.
-- ☐ `amethyst` (GEM) — same.
-- ☐ `blaze` (INFERNAL) — same.
-- ☐ `echo_shard` (ARCANE) — same.
+Per-variant work for each = 4 files: variant JSON + inner-cube PNG + primer tag entry + smelting recipe. Existing GameTests auto-cover.
+
+### Locked scope (16 variants)
+
+**METALLIC (+1)**
+- ☐ `netherite_scrap`
+
+**MINERAL (+3)**
+- ☐ `glowstone_dust`
+- ☐ `gunpowder`
+- ☐ `clay_ball` *(non-1:1 smelt — Froglight smelts to `brick`)*
+
+**GEM (+2)**
+- ☐ `quartz`
+- ☐ `amethyst`
+
+**AQUATIC (+2)**
+- ☐ `ink_sac`
+- ☐ `glow_ink_sac`
+
+**INFERNAL (+5)**
+- ☐ `blaze`
+- ☐ `soul_sand`
+- ☐ `soul_soil`
+- ☐ `obsidian`
+- ☐ `netherrack`
+
+**ARCANE (+3)**
+- ☐ `echo_shard`
+- ☐ `chorus_fruit` *(non-1:1 smelt — Froglight smelts to `popped_chorus_fruit`)*
+- ☐ `shulker_shell`
 
 ### Tier B — design open (5 candidates)
-- ☐ `prismarine_crystals` (AQUATIC) — second AQUATIC variant alongside existing `prismarine`, or rename to `prismarine_shard` + add sibling? Tradeoff: naming clarity vs. registry-rename breaking change.
-- ☐ `nautilus_shell` (AQUATIC) — primer-tag fit yes, slime-variant fit awkward (drowned drop / fishing only in vanilla — production-loop framing doesn't match).
-- ☐ `ghast_tear` (INFERNAL) — same shape problem as nautilus_shell.
-- ☐ `wither_rose` (INFERNAL) — recommendation: keep primer-tag-only, skip slime variant (flower, not a resource).
-- ☐ `end_stone` (ARCANE) — recommendation: keep primer-tag-only, skip slime variant (bulk block, not a production target).
+- ☐ `prismarine_crystals` (AQUATIC) — default if undecided: ship alongside existing `prismarine` (additive, no rename).
+- ☐ `nautilus_shell` (AQUATIC) — default if undecided: defer to V1.2+ (production-loop framing weak — drowned/fishing only in vanilla).
+- ☐ `ghast_tear` (INFERNAL) — default if undecided: defer to V1.2+ (single rare mob drop, rarity-break concern).
+- ☐ `wither_rose` (INFERNAL) — default if undecided: skip slime variant, primer tag entry only (flower, not a resource).
+- ☐ `end_stone` (ARCANE) — default if undecided: skip slime variant, primer tag entry only (bulk block).
+
+## V1.2 — new category for biological mob drops
+
+Adds a 7th category covering vanilla items harvested from living/undead mobs. Requires a Java edit (new `Category` enum constant + tint + tags) — that's why it's V1.2, not V1.1. Full design at V1.2 kickoff time.
+
+### Variants (5)
+- ☐ `bone` (skeleton)
+- ☐ `rotten_flesh` (zombie)
+- ☐ `string` (spider)
+- ☐ `leather` (cow / horse)
+- ☐ `feather` (chicken)
+
+### Open design questions
+- ☐ Category name: BESTIAL / MORTAL / VISCERAL / FAUNA / CARNAL — or split into UNDEAD + BESTIAL?
+- ☐ Category ARGB tint (`Category.tintArgb()`).
+- ☐ New parent slime species for the category (parallel to Cave/Geode/Tide/Void Slime).
+- ☐ Biome modifier JSONs for natural spawn rules (parallel to existing `data/productivefrogs/neoforge/biome_modifier/`).
+- ☐ Outer-shell tint for the new parent species (per the PR #77 `TintedSlimeOuterLayer` pattern).
 
 ## V2 — automation
 

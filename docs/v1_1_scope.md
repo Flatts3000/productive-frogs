@@ -2,80 +2,123 @@
 
 ## Theme
 
-V1 shipped 12 Resource Slime variants covering 3 of 6 categories fully (Metallic, Mineral) and 3 partially (Gem, Aquatic, Infernal, Arcane). V1.1's single thrust: **complete the canonical vanilla resource coverage** per the primer-tag lists in [categories_and_tiers.md](./categories_and_tiers.md). No new mechanics, no new blocks, no schema changes — just JSON additions that flow through the existing V1 framework.
+V1 shipped 12 Resource Slime variants. V1.1's single thrust: **complete vanilla resource coverage across the existing 6 categories** by adding every vanilla item that fits cleanly into one of them. No new mechanics, no new categories, no schema changes — pure JSON additions flowing through the existing `SlimeVariant` datapack registry + primer-tag + smelting-recipe pattern from V1.
 
-## Locked scope (Tier A — 4 new variants)
+Items requiring a **new category** (mob biological drops) are deferred to **V1.2**, since adding a category requires a Java edit to the `Category` enum.
 
-These are the "obvious fit" additions that drop cleanly into the existing pipeline: each is a vanilla item with a clear smelt-or-craft target, slotting into a category that already has shipped variants alongside it.
+## Locked scope — 16 new variants
 
-| Variant | Category | Primer item | Smelt target | Notes |
-|---|---|---|---|---|
-| `quartz` | GEM | `minecraft:quartz` (Nether quartz item) | `minecraft:quartz` | Vanilla quartz item is both primer + smelt result (Froglight → quartz item). Block-texture source for slime inner cube: `block/quartz_block.png`. |
-| `amethyst` | GEM | `minecraft:amethyst_shard` | `minecraft:amethyst_shard` | Block-texture source: `block/amethyst_block.png`. Distinct purple from ARCANE's lavender / Void Slime's end-purple. |
-| `blaze` | INFERNAL | `minecraft:blaze_powder` | `minecraft:blaze_powder` | Block-texture source: composite of blaze rod orange-yellow. Iconic Nether resource; pairs naturally with magma_cream. |
-| `echo_shard` | ARCANE | `minecraft:echo_shard` | `minecraft:echo_shard` | 1.19+ Deep Dark resource. Block-texture source: derive from `block/sculk.png` darkened + cyan accent (no native echo_shard block in vanilla). |
+After V1.1: **28 total variants** (12 V1 + 16 V1.1).
 
-**Per-variant work for each = 4 small files** (matches the V1 add-a-variant pattern documented in [architecture.md](./architecture.md)):
+### METALLIC (+1)
+
+| Variant | Primer item | Smelt result | Texture source block |
+|---|---|---|---|
+| `netherite_scrap` | `minecraft:netherite_scrap` | `minecraft:netherite_scrap` | `block/netherite_block.png` |
+
+**Boundary call**: METALLIC over INFERNAL. Its end-form is the top-tier metal in vanilla's gear ladder; INFERNAL is the source-not-form alternative we explicitly rejected for consistency with iron/copper/gold (all of which have Nether-adjacent acquisition paths via specific biomes/loot but are categorised by form).
+
+### MINERAL (+3)
+
+| Variant | Primer item | Smelt result | Texture source block |
+|---|---|---|---|
+| `glowstone_dust` | `minecraft:glowstone_dust` | `minecraft:glowstone_dust` | `block/glowstone.png` |
+| `gunpowder` | `minecraft:gunpowder` | `minecraft:gunpowder` | composite of dark grey + spark accents (no native block) |
+| `clay_ball` | `minecraft:clay_ball` | `minecraft:brick` | `block/clay.png` |
+
+**Boundary call for glowstone_dust**: MINERAL over INFERNAL/ARCANE. Powder form pattern matches redstone/lapis/coal; the existing 3 MINERAL variants are all dust/powder, so glowstone_dust joins by form not source. (Source-based assignment would push it to INFERNAL; magical-glow-based to ARCANE — both rejected to keep the MINERAL framing internally consistent.)
+
+**Note on clay_ball's smelt**: clay_ball smelts to brick in vanilla, not back to itself. The variant Froglight follows the vanilla smelt chain — Froglight → smelt → brick. Unique among the 16; every other addition smelts Froglight → the primer item itself.
+
+### GEM (+2)
+
+| Variant | Primer item | Smelt result | Texture source block |
+|---|---|---|---|
+| `quartz` | `minecraft:quartz` | `minecraft:quartz` | `block/quartz_block.png` |
+| `amethyst` | `minecraft:amethyst_shard` | `minecraft:amethyst_shard` | `block/amethyst_block.png` |
+
+### AQUATIC (+2)
+
+| Variant | Primer item | Smelt result | Texture source block |
+|---|---|---|---|
+| `ink_sac` | `minecraft:ink_sac` | `minecraft:ink_sac` | composite of black + tentacle accent (no native block) |
+| `glow_ink_sac` | `minecraft:glow_ink_sac` | `minecraft:glow_ink_sac` | composite of dark blue + cyan glow (no native block) |
+
+### INFERNAL (+5)
+
+| Variant | Primer item | Smelt result | Texture source block |
+|---|---|---|---|
+| `blaze` | `minecraft:blaze_powder` | `minecraft:blaze_powder` | composite of blaze rod orange-yellow (no native block) |
+| `soul_sand` | `minecraft:soul_sand` | `minecraft:soul_sand` | `block/soul_sand.png` |
+| `soul_soil` | `minecraft:soul_soil` | `minecraft:soul_soil` | `block/soul_soil.png` |
+| `obsidian` | `minecraft:obsidian` | `minecraft:obsidian` | `block/obsidian.png` |
+| `netherrack` | `minecraft:netherrack` | `minecraft:netherrack` | `block/netherrack.png` |
+
+### ARCANE (+3)
+
+| Variant | Primer item | Smelt result | Texture source block |
+|---|---|---|---|
+| `echo_shard` | `minecraft:echo_shard` | `minecraft:echo_shard` | derive from `block/sculk.png` darkened + cyan accent (no native echo_shard block) |
+| `chorus_fruit` | `minecraft:chorus_fruit` | `minecraft:popped_chorus_fruit` | `block/chorus_plant.png` |
+| `shulker_shell` | `minecraft:shulker_shell` | `minecraft:shulker_shell` | derive from `block/purpur_block.png` + shell highlight (no native shulker_shell block) |
+
+**Note on chorus_fruit's smelt**: like clay_ball, chorus_fruit's vanilla smelt chain produces a different item (popped_chorus_fruit). Variant Froglight follows the same chain.
+
+## Per-variant file checklist
+
+Each of the 16 variants needs the same 4 files (no Java, no schema changes):
 
 1. `data/productivefrogs/productivefrogs/slime_variant/<name>.json` — primer_item, category, primary_color, secondary_color, texture path.
 2. `assets/productivefrogs/textures/entity/slime/<name>_resource_slime.png` — inner-cube texture generated by `scripts/generate_variant_slime_textures.ps1` (extend its source-block map).
-3. One entry appended to `data/productivefrogs/tags/item/primer/<category>.json` (the primer tag).
-4. One smelting recipe at `data/productivefrogs/recipe/smelting/configurable_froglight_<name>_smelting.json` — matches the existing variant-recipe shape (uses NeoForge's `neoforge:components` ingredient on the `slime_variant` data component).
+3. One entry appended to `data/productivefrogs/tags/item/primer/<category>.json`.
+4. One smelting recipe at `data/productivefrogs/recipe/smelting/configurable_froglight_<name>_smelting.json` — matches the existing variant-recipe shape (`neoforge:components` ingredient on the `slime_variant` data component).
 
-No Java changes. No model JSON changes. No menu/screen changes. No tag schema changes. Existing GameTests (`SlimeVariantTest`, `slime_variant_datapack_registry_loads_initial_variants`) auto-extend coverage as soon as the JSONs exist; the `PFRegistryTest#variantSlimeSpawnEggCarriesSlimeVariantComponent` parameterised case picks them up too.
+64 small files total. Existing GameTests (`SlimeVariantTest`, `slime_variant_datapack_registry_loads_initial_variants`, `PFRegistryTest#variantSlimeSpawnEggCarriesSlimeVariantComponent`) auto-extend coverage as soon as the JSONs exist.
 
-## Open questions (Tier B — 5 candidates, design unresolved)
+## Deferred to V1.2 — new "biological mob drop" category
 
-Each is a canonical category resource per [categories_and_tiers.md](./categories_and_tiers.md) but doesn't slot cleanly into the V1 framework. Listed for decision before V1.1 freezes; some may defer to V1.2 or stay perpetually out-of-scope.
+The following 5 vanilla items don't fit any existing category cleanly — all are biological materials harvested from living or undead mobs:
 
-### `prismarine_crystals` (AQUATIC)
+- `bone` (skeleton)
+- `rotten_flesh` (zombie)
+- `string` (spider)
+- `leather` (cow / horse)
+- `feather` (chicken)
 
-Already in the primer tag (`prismarine_crystals` distinct from `prismarine_shard`). Question: do we ship it as a **second AQUATIC variant** alongside the existing `prismarine` (which currently primes off `prismarine_shard`)? Tradeoff: more variants = richer ocean theming, but two near-identical prismarine variants may feel like padding. Alternative: rename the existing `prismarine` to `prismarine_shard` and ship `prismarine_crystals` as a sibling — clearer naming but a registry rename is a breaking change for existing worlds.
+Adding them requires a 7th category, which is a Java edit (new `Category` enum constant + tint + primer tag + slime category tag). That's V1.2 scope, not V1.1. Category name (BESTIAL / MORTAL / VISCERAL / FAUNA / CARNAL — or split into UNDEAD + BESTIAL) decided at V1.2 design time.
 
-### `nautilus_shell` (AQUATIC)
+## Open questions still on the table for V1.1
 
-In primer tag. Slime variant fit is awkward: nautilus shells in vanilla are *only* obtainable from drowned mob drops + fishing — they're not a "production resource" the way iron/redstone are. A "Nautilus Slime" that drops shells effectively shortcuts a fishing/mob-grinder loop. Tradeoff: thematic fit is strong (ocean creature shell), but the source pattern doesn't match the rest of the system.
+Listed in the original Tier B audit; status unchanged from initial scope unless explicitly decided here:
 
-### `ghast_tear` (INFERNAL)
-
-In primer tag. Same shape problem as nautilus_shell: ghast tears are a single-item mob drop, no block form, no smelting chain. A "Ghast Slime" producing tears would compete with the player's ghast hunting loop in a way iron/copper/gold don't compete with vanilla ore mining. Tradeoff: strong Nether theming, but breaks the "resource production" framing.
-
-### `wither_rose` (INFERNAL)
-
-In primer tag. A flower / decoration item, not a resource. Slime drop doesn't match any existing pattern — there's no "wither rose smelt target." Recommendation: keep in the primer tag (so a player with wither roses can prime a frog egg), but **don't add a Wither Rose Slime variant**.
-
-### `end_stone` (ARCANE)
-
-In primer tag. A bulk block resource (like cobblestone) more than a "valuable production target." A Resource Slime that drops Froglight → smelts to end_stone is a weak production loop; players don't typically need end_stone in quantity. Recommendation: keep in primer tag, skip as a slime variant — same logic as wither_rose.
-
-### Default position if undecided by V1.1 freeze
-
-If we don't get explicit decisions on Tier B, ship Tier A only (4 variants). Wither_rose and end_stone stay primer-tag-only by recommendation above (3 → 2 unresolved). The remaining unresolved Tier B items (`prismarine_crystals`, `nautilus_shell`, `ghast_tear`) defer to V1.2 or beyond.
+- `prismarine_crystals` (AQUATIC) — second AQUATIC variant alongside existing `prismarine`, or rename existing to `prismarine_shard` + add sibling? Tradeoff: naming clarity vs. registry-rename breaking change. **Default if undecided: ship as a separate variant alongside `prismarine`** (additive, no rename — same shape as iron/copper/gold being separate variants in METALLIC).
+- `nautilus_shell` (AQUATIC) — only obtainable from drowned drops / fishing in vanilla; production-loop framing is weak. **Default if undecided: defer to V1.2+.**
+- `ghast_tear` (INFERNAL) — single mob drop, rarity-break concern. **Default if undecided: defer to V1.2+.**
+- `wither_rose` (INFERNAL) — flower, recommendation: stay primer-tag-only. **Default if undecided: skip slime variant, primer tag entry only.**
+- `end_stone` (ARCANE) — bulk block, recommendation: stay primer-tag-only. **Default if undecided: skip slime variant, primer tag entry only.**
 
 ## Out of V1.1 scope
 
-Explicitly NOT in V1.1, to keep the release focused on filling the existing category gaps:
-
-- **New categories** (no 7th category — that's parked under "Potion Slime / Alchemical" in [versioning.md](./versioning.md) for V2/V3).
-- **Cross-mod primer-tag entries** (Mekanism osmium, Mythic Metals ruby, etc.) — the cross-mod compat surface stays at the existing V1 baseline; expanding it is its own milestone (see [cross_mod_compat.md](./cross_mod_compat.md)).
-- **Netherite slime** — straddles METALLIC and INFERNAL; needs a category-assignment decision separate from the "complete the existing list" theme. Parked for V1.2.
-- **Glowstone / soul-themed materials** — same: needs category-fit conversation, doesn't map to a single primer-tag entry today.
-- **Texture rework of existing variants** — V1 textures stay as-is; only the 4 new variants ship new textures.
-- **Any V2 automation items** ([versioning.md §V2](./versioning.md)) — auto-milker, terrarium, crusher block, FE compat, etc. stay deferred.
+- **The 5 biological mob drops** — V1.2 (new category required).
+- **New categories beyond the V1.2 one** — V2/V3 (e.g. "Potion Slime / Alchemical" parked in [versioning.md](./versioning.md)).
+- **Cross-mod primer-tag entries** (Mekanism osmium, Mythic Metals ruby, etc.) — own milestone, see [cross_mod_compat.md](./cross_mod_compat.md).
+- **Texture rework of existing V1 variants** — only new variants ship new textures.
+- **Any V2 automation items** — auto-milker, terrarium, crusher block, FE compat, etc. stay deferred.
 
 ## Implementation notes
 
 - Follow the JSON-only addition pattern documented in [architecture.md](./architecture.md). Adding a slime variant should never require a Java edit.
-- `scripts/generate_variant_slime_textures.ps1` is the canonical inner-cube texture generator. Extend its source-block map for the 4 new variants; running it regenerates all 12 + 4 = 16 textures.
-- Each variant's `primary_color` should be sampled from the variant's canonical vanilla block texture (e.g. `amethyst_block.png`'s dominant hue) so the spawn-egg tint, outer-shell tint, and Froglight tint all read as the resource colour without per-surface tweaks.
-- Smelting recipe shape: copy `recipe/smelting/configurable_froglight_iron_smelting.json` as the template; only the variant name in the `neoforge:components` ingredient and the result item ID change.
+- `scripts/generate_variant_slime_textures.ps1` is the canonical inner-cube texture generator. Extend its source-block map for the 16 new variants; running it regenerates all 12 + 16 = 28 textures.
+- For variants without a native vanilla block (gunpowder, blaze, ink_sac, glow_ink_sac, echo_shard, shulker_shell), generate a composite texture from related sources (e.g. blaze rod for blaze, sculk + cyan accent for echo_shard) or hand-paint a small 8×8 tile to use as the inner cube.
+- Each variant's `primary_color` should be sampled from the variant's canonical vanilla block (or the composite source for non-block items) so the spawn-egg tint, outer-shell tint, and Froglight tint all read as the resource colour without per-surface tweaks.
+- Smelting recipe shape: copy `recipe/smelting/configurable_froglight_iron_smelting.json` as the template; change the variant name in the `neoforge:components` ingredient and the result item ID. For clay_ball → brick and chorus_fruit → popped_chorus_fruit, the result item differs from the primer (not a 1:1 echo).
 
 ## Definition of done
 
-- Tier A: 4 variant JSONs + 4 inner-cube PNGs + 4 primer tag entries + 4 smelting recipes shipped.
+- 16 variant JSONs + 16 inner-cube PNGs + 16 primer tag entries + 16 smelting recipes shipped.
 - `./gradlew build` green; `./gradlew runGameTestServer` green (existing GameTests auto-cover the new variants).
-- Creative tab shows 4 new variant slime spawn eggs, 4 new variant-stamped configurable_froglight stacks, 4 new variant Slime Buckets.
-- All 16 variants smelt to their respective resources via vanilla furnace.
-- Tier B items either have a decision documented in this file (ship / defer / drop) or are explicitly tagged for V1.2.
-- `docs/versioning.md` gets a V1.1 entry referencing this file.
-- `docs/backlog.md` V1.1 section reflects shipped state.
+- Creative tab shows 16 new variant slime spawn eggs, 16 new variant-stamped configurable_froglight stacks, 16 new variant Slime Buckets.
+- All 28 variants smelt to their respective resources via vanilla furnace (with the two non-1:1 chains documented: clay_ball → brick, chorus_fruit → popped_chorus_fruit).
+- Tier B items (prismarine_crystals, nautilus_shell, ghast_tear, wither_rose, end_stone) either decided per the defaults above or have explicit alternate decisions documented here.
+- `docs/versioning.md` V1.1 section reflects shipped state.
+- `docs/backlog.md` V1.1 checklist reflects shipped state; V1.2 section seeded with the deferred 5 mob-drop items + the new-category Java work.

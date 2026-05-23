@@ -29,20 +29,40 @@ The "playable foundation" release. **Appliance blocks** (single-block hand-opera
 
 ## V1.1 — Vanilla Resource Coverage
 
-JSON-only data release filling the canonical category gaps left after V1. No new mechanics or schema changes — every addition flows through the existing `SlimeVariant` datapack registry + primer-tag + smelting-recipe pattern already proven in V1.
+JSON-only data release that adds every vanilla item fitting cleanly into one of the existing 6 categories. No new mechanics, no new categories, no schema changes — flows through the existing `SlimeVariant` datapack registry + primer-tag + smelting-recipe pattern from V1.
 
-**Locked scope (Tier A — 4 new variants):**
+**16 new variants** (28 total after V1.1):
 
-- `quartz` (GEM) — Nether quartz
-- `amethyst` (GEM) — amethyst shard
-- `blaze` (INFERNAL) — blaze powder
-- `echo_shard` (ARCANE) — Deep Dark drop
+| Category | New variants |
+|---|---|
+| METALLIC (+1) | netherite_scrap |
+| MINERAL (+3) | glowstone_dust, gunpowder, clay_ball |
+| GEM (+2) | quartz, amethyst |
+| AQUATIC (+2) | ink_sac, glow_ink_sac |
+| INFERNAL (+5) | blaze, soul_sand, soul_soil, obsidian, netherrack |
+| ARCANE (+3) | echo_shard, chorus_fruit, shulker_shell |
 
-**Open Tier B candidates** (`prismarine_crystals`, `nautilus_shell`, `ghast_tear`, `wither_rose`, `end_stone`) — design questions tracked in [v1_1_scope.md](./v1_1_scope.md). Default if undecided by freeze: ship Tier A only; wither_rose and end_stone stay primer-tag-only; the other three defer to V1.2.
+Tier B candidates (`prismarine_crystals`, `nautilus_shell`, `ghast_tear`, `wither_rose`, `end_stone`) tracked in [v1_1_scope.md](./v1_1_scope.md) with default decisions if not resolved by freeze.
 
 **Why not V2:** V2 is automation work that requires new blocks/code. V1.1 is content-completion that's pure JSON, ships fast, and unblocks "the mod feels complete vs. the mod has obvious holes" — independent of when V2 is ready.
 
 Full design lives in [v1_1_scope.md](./v1_1_scope.md).
+
+## V1.2 — New Category for Biological Mob Drops
+
+Adds a 7th category covering vanilla items that are harvested from living/undead mobs and don't fit any existing category:
+
+- `bone` (skeleton)
+- `rotten_flesh` (zombie)
+- `string` (spider)
+- `leather` (cow / horse)
+- `feather` (chicken)
+
+**Category name** — undecided. Candidates: BESTIAL, MORTAL, VISCERAL, FAUNA, CARNAL. Could also be split into UNDEAD (bone, rotten_flesh) + BESTIAL (string, leather, feather). Decided at V1.2 design time.
+
+**Why this is V1.2 and not V1.1:** adding a new category is a Java edit — new `Category` enum constant + ARGB tint + primer tag + slime category tag + parent-species mapping for the new biome. V1.1's "JSON-only" charter excludes it.
+
+**Likely additional V1.2 work** (rounding out the new category): a parent slime species for the new category (parallel to Cave/Geode/Tide/Void Slime) and biome-conditioned natural spawning (parallel to the existing biome modifier JSONs).
 
 ## V2 — Automation
 
