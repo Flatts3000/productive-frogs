@@ -17,7 +17,7 @@ import net.minecraft.world.entity.player.Inventory;
  *
  * <p>Background texture lives at
  * {@code assets/productivefrogs/textures/gui/container/slime_milker.png}.
- * The blit arrow uses a fixed 24×17 sprite drawn relative to the
+ * The blit arrow uses a fixed 24×16 sprite drawn relative to the
  * cook-progress fraction from the menu's synced {@link
  * net.minecraft.world.inventory.ContainerData}.
  */

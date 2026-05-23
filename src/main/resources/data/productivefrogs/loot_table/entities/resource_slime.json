@@ -19,7 +19,7 @@
           "condition": "minecraft:inverted",
           "term": {
             "condition": "minecraft:entity_properties",
-            "entity": "attacker",
+            "entity": "killer",
             "predicate": {
               "type": "#productivefrogs:frogs"
             }
