@@ -12,11 +12,17 @@
 # vanilla furnace.png is overwritten with the surrounding gray background
 # color (RGB 198/198/198 = vanilla's GUI panel gray).
 #
-# Slot click targets in SlimeMilkerMenu must match vanilla furnace positions:
-#   INPUT_SLOT_X=56, INPUT_SLOT_Y=17
-#   OUTPUT_SLOT_X=112, OUTPUT_SLOT_Y=30
+# Slot click targets in SlimeMilkerMenu:
+#   INPUT_SLOT_X=56, INPUT_SLOT_Y=35  (recentred vertically against output)
+#   OUTPUT_SLOT_X=116, OUTPUT_SLOT_Y=35  (vanilla furnace result-slot position)
 # Arrow at (79, 34) - same as vanilla. The arrow sprite at (176, 14) on the
 # vanilla PNG is reused unchanged.
+#
+# We override vanilla furnace's stacked input/fuel column (input at y=17,
+# fuel at y=53) and instead present ONE input slot aligned vertically with
+# the output (both at y=35). The vanilla input slot well at (54, 15)-(73, 34)
+# is painted out and re-emitted at (54, 33)-(73, 52) so the slot frame
+# visually matches the item position.
 #
 # Why vanilla composite rather than AI gen: GUI text rendering on gpt-image-1
 # is unreliable (it mangled "Slime Milker" into "Slivve Hilk jar"). The Java
@@ -61,21 +67,32 @@ try {
         $panelGray = [System.Drawing.Color]::FromArgb(255, 198, 198, 198)
         $brush = New-Object System.Drawing.SolidBrush $panelGray
         try {
-            # Paint out two vanilla fuel-system artifacts that the milker
-            # doesn't use:
+            # Move the input slot frame from the vanilla furnace y=17 position
+            # down to y=35 so it aligns vertically with the output slot. Copy
+            # the existing 20x20 input slot region (including the bevel /
+            # shadow) from (54, 15) to (54, 33) first, then erase the
+            # original location plus the fuel-system column underneath.
             #
-            # 1. The fuel slot well at approximately (54, 51) to (72, 69) -
-            #    19x19 region. Slime milker has no fuel slot.
-            #
-            # 2. The burn-flame indicator above the fuel slot at approximately
-            #    (54, 35) to (62, 51) - the vertical "wavy flame outline"
-            #    pixels that vanilla draws as the empty indicator and overlays
-            #    a flame sprite on top of when burning. No fuel = no burn
-            #    indicator, so this column gets erased too.
-            #
-            # Combined paint region: (54, 35) to (72, 70) - a single 19x35
-            # vertical strip covering both artifacts.
-            $g.FillRectangle($brush, 54, 35, 19, 35)
+            # Region copy chain:
+            # 1. Sample (54, 15) - (73, 34) - 20x20 input slot well + bevel.
+            # 2. Paste at (54, 33) - (73, 52) - new aligned position.
+            # 3. Paint over (54, 15) - (73, 69) with panelGray to erase the
+            #    original input position, the burn-flame indicator at
+            #    (54, 35)-(62, 51), and the fuel slot well at (54, 51)-(72, 69).
+            #    Single 20x55 fill covers everything.
+            $inputSlot = New-Object System.Drawing.Bitmap 20, 20
+            try {
+                $slotGfx = [System.Drawing.Graphics]::FromImage($inputSlot)
+                try {
+                    $slotGfx.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
+                    $slotGfx.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::Half
+                    $srcRect = New-Object System.Drawing.Rectangle 54, 15, 20, 20
+                    $dstRect = New-Object System.Drawing.Rectangle 0, 0, 20, 20
+                    $slotGfx.DrawImage($src, $dstRect, $srcRect, [System.Drawing.GraphicsUnit]::Pixel)
+                } finally { $slotGfx.Dispose() }
+                $g.FillRectangle($brush, 54, 15, 20, 55)
+                $g.DrawImage($inputSlot, 54, 33, 20, 20)
+            } finally { $inputSlot.Dispose() }
         } finally { $brush.Dispose() }
 
         # Composite the arrow progress sprite into (176, 14) so the

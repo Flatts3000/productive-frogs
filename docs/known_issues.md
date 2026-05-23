@@ -42,12 +42,10 @@ The Slime Milker GUI shows the static furnace-style arrow between input and outp
 
 **Fix path**: `SlimeMilkerMenu` should expose a `progress` ContainerData int (current cook ticks) and a `totalProgress` int (max ticks for the recipe), the same shape as vanilla `FurnaceMenu`. `SlimeMilkerScreen.render` reads them and blits the progress-arrow texture at the appropriate width based on the ratio. `SlimeMilkerBlockEntity` already drives `cookProgress` per server-tick (see CLAUDE.md notes); wire it through to the menu via ContainerData sync.
 
-### 🔴 Slime Milker input slot is not vertically centered relative to the output
-The input slot sits in the top-left of the GUI's recipe area while the output slot (and the arrow) are vertically centered lower down. The vanilla furnace pattern has input above + fuel below the input column with the output centered to the right; the Slime Milker doesn't use a fuel slot (it's hand-operated), so the input should be vertically centered next to the output rather than top-aligned.
+### 🟢 Slime Milker input slot is not vertically centered relative to the output — resolved
+**Original symptom**: input slot sat at vanilla furnace's y=17 (top of the stacked input/fuel column) while the output sat at y=35 (vanilla result-slot row). With no fuel slot in the milker, the asymmetry looked awkward and the arrow ran diagonally instead of horizontally between the two.
 
-**Symptom**: Open the Slime Milker GUI → the input slot is visibly higher than the output slot. The arrow points from somewhere below the input to the output, creating an awkward visual hierarchy.
-
-**Fix path**: Bump `SlimeMilkerMenu.INPUT_SLOT` Y position from its current value (56,17 per CLAUDE.md) to align vertically with `OUTPUT_SLOT` at y=30 — set input Y to 30 (or whatever centers it against the output). Also bump the input slot frame in `textures/gui/container/slime_milker.png` so the visual slot box matches the new Y. The GUI was modelled on vanilla furnace (which has 2 input slots stacked + 1 output centred); since we only need 1 input + 1 output, recentering is the right move.
+**Resolution**: bumped `SlimeMilkerMenu.INPUT_SLOT_Y` from 17 to 35 so both item positions sit on the same horizontal line as the existing arrow at y=34. Updated `scripts/generate_slime_milker_gui.ps1` to copy the vanilla furnace's 20×20 input slot bevel from (54, 15) and re-paste it at (54, 33), then erase the original input slot well + the obsolete fuel-system column underneath (single 20×55 panel-grey fill from y=15 to y=70). The input slot frame now sits at rows 34-50 and aligns visually with the output result-slot at rows 30-54 (both centred at y=42). Regenerated `slime_milker.png` ships in the same commit.
 
 ### 🟢 Slime Milker output slot doesn't center its item — resolved
 Bumped `SlimeMilkerMenu.OUTPUT_SLOT_X` from 112 to 116 and `OUTPUT_SLOT_Y` from 30 to 35 so the menu uses vanilla furnace's actual result-slot coordinates (the previous (112, 30) values were a mis-quote of vanilla — real furnace result slot is at (116, 35)). The output bucket now centres against the result-slot frame drawn by the inherited GUI texture.
