@@ -27,6 +27,23 @@ The "playable foundation" release. **Appliance blocks** (single-block hand-opera
 
 **Why this scope:** establishes the entire mechanical loop the mod is "about" *with a working scalable economy*. The Milker is the production keystone — without it, the mod has no farming loop. V2 layers automation on top of an already-functional V1.
 
+## V1.1 — Vanilla Resource Coverage
+
+JSON-only data release filling the canonical category gaps left after V1. No new mechanics or schema changes — every addition flows through the existing `SlimeVariant` datapack registry + primer-tag + smelting-recipe pattern already proven in V1.
+
+**Locked scope (Tier A — 4 new variants):**
+
+- `quartz` (GEM) — Nether quartz
+- `amethyst` (GEM) — amethyst shard
+- `blaze` (INFERNAL) — blaze powder
+- `echo_shard` (ARCANE) — Deep Dark drop
+
+**Open Tier B candidates** (`prismarine_crystals`, `nautilus_shell`, `ghast_tear`, `wither_rose`, `end_stone`) — design questions tracked in [v1_1_scope.md](./v1_1_scope.md). Default if undecided by freeze: ship Tier A only; wither_rose and end_stone stay primer-tag-only; the other three defer to V1.2.
+
+**Why not V2:** V2 is automation work that requires new blocks/code. V1.1 is content-completion that's pure JSON, ships fast, and unblocks "the mod feels complete vs. the mod has obvious holes" — independent of when V2 is ready.
+
+Full design lives in [v1_1_scope.md](./v1_1_scope.md).
+
 ## V2 — Automation
 
 Tools and blocks that let the player scale and automate the V1 loop. Built on top of V1; never replaces it.

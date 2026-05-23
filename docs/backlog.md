@@ -46,6 +46,23 @@ Promoted `configurable_froglight` from a plain Item to a `BlockItem` backed by `
 - ✅ Milk spawn interval: `PFConfig.MIN_SPAWN_INTERVAL_TICKS` + `PFConfig.MAX_SPAWN_INTERVAL_TICKS`.
 - ~~Per-parent-species default categories (config or datapack)~~ — shipped. New `productivefrogs:parent_species` datapack registry; entries at `data/<ns>/productivefrogs/parent_species/<name>.json` with shape `{ "entity_type": "...", "category": "..." }`. Six defaults ship (vanilla `Slime`/`MagmaCube` + the four PF parent species). `SlimeSplitDiscoveryHandler.categoryForParent` now does an EntityType-id lookup against the registry instead of an `instanceof` chain — drops the subclass-ordering footgun and lets modpacks wire modded slime mobs into the discovery loop. Pinned by `ParentSpeciesEntryTest` (codec round-trips + error paths) and the new `parent_species_datapack_registry_loads_six_defaults` GameTest.
 
+## V1.1 — vanilla resource coverage
+
+Single thrust: complete the canonical vanilla resource coverage per [categories_and_tiers.md](./categories_and_tiers.md). JSON-only — no Java edits, no schema changes. Full design in [v1_1_scope.md](./v1_1_scope.md).
+
+### Tier A — locked scope (4 variants)
+- ☐ `quartz` (GEM) — variant JSON + inner-cube PNG + primer tag entry + smelting recipe.
+- ☐ `amethyst` (GEM) — same.
+- ☐ `blaze` (INFERNAL) — same.
+- ☐ `echo_shard` (ARCANE) — same.
+
+### Tier B — design open (5 candidates)
+- ☐ `prismarine_crystals` (AQUATIC) — second AQUATIC variant alongside existing `prismarine`, or rename to `prismarine_shard` + add sibling? Tradeoff: naming clarity vs. registry-rename breaking change.
+- ☐ `nautilus_shell` (AQUATIC) — primer-tag fit yes, slime-variant fit awkward (drowned drop / fishing only in vanilla — production-loop framing doesn't match).
+- ☐ `ghast_tear` (INFERNAL) — same shape problem as nautilus_shell.
+- ☐ `wither_rose` (INFERNAL) — recommendation: keep primer-tag-only, skip slime variant (flower, not a resource).
+- ☐ `end_stone` (ARCANE) — recommendation: keep primer-tag-only, skip slime variant (bulk block, not a production target).
+
 ## V2 — automation
 
 Out of scope until V1 ships. [docs/versioning.md#v2--automation](./versioning.md) is canonical.
