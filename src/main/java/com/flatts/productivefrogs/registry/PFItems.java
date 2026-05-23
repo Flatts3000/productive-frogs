@@ -18,7 +18,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.MobBucketItem;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.component.CustomData;
-import net.minecraft.world.item.component.TypedEntityData;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -335,8 +334,13 @@ public final class PFItems {
         // as a fast-path / fallback so include both for safety.
         nbt.putString("Variant", variantId.toString());
         nbt.putString("Category", category.name());
+        // 1.21.1: ENTITY_DATA is CustomData (no TypedEntityData). The entity type
+        // is inferred from the "id" string field inside the NBT, matching vanilla
+        // SpawnEggItem semantics.
+        nbt.putString("id", net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE
+            .getKey(PFEntities.RESOURCE_SLIME.get()).toString());
         return new Item.Properties()
-            .component(DataComponents.ENTITY_DATA, TypedEntityData.of(PFEntities.RESOURCE_SLIME.get(), nbt))
+            .component(DataComponents.ENTITY_DATA, CustomData.of(nbt))
             // SLIME_VARIANT drives the spawn egg's inventory tint via the
             // slime_variant ItemTintSource — picks up the variant's primary
             // colour from the datapack registry (iron-silver, copper-orange,

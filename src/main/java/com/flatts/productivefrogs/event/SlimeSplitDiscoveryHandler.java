@@ -106,7 +106,7 @@ public final class SlimeSplitDiscoveryHandler {
             if (parent.getRandom().nextFloat() >= discoveryChancePerOffspring()) {
                 continue;
             }
-            ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level, MobSpawnType.TRIGGERED);
+            ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level);
             if (resource == null) {
                 continue;
             }

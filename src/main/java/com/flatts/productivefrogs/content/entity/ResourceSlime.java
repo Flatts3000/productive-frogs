@@ -15,8 +15,6 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.ConversionParams;
-import net.minecraft.world.entity.ConversionType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.EntityType;
@@ -178,7 +176,12 @@ public class ResourceSlime extends Slime implements Bucketable {
         } else {
             rgb = getCategory().tintRgb();
         }
-        return new net.minecraft.core.particles.DustParticleOptions(rgb, 1.0F);
+        // 1.21.1 DustParticleOptions takes Vector3f (normalised RGB), not int.
+        org.joml.Vector3f color = new org.joml.Vector3f(
+            ((rgb >> 16) & 0xFF) / 255.0F,
+            ((rgb >> 8) & 0xFF) / 255.0F,
+            (rgb & 0xFF) / 255.0F);
+        return new net.minecraft.core.particles.DustParticleOptions(color, 1.0F);
     }
 
     /**
@@ -259,38 +262,36 @@ public class ResourceSlime extends Slime implements Bucketable {
         float halfWidth = width / 2.0F;
         int childSize = originalSize / 2;
         int childCount = 2 + this.random.nextInt(3);
-        PlayerTeam team = this.getTeam();
         Category category = getCategory();
         ResourceLocation variantId = getVariantId();
+        boolean persistent = this.isPersistenceRequired();
+        boolean noAi = this.isNoAi();
 
         for (int l = 0; l < childCount; l++) {
             float xOff = (l % 2 - 0.5F) * halfWidth;
             float zOff = (l / 2 - 0.5F) * halfWidth;
-            this.convertTo(
-                this.getType(),
-                new ConversionParams(ConversionType.SPLIT_ON_DEATH, false, false, team),
-                MobSpawnType.TRIGGERED,
-                child -> {
-                    child.setSize(childSize, true);
-                    if (child instanceof ResourceSlime resource) {
-                        // Set category first as a fallback, then variant — setVariant
-                        // will sync category from the registry if the variant
-                        // resolves, but if the registry isn't loaded yet the category
-                        // fallback keeps the child consistent with the parent.
-                        resource.setCategory(category);
-                        if (variantId != null) {
-                            resource.setVariant(variantId);
-                        }
-                    }
-                    child.snapTo(
-                        this.getX() + xOff,
-                        this.getY() + 0.5,
-                        this.getZ() + zOff,
-                        this.random.nextFloat() * 360.0F,
-                        0.0F
-                    );
-                }
+            ResourceSlime child = (ResourceSlime) this.getType().create(this.level());
+            if (child == null) continue;
+            if (persistent) child.setPersistenceRequired();
+            child.setNoAi(noAi);
+            child.setInvulnerable(this.isInvulnerable());
+            child.setSize(childSize, true);
+            // Set category first as a fallback, then variant — setVariant
+            // will sync category from the registry if the variant resolves;
+            // if the registry isn't loaded yet, the category fallback keeps
+            // the child consistent with the parent.
+            child.setCategory(category);
+            if (variantId != null) {
+                child.setVariant(variantId);
+            }
+            child.moveTo(
+                this.getX() + xOff,
+                this.getY() + 0.5,
+                this.getZ() + zOff,
+                this.random.nextFloat() * 360.0F,
+                0.0F
             );
+            this.level().addFreshEntity(child);
         }
     }
 

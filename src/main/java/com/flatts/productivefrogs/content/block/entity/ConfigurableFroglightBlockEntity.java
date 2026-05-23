@@ -4,7 +4,6 @@ import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -109,7 +108,7 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * clone to win.
      */
     @Override
-    protected void applyImplicitComponents(DataComponentGetter components) {
+    protected void applyImplicitComponents(DataComponentInput components) {
         super.applyImplicitComponents(components);
         this.variantId = components.get(PFDataComponents.SLIME_VARIANT.get());
     }

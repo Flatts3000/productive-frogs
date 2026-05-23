@@ -10,10 +10,9 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.ConversionParams;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.animal.fish.AbstractFish;
+import net.minecraft.world.entity.animal.AbstractFish;
 import net.minecraft.world.entity.animal.frog.Tadpole;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
@@ -88,13 +87,13 @@ public class ResourceTadpole extends Tadpole {
     }
 
     @Override
-    protected void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putString("Category", getCategory().name());
     }
 
     @Override
-    protected void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains("Category", net.minecraft.nbt.Tag.TAG_STRING)) {
             try {
@@ -122,13 +121,13 @@ public class ResourceTadpole extends Tadpole {
     @Override
     public void loadFromBucketTag(CompoundTag tag) {
         super.loadFromBucketTag(tag);
-        tag.getString("Category").ifPresent(name -> {
+        if (tag.contains("Category", net.minecraft.nbt.Tag.TAG_STRING)) {
             try {
-                setCategory(Category.valueOf(name));
+                setCategory(Category.valueOf(tag.getString("Category")));
             } catch (IllegalArgumentException ignored) {
                 // Unknown category in bucket NBT — leave default.
             }
-        });
+        }
     }
 
     /**
@@ -147,19 +146,26 @@ public class ResourceTadpole extends Tadpole {
             return;
         }
 
+        ResourceFrog frog = target.create(this.level());
+        if (frog == null) return;
+        EventHooks.onLivingConvert(this, frog);
         Category category = getCategory();
-        this.convertTo(target, ConversionParams.single(this, false, false), frog -> {
-            EventHooks.onLivingConvert(this, frog);
-            frog.setCategory(category);
-            frog.finalizeSpawn(
-                serverLevel,
-                serverLevel.getCurrentDifficultyAt(frog.blockPosition()),
-                MobSpawnType.CONVERSION,
-                null
-            );
-            frog.setPersistenceRequired();
-            frog.fudgePositionAfterSizeChange(this.getDimensions(this.getPose()));
-            this.playSound(SoundEvents.TADPOLE_GROW_UP, 0.15F, 1.0F);
-        });
+        frog.setCategory(category);
+        frog.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
+        frog.finalizeSpawn(
+            serverLevel,
+            serverLevel.getCurrentDifficultyAt(frog.blockPosition()),
+            MobSpawnType.CONVERSION,
+            null
+        );
+        frog.setNoAi(this.isNoAi());
+        if (this.hasCustomName()) {
+            frog.setCustomName(this.getCustomName());
+            frog.setCustomNameVisible(this.isCustomNameVisible());
+        }
+        frog.setPersistenceRequired();
+        this.playSound(SoundEvents.TADPOLE_GROW_UP, 0.15F, 1.0F);
+        serverLevel.addFreshEntityWithPassengers(frog);
+        this.discard();
     }
 }

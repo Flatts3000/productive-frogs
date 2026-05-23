@@ -245,12 +245,12 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
     @Nullable
     private Slime createSlimeForVariant(ServerLevel level) {
         if (variant.equals("vanilla")) {
-            return EntityType.SLIME.create(level, MobSpawnType.TRIGGERED);
+            return EntityType.SLIME.create(level);
         }
         if (variant.equals("magma")) {
-            return EntityType.MAGMA_CUBE.create(level, MobSpawnType.TRIGGERED);
+            return EntityType.MAGMA_CUBE.create(level);
         }
-        ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level, MobSpawnType.TRIGGERED);
+        ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level);
         if (resource == null) {
             return null;
         }
