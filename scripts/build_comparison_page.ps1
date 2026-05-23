@@ -107,7 +107,7 @@ $surfaces = @(
     @{
         slug = "tadpole_spawn_egg"
         assetPath = "item\tadpole_spawn_egg.png"
-        vanillaRefs = @("item\frog_spawn_egg.png", "item\egg.png", "item\axolotl_spawn_egg.png")
+        vanillaRefs = @("item\tadpole_spawn_egg.png", "item\frog_spawn_egg.png", "item\axolotl_spawn_egg.png")
     },
     @{
         slug = "slime_spawn_egg"
