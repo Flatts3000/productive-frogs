@@ -141,11 +141,13 @@ public final class PFClientEvents {
             return cat == null ? -1 : opaque(cat.tintRgb());
         }, PFItems.FROG_EGG.get());
 
-        // Resource Tadpole Bucket — tint from BUCKET_ENTITY_DATA Category
+        // Resource Tadpole Bucket — tint from BUCKET_ENTITY_DATA Category.
+        // Empty bucket (no captured tadpole) defaults to vanilla tadpole
+        // brown so the silhouette stays visible in the creative tab.
         event.register((stack, tintIndex) -> {
             if (tintIndex != 1) return -1;
             Category cat = ResourceTadpoleBucketItem.readCategory(stack);
-            return cat == null ? -1 : opaque(cat.tintRgb());
+            return cat == null ? opaque(0x6B4530) : opaque(cat.tintRgb());
         }, PFItems.RESOURCE_TADPOLE_BUCKET.get());
 
         // Slime Bucket — variant first (via BUCKET_ENTITY_DATA Variant),
@@ -176,7 +178,10 @@ public final class PFClientEvents {
                     } catch (IllegalArgumentException ignored) {}
                 }
             }
-            return -1;
+            // Empty Slime Bucket (no captured slime) — fall back to vanilla
+            // slime green so the silhouette stays visible in the creative
+            // tab instead of rendering an invisible (-1 = no tint) layer.
+            return opaque(0x5DDE36);
         }, PFItems.SLIME_BUCKET.get());
 
         // Primed Frog Egg block items — BlockColor doesn't auto-propagate to
