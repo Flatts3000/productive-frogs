@@ -61,7 +61,7 @@ Out of scope until V1 ships. [docs/versioning.md#v2--automation](./versioning.md
 Items noted in commit messages or PR descriptions as known issues but not blocking.
 
 ### Code hygiene
-- **`ResourceFrog#brainProvider` duplicates vanilla constants.** We rebuild the sensor list inline because `Frog.SENSOR_TYPES` is `protected static`. If we add a few more sensors a cleaner approach is access-transforming `Frog.SENSOR_TYPES` and `Frog.MEMORY_TYPES` to public so we can reference them directly.
+- ~~**`ResourceFrog#brainProvider` duplicates vanilla constants.**~~ — resolved. Two ATs added to `META-INF/accesstransformer.cfg` (`Frog.SENSOR_TYPES` and `Frog.MEMORY_TYPES`); `brainProvider` is now a one-line stream substitution that maps the vanilla list, replacing `FROG_ATTACKABLES` with our category-filtered variant. New sensors Mojang adds to the frog brain are inherited automatically — no maintenance burden tracking vanilla churn.
 - ~~**`SlimeSplitDiscoveryHandler.discoveryChancePerOffspring` is `public static`.**~~ — resolved in J5. Now backed by `PFConfig.DISCOVERY_CHANCE_PER_OFFSPRING` with a separate `testOverride` field for GameTest force-conversion.
 
 ### Tests
