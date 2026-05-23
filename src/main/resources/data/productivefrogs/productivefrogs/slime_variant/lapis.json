@@ -1,6 +1,6 @@
 {
   "primer_item": "minecraft:lapis_lazuli",
-  "category": "mineral",
+  "category": "cave",
   "primary_color": 3432131,
   "secondary_color": 2047884,
   "texture": "productivefrogs:textures/entity/slime/lapis_resource_slime.png"

@@ -22,7 +22,7 @@ class SlimeVariantTest {
     private static final String WITHOUT_TEXTURE = """
         {
           "primer_item": "minecraft:iron_ingot",
-          "category": "metallic",
+          "category": "bog",
           "primary_color": 12895428,
           "secondary_color": 14211288
         }
@@ -31,7 +31,7 @@ class SlimeVariantTest {
     private static final String WITH_TEXTURE = """
         {
           "primer_item": "minecraft:iron_ingot",
-          "category": "metallic",
+          "category": "bog",
           "primary_color": 12895428,
           "secondary_color": 14211288,
           "texture": "productivefrogs:textures/entity/slime/iron_resource_slime.png"
@@ -42,7 +42,7 @@ class SlimeVariantTest {
     void codecDecodesVariantWithoutOptionalTextureField() {
         SlimeVariant decoded = decode(WITHOUT_TEXTURE);
         assertEquals(ResourceLocation.parse("minecraft:iron_ingot"), decoded.primerItem());
-        assertEquals(Category.METALLIC, decoded.category());
+        assertEquals(Category.BOG, decoded.category());
         assertEquals(12895428, decoded.primaryColor());
         assertEquals(14211288, decoded.secondaryColor());
         assertEquals(1, decoded.weight(), "weight defaults to 1 when omitted");
@@ -65,7 +65,7 @@ class SlimeVariantTest {
     void codecRoundTripsVariantWithTexture() {
         SlimeVariant original = new SlimeVariant(
             ResourceLocation.parse("minecraft:copper_ingot"),
-            Category.METALLIC,
+            Category.BOG,
             14188339,
             16432204,
             1,
@@ -84,7 +84,7 @@ class SlimeVariantTest {
     void codecRoundTripsVariantWithoutTexture() {
         SlimeVariant original = new SlimeVariant(
             ResourceLocation.parse("minecraft:gold_ingot"),
-            Category.METALLIC,
+            Category.BOG,
             16777045,
             16774260,
             1,

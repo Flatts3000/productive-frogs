@@ -54,6 +54,6 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
                 return TEXTURES.get(cat);
             }
         }
-        return TEXTURES.get(Category.METALLIC);
+        return TEXTURES.get(Category.BOG);
     }
 }

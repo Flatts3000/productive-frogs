@@ -79,7 +79,7 @@ class SlimeBucketItemTest {
         ResourceLocation variantId =
             ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
-            tag.putString("Category", Category.METALLIC.name());
+            tag.putString("Category", Category.BOG.name());
             tag.putString("Variant", variantId.toString());
         });
         assertKey("item.productivefrogs.slime_bucket.copper", stack);

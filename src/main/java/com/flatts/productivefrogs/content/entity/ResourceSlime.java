@@ -71,7 +71,7 @@ public class ResourceSlime extends Slime implements Bucketable {
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
-        builder.define(DATA_CATEGORY, Category.METALLIC.ordinal());
+        builder.define(DATA_CATEGORY, Category.BOG.ordinal());
         builder.define(DATA_FROM_BUCKET, false);
         builder.define(DATA_VARIANT_ID, "");
     }
@@ -83,7 +83,7 @@ public class ResourceSlime extends Slime implements Bucketable {
         int ordinal = this.entityData.get(DATA_CATEGORY);
         Category[] values = Category.values();
         if (ordinal < 0 || ordinal >= values.length) {
-            return Category.METALLIC;
+            return Category.BOG;
         }
         return values[ordinal];
     }

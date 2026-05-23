@@ -33,7 +33,7 @@ import net.minecraft.resources.ResourceLocation;
  * <pre>{@code
  * {
  *   "entity_type": "productivefrogs:cave_slime",
- *   "category":    "mineral"
+ *   "category":    "cave"
  *  }
  * }</pre>
  *

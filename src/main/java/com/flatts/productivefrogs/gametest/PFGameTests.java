@@ -97,13 +97,13 @@ public final class PFGameTests {
     public static void primedEggBreaksWhenWaterRemoved(GameTestHelper helper) {
         BlockPos eggPos = new BlockPos(2, 2, 2);
         helper.setBlock(eggPos.below(), Blocks.WATER);
-        helper.setBlock(eggPos, PFBlocks.primedEgg(Category.METALLIC));
-        helper.assertBlockPresent(PFBlocks.primedEgg(Category.METALLIC), eggPos);
+        helper.setBlock(eggPos, PFBlocks.primedEgg(Category.BOG));
+        helper.assertBlockPresent(PFBlocks.primedEgg(Category.BOG), eggPos);
 
         // Knock out the water — the egg should detect via neighbor update
         // (PrimedFrogEggBlock.updateShape → canSurvive false → air) and disappear.
         helper.setBlock(eggPos.below(), Blocks.AIR);
-        helper.succeedWhen(() -> helper.assertBlockNotPresent(PFBlocks.primedEgg(Category.METALLIC), eggPos));
+        helper.succeedWhen(() -> helper.assertBlockNotPresent(PFBlocks.primedEgg(Category.BOG), eggPos));
     }
 
     /**
@@ -118,7 +118,7 @@ public final class PFGameTests {
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void primedEggHatchesIntoMatchingCategoryTadpoles(GameTestHelper helper) {
-        Category cat = Category.GEM;
+        Category cat = Category.GEODE;
         BlockPos eggPos = new BlockPos(2, 2, 2);
         helper.setBlock(eggPos.below(), Blocks.WATER);
 
@@ -160,7 +160,7 @@ public final class PFGameTests {
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void tadpoleAgesUpIntoResourceFrogOfSameCategory(GameTestHelper helper) {
-        Category cat = Category.ARCANE;
+        Category cat = Category.VOID;
         BlockPos spawnPos = new BlockPos(2, 2, 2);
         helper.setBlock(spawnPos.below(), Blocks.WATER);
 
@@ -220,7 +220,7 @@ public final class PFGameTests {
         //    METALLIC as the starting state so the assertion fails loudly if
         //    loadFromBucketTag silently no-ops.
         ResourceTadpole released = helper.spawn(PFEntities.RESOURCE_TADPOLE.get(), pos.east());
-        released.setCategory(Category.METALLIC);
+        released.setCategory(Category.BOG);
         net.minecraft.world.item.component.CustomData data =
             bucket.get(net.minecraft.core.component.DataComponents.BUCKET_ENTITY_DATA);
         if (data == null) {
@@ -249,12 +249,12 @@ public final class PFGameTests {
         // Spot-check one canonical entry per category. We don't enumerate every
         // entry here — that's the tag JSON's job. We just verify the tags
         // themselves resolve in the live tag manager.
-        assertItemInPrimerTag(helper, Items.IRON_INGOT, Category.METALLIC);
-        assertItemInPrimerTag(helper, Items.REDSTONE, Category.MINERAL);
-        assertItemInPrimerTag(helper, Items.DIAMOND, Category.GEM);
-        assertItemInPrimerTag(helper, Items.PRISMARINE_SHARD, Category.AQUATIC);
+        assertItemInPrimerTag(helper, Items.IRON_INGOT, Category.BOG);
+        assertItemInPrimerTag(helper, Items.REDSTONE, Category.CAVE);
+        assertItemInPrimerTag(helper, Items.DIAMOND, Category.GEODE);
+        assertItemInPrimerTag(helper, Items.PRISMARINE_SHARD, Category.TIDE);
         assertItemInPrimerTag(helper, Items.MAGMA_CREAM, Category.INFERNAL);
-        assertItemInPrimerTag(helper, Items.ENDER_PEARL, Category.ARCANE);
+        assertItemInPrimerTag(helper, Items.ENDER_PEARL, Category.VOID);
         helper.succeed();
     }
 
@@ -344,7 +344,7 @@ public final class PFGameTests {
                         helper.fail("split-discovered slime should carry a variant (METALLIC pool is non-empty)");
                         return;
                     }
-                    if (s.getCategory() != Category.METALLIC) {
+                    if (s.getCategory() != Category.BOG) {
                         helper.fail("variant sync should leave category METALLIC, got " + s.getCategory());
                     }
                     String path = variantId.getPath();
@@ -372,14 +372,14 @@ public final class PFGameTests {
         BlockPos slimePos = new BlockPos(3, 2, 2);
 
         ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
-        frog.setCategory(Category.METALLIC);
+        frog.setCategory(Category.BOG);
 
         ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
         slime.setSize(1, true);
         ResourceLocation ironVariant = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
         slime.setVariant(ironVariant);
         // setVariant syncs category from the registry, but assert just in case.
-        if (slime.getCategory() != Category.METALLIC) {
+        if (slime.getCategory() != Category.BOG) {
             helper.fail("setVariant(iron) should have synced category to METALLIC, got " + slime.getCategory());
         }
 
@@ -438,7 +438,7 @@ public final class PFGameTests {
             helper.fail("iron variant must be loaded");
             return;
         }
-        if (iron.category() != Category.METALLIC) {
+        if (iron.category() != Category.BOG) {
             helper.fail("iron variant should be METALLIC, got " + iron.category());
         }
         if (!iron.primerItem().equals(ResourceLocation.fromNamespaceAndPath("minecraft", "iron_ingot"))) {
@@ -482,12 +482,12 @@ public final class PFGameTests {
 
         // entity_type id -> expected category
         java.util.Map<ResourceLocation, Category> expected = new java.util.LinkedHashMap<>();
-        expected.put(ResourceLocation.parse("minecraft:slime"),              Category.METALLIC);
+        expected.put(ResourceLocation.parse("minecraft:slime"),              Category.BOG);
         expected.put(ResourceLocation.parse("minecraft:magma_cube"),         Category.INFERNAL);
-        expected.put(ResourceLocation.parse("productivefrogs:cave_slime"),   Category.MINERAL);
-        expected.put(ResourceLocation.parse("productivefrogs:geode_slime"),  Category.GEM);
-        expected.put(ResourceLocation.parse("productivefrogs:tide_slime"),   Category.AQUATIC);
-        expected.put(ResourceLocation.parse("productivefrogs:void_slime"),   Category.ARCANE);
+        expected.put(ResourceLocation.parse("productivefrogs:cave_slime"),   Category.CAVE);
+        expected.put(ResourceLocation.parse("productivefrogs:geode_slime"),  Category.GEODE);
+        expected.put(ResourceLocation.parse("productivefrogs:tide_slime"),   Category.TIDE);
+        expected.put(ResourceLocation.parse("productivefrogs:void_slime"),   Category.VOID);
 
         java.util.Map<ResourceLocation, Category> actual = new java.util.HashMap<>();
         for (com.flatts.productivefrogs.data.ParentSpeciesEntry entry : registry) {
@@ -517,7 +517,7 @@ public final class PFGameTests {
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void slimeInfusionTransformsVanillaIntoResourceSlime(GameTestHelper helper) {
-        Category cat = Category.METALLIC;
+        Category cat = Category.BOG;
         BlockPos spawnPos = new BlockPos(2, 2, 2);
 
         net.minecraft.world.entity.monster.Slime vanilla =
@@ -556,7 +556,7 @@ public final class PFGameTests {
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
     public static void frogTongueTargetsOnlyMatchingCategorySlime(GameTestHelper helper) {
-        Category cat = Category.METALLIC;
+        Category cat = Category.BOG;
         BlockPos frogPos = new BlockPos(2, 2, 2);
 
         ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
@@ -633,7 +633,7 @@ public final class PFGameTests {
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void matchingFrogKillDropsCategoryFroglight(GameTestHelper helper) {
-        Category cat = Category.AQUATIC;
+        Category cat = Category.TIDE;
         BlockPos frogPos = new BlockPos(2, 2, 2);
         BlockPos slimePos = new BlockPos(3, 2, 2);
 
@@ -669,7 +669,7 @@ public final class PFGameTests {
         BlockPos slimePos = new BlockPos(3, 2, 2);
 
         ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
-        frog.setCategory(Category.METALLIC);
+        frog.setCategory(Category.BOG);
 
         ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
         slime.setSize(1, true);
@@ -716,7 +716,7 @@ public final class PFGameTests {
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 400)
     public static void frogTongueAiPathDropsCategoryFroglight(GameTestHelper helper) {
-        Category cat = Category.METALLIC;
+        Category cat = Category.BOG;
         BlockPos frogPos = new BlockPos(2, 2, 2);
 
         // Floor under the frog + slime. Without ground both entities fall
@@ -760,7 +760,7 @@ public final class PFGameTests {
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void slimeBucketRoundTripPreservesCategory(GameTestHelper helper) {
-        Category cat = Category.MINERAL;
+        Category cat = Category.CAVE;
         BlockPos pos = new BlockPos(2, 2, 2);
 
         ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), pos);
@@ -852,7 +852,7 @@ public final class PFGameTests {
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void vanillaSlimeSplitDiscoveryConvertsToMetallicResourceSlime(GameTestHelper helper) {
-        runSplitDiscoveryTest(helper, net.minecraft.world.entity.EntityType.SLIME, Category.METALLIC);
+        runSplitDiscoveryTest(helper, net.minecraft.world.entity.EntityType.SLIME, Category.BOG);
     }
 
     /**
@@ -874,7 +874,7 @@ public final class PFGameTests {
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void caveSlimeSplitDiscoveryConvertsToMineralResourceSlime(GameTestHelper helper) {
-        runSplitDiscoveryTest(helper, PFEntities.CAVE_SLIME.get(), Category.MINERAL);
+        runSplitDiscoveryTest(helper, PFEntities.CAVE_SLIME.get(), Category.CAVE);
     }
 
     /**
@@ -884,7 +884,7 @@ public final class PFGameTests {
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void geodeSlimeSplitDiscoveryConvertsToGemResourceSlime(GameTestHelper helper) {
-        runSplitDiscoveryTest(helper, PFEntities.GEODE_SLIME.get(), Category.GEM);
+        runSplitDiscoveryTest(helper, PFEntities.GEODE_SLIME.get(), Category.GEODE);
     }
 
     /**
@@ -894,7 +894,7 @@ public final class PFGameTests {
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void tideSlimeSplitDiscoveryConvertsToAquaticResourceSlime(GameTestHelper helper) {
-        runSplitDiscoveryTest(helper, PFEntities.TIDE_SLIME.get(), Category.AQUATIC);
+        runSplitDiscoveryTest(helper, PFEntities.TIDE_SLIME.get(), Category.TIDE);
     }
 
     /**
@@ -904,7 +904,7 @@ public final class PFGameTests {
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void voidSlimeSplitDiscoveryConvertsToArcaneResourceSlime(GameTestHelper helper) {
-        runSplitDiscoveryTest(helper, PFEntities.VOID_SLIME.get(), Category.ARCANE);
+        runSplitDiscoveryTest(helper, PFEntities.VOID_SLIME.get(), Category.VOID);
     }
 
     /**
@@ -1019,7 +1019,7 @@ public final class PFGameTests {
         source.setSize(1, true);
         ResourceLocation ironVariant = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
         source.setVariant(ironVariant);
-        if (source.getCategory() != Category.METALLIC) {
+        if (source.getCategory() != Category.BOG) {
             helper.fail("setVariant(iron) should sync category to METALLIC, got " + source.getCategory());
             return;
         }
@@ -1482,12 +1482,12 @@ public final class PFGameTests {
         ServerLevel level = helper.getLevel();
         net.minecraft.world.item.crafting.RecipeManager rm = level.getServer().getRecipeManager();
 
-        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.METALLIC).asItem(), net.minecraft.world.item.Items.IRON_INGOT);
-        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.MINERAL).asItem(), net.minecraft.world.item.Items.REDSTONE);
-        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.GEM).asItem(), net.minecraft.world.item.Items.DIAMOND);
-        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.AQUATIC).asItem(), net.minecraft.world.item.Items.PRISMARINE_SHARD);
+        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.BOG).asItem(), net.minecraft.world.item.Items.IRON_INGOT);
+        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.CAVE).asItem(), net.minecraft.world.item.Items.REDSTONE);
+        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.GEODE).asItem(), net.minecraft.world.item.Items.DIAMOND);
+        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.TIDE).asItem(), net.minecraft.world.item.Items.PRISMARINE_SHARD);
         assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.INFERNAL).asItem(), net.minecraft.world.item.Items.MAGMA_CREAM);
-        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.ARCANE).asItem(), net.minecraft.world.item.Items.ENDER_PEARL);
+        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.VOID).asItem(), net.minecraft.world.item.Items.ENDER_PEARL);
 
         helper.succeed();
     }
@@ -1700,14 +1700,14 @@ public final class PFGameTests {
         // saveToBucketTag on a sized-1 slime writes the canonical NBT shape.
         ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(4, 2, 4));
         source.setSize(1, true);
-        source.setCategory(Category.METALLIC);
+        source.setCategory(Category.BOG);
         ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
         source.saveToBucketTag(bucket);
         source.discard();
 
         com.flatts.productivefrogs.content.entity.ResourceFrog frog =
             helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
-        frog.setCategory(Category.METALLIC);
+        frog.setCategory(Category.BOG);
 
         net.minecraft.world.entity.player.Player player =
             helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
@@ -1730,7 +1730,7 @@ public final class PFGameTests {
             }
             // A broad-strokes metallic_froglight should have dropped at the
             // frog's position.
-            net.minecraft.world.item.Item expected = PFBlocks.resourceFroglight(Category.METALLIC).asItem();
+            net.minecraft.world.item.Item expected = PFBlocks.resourceFroglight(Category.BOG).asItem();
             boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
                 .anyMatch(itemEntity -> itemEntity.getItem().is(expected));
             if (!found) {
@@ -1761,7 +1761,7 @@ public final class PFGameTests {
 
         com.flatts.productivefrogs.content.entity.ResourceFrog frog =
             helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
-        frog.setCategory(Category.METALLIC);
+        frog.setCategory(Category.BOG);
 
         net.minecraft.world.entity.player.Player player =
             helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
@@ -1802,14 +1802,14 @@ public final class PFGameTests {
 
         ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(4, 2, 4));
         source.setSize(1, true);
-        source.setCategory(Category.METALLIC);
+        source.setCategory(Category.BOG);
         ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
         source.saveToBucketTag(bucket);
         source.discard();
 
         com.flatts.productivefrogs.content.entity.ResourceFrog frog =
             helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
-        frog.setCategory(Category.AQUATIC);
+        frog.setCategory(Category.TIDE);
 
         net.minecraft.world.entity.player.Player player =
             helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);

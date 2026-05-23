@@ -21,14 +21,14 @@ class ParentSpeciesEntryTest {
     private static final String JSON_VANILLA = """
         {
           "entity_type": "minecraft:slime",
-          "category": "metallic"
+          "category": "bog"
         }
         """;
 
     private static final String JSON_PF = """
         {
           "entity_type": "productivefrogs:cave_slime",
-          "category": "mineral"
+          "category": "cave"
         }
         """;
 
@@ -36,21 +36,21 @@ class ParentSpeciesEntryTest {
     void decodesVanillaParentSpeciesEntry() {
         ParentSpeciesEntry entry = decode(JSON_VANILLA);
         assertEquals(ResourceLocation.parse("minecraft:slime"), entry.entityType());
-        assertEquals(Category.METALLIC, entry.category());
+        assertEquals(Category.BOG, entry.category());
     }
 
     @Test
     void decodesPfParentSpeciesEntry() {
         ParentSpeciesEntry entry = decode(JSON_PF);
         assertEquals(ResourceLocation.parse("productivefrogs:cave_slime"), entry.entityType());
-        assertEquals(Category.MINERAL, entry.category());
+        assertEquals(Category.CAVE, entry.category());
     }
 
     @Test
     void codecRoundTrip() {
         ParentSpeciesEntry original = new ParentSpeciesEntry(
             ResourceLocation.parse("productivefrogs:void_slime"),
-            Category.ARCANE
+            Category.VOID
         );
         JsonElement encoded = ParentSpeciesEntry.CODEC.encodeStart(JsonOps.INSTANCE, original)
             .result()
@@ -69,7 +69,7 @@ class ParentSpeciesEntryTest {
         DataResult<ParentSpeciesEntry> result = ParentSpeciesEntry.CODEC.parse(
             JsonOps.INSTANCE,
             JsonParser.parseString("""
-                { "category": "metallic" }
+                { "category": "bog" }
             """)
         );
         assertNull(result.result().orElse(null), "missing entity_type should not decode");

@@ -1,6 +1,6 @@
 {
   "primer_item": "minecraft:copper_ingot",
-  "category": "metallic",
+  "category": "bog",
   "primary_color": 14711367,
   "secondary_color": 11553069,
   "texture": "productivefrogs:textures/entity/slime/copper_resource_slime.png"

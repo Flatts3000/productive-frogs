@@ -168,12 +168,12 @@ public final class PFBlocks {
      */
     private static MapColor mapColorFor(Category cat) {
         return switch (cat) {
-            case METALLIC -> MapColor.METAL;
-            case MINERAL  -> MapColor.COLOR_RED;
-            case GEM      -> MapColor.DIAMOND;
-            case AQUATIC  -> MapColor.WATER;
+            case BOG      -> MapColor.PLANT;
+            case CAVE     -> MapColor.METAL;
+            case GEODE    -> MapColor.DIAMOND;
+            case TIDE     -> MapColor.WATER;
             case INFERNAL -> MapColor.FIRE;
-            case ARCANE   -> MapColor.COLOR_PURPLE;
+            case VOID     -> MapColor.COLOR_PURPLE;
         };
     }
 
