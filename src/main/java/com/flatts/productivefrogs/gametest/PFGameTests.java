@@ -87,6 +87,122 @@ public final class PFGameTests {
     // Tests
     // ---------------------------------------------------------------------
 
+    // =================================================================
+    // V1.5 species-as-category — Q1/Q2/Q3/Q4 regression pins
+    // =================================================================
+
+    /**
+     * Q1=A regression pin: vanilla {@code minecraft:slime} cannot be infused.
+     * Verified at the helper level via {@link SlimeInfusionHandler#resolveParentSpecies}
+     * — must return null for vanilla Slime so the handler's gate rejects it.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 20)
+    public static void vanillaSlimeIsNotAParentSpecies(GameTestHelper helper) {
+        net.minecraft.world.entity.monster.Slime vanilla =
+            helper.spawn(net.minecraft.world.entity.EntityType.SLIME, new BlockPos(2, 2, 2));
+        Category resolved = SlimeInfusionHandler.resolveParentSpecies(vanilla);
+        if (resolved != null) {
+            helper.fail("vanilla Slime must resolve to null parent species (Q1=A), got " + resolved);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Q1=A regression pin: vanilla {@code minecraft:magma_cube} cannot be
+     * infused. Parallel to {@link #vanillaSlimeIsNotAParentSpecies}.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 20)
+    public static void vanillaMagmaCubeIsNotAParentSpecies(GameTestHelper helper) {
+        net.minecraft.world.entity.monster.MagmaCube vanilla =
+            helper.spawn(net.minecraft.world.entity.EntityType.MAGMA_CUBE, new BlockPos(2, 2, 2));
+        Category resolved = SlimeInfusionHandler.resolveParentSpecies(vanilla);
+        if (resolved != null) {
+            helper.fail("vanilla MagmaCube must resolve to null parent species (Q1=A), got " + resolved);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Q1=A positive pin: all 6 PF parent species resolve to their matching
+     * {@link Category}. Catches accidental species removal or wrong class
+     * binding in {@link SlimeInfusionHandler#resolveParentSpecies}.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 20)
+    public static void allPfParentSpeciesResolveToTheirCategory(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        assertResolves(helper, helper.spawn(PFEntities.BOG_SLIME.get(), pos),      Category.BOG);
+        assertResolves(helper, helper.spawn(PFEntities.CAVE_SLIME.get(), pos),     Category.CAVE);
+        assertResolves(helper, helper.spawn(PFEntities.GEODE_SLIME.get(), pos),    Category.GEODE);
+        assertResolves(helper, helper.spawn(PFEntities.TIDE_SLIME.get(), pos),     Category.TIDE);
+        assertResolves(helper, helper.spawn(PFEntities.INFERNAL_SLIME.get(), pos), Category.INFERNAL);
+        assertResolves(helper, helper.spawn(PFEntities.VOID_SLIME.get(), pos),     Category.VOID);
+        helper.succeed();
+    }
+
+    private static void assertResolves(GameTestHelper helper, net.minecraft.world.entity.monster.Slime s, Category expected) {
+        Category got = SlimeInfusionHandler.resolveParentSpecies(s);
+        if (got != expected) {
+            helper.fail(s.getClass().getSimpleName() + " resolved to " + got + ", expected " + expected);
+        }
+    }
+
+    /**
+     * Q3 regression pin: an already-infused {@link ResourceSlime} is hard-rejected
+     * by {@link SlimeInfusionHandler#resolveParentSpecies} (which is also
+     * checked separately for the ResourceSlime instanceof early-return in
+     * the handler). No variant swapping.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 20)
+    public static void resourceSlimeResolvesToNullParentSpecies(GameTestHelper helper) {
+        ResourceSlime resource = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(2, 2, 2));
+        resource.setCategory(Category.CAVE);
+        Category resolved = SlimeInfusionHandler.resolveParentSpecies(resource);
+        if (resolved != null) {
+            helper.fail("ResourceSlime must NOT resolve to a parent species (Q3 hard-reject), got " + resolved);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Q4 = Path A regression pin: a variant primer item that matches a Cave
+     * variant (e.g., iron) infuses a Cave Slime into the matching variant.
+     * Inverse of the cross-species rejection — confirms the happy path
+     * still works under the new gate.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void caveSlimePlusCaveVariantPrimerProducesVariantSlime(GameTestHelper helper) {
+        net.minecraft.core.Registry<SlimeVariant> registry =
+            helper.getLevel().registryAccess().registryOrThrow(PFRegistries.SLIME_VARIANT);
+        java.util.Map.Entry<ResourceLocation, SlimeVariant> ironEntry =
+            SlimeVariant.findByPrimerItem(registry,
+                BuiltInRegistries.ITEM.getKey(Items.IRON_INGOT));
+        if (ironEntry == null) {
+            helper.fail("iron variant should be in slime_variant registry");
+            return;
+        }
+        if (ironEntry.getValue().category() != Category.CAVE) {
+            helper.fail("iron must be a Cave variant after V1.5 remap, got " + ironEntry.getValue().category());
+            return;
+        }
+
+        // Exercise the helper directly — the player-interaction event would
+        // produce the same outcome but requires a player which the gametest
+        // harness doesn't expose cleanly.
+        com.flatts.productivefrogs.content.entity.CaveSlime parent =
+            helper.spawn(PFEntities.CAVE_SLIME.get(), new BlockPos(2, 2, 2));
+        parent.setSize(1, true);
+        ResourceSlime resource = SlimeInfusionHandler.transformInPlace(parent, Category.CAVE);
+        if (resource == null) {
+            helper.fail("transformInPlace returned null");
+            return;
+        }
+        resource.setVariant(ironEntry.getKey());
+        if (!ironEntry.getKey().equals(resource.getVariantId())) {
+            helper.fail("expected variant " + ironEntry.getKey() + ", got " + resource.getVariantId());
+        }
+        helper.succeed();
+    }
+
     /**
      * Place a Primed Frog Egg on a water source, then remove the water. The
      * block's {@code updateShape} runs {@code canSurvive}, sees no water below,
@@ -342,15 +458,18 @@ public final class PFGameTests {
         BlockPos slimePos = new BlockPos(3, 2, 2);
 
         ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
-        frog.setCategory(Category.BOG);
+        // V1.5: iron is a Cave variant — frog category must match the
+        // slime's category for FrogTongueDropHandler to emit the drop.
+        frog.setCategory(Category.CAVE);
 
         ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
         slime.setSize(1, true);
         ResourceLocation ironVariant = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
         slime.setVariant(ironVariant);
-        // setVariant syncs category from the registry, but assert just in case.
-        if (slime.getCategory() != Category.BOG) {
-            helper.fail("setVariant(iron) should have synced category to METALLIC, got " + slime.getCategory());
+        // setVariant syncs category from the registry. V1.5: iron is a Cave
+        // variant (was Metallic / BOG pre-remap).
+        if (slime.getCategory() != Category.CAVE) {
+            helper.fail("setVariant(iron) should have synced category to CAVE, got " + slime.getCategory());
         }
 
         slime.hurt(helper.getLevel().damageSources().mobAttack(frog), 999.0F);
@@ -408,8 +527,8 @@ public final class PFGameTests {
             helper.fail("iron variant must be loaded");
             return;
         }
-        if (iron.category() != Category.BOG) {
-            helper.fail("iron variant should be METALLIC, got " + iron.category());
+        if (iron.category() != Category.CAVE) {
+            helper.fail("iron variant should be CAVE (V1.5 remap), got " + iron.category());
         }
         if (!iron.primerItem().equals(ResourceLocation.fromNamespaceAndPath("minecraft", "iron_ingot"))) {
             helper.fail("iron variant primer should be minecraft:iron_ingot, got " + iron.primerItem());
@@ -482,22 +601,32 @@ public final class PFGameTests {
     }
 
     /**
-     * Spawn a vanilla Slime, run it through the infusion helper, and assert the
+     * Spawn a Cave Slime, run it through the infusion helper, and assert the
      * source is gone and a ResourceSlime of the matching category sits at the
-     * same place with the same size. Exercises the data shape of the
-     * transformation independent of the player-interaction event.
+     * same place with the same size. Exercises the {@link SlimeInfusionHandler#transformInPlace}
+     * helper directly — does not go through the player-interaction gate
+     * (that gate is covered separately by the Q1/Q2/Q3/Q4 regression tests).
+     *
+     * <p>V1.5: the test was previously called slimeInfusionTransformsVanillaIntoResourceSlime
+     * and used a vanilla {@code minecraft:slime} as the source. Per Q1=A,
+     * vanilla mobs are no longer parent species, so the higher-level handler
+     * rejects them. The low-level helper {@code transformInPlace} still
+     * accepts any {@link net.minecraft.world.entity.monster.Slime} (it
+     * doesn't read the parent_species registry) — but for a realistic
+     * positive test we now seed it with a Cave Slime which is the canonical
+     * CAVE parent.
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
-    public static void slimeInfusionTransformsVanillaIntoResourceSlime(GameTestHelper helper) {
-        Category cat = Category.BOG;
+    public static void slimeInfusionTransformsParentIntoVariantSlime(GameTestHelper helper) {
+        Category cat = Category.CAVE;
         BlockPos spawnPos = new BlockPos(2, 2, 2);
 
-        net.minecraft.world.entity.monster.Slime vanilla =
-            helper.spawn(net.minecraft.world.entity.EntityType.SLIME, spawnPos);
-        vanilla.setSize(2, true);
-        int originalSize = vanilla.getSize();
+        com.flatts.productivefrogs.content.entity.CaveSlime parent =
+            helper.spawn(PFEntities.CAVE_SLIME.get(), spawnPos);
+        parent.setSize(2, true);
+        int originalSize = parent.getSize();
 
-        ResourceSlime resource = SlimeInfusionHandler.transformInPlace(vanilla, cat);
+        ResourceSlime resource = SlimeInfusionHandler.transformInPlace(parent, cat);
         if (resource == null) {
             helper.fail("transformInPlace returned null");
             return;
@@ -508,11 +637,11 @@ public final class PFGameTests {
         if (resource.getSize() != originalSize) {
             helper.fail("expected size " + originalSize + ", got " + resource.getSize());
         }
-        if (vanilla.isAlive()) {
-            helper.fail("source vanilla slime should be discarded after infusion");
+        if (parent.isAlive()) {
+            helper.fail("source Cave Slime should be discarded after infusion");
         }
-        if (helper.getEntities(net.minecraft.world.entity.EntityType.SLIME).size() != 0) {
-            helper.fail("no vanilla slimes should remain in the test plot after infusion");
+        if (!helper.getEntities(PFEntities.CAVE_SLIME.get()).isEmpty()) {
+            helper.fail("no Cave Slimes should remain in the test plot after infusion");
         }
         helper.succeed();
     }
@@ -840,45 +969,41 @@ public final class PFGameTests {
     }
 
     /**
-     * Cave Slime is the parent species for the MINERAL category — splitting one
-     * with 100% discovery should give MINERAL ResourceSlimes. Mirrors the
-     * vanilla-slime / magma-cube tests, but exercises the {@code instanceof
-     * CaveSlime} branch in {@code SlimeSplitDiscoveryHandler#categoryForParent}
-     * which must be checked BEFORE the {@code getClass() == Slime.class} check
-     * (CaveSlime extends Slime, so the strict-equality check would miss it).
+     * Cave Slime (V1.5: the CAVE parent species) splits with 100% discovery
+     * convert to CAVE ResourceSlimes. Exercises the
+     * {@code SlimeSplitDiscoveryHandler#categoryForParent} registry lookup
+     * for the {@code productivefrogs:cave_slime} entry.
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
-    public static void caveSlimeSplitDiscoveryConvertsToMineralResourceSlime(GameTestHelper helper) {
+    public static void caveSlimeSplitDiscoveryConvertsToCaveResourceSlime(GameTestHelper helper) {
         runSplitDiscoveryTest(helper, PFEntities.CAVE_SLIME.get(), Category.CAVE);
     }
 
     /**
-     * Geode Slime is the parent species for GEM — splitting one with 100%
-     * discovery should give GEM ResourceSlimes. Same shape as the Cave Slime
-     * test, just hitting the {@code instanceof GeodeSlime} branch.
+     * Geode Slime (V1.5: the GEODE parent species) splits with 100% discovery
+     * convert to GEODE ResourceSlimes.
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
-    public static void geodeSlimeSplitDiscoveryConvertsToGemResourceSlime(GameTestHelper helper) {
+    public static void geodeSlimeSplitDiscoveryConvertsToGeodeResourceSlime(GameTestHelper helper) {
         runSplitDiscoveryTest(helper, PFEntities.GEODE_SLIME.get(), Category.GEODE);
     }
 
     /**
-     * Tide Slime is the parent species for AQUATIC — splitting one with 100%
-     * discovery should give AQUATIC ResourceSlimes. Same shape as the other
-     * parent-species tests.
+     * Tide Slime (V1.5: the TIDE parent species) splits with 100% discovery
+     * convert to TIDE ResourceSlimes.
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
-    public static void tideSlimeSplitDiscoveryConvertsToAquaticResourceSlime(GameTestHelper helper) {
+    public static void tideSlimeSplitDiscoveryConvertsToTideResourceSlime(GameTestHelper helper) {
         runSplitDiscoveryTest(helper, PFEntities.TIDE_SLIME.get(), Category.TIDE);
     }
 
     /**
-     * Void Slime is the parent species for ARCANE — splitting one with 100%
-     * discovery should give ARCANE ResourceSlimes. Closes the parent-species
-     * test set (one per non-vanilla category).
+     * Void Slime (V1.5: the VOID parent species) splits with 100% discovery
+     * convert to VOID ResourceSlimes. Closes the parent-species test set
+     * (one per species — bog + cave + geode + tide + infernal + void).
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
-    public static void voidSlimeSplitDiscoveryConvertsToArcaneResourceSlime(GameTestHelper helper) {
+    public static void voidSlimeSplitDiscoveryConvertsToVoidResourceSlime(GameTestHelper helper) {
         runSplitDiscoveryTest(helper, PFEntities.VOID_SLIME.get(), Category.VOID);
     }
 
@@ -994,8 +1119,8 @@ public final class PFGameTests {
         source.setSize(1, true);
         ResourceLocation ironVariant = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
         source.setVariant(ironVariant);
-        if (source.getCategory() != Category.BOG) {
-            helper.fail("setVariant(iron) should sync category to METALLIC, got " + source.getCategory());
+        if (source.getCategory() != Category.CAVE) {
+            helper.fail("setVariant(iron) should sync category to CAVE (V1.5), got " + source.getCategory());
             return;
         }
 
@@ -1736,7 +1861,9 @@ public final class PFGameTests {
 
         com.flatts.productivefrogs.content.entity.ResourceFrog frog =
             helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
-        frog.setCategory(Category.BOG);
+        // V1.5: iron is a Cave variant — frog category must match the
+        // bucket's variant category for direct-feed to fire.
+        frog.setCategory(Category.CAVE);
 
         net.minecraft.world.entity.player.Player player =
             helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);

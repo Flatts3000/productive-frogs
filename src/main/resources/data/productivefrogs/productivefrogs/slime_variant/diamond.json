@@ -1,6 +1,6 @@
 {
   "primer_item": "minecraft:diamond",
-  "category": "geode",
+  "category": "cave",
   "primary_color": 7134423,
   "secondary_color": 4175792,
   "texture": "productivefrogs:textures/entity/slime/diamond_resource_slime.png"
