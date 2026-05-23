@@ -76,12 +76,13 @@ public final class PFClientEvents {
     @SubscribeEvent
     public static void onRegisterBlockColors(RegisterColorHandlersEvent.Block event) {
         for (Category cat : Category.values()) {
+            final int rgb = opaque(cat.tintRgb());
             event.register(
-                (state, level, pos, tintIndex) -> tintIndex == 0 ? cat.tintRgb() : -1,
+                (state, level, pos, tintIndex) -> tintIndex == 0 ? rgb : -1,
                 PFBlocks.primedEgg(cat)
             );
             event.register(
-                (state, level, pos, tintIndex) -> tintIndex == 0 ? cat.tintRgb() : -1,
+                (state, level, pos, tintIndex) -> tintIndex == 0 ? rgb : -1,
                 PFBlocks.resourceFroglight(cat)
             );
         }
@@ -111,7 +112,7 @@ public final class PFClientEvents {
                     return -1;
                 }
                 SlimeVariant variant = registry.get(variantId);
-                return variant == null ? -1 : variant.primaryColor();
+                return variant == null ? -1 : opaque(variant.primaryColor());
             },
             PFBlocks.CONFIGURABLE_FROGLIGHT.get()
         );
@@ -121,6 +122,13 @@ public final class PFClientEvents {
      * Item-color registration — 1.21.1 uses the legacy {@link RegisterColorHandlersEvent.Item}
      * event with per-item lambdas. (1.21.4+ moved this to JSON {@code items/*.json} +
      * {@code ItemTintSource} but that doesn't exist in 1.21.1.)
+     *
+     * <p>Every non-{@code -1} return is OR-ed with {@code 0xFF000000} via
+     * {@link #opaque(int)}. Without this, a raw 24-bit RGB value like
+     * {@code 0x808088} is interpreted as ARGB with {@code alpha == 0}, which
+     * renders the tinted layer fully transparent. Vanilla applies opaque-alpha
+     * inside its auto-registered SpawnEggItem handler; modded handlers must
+     * do it explicitly.
      */
     @SubscribeEvent
     public static void onRegisterItemColors(RegisterColorHandlersEvent.Item event) {
@@ -130,14 +138,14 @@ public final class PFClientEvents {
         event.register((stack, tintIndex) -> {
             if (tintIndex != 0) return -1;
             Category cat = stack.get(PFDataComponents.CONTAINED_CATEGORY.get());
-            return cat == null ? -1 : cat.tintRgb();
+            return cat == null ? -1 : opaque(cat.tintRgb());
         }, PFItems.FROG_EGG.get());
 
         // Resource Tadpole Bucket — tint from BUCKET_ENTITY_DATA Category
         event.register((stack, tintIndex) -> {
             if (tintIndex != 1) return -1;
             Category cat = ResourceTadpoleBucketItem.readCategory(stack);
-            return cat == null ? -1 : cat.tintRgb();
+            return cat == null ? -1 : opaque(cat.tintRgb());
         }, PFItems.RESOURCE_TADPOLE_BUCKET.get());
 
         // Slime Bucket — variant first (via BUCKET_ENTITY_DATA Variant),
@@ -157,19 +165,34 @@ public final class PFClientEvents {
                                 .registry(PFRegistries.SLIME_VARIANT).orElse(null);
                             if (registry != null) {
                                 SlimeVariant variant = registry.get(variantId);
-                                if (variant != null) return variant.primaryColor();
+                                if (variant != null) return opaque(variant.primaryColor());
                             }
                         }
                     }
                 }
                 if (tag.contains("Category")) {
                     try {
-                        return Category.valueOf(tag.getString("Category")).tintRgb();
+                        return opaque(Category.valueOf(tag.getString("Category")).tintRgb());
                     } catch (IllegalArgumentException ignored) {}
                 }
             }
             return -1;
         }, PFItems.SLIME_BUCKET.get());
+
+        // Primed Frog Egg block items — BlockColor doesn't auto-propagate to
+        // BlockItem in 1.21.1 the way it does in 1.21.4+; register explicit
+        // item color handlers so the 6 in-hand bottles tint per category.
+        for (Category cat : Category.values()) {
+            final int rgb = opaque(cat.tintRgb());
+            event.register(
+                (stack, tintIndex) -> tintIndex == 0 ? rgb : -1,
+                PFItems.PRIMED_FROG_EGG_ITEMS.get(cat).get()
+            );
+            event.register(
+                (stack, tintIndex) -> tintIndex == 0 ? rgb : -1,
+                PFItems.RESOURCE_FROGLIGHT_ITEMS.get(cat).get()
+            );
+        }
 
         // Configurable Froglight item — tint from SLIME_VARIANT component
         event.register((stack, tintIndex) -> {
@@ -182,7 +205,7 @@ public final class PFClientEvents {
                 .registry(PFRegistries.SLIME_VARIANT).orElse(null);
             if (registry == null) return -1;
             SlimeVariant variant = registry.get(variantId);
-            return variant == null ? -1 : variant.primaryColor();
+            return variant == null ? -1 : opaque(variant.primaryColor());
         }, PFItems.CONFIGURABLE_FROGLIGHT.get());
 
         // Per-category Froglight blockitems — inherit BlockColor automatically,
@@ -209,13 +232,13 @@ public final class PFClientEvents {
                         if (registry != null) {
                             SlimeVariant variant = registry.get(variantId);
                             if (variant != null) {
-                                return tintIndex == 0 ? variant.primaryColor() : variant.secondaryColor();
+                                return opaque(tintIndex == 0 ? variant.primaryColor() : variant.secondaryColor());
                             }
                         }
                     }
                 }
                 // Fallback to SpawnEggItem ctor colors (Category.tintRgb + darker shade).
-                return ((net.minecraft.world.item.SpawnEggItem) stack.getItem()).getColor(tintIndex);
+                return opaque(((net.minecraft.world.item.SpawnEggItem) stack.getItem()).getColor(tintIndex));
             }, entry.getValue().get());
         }
 
@@ -224,7 +247,7 @@ public final class PFClientEvents {
         // (primary, secondary) colours set in PFItems.
         java.util.function.Consumer<net.minecraft.world.item.SpawnEggItem> registerCtorColors = egg ->
             event.register((stack, tintIndex) ->
-                ((net.minecraft.world.item.SpawnEggItem) stack.getItem()).getColor(tintIndex),
+                opaque(((net.minecraft.world.item.SpawnEggItem) stack.getItem()).getColor(tintIndex)),
                 egg);
 
         registerCtorColors.accept(PFItems.CAVE_SLIME_SPAWN_EGG.get());
@@ -238,6 +261,18 @@ public final class PFClientEvents {
         for (var entry : PFItems.RESOURCE_TADPOLE_SPAWN_EGGS.entrySet()) {
             registerCtorColors.accept(entry.getValue().get());
         }
+    }
+
+    /**
+     * Ensure the alpha byte is set to 0xFF. Item color handlers in 1.21.1
+     * return ARGB-shaped {@code int}s; a raw 24-bit RGB value (alpha == 0)
+     * makes the tinted layer render fully transparent. Source colors here
+     * ({@link Category#tintRgb()}, {@link SlimeVariant#primaryColor()}, the
+     * ctor-passed {@link net.minecraft.world.item.SpawnEggItem} colors) are
+     * all 24-bit; this normalises them.
+     */
+    private static int opaque(int rgb) {
+        return 0xFF000000 | rgb;
     }
 
     /**
