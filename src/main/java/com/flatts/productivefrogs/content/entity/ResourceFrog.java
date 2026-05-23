@@ -29,8 +29,6 @@ import net.minecraft.world.entity.animal.frog.Frog;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 /**
  * The Resource Frog — a Productive Frogs frog locked to one of the six
@@ -100,21 +98,21 @@ public class ResourceFrog extends Frog {
     }
 
     @Override
-    protected void addAdditionalSaveData(ValueOutput out) {
-        super.addAdditionalSaveData(out);
-        out.putString("Category", getCategory().name());
+    protected void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putString("Category", getCategory().name());
     }
 
     @Override
-    protected void readAdditionalSaveData(ValueInput in) {
-        super.readAdditionalSaveData(in);
-        in.getString("Category").ifPresent(name -> {
+    protected void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.contains("Category", net.minecraft.nbt.Tag.TAG_STRING)) {
             try {
-                setCategory(Category.valueOf(name));
+                setCategory(Category.valueOf(tag.getString("Category")));
             } catch (IllegalArgumentException ignored) {
                 // Unknown category in save data — leave default.
             }
-        });
+        }
     }
 
     /**

@@ -4,7 +4,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.client.renderer.entity.layers.SlimeOuterLayer;
-import net.minecraft.client.renderer.entity.state.SlimeRenderState;
+
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -29,7 +29,7 @@ public class VoidSlimeRenderer extends SlimeRenderer {
     }
 
     @Override
-    public ResourceLocation getTextureLocation(SlimeRenderState state) {
+    public ResourceLocation getTextureLocation(net.minecraft.world.entity.monster.Slime entity) {
         return TEXTURE;
     }
 }

@@ -19,8 +19,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 /**
  * BlockEntity backing the {@link SlimeMilkerBlock}. Two-slot inventory
@@ -188,17 +186,22 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
     // -------------------------------------------------------------------
 
     @Override
-    protected void saveAdditional(ValueOutput out) {
-        super.saveAdditional(out);
-        out.putInt("CookProgress", cookProgress);
-        inventory.serialize(out.child("Inventory"));
+    protected void saveAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        tag.putInt("CookProgress", cookProgress);
+        net.minecraft.nbt.CompoundTag invTag = new net.minecraft.nbt.CompoundTag();
+        inventory.serialize(invTag);
+        tag.put("Inventory", invTag);
     }
 
     @Override
-    protected void loadAdditional(ValueInput in) {
-        super.loadAdditional(in);
-        cookProgress = in.getIntOr("CookProgress", 0);
-        in.child("Inventory").ifPresent(inventory::deserialize);
+    protected void loadAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        cookProgress = tag.contains("CookProgress", net.minecraft.nbt.Tag.TAG_INT)
+            ? tag.getInt("CookProgress") : 0;
+        if (tag.contains("Inventory", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
+            inventory.deserialize(tag.getCompound("Inventory"));
+        }
     }
 
     // -------------------------------------------------------------------

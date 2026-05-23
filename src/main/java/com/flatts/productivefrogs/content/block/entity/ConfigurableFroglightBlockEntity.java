@@ -13,8 +13,6 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -117,19 +115,21 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(ValueOutput out) {
-        super.saveAdditional(out);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
         if (variantId != null) {
-            out.putString("Variant", variantId.toString());
+            tag.putString("Variant", variantId.toString());
         }
     }
 
     @Override
-    protected void loadAdditional(ValueInput in) {
-        super.loadAdditional(in);
-        variantId = in.getString("Variant")
-            .map(ResourceLocation::tryParse)
-            .orElse(null);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        if (tag.contains("Variant", net.minecraft.nbt.Tag.TAG_STRING)) {
+            variantId = ResourceLocation.tryParse(tag.getString("Variant"));
+        } else {
+            variantId = null;
+        }
     }
 
     /**
