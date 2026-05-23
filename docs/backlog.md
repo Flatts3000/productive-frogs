@@ -46,19 +46,27 @@ Promoted `configurable_froglight` from a plain Item to a `BlockItem` backed by `
 - ✅ Milk spawn interval: `PFConfig.MIN_SPAWN_INTERVAL_TICKS` + `PFConfig.MAX_SPAWN_INTERVAL_TICKS`.
 - ~~Per-parent-species default categories (config or datapack)~~ — shipped. New `productivefrogs:parent_species` datapack registry; entries at `data/<ns>/productivefrogs/parent_species/<name>.json` with shape `{ "entity_type": "...", "category": "..." }`. Six defaults ship (vanilla `Slime`/`MagmaCube` + the four PF parent species). `SlimeSplitDiscoveryHandler.categoryForParent` now does an EntityType-id lookup against the registry instead of an `instanceof` chain — drops the subclass-ordering footgun and lets modpacks wire modded slime mobs into the discovery loop. Pinned by `ParentSpeciesEntryTest` (codec round-trips + error paths) and the new `parent_species_datapack_registry_loads_six_defaults` GameTest.
 
+## V1.0.x — data-driven variant architecture refactor (V1.1 prerequisite)
+
+Removes per-variant Java hardcoding so modpacks can add a SlimeVariant by JSON only. Full design in [refactor_data_driven_variants.md](./refactor_data_driven_variants.md). Ship in 4 PRs:
+
+- ☐ **Phase 1 — Spawn eggs collapse + lang derivation**: single `resource_slime_spawn_egg` with `SLIME_VARIANT` component; template lang entries with title-cased fallback. Deprecated aliases for old per-variant spawn egg items (migration safety).
+- ☐ **Phase 2 — Milk fluid auto-registration**: scan loaded mods for `slime_variant/*.json` at mod init, register fluid pipeline dynamically. Removes `PFFluidTypes.VARIANTS` hardcoded list. Carries the most risk (mod-resource scanning at mod init is non-standard).
+- ☐ **Phase 3 — Asset auto-generation from variant JSONs**: extend `generate_variant_slime_textures.ps1` + `generate_slime_milk_textures.ps1` to scan variant JSONs and use a new optional `texture_source_block` field. Document the modpack workflow in `docs/modpack_adding_variants.md`.
+- ☐ **Phase 4 — Validation with a test external variant**: ship a brand-new variant via JSON-only and verify the full production loop end-to-end.
+
 ## V1.1 — vanilla resource coverage
 
-Add every vanilla item fitting cleanly into one of the existing 6 categories. JSON-only — no Java edits, no schema changes. Full design in [v1_1_scope.md](./v1_1_scope.md). 16 new variants → 28 total post-V1.1.
+After V1.0.x refactor lands: add every vanilla item fitting cleanly into one of the existing 6 categories. JSON-only authoring post-refactor. Full design in [v1_1_scope.md](./v1_1_scope.md). 16 new variants → 28 total post-V1.1.
 
-Per-variant work for each = 4 files: variant JSON + inner-cube PNG + primer tag entry + smelting recipe. Existing GameTests auto-cover.
+Per-variant work for each = 4 files: variant JSON + (optional) hand-authored inner-cube PNG OR `texture_source_block` field + primer tag entry + smelting recipe. Existing GameTests auto-cover.
 
 ### Locked scope (16 variants)
 
 **METALLIC (+1)**
 - ☐ `netherite_scrap`
 
-**MINERAL (+3)**
-- ☐ `glowstone_dust`
+**MINERAL (+2)**
 - ☐ `gunpowder`
 - ☐ `clay_ball` *(non-1:1 smelt — Froglight smelts to `brick`)*
 
@@ -70,8 +78,9 @@ Per-variant work for each = 4 files: variant JSON + inner-cube PNG + primer tag 
 - ☐ `ink_sac`
 - ☐ `glow_ink_sac`
 
-**INFERNAL (+5)**
+**INFERNAL (+6)**
 - ☐ `blaze`
+- ☐ `glowstone_dust` *(moved from MINERAL — Nether-source classification)*
 - ☐ `soul_sand`
 - ☐ `soul_soil`
 - ☐ `obsidian`

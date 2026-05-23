@@ -27,24 +27,36 @@ The "playable foundation" release. **Appliance blocks** (single-block hand-opera
 
 **Why this scope:** establishes the entire mechanical loop the mod is "about" *with a working scalable economy*. The Milker is the production keystone — without it, the mod has no farming loop. V2 layers automation on top of an already-functional V1.
 
+## V1.0.x — Data-Driven Variant Architecture Refactor (V1.1 prerequisite)
+
+Internal architecture refactor. Removes the per-variant Java hardcoding in `PFFluidTypes.VARIANTS` and `PFItems.buildSlimeVariantSpawnEggs()` so that modpacks can add a Resource Slime variant by JSON only — no Java edits, no recompilation, no lang file changes.
+
+**Why this lands before V1.1:** V1.1 adds 16 new variants. Shipping V1.1 on the current hardcoded architecture would lock that "hardcoded variants" debt deeper and make the refactor harder to do later (more variants to migrate). Refactor must come first.
+
+**Scope:** spawn-egg collapse to component-based item, dynamic milk-fluid registration via mod-resource scanning at boot, lang derivation pattern, asset-generation scripts that scan variant JSONs.
+
+**Estimated:** 2-3 weeks across ~4 PRs. Once shipped, V1.1 becomes a JSON-only authoring task.
+
+Full design in [refactor_data_driven_variants.md](./refactor_data_driven_variants.md).
+
 ## V1.1 — Vanilla Resource Coverage
 
-JSON-only data release that adds every vanilla item fitting cleanly into one of the existing 6 categories. No new mechanics, no new categories, no schema changes — flows through the existing `SlimeVariant` datapack registry + primer-tag + smelting-recipe pattern from V1.
+After the V1.0.x refactor lands, this becomes a pure-JSON data release adding every vanilla item fitting cleanly into one of the existing 6 categories.
 
 **16 new variants** (28 total after V1.1):
 
 | Category | New variants |
 |---|---|
 | METALLIC (+1) | netherite_scrap |
-| MINERAL (+3) | glowstone_dust, gunpowder, clay_ball |
+| MINERAL (+2) | gunpowder, clay_ball |
 | GEM (+2) | quartz, amethyst |
 | AQUATIC (+2) | ink_sac, glow_ink_sac |
-| INFERNAL (+5) | blaze, soul_sand, soul_soil, obsidian, netherrack |
+| INFERNAL (+6) | blaze, glowstone_dust, soul_sand, soul_soil, obsidian, netherrack |
 | ARCANE (+3) | echo_shard, chorus_fruit, shulker_shell |
 
 Tier B candidates (`prismarine_crystals`, `nautilus_shell`, `ghast_tear`, `wither_rose`, `end_stone`) tracked in [v1_1_scope.md](./v1_1_scope.md) with default decisions if not resolved by freeze.
 
-**Why not V2:** V2 is automation work that requires new blocks/code. V1.1 is content-completion that's pure JSON, ships fast, and unblocks "the mod feels complete vs. the mod has obvious holes" — independent of when V2 is ready.
+**Why not V2:** V2 is automation work that requires new blocks/code. V1.1 is content-completion that's pure JSON post-refactor, ships fast, and unblocks "the mod feels complete vs. the mod has obvious holes" — independent of when V2 is ready.
 
 Full design lives in [v1_1_scope.md](./v1_1_scope.md).
 

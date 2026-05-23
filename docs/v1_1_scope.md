@@ -2,7 +2,9 @@
 
 ## Theme
 
-V1 shipped 12 Resource Slime variants. V1.1's single thrust: **complete vanilla resource coverage across the existing 6 categories** by adding every vanilla item that fits cleanly into one of them. No new mechanics, no new categories, no schema changes — pure JSON additions flowing through the existing `SlimeVariant` datapack registry + primer-tag + smelting-recipe pattern from V1.
+V1 shipped 12 Resource Slime variants. V1.1's single thrust: **complete vanilla resource coverage across the existing 6 categories** by adding every vanilla item that fits cleanly into one of them. No new mechanics, no new categories, no schema changes — pure JSON additions flowing through the data-driven variant architecture.
+
+**Prerequisite:** the V1.0.x refactor (see [refactor_data_driven_variants.md](./refactor_data_driven_variants.md)) must land first. Until that's done, "adding a slime variant" requires Java edits to `PFFluidTypes.VARIANTS` and `PFItems.buildSlimeVariantSpawnEggs()`, plus 7 lang entries and 9 auto-generated assets per variant. V1.1 is a JSON-only release **post-refactor**.
 
 Items requiring a **new category** (mob biological drops) are deferred to **V1.2**, since adding a category requires a Java edit to the `Category` enum.
 
@@ -18,17 +20,14 @@ After V1.1: **28 total variants** (12 V1 + 16 V1.1).
 
 **Boundary call**: METALLIC over INFERNAL. Its end-form is the top-tier metal in vanilla's gear ladder; INFERNAL is the source-not-form alternative we explicitly rejected for consistency with iron/copper/gold (all of which have Nether-adjacent acquisition paths via specific biomes/loot but are categorised by form).
 
-### MINERAL (+3)
+### MINERAL (+2)
 
 | Variant | Primer item | Smelt result | Texture source block |
 |---|---|---|---|
-| `glowstone_dust` | `minecraft:glowstone_dust` | `minecraft:glowstone_dust` | `block/glowstone.png` |
 | `gunpowder` | `minecraft:gunpowder` | `minecraft:gunpowder` | composite of dark grey + spark accents (no native block) |
 | `clay_ball` | `minecraft:clay_ball` | `minecraft:brick` | `block/clay.png` |
 
-**Boundary call for glowstone_dust**: MINERAL over INFERNAL/ARCANE. Powder form pattern matches redstone/lapis/coal; the existing 3 MINERAL variants are all dust/powder, so glowstone_dust joins by form not source. (Source-based assignment would push it to INFERNAL; magical-glow-based to ARCANE — both rejected to keep the MINERAL framing internally consistent.)
-
-**Note on clay_ball's smelt**: clay_ball smelts to brick in vanilla, not back to itself. The variant Froglight follows the vanilla smelt chain — Froglight → smelt → brick. Unique among the 16; every other addition smelts Froglight → the primer item itself.
+**Note on clay_ball's smelt**: clay_ball smelts to brick in vanilla, not back to itself. The variant Froglight follows the vanilla smelt chain — Froglight → smelt → brick. Unique among the 16; every other addition smelts Froglight → the primer item itself (except chorus_fruit below).
 
 ### GEM (+2)
 
@@ -44,15 +43,18 @@ After V1.1: **28 total variants** (12 V1 + 16 V1.1).
 | `ink_sac` | `minecraft:ink_sac` | `minecraft:ink_sac` | composite of black + tentacle accent (no native block) |
 | `glow_ink_sac` | `minecraft:glow_ink_sac` | `minecraft:glow_ink_sac` | composite of dark blue + cyan glow (no native block) |
 
-### INFERNAL (+5)
+### INFERNAL (+6)
 
 | Variant | Primer item | Smelt result | Texture source block |
 |---|---|---|---|
 | `blaze` | `minecraft:blaze_powder` | `minecraft:blaze_powder` | composite of blaze rod orange-yellow (no native block) |
+| `glowstone_dust` | `minecraft:glowstone_dust` | `minecraft:glowstone_dust` | `block/glowstone.png` |
 | `soul_sand` | `minecraft:soul_sand` | `minecraft:soul_sand` | `block/soul_sand.png` |
 | `soul_soil` | `minecraft:soul_soil` | `minecraft:soul_soil` | `block/soul_soil.png` |
 | `obsidian` | `minecraft:obsidian` | `minecraft:obsidian` | `block/obsidian.png` |
 | `netherrack` | `minecraft:netherrack` | `minecraft:netherrack` | `block/netherrack.png` |
+
+**Boundary call for glowstone_dust**: INFERNAL over MINERAL. Glowstone is mined exclusively from the Nether (no Overworld occurrence in vanilla) — source-themed assignment dominates over form-based. MINERAL stays a pure overworld-dust category (coal/redstone/lapis); INFERNAL gains a non-block-form variant (powder), which is the first non-block INFERNAL slime variant but acceptable since blaze powder is the same shape.
 
 ### ARCANE (+3)
 
