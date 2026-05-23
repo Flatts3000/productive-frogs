@@ -53,12 +53,8 @@ Each resource Froglight shows up as **two distinct entries** in the creative inv
 
 Option 1 is the V1 path; option 3 belongs in V2 if at all.
 
-### 🔴 Bucket of Tadpole + Bucket of Slime render as empty buckets
-The Resource Tadpole Bucket and Slime Bucket items use a two-layer model: layer 0 is the contents (tadpole/slime silhouette inside the bucket), layer 1 is the iron-bucket exterior. The contents layer references `textures/item/tadpole_silhouette.png` and `textures/item/slime_silhouette.png` — both of which are currently **blank/transparent PNGs**. Result: held / dropped buckets show only the iron exterior, no critter visible inside.
-
-**Symptom**: Right-click a Resource Tadpole with a water bucket → get a "Bucket of <Category> Tadpole" item with the correct display name and category tint applied to nothing visible (since the silhouette layer is empty). Same for the Slime Bucket.
-
-**Fix path**: Generate real `tadpole_silhouette.png` and `slime_silhouette.png` (16×16 grayscale silhouettes designed to tint at runtime via `BucketedCategoryTint`). PixelLab `create_map_object` workflow is in flight (see `gen/tadpole_silhouette-*/`); needs review + ship.
+### 🟢 Bucket of Tadpole + Bucket of Slime render as empty buckets — resolved
+The two silhouette PNGs (`textures/item/tadpole_silhouette.png` and `textures/item/slime_silhouette.png`) were blank/transparent placeholders, so the layered bucket items rendered as iron exteriors with empty contents. Resolved by generating both via PixelLab MCP (`create_map_object`, transparent BG), then tone-mapping with `scripts/process_silhouette.ps1`: non-transparent body pixels brighten to near-white (220,220,220) so the runtime `BucketedCategoryTint` multiplication renders the category color, while dark accent pixels (eyes) stay below the 64 threshold and are preserved as-is so they remain visible at every variant tint.
 
 ### 🔴 Slime Milk bucket textures should show slime eyes in the liquid
 The 14 variant Slime Milk bucket textures (shipped by `scripts/generate_slime_milk_textures.ps1` — PR #64) are produced by tinting the vanilla `milk_bucket.png` cream-white pixels per variant `primary_color`. The result is a clean bucket-of-tinted-fluid, but it's missing a Productive Frogs signature visual cue: **two small dark slime eyes** in the bucket's liquid surface, as if the bucketed slime is peeking out at the player.
