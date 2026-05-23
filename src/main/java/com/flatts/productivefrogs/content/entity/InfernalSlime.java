@@ -26,7 +26,9 @@ import net.minecraft.world.level.Level;
  * via the matching renderer), and the splash-particle colour.
  *
  * <p>Natural spawn: nether_wastes + basalt_deltas + soul_sand_valley with
- * any light level, weight 10, count 1-3 per spawn. See
+ * any light level (via {@code PFModBusEvents.checkInfernalSlimeSpawnRules}
+ * which drops the darkness gate vanilla magma cubes also skip), weight 10,
+ * count 1-3 per spawn. See
  * {@code data/productivefrogs/neoforge/biome_modifier/add_infernal_slime_spawn.json}.
  */
 public class InfernalSlime extends Slime {

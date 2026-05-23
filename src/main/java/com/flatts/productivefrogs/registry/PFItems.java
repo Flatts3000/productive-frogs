@@ -336,13 +336,13 @@ public final class PFItems {
     private static Map<String, DeferredItem<SpawnEggItem>> buildSlimeVariantSpawnEggs() {
         record VariantSpec(String name, Category category) {}
         VariantSpec[] variants = new VariantSpec[]{
-            new VariantSpec("iron",        Category.BOG),
-            new VariantSpec("copper",      Category.BOG),
-            new VariantSpec("gold",        Category.BOG),
+            new VariantSpec("iron",        Category.CAVE),
+            new VariantSpec("copper",      Category.CAVE),
+            new VariantSpec("gold",        Category.CAVE),
             new VariantSpec("redstone",    Category.CAVE),
             new VariantSpec("lapis",       Category.CAVE),
             new VariantSpec("coal",        Category.CAVE),
-            new VariantSpec("diamond",     Category.GEODE),
+            new VariantSpec("diamond",     Category.CAVE),
             new VariantSpec("emerald",     Category.GEODE),
             new VariantSpec("prismarine",  Category.TIDE),
             new VariantSpec("sponge",      Category.TIDE),

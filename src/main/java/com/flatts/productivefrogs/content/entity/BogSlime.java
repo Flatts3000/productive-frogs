@@ -24,9 +24,12 @@ import net.minecraft.world.level.Level;
  * handler picks for its split offspring, the texture (client-side via the
  * matching renderer), and the splash-particle colour.
  *
- * <p>Natural spawn: swamp + mangrove_swamp biomes at surface Y band 50..80
- * with light level ≤ 7, weight 8, count 1-3 per spawn. See
- * {@code data/productivefrogs/neoforge/biome_modifier/add_bog_slime_spawn.json}.
+ * <p>Natural spawn: swamp + mangrove_swamp biomes, light level ≤ 7 (via
+ * the shared parent-slime spawn predicate), weight 8, count 1-3 per spawn.
+ * See {@code data/productivefrogs/neoforge/biome_modifier/add_bog_slime_spawn.json}.
+ * Y-band restriction is handled implicitly by the biome's natural surface
+ * topology; if hard Y-range filtering becomes necessary, add a dedicated
+ * predicate in {@code PFModBusEvents}.
  */
 public class BogSlime extends Slime {
 

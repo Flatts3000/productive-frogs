@@ -22,10 +22,10 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Direct analog of Productive Bees' {@code configurable_honeycomb} pattern:
  * one registered Item, N visual surfaces driven by JSON data (see
- * {@code docs/productive_bees_analysis.md} §2). Distinct from the six broad-
- * category {@code <category>_froglight} blocks — those are the fixed-palette
- * decorative blocks (Bog Froglight, etc), this one is the production-loop
- * currency that survives variant fidelity across pickup ↔ place ↔ break.
+ * {@code docs/productive_bees_analysis.md} §2). V1.5 removed the six
+ * fixed-palette decorative species Froglight blocks; the data-driven
+ * Configurable Froglight is now the sole Froglight type — every drop from a
+ * frog kill is a variant-stamped instance of this item.
  *
  * <p>Variant round-trip:
  * <ol>
