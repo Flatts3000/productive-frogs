@@ -51,17 +51,6 @@ The 3 spawn-egg base textures shipped in PR #69 (`frog_spawn_egg.png`, `tadpole_
 
 The simplest implementation copies vanilla's two-layer spawn-egg approach: `layer0` is the egg base (tintable primary), `layer1` is the speckle overlay (tintable secondary, or constant grey for now). Updating `models/item/{frog,tadpole,slime}_spawn_egg.json` to a two-layer template plus regenerating the three PNGs in the vanilla style closes this.
 
-### 🔴 Wrong-category frog still drops the variant Froglight when it eats an off-category Resource Slime
-Per design (and the CLAUDE.md architecture notes), the category-match rule is enforced in **two** independent layers:
-1. AI: `ResourceFrogAttackablesSensor` filters `NEAREST_ATTACKABLE` to same-category slimes only, so the tongue should never target an off-category slime.
-2. Drop: `FrogTongueDropHandler.LivingDeathEvent` checks `frog.getCategory() == slime.getCategory()` before emitting the Froglight, as a backstop in case some non-AI path (commands, environmental damage credited to the frog, etc.) routes the kill through.
-
-Playtest shows the backstop is failing for at least one path: a **non-MINERAL frog eating a lapis (MINERAL) Resource Slime** is producing a lapis-variant `configurable_froglight` drop. Expected: vanilla slimeball loot only, no Froglight — the categories don't match, so the variant-stamped Froglight emit shouldn't fire.
-
-**Symptom**: Spawn a lapis Resource Slime, spawn an off-category Resource Frog nearby (e.g., AQUATIC), let the kill happen (via /summon proximity or by spawning the slime where the frog's AI can still attack it — perhaps when the sensor's category filter races) → drops include the lapis configurable_froglight that shouldn't be there.
-
-**Fix path**: Audit `FrogTongueDropHandler.LivingDeathEvent`'s category-equality check — verify it reads both sides correctly (`frog.getCategory()` vs `slime.getCategory()`), that the equality comparison happens BEFORE the Froglight emit, and that the variant-stamping path doesn't bypass the check (the variant-aware emit and the category fallback are two branches; both must gate on the same category-match condition). Adding a GameTest that explicitly mismatches categories and asserts no Froglight drops would pin this.
-
 ### 🔴 Frog tongue kill on Resource Slime emits both Froglight AND slimeballs
 When a category-matched Resource Frog eats a Resource Slime, the kill is producing **both** the variant-stamped Froglight (the intended drop, emitted by `FrogTongueDropHandler.LivingDeathEvent`) **and** the vanilla slimeball loot from the slime's loot table. Confirmed in playtest: a gold (METALLIC-variant) Resource Slime eaten by a METALLIC Resource Frog drops the iron-variant `configurable_froglight` plus 1-4 slimeballs.
 
