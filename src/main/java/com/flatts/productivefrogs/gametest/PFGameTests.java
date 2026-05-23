@@ -18,16 +18,11 @@ import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFFluidTypes;
 import com.flatts.productivefrogs.registry.PFFluids;
 import com.flatts.productivefrogs.registry.PFItems;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.gametest.framework.FunctionGameTestInstance;
+import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.gametest.framework.TestData;
-import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -38,8 +33,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.gametest.GameTestHolder;
 
 /**
  * In-world GameTests for Productive Frogs. Each test is a headless scenario
@@ -47,189 +41,37 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  * each is given a small plot via the referenced structure NBT and asserts
  * behavior via {@link GameTestHelper}.
  *
- * <p>Registration in MC 1.21.11 uses the registry-based system (the older
- * {@code @GameTestHolder}/{@code @GameTest} annotations were removed):
- * <ol>
- *   <li><b>Test functions</b> register via a standard {@link DeferredRegister}
- *       on {@link BuiltInRegistries#TEST_FUNCTION}. NeoForge unfreezes that
- *       registry after vanilla bootstrap and fires {@code RegisterEvent} for
- *       it on the mod bus, identical lifecycle to Blocks/Items.</li>
- *   <li><b>Test instances</b> are registered through {@link RegisterGameTestsEvent},
- *       which pairs a function holder with a structure + timing metadata.
- *       That event fires only on game-test-enabled boots, and per
- *       NeoForge issue patterns it can fire twice — guard via
- *       {@link #testInstancesRegistered}.</li>
- *   <li><b>Structure NBT</b> lives at {@code data/<modid>/structure/<name>.nbt}
- *       — singular {@code structure/}, same as 1.21.x tag dirs went singular.</li>
- * </ol>
+ * <p>Registration in MC 1.21.1 uses {@code @GameTestHolder} + {@code @GameTest}
+ * annotations (the registry-based scaffold landed in 1.21.6). Methods marked
+ * with {@link GameTest} are auto-discovered when this class is passed to
+ * {@link RegisterGameTestsEvent#register(Class)}.
  *
- * <p>Pattern lifted from the working reference at
- * <a href="https://github.com/ksoichiro/JustBlockShapes/blob/main/neoforge/1.21.11/src/main/java/com/justblockshapes/neoforge/gametest/JustBlockShapesGameTestNeoForge.java">ksoichiro/JustBlockShapes</a>.
+ * <p>Each test must be {@code public static} and take a single
+ * {@link GameTestHelper} parameter. Structure NBT lives at
+ * {@code data/<modid>/structures/<name>.nbt} — note <b>plural</b> "structures"
+ * (the singular {@code structure/} dir came in 1.21.4+).
  */
+@GameTestHolder(ProductiveFrogs.MOD_ID)
 public final class PFGameTests {
 
-    private static final ResourceLocation EMPTY_STRUCTURE =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "empty_5x5x5");
-
-    public static final DeferredRegister<Consumer<GameTestHelper>> TEST_FUNCTIONS =
-        DeferredRegister.create(BuiltInRegistries.TEST_FUNCTION, ProductiveFrogs.MOD_ID);
-
-    private static final List<RegisteredTest> REGISTERED_TESTS = new ArrayList<>();
-
-    /** {@link RegisterGameTestsEvent} can fire more than once per JVM. */
-    private static boolean testInstancesRegistered = false;
-
-    private record RegisteredTest(
-        DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> holder,
-        int timeoutTicks
-    ) {}
-
-    static {
-        registerTest("primed_egg_breaks_when_water_removed",
-            PFGameTests::primedEggBreaksWhenWaterRemoved, 100);
-        registerTest("primed_egg_hatches_into_matching_category_tadpoles",
-            PFGameTests::primedEggHatchesIntoMatchingCategoryTadpoles, 100);
-        registerTest("tadpole_ages_up_into_resource_frog_of_same_category",
-            PFGameTests::tadpoleAgesUpIntoResourceFrogOfSameCategory, 100);
-        registerTest("tadpole_bucket_round_trip_preserves_category",
-            PFGameTests::tadpoleBucketRoundTripPreservesCategory, 100);
-        registerTest("primer_tags_contain_expected_items",
-            PFGameTests::primerTagsContainExpectedItems, 100);
-        registerTest("slime_infusion_transforms_vanilla_into_resource_slime",
-            PFGameTests::slimeInfusionTransformsVanillaIntoResourceSlime, 100);
-        registerTest("resource_slime_split_preserves_category",
-            PFGameTests::resourceSlimeSplitPreservesCategory, 100);
-        registerTest("frog_tongue_targets_only_matching_category_slime",
-            PFGameTests::frogTongueTargetsOnlyMatchingCategorySlime, 200);
-        registerTest("matching_frog_kill_drops_category_froglight",
-            PFGameTests::matchingFrogKillDropsCategoryFroglight, 100);
-        registerTest("mismatched_frog_kill_drops_no_froglight",
-            PFGameTests::mismatchedFrogKillDropsNoFroglight, 100);
-        registerTest("frog_tongue_ai_path_drops_category_froglight",
-            PFGameTests::frogTongueAiPathDropsCategoryFroglight, 400);
-        registerTest("slime_bucket_round_trip_preserves_category",
-            PFGameTests::slimeBucketRoundTripPreservesCategory, 100);
-        registerTest("slime_bucket_round_trip_preserves_variant",
-            PFGameTests::slimeBucketRoundTripPreservesVariant, 100);
-        registerTest("vanilla_slime_split_discovery_converts_to_metallic_resource_slime",
-            PFGameTests::vanillaSlimeSplitDiscoveryConvertsToMetallicResourceSlime, 100);
-        registerTest("vanilla_magma_cube_split_discovery_converts_to_infernal_resource_slime",
-            PFGameTests::vanillaMagmaCubeSplitDiscoveryConvertsToInfernalResourceSlime, 100);
-        registerTest("slime_variant_datapack_registry_loads_initial_variants",
-            PFGameTests::slimeVariantDatapackRegistryLoadsInitialVariants, 100);
-        registerTest("parent_species_datapack_registry_loads_six_defaults",
-            PFGameTests::parentSpeciesDatapackRegistryLoadsSixDefaults, 100);
-        registerTest("variant_slime_kill_drops_configurable_froglight",
-            PFGameTests::variantSlimeKillDropsConfigurableFroglight, 100);
-        registerTest("infusion_with_variant_primer_sets_specific_variant",
-            PFGameTests::infusionWithVariantPrimerSetsSpecificVariant, 100);
-        registerTest("split_discovery_picks_variant_from_pool",
-            PFGameTests::splitDiscoveryPicksVariantFromPool, 100);
-        registerTest("cave_slime_split_discovery_converts_to_mineral_resource_slime",
-            PFGameTests::caveSlimeSplitDiscoveryConvertsToMineralResourceSlime, 100);
-        registerTest("geode_slime_split_discovery_converts_to_gem_resource_slime",
-            PFGameTests::geodeSlimeSplitDiscoveryConvertsToGemResourceSlime, 100);
-        registerTest("tide_slime_split_discovery_converts_to_aquatic_resource_slime",
-            PFGameTests::tideSlimeSplitDiscoveryConvertsToAquaticResourceSlime, 100);
-        registerTest("void_slime_split_discovery_converts_to_arcane_resource_slime",
-            PFGameTests::voidSlimeSplitDiscoveryConvertsToArcaneResourceSlime, 100);
-        registerTest("slime_milker_converts_iron_slime_bucket_into_iron_milk_bucket",
-            PFGameTests::slimeMilkerConvertsIronSlimeBucketIntoIronMilkBucket, 100);
-        registerTest("slime_milk_source_spawns_iron_resource_slime_on_solid_neighbour",
-            PFGameTests::slimeMilkSourceSpawnsIronResourceSlimeOnSolidNeighbour, 100);
-        registerTest("slime_milk_source_falls_back_to_liquid_when_no_solid_neighbour",
-            PFGameTests::slimeMilkSourceFallsBackToLiquidWhenNoSolidNeighbour, 100);
-        registerTest("vanilla_slime_milk_source_spawns_vanilla_slime",
-            PFGameTests::vanillaSlimeMilkSourceSpawnsVanillaSlime, 100);
-        registerTest("magma_slime_milk_source_spawns_magma_cube",
-            PFGameTests::magmaSlimeMilkSourceSpawnsMagmaCube, 100);
-        registerTest("slime_milk_source_picks_solid_neighbour_below_when_no_horizontal_neighbour",
-            PFGameTests::slimeMilkSourcePicksSolidNeighbourBelowWhenNoHorizontalNeighbour, 100);
-        registerTest("slime_milk_source_decrements_spawns_remaining_each_spawn",
-            PFGameTests::slimeMilkSourceDecrementsSpawnsRemainingEachSpawn, 100);
-        registerTest("slime_milk_source_drains_when_spawns_remaining_reaches_zero",
-            PFGameTests::slimeMilkSourceDrainsWhenSpawnsRemainingReachesZero, 100);
-        registerTest("slime_milk_source_default_state_has_max_spawns_remaining",
-            PFGameTests::slimeMilkSourceDefaultStateHasMaxSpawnsRemaining, 100);
-        registerTest("custom_slimes_size_1_hitbox_matches_vanilla_slime",
-            PFGameTests::customSlimesSize1HitboxMatchesVanillaSlime, 100);
-        registerTest("category_froglight_smelt_recipes_resolve_to_canonical_resource",
-            PFGameTests::categoryFroglightSmeltRecipesResolveToCanonicalResource, 100);
-        registerTest("variant_configurable_froglight_smelt_recipes_resolve_per_variant",
-            PFGameTests::variantConfigurableFroglightSmeltRecipesResolvePerVariant, 100);
-        registerTest("configurable_froglight_without_variant_does_not_smelt",
-            PFGameTests::configurableFroglightWithoutVariantDoesNotSmelt, 100);
-        registerTest("variant_froglight_round_trip_preserves_variant_through_place_and_break",
-            PFGameTests::variantFroglightRoundTripPreservesVariantThroughPlaceAndBreak, 100);
-        registerTest("direct_feed_matching_category_drops_froglight_and_empties_bucket",
-            PFGameTests::directFeedMatchingCategoryDropsFroglightAndEmptiesBucket, 100);
-        registerTest("direct_feed_variant_slime_drops_configurable_froglight",
-            PFGameTests::directFeedVariantSlimeDropsConfigurableFroglight, 100);
-        registerTest("direct_feed_mismatched_category_is_a_no_op",
-            PFGameTests::directFeedMismatchedCategoryIsANoOp, 100);
-        registerTest("milk_bucket_exposes_fluid_capability_for_tank_mods",
-            PFGameTests::milkBucketExposesFluidCapabilityForTankMods, 100);
-        registerTest("slime_milker_be_cooks_iron_bucket_to_iron_milk_after_100_ticks",
-            PFGameTests::slimeMilkerBeCooksIronBucketToIronMilkAfter100Ticks, 200);
-        registerTest("slime_milker_be_resets_progress_when_input_lacks_variant",
-            PFGameTests::slimeMilkerBeResetsProgressWhenInputLacksVariant, 100);
-        registerTest("slime_milker_capability_routes_input_view_to_top_and_output_view_to_bottom",
-            PFGameTests::slimeMilkerCapabilityRoutesInputViewToTopAndOutputViewToBottom, 100);
-        registerTest("hopper_above_slime_milker_pushes_slime_bucket_into_input_slot",
-            PFGameTests::hopperAboveSlimeMilkerPushesSlimeBucketIntoInputSlot, 100);
-        registerTest("hopper_below_slime_milker_pulls_milk_bucket_from_output_slot",
-            PFGameTests::hopperBelowSlimeMilkerPullsMilkBucketFromOutputSlot, 100);
-    }
+    private static final String EMPTY_STRUCTURE = ProductiveFrogs.MOD_ID + ":empty_5x5x5";
 
     private PFGameTests() {
         // static-only
     }
 
-    private static void registerTest(String name, Consumer<GameTestHelper> test, int timeoutTicks) {
-        DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> holder =
-            TEST_FUNCTIONS.register(name, () -> test);
-        REGISTERED_TESTS.add(new RegisteredTest(holder, timeoutTicks));
-    }
-
     /** Wire up via the mod event bus from {@code ProductiveFrogs} constructor. */
     public static void register(IEventBus modEventBus) {
-        TEST_FUNCTIONS.register(modEventBus);
         modEventBus.addListener(PFGameTests::onRegisterGameTests);
     }
 
+    /**
+     * Hand the entire class to NeoForge — it reflects over the methods and
+     * picks up every {@code @GameTest}-annotated one. No per-test wiring.
+     */
     @SubscribeEvent
     public static void onRegisterGameTests(RegisterGameTestsEvent event) {
-        if (testInstancesRegistered) {
-            return;
-        }
-        testInstancesRegistered = true;
-
-        Holder<TestEnvironmentDefinition> defaultEnv = event.registerEnvironment(
-            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "default")
-        );
-
-        for (RegisteredTest test : REGISTERED_TESTS) {
-            // Fail fast — if a holder didn't bind it means the DeferredRegister
-            // pipeline broke somewhere, and silently skipping would let CI go
-            // green with zero of our tests actually running.
-            if (!test.holder().isBound()) {
-                throw new IllegalStateException(
-                    "Test function holder " + test.holder().getId() + " is unbound at "
-                    + "RegisterGameTestsEvent time — DeferredRegister pipeline is broken"
-                );
-            }
-            TestData<Holder<TestEnvironmentDefinition>> testData = new TestData<>(
-                defaultEnv,
-                EMPTY_STRUCTURE,
-                test.timeoutTicks(),
-                0,      // setupTicks
-                true    // required
-            );
-            event.registerTest(
-                test.holder().getId(),
-                new FunctionGameTestInstance(test.holder().getKey(), testData)
-            );
-        }
+        event.register(PFGameTests.class);
     }
 
     // ---------------------------------------------------------------------
@@ -241,7 +83,8 @@ public final class PFGameTests {
      * block's {@code updateShape} runs {@code canSurvive}, sees no water below,
      * and replaces itself with air. Verifies the survive-on-water rule.
      */
-    private static void primedEggBreaksWhenWaterRemoved(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void primedEggBreaksWhenWaterRemoved(GameTestHelper helper) {
         BlockPos eggPos = new BlockPos(2, 2, 2);
         helper.setBlock(eggPos.below(), Blocks.WATER);
         helper.setBlock(eggPos, PFBlocks.primedEgg(Category.METALLIC));
@@ -263,7 +106,8 @@ public final class PFGameTests {
      * so we invoke {@link PrimedFrogEggBlock#tick} directly — exercising the
      * exact same code path the schedule would have triggered.
      */
-    private static void primedEggHatchesIntoMatchingCategoryTadpoles(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void primedEggHatchesIntoMatchingCategoryTadpoles(GameTestHelper helper) {
         Category cat = Category.GEM;
         BlockPos eggPos = new BlockPos(2, 2, 2);
         helper.setBlock(eggPos.below(), Blocks.WATER);
@@ -304,7 +148,8 @@ public final class PFGameTests {
      * Resource Frog of the same category exists afterward. Tadpole entity
      * itself should be gone (converted, not duplicated).
      */
-    private static void tadpoleAgesUpIntoResourceFrogOfSameCategory(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void tadpoleAgesUpIntoResourceFrogOfSameCategory(GameTestHelper helper) {
         Category cat = Category.ARCANE;
         BlockPos spawnPos = new BlockPos(2, 2, 2);
         helper.setBlock(spawnPos.below(), Blocks.WATER);
@@ -341,7 +186,8 @@ public final class PFGameTests {
      * PR #22's slime-bucket strengthening — the tadpole bucket now has the
      * same coverage shape.
      */
-    private static void tadpoleBucketRoundTripPreservesCategory(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void tadpoleBucketRoundTripPreservesCategory(GameTestHelper helper) {
         Category cat = Category.INFERNAL;
         BlockPos pos = new BlockPos(2, 2, 2);
         helper.setBlock(pos.below(), Blocks.WATER);
@@ -388,7 +234,8 @@ public final class PFGameTests {
      * would have flagged that within a CI run instead of from a manual playtest
      * that "nothing happens when I right-click frogspawn with iron".
      */
-    private static void primerTagsContainExpectedItems(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void primerTagsContainExpectedItems(GameTestHelper helper) {
         // Spot-check one canonical entry per category. We don't enumerate every
         // entry here — that's the tag JSON's job. We just verify the tags
         // themselves resolve in the live tag manager.
@@ -414,9 +261,10 @@ public final class PFGameTests {
      * correct variants — covers the path the slime infusion handler walks
      * before calling {@code setVariant} on the transformed slime.
      */
-    private static void infusionWithVariantPrimerSetsSpecificVariant(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void infusionWithVariantPrimerSetsSpecificVariant(GameTestHelper helper) {
         net.minecraft.core.Registry<SlimeVariant> registry =
-            helper.getLevel().registryAccess().lookupOrThrow(PFRegistries.SLIME_VARIANT);
+            helper.getLevel().registryAccess().registryOrThrow(PFRegistries.SLIME_VARIANT);
 
         java.util.Map.Entry<ResourceLocation, SlimeVariant> ironEntry = SlimeVariant.findByPrimerItem(
             registry, ResourceLocation.fromNamespaceAndPath("minecraft", "iron_ingot"));
@@ -451,7 +299,8 @@ public final class PFGameTests {
      * {@link SlimeVariant#pickWeighted} integration in
      * {@code SlimeSplitDiscoveryHandler}.
      */
-    private static void splitDiscoveryPicksVariantFromPool(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void splitDiscoveryPicksVariantFromPool(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 2, 2);
         // Capture-and-restore in case another harness mid-run has set its own
         // override — blindly clearing to null would clobber it. Unconditional
@@ -507,7 +356,8 @@ public final class PFGameTests {
      * SLIME_VARIANT component. The original category-Froglight test still
      * covers the fallback path (slime without a variant).
      */
-    private static void variantSlimeKillDropsConfigurableFroglight(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void variantSlimeKillDropsConfigurableFroglight(GameTestHelper helper) {
         BlockPos frogPos = new BlockPos(2, 2, 2);
         BlockPos slimePos = new BlockPos(3, 2, 2);
 
@@ -523,8 +373,7 @@ public final class PFGameTests {
             helper.fail("setVariant(iron) should have synced category to METALLIC, got " + slime.getCategory());
         }
 
-        slime.hurtServer(helper.getLevel(),
-            helper.getLevel().damageSources().mobAttack(frog), 999.0F);
+        slime.hurt(helper.getLevel().damageSources().mobAttack(frog), 999.0F);
 
         helper.succeedWhen(() -> {
             net.minecraft.world.item.Item expected = PFItems.CONFIGURABLE_FROGLIGHT.get();
@@ -550,10 +399,11 @@ public final class PFGameTests {
      * from the conventional {@code data/<ns>/productivefrogs/slime_variant/}
      * path, and (c) the codec decodes them without throwing.
      */
-    private static void slimeVariantDatapackRegistryLoadsInitialVariants(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeVariantDatapackRegistryLoadsInitialVariants(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         net.minecraft.core.Registry<SlimeVariant> registry =
-            level.registryAccess().lookupOrThrow(PFRegistries.SLIME_VARIANT);
+            level.registryAccess().registryOrThrow(PFRegistries.SLIME_VARIANT);
 
         String[] expected = {
             "iron", "copper", "gold",
@@ -613,10 +463,11 @@ public final class PFGameTests {
      * existing 6 split-discovery GameTests would also fail, but this one
      * surfaces the registry-load failure directly without the indirection.
      */
-    private static void parentSpeciesDatapackRegistryLoadsSixDefaults(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void parentSpeciesDatapackRegistryLoadsSixDefaults(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         net.minecraft.core.Registry<com.flatts.productivefrogs.data.ParentSpeciesEntry> registry =
-            level.registryAccess().lookupOrThrow(
+            level.registryAccess().registryOrThrow(
                 com.flatts.productivefrogs.registry.PFRegistries.PARENT_SPECIES);
 
         // entity_type id -> expected category
@@ -654,7 +505,8 @@ public final class PFGameTests {
      * same place with the same size. Exercises the data shape of the
      * transformation independent of the player-interaction event.
      */
-    private static void slimeInfusionTransformsVanillaIntoResourceSlime(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeInfusionTransformsVanillaIntoResourceSlime(GameTestHelper helper) {
         Category cat = Category.METALLIC;
         BlockPos spawnPos = new BlockPos(2, 2, 2);
 
@@ -692,7 +544,8 @@ public final class PFGameTests {
      * is wired into ResourceFrog's brain provider and the category check
      * actually fires.
      */
-    private static void frogTongueTargetsOnlyMatchingCategorySlime(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void frogTongueTargetsOnlyMatchingCategorySlime(GameTestHelper helper) {
         Category cat = Category.METALLIC;
         BlockPos frogPos = new BlockPos(2, 2, 2);
 
@@ -768,7 +621,8 @@ public final class PFGameTests {
      * assert a Froglight item entity of the correct category drops at the
      * frog's position. Verifies the {@code LivingDeathEvent} handler runs.
      */
-    private static void matchingFrogKillDropsCategoryFroglight(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void matchingFrogKillDropsCategoryFroglight(GameTestHelper helper) {
         Category cat = Category.AQUATIC;
         BlockPos frogPos = new BlockPos(2, 2, 2);
         BlockPos slimePos = new BlockPos(3, 2, 2);
@@ -782,8 +636,7 @@ public final class PFGameTests {
 
         // Damage from the frog — drives the LivingDeathEvent handler's
         // source check.
-        slime.hurtServer(helper.getLevel(),
-            helper.getLevel().damageSources().mobAttack(frog), 999.0F);
+        slime.hurt(helper.getLevel().damageSources().mobAttack(frog), 999.0F);
 
         helper.succeedWhen(() -> {
             net.minecraft.world.item.Item expected = PFBlocks.resourceFroglight(cat).asItem();
@@ -800,7 +653,8 @@ public final class PFGameTests {
      * handler must skip its drop because the frog/slime categories disagree.
      * Asserts no Froglight item entities appear.
      */
-    private static void mismatchedFrogKillDropsNoFroglight(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void mismatchedFrogKillDropsNoFroglight(GameTestHelper helper) {
         BlockPos frogPos = new BlockPos(2, 2, 2);
         BlockPos slimePos = new BlockPos(3, 2, 2);
 
@@ -811,8 +665,7 @@ public final class PFGameTests {
         slime.setSize(1, true);
         slime.setCategory(Category.INFERNAL);
 
-        slime.hurtServer(helper.getLevel(),
-            helper.getLevel().damageSources().mobAttack(frog), 999.0F);
+        slime.hurt(helper.getLevel().damageSources().mobAttack(frog), 999.0F);
 
         // Wait a small window then assert: no Froglight items dropped from any
         // category. The death event has already fired by the next tick, so 20
@@ -851,7 +704,8 @@ public final class PFGameTests {
      * boundary adds variance. Polling via {@code succeedWhen} succeeds the
      * moment the drop appears, so green runs finish well under that ceiling.
      */
-    private static void frogTongueAiPathDropsCategoryFroglight(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 400)
+    public static void frogTongueAiPathDropsCategoryFroglight(GameTestHelper helper) {
         Category cat = Category.METALLIC;
         BlockPos frogPos = new BlockPos(2, 2, 2);
 
@@ -888,7 +742,8 @@ public final class PFGameTests {
      * referenced by both bucket item models via the renamed
      * {@code BucketedCategoryTint} ItemTintSource.
      */
-    private static void slimeBucketRoundTripPreservesCategory(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeBucketRoundTripPreservesCategory(GameTestHelper helper) {
         Category cat = Category.MINERAL;
         BlockPos pos = new BlockPos(2, 2, 2);
 
@@ -936,7 +791,8 @@ public final class PFGameTests {
      * {@code BucketedCategoryTint} resolution-order would skip the
      * variant lookup and fall back to the broader category colour.
      */
-    private static void slimeBucketRoundTripPreservesVariant(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeBucketRoundTripPreservesVariant(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 2, 2);
         ResourceLocation variantId =
             ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
@@ -978,7 +834,8 @@ public final class PFGameTests {
      * assert every child becomes a METALLIC {@link ResourceSlime} via
      * {@link SlimeSplitDiscoveryHandler}'s {@link MobSplitEvent} hook.
      */
-    private static void vanillaSlimeSplitDiscoveryConvertsToMetallicResourceSlime(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void vanillaSlimeSplitDiscoveryConvertsToMetallicResourceSlime(GameTestHelper helper) {
         runSplitDiscoveryTest(helper, net.minecraft.world.entity.EntityType.SLIME, Category.METALLIC);
     }
 
@@ -986,7 +843,8 @@ public final class PFGameTests {
      * Same shape as the slime test but for magma cubes — vanilla magma cube
      * splits map to INFERNAL Resource Slimes.
      */
-    private static void vanillaMagmaCubeSplitDiscoveryConvertsToInfernalResourceSlime(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void vanillaMagmaCubeSplitDiscoveryConvertsToInfernalResourceSlime(GameTestHelper helper) {
         runSplitDiscoveryTest(helper, net.minecraft.world.entity.EntityType.MAGMA_CUBE, Category.INFERNAL);
     }
 
@@ -998,7 +856,8 @@ public final class PFGameTests {
      * which must be checked BEFORE the {@code getClass() == Slime.class} check
      * (CaveSlime extends Slime, so the strict-equality check would miss it).
      */
-    private static void caveSlimeSplitDiscoveryConvertsToMineralResourceSlime(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void caveSlimeSplitDiscoveryConvertsToMineralResourceSlime(GameTestHelper helper) {
         runSplitDiscoveryTest(helper, PFEntities.CAVE_SLIME.get(), Category.MINERAL);
     }
 
@@ -1007,7 +866,8 @@ public final class PFGameTests {
      * discovery should give GEM ResourceSlimes. Same shape as the Cave Slime
      * test, just hitting the {@code instanceof GeodeSlime} branch.
      */
-    private static void geodeSlimeSplitDiscoveryConvertsToGemResourceSlime(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void geodeSlimeSplitDiscoveryConvertsToGemResourceSlime(GameTestHelper helper) {
         runSplitDiscoveryTest(helper, PFEntities.GEODE_SLIME.get(), Category.GEM);
     }
 
@@ -1016,7 +876,8 @@ public final class PFGameTests {
      * discovery should give AQUATIC ResourceSlimes. Same shape as the other
      * parent-species tests.
      */
-    private static void tideSlimeSplitDiscoveryConvertsToAquaticResourceSlime(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void tideSlimeSplitDiscoveryConvertsToAquaticResourceSlime(GameTestHelper helper) {
         runSplitDiscoveryTest(helper, PFEntities.TIDE_SLIME.get(), Category.AQUATIC);
     }
 
@@ -1025,7 +886,8 @@ public final class PFGameTests {
      * discovery should give ARCANE ResourceSlimes. Closes the parent-species
      * test set (one per non-vanilla category).
      */
-    private static void voidSlimeSplitDiscoveryConvertsToArcaneResourceSlime(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void voidSlimeSplitDiscoveryConvertsToArcaneResourceSlime(GameTestHelper helper) {
         runSplitDiscoveryTest(helper, PFEntities.VOID_SLIME.get(), Category.ARCANE);
     }
 
@@ -1078,7 +940,8 @@ public final class PFGameTests {
      * the {@code Slime#remove} override propagates category through the
      * convertTo lambda.
      */
-    private static void resourceSlimeSplitPreservesCategory(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void resourceSlimeSplitPreservesCategory(GameTestHelper helper) {
         Category cat = Category.INFERNAL;
         BlockPos spawnPos = new BlockPos(2, 2, 2);
 
@@ -1127,7 +990,8 @@ public final class PFGameTests {
      * load client resource packs, so missing or malformed asset JSON has
      * to be caught by running {@code ./gradlew runClient} manually.
      */
-    private static void slimeMilkerConvertsIronSlimeBucketIntoIronMilkBucket(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkerConvertsIronSlimeBucketIntoIronMilkBucket(GameTestHelper helper) {
         BlockPos milkerPos = new BlockPos(2, 2, 2);
         BlockPos slimePos = new BlockPos(3, 2, 2);
 
@@ -1157,7 +1021,7 @@ public final class PFGameTests {
             helper.fail("slime bucket BUCKET_ENTITY_DATA is null after saveToBucketTag");
             return;
         }
-        String storedVariant = data.copyTag().getString("Variant").orElse(null);
+        String storedVariant = data.copyTag().getString("Variant");
         if (!ironVariant.toString().equals(storedVariant)) {
             helper.fail("expected Variant=" + ironVariant + " in bucket NBT, got " + storedVariant);
             return;
@@ -1211,7 +1075,8 @@ public final class PFGameTests {
      * don't sit through the 200–600-tick scheduled delay. The block widens
      * {@code tick} to public specifically to enable this.
      */
-    private static void slimeMilkSourceSpawnsIronResourceSlimeOnSolidNeighbour(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkSourceSpawnsIronResourceSlimeOnSolidNeighbour(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
         BlockPos neighbourPos = sourcePos.east();
         BlockPos expectedSpawnPos = neighbourPos.above();
@@ -1266,7 +1131,8 @@ public final class PFGameTests {
      * candidate in {@code NEIGHBOUR_OFFSETS} fails the sturdy check, the
      * loop exits, and the source position is returned.
      */
-    private static void slimeMilkSourceFallsBackToLiquidWhenNoSolidNeighbour(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkSourceFallsBackToLiquidWhenNoSolidNeighbour(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
 
         // No neighbour blocks set — the empty 5x5x5 test plot is pure air
@@ -1311,7 +1177,8 @@ public final class PFGameTests {
      * accidentally routes "vanilla" through the ResourceSlime path, this
      * test catches it.
      */
-    private static void vanillaSlimeMilkSourceSpawnsVanillaSlime(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void vanillaSlimeMilkSourceSpawnsVanillaSlime(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
         helper.setBlock(sourcePos.east(), Blocks.STONE);
 
@@ -1340,7 +1207,8 @@ public final class PFGameTests {
     }
 
     /** magma_slime_milk → vanilla MagmaCube. Mirror of the vanilla-milk test. */
-    private static void magmaSlimeMilkSourceSpawnsMagmaCube(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void magmaSlimeMilkSourceSpawnsMagmaCube(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
         helper.setBlock(sourcePos.east(), Blocks.STONE);
 
@@ -1372,7 +1240,8 @@ public final class PFGameTests {
      * "rim-first" priority without conflating it with the no-solid-anywhere
      * fallback (which is the previous test).
      */
-    private static void slimeMilkSourcePicksSolidNeighbourBelowWhenNoHorizontalNeighbour(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkSourcePicksSolidNeighbourBelowWhenNoHorizontalNeighbour(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
 
         // Solid floor directly beneath the source. The y=-1 center neighbour
@@ -1420,7 +1289,8 @@ public final class PFGameTests {
      * {@code depletionEnabled} off in their local
      * {@code productivefrogs-common.toml}.
      */
-    private static void slimeMilkSourceDecrementsSpawnsRemainingEachSpawn(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkSourceDecrementsSpawnsRemainingEachSpawn(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
         helper.setBlock(sourcePos.east(), Blocks.STONE);
 
@@ -1466,7 +1336,8 @@ public final class PFGameTests {
      * has flipped {@code depletionEnabled} off in their local config can
      * still run this suite.
      */
-    private static void slimeMilkSourceDrainsWhenSpawnsRemainingReachesZero(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkSourceDrainsWhenSpawnsRemainingReachesZero(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
         helper.setBlock(sourcePos.east(), Blocks.STONE);
 
@@ -1510,7 +1381,8 @@ public final class PFGameTests {
      * via {@code setBlock(pos, block)} would default to 0 and drain
      * immediately on first tick.
      */
-    private static void slimeMilkSourceDefaultStateHasMaxSpawnsRemaining(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkSourceDefaultStateHasMaxSpawnsRemaining(GameTestHelper helper) {
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
             (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.MILK_BLOCKS.get("iron").get();
         int defaultCount = block.defaultBlockState().getValue(
@@ -1538,7 +1410,8 @@ public final class PFGameTests {
      * scale chain). If any custom slime diverges, the size of the base
      * dimensions in {@code PFEntities} drifted from vanilla.
      */
-    private static void customSlimesSize1HitboxMatchesVanillaSlime(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void customSlimesSize1HitboxMatchesVanillaSlime(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 2, 2);
 
         net.minecraft.world.entity.monster.Slime vanilla =
@@ -1588,7 +1461,8 @@ public final class PFGameTests {
      * is renamed, deleted, or has a wrong output, this catches it before
      * playtest.
      */
-    private static void categoryFroglightSmeltRecipesResolveToCanonicalResource(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void categoryFroglightSmeltRecipesResolveToCanonicalResource(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         net.minecraft.world.item.crafting.RecipeManager rm = level.getServer().getRecipeManager();
 
@@ -1610,7 +1484,8 @@ public final class PFGameTests {
      * renames the discriminator (e.g. {@code neoforge:data_components}),
      * the recipes silently stop matching and this test catches it.
      */
-    private static void variantConfigurableFroglightSmeltRecipesResolvePerVariant(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void variantConfigurableFroglightSmeltRecipesResolvePerVariant(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         net.minecraft.world.item.crafting.RecipeManager rm = level.getServer().getRecipeManager();
 
@@ -1643,7 +1518,8 @@ public final class PFGameTests {
      * strict flag would silently let bare configurable_froglights smelt
      * to whatever variant happens to sort first.
      */
-    private static void configurableFroglightWithoutVariantDoesNotSmelt(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void configurableFroglightWithoutVariantDoesNotSmelt(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         net.minecraft.world.item.crafting.RecipeManager rm = level.getServer().getRecipeManager();
 
@@ -1691,7 +1567,8 @@ public final class PFGameTests {
      * and avoiding the UseOnContext / mock-player ceremony keeps the test
      * focused on the placement→drop invariant.
      */
-    private static void variantFroglightRoundTripPreservesVariantThroughPlaceAndBreak(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void variantFroglightRoundTripPreservesVariantThroughPlaceAndBreak(GameTestHelper helper) {
         BlockPos blockPos = new BlockPos(2, 2, 2);
         ResourceLocation ironVariant = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
 
@@ -1799,7 +1676,8 @@ public final class PFGameTests {
      * dropped at frog position, player's main hand now holds an empty
      * vanilla bucket (Slime Bucket consumed).
      */
-    private static void directFeedMatchingCategoryDropsFroglightAndEmptiesBucket(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void directFeedMatchingCategoryDropsFroglightAndEmptiesBucket(GameTestHelper helper) {
         BlockPos frogPos = new BlockPos(2, 2, 2);
 
         // Build the bucket the same way the slime mob-interact path does —
@@ -1853,7 +1731,8 @@ public final class PFGameTests {
      * the variant_slime_kill_drops_configurable_froglight test but for the
      * player-driven path instead of the tongue-kill path.
      */
-    private static void directFeedVariantSlimeDropsConfigurableFroglight(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void directFeedVariantSlimeDropsConfigurableFroglight(GameTestHelper helper) {
         BlockPos frogPos = new BlockPos(2, 2, 2);
 
         ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(4, 2, 4));
@@ -1901,7 +1780,8 @@ public final class PFGameTests {
      * and the result returns PASS (so vanilla Animal#mobInteract continues
      * — slimeballs and name-tag still work as before).
      */
-    private static void directFeedMismatchedCategoryIsANoOp(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void directFeedMismatchedCategoryIsANoOp(GameTestHelper helper) {
         BlockPos frogPos = new BlockPos(2, 2, 2);
 
         ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(4, 2, 4));
@@ -1992,7 +1872,8 @@ public final class PFGameTests {
      * {@link com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock}
      * inherits unchanged.
      */
-    private static void milkBucketExposesFluidCapabilityForTankMods(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void milkBucketExposesFluidCapabilityForTankMods(GameTestHelper helper) {
         assertBucketExposesFluid(helper, "iron");
         assertBucketExposesFluid(helper, "magma_cream");
         assertBucketExposesFluid(helper, "vanilla");
@@ -2002,25 +1883,25 @@ public final class PFGameTests {
     private static void assertBucketExposesFluid(GameTestHelper helper, String variant) {
         net.minecraft.world.item.BucketItem bucketItem = PFItems.MILK_BUCKETS.get(variant).get();
         ItemStack stack = new ItemStack(bucketItem);
-        net.neoforged.neoforge.transfer.access.ItemAccess access =
-            net.neoforged.neoforge.transfer.access.ItemAccess.forStack(stack);
-        net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> handler =
-            access.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.ITEM);
+        // 1.21.1: Capabilities.FluidHandler.ITEM returns IFluidHandlerItem (the
+        // transfer.* / ResourceHandler<FluidResource> rewrite only landed in 1.21.4+).
+        net.neoforged.neoforge.fluids.capability.IFluidHandlerItem handler =
+            stack.getCapability(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.ITEM);
         if (handler == null) {
-            helper.fail(variant + "_slime_milk_bucket exposes no Fluid.ITEM capability — "
+            helper.fail(variant + "_slime_milk_bucket exposes no FluidHandler.ITEM capability — "
                 + "NeoForge's auto-registration on BucketItem broke");
             return;
         }
-        if (handler.size() < 1) {
-            helper.fail(variant + " bucket handler reports size " + handler.size() + ", expected >= 1");
+        if (handler.getTanks() < 1) {
+            helper.fail(variant + " bucket handler reports " + handler.getTanks() + " tanks, expected >= 1");
             return;
         }
-        net.neoforged.neoforge.transfer.fluid.FluidResource resource = handler.getResource(0);
+        net.neoforged.neoforge.fluids.FluidStack contents = handler.getFluidInTank(0);
         net.minecraft.world.level.material.Fluid expectedFluid =
             PFFluids.BY_VARIANT.get(variant).source().get();
-        if (resource.getFluid() != expectedFluid) {
+        if (contents.getFluid() != expectedFluid) {
             helper.fail(variant + " bucket handler reports fluid "
-                + BuiltInRegistries.FLUID.getKey(resource.getFluid())
+                + BuiltInRegistries.FLUID.getKey(contents.getFluid())
                 + ", expected " + BuiltInRegistries.FLUID.getKey(expectedFluid));
         }
     }
@@ -2035,7 +1916,8 @@ public final class PFGameTests {
      * assert the output slot holds an iron Slime Milk bucket and the
      * input slot is empty.
      */
-    private static void slimeMilkerBeCooksIronBucketToIronMilkAfter100Ticks(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void slimeMilkerBeCooksIronBucketToIronMilkAfter100Ticks(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 2, 2);
         helper.setBlock(pos, PFBlocks.SLIME_MILKER.get());
 
@@ -2094,7 +1976,8 @@ public final class PFGameTests {
      * "fail-closed" semantic — a category-only or vanilla bucket can sit
      * in the input forever without producing a default-milk output.
      */
-    private static void slimeMilkerBeResetsProgressWhenInputLacksVariant(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkerBeResetsProgressWhenInputLacksVariant(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 2, 2);
         helper.setBlock(pos, PFBlocks.SLIME_MILKER.get());
 
@@ -2144,7 +2027,8 @@ public final class PFGameTests {
      * {@code PFModBusEvents#onRegisterCapabilities} without spinning up a
      * real hopper.
      */
-    private static void slimeMilkerCapabilityRoutesInputViewToTopAndOutputViewToBottom(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkerCapabilityRoutesInputViewToTopAndOutputViewToBottom(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 2, 2);
         helper.setBlock(pos, PFBlocks.SLIME_MILKER.get());
         ServerLevel level = helper.getLevel();
@@ -2168,44 +2052,52 @@ public final class PFGameTests {
         milker.getInventory().setStackInSlot(
             com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity.OUTPUT_SLOT, ironMilk);
 
-        net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> downView =
-            level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, absPos, net.minecraft.core.Direction.DOWN);
-        net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> upView =
-            level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, absPos, net.minecraft.core.Direction.UP);
+        // 1.21.1: Capabilities.ItemHandler.BLOCK returns IItemHandler (the
+        // ResourceHandler<ItemResource> / transfer.* rewrite only landed in 1.21.4+).
+        net.neoforged.neoforge.items.IItemHandler downView =
+            level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK, absPos, net.minecraft.core.Direction.DOWN);
+        net.neoforged.neoforge.items.IItemHandler upView =
+            level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK, absPos, net.minecraft.core.Direction.UP);
         if (downView == null || upView == null) {
             helper.fail("capability not registered for SLIME_MILKER (downView="
                 + downView + ", upView=" + upView + ")");
             return;
         }
-        if (downView.size() != 1 || upView.size() != 1) {
-            helper.fail("expected single-slot views, got downView.size=" + downView.size()
-                + ", upView.size=" + upView.size());
+        if (downView.getSlots() != 1 || upView.getSlots() != 1) {
+            helper.fail("expected single-slot views, got downView.slots=" + downView.getSlots()
+                + ", upView.slots=" + upView.getSlots());
             return;
         }
         // DOWN view sees the OUTPUT slot's iron milk bucket.
-        if (!downView.getResource(0).is(PFItems.MILK_BUCKETS.get("iron").get())) {
+        if (!downView.getStackInSlot(0).is(PFItems.MILK_BUCKETS.get("iron").get())) {
             helper.fail("down view should see OUTPUT slot's iron milk bucket, got "
-                + downView.getResource(0));
+                + downView.getStackInSlot(0));
             return;
         }
         // UP view sees the INPUT slot's primed Slime Bucket.
-        if (!upView.getResource(0).is(PFItems.SLIME_BUCKET.get())) {
+        if (!upView.getStackInSlot(0).is(PFItems.SLIME_BUCKET.get())) {
             helper.fail("up view should see INPUT slot's slime bucket, got "
-                + upView.getResource(0));
+                + upView.getStackInSlot(0));
             return;
         }
-        // DOWN view refuses insert (it's extract-only).
-        if (downView.isValid(0, net.neoforged.neoforge.transfer.item.ItemResource.of(PFItems.SLIME_BUCKET.get()))) {
+        // DOWN view refuses insert (extract-only) — insertItem returns the full
+        // input stack unchanged when the slot rejects the insert.
+        ItemStack probe = new ItemStack(PFItems.SLIME_BUCKET.get());
+        ItemStack rejected = downView.insertItem(0, probe.copy(), true);
+        if (rejected.getCount() != probe.getCount()) {
             helper.fail("down view must reject inserts (extract-only)");
             return;
         }
-        // UP view accepts SLIME_BUCKET insert.
-        if (!upView.isValid(0, net.neoforged.neoforge.transfer.item.ItemResource.of(PFItems.SLIME_BUCKET.get()))) {
+        // UP view accepts SLIME_BUCKET insert (simulate=true so we don't mutate state).
+        ItemStack accepted = upView.insertItem(0, probe.copy(), true);
+        if (accepted.getCount() == probe.getCount()) {
             helper.fail("up view must accept SLIME_BUCKET inserts");
             return;
         }
         // UP view refuses unrelated items even though the underlying slot would accept SLIME_BUCKET.
-        if (upView.isValid(0, net.neoforged.neoforge.transfer.item.ItemResource.of(Items.IRON_INGOT))) {
+        ItemStack unrelated = new ItemStack(Items.IRON_INGOT);
+        ItemStack unrelatedResult = upView.insertItem(0, unrelated.copy(), true);
+        if (unrelatedResult.getCount() != unrelated.getCount()) {
             helper.fail("up view must reject non-SLIME_BUCKET items");
             return;
         }
@@ -2218,7 +2110,8 @@ public final class PFGameTests {
      * {@code PFModBusEvents} actually works against a real vanilla
      * {@code HopperBlockEntity} — not just a synthetic capability query.
      */
-    private static void hopperAboveSlimeMilkerPushesSlimeBucketIntoInputSlot(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void hopperAboveSlimeMilkerPushesSlimeBucketIntoInputSlot(GameTestHelper helper) {
         BlockPos milkerPos = new BlockPos(2, 2, 2);
         BlockPos hopperPos = new BlockPos(2, 3, 2);
         helper.setBlock(milkerPos, PFBlocks.SLIME_MILKER.get());
@@ -2274,7 +2167,8 @@ public final class PFGameTests {
      * the OUTPUT slot directly (the full cook is covered by the existing
      * BE tick test); this scenario isolates the extract path.
      */
-    private static void hopperBelowSlimeMilkerPullsMilkBucketFromOutputSlot(GameTestHelper helper) {
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void hopperBelowSlimeMilkerPullsMilkBucketFromOutputSlot(GameTestHelper helper) {
         BlockPos milkerPos = new BlockPos(2, 3, 2);
         BlockPos hopperPos = new BlockPos(2, 2, 2);
         helper.setBlock(milkerPos, PFBlocks.SLIME_MILKER.get());
