@@ -10,7 +10,6 @@ import java.util.EnumMap;
 import java.util.Map;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LiquidBlock;
-import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
@@ -38,14 +37,6 @@ public final class PFBlocks {
         DeferredRegister.createBlocks(ProductiveFrogs.MOD_ID);
 
     public static final Map<Category, DeferredBlock<PrimedFrogEggBlock>> PRIMED_FROG_EGGS = buildPrimedEggs();
-
-    /**
-     * Per-category Resource Froglight blocks. {@link RotatedPillarBlock} so they
-     * inherit vanilla {@code OCHRE_FROGLIGHT}'s "axis" rotation property and
-     * placement behavior. Light level 15, sound type FROGLIGHT — same vanilla
-     * properties — only the map color and (client-side) tint differ per category.
-     */
-    public static final Map<Category, DeferredBlock<RotatedPillarBlock>> RESOURCE_FROGLIGHTS = buildResourceFroglights();
 
     /**
      * The variant-keyed configurable Froglight block. One block, datapack-driven
@@ -130,26 +121,6 @@ public final class PFBlocks {
         return map;
     }
 
-    private static Map<Category, DeferredBlock<RotatedPillarBlock>> buildResourceFroglights() {
-        EnumMap<Category, DeferredBlock<RotatedPillarBlock>> map = new EnumMap<>(Category.class);
-        for (Category cat : Category.values()) {
-            map.put(cat, BLOCKS.registerBlock(
-                cat.id() + "_froglight",
-                RotatedPillarBlock::new,
-                resourceFroglightProperties(cat)
-            ));
-        }
-        return map;
-    }
-
-    private static BlockBehaviour.Properties resourceFroglightProperties(Category cat) {
-        return BlockBehaviour.Properties.of()
-            .mapColor(mapColorFor(cat))
-            .strength(0.3F)
-            .lightLevel(state -> 15)
-            .sound(SoundType.FROGLIGHT);
-    }
-
     private static BlockBehaviour.Properties primedEggProperties(Category cat) {
         return BlockBehaviour.Properties.of()
             .mapColor(mapColorFor(cat))
@@ -168,12 +139,12 @@ public final class PFBlocks {
      */
     private static MapColor mapColorFor(Category cat) {
         return switch (cat) {
-            case METALLIC -> MapColor.METAL;
-            case MINERAL  -> MapColor.COLOR_RED;
-            case GEM      -> MapColor.DIAMOND;
-            case AQUATIC  -> MapColor.WATER;
+            case BOG      -> MapColor.PLANT;
+            case CAVE     -> MapColor.METAL;
+            case GEODE    -> MapColor.DIAMOND;
+            case TIDE     -> MapColor.WATER;
             case INFERNAL -> MapColor.FIRE;
-            case ARCANE   -> MapColor.COLOR_PURPLE;
+            case VOID     -> MapColor.COLOR_PURPLE;
         };
     }
 
@@ -188,10 +159,5 @@ public final class PFBlocks {
     /** Convenience: get the primed egg block for a given category. */
     public static PrimedFrogEggBlock primedEgg(Category category) {
         return PRIMED_FROG_EGGS.get(category).get();
-    }
-
-    /** Convenience: get the Resource Froglight block for a given category. */
-    public static Block resourceFroglight(Category category) {
-        return RESOURCE_FROGLIGHTS.get(category).get();
     }
 }

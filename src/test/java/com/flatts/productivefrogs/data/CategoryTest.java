@@ -40,12 +40,6 @@ class CategoryTest {
 
     @ParameterizedTest
     @EnumSource(Category.class)
-    void primerTagPathFormat(Category cat) {
-        assertEquals("primer/" + cat.id(), cat.primerTagPath());
-    }
-
-    @ParameterizedTest
-    @EnumSource(Category.class)
     void primedEggItemNameFormat(Category cat) {
         assertEquals(cat.id() + "_frog_egg", cat.primedEggItemName());
     }

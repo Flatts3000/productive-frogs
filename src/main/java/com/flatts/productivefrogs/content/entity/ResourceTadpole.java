@@ -53,7 +53,7 @@ public class ResourceTadpole extends Tadpole {
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
-        builder.define(DATA_CATEGORY, Category.METALLIC.ordinal());
+        builder.define(DATA_CATEGORY, Category.BOG.ordinal());
     }
 
     public Category getCategory() {
@@ -63,7 +63,7 @@ public class ResourceTadpole extends Tadpole {
         int ordinal = this.entityData.get(DATA_CATEGORY);
         Category[] values = Category.values();
         if (ordinal < 0 || ordinal >= values.length) {
-            return Category.METALLIC;
+            return Category.BOG;
         }
         return values[ordinal];
     }

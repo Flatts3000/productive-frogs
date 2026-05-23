@@ -1,8 +1,10 @@
 package com.flatts.productivefrogs.client;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.client.renderer.BogSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.CaveSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.GeodeSlimeRenderer;
+import com.flatts.productivefrogs.client.renderer.InfernalSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceFrogRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
@@ -71,6 +73,8 @@ public final class PFClientEvents {
         event.registerEntityRenderer(PFEntities.GEODE_SLIME.get(), GeodeSlimeRenderer::new);
         event.registerEntityRenderer(PFEntities.TIDE_SLIME.get(), TideSlimeRenderer::new);
         event.registerEntityRenderer(PFEntities.VOID_SLIME.get(), VoidSlimeRenderer::new);
+        event.registerEntityRenderer(PFEntities.BOG_SLIME.get(), BogSlimeRenderer::new);
+        event.registerEntityRenderer(PFEntities.INFERNAL_SLIME.get(), InfernalSlimeRenderer::new);
     }
 
     @SubscribeEvent
@@ -80,10 +84,6 @@ public final class PFClientEvents {
             event.register(
                 (state, level, pos, tintIndex) -> tintIndex == 0 ? rgb : -1,
                 PFBlocks.primedEgg(cat)
-            );
-            event.register(
-                (state, level, pos, tintIndex) -> tintIndex == 0 ? rgb : -1,
-                PFBlocks.resourceFroglight(cat)
             );
         }
         // Variant-keyed configurable Froglight: BlockColor reads the variant
@@ -141,11 +141,13 @@ public final class PFClientEvents {
             return cat == null ? -1 : opaque(cat.tintRgb());
         }, PFItems.FROG_EGG.get());
 
-        // Resource Tadpole Bucket — tint from BUCKET_ENTITY_DATA Category
+        // Resource Tadpole Bucket — tint from BUCKET_ENTITY_DATA Category.
+        // Empty bucket (no captured tadpole) defaults to vanilla tadpole
+        // brown so the silhouette stays visible in the creative tab.
         event.register((stack, tintIndex) -> {
             if (tintIndex != 1) return -1;
             Category cat = ResourceTadpoleBucketItem.readCategory(stack);
-            return cat == null ? -1 : opaque(cat.tintRgb());
+            return cat == null ? opaque(0x6B4530) : opaque(cat.tintRgb());
         }, PFItems.RESOURCE_TADPOLE_BUCKET.get());
 
         // Slime Bucket — variant first (via BUCKET_ENTITY_DATA Variant),
@@ -176,7 +178,10 @@ public final class PFClientEvents {
                     } catch (IllegalArgumentException ignored) {}
                 }
             }
-            return -1;
+            // Empty Slime Bucket (no captured slime) — fall back to vanilla
+            // slime green so the silhouette stays visible in the creative
+            // tab instead of rendering an invisible (-1 = no tint) layer.
+            return opaque(0x5DDE36);
         }, PFItems.SLIME_BUCKET.get());
 
         // Primed Frog Egg block items — BlockColor doesn't auto-propagate to
@@ -187,10 +192,6 @@ public final class PFClientEvents {
             event.register(
                 (stack, tintIndex) -> tintIndex == 0 ? rgb : -1,
                 PFItems.PRIMED_FROG_EGG_ITEMS.get(cat).get()
-            );
-            event.register(
-                (stack, tintIndex) -> tintIndex == 0 ? rgb : -1,
-                PFItems.RESOURCE_FROGLIGHT_ITEMS.get(cat).get()
             );
         }
 
@@ -250,9 +251,11 @@ public final class PFClientEvents {
                 opaque(((net.minecraft.world.item.SpawnEggItem) stack.getItem()).getColor(tintIndex)),
                 egg);
 
+        registerCtorColors.accept(PFItems.BOG_SLIME_SPAWN_EGG.get());
         registerCtorColors.accept(PFItems.CAVE_SLIME_SPAWN_EGG.get());
         registerCtorColors.accept(PFItems.GEODE_SLIME_SPAWN_EGG.get());
         registerCtorColors.accept(PFItems.TIDE_SLIME_SPAWN_EGG.get());
+        registerCtorColors.accept(PFItems.INFERNAL_SLIME_SPAWN_EGG.get());
         registerCtorColors.accept(PFItems.VOID_SLIME_SPAWN_EGG.get());
 
         for (var entry : PFItems.RESOURCE_FROG_SPAWN_EGGS.entrySet()) {

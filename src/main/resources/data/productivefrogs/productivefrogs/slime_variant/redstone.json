@@ -1,6 +1,6 @@
 {
   "primer_item": "minecraft:redstone",
-  "category": "mineral",
+  "category": "cave",
   "primary_color": 13120050,
   "secondary_color": 8985114,
   "texture": "productivefrogs:textures/entity/slime/redstone_resource_slime.png"

@@ -71,7 +71,7 @@ public class ResourceSlime extends Slime implements Bucketable {
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
-        builder.define(DATA_CATEGORY, Category.METALLIC.ordinal());
+        builder.define(DATA_CATEGORY, Category.BOG.ordinal());
         builder.define(DATA_FROM_BUCKET, false);
         builder.define(DATA_VARIANT_ID, "");
     }
@@ -83,7 +83,7 @@ public class ResourceSlime extends Slime implements Bucketable {
         int ordinal = this.entityData.get(DATA_CATEGORY);
         Category[] values = Category.values();
         if (ordinal < 0 || ordinal >= values.length) {
-            return Category.METALLIC;
+            return Category.BOG;
         }
         return values[ordinal];
     }
@@ -191,7 +191,7 @@ public class ResourceSlime extends Slime implements Bucketable {
      * "Iron Slime". When the variant id is absent OR resolves to {@code null}
      * (datapack/mod removed since save), falls back to the broad category
      * name ({@code entity.productivefrogs.resource_slime.<category_id>}) —
-     * e.g. "Metallic Slime". The variant-resolution check avoids showing a
+     * e.g. "Bog Slime". The variant-resolution check avoids showing a
      * raw translation key in the overlay when the lang entry doesn't exist.
      */
     @Override

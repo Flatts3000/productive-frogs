@@ -63,17 +63,11 @@ public final class PFCreativeTabs {
                     for (var entry : PFItems.PRIMED_FROG_EGG_ITEMS.values()) {
                         output.accept(entry.get());
                     }
-                    // NOTE: PFItems.RESOURCE_FROGLIGHT_ITEMS (the 6 broad-strokes
-                    // category Froglight BlockItems) is intentionally NOT listed
-                    // here. After the PR #43 display-name renames, the broad-
-                    // strokes "Iron Froglight" (METALLIC category) collides with
-                    // the variant-stamped configurable_froglight (variant=iron),
-                    // and they appeared side-by-side as two creative-tab entries
-                    // sharing one name. The BlockItems stay registered (existing
-                    // worlds load fine, FrogTongueDropHandler still emits them
-                    // as the no-variant fallback drop) — only the tab listing is
-                    // dropped. Creative testers wanting a specific category block
-                    // can /give productivefrogs:metallic_froglight etc.
+                    // V1.5: the 6 broad-strokes category Froglight BlockItems
+                    // (bog_froglight, cave_froglight, …) were deleted entirely.
+                    // ResourceSlimes always carry a variant, so the no-variant
+                    // fallback drop path no longer exists. The only Froglight
+                    // is the variant-stamped configurable_froglight below.
                     //
                     // One configurable_froglight per shipped variant — each stack
                     // carries its variant id in the SLIME_VARIANT data component so
@@ -98,9 +92,11 @@ public final class PFCreativeTabs {
                     // Parent species spawn eggs (Cave / Geode / Tide / Void) —
                     // not category-themed, kept after the variant eggs so the
                     // tab reads as: variants first, then upstream sources.
+                    output.accept(PFItems.BOG_SLIME_SPAWN_EGG.get());
                     output.accept(PFItems.CAVE_SLIME_SPAWN_EGG.get());
                     output.accept(PFItems.GEODE_SLIME_SPAWN_EGG.get());
                     output.accept(PFItems.TIDE_SLIME_SPAWN_EGG.get());
+                    output.accept(PFItems.INFERNAL_SLIME_SPAWN_EGG.get());
                     output.accept(PFItems.VOID_SLIME_SPAWN_EGG.get());
                 })
                 .build()

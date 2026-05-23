@@ -61,7 +61,7 @@ class SlimeMilkerBlockTest {
         // CONSUME no-op rather than picking some arbitrary default milk.
         ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, bucket,
-            tag -> tag.putString("Category", "METALLIC"));
+            tag -> tag.putString("Category", "BOG"));
 
         assertNull(SlimeMilkerBlock.readBucketVariant(bucket),
             "a bucket with Category but no Variant must not resolve");

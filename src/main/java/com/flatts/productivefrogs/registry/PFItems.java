@@ -94,9 +94,6 @@ public final class PFItems {
      */
     public static final Map<Category, DeferredItem<BlockItem>> PRIMED_FROG_EGG_ITEMS = buildPrimedEggItems();
 
-    /** Per-category BlockItems for the six Resource Froglight blocks. */
-    public static final Map<Category, DeferredItem<BlockItem>> RESOURCE_FROGLIGHT_ITEMS = buildResourceFroglightItems();
-
     /**
      * Per-category spawn eggs for Resource Frogs. Each item carries two default
      * components: {@code ENTITY_DATA} (preset NBT seeding the spawned entity's
@@ -160,28 +157,42 @@ public final class PFItems {
     public static final DeferredItem<SpawnEggItem> CAVE_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "cave_slime_spawn_egg",
         props -> new SpawnEggItem(PFEntities.CAVE_SLIME.get(),
-            Category.MINERAL.tintRgb(), darker(Category.MINERAL.tintRgb()), props)
+            Category.CAVE.tintRgb(), darker(Category.CAVE.tintRgb()), props)
     );
 
     /** Geode Slime spawn egg — GEM parent species. Mirrors Cave Slime. */
     public static final DeferredItem<SpawnEggItem> GEODE_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "geode_slime_spawn_egg",
         props -> new SpawnEggItem(PFEntities.GEODE_SLIME.get(),
-            Category.GEM.tintRgb(), darker(Category.GEM.tintRgb()), props)
+            Category.GEODE.tintRgb(), darker(Category.GEODE.tintRgb()), props)
     );
 
     /** Tide Slime spawn egg — AQUATIC parent species. Mirrors Cave Slime. */
     public static final DeferredItem<SpawnEggItem> TIDE_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "tide_slime_spawn_egg",
         props -> new SpawnEggItem(PFEntities.TIDE_SLIME.get(),
-            Category.AQUATIC.tintRgb(), darker(Category.AQUATIC.tintRgb()), props)
+            Category.TIDE.tintRgb(), darker(Category.TIDE.tintRgb()), props)
     );
 
-    /** Void Slime spawn egg — ARCANE parent species. Mirrors Cave Slime. */
+    /** Void Slime spawn egg — VOID parent species. Mirrors Cave Slime. */
     public static final DeferredItem<SpawnEggItem> VOID_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "void_slime_spawn_egg",
         props -> new SpawnEggItem(PFEntities.VOID_SLIME.get(),
-            Category.ARCANE.tintRgb(), darker(Category.ARCANE.tintRgb()), props)
+            Category.VOID.tintRgb(), darker(Category.VOID.tintRgb()), props)
+    );
+
+    /** Bog Slime spawn egg — BOG parent species. V1.5 addition. */
+    public static final DeferredItem<SpawnEggItem> BOG_SLIME_SPAWN_EGG = ITEMS.registerItem(
+        "bog_slime_spawn_egg",
+        props -> new SpawnEggItem(PFEntities.BOG_SLIME.get(),
+            Category.BOG.tintRgb(), darker(Category.BOG.tintRgb()), props)
+    );
+
+    /** Infernal Slime spawn egg — INFERNAL parent species. V1.5 addition. */
+    public static final DeferredItem<SpawnEggItem> INFERNAL_SLIME_SPAWN_EGG = ITEMS.registerItem(
+        "infernal_slime_spawn_egg",
+        props -> new SpawnEggItem(PFEntities.INFERNAL_SLIME.get(),
+            Category.INFERNAL.tintRgb(), darker(Category.INFERNAL.tintRgb()), props)
     );
 
     /**
@@ -256,17 +267,6 @@ public final class PFItems {
         return map;
     }
 
-    private static Map<Category, DeferredItem<BlockItem>> buildResourceFroglightItems() {
-        EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
-        for (Category cat : Category.values()) {
-            map.put(cat, ITEMS.registerSimpleBlockItem(
-                cat.id() + "_froglight",
-                PFBlocks.RESOURCE_FROGLIGHTS.get(cat),
-                new Item.Properties()
-            ));
-        }
-        return map;
-    }
 
     @SuppressWarnings("unchecked")
     private static Map<Category, DeferredItem<SpawnEggItem>> buildSpawnEggs(
@@ -336,18 +336,18 @@ public final class PFItems {
     private static Map<String, DeferredItem<SpawnEggItem>> buildSlimeVariantSpawnEggs() {
         record VariantSpec(String name, Category category) {}
         VariantSpec[] variants = new VariantSpec[]{
-            new VariantSpec("iron",        Category.METALLIC),
-            new VariantSpec("copper",      Category.METALLIC),
-            new VariantSpec("gold",        Category.METALLIC),
-            new VariantSpec("redstone",    Category.MINERAL),
-            new VariantSpec("lapis",       Category.MINERAL),
-            new VariantSpec("coal",        Category.MINERAL),
-            new VariantSpec("diamond",     Category.GEM),
-            new VariantSpec("emerald",     Category.GEM),
-            new VariantSpec("prismarine",  Category.AQUATIC),
-            new VariantSpec("sponge",      Category.AQUATIC),
+            new VariantSpec("iron",        Category.CAVE),
+            new VariantSpec("copper",      Category.CAVE),
+            new VariantSpec("gold",        Category.CAVE),
+            new VariantSpec("redstone",    Category.CAVE),
+            new VariantSpec("lapis",       Category.CAVE),
+            new VariantSpec("coal",        Category.CAVE),
+            new VariantSpec("diamond",     Category.CAVE),
+            new VariantSpec("emerald",     Category.GEODE),
+            new VariantSpec("prismarine",  Category.TIDE),
+            new VariantSpec("sponge",      Category.TIDE),
             new VariantSpec("magma_cream", Category.INFERNAL),
-            new VariantSpec("ender_pearl", Category.ARCANE),
+            new VariantSpec("ender_pearl", Category.VOID),
         };
         java.util.LinkedHashMap<String, DeferredItem<SpawnEggItem>> map = new java.util.LinkedHashMap<>();
         for (VariantSpec spec : variants) {
