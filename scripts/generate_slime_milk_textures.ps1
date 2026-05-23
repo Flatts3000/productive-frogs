@@ -150,21 +150,21 @@ function Build-BucketTexture {
                 $out.SetPixel($x, $y, (Apply-Tint $mp $tintRgb))
             }
         }
-        # Slime eyes overlay: two dark pixels on the top milk surface so the
-        # bucket reads as "slime peering out" rather than "tinted dye." Eye
-        # positions chosen against the vanilla milk_bucket.png milk shape --
-        # y=3 is the top of the widest milk band; x=6 / x=9 symmetric around
-        # center give vanilla-slime-style 2-pixel eye spacing. Dark color
-        # stays low-channel so post-tint multiplication keeps it dark on
-        # every variant.
+        # Slime eyes overlay: two dark pixels written AFTER the tint loop
+        # has finished, so they bypass Apply-Tint entirely and ship at their
+        # literal (28,28,28) value on every variant. The eye positions are
+        # chosen against the vanilla milk_bucket.png milk shape -- y=3 is the
+        # top of the widest milk band; x=6 / x=9 symmetric around center give
+        # vanilla-slime-style 2-pixel eye spacing.
         $eyeColor = [System.Drawing.Color]::FromArgb(255, 28, 28, 28)
         $out.SetPixel(6, 3, $eyeColor)
         $out.SetPixel(9, 3, $eyeColor)
 
-        $outPath = Join-Path $itemDir "${variant}_slime_milk_bucket.png"
-        Save-Png $out $outPath
-        Write-Output "wrote $outPath"
-        $out.Dispose()
+        try {
+            $outPath = Join-Path $itemDir "${variant}_slime_milk_bucket.png"
+            Save-Png $out $outPath
+            Write-Output "wrote $outPath"
+        } finally { $out.Dispose() }
     } finally {
         $emptyBmp.Dispose()
         $milkBmp.Dispose()
@@ -181,23 +181,33 @@ function Build-FluidTexture {
         $w = $src.Width
         $h = $src.Height
         $out = New-Object System.Drawing.Bitmap $w, $h
-        for ($y = 0; $y -lt $h; $y++) {
-            for ($x = 0; $x -lt $w; $x++) {
-                $p = $src.GetPixel($x, $y)
-                if ($p.A -eq 0) { continue }
-                $out.SetPixel($x, $y, (Apply-Tint $p $tintRgb))
+        try {
+            for ($y = 0; $y -lt $h; $y++) {
+                for ($x = 0; $x -lt $w; $x++) {
+                    $p = $src.GetPixel($x, $y)
+                    if ($p.A -eq 0) {
+                        # Explicit transparent write so we don't rely on
+                        # the Bitmap ctor's initial contents (technically
+                        # implementation-defined). Matches vanilla water
+                        # alpha which is fully opaque, but keeps the loop
+                        # invariant clear if vanilla ever ships transparent
+                        # pixels in these strips.
+                        $out.SetPixel($x, $y, [System.Drawing.Color]::FromArgb(0, 0, 0, 0))
+                        continue
+                    }
+                    $out.SetPixel($x, $y, (Apply-Tint $p $tintRgb))
+                }
             }
-        }
-        $outPath = Join-Path $blockDir "${variant}_slime_milk_${kind}.png"
-        Save-Png $out $outPath
-        Write-Output "wrote $outPath ($w x $h)"
-        # Sibling .mcmeta declaring the animation. frametime=2 matches vanilla
-        # water_still.png.mcmeta's cadence. Width/height left implicit so MC
-        # auto-detects frame size = texture width.
-        $mcmetaPath = "$outPath.mcmeta"
-        [System.IO.File]::WriteAllText($mcmetaPath, "{`n  `"animation`": {`n    `"frametime`": 2`n  }`n}`n", [System.Text.UTF8Encoding]::new($false))
-        Write-Output "wrote $mcmetaPath"
-        $out.Dispose()
+            $outPath = Join-Path $blockDir "${variant}_slime_milk_${kind}.png"
+            Save-Png $out $outPath
+            Write-Output "wrote $outPath ($w x $h)"
+            # Sibling .mcmeta declaring the animation. frametime=2 matches
+            # vanilla water_still.png.mcmeta's cadence. Width/height left
+            # implicit so MC auto-detects frame size = texture width.
+            $mcmetaPath = "$outPath.mcmeta"
+            [System.IO.File]::WriteAllText($mcmetaPath, "{`n  `"animation`": {`n    `"frametime`": 2`n  }`n}`n", [System.Text.UTF8Encoding]::new($false))
+            Write-Output "wrote $mcmetaPath"
+        } finally { $out.Dispose() }
     } finally { $src.Dispose() }
 }
 
