@@ -4,7 +4,6 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.data.Category;
-import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.resources.ResourceLocation;
@@ -94,13 +93,15 @@ public final class FrogTongueDropHandler {
         if (level.isClientSide()) {
             return;
         }
-        ItemStack froglight;
-        if (variantId != null) {
-            froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
-            froglight.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
-        } else {
-            froglight = new ItemStack(PFBlocks.resourceFroglight(category));
+        // V1.5: ResourceSlime always carries a variant. If somehow we reach
+        // this code path with null variantId (legacy save or a bug), drop
+        // nothing — the kill is treated as a "wasted" eat and the player
+        // gets only the vanilla slime-ball death drop from the source mob.
+        if (variantId == null) {
+            return;
         }
+        ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
+        froglight.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
         Vec3 pos = frog.position();
         ItemEntity drop = new ItemEntity(level, pos.x, pos.y, pos.z, froglight);
         drop.setDefaultPickUpDelay();

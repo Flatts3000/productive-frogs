@@ -157,12 +157,18 @@ public class ResourceFrog extends Frog {
             // mobInteract so slimeballs, name tags, etc. still work normally.
             return super.mobInteract(player, hand);
         }
+        // V1.5: direct-feed requires a variant-stamped bucket. Category-only
+        // buckets (a Bucket of <Species> Slime with no variant) are
+        // intermediates — frogs only "produce" from variant slimes.
+        ResourceLocation variantId = ResourceTadpoleBucketItem.readVariant(stack);
+        if (variantId == null) {
+            return super.mobInteract(player, hand);
+        }
         if (this.level().isClientSide()) {
             // Client-side returns SUCCESS so the player's swing arm animates
             // and the inventory updates roundtrip from the server's mutation.
             return InteractionResult.SUCCESS;
         }
-        ResourceLocation variantId = ResourceTadpoleBucketItem.readVariant(stack);
         FrogTongueDropHandler.dropFroglightAtFrog(this, bucketCategory, variantId);
         // Apply the same brain memory vanilla Frog uses to gate repeated
         // tongue use — keeps direct-feed cadence consistent with the natural

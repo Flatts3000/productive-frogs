@@ -85,10 +85,6 @@ public final class PFClientEvents {
                 (state, level, pos, tintIndex) -> tintIndex == 0 ? rgb : -1,
                 PFBlocks.primedEgg(cat)
             );
-            event.register(
-                (state, level, pos, tintIndex) -> tintIndex == 0 ? rgb : -1,
-                PFBlocks.resourceFroglight(cat)
-            );
         }
         // Variant-keyed configurable Froglight: BlockColor reads the variant
         // identifier from the BE, looks up the matching SlimeVariant in the
@@ -191,10 +187,6 @@ public final class PFClientEvents {
             event.register(
                 (stack, tintIndex) -> tintIndex == 0 ? rgb : -1,
                 PFItems.PRIMED_FROG_EGG_ITEMS.get(cat).get()
-            );
-            event.register(
-                (stack, tintIndex) -> tintIndex == 0 ? rgb : -1,
-                PFItems.RESOURCE_FROGLIGHT_ITEMS.get(cat).get()
             );
         }
 

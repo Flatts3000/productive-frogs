@@ -727,13 +727,17 @@ public final class PFGameTests {
     }
 
     /**
-     * Place a matching-category frog and slime; deal lethal damage to the
-     * slime sourced from the frog (simulating the result of the tongue eat);
-     * assert a Froglight item entity of the correct category drops at the
-     * frog's position. Verifies the {@code LivingDeathEvent} handler runs.
+     * Place a matching-category frog and a variant-stamped slime; deal lethal
+     * damage to the slime sourced from the frog (simulating the result of the
+     * tongue eat); assert a {@code configurable_froglight} stamped with the
+     * same variant drops at the frog's position.
+     *
+     * <p>V1.5: ResourceSlime always carries a variant (the category-only
+     * intermediate was removed). Test seeds the slime with the prismarine
+     * variant (Tide species) and the frog with TIDE category.
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
-    public static void matchingFrogKillDropsCategoryFroglight(GameTestHelper helper) {
+    public static void matchingFrogKillDropsConfigurableFroglight(GameTestHelper helper) {
         Category cat = Category.TIDE;
         BlockPos frogPos = new BlockPos(2, 2, 2);
         BlockPos slimePos = new BlockPos(3, 2, 2);
@@ -743,26 +747,29 @@ public final class PFGameTests {
 
         ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
         slime.setSize(1, true);
-        slime.setCategory(cat);
+        ResourceLocation prismarine = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "prismarine");
+        slime.setVariant(prismarine);
 
-        // Damage from the frog — drives the LivingDeathEvent handler's
-        // source check.
         slime.hurt(helper.getLevel().damageSources().mobAttack(frog), 999.0F);
 
         helper.succeedWhen(() -> {
-            net.minecraft.world.item.Item expected = PFBlocks.resourceFroglight(cat).asItem();
             boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
-                .anyMatch(itemEntity -> itemEntity.getItem().is(expected));
+                .anyMatch(itemEntity -> {
+                    ItemStack stack = itemEntity.getItem();
+                    return stack.is(PFItems.CONFIGURABLE_FROGLIGHT.get())
+                        && prismarine.equals(stack.get(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get()));
+                });
             if (!found) {
-                helper.fail("expected " + expected + " to drop at frog position after kill");
+                helper.fail("expected prismarine-stamped configurable_froglight to drop at frog position");
             }
         });
     }
 
     /**
-     * Same setup but with mismatched categories — the slime dies but the
-     * handler must skip its drop because the frog/slime categories disagree.
-     * Asserts no Froglight item entities appear.
+     * Mismatched-category kill: a Bog Frog (BOG category) kills an
+     * Infernal-stamped slime (INFERNAL category). Handler must skip its drop
+     * because the categories disagree. Asserts no configurable_froglight
+     * item entity appears.
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void mismatchedFrogKillDropsNoFroglight(GameTestHelper helper) {
@@ -774,21 +781,17 @@ public final class PFGameTests {
 
         ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
         slime.setSize(1, true);
-        slime.setCategory(Category.INFERNAL);
+        // Magma cream is an Infernal variant — categorically wrong for the Bog frog.
+        slime.setVariant(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "magma_cream"));
 
         slime.hurt(helper.getLevel().damageSources().mobAttack(frog), 999.0F);
 
-        // Wait a small window then assert: no Froglight items dropped from any
-        // category. The death event has already fired by the next tick, so 20
-        // ticks is generous headroom.
+        // Wait then verify no configurable_froglight dropped.
         helper.runAfterDelay(20L, () -> {
-            for (Category cat : Category.values()) {
-                net.minecraft.world.item.Item froglight = PFBlocks.resourceFroglight(cat).asItem();
-                boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
-                    .anyMatch(itemEntity -> itemEntity.getItem().is(froglight));
-                if (found) {
-                    helper.fail("category mismatch should not drop Froglight, but found " + froglight);
-                }
+            boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                .anyMatch(itemEntity -> itemEntity.getItem().is(PFItems.CONFIGURABLE_FROGLIGHT.get()));
+            if (found) {
+                helper.fail("category mismatch should not drop configurable_froglight");
             }
             helper.succeed();
         });
@@ -816,8 +819,8 @@ public final class PFGameTests {
      * moment the drop appears, so green runs finish well under that ceiling.
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 400)
-    public static void frogTongueAiPathDropsCategoryFroglight(GameTestHelper helper) {
-        Category cat = Category.BOG;
+    public static void frogTongueAiPathDropsConfigurableFroglight(GameTestHelper helper) {
+        Category cat = Category.CAVE;
         BlockPos frogPos = new BlockPos(2, 2, 2);
 
         // Floor under the frog + slime. Without ground both entities fall
@@ -831,16 +834,21 @@ public final class PFGameTests {
 
         ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), frogPos.east());
         slime.setSize(1, true);
-        slime.setCategory(cat);
+        // V1.5: ResourceSlime always carries a variant. Iron is a Cave variant.
+        ResourceLocation iron = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        slime.setVariant(iron);
 
         // No manual hurtServer call — the frog's brain runs the full target →
         // tongue-extend → damage path on its own.
         helper.succeedWhen(() -> {
-            net.minecraft.world.item.Item expected = PFBlocks.resourceFroglight(cat).asItem();
             boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
-                .anyMatch(itemEntity -> itemEntity.getItem().is(expected));
+                .anyMatch(itemEntity -> {
+                    ItemStack stack = itemEntity.getItem();
+                    return stack.is(PFItems.CONFIGURABLE_FROGLIGHT.get())
+                        && iron.equals(stack.get(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get()));
+                });
             if (!found) {
-                helper.fail("expected " + expected + " to drop after frog's AI tongues the slime");
+                helper.fail("expected iron-stamped configurable_froglight to drop after frog's AI tongues the slime");
             }
         });
     }
@@ -1572,27 +1580,6 @@ public final class PFGameTests {
     // ---------------------------------------------------------------------
 
     /**
-     * Every broad-strokes (category) Froglight should smelt to its canonical
-     * resource. Pins the 6 plain-item smelting recipes — if a recipe JSON
-     * is renamed, deleted, or has a wrong output, this catches it before
-     * playtest.
-     */
-    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
-    public static void categoryFroglightSmeltRecipesResolveToCanonicalResource(GameTestHelper helper) {
-        ServerLevel level = helper.getLevel();
-        net.minecraft.world.item.crafting.RecipeManager rm = level.getServer().getRecipeManager();
-
-        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.BOG).asItem(), net.minecraft.world.item.Items.IRON_INGOT);
-        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.CAVE).asItem(), net.minecraft.world.item.Items.REDSTONE);
-        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.GEODE).asItem(), net.minecraft.world.item.Items.DIAMOND);
-        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.TIDE).asItem(), net.minecraft.world.item.Items.PRISMARINE_SHARD);
-        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.INFERNAL).asItem(), net.minecraft.world.item.Items.MAGMA_CREAM);
-        assertSmelts(helper, rm, level, PFBlocks.resourceFroglight(Category.VOID).asItem(), net.minecraft.world.item.Items.ENDER_PEARL);
-
-        helper.succeed();
-    }
-
-    /**
      * configurable_froglight stamped with a {@code slime_variant} component
      * should smelt to the variant's canonical resource. Pins the 12
      * component-ingredient smelting recipes against the
@@ -1782,61 +1769,59 @@ public final class PFGameTests {
     // ---------------------------------------------------------------------
 
     /**
-     * Happy path: matching-category Slime Bucket fed to the right Resource
-     * Frog. Captures a METALLIC ResourceSlime (no variant) into a Slime
-     * Bucket, spawns a METALLIC ResourceFrog, then simulates a right-click
-     * by calling {@code frog.mobInteract(player, MAIN_HAND)} with the
-     * bucket in the player's hand.
-     *
-     * <p>Asserts: SUCCESS result, broad-strokes metallic_froglight item
-     * dropped at frog position, player's main hand now holds an empty
-     * vanilla bucket (Slime Bucket consumed).
+     * Category-only Slime Bucket (no variant tag, e.g. a Bucket of Cave Slime)
+     * fed to a matching Resource Frog. V1.5 = PASS, bucket NOT consumed:
+     * category-only slimes are intermediates only; frogs only "produce" from
+     * variant-stamped slimes. Direct-feeding an unstamped bucket is a no-op.
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
-    public static void directFeedMatchingCategoryDropsFroglightAndEmptiesBucket(GameTestHelper helper) {
+    public static void directFeedCategoryOnlyBucketIsNoOp(GameTestHelper helper) {
         BlockPos frogPos = new BlockPos(2, 2, 2);
 
-        // Build the bucket the same way the slime mob-interact path does —
-        // saveToBucketTag on a sized-1 slime writes the canonical NBT shape.
-        ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(4, 2, 4));
+        // Build the bucket from a parent species (Cave Slime). The bucket
+        // ends up with a Category but no Variant.
+        com.flatts.productivefrogs.content.entity.CaveSlime source =
+            helper.spawn(PFEntities.CAVE_SLIME.get(), new BlockPos(4, 2, 4));
         source.setSize(1, true);
-        source.setCategory(Category.BOG);
         ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
-        source.saveToBucketTag(bucket);
+        // CaveSlime doesn't have a saveToBucketTag override; manually write
+        // the category tag the way the bucket flow would.
+        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+        tag.putString("Category", Category.CAVE.name());
+        bucket.set(net.minecraft.core.component.DataComponents.BUCKET_ENTITY_DATA,
+            net.minecraft.world.item.component.CustomData.of(tag));
         source.discard();
 
         com.flatts.productivefrogs.content.entity.ResourceFrog frog =
             helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
-        frog.setCategory(Category.BOG);
+        frog.setCategory(Category.CAVE);
 
         net.minecraft.world.entity.player.Player player =
             helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
-        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, bucket);
+        ItemStack bucketCopy = bucket.copy();
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, bucketCopy);
 
         net.minecraft.world.InteractionResult result =
             frog.mobInteract(player, net.minecraft.world.InteractionHand.MAIN_HAND);
-        if (result != net.minecraft.world.InteractionResult.SUCCESS) {
-            helper.fail("expected SUCCESS interaction, got " + result);
+        // PASS = "we didn't handle it, vanilla fallthrough". Bucket must NOT
+        // be consumed; no drops.
+        if (result != net.minecraft.world.InteractionResult.PASS) {
+            helper.fail("expected PASS for category-only direct-feed (V1.5 no-op), got " + result);
             return;
         }
-
-        helper.succeedWhen(() -> {
-            // Hand should now hold an empty vanilla bucket.
-            ItemStack heldNow = player.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND);
-            if (!heldNow.is(net.minecraft.world.item.Items.BUCKET)) {
-                helper.fail("expected hand to hold an empty bucket after direct-feed, got "
-                    + BuiltInRegistries.ITEM.getKey(heldNow.getItem()));
-                return;
+        ItemStack heldAfter = player.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (!heldAfter.is(PFItems.SLIME_BUCKET.get())) {
+            helper.fail("category-only direct-feed must NOT consume the bucket; held now: "
+                + BuiltInRegistries.ITEM.getKey(heldAfter.getItem()));
+            return;
+        }
+        helper.runAfterDelay(10L, () -> {
+            boolean anyDrop = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                .anyMatch(itemEntity -> itemEntity.getItem().is(PFItems.CONFIGURABLE_FROGLIGHT.get()));
+            if (anyDrop) {
+                helper.fail("no configurable_froglight should drop from category-only direct-feed");
             }
-            // A broad-strokes metallic_froglight should have dropped at the
-            // frog's position.
-            net.minecraft.world.item.Item expected = PFBlocks.resourceFroglight(Category.BOG).asItem();
-            boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
-                .anyMatch(itemEntity -> itemEntity.getItem().is(expected));
-            if (!found) {
-                helper.fail("expected " + BuiltInRegistries.ITEM.getKey(expected)
-                    + " to drop at frog position after direct-feed");
-            }
+            helper.succeed();
         });
     }
 
@@ -1943,16 +1928,8 @@ public final class PFGameTests {
                     + BuiltInRegistries.ITEM.getKey(heldNow.getItem()));
                 return;
             }
-            // No Froglight items should have dropped.
-            for (Category cat : Category.values()) {
-                net.minecraft.world.item.Item froglight = PFBlocks.resourceFroglight(cat).asItem();
-                boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
-                    .anyMatch(itemEntity -> itemEntity.getItem().is(froglight));
-                if (found) {
-                    helper.fail("mismatched direct-feed dropped a " + cat.id() + " Froglight — should have been a no-op");
-                    return;
-                }
-            }
+            // No configurable_froglight should have dropped — V1.5: that's the
+            // only froglight type. Species-level Froglight blocks were removed.
             boolean configurableDropped = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
                 .anyMatch(itemEntity -> itemEntity.getItem().is(PFItems.CONFIGURABLE_FROGLIGHT.get()));
             if (configurableDropped) {

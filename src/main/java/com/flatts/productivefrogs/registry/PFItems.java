@@ -94,9 +94,6 @@ public final class PFItems {
      */
     public static final Map<Category, DeferredItem<BlockItem>> PRIMED_FROG_EGG_ITEMS = buildPrimedEggItems();
 
-    /** Per-category BlockItems for the six Resource Froglight blocks. */
-    public static final Map<Category, DeferredItem<BlockItem>> RESOURCE_FROGLIGHT_ITEMS = buildResourceFroglightItems();
-
     /**
      * Per-category spawn eggs for Resource Frogs. Each item carries two default
      * components: {@code ENTITY_DATA} (preset NBT seeding the spawned entity's
@@ -270,17 +267,6 @@ public final class PFItems {
         return map;
     }
 
-    private static Map<Category, DeferredItem<BlockItem>> buildResourceFroglightItems() {
-        EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
-        for (Category cat : Category.values()) {
-            map.put(cat, ITEMS.registerSimpleBlockItem(
-                cat.id() + "_froglight",
-                PFBlocks.RESOURCE_FROGLIGHTS.get(cat),
-                new Item.Properties()
-            ));
-        }
-        return map;
-    }
 
     @SuppressWarnings("unchecked")
     private static Map<Category, DeferredItem<SpawnEggItem>> buildSpawnEggs(
