@@ -27,7 +27,19 @@ The "playable foundation" release. **Appliance blocks** (single-block hand-opera
 
 **Why this scope:** establishes the entire mechanical loop the mod is "about" *with a working scalable economy*. The Milker is the production keystone — without it, the mod has no farming loop. V2 layers automation on top of an already-functional V1.
 
-## V1.0.x — Data-Driven Variant Architecture Refactor (V1.1 prerequisite)
+## V1.0.x — Port to MC 1.21.1 / NeoForge 21.1.230 (BLOCKS EVERYTHING ELSE)
+
+[Sky Frogs](../../sky-frogs) — the modpack PF was built to anchor — is locked to MC 1.21.1 because its load-bearing dependencies (Ex Deorum, Skyblock Builder) have no 1.21.4+ NeoForge builds. PF must rebuild on 1.21.1 to ship inside the pack.
+
+This is a **port, not a version bump**. Between 1.21.1 and our current 1.21.11 target, many APIs changed: `Identifier`/`ResourceLocation` rename, `ValueInput`/`ValueOutput` (1.21.5+) revert to `CompoundTag`, NeoForge transfer API rewrite (`ItemStacksResourceHandler` → `IItemHandler`), GameTest annotation revert, tint pipeline revert (delete `items/*.json` model definitions + restore `RegisterColorHandlersEvent.Item`), several singular-plural data folder renames (`tags/item/`→`tags/items/`, `recipe/`→`recipes/`, `loot_table/`→`loot_tables/`, `structure/`→`structures/`).
+
+Estimated **3-4 weeks** across 11 phase PRs on a long-lived branch.
+
+**Blocks**: the data-driven refactor, V1.1, V1.2 all wait on this. Refactoring code about to be ported is wasted effort — many of the refactor's load-bearing APIs differ between target versions.
+
+Full design in [port_mc_1_21_1.md](./port_mc_1_21_1.md).
+
+## V1.0.x — Data-Driven Variant Architecture Refactor (V1.1 prerequisite, post-port)
 
 Internal architecture refactor. Removes the per-variant Java hardcoding in `PFFluidTypes.VARIANTS` and `PFItems.buildSlimeVariantSpawnEggs()` so that modpacks can add a Resource Slime variant by JSON only — no Java edits, no recompilation, no lang file changes.
 

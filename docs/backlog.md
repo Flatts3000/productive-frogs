@@ -46,7 +46,24 @@ Promoted `configurable_froglight` from a plain Item to a `BlockItem` backed by `
 - ✅ Milk spawn interval: `PFConfig.MIN_SPAWN_INTERVAL_TICKS` + `PFConfig.MAX_SPAWN_INTERVAL_TICKS`.
 - ~~Per-parent-species default categories (config or datapack)~~ — shipped. New `productivefrogs:parent_species` datapack registry; entries at `data/<ns>/productivefrogs/parent_species/<name>.json` with shape `{ "entity_type": "...", "category": "..." }`. Six defaults ship (vanilla `Slime`/`MagmaCube` + the four PF parent species). `SlimeSplitDiscoveryHandler.categoryForParent` now does an EntityType-id lookup against the registry instead of an `instanceof` chain — drops the subclass-ordering footgun and lets modpacks wire modded slime mobs into the discovery loop. Pinned by `ParentSpeciesEntryTest` (codec round-trips + error paths) and the new `parent_species_datapack_registry_loads_six_defaults` GameTest.
 
-## V1.0.x — data-driven variant architecture refactor (V1.1 prerequisite)
+## V1.0.x — port to MC 1.21.1 / NeoForge 21.1.230 (blocks everything else)
+
+Sky Frogs is locked to 1.21.1; PF must rebuild on 1.21.1 to ship in the pack. This is a port, not a version bump — ~10 minor versions of API changes to revert. Full design in [port_mc_1_21_1.md](./port_mc_1_21_1.md). Estimated 3-4 weeks across 11 phases on a long-lived branch:
+
+- ☐ **Phase 0** — Branch + gradle setup (gradle.properties, neoforge.mods.toml version ranges, moddev plugin version check).
+- ☐ **Phase 1** — `Identifier` → `ResourceLocation` mechanical sweep (33 files).
+- ☐ **Phase 2** — BE save/load: revert `ValueInput`/`ValueOutput` → `CompoundTag` (5 BlockEntities).
+- ☐ **Phase 3** — NeoForge resource handler API revert: `ItemStacksResourceHandler` → `IItemHandler` / `ItemStackHandler` (3 files).
+- ☐ **Phase 4** — GameTest annotation revert: `@GameTestHolder` + `@GameTest`, remove the `DeferredRegister<Consumer<GameTestHelper>>` scaffolding.
+- ☐ **Phase 5** — Tint pipeline revert: delete `assets/.../items/*.json` (~70 files), delete 3 `ItemTintSource` classes, register `ItemColor` lambdas via `RegisterColorHandlersEvent.Item`.
+- ☐ **Phase 6** — Data path renames: `tags/item/`→`tags/items/`, `tags/entity_type/`→`tags/entity_types/`, `structure/`→`structures/`, `loot_table/`→`loot_tables/`, `recipe/`→`recipes/`; bump `pack.mcmeta` `pack_format` to 48.
+- ☐ **Phase 7** — Item / Block registration shape revert (`registerItem(name, Function, props)` → `register(name, () -> new Item(props))`).
+- ☐ **Phase 8** — `DataPackRegistryEvent.NewRegistry` + codec adjustments for SlimeVariant / ParentSpecies registries.
+- ☐ **Phase 9** — Biome modifier JSON adjustments (4 files at `data/.../neoforge/biome_modifier/`).
+- ☐ **Phase 10** — Final compile sweep + full manual playtest (creative-tab, milker pipeline, all 12 variants).
+- ☐ **Phase 11** — Merge to main; update `CLAUDE.md` + `docs/dev_setup.md` + `docs/architecture.md` to reflect new versions.
+
+## V1.0.x — data-driven variant architecture refactor (V1.1 prerequisite, post-port)
 
 Removes per-variant Java hardcoding so modpacks can add a SlimeVariant by JSON only. Full design in [refactor_data_driven_variants.md](./refactor_data_driven_variants.md). Ship in 4 PRs:
 
