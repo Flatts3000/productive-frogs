@@ -35,14 +35,18 @@
 #   This isolates the milk region without us hand-authoring a milk mask.
 #
 # Fluid pipeline:
-#   Crop the top 16x16 frame of water_still.png / water_flow.png, grayscale
-#   to remove the existing blue cast, then tint. Single-frame for V1 - the
-#   .mcmeta animation strip is deferred to polish; the milk source-block
-#   isn't visually load-bearing day one.
+#   Crop the top 16x16 frame of water_still.png / water_flow.png and apply
+#   Apply-Tint to each non-transparent pixel. Apply-Tint uses the source
+#   pixel's max(R,G,B) as a lightness factor and multiplies by the variant
+#   tint RGB - effectively a hue swap that preserves vanilla water's
+#   highlight + shadow gradient without needing an explicit grayscale pass.
+#   Single-frame for V1 - the .mcmeta animation strip is deferred to polish;
+#   the milk source-block isn't visually load-bearing day one.
 #
 # Re-run whenever a variant's primary_color changes, or when adding a new
-# variant: drop the new entry into the slime_variant/ JSONs (resource
-# variants) or the $specialVariants list (vanilla/magma), then re-run.
+# variant: drop the new entry into the slime_variant/ JSONs (for resource
+# variants), or add a new key/value to the $variants hashtable below for
+# the two specials (vanilla, magma) that don't ship a SlimeVariant entry.
 #
 # Platform: Windows. Same System.Drawing dependency as the slime script.
 
