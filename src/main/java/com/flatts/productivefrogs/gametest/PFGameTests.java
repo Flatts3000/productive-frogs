@@ -680,38 +680,56 @@ public final class PFGameTests {
         offCategory.setSize(1, true);
         offCategory.setCategory(Category.INFERNAL);
 
-        // Track whether the off-category slime was ever selected across the
-        // entire polling window. succeedWhen alone retries past transient bad
-        // states — we need onEachTick to record sightings, then a single-shot
-        // succeedOnTickWhen at the end to assert "never off-category AND
-        // settled on matching."
-        java.util.concurrent.atomic.AtomicBoolean sawOffCategory = new java.util.concurrent.atomic.AtomicBoolean(false);
+        // Two sensors chain to populate NEAREST_ATTACKABLE:
+        //   1. NEAREST_LIVING_ENTITIES   → writes NEAREST_VISIBLE_LIVING_ENTITIES
+        //   2. RESOURCE_FROG_ATTACKABLES → reads NEAREST_VISIBLE_LIVING_ENTITIES,
+        //                                  filters by category, writes NEAREST_ATTACKABLE
+        //
+        // Each Sensor's first scan is offset by a random tick in [0, scanRate)
+        // chosen at construction, and the chain only settles once both sensors
+        // have fired in the right order. A fixed-tick assertion (the original
+        // runAfterDelay(60L, ...)) raced against worst-case timing and went
+        // flaky on PR #32.
+        //
+        // Polling pattern below:
+        //   - Fail immediately if NEAREST_ATTACKABLE ever points at the
+        //     off-category slime (the category filter is broken).
+        //   - Require a stability window of STABLE_TICKS consecutive ticks of
+        //     NEAREST_ATTACKABLE == matching before succeeding. A single
+        //     correct tick isn't enough -- the memory could oscillate after
+        //     and we'd miss it.
+        //   - Delayed-fallback assertion at tick 180 reports a specific
+        //     last-observed-state failure if the chain never settles, instead
+        //     of falling through to the generic 200-tick timeout.
+        final int STABLE_TICKS = 10;
+        java.util.concurrent.atomic.AtomicInteger consecutiveMatches = new java.util.concurrent.atomic.AtomicInteger(0);
+        java.util.concurrent.atomic.AtomicReference<LivingEntity> lastTarget = new java.util.concurrent.atomic.AtomicReference<>();
         helper.onEachTick(() -> {
             LivingEntity target = frog.getBrain()
                 .getMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.NEAREST_ATTACKABLE)
                 .orElse(null);
+            lastTarget.set(target);
             if (target == offCategory) {
-                sawOffCategory.set(true);
+                helper.fail("sensor targeted the off-category slime — category filter is broken");
+                return;
+            }
+            if (target == matching) {
+                if (consecutiveMatches.incrementAndGet() >= STABLE_TICKS) {
+                    helper.succeed();
+                }
+            } else {
+                consecutiveMatches.set(0);
             }
         });
-        // Sensor scans every ~20 ticks; allow two full scan cycles plus headroom
-        // for the brain to absorb. Use runAfterDelay + explicit helper.succeed
-        // (not succeedOnTickWhen — that's a strict equality and would fail if
-        // the brain settles earlier than expected).
-        helper.runAfterDelay(60L, () -> {
-            if (sawOffCategory.get()) {
-                helper.fail("sensor targeted the off-category slime at some point during the polling window");
-            }
-            LivingEntity target = frog.getBrain()
-                .getMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.NEAREST_ATTACKABLE)
-                .orElse(null);
-            if (target == null) {
-                helper.fail("sensor never wrote NEAREST_ATTACKABLE — does the matching slime exist within range?");
-            }
-            if (target != matching) {
-                helper.fail("expected matching slime as target, got " + target);
-            }
-            helper.succeed();
+        helper.runAfterDelay(180L, () -> {
+            LivingEntity target = lastTarget.get();
+            String label = target == null
+                ? "null"
+                : target == matching ? "matching (but stability window never reached)"
+                : target == offCategory ? "offCategory (would have already failed above)"
+                : target.toString();
+            helper.fail("NEAREST_ATTACKABLE never settled on matching for "
+                + STABLE_TICKS + " consecutive ticks within 180-tick window; last observed target=" + label);
         });
     }
 
