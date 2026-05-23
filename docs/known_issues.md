@@ -19,18 +19,16 @@ Living tracker of playtest bugs, limitations, and workarounds for Productive Fro
 ### 🟢 Coal Resource Slime's eye dots are nearly invisible (dark on dark) — resolved
 Took option 2 from the fix-path discussion: bumped `data/.../slime_variant/coal.json` `primary_color` from `0x2A2A2A` (near-black) to `0x585858` (charcoal grey), and `secondary_color` from `0x101010` to `0x202020`. Body tint now multiplies silhouette body pixels to a charcoal value while the preserved eye dots stay near-black — visible contrast restored. Coal variant still reads as "coal" but no longer flattens against its own eye dots.
 
-### 🔴 World-spawned parent slime species render with default green textures
-The four custom parent slime species — Cave Slime (MINERAL), Geode Slime (GEM), Tide Slime (AQUATIC), Void Slime (ARCANE) — render with placeholder near-vanilla-green textures when spawned in the world. Per the category mapping these should pick up category-themed colours that read at a glance: Cave Slime → stone grey, Geode Slime → diamond cyan, Tide Slime → blue, Void Slime → end purple. METALLIC (`minecraft:slime`) and INFERNAL (`minecraft:magma_cube`) reuse vanilla textures and are correct as-is — only the four custom species need rework.
+### 🟢 World-spawned parent slime species render with vanilla green — resolved
+**Original symptom**: spawning a Cave / Geode / Tide / Void Slime via spawn egg or `/summon` showed a generic green slime cube. The per-species inner-cube PNGs were correctly themed (Cave terracotta-brown, Geode amethyst-purple, Tide blue-cyan, Void dark-purple) but the **outer translucent shell** still pulled from the hardcoded `SlimeRenderer.SLIME_LOCATION` (vanilla green), and that green dominated the visual.
 
-**Symptom**: Spawn a Cave / Geode / Tide / Void Slime via its spawn egg or `/summon`. The body reads as a generic green slime cube — visually indistinguishable from a vanilla slime except in subtle ways. Players cannot tell which category a parent slime belongs to from across the room.
+**Resolution**: added a generic `TintedSlimeOuterLayer` (drop-in replacement for vanilla `SlimeOuterLayer`, parameterised by a constant ARGB tint) and updated each parent renderer to swap it in via `this.layers.removeIf(l -> l instanceof SlimeOuterLayer); this.addLayer(new TintedSlimeOuterLayer(...))`. The layer routes texture lookups through the parent renderer's `getTextureLocation`, so both the inner cube and the outer shell read from the same per-species PNG. Per-species tints:
+- Cave Slime → `0xFF8A8A8A` stone grey
+- Geode Slime → `0xFF6CDCD7` diamond cyan (matches the `diamond` variant's `primary_color`)
+- Tide Slime → `0xFF3F76E4` water blue (vanilla water tint)
+- Void Slime → `0xFF5E3782` end-portal-frame purple
 
-**Fix path**: Repaint the four PNGs at `src/main/resources/assets/productivefrogs/textures/entity/slime/{cave,geode,tide,void}_slime.png`. Keep the vanilla slime UV layout (renderers subclass `SlimeRenderer` and reuse the vanilla `LayerDefinition`); only the colour palette changes. Suggested target colours per `Category.tintArgb()` semantics:
-- Cave Slime → stone grey (~`#7F7F7F` mid + darker shading)
-- Geode Slime → diamond cyan (~`#5DECF5` highlight + teal mid)
-- Tide Slime → ocean blue (~`#3568D8` body + lighter highlight)
-- Void Slime → end purple (~`#7B3E9B` body + darker outline)
-
-Note the existing renderer comment on `CaveSlimeRenderer.java`: the outer translucent shell still pulls from `SlimeRenderer.SLIME_LOCATION` (vanilla green) — accepted limitation since parent slimes are transient (they split into `ResourceSlime` on death via `SlimeSplitDiscoveryHandler`). Recolouring only the inner cube texture is sufficient for the at-a-glance fix.
+Modelled directly on `ResourceSlimeRenderer` + `ResourceSlimeOuterLayer`, but with a constant tint (every Cave Slime is grey, every Geode Slime is cyan, etc.) rather than per-state variant lookup — that shape fits the parent species exactly. The outer-shell-tint-is-known-limitation comment that previously lived on each parent renderer is gone since the limitation is gone.
 
 ### 🟢 Bucket of Slime + Bucket of Tadpole silhouettes positioned outside the bucket — resolved
 **Original symptom (PR #66 era)**: silhouettes were invisible — buckets rendered as plain iron buckets. PR #73 wrote the silhouette PNGs and they became visible, but at the wrong position: the body-shaped silhouettes painted onto the bucket body (rows 5-10 in the 16×16 frame) rather than peeking from the bucket's mouth opening (rows 1-5, cols 5-10), so creatures read as "stuck on the front of the bucket" instead of "contained inside it."
