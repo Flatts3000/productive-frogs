@@ -150,15 +150,12 @@ function Build-BucketTexture {
                 $out.SetPixel($x, $y, (Apply-Tint $mp $tintRgb))
             }
         }
-        # Slime eyes overlay: two dark pixels written AFTER the tint loop
-        # has finished, so they bypass Apply-Tint entirely and ship at their
-        # literal (28,28,28) value on every variant. The eye positions are
-        # chosen against the vanilla milk_bucket.png milk shape -- y=3 is the
-        # top of the widest milk band; x=6 / x=9 symmetric around center give
-        # vanilla-slime-style 2-pixel eye spacing.
-        $eyeColor = [System.Drawing.Color]::FromArgb(255, 28, 28, 28)
-        $out.SetPixel(6, 3, $eyeColor)
-        $out.SetPixel(9, 3, $eyeColor)
+        # NOTE: No eye overlay on milk buckets. Slime Milk is the extracted
+        # fluid, not the live slime -- eyes belong on the Slime Bucket
+        # (the bucketed-slime entity surface, layer0 = slime_silhouette.png).
+        # An earlier revision of this script added eyes here; reverted because
+        # the milk bucket should read as "bucket of tinted liquid," not "slime
+        # in a jar." See docs/known_issues.md for the design pivot history.
 
         try {
             $outPath = Join-Path $itemDir "${variant}_slime_milk_bucket.png"

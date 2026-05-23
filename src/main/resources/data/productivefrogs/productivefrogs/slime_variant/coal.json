@@ -1,7 +1,7 @@
 {
   "primer_item": "minecraft:coal",
   "category": "mineral",
-  "primary_color": 2763306,
-  "secondary_color": 1052688,
+  "primary_color": 5789784,
+  "secondary_color": 2105376,
   "texture": "productivefrogs:textures/entity/slime/coal_resource_slime.png"
 }
