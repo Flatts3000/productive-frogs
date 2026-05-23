@@ -719,6 +719,12 @@ public final class PFGameTests {
         Category cat = Category.METALLIC;
         BlockPos frogPos = new BlockPos(2, 2, 2);
 
+        // Floor under the frog + slime. Without ground both entities fall
+        // through the empty plot during the 400-tick wait, and the frog's
+        // brain stays in "fall" / "swim" mode instead of running ShootTongue.
+        helper.setBlock(frogPos.below(), Blocks.STONE);
+        helper.setBlock(frogPos.east().below(), Blocks.STONE);
+
         ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
         frog.setCategory(cat);
 
@@ -2090,24 +2096,21 @@ public final class PFGameTests {
                 + upView.getStackInSlot(0));
             return;
         }
-        // DOWN view refuses insert (extract-only) — insertItem returns the full
-        // input stack unchanged when the slot rejects the insert.
+        // Predicate checks via isItemValid — the slot may be full (we pre-seeded
+        // both INPUT and OUTPUT), so insertItem would conflate "slot has no room"
+        // with "slot rejects this item". isItemValid is the pure-predicate check
+        // that mirrors the old 1.21.11 ResourceHandler.isValid semantics.
         ItemStack probe = new ItemStack(PFItems.SLIME_BUCKET.get());
-        ItemStack rejected = downView.insertItem(0, probe.copy(), true);
-        if (rejected.getCount() != probe.getCount()) {
+        if (downView.isItemValid(0, probe)) {
             helper.fail("down view must reject inserts (extract-only)");
             return;
         }
-        // UP view accepts SLIME_BUCKET insert (simulate=true so we don't mutate state).
-        ItemStack accepted = upView.insertItem(0, probe.copy(), true);
-        if (accepted.getCount() == probe.getCount()) {
+        if (!upView.isItemValid(0, probe)) {
             helper.fail("up view must accept SLIME_BUCKET inserts");
             return;
         }
-        // UP view refuses unrelated items even though the underlying slot would accept SLIME_BUCKET.
-        ItemStack unrelated = new ItemStack(Items.IRON_INGOT);
-        ItemStack unrelatedResult = upView.insertItem(0, unrelated.copy(), true);
-        if (unrelatedResult.getCount() != unrelated.getCount()) {
+        // UP view's underlying validator restricts to SLIME_BUCKET only.
+        if (upView.isItemValid(0, new ItemStack(Items.IRON_INGOT))) {
             helper.fail("up view must reject non-SLIME_BUCKET items");
             return;
         }
