@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.material.Fluid;
@@ -42,8 +42,8 @@ class PFFluidsTest {
     @ParameterizedTest
     @MethodSource("variants")
     void milkFluidTypeIsRegistered(String variant) {
-        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant + "_slime_milk");
-        FluidType type = NeoForgeRegistries.FLUID_TYPES.getValue(id);
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant + "_slime_milk");
+        FluidType type = NeoForgeRegistries.FLUID_TYPES.get(id);
         assertNotNull(type, id + " must be registered as a FluidType");
         assertSame(PFFluidTypes.BY_VARIANT.get(variant).get(), type,
             "DeferredHolder must resolve to the registered FluidType");
@@ -52,11 +52,11 @@ class PFFluidsTest {
     @ParameterizedTest
     @MethodSource("variants")
     void sourceAndFlowingFluidsAreRegistered(String variant) {
-        Identifier sourceId = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant + "_slime_milk");
-        Identifier flowingId = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant + "_slime_milk_flowing");
+        ResourceLocation sourceId = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant + "_slime_milk");
+        ResourceLocation flowingId = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant + "_slime_milk_flowing");
 
-        Fluid source = BuiltInRegistries.FLUID.getValue(sourceId);
-        Fluid flowing = BuiltInRegistries.FLUID.getValue(flowingId);
+        Fluid source = BuiltInRegistries.FLUID.get(sourceId);
+        Fluid flowing = BuiltInRegistries.FLUID.get(flowingId);
 
         assertNotNull(source, sourceId + " must be registered as a Fluid");
         assertNotNull(flowing, flowingId + " must be registered as a Fluid");
@@ -81,8 +81,8 @@ class PFFluidsTest {
     @ParameterizedTest
     @MethodSource("variants")
     void liquidBlockIsRegistered(String variant) {
-        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant + "_slime_milk");
-        assertNotNull(BuiltInRegistries.BLOCK.getValue(id), id + " must be registered as a Block");
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant + "_slime_milk");
+        assertNotNull(BuiltInRegistries.BLOCK.get(id), id + " must be registered as a Block");
         assertTrue(PFBlocks.MILK_BLOCKS.get(variant).get() instanceof LiquidBlock,
             variant + " milk block must be a LiquidBlock");
     }
@@ -90,8 +90,8 @@ class PFFluidsTest {
     @ParameterizedTest
     @MethodSource("variants")
     void bucketItemIsRegistered(String variant) {
-        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant + "_slime_milk_bucket");
-        assertNotNull(BuiltInRegistries.ITEM.getValue(id), id + " must be registered as an Item");
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant + "_slime_milk_bucket");
+        assertNotNull(BuiltInRegistries.ITEM.get(id), id + " must be registered as an Item");
         assertTrue(PFItems.MILK_BUCKETS.get(variant).get() instanceof BucketItem,
             variant + " milk bucket must be a BucketItem");
     }

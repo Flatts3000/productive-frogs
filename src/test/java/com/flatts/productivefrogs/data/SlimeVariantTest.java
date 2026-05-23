@@ -8,7 +8,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import java.util.Optional;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -41,7 +41,7 @@ class SlimeVariantTest {
     @Test
     void codecDecodesVariantWithoutOptionalTextureField() {
         SlimeVariant decoded = decode(WITHOUT_TEXTURE);
-        assertEquals(Identifier.parse("minecraft:iron_ingot"), decoded.primerItem());
+        assertEquals(ResourceLocation.parse("minecraft:iron_ingot"), decoded.primerItem());
         assertEquals(Category.METALLIC, decoded.category());
         assertEquals(12895428, decoded.primaryColor());
         assertEquals(14211288, decoded.secondaryColor());
@@ -53,10 +53,10 @@ class SlimeVariantTest {
     @Test
     void codecDecodesVariantWithTextureField() {
         SlimeVariant decoded = decode(WITH_TEXTURE);
-        Optional<Identifier> texture = decoded.texture();
+        Optional<ResourceLocation> texture = decoded.texture();
         assertTrue(texture.isPresent(), "texture must be present when the JSON includes the field");
         assertEquals(
-            Identifier.parse("productivefrogs:textures/entity/slime/iron_resource_slime.png"),
+            ResourceLocation.parse("productivefrogs:textures/entity/slime/iron_resource_slime.png"),
             texture.get()
         );
     }
@@ -64,12 +64,12 @@ class SlimeVariantTest {
     @Test
     void codecRoundTripsVariantWithTexture() {
         SlimeVariant original = new SlimeVariant(
-            Identifier.parse("minecraft:copper_ingot"),
+            ResourceLocation.parse("minecraft:copper_ingot"),
             Category.METALLIC,
             14188339,
             16432204,
             1,
-            Optional.of(Identifier.parse("productivefrogs:textures/entity/slime/copper_resource_slime.png"))
+            Optional.of(ResourceLocation.parse("productivefrogs:textures/entity/slime/copper_resource_slime.png"))
         );
         JsonElement encoded = SlimeVariant.CODEC.encodeStart(JsonOps.INSTANCE, original)
             .result()
@@ -83,7 +83,7 @@ class SlimeVariantTest {
     @Test
     void codecRoundTripsVariantWithoutTexture() {
         SlimeVariant original = new SlimeVariant(
-            Identifier.parse("minecraft:gold_ingot"),
+            ResourceLocation.parse("minecraft:gold_ingot"),
             Category.METALLIC,
             16777045,
             16774260,

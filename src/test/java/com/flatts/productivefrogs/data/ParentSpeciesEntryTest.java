@@ -8,7 +8,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -35,21 +35,21 @@ class ParentSpeciesEntryTest {
     @Test
     void decodesVanillaParentSpeciesEntry() {
         ParentSpeciesEntry entry = decode(JSON_VANILLA);
-        assertEquals(Identifier.parse("minecraft:slime"), entry.entityType());
+        assertEquals(ResourceLocation.parse("minecraft:slime"), entry.entityType());
         assertEquals(Category.METALLIC, entry.category());
     }
 
     @Test
     void decodesPfParentSpeciesEntry() {
         ParentSpeciesEntry entry = decode(JSON_PF);
-        assertEquals(Identifier.parse("productivefrogs:cave_slime"), entry.entityType());
+        assertEquals(ResourceLocation.parse("productivefrogs:cave_slime"), entry.entityType());
         assertEquals(Category.MINERAL, entry.category());
     }
 
     @Test
     void codecRoundTrip() {
         ParentSpeciesEntry original = new ParentSpeciesEntry(
-            Identifier.parse("productivefrogs:void_slime"),
+            ResourceLocation.parse("productivefrogs:void_slime"),
             Category.ARCANE
         );
         JsonElement encoded = ParentSpeciesEntry.CODEC.encodeStart(JsonOps.INSTANCE, original)
