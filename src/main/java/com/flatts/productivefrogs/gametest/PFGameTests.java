@@ -159,6 +159,8 @@ public final class PFGameTests {
             PFGameTests::variantConfigurableFroglightSmeltRecipesResolvePerVariant, 100);
         registerTest("configurable_froglight_without_variant_does_not_smelt",
             PFGameTests::configurableFroglightWithoutVariantDoesNotSmelt, 100);
+        registerTest("variant_froglight_round_trip_preserves_variant_through_place_and_break",
+            PFGameTests::variantFroglightRoundTripPreservesVariantThroughPlaceAndBreak, 100);
         registerTest("direct_feed_matching_category_drops_froglight_and_empties_bucket",
             PFGameTests::directFeedMatchingCategoryDropsFroglightAndEmptiesBucket, 100);
         registerTest("direct_feed_variant_slime_drops_configurable_froglight",
@@ -1656,6 +1658,82 @@ public final class PFGameTests {
             return;
         }
         helper.succeed();
+    }
+
+    /**
+     * Round-trip: a variant-stamped configurable_froglight ItemStack placed
+     * as a block, then broken, must produce a dropped ItemStack carrying the
+     * same {@code SLIME_VARIANT} component. Pins three load-bearing pieces
+     * of the placement/break loop together:
+     *
+     * <ol>
+     *   <li>{@link com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity#setVariantId}
+     *       persists the variant onto the BE.</li>
+     *   <li>{@link com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity#collectImplicitComponents}
+     *       exposes that variant as an implicit data component on the BE.</li>
+     *   <li>The loot table at
+     *       {@code data/productivefrogs/loot_table/blocks/configurable_froglight.json}
+     *       uses {@code minecraft:copy_components} with source
+     *       {@code block_entity} to copy that component onto the dropped item.</li>
+     * </ol>
+     *
+     * <p>If any of those three pieces silently breaks, a variant-stamped
+     * Iron Froglight would survive the placement but the broken-block drop
+     * would lose the iron variant — i.e. the player would pick up an
+     * unstamped configurable_froglight, lose smelt-recipe matching, and
+     * regress to exactly the bug this PR fixes. This test fails closed in
+     * that scenario.
+     *
+     * <p>The test exercises the post-placement path directly (set block +
+     * call BE setter) rather than the BlockItem.useOn path. The two are
+     * equivalent for our purposes — {@code ConfigurableFroglightItem.updateCustomBlockEntityTag}
+     * is a thin wrapper that resolves the BE and calls the same setter —
+     * and avoiding the UseOnContext / mock-player ceremony keeps the test
+     * focused on the placement→drop invariant.
+     */
+    private static void variantFroglightRoundTripPreservesVariantThroughPlaceAndBreak(GameTestHelper helper) {
+        BlockPos blockPos = new BlockPos(2, 2, 2);
+        Identifier ironVariant = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+
+        ServerLevel level = helper.getLevel();
+        BlockPos absPos = helper.absolutePos(blockPos);
+
+        // Mirror the placement code path: set the block, then write the
+        // variant onto the BE (this is what ConfigurableFroglightItem's
+        // updateCustomBlockEntityTag override does after vanilla seats the BE).
+        level.setBlock(absPos,
+            PFBlocks.CONFIGURABLE_FROGLIGHT.get().defaultBlockState(), 3);
+        net.minecraft.world.level.block.entity.BlockEntity be = level.getBlockEntity(absPos);
+        if (!(be instanceof com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity froglightBe)) {
+            helper.fail("expected ConfigurableFroglightBlockEntity at " + blockPos
+                + ", got " + (be == null ? "null" : be.getClass().getSimpleName()));
+            return;
+        }
+        froglightBe.setVariantId(ironVariant);
+
+        // Run the loot table. The 4-arg dropResources overload passes the
+        // BE through LootContextParams.BLOCK_ENTITY, which copy_components
+        // (source=block_entity) reads via BlockEntity.collectComponents().
+        BlockState state = level.getBlockState(absPos);
+        net.minecraft.world.level.block.Block.dropResources(state, level, absPos, froglightBe);
+
+        helper.succeedWhen(() -> {
+            net.minecraft.world.item.Item expected = PFItems.CONFIGURABLE_FROGLIGHT.get();
+            net.minecraft.world.entity.item.ItemEntity match =
+                helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                    .filter(e -> e.getItem().is(expected))
+                    .findFirst()
+                    .orElse(null);
+            if (match == null) {
+                helper.fail("expected configurable_froglight to drop after break");
+                return;
+            }
+            Identifier droppedVariant = match.getItem().get(
+                com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get());
+            if (!ironVariant.equals(droppedVariant)) {
+                helper.fail("dropped variant=" + droppedVariant + ", expected " + ironVariant);
+            }
+        });
     }
 
     private static void assertSmelts(

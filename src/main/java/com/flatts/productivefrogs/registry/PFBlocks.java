@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
@@ -45,6 +46,25 @@ public final class PFBlocks {
      * properties — only the map color and (client-side) tint differ per category.
      */
     public static final Map<Category, DeferredBlock<RotatedPillarBlock>> RESOURCE_FROGLIGHTS = buildResourceFroglights();
+
+    /**
+     * The variant-keyed configurable Froglight block. One block, datapack-driven
+     * variant via a {@link com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity}
+     * — placement copies the item's {@code SLIME_VARIANT} component into the BE,
+     * drops copy the BE back into the item via the loot table at
+     * {@code data/productivefrogs/loot_table/blocks/configurable_froglight.json}.
+     * Inherits vanilla Froglight properties (light 15, FROGLIGHT sound).
+     */
+    public static final DeferredBlock<ConfigurableFroglightBlock> CONFIGURABLE_FROGLIGHT =
+        BLOCKS.registerBlock(
+            "configurable_froglight",
+            ConfigurableFroglightBlock::new,
+            BlockBehaviour.Properties.of()
+                .mapColor(MapColor.SAND)
+                .strength(0.3F)
+                .lightLevel(state -> 15)
+                .sound(SoundType.FROGLIGHT)
+        );
 
     /**
      * Slime Milk LiquidBlocks keyed by variant name. One block per variant in

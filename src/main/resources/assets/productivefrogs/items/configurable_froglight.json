@@ -3,8 +3,7 @@
     "type": "minecraft:model",
     "model": "productivefrogs:item/configurable_froglight",
     "tints": [
-      { "type": "productivefrogs:slime_variant", "layer": "primary",   "default": [200, 200, 200] },
-      { "type": "productivefrogs:slime_variant", "layer": "secondary", "default": [160, 160, 160] }
+      { "type": "productivefrogs:slime_variant", "layer": "primary", "default": [200, 200, 200] }
     ]
   }
 }

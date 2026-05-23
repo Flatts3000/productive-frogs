@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
@@ -29,6 +30,17 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "slime_milker",
             () -> new BlockEntityType<>(SlimeMilkerBlockEntity::new, PFBlocks.SLIME_MILKER.get())
+        );
+
+    /**
+     * BE type for the variant-keyed {@code configurable_froglight} block.
+     * Stores one identifier (the variant) — see
+     * {@link com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<ConfigurableFroglightBlockEntity>> CONFIGURABLE_FROGLIGHT =
+        BLOCK_ENTITIES.register(
+            "configurable_froglight",
+            () -> new BlockEntityType<>(ConfigurableFroglightBlockEntity::new, PFBlocks.CONFIGURABLE_FROGLIGHT.get())
         );
 
     private PFBlockEntities() {
