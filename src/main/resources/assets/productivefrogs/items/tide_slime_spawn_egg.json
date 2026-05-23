@@ -1,7 +1,7 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "productivefrogs:item/category_spawn_egg",
+    "model": "productivefrogs:item/slime_spawn_egg",
     "tints": [
       { "type": "minecraft:constant", "value": [40, 140, 180] }
     ]

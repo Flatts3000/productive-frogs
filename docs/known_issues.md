@@ -15,17 +15,8 @@ Living tracker of playtest bugs, limitations, and workarounds for Productive Fro
 
 ## Open issues
 
-### 🔴 Frog / Slime / Tadpole spawn eggs share one silhouette and can't be told apart
-All Productive Frogs spawn eggs (6 Resource Frog + 6 Resource Tadpole + 12 variant Resource Slime + 4 parent-species) currently share **one base texture** (`textures/item/category_spawn_egg.png` — the vanilla egg-shape silhouette) and are differentiated only by per-item tint via the `SLIME_VARIANT` / `CONTAINED_CATEGORY` data components. Result: at-rest the eggs read as "tinted vanilla spawn eggs" — the iron Slime egg and the iron Frog egg are visually identical apart from being on different inventory slots.
-
-**Symptom**: Open creative tab → see ~28 spawn eggs that look like color-tinted variants of the same shape. Can't tell a Frog egg from a Tadpole egg from a Slime egg at a glance; the name tooltip is the only signal.
-
-**Fix path**: Generate three distinct base PNGs (grayscale, tintable at runtime via the existing `slime_variant` / `contained_category` `ItemTintSource`):
-- `frog_spawn_egg_base.png` — frog-silhouette shape with two visible eye dots
-- `tadpole_spawn_egg_base.png` — egg shape with a small tadpole tail wisp
-- `slime_spawn_egg_base.png` — egg shape with a small blob / squish detail
-
-Each grayscale; tinting stays the per-variant runtime path. Then update the three item-model JSONs to reference their distinct base instead of the shared `category_spawn_egg.png`. PixelLab `create_map_object` is the right pipeline for these.
+### 🟢 Frog / Slime / Tadpole spawn eggs share one silhouette — resolved
+Three distinct base PNGs now ship at `textures/item/{frog,tadpole,slime}_spawn_egg.png`, generated via PixelLab MCP (`create_map_object`) and tone-mapped through `scripts/process_silhouette.ps1` so they render cleanly under the spawn-egg tint pipelines: body pixels brighten to (220,220,220) so the runtime `ItemTintSource` multiplication renders the category color, dark accent pixels under 64 preserved as-is so eyes stay visible across all category tints. The relevant tint sources are `productivefrogs:contained_category` (frog + tadpole eggs), `productivefrogs:slime_variant` (12 variant slime eggs), and `minecraft:constant` (4 parent-species slime eggs — Cave / Geode / Tide / Void use a fixed RGB rather than a runtime data component). `productivefrogs:bucketed_category` is the bucket-item tint and is NOT used here. Three new model JSONs at `models/item/{frog,tadpole,slime}_spawn_egg.json` route each shape to its own texture, and all 28 spawn-egg item JSONs were updated to point at the right shape model — frogs at frog, tadpoles at tadpole, all 12 variant + 4 parent-species + 6 category slime eggs at slime. The old shared `category_spawn_egg.png` / model JSON were deleted.
 
 ### 🟢 Slime Milk fluids don't animate (static surface) — resolved
 `scripts/generate_slime_milk_textures.ps1` now tints the **full vanilla water_still / water_flow vertical strips** (32 frames each) instead of just the top frame. Output: `<variant>_slime_milk_still.png` is now 16×512 (32 frames), `<variant>_slime_milk_flow.png` is 32×1024 (32 frames). Each PNG ships a sibling `.mcmeta` with `{"animation": {"frametime": 2}}` matching vanilla water cadence. Source-block fluid surface now moves like vanilla water in the variant's tinted hue.
