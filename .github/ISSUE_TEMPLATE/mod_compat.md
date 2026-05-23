@@ -10,7 +10,7 @@ assignees: []
 
 - **Name:**
 - **Version:**
-- **Link (Modrinth / CurseForge / GitHub):**
+- **Link (CurseForge / GitHub):**
 
 ## Compatibility Issue
 

@@ -36,7 +36,7 @@ Pinned version: `mezz.jei:jei-1.21.11-neoforge:27.4.0.22`. Bump in `build.gradle
 
 We don't depend on Jade in `build.gradle` because it doesn't ship to a maven repo we use cleanly. Install once into the dev environment:
 
-1. Download the 1.21.11 NeoForge build from [the CurseForge page](https://www.curseforge.com/minecraft/mc-mods/jade) (or [Modrinth](https://modrinth.com/mod/jade)).
+1. Download the 1.21.11 NeoForge build from [the CurseForge page](https://www.curseforge.com/minecraft/mc-mods/jade).
 2. Drop the jar into `run/mods/` (create the directory if it doesn't exist).
 3. `./gradlew runClient` — Jade loads alongside JEI and Productive Frogs.
 

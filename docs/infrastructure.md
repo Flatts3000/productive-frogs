@@ -43,7 +43,7 @@ F:\minecraft-repos\
 2. **Repository settings** — description, visibility, topics (`minecraft`, `neoforge-mod`, etc.), features (issues + discussions on, wiki + projects off), merge strategy (squash-only, delete-branch-on-merge, auto-merge enabled).
 3. **Branch protection on `main`** — required status check (`build`), no force-pushes, no deletions, no enforce-admins (owner can hotfix), no PR reviews required (solo OSS — re-enable when contributors arrive).
 4. **Labels** — 10 standard OSS labels + 6 per-category labels (`category/metallic`, `category/mineral`, `category/gem`, `category/aquatic`, `category/infernal`, `category/arcane`).
-5. **Actions secrets** — `MODRINTH_TOKEN` and `CURSEFORGE_TOKEN`, conditional on `$env:PF_MODRINTH_TOKEN` / `$env:PF_CURSEFORGE_TOKEN` being set before the script runs.
+5. **Actions secrets** — `CURSEFORGE_TOKEN`, conditional on `$env:PF_CURSEFORGE_TOKEN` being set before the script runs. (Modrinth distribution is intentionally not supported — FTB ecosystem requires CurseForge-only distribution; Productive Frogs targets the FTB modpack audience.)
 
 ## What `setup.ps1` does NOT manage
 
@@ -101,4 +101,4 @@ gh CLI commands inside the script use the stored credentials
 GitHub API calls authenticated as your account
 ```
 
-No tokens are written to disk by the script. No environment variables for the GitHub token. The release-workflow secrets (`MODRINTH_TOKEN`, `CURSEFORGE_TOKEN`) DO use env vars (`$env:PF_MODRINTH_TOKEN`, `$env:PF_CURSEFORGE_TOKEN`) because they're passed *into* the repo's Actions secrets — but those env vars are transient and never persisted.
+No tokens are written to disk by the script. No environment variables for the GitHub token. The release-workflow secret (`CURSEFORGE_TOKEN`) DOES use an env var (`$env:PF_CURSEFORGE_TOKEN`) because it's passed *into* the repo's Actions secrets — but that env var is transient and never persisted.

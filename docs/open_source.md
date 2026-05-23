@@ -40,7 +40,7 @@ All under `.github/`:
 | `.github/dependabot.yml` | Auto-PRs for Gradle dep updates |
 | `.github/FUNDING.yml` | Sponsor links (optional, can omit) |
 | `.github/workflows/ci.yml` | Build + test on every push and PR |
-| `.github/workflows/release.yml` | Publish to Modrinth / CurseForge on tag push (when ready) |
+| `.github/workflows/release.yml` | Publish to CurseForge on tag push (when ready) |
 
 ## CI Pipeline (GitHub Actions)
 
@@ -56,11 +56,12 @@ All under `.github/`:
 
 1. Same build steps
 2. Verify tag matches `mod_version` in `gradle.properties`
-3. Publish to Modrinth via [Modrinth/minotaur-action](https://github.com/modrinth/minotaur)
-4. Publish to CurseForge via [Kir-Antipov/mc-publish](https://github.com/Kir-Antipov/mc-publish)
-5. Create GitHub Release with the jar attached and CHANGELOG section as body
+3. Publish to CurseForge via [Kir-Antipov/mc-publish](https://github.com/Kir-Antipov/mc-publish)
+4. Create GitHub Release with the jar attached and CHANGELOG section as body
 
-Secrets required: `MODRINTH_TOKEN`, `CURSEFORGE_TOKEN`. Set via `gh secret set` from the sibling `infra/setup.ps1` script (see [infrastructure.md](./infrastructure.md)).
+Modrinth distribution is intentionally omitted — the FTB ecosystem requires CurseForge-only distribution, and Productive Frogs targets the FTB modpack audience. Players who want the mod can grab it from CurseForge or the GitHub Releases attachment.
+
+Secret required: `CURSEFORGE_TOKEN`. Set via `gh secret set` from the sibling `infra/setup.ps1` script (see [infrastructure.md](./infrastructure.md)).
 
 ## Contributor Conventions
 
