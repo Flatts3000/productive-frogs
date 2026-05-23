@@ -13,7 +13,7 @@ import java.util.Map;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.level.Level;
@@ -106,7 +106,7 @@ public final class SlimeSplitDiscoveryHandler {
             if (parent.getRandom().nextFloat() >= discoveryChancePerOffspring()) {
                 continue;
             }
-            ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level, EntitySpawnReason.TRIGGERED);
+            ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level, MobSpawnType.TRIGGERED);
             if (resource == null) {
                 continue;
             }

@@ -18,7 +18,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.ConversionParams;
 import net.minecraft.world.entity.ConversionType;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Bucketable;
 import net.minecraft.world.entity.monster.Slime;
@@ -269,7 +269,7 @@ public class ResourceSlime extends Slime implements Bucketable {
             this.convertTo(
                 this.getType(),
                 new ConversionParams(ConversionType.SPLIT_ON_DEATH, false, false, team),
-                EntitySpawnReason.TRIGGERED,
+                MobSpawnType.TRIGGERED,
                 child -> {
                     child.setSize(childSize, true);
                     if (child instanceof ResourceSlime resource) {

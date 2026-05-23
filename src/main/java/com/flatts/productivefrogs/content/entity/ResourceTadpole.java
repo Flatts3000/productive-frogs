@@ -11,7 +11,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.ConversionParams;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.fish.AbstractFish;
 import net.minecraft.world.entity.animal.frog.Tadpole;
@@ -154,7 +154,7 @@ public class ResourceTadpole extends Tadpole {
             frog.finalizeSpawn(
                 serverLevel,
                 serverLevel.getCurrentDifficultyAt(frog.blockPosition()),
-                EntitySpawnReason.CONVERSION,
+                MobSpawnType.CONVERSION,
                 null
             );
             frog.setPersistenceRequired();

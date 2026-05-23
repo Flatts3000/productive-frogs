@@ -8,7 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.SpawnPlacementTypes;
@@ -141,7 +141,7 @@ public final class PFModBusEvents {
     private static <T extends Mob> boolean checkParentSlimeSpawnRules(
         EntityType<T> type,
         ServerLevelAccessor level,
-        EntitySpawnReason reason,
+        MobSpawnType reason,
         BlockPos pos,
         RandomSource random
     ) {

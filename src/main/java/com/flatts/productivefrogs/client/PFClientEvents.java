@@ -9,15 +9,24 @@ import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
 import com.flatts.productivefrogs.client.renderer.TideSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.VoidSlimeRenderer;
 import com.flatts.productivefrogs.client.screen.SlimeMilkerScreen;
-import com.flatts.productivefrogs.client.tint.BucketedCategoryTint;
-import com.flatts.productivefrogs.client.tint.ContainedCategoryTint;
-import com.flatts.productivefrogs.client.tint.SlimeVariantTint;
+import com.flatts.productivefrogs.content.item.FrogEggItem;
+import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFBlocks;
+import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFFluidTypes;
+import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
+import com.flatts.productivefrogs.registry.PFRegistries;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -31,25 +40,20 @@ import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsE
  * Client-only setup. Registers:
  *
  * <ul>
- *   <li>Custom {@link ResourceTadpoleRenderer} / {@link ResourceFrogRenderer}
- *       so our entities pick up per-category tint at render time.</li>
- *   <li>{@code BlockColor} handlers on each Primed Frog Egg block so
- *       {@code tintindex 0} in the shared block model picks up the category
- *       color in-world.</li>
- *   <li>Custom {@link ContainedCategoryTint} and {@link BucketedCategoryTint}
- *       ItemTintSources, referenced from item model JSONs to drive Frog Egg
- *       bottle + Tadpole/Slime Bucket content-layer tinting.</li>
+ *   <li>Entity renderers (slime, tadpole, frog).</li>
+ *   <li>{@link RegisterColorHandlersEvent.Block} for the Primed Frog Egg blocks,
+ *       category Froglight blocks, and the variant-keyed Configurable Froglight.</li>
+ *   <li>{@link RegisterColorHandlersEvent.Item} for the item-form tints
+ *       (Slime Bucket, Resource Tadpole Bucket, Frog Egg bottle, variant
+ *       spawn eggs, Configurable Froglight item, category Froglights).</li>
+ *   <li>{@link RegisterClientExtensionsEvent} for per-variant Slime Milk fluid
+ *       textures.</li>
  * </ul>
  *
- * <p>All tint values flow through {@link Category#tintArgb()} — single source
- * of truth for category color.
- *
- * <p>Note on item color API in 1.21.x: vanilla and NeoForge removed the
- * legacy {@code RegisterColorHandlersEvent.Item} event. Per-item runtime
- * tinting is now declared in the item model JSON via a {@code "tints"} array,
- * with each entry referencing a registered {@code ItemTintSource} type.
- * Block-item inventory icons that reference a block model with
- * {@code tintindex} still pick up tint via {@code BlockColor}.
+ * <p>On 1.21.1 we register item colors via {@link RegisterColorHandlersEvent.Item}
+ * (the legacy event still present in this version). The 1.21.4+ JSON-driven
+ * {@code ItemTintSource} pipeline doesn't exist here — it'll come back in a
+ * future MC version bump.
  */
 @EventBusSubscriber(modid = ProductiveFrogs.MOD_ID, value = Dist.CLIENT)
 public final class PFClientEvents {
@@ -83,20 +87,7 @@ public final class PFClientEvents {
         }
         // Variant-keyed configurable Froglight: BlockColor reads the variant
         // identifier from the BE, looks up the matching SlimeVariant in the
-        // datapack registry, and returns its primary_color. Falls back to
-        // -1 (white, no tint) when the BlockAndTintGetter or pos is null
-        // (item-form preview rendered via the BlockColor path before the BE
-        // has a level), when the BE hasn't loaded yet, when the BE's level
-        // reference isn't set yet (transient state during chunk attach), or
-        // when the stored variant id isn't in the registry — keeps the block
-        // visible in every fallback path.
-        //
-        // We read the registry through the BE's stored {@link
-        // net.minecraft.world.level.block.entity.BlockEntity#getLevel} rather
-        // than the BlockColor lambda's BlockAndTintGetter parameter, because
-        // the latter is often a RenderChunkRegion during chunk meshing and
-        // does not expose registryAccess(). The BE's level field is set when
-        // it's added to a chunk and stays valid for the BE's lifetime.
+        // datapack registry, returns its primary_color.
         event.register(
             (state, level, pos, tintIndex) -> {
                 if (tintIndex != 0 || level == null || pos == null) {
@@ -114,39 +105,115 @@ public final class PFClientEvents {
                 if (beLevel == null) {
                     return -1;
                 }
-                var registry = beLevel.registryAccess()
-                    .lookup(com.flatts.productivefrogs.registry.PFRegistries.SLIME_VARIANT).orElse(null);
+                Registry<SlimeVariant> registry = beLevel.registryAccess()
+                    .lookup(PFRegistries.SLIME_VARIANT).orElse(null);
                 if (registry == null) {
                     return -1;
                 }
-                var variant = registry.getValue(variantId);
+                SlimeVariant variant = registry.getValue(variantId);
                 return variant == null ? -1 : variant.primaryColor();
             },
             PFBlocks.CONFIGURABLE_FROGLIGHT.get()
         );
     }
 
+    /**
+     * Item-color registration — 1.21.1 uses the legacy {@link RegisterColorHandlersEvent.Item}
+     * event with per-item lambdas. (1.21.4+ moved this to JSON {@code items/*.json} +
+     * {@code ItemTintSource} but that doesn't exist in 1.21.1.)
+     */
     @SubscribeEvent
-    public static void onRegisterItemTintSources(RegisterColorHandlersEvent.ItemTintSources event) {
-        event.register(
-            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "contained_category"),
-            ContainedCategoryTint.MAP_CODEC
-        );
-        event.register(
-            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "slime_variant"),
-            SlimeVariantTint.MAP_CODEC
-        );
-        event.register(
-            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "bucketed_category"),
-            BucketedCategoryTint.MAP_CODEC
-        );
+    public static void onRegisterItemColors(RegisterColorHandlersEvent.Item event) {
+        // Frog Egg bottle — tint from CONTAINED_CATEGORY data component
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 1) return -1;
+            Category cat = stack.get(PFDataComponents.CONTAINED_CATEGORY.get());
+            return cat == null ? -1 : cat.tintRgb();
+        }, PFItems.FROG_EGG.get());
+
+        // Resource Tadpole Bucket — tint from BUCKET_ENTITY_DATA Category
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 1) return -1;
+            Category cat = ResourceTadpoleBucketItem.readCategory(stack);
+            return cat == null ? -1 : cat.tintRgb();
+        }, PFItems.RESOURCE_TADPOLE_BUCKET.get());
+
+        // Slime Bucket — variant first (via BUCKET_ENTITY_DATA Variant),
+        // fall back to category if no variant
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 1) return -1;
+            // Try variant primary_color first
+            CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
+            if (data != null) {
+                CompoundTag tag = data.copyTag();
+                if (tag.contains("Variant")) {
+                    ResourceLocation variantId = ResourceLocation.tryParse(tag.getString("Variant"));
+                    if (variantId != null) {
+                        Minecraft mc = Minecraft.getInstance();
+                        if (mc.level != null) {
+                            Registry<SlimeVariant> registry = mc.level.registryAccess()
+                                .lookup(PFRegistries.SLIME_VARIANT).orElse(null);
+                            if (registry != null) {
+                                SlimeVariant variant = registry.getValue(variantId);
+                                if (variant != null) return variant.primaryColor();
+                            }
+                        }
+                    }
+                }
+                if (tag.contains("Category")) {
+                    try {
+                        return Category.valueOf(tag.getString("Category")).tintRgb();
+                    } catch (IllegalArgumentException ignored) {}
+                }
+            }
+            return -1;
+        }, PFItems.SLIME_BUCKET.get());
+
+        // Configurable Froglight item — tint from SLIME_VARIANT component
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 0) return -1;
+            ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+            if (variantId == null) return -1;
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.level == null) return -1;
+            Registry<SlimeVariant> registry = mc.level.registryAccess()
+                .lookup(PFRegistries.SLIME_VARIANT).orElse(null);
+            if (registry == null) return -1;
+            SlimeVariant variant = registry.getValue(variantId);
+            return variant == null ? -1 : variant.primaryColor();
+        }, PFItems.CONFIGURABLE_FROGLIGHT.get());
+
+        // Per-category Froglight blockitems — inherit BlockColor automatically,
+        // no separate Item color registration needed.
+
+        // Variant slime spawn eggs (12 items) — each carries SLIME_VARIANT
+        for (Category cat : Category.values()) {
+            for (var entry : PFItems.SLIME_VARIANT_SPAWN_EGGS.entrySet()) {
+                event.register((stack, tintIndex) -> {
+                    ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+                    if (variantId == null) return -1;
+                    Minecraft mc = Minecraft.getInstance();
+                    if (mc.level == null) {
+                        // Fallback to category tint if no level (creative tab preview)
+                        Category catFromComponent = stack.get(PFDataComponents.CONTAINED_CATEGORY.get());
+                        return catFromComponent == null ? -1 : catFromComponent.tintRgb();
+                    }
+                    Registry<SlimeVariant> registry = mc.level.registryAccess()
+                        .lookup(PFRegistries.SLIME_VARIANT).orElse(null);
+                    if (registry == null) return -1;
+                    SlimeVariant variant = registry.getValue(variantId);
+                    if (variant != null) {
+                        return tintIndex == 0 ? variant.primaryColor() : variant.secondaryColor();
+                    }
+                    return -1;
+                }, entry.getValue().get());
+            }
+            break; // The for-Category loop is just to scope a single iteration; actual iteration is over the spawn egg map.
+        }
     }
 
     /**
-     * Bind the Slime Milker's MenuType to its client screen. Without this,
-     * opening the menu server-side would log a warning and fall back to
-     * vanilla's blank container screen — players would see the slot layout
-     * but no progress arrow or our custom background.
+     * Bind the Slime Milker's MenuType to its client screen.
      */
     @SubscribeEvent
     public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
@@ -155,14 +222,6 @@ public final class PFClientEvents {
 
     /**
      * Wire each Slime Milk FluidType to its still + flowing block textures.
-     * NeoForge keeps client-only fluid properties off the server by routing
-     * them through {@link IClientFluidTypeExtensions} registered via this
-     * event. Without it each fluid renders as the purple-and-black "missing
-     * texture" cube.
-     *
-     * <p>Iterates {@link PFFluidTypes#VARIANTS} so adding a new variant only
-     * requires editing that list — texture path follows
-     * {@code productivefrogs:block/<variant>_slime_milk_(still|flow)}.
      */
     @SubscribeEvent
     public static void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {

@@ -1,9 +1,0 @@
-{
-  "model": {
-    "type": "minecraft:model",
-    "model": "productivefrogs:item/mineral_frog_egg",
-    "tints": [
-      { "type": "minecraft:constant", "value": [181, 101, 29] }
-    ]
-  }
-}

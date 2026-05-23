@@ -9,7 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.MagmaCube;
 import net.minecraft.world.entity.monster.Slime;
@@ -245,12 +245,12 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
     @Nullable
     private Slime createSlimeForVariant(ServerLevel level) {
         if (variant.equals("vanilla")) {
-            return EntityType.SLIME.create(level, EntitySpawnReason.TRIGGERED);
+            return EntityType.SLIME.create(level, MobSpawnType.TRIGGERED);
         }
         if (variant.equals("magma")) {
-            return EntityType.MAGMA_CUBE.create(level, EntitySpawnReason.TRIGGERED);
+            return EntityType.MAGMA_CUBE.create(level, MobSpawnType.TRIGGERED);
         }
-        ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level, EntitySpawnReason.TRIGGERED);
+        ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level, MobSpawnType.TRIGGERED);
         if (resource == null) {
             return null;
         }
