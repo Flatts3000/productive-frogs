@@ -78,6 +78,22 @@ try {
             $g.FillRectangle($brush, 54, 35, 19, 35)
         } finally { $brush.Dispose() }
 
+        # Composite the arrow progress sprite into (176, 14) so the
+        # SlimeMilkerScreen blit works. In MC 1.21.x vanilla split the
+        # furnace arrow into a sprite-atlas entry at
+        # gui/sprites/container/furnace/burn_progress.png (24x16) rather
+        # than keeping it inline in the GUI background. Our screen blits
+        # from the background at (176, 14) — so we have to re-inline it.
+        $arrowPath = Join-Path $mcExtract "assets\minecraft\textures\gui\sprites\container\furnace\burn_progress.png"
+        if (Test-Path $arrowPath) {
+            $arrow = New-Object System.Drawing.Bitmap $arrowPath
+            try {
+                $g.DrawImage($arrow, 176, 14, $arrow.Width, $arrow.Height)
+            } finally { $arrow.Dispose() }
+        } else {
+            Write-Warning "Vanilla furnace burn_progress sprite not found at $arrowPath; progress arrow will be empty."
+        }
+
         # Restore the inner shadow on the slot positions we KEEP (input + output)
         # by leaving them untouched. The original furnace's input and output
         # well shadows are preserved by virtue of only overwriting the fuel slot.

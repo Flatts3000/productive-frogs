@@ -28,13 +28,17 @@ public class SlimeMilkerScreen extends AbstractContainerScreen<SlimeMilkerMenu> 
 
     // Progress-arrow sprite layout on the background texture. (X1, Y1) is
     // the screen position; (X2, Y2) the source position on the PNG.
-    // Width 24 / height 17 matches vanilla's furnace arrow.
+    // Width 24 / height 16 matches vanilla's furnace burn_progress sprite,
+    // which generate_slime_milker_gui.ps1 composites into (176, 14) so this
+    // blit pulls the sprite from our GUI background atlas. In MC 1.21.x
+    // vanilla moved the arrow into a sprite-atlas entry instead of inlining
+    // it in furnace.png; the script re-inlines so the existing blit works.
     private static final int ARROW_BG_X = 79;
     private static final int ARROW_BG_Y = 34;
     private static final int ARROW_SRC_X = 176;
     private static final int ARROW_SRC_Y = 14;
     private static final int ARROW_WIDTH = 24;
-    private static final int ARROW_HEIGHT = 17;
+    private static final int ARROW_HEIGHT = 16;
 
     // Background PNG is the standard 256x256 image with the 176x166 GUI
     // region in the top-left, matching vanilla furnace conventions.
