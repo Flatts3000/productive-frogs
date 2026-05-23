@@ -65,6 +65,23 @@ GameTests run real headless Minecraft scenarios in scripted plots. They're the r
 - "Resource Tadpole grows into Resource Frog of the same category" (`ageUp` override via access transformer)
 - "Two same-category Resource Frogs in water + slimeballs lay a Primed Frog Egg of that category" (LayCategoryFrogspawn brain task override)
 
+### What GameTest does NOT cover — visuals are blind
+
+`runGameTestServer` boots a **dedicated server** — no client, no renderer, no shader pipeline. Any bug that lives entirely in the client-side render path is invisible to it. Treat GameTest as a server-state oracle, not a UI oracle. Specifically, GameTest cannot catch:
+
+- **Tint resolution** — wrong `ItemTintSource` registered, wrong layer index, `BlockColor` returning -1, source-alpha mismatch.
+- **Texture paths** — missing PNG, typo'd path resolving to the purple-and-black missing-texture cube.
+- **UV / model transforms** — fragment sampling the wrong section of an atlas, broken display transforms.
+- **Render type** — opaque vs. translucent vs. cutout misassignment, source-alpha collapsing a layered model.
+- **Particle / animation** — frog tongue extend animation, slime jiggle, bucket pour sound (sound is server-driven but client-rendered).
+- **GUI layout** — Slime Milker's slot positions, progress arrow, tooltip wrapping.
+- **Creative-tab ordering and icons**.
+- **Language file coverage** — a missing translation key surfaces as the raw `item.productivefrogs.foo` string in tooltips, which is a visual regression invisible to server state.
+
+**Canonical example.** PR #27 shipped a Resource Slime where the outer translucent shell rendered solid gray instead of the category-tinted gradient. Every GameTest passed. Root cause: the outer-layer texture had source-alpha 255 where vanilla expects ~180; the render type respects source alpha so the gradient collapsed into an opaque cube. Server state was identical to a healthy build — only the screen pixels differed. The bug shipped through CI to a playtest.
+
+**Takeaway:** if you touch any of `client/`, `assets/<modid>/`, `Category.tintArgb`, item-model JSON, block-model JSON, lang files, or particle/sound code, schedule a manual `./gradlew runClient` pass and walk the affected surface before marking the work done. Document the playtest matrix in the PR description so the reviewer knows what was eyeballed.
+
 ### Registration pattern (MC 1.21.11)
 
 MC 1.21.11 refactored the GameTest API — the old `@GameTestHolder`/`@GameTest` annotations are gone. The new system has three pieces:
@@ -124,10 +141,21 @@ Both are required status checks on main; PR can't merge with either failing.
 
 ## What manual playtesting still covers
 
-Both automated layers target mechanics. They don't replace eyeballs for:
+Both automated layers target server state. They don't replace eyeballs for:
 
-- Visuals — tint, render layers, model transforms, creative-tab layout
-- Player-driven flows — right-click semantics, hand-slot consumption, sound feedback
-- Cross-mod compat sanity (Mekanism, Create, etc. — future)
+- **Visuals** — tint, render layers, model transforms, alpha behavior, creative-tab layout. See [§What GameTest does NOT cover](#what-gametest-does-not-cover--visuals-are-blind) above for the full list and the PR #27 outer-shell-gray cautionary tale.
+- **Player-driven flows** — right-click semantics, hand-slot consumption, sound feedback, GUI interactions.
+- **Cross-mod compat sanity** (Mekanism, Create, etc. — future).
 
-Keep playtest matrices in PR descriptions for these. The automated layers are about regression safety, not feature acceptance.
+### Minimum playtest checklist for visual-touching PRs
+
+When a PR changes any of `client/`, `assets/`, `Category.tintArgb`, item/block model JSON, or lang entries, run `./gradlew runClient` and verify:
+
+1. The affected item / block renders the expected color in **inventory**, **dropped item**, and **placed-in-world** views (these resolve tints through different code paths).
+2. The translucent / cutout render type looks right — outer layer should not collapse into an opaque solid; gradient should not vanish.
+3. Display name reads correctly (no raw `item.productivefrogs.foo` translation-key fallback).
+4. Tooltip and JEI search find the item by every category / variant name.
+
+Capture screenshots in the PR description for any visually-distinct surface. The reviewer should be able to verify the pixels without re-running the client.
+
+The automated layers are about regression safety, not feature acceptance.
