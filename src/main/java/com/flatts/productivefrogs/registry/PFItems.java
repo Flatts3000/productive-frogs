@@ -47,8 +47,7 @@ public final class PFItems {
      */
     public static final DeferredItem<FrogEggItem> FROG_EGG = ITEMS.registerItem(
         "frog_egg",
-        FrogEggItem::new,
-        () -> new Item.Properties().stacksTo(1)
+        props -> new FrogEggItem(props.stacksTo(1))
     );
 
     /**
@@ -69,11 +68,8 @@ public final class PFItems {
             PFEntities.RESOURCE_SLIME.get(),
             Fluids.WATER,
             SoundEvents.BUCKET_EMPTY_FISH,
-            props
-        ),
-        () -> new Item.Properties()
-            .stacksTo(1)
-            .component(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY)
+            props.stacksTo(1).component(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY)
+        )
     );
 
     /**
@@ -87,11 +83,8 @@ public final class PFItems {
             PFEntities.RESOURCE_TADPOLE.get(),
             Fluids.WATER,
             SoundEvents.BUCKET_EMPTY_TADPOLE,
-            props
-        ),
-        () -> new Item.Properties()
-            .stacksTo(1)
-            .component(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY)
+            props.stacksTo(1).component(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY)
+        )
     );
 
     /**
@@ -153,8 +146,9 @@ public final class PFItems {
      */
     public static final DeferredItem<ConfigurableFroglightItem> CONFIGURABLE_FROGLIGHT = ITEMS.registerItem(
         "configurable_froglight",
-        props -> new ConfigurableFroglightItem(PFBlocks.CONFIGURABLE_FROGLIGHT.get(), props),
-        () -> new Item.Properties().useBlockDescriptionPrefix()
+        // 1.21.1: no Item.Properties.useBlockDescriptionPrefix(); ConfigurableFroglightItem
+        // overrides getDescriptionId itself to fall through to the block translation key.
+        props -> new ConfigurableFroglightItem(PFBlocks.CONFIGURABLE_FROGLIGHT.get(), props)
     );
 
     /**
@@ -165,30 +159,43 @@ public final class PFItems {
      */
     public static final DeferredItem<SpawnEggItem> CAVE_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "cave_slime_spawn_egg",
-        SpawnEggItem::new,
-        () -> new Item.Properties().spawnEgg(PFEntities.CAVE_SLIME.get())
+        props -> new SpawnEggItem(PFEntities.CAVE_SLIME.get(),
+            Category.MINERAL.tintRgb(), darker(Category.MINERAL.tintRgb()), props)
     );
 
     /** Geode Slime spawn egg — GEM parent species. Mirrors Cave Slime. */
     public static final DeferredItem<SpawnEggItem> GEODE_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "geode_slime_spawn_egg",
-        SpawnEggItem::new,
-        () -> new Item.Properties().spawnEgg(PFEntities.GEODE_SLIME.get())
+        props -> new SpawnEggItem(PFEntities.GEODE_SLIME.get(),
+            Category.GEM.tintRgb(), darker(Category.GEM.tintRgb()), props)
     );
 
     /** Tide Slime spawn egg — AQUATIC parent species. Mirrors Cave Slime. */
     public static final DeferredItem<SpawnEggItem> TIDE_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "tide_slime_spawn_egg",
-        SpawnEggItem::new,
-        () -> new Item.Properties().spawnEgg(PFEntities.TIDE_SLIME.get())
+        props -> new SpawnEggItem(PFEntities.TIDE_SLIME.get(),
+            Category.AQUATIC.tintRgb(), darker(Category.AQUATIC.tintRgb()), props)
     );
 
     /** Void Slime spawn egg — ARCANE parent species. Mirrors Cave Slime. */
     public static final DeferredItem<SpawnEggItem> VOID_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "void_slime_spawn_egg",
-        SpawnEggItem::new,
-        () -> new Item.Properties().spawnEgg(PFEntities.VOID_SLIME.get())
+        props -> new SpawnEggItem(PFEntities.VOID_SLIME.get(),
+            Category.ARCANE.tintRgb(), darker(Category.ARCANE.tintRgb()), props)
     );
+
+    /**
+     * Darken an RGB triple by ~30% for use as the spawn egg's secondary (highlight)
+     * colour. 1.21.1 SpawnEggItem renders a two-tone overlay; the secondary is
+     * the spotted-blob colour, so a darker shade of the primary reads as
+     * a darker variant of the parent's tint.
+     */
+    private static int darker(int rgb) {
+        int r = ((rgb >> 16) & 0xFF) * 70 / 100;
+        int g = ((rgb >>  8) & 0xFF) * 70 / 100;
+        int b =  (rgb        & 0xFF) * 70 / 100;
+        return (r << 16) | (g << 8) | b;
+    }
 
     /**
      * Bucket of <variant> Slime Milk for each variant in
@@ -223,10 +230,8 @@ public final class PFItems {
             map.put(variant, ITEMS.registerItem(
                 variant + "_slime_milk_bucket",
                 props -> new net.minecraft.world.item.BucketItem(
-                    PFFluids.BY_VARIANT.get(variant).source().get(), props),
-                () -> new Item.Properties()
-                    .stacksTo(1)
-                    .craftRemainder(net.minecraft.world.item.Items.BUCKET)
+                    PFFluids.BY_VARIANT.get(variant).source().get(),
+                    props.stacksTo(1).craftRemainder(net.minecraft.world.item.Items.BUCKET))
             ));
         }
         return java.util.Collections.unmodifiableMap(map);
@@ -256,23 +261,40 @@ public final class PFItems {
         return map;
     }
 
+    @SuppressWarnings("unchecked")
     private static Map<Category, DeferredItem<SpawnEggItem>> buildSpawnEggs(
             String entitySuffix,
             java.util.function.Supplier<EntityType<?>> entityTypeSupplier) {
         EnumMap<Category, DeferredItem<SpawnEggItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {
             String name = cat.id() + "_" + entitySuffix + "_spawn_egg";
-            // Use the Supplier<Item.Properties> overload so the EntityType
-            // lookup is deferred until registry-build time. The Function
-            // overload (Item.Properties) would force entityTypeSupplier.get()
-            // at PFItems class-init, when PFEntities holders are still unbound.
+            int primary = cat.tintRgb();
+            int secondary = darker(primary);
+            // 1.21.1 NeoForge has no Supplier<Properties> registerItem overload —
+            // do the EntityType.get() lookup inside the Function lambda, which runs
+            // at registry-build time (post-PFEntities binding).
             map.put(cat, ITEMS.registerItem(
                 name,
-                SpawnEggItem::new,
-                () -> spawnEggProperties(entityTypeSupplier.get(), cat)
+                props -> {
+                    EntityType<?> type = entityTypeSupplier.get();
+                    return new SpawnEggItem(
+                        (EntityType<? extends net.minecraft.world.entity.Mob>) type,
+                        primary, secondary,
+                        applySpawnEggProps(props, type, cat));
+                }
             ));
         }
         return map;
+    }
+
+    private static Item.Properties applySpawnEggProps(Item.Properties props, EntityType<?> type, Category category) {
+        CompoundTag nbt = new CompoundTag();
+        nbt.putString("id", net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE
+            .getKey(type).toString());
+        nbt.putString("Category", category.name());
+        return props
+            .component(DataComponents.ENTITY_DATA, CustomData.of(nbt))
+            .component(PFDataComponents.CONTAINED_CATEGORY.get(), category);
     }
 
     /**
@@ -281,12 +303,19 @@ public final class PFItems {
      * entity's {@code readAdditionalSaveData} picks up the right category, and
      * sets {@code CONTAINED_CATEGORY} so the inventory tint reads it via the
      * existing {@code productivefrogs:contained_category} ItemTintSource.
+     *
+     * <p>1.21.1 ENTITY_DATA is plain {@code CustomData} — there's no
+     * {@code TypedEntityData} in this version. We embed the entity type id
+     * under the standard "id" field so vanilla SpawnEggItem semantics resolve
+     * correctly.
      */
     private static Item.Properties spawnEggProperties(EntityType<?> type, Category category) {
         CompoundTag nbt = new CompoundTag();
+        nbt.putString("id", net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE
+            .getKey(type).toString());
         nbt.putString("Category", category.name());
         return new Item.Properties()
-            .component(DataComponents.ENTITY_DATA, TypedEntityData.of(type, nbt))
+            .component(DataComponents.ENTITY_DATA, CustomData.of(nbt))
             .component(PFDataComponents.CONTAINED_CATEGORY.get(), category);
     }
 
@@ -316,16 +345,20 @@ public final class PFItems {
         java.util.LinkedHashMap<String, DeferredItem<SpawnEggItem>> map = new java.util.LinkedHashMap<>();
         for (VariantSpec spec : variants) {
             String itemName = spec.name() + "_slime_spawn_egg";
+            int primary = spec.category().tintRgb();
+            int secondary = darker(primary);
             map.put(spec.name(), ITEMS.registerItem(
                 itemName,
-                SpawnEggItem::new,
-                () -> slimeVariantSpawnEggProperties(spec.name(), spec.category())
+                props -> new SpawnEggItem(
+                    PFEntities.RESOURCE_SLIME.get(),
+                    primary, secondary,
+                    applyVariantSpawnEggProps(props, spec.name(), spec.category()))
             ));
         }
         return map;
     }
 
-    private static Item.Properties slimeVariantSpawnEggProperties(String variantName, Category category) {
+    private static Item.Properties applyVariantSpawnEggProps(Item.Properties props, String variantName, Category category) {
         net.minecraft.resources.ResourceLocation variantId =
             net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName);
         CompoundTag nbt = new CompoundTag();
@@ -339,15 +372,11 @@ public final class PFItems {
         // SpawnEggItem semantics.
         nbt.putString("id", net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE
             .getKey(PFEntities.RESOURCE_SLIME.get()).toString());
-        return new Item.Properties()
+        return props
             .component(DataComponents.ENTITY_DATA, CustomData.of(nbt))
-            // SLIME_VARIANT drives the spawn egg's inventory tint via the
-            // slime_variant ItemTintSource — picks up the variant's primary
-            // colour from the datapack registry (iron-silver, copper-orange,
-            // etc.) so each variant egg renders distinctly instead of all
-            // metallic eggs sharing the broader category tint. CONTAINED_CATEGORY
-            // is kept as a fallback signal for any UI surface that wants the
-            // broader category (currently unused on this item, but cheap).
+            // CONTAINED_CATEGORY is a fallback signal for any UI surface that wants
+            // the broader category; SLIME_VARIANT keeps the per-variant identity
+            // for JEI subtyping and (future) tint resolution.
             .component(PFDataComponents.SLIME_VARIANT.get(), variantId)
             .component(PFDataComponents.CONTAINED_CATEGORY.get(), category);
     }

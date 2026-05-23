@@ -100,8 +100,9 @@ dependencies {
     // Jade (the WAILA fork) for in-world entity/block ID overlay isn't on a
     // public maven we depend on cleanly — see docs/dev_setup.md for the
     // drop-in-run-mods install path.
-    compileOnly "mezz.jei:jei-1.21.11-neoforge-api:27.4.0.22"
-    runtimeOnly "mezz.jei:jei-1.21.11-neoforge:27.4.0.22"
+    // JEI for MC 1.21.1 lives on the 19.21.x line.
+    compileOnly "mezz.jei:jei-1.21.1-neoforge-api:19.21.0.247"
+    runtimeOnly "mezz.jei:jei-1.21.1-neoforge:19.21.0.247"
 
     testImplementation platform('org.junit:junit-bom:5.11.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'

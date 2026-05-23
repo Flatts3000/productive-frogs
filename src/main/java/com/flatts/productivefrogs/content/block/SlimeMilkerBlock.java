@@ -166,7 +166,9 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock())) {
-            net.minecraft.world.Containers.updateNeighboursAfterDestroy(state, level, pos);
+            // Notify comparators / redstone of removal. Item-dropping is handled
+            // by playerWillDestroy above; we don't reach into the BE here.
+            level.updateNeighbourForOutputSignal(pos, this);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }

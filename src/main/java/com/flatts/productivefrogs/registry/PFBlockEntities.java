@@ -16,10 +16,10 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  *
  * <p>Productive Bees' centrifuge is the closest reference shape, but they
  * lean heavily on their {@code productivelib} utility module. We register
- * the BE directly here through the NeoForge-added convenience constructor
- * {@code new BlockEntityType<>(factory, Block...)} — vanilla 1.21.11 dropped
- * the older {@code BlockEntityType.Builder.of(...).build(...)} entry point,
- * so the Builder reference that used to live here was stale.
+ * the BE directly here through {@code BlockEntityType.Builder.of(...).build(null)}
+ * — the canonical 1.21.1 vanilla entry point. The Builder takes a {@code DSL.Type}
+ * data-fixer arg ({@code null} is fine for mod content not subject to vanilla
+ * data-fixer-upper migrations).
  */
 public final class PFBlockEntities {
 
@@ -29,7 +29,7 @@ public final class PFBlockEntities {
     public static final Supplier<BlockEntityType<SlimeMilkerBlockEntity>> SLIME_MILKER =
         BLOCK_ENTITIES.register(
             "slime_milker",
-            () -> new BlockEntityType<>(SlimeMilkerBlockEntity::new, PFBlocks.SLIME_MILKER.get())
+            () -> BlockEntityType.Builder.of(SlimeMilkerBlockEntity::new, PFBlocks.SLIME_MILKER.get()).build(null)
         );
 
     /**
@@ -40,7 +40,7 @@ public final class PFBlockEntities {
     public static final Supplier<BlockEntityType<ConfigurableFroglightBlockEntity>> CONFIGURABLE_FROGLIGHT =
         BLOCK_ENTITIES.register(
             "configurable_froglight",
-            () -> new BlockEntityType<>(ConfigurableFroglightBlockEntity::new, PFBlocks.CONFIGURABLE_FROGLIGHT.get())
+            () -> BlockEntityType.Builder.of(ConfigurableFroglightBlockEntity::new, PFBlocks.CONFIGURABLE_FROGLIGHT.get()).build(null)
         );
 
     private PFBlockEntities() {

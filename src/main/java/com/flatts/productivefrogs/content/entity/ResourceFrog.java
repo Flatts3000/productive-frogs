@@ -24,6 +24,7 @@ import net.minecraft.world.entity.ai.sensing.Sensor;
 import net.minecraft.world.entity.ai.sensing.SensorType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.frog.Frog;
 import net.minecraft.world.item.ItemStack;
@@ -225,7 +226,7 @@ public class ResourceFrog extends Frog {
         // entire production loop stalled at the tongue grab. Any non-zero value
         // would technically kill a 1-HP size-1 slime — we use the vanilla number
         // so larger / armored future prey still die in one tongue eat.
-        return Animal.createAnimalAttributes()
+        return Mob.createMobAttributes()
             .add(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, 1.0)
             .add(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, 10.0)
             .add(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, 10.0)

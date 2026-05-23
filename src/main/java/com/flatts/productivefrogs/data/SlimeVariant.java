@@ -102,7 +102,7 @@ public record SlimeVariant(
             Registry<SlimeVariant> registry, ResourceLocation itemId) {
         for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
             if (entry.getValue().primerItem().equals(itemId)) {
-                return Map.entry(entry.getKey().identifier(), entry.getValue());
+                return Map.entry(entry.getKey().location(), entry.getValue());
             }
         }
         return null;
@@ -129,7 +129,7 @@ public record SlimeVariant(
         long totalWeight = 0L;
         for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
             if (entry.getValue().category() != category) continue;
-            pool.add(Map.entry(entry.getKey().identifier(), entry.getValue()));
+            pool.add(Map.entry(entry.getKey().location(), entry.getValue()));
             totalWeight += entry.getValue().weight();
         }
         if (pool.isEmpty()) {

@@ -116,11 +116,10 @@ public final class SlimeInfusionHandler {
      * entity, or {@code null} if conversion was rejected (event veto or entity
      * already removed).
      *
-     * <p>Uses vanilla {@code Mob#convertTo} + NeoForge {@code EventHooks} for the
-     * same reason {@link com.flatts.productivefrogs.content.entity.ResourceTadpole#ageUp}
-     * does: it preserves more entity state than a manual create+discard, fires
-     * the {@code LivingConvertEvent} hooks that other mods may listen on, and
-     * handles the source discard via {@code ConversionType.SINGLE} automatically.
+     * <p>1.21.1 uses the simpler {@code Mob#convertTo(EntityType, boolean)}
+     * signature — no {@code ConversionParams} / {@code ConversionType} in this
+     * version. We still fire the {@code LivingConvertEvent} hooks manually so
+     * downstream listeners observe the same notifications.
      *
      * <p>Exposed as a static helper so both the event handler and tests can
      * exercise the transformation without duplicating positioning code.
@@ -137,18 +136,17 @@ public final class SlimeInfusionHandler {
         float health = sourceSlime.getHealth();
         Vec3 velocity = sourceSlime.getDeltaMovement();
 
-        return sourceSlime.convertTo(
-            target,
-            ConversionParams.single(sourceSlime, false, false),
-            resource -> {
-                EventHooks.onLivingConvert(sourceSlime, resource);
-                resource.setSize(size, false);
-                resource.setCategory(category);
-                resource.setHealth(health);
-                resource.setDeltaMovement(velocity);
-                resource.setPersistenceRequired();
-            }
-        );
+        ResourceSlime resource = sourceSlime.convertTo(target, false);
+        if (resource == null) {
+            return null;
+        }
+        EventHooks.onLivingConvert(sourceSlime, resource);
+        resource.setSize(size, false);
+        resource.setCategory(category);
+        resource.setHealth(health);
+        resource.setDeltaMovement(velocity);
+        resource.setPersistenceRequired();
+        return resource;
     }
 
     /**

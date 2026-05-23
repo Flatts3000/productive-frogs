@@ -28,7 +28,7 @@ These aren't dependencies of the mod itself, but they make in-game testing much 
 - Search by name or mod (filter by `@productivefrogs` to see only our content).
 - View recipes by clicking an item (when we ship smelting recipes for Froglights, they'll show here automatically — no JEI plugin code on our side).
 
-Pinned version: `mezz.jei:jei-1.21.11-neoforge:27.4.0.22`. Bump in `build.gradle` if a newer version is needed.
+Pinned version: `mezz.jei:jei-1.21.1-neoforge:19.21.0.247` (1.21.1 line). Bump in `build.gradle` if a newer 1.21.1-compatible build is needed.
 
 ### Jade — drop-in install (manual)
 
@@ -36,7 +36,7 @@ Pinned version: `mezz.jei:jei-1.21.11-neoforge:27.4.0.22`. Bump in `build.gradle
 
 We don't depend on Jade in `build.gradle` because it doesn't ship to a maven repo we use cleanly. Install once into the dev environment:
 
-1. Download the 1.21.11 NeoForge build from [the CurseForge page](https://www.curseforge.com/minecraft/mc-mods/jade).
+1. Download the 1.21.1 NeoForge build from [the CurseForge page](https://www.curseforge.com/minecraft/mc-mods/jade). (The 1.21.x line ships a separate jar per minor version — pick the 1.21.1 file specifically, not 1.21.11.)
 2. Drop the jar into `run/mods/` (create the directory if it doesn't exist).
 3. `./gradlew runClient` — Jade loads alongside JEI and Productive Frogs.
 
