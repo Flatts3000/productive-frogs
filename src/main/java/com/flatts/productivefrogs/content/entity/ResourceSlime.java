@@ -43,7 +43,7 @@ import net.minecraft.world.scores.PlayerTeam;
  *
  * <p>Direct-kill drops (per design Q10): slimeballs only, vanilla parity.
  * Behavior lives in
- * {@code data/productivefrogs/loot_table/entities/resource_slime.json}, which
+ * {@code data/productivefrogs/loot_tables/entities/resource_slime.json}, which
  * mirrors vanilla {@code minecraft:entities/slime}'s "size-1 only" condition.
  * Loot table customization has to go through JSON in 1.21.x — {@code Mob#getLootTable}
  * is {@code final}, so an override-by-subclass path isn't available.
@@ -296,7 +296,7 @@ public class ResourceSlime extends Slime implements Bucketable {
     }
 
     // Direct-kill drops are handled via the entity's default loot table at
-    // data/productivefrogs/loot_table/entities/resource_slime.json — a copy
+    // data/productivefrogs/loot_tables/entities/resource_slime.json — a copy
     // of vanilla slime's loot (slimeballs from size-1 only). Per design Q10,
     // the resource conversion lives in the frog tongue path, not in direct
     // combat. We can't override getLootTable() in code because Mob declares

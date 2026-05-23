@@ -52,7 +52,7 @@ public final class PFBlocks {
      * variant via a {@link com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity}
      * — placement copies the item's {@code SLIME_VARIANT} component into the BE,
      * drops copy the BE back into the item via the loot table at
-     * {@code data/productivefrogs/loot_table/blocks/configurable_froglight.json}.
+     * {@code data/productivefrogs/loot_tables/blocks/configurable_froglight.json}.
      * Inherits vanilla Froglight properties (light 15, FROGLIGHT sound).
      */
     public static final DeferredBlock<ConfigurableFroglightBlock> CONFIGURABLE_FROGLIGHT =

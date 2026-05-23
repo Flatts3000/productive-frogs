@@ -229,7 +229,7 @@ public final class PFGameTests {
 
     /**
      * Verify that primer item tags actually loaded — exercises the data-load
-     * pipeline. The {@code tags/items/} → {@code tags/item/} singularization in
+     * pipeline. The {@code tags/items/} → {@code tags/items/} singularization in
      * MC 1.21.x silently dropped our tag files until we renamed; this test
      * would have flagged that within a CI run instead of from a manual playtest
      * that "nothing happens when I right-click frogspawn with iron".
@@ -1548,7 +1548,7 @@ public final class PFGameTests {
      *   <li>{@link com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity#collectImplicitComponents}
      *       exposes that variant as an implicit data component on the BE.</li>
      *   <li>The loot table at
-     *       {@code data/productivefrogs/loot_table/blocks/configurable_froglight.json}
+     *       {@code data/productivefrogs/loot_tables/blocks/configurable_froglight.json}
      *       uses {@code minecraft:copy_components} with source
      *       {@code block_entity} to copy that component onto the dropped item.</li>
      * </ol>

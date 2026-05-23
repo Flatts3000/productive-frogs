@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Variant transfer happens in two places: placement via
  * {@link com.flatts.productivefrogs.content.item.ConfigurableFroglightItem#updateCustomBlockEntityTag}
  * (writes the item's {@code SLIME_VARIANT} component into the BE), and drop via
- * the loot table at {@code data/productivefrogs/loot_table/blocks/configurable_froglight.json}
+ * the loot table at {@code data/productivefrogs/loot_tables/blocks/configurable_froglight.json}
  * (copies BE NBT into the dropped item's component).
  */
 public class ConfigurableFroglightBlock extends RotatedPillarBlock implements EntityBlock {

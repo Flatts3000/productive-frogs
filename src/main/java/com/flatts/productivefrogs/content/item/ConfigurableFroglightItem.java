@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
  *       {@link com.flatts.productivefrogs.client.PFClientEvents}'s registered
  *       {@code BlockColor} which reads the BE's variant.</li>
  *   <li>Player breaks the block; the loot table at
- *       {@code data/productivefrogs/loot_table/blocks/configurable_froglight.json}
+ *       {@code data/productivefrogs/loot_tables/blocks/configurable_froglight.json}
  *       copies the BE's variant back into the dropped item's component.</li>
  * </ol>
  */
