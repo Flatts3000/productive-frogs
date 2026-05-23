@@ -110,7 +110,7 @@ public final class SlimeSplitDiscoveryHandler {
             if (resource == null) {
                 continue;
             }
-            resource.snapTo(child.getX(), child.getY(), child.getZ(), child.getYRot(), child.getXRot());
+            resource.moveTo(child.getX(), child.getY(), child.getZ(), child.getYRot(), child.getXRot());
             resource.setSize(childSlime.getSize(), true);
             // Category first (fallback when no variants in pool), then a
             // weighted variant pick — setVariant re-syncs category from the

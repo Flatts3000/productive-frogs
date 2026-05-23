@@ -56,8 +56,7 @@ public class SlimeMilkerScreen extends AbstractContainerScreen<SlimeMilkerMenu> 
     protected void renderBg(GuiGraphics gui, float partialTick, int mouseX, int mouseY) {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
-        gui.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED,
-                 BACKGROUND, x, y, 0.0F, 0.0F, this.imageWidth, this.imageHeight,
+        gui.blit(BACKGROUND, x, y, 0.0F, 0.0F, this.imageWidth, this.imageHeight,
                  BG_TEX_WIDTH, BG_TEX_HEIGHT);
 
         // Cook-progress arrow — width scales linearly with cookProgress
@@ -67,8 +66,7 @@ public class SlimeMilkerScreen extends AbstractContainerScreen<SlimeMilkerMenu> 
         int total = this.menu.getCookTotal();
         if (progress > 0 && total > 0) {
             int filled = Math.min(ARROW_WIDTH, (progress * ARROW_WIDTH) / total);
-            gui.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED,
-                     BACKGROUND,
+            gui.blit(BACKGROUND,
                      x + ARROW_BG_X, y + ARROW_BG_Y,
                      ARROW_SRC_X, ARROW_SRC_Y,
                      filled, ARROW_HEIGHT,

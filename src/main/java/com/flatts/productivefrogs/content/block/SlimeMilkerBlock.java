@@ -164,10 +164,7 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
     }
 
     @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        // 1.21.1 uses onRemove for the post-removal hook. Drop-on-break is
-        // handled via loot table; the Milker's inventory is dropped via
-        // {@link #playerWillDestroy} before the BE is removed.
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock())) {
             net.minecraft.world.Containers.updateNeighboursAfterDestroy(state, level, pos);
         }

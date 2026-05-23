@@ -218,7 +218,7 @@ public class ResourceSlime extends Slime implements Bucketable {
     }
 
     @Override
-    protected void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains("Category", net.minecraft.nbt.Tag.TAG_STRING)) {
             try {
@@ -356,22 +356,11 @@ public class ResourceSlime extends Slime implements Bucketable {
     public void loadFromBucketTag(CompoundTag tag) {
         // See saveToBucketTag — same deprecation rationale.
         Bucketable.loadDefaultDataFromBucketTag(this, tag);
-        tag.getString("Category").ifPresent(name -> {
-            try {
-                setCategory(Category.valueOf(name));
-            } catch (IllegalArgumentException ignored) {
-                // Unknown category in bucket NBT — leave default.
-            }
-        });
+        if (tag.contains("Category", net.minecraft.nbt.Tag.TAG_STRING)) { try { setCategory(Category.valueOf(tag.getString("Category"))); } catch (IllegalArgumentException ignored) {} }
         // Read Variant AFTER Category so setVariant's category sync wins when
         // the variant resolves in the registry, but the category fallback
         // remains correct if the variant id is unknown.
-        tag.getString("Variant").ifPresent(s -> {
-            ResourceLocation id = ResourceLocation.tryParse(s);
-            if (id != null) {
-                setVariant(id);
-            }
-        });
+        if (tag.contains("Variant", net.minecraft.nbt.Tag.TAG_STRING)) { ResourceLocation id = ResourceLocation.tryParse(tag.getString("Variant")); if (id != null) setVariant(id); }
         // Flag the slime as bucket-originated so it survives chunk reloads
         // without despawning — bucket-released mobs are conceptually
         // player-placed and need persistence parity with named mobs.
@@ -389,7 +378,7 @@ public class ResourceSlime extends Slime implements Bucketable {
     }
 
     @Override
-    protected void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putString("Category", getCategory().name());
         // The category save is handled above; persist the fromBucket flag too

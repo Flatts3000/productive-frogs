@@ -234,7 +234,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
         slime.setSize(1, true);
         // Center on the block's XZ; sit on top of whatever's at spawnPos.below()
         // so the entity's feet line up with the block face rather than clipping.
-        slime.snapTo(spawnPos.getX() + 0.5,
+        slime.moveTo(spawnPos.getX() + 0.5,
                      spawnPos.getY(),
                      spawnPos.getZ() + 0.5,
                      random.nextFloat() * 360F,

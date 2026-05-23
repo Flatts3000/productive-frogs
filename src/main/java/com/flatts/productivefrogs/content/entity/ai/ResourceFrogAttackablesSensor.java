@@ -2,7 +2,6 @@ package com.flatts.productivefrogs.content.entity.ai;
 
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.sensing.FrogAttackablesSensor;
 
@@ -26,8 +25,8 @@ import net.minecraft.world.entity.ai.sensing.FrogAttackablesSensor;
 public class ResourceFrogAttackablesSensor extends FrogAttackablesSensor {
 
     @Override
-    protected boolean isMatchingEntity(ServerLevel level, LivingEntity attacker, LivingEntity target) {
-        if (!super.isMatchingEntity(level, attacker, target)) {
+    protected boolean isMatchingEntity(LivingEntity attacker, LivingEntity target) {
+        if (!super.isMatchingEntity(attacker, target)) {
             return false;
         }
         if (!(attacker instanceof ResourceFrog frog)) {

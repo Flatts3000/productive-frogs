@@ -188,7 +188,7 @@ public final class PFClientEvents {
 
         // Variant slime spawn eggs (12 items) — each carries SLIME_VARIANT
         for (Category cat : Category.values()) {
-            for (var entry : PFItems.SLIME_VARIANT_SPAWN_EGGS.entrySet()) {
+            for (var entry : PFItems.RESOURCE_SLIME_SPAWN_EGGS.entrySet()) {
                 event.register((stack, tintIndex) -> {
                     ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
                     if (variantId == null) return -1;

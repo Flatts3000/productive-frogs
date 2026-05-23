@@ -112,7 +112,7 @@ public final class PrimedFrogEggBlock extends Block {
             double z = pos.getZ() + clampedOffset(random);
             float yaw = random.nextInt(1, 361);
 
-            tadpole.snapTo(x, pos.getY() - 0.5, z, yaw, 0.0F);
+            tadpole.moveTo(x, pos.getY() - 0.5, z, yaw, 0.0F);
             tadpole.setPersistenceRequired();
             level.addFreshEntity(tadpole);
         }
