@@ -105,6 +105,8 @@ public final class PFGameTests {
             PFGameTests::matchingFrogKillDropsCategoryFroglight, 100);
         registerTest("mismatched_frog_kill_drops_no_froglight",
             PFGameTests::mismatchedFrogKillDropsNoFroglight, 100);
+        registerTest("frog_tongue_ai_path_drops_category_froglight",
+            PFGameTests::frogTongueAiPathDropsCategoryFroglight, 400);
         registerTest("slime_bucket_round_trip_preserves_category",
             PFGameTests::slimeBucketRoundTripPreservesCategory, 100);
         registerTest("slime_bucket_round_trip_preserves_variant",
@@ -823,6 +825,50 @@ public final class PFGameTests {
                 }
             }
             helper.succeed();
+        });
+    }
+
+    /**
+     * End-to-end tongue-kill test: spawn a matching frog and slime, let the
+     * frog's AI itself drive the tongue strike, and verify the Froglight drops.
+     * The pre-PR-#61 manual-damage test ({@link #matchingFrogKillDropsCategoryFroglight})
+     * uses {@code hurtServer(level, source, 999.0F)} which bypasses the frog's
+     * {@code ATTACK_DAMAGE} attribute and the entire vanilla tongue task chain
+     * — PR #27 caught a damage=0 regression that test couldn't see. This one
+     * fails closed if any link in the chain breaks:
+     *
+     * <ul>
+     *   <li>sensor wiring writes {@code NEAREST_ATTACKABLE},</li>
+     *   <li>vanilla {@code FrogEat} behavior extends the tongue and reaches the prey,</li>
+     *   <li>the damage value derived from {@code Attributes.ATTACK_DAMAGE} is non-zero,</li>
+     *   <li>the slime dies and the {@code LivingDeathEvent} handler still emits the drop.</li>
+     * </ul>
+     *
+     * <p>Generous 400-tick timeout: the frog's tongue task can pace through
+     * targeting → approach → strike across ~30–60 ticks; the test plot tick
+     * boundary adds variance. Polling via {@code succeedWhen} succeeds the
+     * moment the drop appears, so green runs finish well under that ceiling.
+     */
+    private static void frogTongueAiPathDropsCategoryFroglight(GameTestHelper helper) {
+        Category cat = Category.METALLIC;
+        BlockPos frogPos = new BlockPos(2, 2, 2);
+
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
+        frog.setCategory(cat);
+
+        ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), frogPos.east());
+        slime.setSize(1, true);
+        slime.setCategory(cat);
+
+        // No manual hurtServer call — the frog's brain runs the full target →
+        // tongue-extend → damage path on its own.
+        helper.succeedWhen(() -> {
+            net.minecraft.world.item.Item expected = PFBlocks.resourceFroglight(cat).asItem();
+            boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                .anyMatch(itemEntity -> itemEntity.getItem().is(expected));
+            if (!found) {
+                helper.fail("expected " + expected + " to drop after frog's AI tongues the slime");
+            }
         });
     }
 
