@@ -40,3 +40,8 @@ hs_err_*.log
 
 # Generated docs (if any tooling auto-generates)
 docs/CODEMAPS/
+
+# AI-generated texture candidates (raw 1024s, previews, prompt metadata).
+# Selected candidates get copied into assets/ explicitly; this folder is
+# scratch space.
+gen/

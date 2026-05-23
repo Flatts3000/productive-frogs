@@ -1,7 +1,12 @@
 {
   "variants": {
-    "": {
-      "model": "productivefrogs:block/slime_milker"
-    }
+    "facing=north,working=false": { "model": "productivefrogs:block/slime_milker" },
+    "facing=east,working=false":  { "model": "productivefrogs:block/slime_milker", "y":  90 },
+    "facing=south,working=false": { "model": "productivefrogs:block/slime_milker", "y": 180 },
+    "facing=west,working=false":  { "model": "productivefrogs:block/slime_milker", "y": 270 },
+    "facing=north,working=true":  { "model": "productivefrogs:block/slime_milker_working" },
+    "facing=east,working=true":   { "model": "productivefrogs:block/slime_milker_working", "y":  90 },
+    "facing=south,working=true":  { "model": "productivefrogs:block/slime_milker_working", "y": 180 },
+    "facing=west,working=true":   { "model": "productivefrogs:block/slime_milker_working", "y": 270 }
   }
 }

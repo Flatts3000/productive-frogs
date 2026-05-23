@@ -1,0 +1,18 @@
+A 176x166 Minecraft container GUI background, drawn at 1024x1024 with each ship-pixel rendered as roughly 6 canvas pixels (the image is slightly wider than tall to match the 176:166 aspect ratio - render with letterbox columns of fully transparent pixels left and right of the GUI area).
+
+Subject: Slime Milker container GUI - rustic cobblestone-and-oak themed furnace-style interface with input slot, progress arrow, output slot, and player inventory below.
+
+Layout, top to bottom (in ship-pixel coordinates):
+- Top narrow title band: thin cobblestone border with the words "Slime Milker" in vanilla Minecraft font (white pixels) on a darker cobblestone strip.
+- Below the title: a large interaction area with three components arranged horizontally in a row:
+  - LEFT: a square dark recessed slot (the bucket-input slot) framed by a thin wooden border.
+  - CENTER: a horizontal slime-green progress arrow pointing right, partially filled (about 40% fill from the left, indicating active progress). The arrow has dark outline pixels and the fill is vivid slime-green.
+  - RIGHT: a slightly larger square dark recessed slot (the bucket-output slot) framed by a thin wooden border.
+- Middle separator band: a horizontal oak plank beam crossing left to right.
+- Below the beam: a 9-wide x 3-tall grid of small dark square slots representing the player's main inventory - each slot is recessed, framed by very thin cobblestone borders.
+- Below that: a 9-wide x 1-tall grid of slots representing the player's hotbar, identical to the inventory slots but slightly more spaced down.
+- Background color of empty space between widgets: a muted cobblestone-gray tone, like vanilla Minecraft cobblestone but slightly desaturated to read as a flat panel.
+
+Style: vanilla Minecraft 1.21 container GUI texture. SHARP 1-pixel hard edges, NO anti-aliasing, NO soft gradients. Limited palette: mid-gray + dark-gray + black for cobblestone; light-brown + warm-brown + dark-brown for wood accents; bright slime-green for the progress arrow fill; white for text pixels. The recessed slot wells are dark, the slot borders are thin (1 ship-pixel).
+
+Critical: the GUI rectangle itself is 176x166 ship-pixels (about 80% width of a 1024x1024 canvas centered horizontally, with transparent letterbox columns on the left and right). The transparent areas outside the GUI are FULLY transparent.

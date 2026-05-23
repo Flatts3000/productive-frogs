@@ -114,6 +114,7 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
         ItemStack input = be.inventory.getStackInSlot(INPUT_SLOT);
         if (input.isEmpty() || !input.is(PFItems.SLIME_BUCKET.get())) {
             be.resetProgress();
+            setWorking(level, pos, state, false);
             return;
         }
         String variant = SlimeMilkerBlock.readBucketVariant(input);
@@ -122,6 +123,7 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
             // or carries an unknown variant — fail closed, just like the
             // original right-click flow did before this redesign.
             be.resetProgress();
+            setWorking(level, pos, state, false);
             return;
         }
         ItemStack output = be.inventory.getStackInSlot(OUTPUT_SLOT);
@@ -130,7 +132,10 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
             // be drained before another cook can start. Don't reset progress
             // — players (and hoppers) will pull the bucket out and the cook
             // resumes from where it paused. Matches the vanilla furnace
-            // behavior where a full output pauses the cook.
+            // behavior where a full output pauses the cook. WORKING goes
+            // false during the stall so the textures don't keep animating
+            // a frozen press.
+            setWorking(level, pos, state, false);
             return;
         }
         be.cookProgress++;
@@ -143,10 +148,31 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
             be.inventory.setStackInSlot(INPUT_SLOT, ItemStack.EMPTY);
             be.inventory.setStackInSlot(OUTPUT_SLOT, new ItemStack(outputBucket));
             be.cookProgress = 0;
+            setWorking(level, pos, state, false);
             level.playSound(
                 null, pos, SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS,
                 0.8F, 1.2F + level.getRandom().nextFloat() * 0.2F
             );
+        } else {
+            // Mid-cook: drive the WORKING blockstate so clients render the
+            // slime-visible textures. setWorking is a no-op if the property
+            // is already true, so this doesn't spam neighbor updates.
+            setWorking(level, pos, state, true);
+        }
+    }
+
+    /**
+     * Toggle the {@link SlimeMilkerBlock#WORKING} blockstate property and
+     * sync to clients. No-op when the state already matches — keeps
+     * neighbor-update spam off the network in the common per-tick case.
+     */
+    private static void setWorking(Level level, BlockPos pos, BlockState state, boolean working) {
+        if (!(state.getBlock() instanceof SlimeMilkerBlock)) {
+            return;
+        }
+        if (state.getValue(SlimeMilkerBlock.WORKING) != working) {
+            level.setBlock(pos, state.setValue(SlimeMilkerBlock.WORKING, working),
+                net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
         }
     }
 

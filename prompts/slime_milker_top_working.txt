@@ -1,0 +1,9 @@
+A 16x16 Minecraft block texture file, viewed at 1024x1024 with each ship-pixel rendered as a 64x64 chunk. The image MUST fill the entire 1024x1024 canvas edge-to-edge with NO transparent areas.
+
+Subject: top face of a rustic stone press machine that is CURRENTLY OPERATING. Same composition as the idle state but the slot now shows bright slime fluid.
+
+Composition: the entire canvas is mossy gray cobblestone (vanilla Minecraft cobblestone palette). In the dead center is a square wooden frame (vanilla Minecraft oak_planks palette, warm light brown with darker grain) approximately 6 ship-pixels wide, 1 ship-pixel thick. Inside the wooden frame is a recess about 4 ship-pixels square filled with BRIGHT SLIME-GREEN FLUID (vanilla Minecraft slime color, around RGB 82/160/58 with brighter highlights). Two TINY dark dot eyes are visible peeking up out of the slime fluid (the captured slime looking out of the bucket slot), positioned in the upper portion of the slot.
+
+Style: vanilla Minecraft 1.21 block texture. SHARP 1-pixel hard edges, NO anti-aliasing, NO smooth gradients. Limited palette: mid-gray + dark-gray + black for stone; light-brown + warm-brown + dark-brown for wood; vivid slime-green + brighter highlight + dark accent for the slime fluid; pure black for the slime eyes. Tiles seamlessly.
+
+Critical: this is a TILEABLE BLOCK FACE. The cobblestone+wood+slime covers EVERY pixel of the canvas. The image is fully opaque. No transparent background.

@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/orientable_with_bottom",
+  "textures": {
+    "top":    "productivefrogs:block/slime_milker_top_working",
+    "bottom": "productivefrogs:block/slime_milker_bottom",
+    "side":   "productivefrogs:block/slime_milker_side_working",
+    "front":  "productivefrogs:block/slime_milker_front_working"
+  }
+}
