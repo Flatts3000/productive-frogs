@@ -121,8 +121,11 @@ public final class PFModBusEvents {
      */
     @SubscribeEvent
     public static void onRegisterCapabilities(RegisterCapabilitiesEvent event) {
+        // 1.21.1 NeoForge: Capabilities.ItemHandler.BLOCK (returns IItemHandler).
+        // The Capabilities.Item.BLOCK rename + ResourceHandler<ItemResource>
+        // transfer-API surface only landed in 1.21.4+.
         event.registerBlockEntity(
-            Capabilities.Item.BLOCK,
+            Capabilities.ItemHandler.BLOCK,
             PFBlockEntities.SLIME_MILKER.get(),
             (be, side) -> {
                 if (side == Direction.DOWN) {

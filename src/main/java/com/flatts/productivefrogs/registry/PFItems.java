@@ -220,7 +220,7 @@ public final class PFItems {
     public static final DeferredItem<BlockItem> SLIME_MILKER = ITEMS.registerSimpleBlockItem(
         "slime_milker",
         PFBlocks.SLIME_MILKER,
-        () -> new Item.Properties()
+        new Item.Properties()
     );
 
     private static Map<String, DeferredItem<net.minecraft.world.item.BucketItem>> buildMilkBuckets() {
@@ -243,7 +243,7 @@ public final class PFItems {
             map.put(cat, ITEMS.registerSimpleBlockItem(
                 cat.primedEggItemName(),
                 PFBlocks.PRIMED_FROG_EGGS.get(cat),
-                () -> new Item.Properties()
+                new Item.Properties()
             ));
         }
         return map;
@@ -255,7 +255,7 @@ public final class PFItems {
             map.put(cat, ITEMS.registerSimpleBlockItem(
                 cat.id() + "_froglight",
                 PFBlocks.RESOURCE_FROGLIGHTS.get(cat),
-                () -> new Item.Properties()
+                new Item.Properties()
             ));
         }
         return map;

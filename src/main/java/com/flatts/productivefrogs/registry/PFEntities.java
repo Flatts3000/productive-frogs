@@ -36,10 +36,9 @@ public final class PFEntities {
             () -> EntityType.Builder.<ResourceTadpole>of(ResourceTadpole::new, MobCategory.WATER_CREATURE)
                 .sized(Tadpole.HITBOX_WIDTH, Tadpole.HITBOX_HEIGHT)
                 .eyeHeight(Tadpole.HITBOX_HEIGHT * 0.5F)
-                .build(net.minecraft.resources.ResourceKey.create(
-                    Registries.ENTITY_TYPE,
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_tadpole")
-                ))
+                // 1.21.1 EntityType.Builder.build takes the registry id String,
+                // not a ResourceKey (that signature change came in 1.21.4+).
+                .build("resource_tadpole")
         );
 
     public static final DeferredHolder<EntityType<?>, EntityType<ResourceFrog>> RESOURCE_FROG =
@@ -48,10 +47,7 @@ public final class PFEntities {
             () -> EntityType.Builder.<ResourceFrog>of(ResourceFrog::new, MobCategory.CREATURE)
                 .sized(0.5F, 0.5F)
                 .eyeHeight(0.4F)
-                .build(net.minecraft.resources.ResourceKey.create(
-                    Registries.ENTITY_TYPE,
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_frog")
-                ))
+                .build("resource_frog")
         );
 
     /**
@@ -80,10 +76,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build(net.minecraft.resources.ResourceKey.create(
-                    Registries.ENTITY_TYPE,
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_slime")
-                ))
+                .build("resource_slime")
         );
 
     /**
@@ -101,10 +94,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build(net.minecraft.resources.ResourceKey.create(
-                    Registries.ENTITY_TYPE,
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "cave_slime")
-                ))
+                .build("cave_slime")
         );
 
     /**
@@ -121,10 +111,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build(net.minecraft.resources.ResourceKey.create(
-                    Registries.ENTITY_TYPE,
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "geode_slime")
-                ))
+                .build("geode_slime")
         );
 
     /**
@@ -141,10 +128,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build(net.minecraft.resources.ResourceKey.create(
-                    Registries.ENTITY_TYPE,
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tide_slime")
-                ))
+                .build("tide_slime")
         );
 
     /**
@@ -161,10 +145,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build(net.minecraft.resources.ResourceKey.create(
-                    Registries.ENTITY_TYPE,
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "void_slime")
-                ))
+                .build("void_slime")
         );
 
     private PFEntities() {

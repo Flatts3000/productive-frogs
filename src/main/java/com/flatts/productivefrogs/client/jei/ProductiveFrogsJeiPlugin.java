@@ -1,13 +1,17 @@
 package com.flatts.productivefrogs.client.jei;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFItems;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
 import mezz.jei.api.registration.ISubtypeRegistration;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 
 /**
  * JEI plugin for Productive Frogs.
@@ -71,34 +75,56 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
 
     @Override
     public void registerItemSubtypes(ISubtypeRegistration registration) {
+        // JEI 19.21 (1.21.1) has no registerFromDataComponentTypes shortcut —
+        // implement the subtype interpreter manually per item. The interpreter
+        // returns a non-null Object used as the subtype identity (JEI compares
+        // via .equals); two stacks with equal subtype data collapse to a
+        // single JEI entry.
+
         // Buckets — subtype by BUCKET_ENTITY_DATA. The vanilla component
         // carries the captured entity's NBT, which is what differentiates
         // an iron Slime Bucket from a copper one (Variant tag) and a
         // METALLIC Tadpole Bucket from a GEM one (Category tag).
-        registration.registerFromDataComponentTypes(
-            PFItems.SLIME_BUCKET.get(),
-            DataComponents.BUCKET_ENTITY_DATA
-        );
-        registration.registerFromDataComponentTypes(
-            PFItems.RESOURCE_TADPOLE_BUCKET.get(),
-            DataComponents.BUCKET_ENTITY_DATA
-        );
+        ISubtypeInterpreter<ItemStack> bucketInterp = new ISubtypeInterpreter<>() {
+            @Override
+            public Object getSubtypeData(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
+                CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
+                return data == null ? "" : data.copyTag().toString();
+            }
+            @Override
+            public String getLegacyStringSubtypeInfo(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
+                Object d = getSubtypeData(stack, ctx);
+                return d == null ? "" : d.toString();
+            }
+        };
+        registration.registerSubtypeInterpreter(PFItems.SLIME_BUCKET.get(), bucketInterp);
+        registration.registerSubtypeInterpreter(PFItems.RESOURCE_TADPOLE_BUCKET.get(), bucketInterp);
 
-        // Configurable Froglight — subtype by SLIME_VARIANT. The smelting
-        // recipes already match on this via NeoForge's neoforge:components
-        // ingredient, so JEI recipe lookups need the same per-variant
-        // identity to surface the right recipes.
-        registration.registerFromDataComponentTypes(
-            PFItems.CONFIGURABLE_FROGLIGHT.get(),
-            PFDataComponents.SLIME_VARIANT.get()
-        );
+        // Configurable Froglight — subtype by SLIME_VARIANT.
+        registration.registerSubtypeInterpreter(PFItems.CONFIGURABLE_FROGLIGHT.get(), new ISubtypeInterpreter<>() {
+            @Override
+            public Object getSubtypeData(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
+                ResourceLocation v = stack.get(PFDataComponents.SLIME_VARIANT.get());
+                return v == null ? "" : v.toString();
+            }
+            @Override
+            public String getLegacyStringSubtypeInfo(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
+                return (String) getSubtypeData(stack, ctx);
+            }
+        });
 
-        // Frog Egg bottle — subtype by CONTAINED_CATEGORY. Six primed
-        // bottles, one per category; the unprimed (no-component) bottle
-        // is the seventh JEI entry.
-        registration.registerFromDataComponentTypes(
-            PFItems.FROG_EGG.get(),
-            PFDataComponents.CONTAINED_CATEGORY.get()
-        );
+        // Frog Egg bottle — subtype by CONTAINED_CATEGORY. Six primed bottles
+        // + one unprimed (no-component) bottle = seven JEI entries.
+        registration.registerSubtypeInterpreter(PFItems.FROG_EGG.get(), new ISubtypeInterpreter<>() {
+            @Override
+            public Object getSubtypeData(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
+                Category c = stack.get(PFDataComponents.CONTAINED_CATEGORY.get());
+                return c == null ? "" : c.name();
+            }
+            @Override
+            public String getLegacyStringSubtypeInfo(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
+                return (String) getSubtypeData(stack, ctx);
+            }
+        });
     }
 }
