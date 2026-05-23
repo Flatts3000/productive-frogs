@@ -8,6 +8,7 @@ Living tracker of playtest bugs, limitations, and workarounds for Productive Fro
 |---|---|
 | 🔴 | Open. Fix pending. |
 | 🟡 | Open. Workaround available — see entry. |
+| 🟠 | Reopened. Was 🟢 resolved but design intent changed; entry kept so the original "ship it" decision and the revert rationale stay searchable. |
 | 🔵 | Limitation by design for V1. May revisit in V2 (see [versioning.md](./versioning.md)). |
 | 🟢 | Resolved. Listed here so playtest reports stay searchable. |
 
