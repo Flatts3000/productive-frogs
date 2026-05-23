@@ -1,8 +1,10 @@
 package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.entity.BogSlime;
 import com.flatts.productivefrogs.content.entity.CaveSlime;
 import com.flatts.productivefrogs.content.entity.GeodeSlime;
+import com.flatts.productivefrogs.content.entity.InfernalSlime;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
@@ -146,6 +148,37 @@ public final class PFEntities {
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
                 .build("void_slime")
+        );
+
+    /**
+     * Bog Slime — the BOG parent species. Swamp-themed; replaces vanilla
+     * {@code minecraft:slime} as the canonical BOG parent (V1.5).
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<BogSlime>> BOG_SLIME =
+        ENTITIES.register(
+            "bog_slime",
+            () -> EntityType.Builder.<BogSlime>of(BogSlime::new, MobCategory.MONSTER)
+                .sized(0.52F, 0.52F)
+                .eyeHeight(0.325F)
+                .spawnDimensionsScale(4.0F)
+                .clientTrackingRange(10)
+                .build("bog_slime")
+        );
+
+    /**
+     * Infernal Slime — the INFERNAL parent species. Nether-themed; replaces
+     * vanilla {@code minecraft:magma_cube} as the canonical INFERNAL parent
+     * (V1.5).
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<InfernalSlime>> INFERNAL_SLIME =
+        ENTITIES.register(
+            "infernal_slime",
+            () -> EntityType.Builder.<InfernalSlime>of(InfernalSlime::new, MobCategory.MONSTER)
+                .sized(0.52F, 0.52F)
+                .eyeHeight(0.325F)
+                .spawnDimensionsScale(4.0F)
+                .clientTrackingRange(10)
+                .build("infernal_slime")
         );
 
     private PFEntities() {

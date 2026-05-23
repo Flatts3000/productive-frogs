@@ -1,8 +1,10 @@
 package com.flatts.productivefrogs.client;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.client.renderer.BogSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.CaveSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.GeodeSlimeRenderer;
+import com.flatts.productivefrogs.client.renderer.InfernalSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceFrogRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
@@ -71,6 +73,8 @@ public final class PFClientEvents {
         event.registerEntityRenderer(PFEntities.GEODE_SLIME.get(), GeodeSlimeRenderer::new);
         event.registerEntityRenderer(PFEntities.TIDE_SLIME.get(), TideSlimeRenderer::new);
         event.registerEntityRenderer(PFEntities.VOID_SLIME.get(), VoidSlimeRenderer::new);
+        event.registerEntityRenderer(PFEntities.BOG_SLIME.get(), BogSlimeRenderer::new);
+        event.registerEntityRenderer(PFEntities.INFERNAL_SLIME.get(), InfernalSlimeRenderer::new);
     }
 
     @SubscribeEvent
