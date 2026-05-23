@@ -1,7 +1,11 @@
 {
   "type": "minecraft:smelting",
-  "ingredient": "productivefrogs:infernal_froglight",
-  "result": {"id": "minecraft:magma_cream"},
+  "ingredient": {
+    "item": "productivefrogs:infernal_froglight"
+  },
+  "result": {
+    "id": "minecraft:magma_cream"
+  },
   "experience": 0.5,
   "cookingtime": 200,
   "category": "misc",

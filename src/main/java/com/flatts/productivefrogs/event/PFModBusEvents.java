@@ -58,7 +58,7 @@ public final class PFModBusEvents {
      * Register {@link net.minecraft.world.entity.SpawnPlacements} for each
      * parent species so they can actually spawn during worldgen / chunk-spawn
      * cycles. Biome filtering is done separately via {@code neoforge:add_spawns}
-     * BiomeModifier JSONs at {@code data/productivefrogs/neoforge/biome_modifiers/};
+     * BiomeModifier JSONs at {@code data/productivefrogs/neoforge/biome_modifier/};
      * this event sets the per-block placement type + condition.
      *
      * <p>{@link Heightmap.Types#OCEAN_FLOOR} for Tide Slime so it spawns on the

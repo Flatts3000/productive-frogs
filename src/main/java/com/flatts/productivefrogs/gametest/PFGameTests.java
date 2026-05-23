@@ -34,6 +34,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * In-world GameTests for Productive Frogs. Each test is a headless scenario
@@ -48,10 +49,19 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
  *
  * <p>Each test must be {@code public static} and take a single
  * {@link GameTestHelper} parameter. Structure NBT lives at
- * {@code data/<modid>/structures/<name>.nbt} — note <b>plural</b> "structures"
- * (the singular {@code structure/} dir came in 1.21.4+).
+ * {@code data/<modid>/structure/<name>.nbt} — singular {@code structure/}
+ * since 1.21.0 (mirrors the singular {@code tags/item/}, {@code tags/entity_type/}
+ * naming the rest of 1.21.x uses).
+ *
+ * <p>{@link PrefixGameTestTemplate}{@code (false)} disables NeoForge's default
+ * class-name prefix on the structure path. Without it, {@code template =
+ * "empty_5x5x5"} resolves to {@code productivefrogs:pfgametests.empty_5x5x5},
+ * which would require all 47 tests to live under a {@code pfgametests/}
+ * subdirectory. Since every test uses the same shared empty plot, dropping
+ * the prefix keeps the asset layout flat.
  */
 @GameTestHolder(ProductiveFrogs.MOD_ID)
+@PrefixGameTestTemplate(false)
 public final class PFGameTests {
 
     private static final String EMPTY_STRUCTURE = ProductiveFrogs.MOD_ID + ":empty_5x5x5";
@@ -229,7 +239,7 @@ public final class PFGameTests {
 
     /**
      * Verify that primer item tags actually loaded — exercises the data-load
-     * pipeline. The {@code tags/items/} → {@code tags/items/} singularization in
+     * pipeline. The {@code tags/item/} → {@code tags/item/} singularization in
      * MC 1.21.x silently dropped our tag files until we renamed; this test
      * would have flagged that within a CI run instead of from a manual playtest
      * that "nothing happens when I right-click frogspawn with iron".
@@ -1548,7 +1558,7 @@ public final class PFGameTests {
      *   <li>{@link com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity#collectImplicitComponents}
      *       exposes that variant as an implicit data component on the BE.</li>
      *   <li>The loot table at
-     *       {@code data/productivefrogs/loot_tables/blocks/configurable_froglight.json}
+     *       {@code data/productivefrogs/loot_table/blocks/configurable_froglight.json}
      *       uses {@code minecraft:copy_components} with source
      *       {@code block_entity} to copy that component onto the dropped item.</li>
      * </ol>

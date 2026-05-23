@@ -1,7 +1,11 @@
 {
   "type": "minecraft:smelting",
-  "ingredient": "productivefrogs:mineral_froglight",
-  "result": {"id": "minecraft:redstone"},
+  "ingredient": {
+    "item": "productivefrogs:mineral_froglight"
+  },
+  "result": {
+    "id": "minecraft:redstone"
+  },
   "experience": 0.2,
   "cookingtime": 200,
   "category": "misc",

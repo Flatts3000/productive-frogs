@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>When the block is broken the loot table copies the BE's variant back into
  * the dropped item's {@code SLIME_VARIANT} component (see
- * {@code data/productivefrogs/loot_tables/blocks/configurable_froglight.json}),
+ * {@code data/productivefrogs/loot_table/blocks/configurable_froglight.json}),
  * so the variant survives the round-trip.
  */
 public class ConfigurableFroglightBlockEntity extends BlockEntity {
@@ -77,7 +77,7 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * loot-function {@code minecraft:copy_components} with source
      * {@code block_entity} can copy it into the dropped item (see the
      * loot table at
-     * {@code data/productivefrogs/loot_tables/blocks/configurable_froglight.json}).
+     * {@code data/productivefrogs/loot_table/blocks/configurable_froglight.json}).
      * This also makes creative pick-block automatically stamp the variant
      * on the picked item — vanilla calls this when building the
      * {@code getCloneItemStack} result.

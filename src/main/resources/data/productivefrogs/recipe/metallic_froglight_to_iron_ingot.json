@@ -1,7 +1,11 @@
 {
   "type": "minecraft:smelting",
-  "ingredient": "productivefrogs:metallic_froglight",
-  "result": {"id": "minecraft:iron_ingot"},
+  "ingredient": {
+    "item": "productivefrogs:metallic_froglight"
+  },
+  "result": {
+    "id": "minecraft:iron_ingot"
+  },
   "experience": 0.7,
   "cookingtime": 200,
   "category": "misc",

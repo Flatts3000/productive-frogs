@@ -12,7 +12,7 @@ import net.minecraft.world.item.Item;
  * Tag key constants used by Productive Frogs.
  *
  * <p>Tags themselves are defined as JSON files in
- * {@code src/main/resources/data/productivefrogs/tags/items/primer/*.json}.
+ * {@code src/main/resources/data/productivefrogs/tags/item/primer/*.json}.
  * (Singular {@code item/} — MC 1.21.x renamed the tag directory from the
  * legacy plural {@code items/}.) This class holds the typed {@link TagKey}
  * handles that Java code uses to check tag membership at runtime.
