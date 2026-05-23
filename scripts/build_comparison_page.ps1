@@ -27,6 +27,23 @@ $mcExtract = Join-Path ([System.IO.Path]::GetTempPath()) "mc-extra"
 
 if (-not (Test-Path $genRoot)) { New-Item -ItemType Directory -Force -Path $genRoot | Out-Null }
 
+# Populate the vanilla MC texture cache if missing -- same pattern as the
+# generator scripts. Without this, the vanilla reference cards on the
+# comparison page silently disappear on a fresh machine / temp dir.
+if (-not (Test-Path (Join-Path $mcExtract "assets\minecraft\textures\block"))) {
+    $artifactsDir = Join-Path $repoRoot "build\moddev\artifacts"
+    $jarMatches = @(Get-ChildItem -Path $artifactsDir -Filter "neoforge-*-client-extra-aka-minecraft-resources.jar" -ErrorAction SilentlyContinue)
+    if ($jarMatches.Count -gt 0) {
+        $jar = ($jarMatches | Sort-Object LastWriteTime -Descending | Select-Object -First 1).FullName
+        New-Item -ItemType Directory -Force -Path $mcExtract | Out-Null
+        Write-Output "extracting $(Split-Path $jar -Leaf) -> $mcExtract"
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($jar, $mcExtract)
+    } else {
+        Write-Warning "No NeoForge minecraft-resources jar under $artifactsDir -- vanilla reference cards will be skipped. Run ./gradlew createMinecraftArtifacts to populate the cache."
+    }
+}
+
 # Surfaces under active comparison. Each entry maps a slug to the asset path
 # it would replace if approved, plus a list of vanilla Minecraft texture paths
 # that serve as visual style references. Extend as new surfaces enter the
@@ -69,18 +86,18 @@ $surfaces = @(
     },
     @{
         slug = "slime_milker_gui"
-        assetPath = "..\gui\container\slime_milker.png"
-        vanillaRefs = @("..\gui\container\furnace.png", "..\gui\container\blast_furnace.png")
+        assetPath = "gui\container\slime_milker.png"
+        vanillaRefs = @("gui\container\furnace.png", "gui\container\blast_furnace.png")
     },
     @{
         slug = "tadpole_silhouette"
-        assetPath = "..\item\tadpole_silhouette.png"
-        vanillaRefs = @("..\item\tadpole_bucket.png", "..\item\milk_bucket.png", "..\item\bucket.png")
+        assetPath = "item\tadpole_silhouette.png"
+        vanillaRefs = @("item\tadpole_bucket.png", "item\milk_bucket.png", "item\bucket.png")
     },
     @{
         slug = "slime_silhouette"
-        assetPath = "..\item\slime_silhouette.png"
-        vanillaRefs = @("..\item\slime_ball.png", "..\item\bucket.png")
+        assetPath = "item\slime_silhouette.png"
+        vanillaRefs = @("item\slime_ball.png", "item\bucket.png")
     }
 )
 

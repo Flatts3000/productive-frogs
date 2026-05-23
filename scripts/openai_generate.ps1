@@ -1,18 +1,21 @@
 # OpenAI gpt-image-1 image generation client.
 #
-# Reads OPENAI_API_KEY, OPENAI_IMAGE_MODEL, OPENAI_IMAGE_QUALITY from .env at
-# the repo root. Calls POST /v1/images/generations with the supplied prompt,
-# saves the returned base64-encoded PNGs to gen/<slug>/<idx>.png, then writes
-# a 16x16 nearest-neighbor + palette-quantized preview alongside each one.
+# Reads OPENAI_API_KEY, OPENAI_IMAGE_MODEL, OPENAI_IMAGE_QUALITY from the
+# process env first, falling back to .env at the repo root if a .env file
+# exists. Calls POST /v1/images/generations with the supplied prompt, saves
+# the returned base64-encoded PNGs to gen/<slug>/<idx>.png, then writes a
+# 16x16 nearest-neighbor downsampled preview alongside each one.
 #
 # Usage:
 #   .\scripts\openai_generate.ps1 -PromptFile prompts/slime_milker_gui.txt -Slug slime_milker_gui -Count 4
 #   .\scripts\openai_generate.ps1 -Prompt "A 16-bit pixel art ..." -Slug test -Count 1
 #
-# The downscale-and-quantize preview is for evaluating pixel-art viability;
-# the raw 1024x1024 is kept too for any surface that should ship at higher
-# resolution (GUI backgrounds typically do -- Minecraft renders them at the
-# stored pixel density, not at block-texture pixel density).
+# The downsampled preview is for evaluating pixel-art viability at ship
+# resolution. Note: it's a plain 32bpp PNG -- no palette quantization is
+# applied (would need a third-party median-cut library to do that
+# properly). The raw 1024x1024 is also kept for surfaces that ship at
+# higher resolution (GUI backgrounds typically do -- Minecraft renders
+# them at the stored pixel density, not at block-texture pixel density).
 
 [CmdletBinding(DefaultParameterSetName='Prompt')]
 param(
@@ -27,8 +30,7 @@ param(
 
     [int]$Count = 4,
     [string]$Size = "1024x1024",
-    [int]$PreviewSize = 16,
-    [int]$PreviewColors = 16
+    [int]$PreviewSize = 16
 )
 
 Add-Type -AssemblyName System.Drawing
@@ -37,16 +39,13 @@ $repoRoot = (Resolve-Path "$PSScriptRoot\..").Path
 $envPath = Join-Path $repoRoot ".env"
 $genRoot = Join-Path $repoRoot "gen"
 
-# Load .env into a hashtable. Skip blank lines and comments. The whole point
-# of .env is keys never appear on the command line -- Get-Content reads them
-# locally, the script uses the value, but never echoes it.
+# Load .env into a hashtable. Skip blank lines and comments. Returns an
+# empty hashtable when .env is absent -- the caller falls back to process
+# env vars in that case.
 function Read-DotEnv {
     param([string]$Path)
-    if (-not (Test-Path $Path)) {
-        Write-Error "No .env file at $Path. Copy from .env.example or create one with OPENAI_API_KEY=..."
-        exit 1
-    }
     $map = @{}
+    if (-not (Test-Path $Path)) { return $map }
     foreach ($line in Get-Content $Path) {
         $trim = $line.Trim()
         if ($trim -eq "" -or $trim.StartsWith("#")) { continue }
@@ -63,11 +62,11 @@ $envMap = Read-DotEnv -Path $envPath
 
 # Prefer process env if set; fall back to .env. Never log either value.
 $apiKey = if ($env:OPENAI_API_KEY) { $env:OPENAI_API_KEY } else { $envMap["OPENAI_API_KEY"] }
-$model = if ($envMap["OPENAI_IMAGE_MODEL"]) { $envMap["OPENAI_IMAGE_MODEL"] } else { "gpt-image-1" }
-$quality = if ($envMap["OPENAI_IMAGE_QUALITY"]) { $envMap["OPENAI_IMAGE_QUALITY"] } else { "low" }
+$model = if ($env:OPENAI_IMAGE_MODEL) { $env:OPENAI_IMAGE_MODEL } elseif ($envMap["OPENAI_IMAGE_MODEL"]) { $envMap["OPENAI_IMAGE_MODEL"] } else { "gpt-image-1" }
+$quality = if ($env:OPENAI_IMAGE_QUALITY) { $env:OPENAI_IMAGE_QUALITY } elseif ($envMap["OPENAI_IMAGE_QUALITY"]) { $envMap["OPENAI_IMAGE_QUALITY"] } else { "low" }
 
 if ([string]::IsNullOrWhiteSpace($apiKey) -or $apiKey -eq "sk-REPLACE-ME") {
-    Write-Error "OPENAI_API_KEY missing or unset. Edit .env and replace the placeholder."
+    Write-Error "OPENAI_API_KEY missing or unset. Set ``$env:OPENAI_API_KEY`` in your shell, or put it in .env at the repo root."
     exit 1
 }
 
@@ -127,9 +126,11 @@ foreach ($img in $resp.data) {
     [System.IO.File]::WriteAllBytes($rawPath, $bytes)
     Write-Output "wrote $rawPath ($($bytes.Length) bytes)"
 
-    # Build downscaled preview. Nearest-neighbor + indexed palette quantize.
-    # This shows what the texture would look like at ship resolution; the
-    # raw 1024 is preserved for surfaces that ship at higher density (GUIs).
+    # Build downsampled preview. Nearest-neighbor scale only -- no palette
+    # quantization (would need a third-party median-cut library to do that
+    # properly). This shows the gpt-image-1 output at ship pixel density
+    # for visual evaluation; the raw 1024 is preserved alongside for
+    # surfaces that ship at higher density (GUIs in particular).
     $srcImg = [System.Drawing.Image]::FromFile($rawPath)
     try {
         $preview = New-Object System.Drawing.Bitmap $PreviewSize, $PreviewSize
@@ -139,10 +140,6 @@ foreach ($img in $resp.data) {
             $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::Half
             $g.DrawImage($srcImg, 0, 0, $PreviewSize, $PreviewSize)
         } finally { $g.Dispose() }
-        # Palette quantize via System.Drawing PixelFormat conversion to 8bpp
-        # indexed -- gives a 256-color palette by default; for stricter 16-color
-        # quantization we'd need a third-party median-cut library. 256 is
-        # already a reduction from 32bpp and good enough for PoC visual eval.
         $previewPath = Join-Path $outDir "${idx}_preview.png"
         $preview.Save($previewPath, [System.Drawing.Imaging.ImageFormat]::Png)
         $preview.Dispose()

@@ -1,29 +1,28 @@
-# Generate the 3 Slime Milker block-face textures by compositing vanilla
-# Minecraft block textures.
+# SUPERSEDED FALLBACK -- the shipped Slime Milker textures come from
+# gpt-image-1 (cobblestone+wood theme, see prompts/slime_milker_*.txt and
+# the assets/textures/block/slime_milker_*.png files committed in this PR's
+# parent commit). This script is kept as a vanilla-composite fallback path
+# in case the AI workflow ever needs replacing.
 #
-# Output:
+# Generates 3 iron-industrial block-face textures by compositing vanilla
+# Minecraft block textures. NOTE: the SHIPPED milker no longer uses these
+# outputs -- it ships cobblestone+wood AI textures plus a 4th front face,
+# driven by minecraft:block/orientable_with_bottom (not cube_bottom_top).
+#
+# Output (if run, will OVERWRITE the AI-shipped textures):
 #   src/main/resources/assets/productivefrogs/textures/block/slime_milker_top.png
 #   src/main/resources/assets/productivefrogs/textures/block/slime_milker_side.png
 #   src/main/resources/assets/productivefrogs/textures/block/slime_milker_bottom.png
 #
-# Block model is minecraft:block/cube_bottom_top — top/bottom/side, no front
-# (the Slime Milker has no facing direction in V1).
-#
 # Per-face composite source:
-#   top    = dispenser_front_vertical.png    — vanilla dispenser face has a
+#   top    = dispenser_front_vertical.png    -- vanilla dispenser face has a
 #            centered recessed dark slot that reads exactly like "bucket goes
 #            in here." Center pixels are tinted slime-green to hint at the
 #            captured fluid below.
-#   side   = blast_furnace_side.png          — vertical metal banding /
+#   side   = blast_furnace_side.png          -- vertical metal banding /
 #            riveting reads industrial. Used straight, no tint changes.
-#   bottom = iron_block.png                  — plain iron underside, matching
+#   bottom = iron_block.png                  -- plain iron underside, matching
 #            the rest of the machine's metal palette.
-#
-# Why composites instead of AI generation: V1 visual scope is "blocks that
-# read as vanilla-adjacent appliances," not bespoke pixel art. Pure composite
-# guarantees palette / grid consistency with vanilla and ships ready-to-use
-# without AI artifacts. The Slime Milker GUI background is the only Tier B
-# surface that needs AI — see generate_slime_milker_gui.ps1 (when shipped).
 #
 # Tint algorithm for the top-face slime-fluid hint: pixels in the 6x6 inner
 # slot region (anchored at the dark spot of the dispenser texture) get their
