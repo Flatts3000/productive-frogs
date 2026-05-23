@@ -140,8 +140,8 @@ public class ResourceSlime extends Slime implements Bucketable {
 
     @org.jetbrains.annotations.Nullable
     private SlimeVariant lookupVariant(ResourceLocation id) {
-        Registry<SlimeVariant> registry = this.level().registryAccess().lookup(PFRegistries.SLIME_VARIANT).orElse(null);
-        return registry == null ? null : registry.getValue(id);
+        Registry<SlimeVariant> registry = this.level().registryAccess().registry(PFRegistries.SLIME_VARIANT).orElse(null);
+        return registry == null ? null : registry.get(id);
     }
 
     /**

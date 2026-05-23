@@ -161,7 +161,7 @@ public final class SlimeInfusionHandler {
     private static Map.Entry<ResourceLocation, SlimeVariant> findVariantForHeldItem(
             net.minecraft.world.level.Level level, ItemStack stack) {
         Registry<SlimeVariant> registry = level.registryAccess()
-            .lookup(PFRegistries.SLIME_VARIANT).orElse(null);
+            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
         if (registry == null) return null;
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
         return SlimeVariant.findByPrimerItem(registry, itemId);

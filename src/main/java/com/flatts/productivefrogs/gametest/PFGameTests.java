@@ -565,7 +565,7 @@ public final class PFGameTests {
         };
         for (String name : expected) {
             ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, name);
-            SlimeVariant variant = registry.getValue(id);
+            SlimeVariant variant = registry.get(id);
             if (variant == null) {
                 helper.fail("expected variant " + id + " to be loaded from datapack registry");
             }
@@ -573,7 +573,7 @@ public final class PFGameTests {
 
         // Spot-check a specific variant's decoded fields so a codec regression
         // (e.g., a field name typo) fails the test, not just "registry empty."
-        SlimeVariant iron = registry.getValue(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        SlimeVariant iron = registry.get(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
         if (iron == null) {
             helper.fail("iron variant must be loaded");
             return;

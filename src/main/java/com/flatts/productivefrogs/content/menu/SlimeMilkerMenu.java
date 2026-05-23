@@ -17,7 +17,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
+import net.neoforged.neoforge.items.SlotItemHandler;
 
 /**
  * Container menu for the {@link SlimeMilkerBlockEntity}. Two slot widgets
@@ -75,15 +75,14 @@ public class SlimeMilkerMenu extends AbstractContainerMenu {
 
         if (be != null) {
             SlimeMilkerInventory inv = be.getInventory();
-            // Input slot — Slime Bucket only; isValid on the inventory
-            // enforces this via ResourceHandlerSlot.mayPlace.
-            addSlot(new ResourceHandlerSlot(inv, inv::set,
+            // Input slot — Slime Bucket only; SlotItemHandler delegates
+            // mayPlace to ItemStackHandler.isItemValid.
+            addSlot(new SlotItemHandler(inv,
                 SlimeMilkerBlockEntity.INPUT_SLOT, INPUT_SLOT_X, INPUT_SLOT_Y));
-            // Output slot — Slime Milk Bucket. The inventory's isValid
-            // already returns false for OUTPUT, so mayPlace would block
-            // inserts anyway; the explicit override is belt-and-suspenders
-            // documentation of intent.
-            addSlot(new ResourceHandlerSlot(inv, inv::set,
+            // Output slot — Slime Milk Bucket. Override mayPlace to reject
+            // all inserts (the cook loop writes via setStackInSlot which
+            // bypasses this).
+            addSlot(new SlotItemHandler(inv,
                 SlimeMilkerBlockEntity.OUTPUT_SLOT, OUTPUT_SLOT_X, OUTPUT_SLOT_Y) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {

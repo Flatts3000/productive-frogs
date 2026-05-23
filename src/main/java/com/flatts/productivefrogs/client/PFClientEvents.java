@@ -106,11 +106,11 @@ public final class PFClientEvents {
                     return -1;
                 }
                 Registry<SlimeVariant> registry = beLevel.registryAccess()
-                    .lookup(PFRegistries.SLIME_VARIANT).orElse(null);
+                    .registry(PFRegistries.SLIME_VARIANT).orElse(null);
                 if (registry == null) {
                     return -1;
                 }
-                SlimeVariant variant = registry.getValue(variantId);
+                SlimeVariant variant = registry.get(variantId);
                 return variant == null ? -1 : variant.primaryColor();
             },
             PFBlocks.CONFIGURABLE_FROGLIGHT.get()
@@ -152,9 +152,9 @@ public final class PFClientEvents {
                         Minecraft mc = Minecraft.getInstance();
                         if (mc.level != null) {
                             Registry<SlimeVariant> registry = mc.level.registryAccess()
-                                .lookup(PFRegistries.SLIME_VARIANT).orElse(null);
+                                .registry(PFRegistries.SLIME_VARIANT).orElse(null);
                             if (registry != null) {
-                                SlimeVariant variant = registry.getValue(variantId);
+                                SlimeVariant variant = registry.get(variantId);
                                 if (variant != null) return variant.primaryColor();
                             }
                         }
@@ -177,9 +177,9 @@ public final class PFClientEvents {
             Minecraft mc = Minecraft.getInstance();
             if (mc.level == null) return -1;
             Registry<SlimeVariant> registry = mc.level.registryAccess()
-                .lookup(PFRegistries.SLIME_VARIANT).orElse(null);
+                .registry(PFRegistries.SLIME_VARIANT).orElse(null);
             if (registry == null) return -1;
-            SlimeVariant variant = registry.getValue(variantId);
+            SlimeVariant variant = registry.get(variantId);
             return variant == null ? -1 : variant.primaryColor();
         }, PFItems.CONFIGURABLE_FROGLIGHT.get());
 
@@ -199,9 +199,9 @@ public final class PFClientEvents {
                         return catFromComponent == null ? -1 : catFromComponent.tintRgb();
                     }
                     Registry<SlimeVariant> registry = mc.level.registryAccess()
-                        .lookup(PFRegistries.SLIME_VARIANT).orElse(null);
+                        .registry(PFRegistries.SLIME_VARIANT).orElse(null);
                     if (registry == null) return -1;
-                    SlimeVariant variant = registry.getValue(variantId);
+                    SlimeVariant variant = registry.get(variantId);
                     if (variant != null) {
                         return tintIndex == 0 ? variant.primaryColor() : variant.secondaryColor();
                     }

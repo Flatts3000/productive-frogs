@@ -95,7 +95,7 @@ public final class SlimeSplitDiscoveryHandler {
         }
 
         Registry<SlimeVariant> variantRegistry = level.registryAccess()
-            .lookup(PFRegistries.SLIME_VARIANT).orElse(null);
+            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
 
         List<Mob> children = event.getChildren();
         for (int i = 0; i < children.size(); i++) {
@@ -158,7 +158,7 @@ public final class SlimeSplitDiscoveryHandler {
             return null;
         }
         Registry<ParentSpeciesEntry> registry = level.registryAccess()
-            .lookup(PFRegistries.PARENT_SPECIES).orElse(null);
+            .registry(PFRegistries.PARENT_SPECIES).orElse(null);
         if (registry == null) {
             return null;
         }
