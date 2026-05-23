@@ -2,9 +2,14 @@ package com.flatts.productivefrogs.event;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.data.Category;
-import com.flatts.productivefrogs.data.PFTags;
+import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFBlocks;
+import com.flatts.productivefrogs.registry.PFRegistries;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
@@ -18,18 +23,22 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 /**
- * Handles right-clicking vanilla {@code minecraft:frogspawn} with any item in
- * a {@code productivefrogs:primer/<category>} tag.
+ * Frog Egg priming — biome-agnostic, variant-primer-driven per the V1.5
+ * redesign ({@code docs/species_as_category_redesign.md}).
  *
- * <p>The vanilla frogspawn block is replaced in-place with the matching
- * Primed Frog Egg block, and one of the held item is consumed. This is the
- * one-time "what category does this egg belong to" gate per category — the
- * primed block is then a category-locked egg awaiting hatch (future feature).
+ * <p>Right-clicking vanilla {@code minecraft:frogspawn} with any item that is
+ * a {@link SlimeVariant#primerItem()} on a shipped slime variant converts the
+ * frogspawn to a Primed Frog Egg of the variant's species. The egg later
+ * hatches into species-keyed tadpoles (Cave Tadpoles for an Iron-primed egg,
+ * etc.) — the variant identity itself is not preserved on tadpoles or frogs.
  *
- * <p>If the held item is in multiple primer tags simultaneously (which it
- * shouldn't be — tags are disjoint by design), the first match in
- * {@link Category} declaration order wins. This is also the natural tier
- * order: metallic, mineral, gem, aquatic, infernal, arcane.
+ * <p>The Q4 = Path A decision applies: only exact variant primer matches
+ * count. The previous {@code primer/<category>} item-tag fallback is removed.
+ *
+ * <p>Symmetric design partner to {@link SlimeInfusionHandler}. Asymmetric
+ * design point: slime infusion requires a PF parent slime as the target;
+ * egg priming accepts vanilla frogspawn anywhere. Both gate functions
+ * differ on purpose — see the spec's "Why the asymmetry" section.
  */
 @EventBusSubscriber(modid = ProductiveFrogs.MOD_ID)
 public final class EggPrimerHandler {
@@ -52,51 +61,35 @@ public final class EggPrimerHandler {
             return;
         }
 
-        Category category = matchPrimerCategory(held);
-        if (category == null) {
-            return;
+        // Exact variant primer match required (Q4: Path A only).
+        Map.Entry<ResourceLocation, SlimeVariant> variantEntry = findVariantForHeldItem(level, held);
+        if (variantEntry == null) {
+            return;  // no primer match — silent no-op (no rejection feedback for frogspawn)
         }
+        Category species = variantEntry.getValue().category();
 
-        // We're going to handle this. Suppress vanilla behavior.
+        // We're handling this. Suppress vanilla behavior.
         event.setCancellationResult(InteractionResult.SUCCESS);
         event.setCanceled(true);
-
         if (level.isClientSide()) {
             return;
         }
 
         Player player = event.getEntity();
-
-        // Replace vanilla frogspawn with the matching category's primed egg.
-        level.setBlockAndUpdate(pos, PFBlocks.primedEgg(category).defaultBlockState());
-
-        // Consume one primer (creative skips).
+        // Replace vanilla frogspawn with the matching species's primed egg.
+        level.setBlockAndUpdate(pos, PFBlocks.primedEgg(species).defaultBlockState());
         if (!player.getAbilities().instabuild) {
             held.shrink(1);
         }
-
-        // Feedback — bubble-pop sound has the right "absorbed" feel without
-        // committing to a bespoke audio asset.
-        level.playSound(
-            null,
-            pos,
-            SoundEvents.BUBBLE_COLUMN_BUBBLE_POP,
-            SoundSource.BLOCKS,
-            0.6F,
-            1.0F
-        );
+        level.playSound(null, pos, SoundEvents.BUBBLE_COLUMN_BUBBLE_POP, SoundSource.BLOCKS, 0.6F, 1.0F);
     }
 
-    /**
-     * Find the first category whose primer tag contains the given item. Returns
-     * null if no category matches (the item isn't a primer).
-     */
-    private static Category matchPrimerCategory(ItemStack stack) {
-        for (Category cat : Category.values()) {
-            if (stack.is(PFTags.PRIMER_BY_CATEGORY.get(cat))) {
-                return cat;
-            }
-        }
-        return null;
+    private static Map.Entry<ResourceLocation, SlimeVariant> findVariantForHeldItem(
+            Level level, ItemStack stack) {
+        Registry<SlimeVariant> registry = level.registryAccess()
+            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+        if (registry == null) return null;
+        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        return SlimeVariant.findByPrimerItem(registry, itemId);
     }
 }

@@ -8,7 +8,6 @@ import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.data.Category;
-import com.flatts.productivefrogs.data.PFTags;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFRegistries;
 import com.flatts.productivefrogs.event.SlimeInfusionHandler;
@@ -235,35 +234,6 @@ public final class PFGameTests {
             return;
         }
         helper.succeed();
-    }
-
-    /**
-     * Verify that primer item tags actually loaded — exercises the data-load
-     * pipeline. The {@code tags/item/} → {@code tags/item/} singularization in
-     * MC 1.21.x silently dropped our tag files until we renamed; this test
-     * would have flagged that within a CI run instead of from a manual playtest
-     * that "nothing happens when I right-click frogspawn with iron".
-     */
-    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
-    public static void primerTagsContainExpectedItems(GameTestHelper helper) {
-        // Spot-check one canonical entry per category. We don't enumerate every
-        // entry here — that's the tag JSON's job. We just verify the tags
-        // themselves resolve in the live tag manager.
-        assertItemInPrimerTag(helper, Items.IRON_INGOT, Category.BOG);
-        assertItemInPrimerTag(helper, Items.REDSTONE, Category.CAVE);
-        assertItemInPrimerTag(helper, Items.DIAMOND, Category.GEODE);
-        assertItemInPrimerTag(helper, Items.PRISMARINE_SHARD, Category.TIDE);
-        assertItemInPrimerTag(helper, Items.MAGMA_CREAM, Category.INFERNAL);
-        assertItemInPrimerTag(helper, Items.ENDER_PEARL, Category.VOID);
-        helper.succeed();
-    }
-
-    private static void assertItemInPrimerTag(GameTestHelper helper, net.minecraft.world.item.Item item, Category cat) {
-        ItemStack stack = new ItemStack(item);
-        if (!stack.is(PFTags.PRIMER_BY_CATEGORY.get(cat))) {
-            helper.fail(BuiltInRegistries.ITEM.getKey(item)
-                + " must be in primer/" + cat.id() + " tag — check the JSON and the directory path");
-        }
     }
 
     /**

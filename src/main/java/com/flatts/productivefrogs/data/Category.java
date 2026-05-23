@@ -37,14 +37,9 @@ public enum Category implements StringRepresentable {
         this.rgb = rgb;
     }
 
-    /** Lowercase id used in registry paths, tag paths, lang keys. */
+    /** Lowercase id used in registry paths, lang keys. */
     public String id() {
         return name().toLowerCase(Locale.ROOT);
-    }
-
-    /** Item-tag path for items that prime this category. */
-    public String primerTagPath() {
-        return "primer/" + id();
     }
 
     /** Registry name for this category's Primed Frog Egg block / item. */
