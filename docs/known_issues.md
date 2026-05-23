@@ -53,17 +53,15 @@ Bumped `SlimeMilkerMenu.OUTPUT_SLOT_X` from 112 to 116 and `OUTPUT_SLOT_Y` from 
 ### 🟢 Slime Milk buckets have eyes — they shouldn't; Slime Buckets should — resolved
 Reverted the eye-overlay portion of PR #67. `scripts/generate_slime_milk_textures.ps1`'s `Build-BucketTexture` no longer writes the two dark pixels at (6,3) and (9,3); replaced with a comment block explaining the design pivot. Re-ran the script to regenerate the 14 variant milk-bucket PNGs without eyes. The animated-fluid changes from the same PR stay (still correct). The Slime Bucket (`slime_silhouette.png` layer0) keeps its eyes, which was always the right surface.
 
-### 🔴 Spawn egg textures don't read as eggs — they look like dead 2D creatures
-The 3 spawn-egg base textures shipped in PR #69 (`frog_spawn_egg.png`, `tadpole_spawn_egg.png`, `slime_spawn_egg.png`) render the full creature silhouette tinted per variant. In context next to the **vanilla Minecraft spawn-egg style** they don't read as "eggs you spawn a creature from" — they read as flat 2D dead frogs / tadpoles / slime blobs. Vanilla spawn eggs are an **oval / ovoid egg shape with a two-tone speckle pattern** (primary + secondary colour) and a **small creature-face overlay** on top to distinguish species; PF's spawn eggs throw away the egg shape entirely and just paint the creature.
+### 🟢 Spawn egg textures don't read as eggs — they look like dead 2D creatures — resolved
+**Original symptom**: the 3 base textures from PR #69 rendered the full creature silhouette tinted per variant — read as "dead frogs / tadpoles / slime blobs" rather than "spawn eggs." Per playtest, the egg ITEM should be egg-shaped with minor accompaniments suggesting the animal's silhouette (matching vanilla 1.21.x style), not a full creature portrait and not a generic ovoid either.
 
-**Symptom**: Open the Productive Frogs creative tab → bottom rows of spawn eggs read as a wall of dark silhouettes ("dead frogs sitting on the grass," "wet tadpoles with tails," "ghost slimes"). Compared to the vanilla spawn-egg tab (oval eggs with clean two-tone fills + a creature face), PF's eggs look out of place and amateurish.
+**Resolution**: regenerated all three at 16×16 via AI gen (PixelLab + OpenAI gpt-image-1 candidates, side-by-side review in `gen/comparison.html` against the shipped versions and vanilla references). Selected:
+- `frog_spawn_egg.png` — vanilla 1.21.x frog spawn egg shape tone-mapped to 4-tone greyscale (egg body + visible hind-leg bumps at row 14). Lifts vanilla's design directly since it already matches the "egg + leg accompaniments" pattern.
+- `slime_spawn_egg.png` — OpenAI gpt-image-1 candidate at 1024×1024 downscaled (nearest-neighbour) and tone-mapped: rounded blob-cube egg silhouette suggesting the slime cube shape.
+- `tadpole_spawn_egg.png` — OpenAI gpt-image-1 candidate similarly downscaled + tone-mapped: rounded head + tapering tail-flick at the back.
 
-**Fix path**: Replace the three base PNGs with the vanilla spawn-egg pattern:
-1. Each base PNG is a 16×16 **egg shape** matching vanilla's `template_spawn_egg.png` (two-tone: primary fill body + secondary speckle highlight).
-2. A small **creature-face overlay** in the top portion distinguishes frog vs tadpole vs slime (just the face/silhouette, not the whole body).
-3. Per-variant runtime tint via the existing `ItemTintSource` pipeline still drives the colour — but now it's the EGG that gets tinted, not the whole creature body.
-
-The simplest implementation copies vanilla's two-layer spawn-egg approach: `layer0` is the egg base (tintable primary), `layer1` is the speckle overlay (tintable secondary, or constant grey for now). Updating `models/item/{frog,tadpole,slime}_spawn_egg.json` to a two-layer template plus regenerating the three PNGs in the vanilla style closes this.
+Each PNG uses a 4-tone palette (highlight 220, mid body 150, shadow 100, dark outline 50) so the existing `productivefrogs:contained_category` / `productivefrogs:slime_variant` runtime tint multiplies cleanly to give each variant a distinct coloured egg with preserved shading depth. No model JSON / item JSON changes needed — the same single-layer tint pipeline still applies. No faces, no eyes — silhouettes only.
 
 ### 🟢 Frog tongue kill on Resource Slime emits both Froglight AND slimeballs — resolved
 Took option 2 from the fix-path discussion: added a new entity-type tag `productivefrogs:frogs` listing both `minecraft:frog` and `productivefrogs:resource_frog`, then added an `inverted` `entity_properties` condition on the Resource Slime loot table (`data/productivefrogs/loot_table/entities/resource_slime.json`) that gates the slimeball drop on `attacker != #productivefrogs:frogs`. Frog tongue kills now drop the variant Froglight only; non-frog kills (sword, fall damage, environmental) still drop slimeballs per vanilla parity.
