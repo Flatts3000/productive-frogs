@@ -16,16 +16,8 @@ Living tracker of playtest bugs, limitations, and workarounds for Productive Fro
 
 ## Open issues
 
-### 🔴 Coal Resource Slime's eye dots are nearly invisible (dark on dark)
-The coal SlimeVariant's `primary_color` is near-black (it's coal), and the slime body model + spawn-egg silhouette + bucket silhouette all carry the dark accent pixels (eyes) at their preserved low-channel values (~RGB 32,32,32 or below the tone-map threshold of 64). When the variant tint multiplies the body to coal-black, the contrast between body and eye-dots collapses — both are very dark — and the eyes effectively disappear.
-
-**Symptom**: Spawn a coal Resource Slime in-world or look at the coal slime spawn egg / coal slime bucket in inventory → it reads as a featureless black blob with no visible face. Compare against e.g. an iron variant (silver body + visible black eyes) where the contrast works.
-
-**Fix path**: Special-case the eye colour for very-dark variants. Either:
-1. In the silhouette tone-mapping / slime body texture overlay path, pick an eye colour that contrasts against the variant's tint — e.g. a fixed light-grey overlay for any variant whose `primary_color` has max(R,G,B) below some threshold (~64).
-2. OR re-tone the coal variant specifically so the body isn't *quite* black — bump the primary_color from near-black to a dark charcoal grey (still reads as "coal") so the eye dots stay legible against it.
-
-Option 1 is the general fix (covers any future near-black variants); option 2 is the quick coal-only fix.
+### 🟢 Coal Resource Slime's eye dots are nearly invisible (dark on dark) — resolved
+Took option 2 from the fix-path discussion: bumped `data/.../slime_variant/coal.json` `primary_color` from `0x2A2A2A` (near-black) to `0x585858` (charcoal grey), and `secondary_color` from `0x101010` to `0x202020`. Body tint now multiplies silhouette body pixels to a charcoal value while the preserved eye dots stay near-black — visible contrast restored. Coal variant still reads as "coal" but no longer flattens against its own eye dots.
 
 ### 🔴 Bucket of Slime + Bucket of Tadpole render as plain empty iron buckets
 Per the screenshot, the rows of Resource Tadpole Buckets and Slime Buckets across all 6 categories + 12 variants render as **plain unadorned iron buckets** — the silhouette layer that PR #66 (`tadpole_silhouette.png` / `slime_silhouette.png`) was supposed to provide isn't visible. The earlier resolved entry for "Bucket of Tadpole + Bucket of Slime render as empty buckets" claimed this was fixed; playtest shows the fix didn't actually land in the live render. The Slime Milk buckets (variant rim colour visible) are rendering correctly, so the tint pipeline works on at least one surface.
@@ -54,29 +46,11 @@ The input slot sits in the top-left of the GUI's recipe area while the output sl
 
 **Fix path**: Bump `SlimeMilkerMenu.INPUT_SLOT` Y position from its current value (56,17 per CLAUDE.md) to align vertically with `OUTPUT_SLOT` at y=30 — set input Y to 30 (or whatever centers it against the output). Also bump the input slot frame in `textures/gui/container/slime_milker.png` so the visual slot box matches the new Y. The GUI was modelled on vanilla furnace (which has 2 input slots stacked + 1 output centred); since we only need 1 input + 1 output, recentering is the right move.
 
-### 🔴 Slime Milker output slot doesn't center its item
-In the Slime Milker GUI the output milk bucket renders **offset to the left** within its output slot rather than centered. Vanilla furnace-style GUIs center the result item; the Slime Milker's output slot is a furnace-derived menu (`SlimeMilkerMenu`) so it should inherit the centering, but doesn't — the bucket sits flush against the left edge of the slot frame.
+### 🟢 Slime Milker output slot doesn't center its item — resolved
+Bumped `SlimeMilkerMenu.OUTPUT_SLOT_X` from 112 to 116 and `OUTPUT_SLOT_Y` from 30 to 35 so the menu uses vanilla furnace's actual result-slot coordinates (the previous (112, 30) values were a mis-quote of vanilla — real furnace result slot is at (116, 35)). The output bucket now centres against the result-slot frame drawn by the inherited GUI texture.
 
-**Symptom**: Place a Slime Bucket in the input slot of a Slime Milker → the produced milk bucket appears in the output slot **left-aligned**, not centered. Compare to a vanilla furnace's output slot rendering the smelted item centered.
-
-**Fix path**: Check `SlimeMilkerMenu.OUTPUT_SLOT` position in slot constructor (currently `(112, 30)` per CLAUDE.md notes). The vanilla furnace uses `(116, 30)` for its result slot to centre against the slot box drawn by the GUI texture. Either:
-1. Bump `OUTPUT_SLOT` X from 112 to 116 to match vanilla furnace centering, OR
-2. Adjust the GUI texture's output-slot frame position in `textures/gui/container/slime_milker.png` so the slot's left edge matches what the menu is rendering at x=112.
-
-Option 1 is the cleaner fix (one-line constant change) since the GUI was modelled on the vanilla furnace anyway.
-
-### 🔴 Slime Milk buckets have eyes — they shouldn't; Slime Buckets should
-PR #67 added two dark eye dots at (6,3) and (9,3) to all 14 variant Slime Milk bucket textures via `scripts/generate_slime_milk_textures.ps1`'s `Build-BucketTexture`. That was the wrong call. **Slime Milk is the fluid extracted from a slime** — the slime itself isn't in the bucket anymore, just its milk. The eyes don't belong on milk buckets. Eyes belong on the **Slime Bucket** (the bucketed live-slime entity, the surface that already exists via `SlimeBucketItem` + `slime_silhouette.png` layer0).
-
-**Symptom**: Open the Slime Milker GUI (see the user-supplied screenshot) → the held gold slime milk bucket in the bottom-left inventory slot shows two dark dots in the milk surface. Reads as a creature in a jar instead of a bucket of milk.
-
-**Fix path**:
-1. Revert the eye-overlay block in `scripts/generate_slime_milk_textures.ps1`'s `Build-BucketTexture` (remove the two `$out.SetPixel(6, 3, $eyeColor)` / `(9, 3, $eyeColor)` writes).
-2. Re-run the script to regenerate the 14 milk-bucket PNGs without eyes.
-3. Update the resolved-issue note for "Slime Milk bucket textures should show slime eyes" — flip it back to OPEN as "intentionally reverted: eyes belong on the slime bucket, not the milk bucket" so the design intent is recorded for future contributors.
-4. **Verify** the existing Slime Bucket (`slime_silhouette.png` layer0 from PR #66) already carries visible eye dots — it does, per the PixelLab silhouette tone-mapping, so no additional work on that side.
-
-This is a quick mechanical revert of the bucket-eye portion of PR #67. The animated-fluid changes from the same PR stay (those are correct).
+### 🟢 Slime Milk buckets have eyes — they shouldn't; Slime Buckets should — resolved
+Reverted the eye-overlay portion of PR #67. `scripts/generate_slime_milk_textures.ps1`'s `Build-BucketTexture` no longer writes the two dark pixels at (6,3) and (9,3); replaced with a comment block explaining the design pivot. Re-ran the script to regenerate the 14 variant milk-bucket PNGs without eyes. The animated-fluid changes from the same PR stay (still correct). The Slime Bucket (`slime_silhouette.png` layer0) keeps its eyes, which was always the right surface.
 
 ### 🔴 Spawn egg textures don't read as eggs — they look like dead 2D creatures
 The 3 spawn-egg base textures shipped in PR #69 (`frog_spawn_egg.png`, `tadpole_spawn_egg.png`, `slime_spawn_egg.png`) render the full creature silhouette tinted per variant. In context next to the **vanilla Minecraft spawn-egg style** they don't read as "eggs you spawn a creature from" — they read as flat 2D dead frogs / tadpoles / slime blobs. Vanilla spawn eggs are an **oval / ovoid egg shape with a two-tone speckle pattern** (primary + secondary colour) and a **small creature-face overlay** on top to distinguish species; PF's spawn eggs throw away the egg shape entirely and just paint the creature.
@@ -128,8 +102,8 @@ Dropped the `for (var entry : PFItems.RESOURCE_FROGLIGHT_ITEMS.values())` loop f
 ### 🟢 Bucket of Tadpole + Bucket of Slime render as empty buckets — resolved
 The two silhouette PNGs (`textures/item/tadpole_silhouette.png` and `textures/item/slime_silhouette.png`) were blank/transparent placeholders, so the layered bucket items rendered as iron exteriors with empty contents. Resolved by generating both via PixelLab MCP (`create_map_object`, transparent BG), then tone-mapping with `scripts/process_silhouette.ps1`: non-transparent body pixels brighten to near-white (220,220,220) so the runtime `BucketedCategoryTint` multiplication renders the category color, while dark accent pixels (eyes) stay below the 64 threshold and are preserved as-is so they remain visible at every variant tint.
 
-### 🟠 Slime Milk bucket textures should show slime eyes in the liquid — REOPENED (design pivot)
-PR #67 shipped this with two dark pixel dots at (6,3) and (9,3) overlaid on each variant's milk surface. **Playtest revealed the design intent was wrong**: Slime Milk is the extracted fluid, the slime itself isn't in the bucket anymore — eyes don't belong there. Eyes belong on the **Slime Bucket** (the bucketed live-slime entity), which already carries them via the `slime_silhouette.png` from PR #66. See the active 🔴 entry above ("Slime Milk buckets have eyes — they shouldn't; Slime Buckets should") for the revert plan. Keeping this entry visible with the design-pivot note so the original "ship it" decision isn't silently invalidated.
+### 🟠 Slime Milk bucket textures should show slime eyes in the liquid — REOPENED (design pivot, since reverted)
+PR #67 shipped this with two dark pixel dots at (6,3) and (9,3) overlaid on each variant's milk surface. **Playtest revealed the design intent was wrong**: Slime Milk is the extracted fluid, the slime itself isn't in the bucket anymore — eyes don't belong there. Eyes belong on the **Slime Bucket** (the bucketed live-slime entity), which already carries them via the `slime_silhouette.png` from PR #66. The revert has since landed — see the 🟢 "Slime Milk buckets have eyes — they shouldn't; Slime Buckets should — resolved" entry above. Keeping this entry visible with the design-pivot note so the original "ship it" decision isn't silently invalidated.
 
 ### 🟢 Slime splash particle uses vanilla green regardless of slime variant — resolved
 Vanilla's `Slime#tick` reads `getParticleType()` once per particle in its jump-landing splash loop, so overriding that single method swaps the colour without touching the spawn cadence or count. Each PF slime now returns `new DustParticleOptions(<tint>, 1.0F)` in place of `ParticleTypes.ITEM_SLIME`:

@@ -47,12 +47,16 @@ public class SlimeMilkerMenu extends AbstractContainerMenu {
     // Slot widget positions on the screen, aligned to vanilla furnace
     // background image (the GUI is composed from vanilla furnace.png with
     // the fuel slot painted out — see scripts/generate_slime_milker_gui.ps1).
-    // Vanilla furnace positions: input (56, 17), output (112, 30). The
-    // progress arrow sprite sits between them at (79, 34).
+    // Vanilla furnace positions: input (56, 17), fuel (56, 53), result
+    // (116, 35). The progress arrow sprite sits between them at (79, 34).
+    // We use vanilla's result-slot coordinates (116, 35) directly to centre
+    // the output bucket against the result-slot frame drawn by the GUI
+    // texture — previous values (112, 30) left the bucket offset to the
+    // top-left of the slot box.
     public static final int INPUT_SLOT_X = 56;
     public static final int INPUT_SLOT_Y = 17;
-    public static final int OUTPUT_SLOT_X = 112;
-    public static final int OUTPUT_SLOT_Y = 30;
+    public static final int OUTPUT_SLOT_X = 116;
+    public static final int OUTPUT_SLOT_Y = 35;
 
     private final ContainerLevelAccess access;
     private final ContainerData dataAccess;
