@@ -191,7 +191,7 @@ public class ResourceSlime extends Slime implements Bucketable {
      * "Iron Slime". When the variant id is absent OR resolves to {@code null}
      * (datapack/mod removed since save), falls back to the broad category
      * name ({@code entity.productivefrogs.resource_slime.<category_id>}) —
-     * e.g. "Metallic Slime". The variant-resolution check avoids showing a
+     * e.g. "Bog Slime". The variant-resolution check avoids showing a
      * raw translation key in the overlay when the lang entry doesn't exist.
      */
     @Override

@@ -1,12 +1,12 @@
 {
   "type": "minecraft:smelting",
   "ingredient": {
-    "item": "productivefrogs:arcane_froglight"
+    "item": "productivefrogs:cave_froglight"
   },
   "result": {
-    "id": "minecraft:ender_pearl"
+    "id": "minecraft:redstone"
   },
-  "experience": 1.0,
+  "experience": 0.2,
   "cookingtime": 200,
   "category": "misc",
   "group": "productivefrogs_froglight"

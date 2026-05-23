@@ -6,7 +6,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "productivefrogs:arcane_froglight"
+          "name": "productivefrogs:void_froglight"
         }
       ],
       "conditions": [
@@ -16,5 +16,5 @@
       ]
     }
   ],
-  "random_sequence": "productivefrogs:blocks/arcane_froglight"
+  "random_sequence": "productivefrogs:blocks/void_froglight"
 }

@@ -74,7 +74,7 @@ class SlimeBucketItemTest {
     void variantWinsOverCategoryWhenBothPresent() {
         // Real captured buckets carry both. The resolver must prefer the
         // more specific variant key — otherwise iron / copper / gold
-        // METALLIC slimes would all read "Bucket of Metallic Slime".
+        // METALLIC slimes would all read "Bucket of Bog Slime".
         ItemStack stack = new ItemStack(PFItems.SLIME_BUCKET.get());
         ResourceLocation variantId =
             ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");

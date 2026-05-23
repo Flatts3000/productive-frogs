@@ -6,7 +6,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "productivefrogs:aquatic_froglight"
+          "name": "productivefrogs:tide_froglight"
         }
       ],
       "conditions": [
@@ -16,5 +16,5 @@
       ]
     }
   ],
-  "random_sequence": "productivefrogs:blocks/aquatic_froglight"
+  "random_sequence": "productivefrogs:blocks/tide_froglight"
 }

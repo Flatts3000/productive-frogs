@@ -73,7 +73,7 @@ public final class PFCreativeTabs {
                     // worlds load fine, FrogTongueDropHandler still emits them
                     // as the no-variant fallback drop) — only the tab listing is
                     // dropped. Creative testers wanting a specific category block
-                    // can /give productivefrogs:metallic_froglight etc.
+                    // can /give productivefrogs:bog_froglight etc.
                     //
                     // One configurable_froglight per shipped variant — each stack
                     // carries its variant id in the SLIME_VARIANT data component so
@@ -98,9 +98,11 @@ public final class PFCreativeTabs {
                     // Parent species spawn eggs (Cave / Geode / Tide / Void) —
                     // not category-themed, kept after the variant eggs so the
                     // tab reads as: variants first, then upstream sources.
+                    output.accept(PFItems.BOG_SLIME_SPAWN_EGG.get());
                     output.accept(PFItems.CAVE_SLIME_SPAWN_EGG.get());
                     output.accept(PFItems.GEODE_SLIME_SPAWN_EGG.get());
                     output.accept(PFItems.TIDE_SLIME_SPAWN_EGG.get());
+                    output.accept(PFItems.INFERNAL_SLIME_SPAWN_EGG.get());
                     output.accept(PFItems.VOID_SLIME_SPAWN_EGG.get());
                 })
                 .build()

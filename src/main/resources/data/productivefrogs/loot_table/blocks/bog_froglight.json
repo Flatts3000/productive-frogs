@@ -6,7 +6,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "productivefrogs:mineral_froglight"
+          "name": "productivefrogs:bog_froglight"
         }
       ],
       "conditions": [
@@ -16,5 +16,5 @@
       ]
     }
   ],
-  "random_sequence": "productivefrogs:blocks/mineral_froglight"
+  "random_sequence": "productivefrogs:blocks/bog_froglight"
 }

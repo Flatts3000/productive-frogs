@@ -273,24 +273,24 @@ public final class PFGameTests {
     }
 
     /**
-     * Force the discovery chance to 100% and split a vanilla green slime;
-     * assert every offspring is a Resource Slime carrying a METALLIC-pool
-     * variant (iron / copper / gold). Verifies the
+     * V1.5: force discovery chance to 100% and split a Cave Slime; assert
+     * every offspring is a Resource Slime carrying a CAVE-pool variant
+     * (iron / copper / gold / redstone / lapis / coal / diamond). Verifies
      * {@link SlimeVariant#pickWeighted} integration in
      * {@code SlimeSplitDiscoveryHandler}.
+     *
+     * <p>Pre-V1.5 this test used vanilla slime + METALLIC pool. Post-V1.5,
+     * vanilla slime is not a parent (Q1=A) so the test uses Cave Slime
+     * (the canonical CAVE parent) which carries the bulk of V1's variants.
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void splitDiscoveryPicksVariantFromPool(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 2, 2);
-        // Capture-and-restore in case another harness mid-run has set its own
-        // override — blindly clearing to null would clobber it. Unconditional
-        // null was correct for V1 (only this test family writes the field),
-        // but the restore pattern is cheap insurance against future nesting.
         Float originalOverride = SlimeSplitDiscoveryHandler.testOverride;
         SlimeSplitDiscoveryHandler.testOverride = 1.0f;
         try {
-            net.minecraft.world.entity.monster.Slime parent =
-                helper.spawn(net.minecraft.world.entity.EntityType.SLIME, pos);
+            com.flatts.productivefrogs.content.entity.CaveSlime parent =
+                helper.spawn(PFEntities.CAVE_SLIME.get(), pos);
             parent.setSize(3, true);
             parent.setHealth(0.0F);
             parent.remove(net.minecraft.world.entity.Entity.RemovalReason.KILLED);
@@ -300,26 +300,26 @@ public final class PFGameTests {
                 if (resources.isEmpty()) {
                     helper.fail("expected at least one Resource Slime after forced discovery, got 0");
                 }
-                // At 100% chance every child must convert — no vanilla slimes
-                // should remain. Mirrors runSplitDiscoveryTest's check.
-                List<? extends net.minecraft.world.entity.monster.Slime> vanillaRemaining =
-                    helper.getEntities(net.minecraft.world.entity.EntityType.SLIME);
-                if (!vanillaRemaining.isEmpty()) {
-                    helper.fail("expected zero vanilla slime children at 100% discovery, got "
-                        + vanillaRemaining.size());
+                // At 100% chance every child must convert.
+                List<com.flatts.productivefrogs.content.entity.CaveSlime> remaining =
+                    helper.getEntities(PFEntities.CAVE_SLIME.get());
+                if (!remaining.isEmpty()) {
+                    helper.fail("expected zero Cave Slime children at 100% discovery, got "
+                        + remaining.size());
                 }
+                java.util.Set<String> cavePool = java.util.Set.of(
+                    "iron", "copper", "gold", "redstone", "lapis", "coal", "diamond");
                 for (ResourceSlime s : resources) {
                     ResourceLocation variantId = s.getVariantId();
                     if (variantId == null) {
-                        helper.fail("split-discovered slime should carry a variant (METALLIC pool is non-empty)");
+                        helper.fail("split-discovered slime should carry a variant (CAVE pool is non-empty)");
                         return;
                     }
-                    if (s.getCategory() != Category.BOG) {
-                        helper.fail("variant sync should leave category METALLIC, got " + s.getCategory());
+                    if (s.getCategory() != Category.CAVE) {
+                        helper.fail("variant sync should leave category CAVE, got " + s.getCategory());
                     }
-                    String path = variantId.getPath();
-                    if (!path.equals("iron") && !path.equals("copper") && !path.equals("gold")) {
-                        helper.fail("variant " + path + " is not in the METALLIC pool (iron/copper/gold)");
+                    if (!cavePool.contains(variantId.getPath())) {
+                        helper.fail("variant " + variantId.getPath() + " is not in the CAVE pool");
                     }
                 }
             });
@@ -450,14 +450,16 @@ public final class PFGameTests {
             level.registryAccess().registryOrThrow(
                 com.flatts.productivefrogs.registry.PFRegistries.PARENT_SPECIES);
 
-        // entity_type id -> expected category
+        // V1.5: vanilla slime + magma cube REMOVED from parent_species registry
+        // (Q1=A — vanilla mobs are no longer parents). Six PF parent species
+        // cover all categories.
         java.util.Map<ResourceLocation, Category> expected = new java.util.LinkedHashMap<>();
-        expected.put(ResourceLocation.parse("minecraft:slime"),              Category.BOG);
-        expected.put(ResourceLocation.parse("minecraft:magma_cube"),         Category.INFERNAL);
-        expected.put(ResourceLocation.parse("productivefrogs:cave_slime"),   Category.CAVE);
-        expected.put(ResourceLocation.parse("productivefrogs:geode_slime"),  Category.GEODE);
-        expected.put(ResourceLocation.parse("productivefrogs:tide_slime"),   Category.TIDE);
-        expected.put(ResourceLocation.parse("productivefrogs:void_slime"),   Category.VOID);
+        expected.put(ResourceLocation.parse("productivefrogs:bog_slime"),      Category.BOG);
+        expected.put(ResourceLocation.parse("productivefrogs:cave_slime"),     Category.CAVE);
+        expected.put(ResourceLocation.parse("productivefrogs:geode_slime"),    Category.GEODE);
+        expected.put(ResourceLocation.parse("productivefrogs:tide_slime"),     Category.TIDE);
+        expected.put(ResourceLocation.parse("productivefrogs:infernal_slime"), Category.INFERNAL);
+        expected.put(ResourceLocation.parse("productivefrogs:void_slime"),     Category.VOID);
 
         java.util.Map<ResourceLocation, Category> actual = new java.util.HashMap<>();
         for (com.flatts.productivefrogs.data.ParentSpeciesEntry entry : registry) {
@@ -816,22 +818,25 @@ public final class PFGameTests {
     }
 
     /**
-     * Force the discovery chance to 100% and split a vanilla green slime —
-     * assert every child becomes a METALLIC {@link ResourceSlime} via
-     * {@link SlimeSplitDiscoveryHandler}'s {@link MobSplitEvent} hook.
+     * V1.5 species-as-category: Bog Slime (the PF parent species for BOG)
+     * splits convert to BOG ResourceSlimes at 100% discovery. Replaces the
+     * pre-V1.5 vanillaSlimeSplitDiscoveryConvertsToMetallicResourceSlime test
+     * — vanilla slime is no longer a parent (Q1=A).
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
-    public static void vanillaSlimeSplitDiscoveryConvertsToMetallicResourceSlime(GameTestHelper helper) {
-        runSplitDiscoveryTest(helper, net.minecraft.world.entity.EntityType.SLIME, Category.BOG);
+    public static void bogSlimeSplitDiscoveryConvertsToBogResourceSlime(GameTestHelper helper) {
+        runSplitDiscoveryTest(helper, PFEntities.BOG_SLIME.get(), Category.BOG);
     }
 
     /**
-     * Same shape as the slime test but for magma cubes — vanilla magma cube
-     * splits map to INFERNAL Resource Slimes.
+     * V1.5 species-as-category: Infernal Slime (the PF parent species for
+     * INFERNAL) splits convert to INFERNAL ResourceSlimes at 100% discovery.
+     * Replaces the pre-V1.5 vanillaMagmaCubeSplitDiscoveryConvertsToInfernalResourceSlime
+     * test — vanilla magma cube is no longer a parent (Q1=A).
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
-    public static void vanillaMagmaCubeSplitDiscoveryConvertsToInfernalResourceSlime(GameTestHelper helper) {
-        runSplitDiscoveryTest(helper, net.minecraft.world.entity.EntityType.MAGMA_CUBE, Category.INFERNAL);
+    public static void infernalSlimeSplitDiscoveryConvertsToInfernalResourceSlime(GameTestHelper helper) {
+        runSplitDiscoveryTest(helper, PFEntities.INFERNAL_SLIME.get(), Category.INFERNAL);
     }
 
     /**

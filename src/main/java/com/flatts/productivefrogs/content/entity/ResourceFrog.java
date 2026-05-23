@@ -82,7 +82,7 @@ public class ResourceFrog extends Frog {
 
     /**
      * Category-aware display name — so Jade, the F3 entity readout, and any
-     * other client surface that calls {@code getName()} reads "Metallic Frog"
+     * other client surface that calls {@code getName()} reads "Bog Frog"
      * instead of the generic "Resource Frog". Falls back to the custom name
      * (player-set via name tag) when present.
      *

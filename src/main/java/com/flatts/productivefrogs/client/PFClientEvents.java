@@ -254,9 +254,11 @@ public final class PFClientEvents {
                 opaque(((net.minecraft.world.item.SpawnEggItem) stack.getItem()).getColor(tintIndex)),
                 egg);
 
+        registerCtorColors.accept(PFItems.BOG_SLIME_SPAWN_EGG.get());
         registerCtorColors.accept(PFItems.CAVE_SLIME_SPAWN_EGG.get());
         registerCtorColors.accept(PFItems.GEODE_SLIME_SPAWN_EGG.get());
         registerCtorColors.accept(PFItems.TIDE_SLIME_SPAWN_EGG.get());
+        registerCtorColors.accept(PFItems.INFERNAL_SLIME_SPAWN_EGG.get());
         registerCtorColors.accept(PFItems.VOID_SLIME_SPAWN_EGG.get());
 
         for (var entry : PFItems.RESOURCE_FROG_SPAWN_EGGS.entrySet()) {

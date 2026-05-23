@@ -1,12 +1,12 @@
 {
   "type": "minecraft:smelting",
   "ingredient": {
-    "item": "productivefrogs:aquatic_froglight"
+    "item": "productivefrogs:void_froglight"
   },
   "result": {
-    "id": "minecraft:prismarine_shard"
+    "id": "minecraft:ender_pearl"
   },
-  "experience": 0.5,
+  "experience": 1.0,
   "cookingtime": 200,
   "category": "misc",
   "group": "productivefrogs_froglight"

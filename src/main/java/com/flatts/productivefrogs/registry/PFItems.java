@@ -177,11 +177,25 @@ public final class PFItems {
             Category.TIDE.tintRgb(), darker(Category.TIDE.tintRgb()), props)
     );
 
-    /** Void Slime spawn egg — ARCANE parent species. Mirrors Cave Slime. */
+    /** Void Slime spawn egg — VOID parent species. Mirrors Cave Slime. */
     public static final DeferredItem<SpawnEggItem> VOID_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "void_slime_spawn_egg",
         props -> new SpawnEggItem(PFEntities.VOID_SLIME.get(),
             Category.VOID.tintRgb(), darker(Category.VOID.tintRgb()), props)
+    );
+
+    /** Bog Slime spawn egg — BOG parent species. V1.5 addition. */
+    public static final DeferredItem<SpawnEggItem> BOG_SLIME_SPAWN_EGG = ITEMS.registerItem(
+        "bog_slime_spawn_egg",
+        props -> new SpawnEggItem(PFEntities.BOG_SLIME.get(),
+            Category.BOG.tintRgb(), darker(Category.BOG.tintRgb()), props)
+    );
+
+    /** Infernal Slime spawn egg — INFERNAL parent species. V1.5 addition. */
+    public static final DeferredItem<SpawnEggItem> INFERNAL_SLIME_SPAWN_EGG = ITEMS.registerItem(
+        "infernal_slime_spawn_egg",
+        props -> new SpawnEggItem(PFEntities.INFERNAL_SLIME.get(),
+            Category.INFERNAL.tintRgb(), darker(Category.INFERNAL.tintRgb()), props)
     );
 
     /**

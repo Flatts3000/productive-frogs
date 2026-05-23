@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * one registered Item, N visual surfaces driven by JSON data (see
  * {@code docs/productive_bees_analysis.md} §2). Distinct from the six broad-
  * category {@code <category>_froglight} blocks — those are the fixed-palette
- * decorative blocks (Metallic Froglight, etc), this one is the production-loop
+ * decorative blocks (Bog Froglight, etc), this one is the production-loop
  * currency that survives variant fidelity across pickup ↔ place ↔ break.
  *
  * <p>Variant round-trip:

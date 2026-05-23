@@ -1,12 +1,12 @@
 {
   "type": "minecraft:smelting",
   "ingredient": {
-    "item": "productivefrogs:metallic_froglight"
+    "item": "productivefrogs:tide_froglight"
   },
   "result": {
-    "id": "minecraft:iron_ingot"
+    "id": "minecraft:prismarine_shard"
   },
-  "experience": 0.7,
+  "experience": 0.5,
   "cookingtime": 200,
   "category": "misc",
   "group": "productivefrogs_froglight"
