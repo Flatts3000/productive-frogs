@@ -18,7 +18,7 @@ import net.minecraft.world.level.material.Fluid;
  * the bucket's {@code BUCKET_ENTITY_DATA} payload.
  *
  * <p>Name resolution mirrors the tint pipeline in
- * {@code TadpoleBucketCategoryTint}:
+ * {@code BucketedCategoryTint}:
  *
  * <ol>
  *   <li><b>Variant</b> — read the {@code Variant} id from the bucket NBT via

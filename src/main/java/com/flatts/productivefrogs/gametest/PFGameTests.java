@@ -793,9 +793,9 @@ public final class PFGameTests {
      *
      * <p>Cross-bucket detail: ResourceTadpoleBucketItem.readCategory works for
      * the slime bucket too because both bucket types write the same
-     * {@code BUCKET_ENTITY_DATA → "Category" string} shape. Candidate for a
-     * rename to {@code BucketedCategoryTint} as a follow-up since the reader
-     * now serves two surfaces.
+     * {@code BUCKET_ENTITY_DATA → "Category" string} shape — same reader is
+     * referenced by both bucket item models via the renamed
+     * {@code BucketedCategoryTint} ItemTintSource.
      */
     private static void slimeBucketRoundTripPreservesCategory(GameTestHelper helper) {
         Category cat = Category.MINERAL;
@@ -842,7 +842,7 @@ public final class PFGameTests {
      *
      * <p>This pins the precondition for the variant-aware Slime Bucket tint:
      * if the bucket doesn't carry the Variant id after capture, the
-     * {@code TadpoleBucketCategoryTint} resolution-order would skip the
+     * {@code BucketedCategoryTint} resolution-order would skip the
      * variant lookup and fall back to the broader category colour.
      */
     private static void slimeBucketRoundTripPreservesVariant(GameTestHelper helper) {

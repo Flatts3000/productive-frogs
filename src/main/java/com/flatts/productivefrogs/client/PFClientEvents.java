@@ -9,9 +9,9 @@ import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
 import com.flatts.productivefrogs.client.renderer.TideSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.VoidSlimeRenderer;
 import com.flatts.productivefrogs.client.screen.SlimeMilkerScreen;
+import com.flatts.productivefrogs.client.tint.BucketedCategoryTint;
 import com.flatts.productivefrogs.client.tint.ContainedCategoryTint;
 import com.flatts.productivefrogs.client.tint.SlimeVariantTint;
-import com.flatts.productivefrogs.client.tint.TadpoleBucketCategoryTint;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFEntities;
@@ -36,9 +36,9 @@ import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsE
  *   <li>{@code BlockColor} handlers on each Primed Frog Egg block so
  *       {@code tintindex 0} in the shared block model picks up the category
  *       color in-world.</li>
- *   <li>Custom {@link ContainedCategoryTint} and {@link TadpoleBucketCategoryTint}
+ *   <li>Custom {@link ContainedCategoryTint} and {@link BucketedCategoryTint}
  *       ItemTintSources, referenced from item model JSONs to drive Frog Egg
- *       bottle + Tadpole Bucket content-layer tinting.</li>
+ *       bottle + Tadpole/Slime Bucket content-layer tinting.</li>
  * </ul>
  *
  * <p>All tint values flow through {@link Category#tintArgb()} — single source
@@ -94,8 +94,8 @@ public final class PFClientEvents {
             SlimeVariantTint.MAP_CODEC
         );
         event.register(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tadpole_bucket_category"),
-            TadpoleBucketCategoryTint.MAP_CODEC
+            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "bucketed_category"),
+            BucketedCategoryTint.MAP_CODEC
         );
     }
 

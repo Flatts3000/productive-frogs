@@ -61,7 +61,6 @@ Out of scope until V1 ships. [docs/versioning.md#v2--automation](./versioning.md
 Items noted in commit messages or PR descriptions as known issues but not blocking.
 
 ### Code hygiene
-- **Rename `TadpoleBucketCategoryTint` → `BucketedCategoryTint`.** Originally tadpole-specific; now serves the Slime Bucket too (PR #22). The class name is misleading. Touch the registration site + 2 client-item-info JSONs.
 - **`ResourceFrog#brainProvider` duplicates vanilla constants.** We rebuild the sensor list inline because `Frog.SENSOR_TYPES` is `protected static`. If we add a few more sensors a cleaner approach is access-transforming `Frog.SENSOR_TYPES` and `Frog.MEMORY_TYPES` to public so we can reference them directly.
 - ~~**`SlimeSplitDiscoveryHandler.discoveryChancePerOffspring` is `public static`.**~~ — resolved in J5. Now backed by `PFConfig.DISCOVERY_CHANCE_PER_OFFSPRING` with a separate `testOverride` field for GameTest force-conversion.
 

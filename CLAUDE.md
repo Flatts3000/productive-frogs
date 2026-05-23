@@ -97,7 +97,7 @@ When adding a test, the pattern is: register a function in the static block, doc
 
 ### Item tinting in 1.21.x — the non-obvious gotcha
 
-The legacy `RegisterColorHandlersEvent.Item` event is **gone** in vanilla and NeoForge for 1.21.x. Per-item runtime tinting is now declared in the item model JSON via a `"tints"` array referencing a registered `ItemTintSource` codec. `PFClientEvents.onRegisterItemTintSources` registers `ContainedCategoryTint` and `TadpoleBucketCategoryTint` for that purpose. Block-item inventory icons still pick up tint via `BlockColor` (registered in the same class). If you add a new content-tinted item, register a new `ItemTintSource` rather than reaching for the removed item-color API.
+The legacy `RegisterColorHandlersEvent.Item` event is **gone** in vanilla and NeoForge for 1.21.x. Per-item runtime tinting is now declared in the item model JSON via a `"tints"` array referencing a registered `ItemTintSource` codec. `PFClientEvents.onRegisterItemTintSources` registers `ContainedCategoryTint` and `BucketedCategoryTint` for that purpose. Block-item inventory icons still pick up tint via `BlockColor` (registered in the same class). If you add a new content-tinted item, register a new `ItemTintSource` rather than reaching for the removed item-color API.
 
 ## Project Conventions
 
