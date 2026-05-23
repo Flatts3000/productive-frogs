@@ -101,14 +101,19 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * where vanilla constructs a BE from components alone (e.g. a /clone
      * with components blocks moved into world via a tool that doesn't run
      * the item-use code path).
+     *
+     * <p>Assigns the component value directly — including null — so this
+     * method is a true inverse of {@link #collectImplicitComponents}. If
+     * the incoming map omits SLIME_VARIANT and the BE previously held one,
+     * we clear it rather than silently retaining the stale variant. Catches
+     * the /clone-with-components edge case where a player clones an
+     * unstamped Froglight onto an already-stamped one and expects the
+     * clone to win.
      */
     @Override
     protected void applyImplicitComponents(DataComponentGetter components) {
         super.applyImplicitComponents(components);
-        Identifier id = components.get(PFDataComponents.SLIME_VARIANT.get());
-        if (id != null) {
-            this.variantId = id;
-        }
+        this.variantId = components.get(PFDataComponents.SLIME_VARIANT.get());
     }
 
     @Override

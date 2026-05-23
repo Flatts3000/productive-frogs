@@ -51,10 +51,12 @@ public final class ConfigurableFroglightItem extends BlockItem {
     /**
      * Hook vanilla calls during block placement to seed the BE with NBT from
      * the item stack. We use it to copy the {@code SLIME_VARIANT} component
-     * into the BE's {@code Variant} field. Returning {@code false} from
-     * {@link BlockItem#updateCustomBlockEntityTag(BlockPos, Level, net.minecraft.world.entity.player.Player, ItemStack, BlockState)}
-     * means "no further NBT mutation needed," which is what we want — we've
-     * already done it manually here.
+     * into the BE's {@code Variant} field. Returns {@code true} when we
+     * actually mutated the BE (variant was present on the stack AND the BE at
+     * the placement position was our BE type) so vanilla can mark the BE
+     * changed; returns {@code false} on the no-op paths (unstamped stack, or
+     * BE missing/wrong type — neither should happen in practice but we fail
+     * closed).
      */
     @Override
     protected boolean updateCustomBlockEntityTag(BlockPos pos, Level level, @Nullable Player player, ItemStack stack, BlockState state) {
