@@ -146,10 +146,21 @@ function Build-BucketTexture {
                         continue
                     }
                 }
-                # Otherwise it's a milk pixel — tint it.
+                # Otherwise it's a milk pixel -- tint it.
                 $out.SetPixel($x, $y, (Apply-Tint $mp $tintRgb))
             }
         }
+        # Slime eyes overlay: two dark pixels on the top milk surface so the
+        # bucket reads as "slime peering out" rather than "tinted dye." Eye
+        # positions chosen against the vanilla milk_bucket.png milk shape --
+        # y=3 is the top of the widest milk band; x=6 / x=9 symmetric around
+        # center give vanilla-slime-style 2-pixel eye spacing. Dark color
+        # stays low-channel so post-tint multiplication keeps it dark on
+        # every variant.
+        $eyeColor = [System.Drawing.Color]::FromArgb(255, 28, 28, 28)
+        $out.SetPixel(6, 3, $eyeColor)
+        $out.SetPixel(9, 3, $eyeColor)
+
         $outPath = Join-Path $itemDir "${variant}_slime_milk_bucket.png"
         Save-Png $out $outPath
         Write-Output "wrote $outPath"
@@ -164,11 +175,14 @@ function Build-FluidTexture {
     param([string]$variant, [int]$tintRgb, [string]$sourcePath, [string]$kind)
     $src = New-Object System.Drawing.Bitmap $sourcePath
     try {
-        # Vanilla water_still/water_flow are vertical animation strips; the
-        # first 16x16 region is the first frame. Single-frame for V1.
-        $out = New-Object System.Drawing.Bitmap 16, 16
-        for ($y = 0; $y -lt 16; $y++) {
-            for ($x = 0; $x -lt 16; $x++) {
+        # Animated multi-frame strip: copy the FULL vanilla water_still /
+        # water_flow vertical strip (32 frames each) and tint every pixel.
+        # Sibling .mcmeta is emitted below to drive the animation cadence.
+        $w = $src.Width
+        $h = $src.Height
+        $out = New-Object System.Drawing.Bitmap $w, $h
+        for ($y = 0; $y -lt $h; $y++) {
+            for ($x = 0; $x -lt $w; $x++) {
                 $p = $src.GetPixel($x, $y)
                 if ($p.A -eq 0) { continue }
                 $out.SetPixel($x, $y, (Apply-Tint $p $tintRgb))
@@ -176,7 +190,13 @@ function Build-FluidTexture {
         }
         $outPath = Join-Path $blockDir "${variant}_slime_milk_${kind}.png"
         Save-Png $out $outPath
-        Write-Output "wrote $outPath"
+        Write-Output "wrote $outPath ($w x $h)"
+        # Sibling .mcmeta declaring the animation. frametime=2 matches vanilla
+        # water_still.png.mcmeta's cadence. Width/height left implicit so MC
+        # auto-detects frame size = texture width.
+        $mcmetaPath = "$outPath.mcmeta"
+        [System.IO.File]::WriteAllText($mcmetaPath, "{`n  `"animation`": {`n    `"frametime`": 2`n  }`n}`n", [System.Text.UTF8Encoding]::new($false))
+        Write-Output "wrote $mcmetaPath"
         $out.Dispose()
     } finally { $src.Dispose() }
 }
