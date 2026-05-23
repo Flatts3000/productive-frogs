@@ -64,17 +64,10 @@ The 3 spawn-egg base textures shipped in PR #69 (`frog_spawn_egg.png`, `tadpole_
 
 The simplest implementation copies vanilla's two-layer spawn-egg approach: `layer0` is the egg base (tintable primary), `layer1` is the speckle overlay (tintable secondary, or constant grey for now). Updating `models/item/{frog,tadpole,slime}_spawn_egg.json` to a two-layer template plus regenerating the three PNGs in the vanilla style closes this.
 
-### 🔴 Frog tongue kill on Resource Slime emits both Froglight AND slimeballs
-When a category-matched Resource Frog eats a Resource Slime, the kill is producing **both** the variant-stamped Froglight (the intended drop, emitted by `FrogTongueDropHandler.LivingDeathEvent`) **and** the vanilla slimeball loot from the slime's loot table. Confirmed in playtest: a gold (METALLIC-variant) Resource Slime eaten by a METALLIC Resource Frog drops the iron-variant `configurable_froglight` plus 1-4 slimeballs.
+### 🟢 Frog tongue kill on Resource Slime emits both Froglight AND slimeballs — resolved
+Took option 2 from the fix-path discussion: added a new entity-type tag `productivefrogs:frogs` listing both `minecraft:frog` and `productivefrogs:resource_frog`, then added an `inverted` `entity_properties` condition on the Resource Slime loot table (`data/productivefrogs/loot_table/entities/resource_slime.json`) that gates the slimeball drop on `attacker != #productivefrogs:frogs`. Frog tongue kills now drop the variant Froglight only; non-frog kills (sword, fall damage, environmental) still drop slimeballs per vanilla parity.
 
-**Symptom**: Spawn a gold Resource Slime, spawn a metallic Resource Frog nearby, wait for the tongue kill → drops on the ground show 1 froglight + slimeballs. Should be froglight only — the slimeball drop is the vanilla "slime killed by anything" loot fallback and shouldn't fire when the kill was the Frog-Slime category-match path that produced the Froglight.
-
-**Fix path** (under consideration):
-1. Suppress the loot table when `FrogTongueDropHandler` emits a Froglight — add a flag to the death event handler so the loot table check sees "Froglight already dropped, skip slimeballs."
-2. OR rewrite the loot table at `data/productivefrogs/loot_table/entities/resource_slime.json` to gate slimeball drops on a `killed_by_entity` condition that excludes Frogs.
-3. OR override `ResourceSlime#dropFromLootTable` (or the appropriate vanilla hook) to skip the loot table when the damage source is a frog tongue.
-
-Option 2 is the cleanest because it's declarative JSON, but verify it can express "damage source is not a Frog" — the vanilla `entity_properties` condition supports type predicates so `{"condition": "inverted", "term": {"condition": "entity_properties", "entity": "direct_killer", "predicate": {"type": "minecraft:frog"}}}` should work.
+The single-Froglight-per-kill design is preserved by `FrogTongueDropHandler.dropFroglightAtFrog`: each invocation creates exactly one `ItemStack` (default count 1) and spawns it as one `ItemEntity`, so a single tongue-hit cannot multiply the drop.
 
 ### 🔴 Variant-stamped Froglights render as 2D items instead of 3D placeable blocks
 The 12 variant-stamped Froglights (the `configurable_froglight` items that ship from frog tongue kills carrying a `SLIME_VARIANT` data component — iron, copper, gold, redstone, lapis, coal, diamond, emerald, prismarine, sponge, magma_cream, ender_pearl) currently render as flat 2D item icons in inventory and as flat 2D ground entities when dropped. They cannot be placed as blocks in the world; vanilla froglights and the 6 broad-strokes category Froglights (`metallic_froglight` etc.) are real 3D `BlockItem`s with a placeable model.

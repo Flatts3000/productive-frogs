@@ -14,6 +14,16 @@
               "size": 1
             }
           }
+        },
+        {
+          "condition": "minecraft:inverted",
+          "term": {
+            "condition": "minecraft:entity_properties",
+            "entity": "killer",
+            "predicate": {
+              "type": "#productivefrogs:frogs"
+            }
+          }
         }
       ],
       "entries": [
