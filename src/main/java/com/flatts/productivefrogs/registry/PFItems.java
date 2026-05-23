@@ -240,10 +240,17 @@ public final class PFItems {
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {
-            map.put(cat, ITEMS.registerSimpleBlockItem(
+            // PlaceOnWaterBlockItem mirrors vanilla Items.FROGSPAWN — the
+            // BlockItem raytraces SOURCE_ONLY fluid so right-clicking the
+            // surface of a water source places the egg ABOVE the water
+            // (rather than the default BlockItem flow which tries to REPLACE
+            // the water block and then fails canSurvive). Without this, the
+            // primed egg block items can't be placed at all.
+            Category catCopy = cat;
+            map.put(cat, ITEMS.registerItem(
                 cat.primedEggItemName(),
-                PFBlocks.PRIMED_FROG_EGGS.get(cat),
-                new Item.Properties()
+                props -> new net.minecraft.world.item.PlaceOnWaterBlockItem(
+                    PFBlocks.PRIMED_FROG_EGGS.get(catCopy).get(), props)
             ));
         }
         return map;
