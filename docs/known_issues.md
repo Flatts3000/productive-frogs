@@ -15,6 +15,68 @@ Living tracker of playtest bugs, limitations, and workarounds for Productive Fro
 
 ## Open issues
 
+### 🔴 Slime Milker output slot doesn't center its item
+In the Slime Milker GUI the output milk bucket renders **offset to the left** within its output slot rather than centered. Vanilla furnace-style GUIs center the result item; the Slime Milker's output slot is a furnace-derived menu (`SlimeMilkerMenu`) so it should inherit the centering, but doesn't — the bucket sits flush against the left edge of the slot frame.
+
+**Symptom**: Place a Slime Bucket in the input slot of a Slime Milker → the produced milk bucket appears in the output slot **left-aligned**, not centered. Compare to a vanilla furnace's output slot rendering the smelted item centered.
+
+**Fix path**: Check `SlimeMilkerMenu.OUTPUT_SLOT` position in slot constructor (currently `(112, 30)` per CLAUDE.md notes). The vanilla furnace uses `(116, 30)` for its result slot to centre against the slot box drawn by the GUI texture. Either:
+1. Bump `OUTPUT_SLOT` X from 112 to 116 to match vanilla furnace centering, OR
+2. Adjust the GUI texture's output-slot frame position in `textures/gui/container/slime_milker.png` so the slot's left edge matches what the menu is rendering at x=112.
+
+Option 1 is the cleaner fix (one-line constant change) since the GUI was modelled on the vanilla furnace anyway.
+
+### 🔴 Slime Milk buckets have eyes — they shouldn't; Slime Buckets should
+PR #67 added two dark eye dots at (6,3) and (9,3) to all 14 variant Slime Milk bucket textures via `scripts/generate_slime_milk_textures.ps1`'s `Build-BucketTexture`. That was the wrong call. **Slime Milk is the fluid extracted from a slime** — the slime itself isn't in the bucket anymore, just its milk. The eyes don't belong on milk buckets. Eyes belong on the **Slime Bucket** (the bucketed live-slime entity, the surface that already exists via `SlimeBucketItem` + `slime_silhouette.png` layer0).
+
+**Symptom**: Open the Slime Milker GUI (see the user-supplied screenshot) → the held gold slime milk bucket in the bottom-left inventory slot shows two dark dots in the milk surface. Reads as a creature in a jar instead of a bucket of milk.
+
+**Fix path**:
+1. Revert the eye-overlay block in `scripts/generate_slime_milk_textures.ps1`'s `Build-BucketTexture` (remove the two `$out.SetPixel(6, 3, $eyeColor)` / `(9, 3, $eyeColor)` writes).
+2. Re-run the script to regenerate the 14 milk-bucket PNGs without eyes.
+3. Update the resolved-issue note for "Slime Milk bucket textures should show slime eyes" — flip it back to OPEN as "intentionally reverted: eyes belong on the slime bucket, not the milk bucket" so the design intent is recorded for future contributors.
+4. **Verify** the existing Slime Bucket (`slime_silhouette.png` layer0 from PR #66) already carries visible eye dots — it does, per the PixelLab silhouette tone-mapping, so no additional work on that side.
+
+This is a quick mechanical revert of the bucket-eye portion of PR #67. The animated-fluid changes from the same PR stay (those are correct).
+
+### 🔴 Spawn egg textures don't read as eggs — they look like dead 2D creatures
+The 3 spawn-egg base textures shipped in PR #69 (`frog_spawn_egg.png`, `tadpole_spawn_egg.png`, `slime_spawn_egg.png`) render the full creature silhouette tinted per variant. In context next to the **vanilla Minecraft spawn-egg style** they don't read as "eggs you spawn a creature from" — they read as flat 2D dead frogs / tadpoles / slime blobs. Vanilla spawn eggs are an **oval / ovoid egg shape with a two-tone speckle pattern** (primary + secondary colour) and a **small creature-face overlay** on top to distinguish species; PF's spawn eggs throw away the egg shape entirely and just paint the creature.
+
+**Symptom**: Open the Productive Frogs creative tab → bottom rows of spawn eggs read as a wall of dark silhouettes ("dead frogs sitting on the grass," "wet tadpoles with tails," "ghost slimes"). Compared to the vanilla spawn-egg tab (oval eggs with clean two-tone fills + a creature face), PF's eggs look out of place and amateurish.
+
+**Fix path**: Replace the three base PNGs with the vanilla spawn-egg pattern:
+1. Each base PNG is a 16×16 **egg shape** matching vanilla's `template_spawn_egg.png` (two-tone: primary fill body + secondary speckle highlight).
+2. A small **creature-face overlay** in the top portion distinguishes frog vs tadpole vs slime (just the face/silhouette, not the whole body).
+3. Per-variant runtime tint via the existing `ItemTintSource` pipeline still drives the colour — but now it's the EGG that gets tinted, not the whole creature body.
+
+The simplest implementation copies vanilla's two-layer spawn-egg approach: `layer0` is the egg base (tintable primary), `layer1` is the speckle overlay (tintable secondary, or constant grey for now). Updating `models/item/{frog,tadpole,slime}_spawn_egg.json` to a two-layer template plus regenerating the three PNGs in the vanilla style closes this.
+
+### 🔴 Frog tongue kill on Resource Slime emits both Froglight AND slimeballs
+When a category-matched Resource Frog eats a Resource Slime, the kill is producing **both** the variant-stamped Froglight (the intended drop, emitted by `FrogTongueDropHandler.LivingDeathEvent`) **and** the vanilla slimeball loot from the slime's loot table. Confirmed in playtest: a gold (METALLIC-variant) Resource Slime eaten by a METALLIC Resource Frog drops the iron-variant `configurable_froglight` plus 1-4 slimeballs.
+
+**Symptom**: Spawn a gold Resource Slime, spawn a metallic Resource Frog nearby, wait for the tongue kill → drops on the ground show 1 froglight + slimeballs. Should be froglight only — the slimeball drop is the vanilla "slime killed by anything" loot fallback and shouldn't fire when the kill was the Frog-Slime category-match path that produced the Froglight.
+
+**Fix path** (under consideration):
+1. Suppress the loot table when `FrogTongueDropHandler` emits a Froglight — add a flag to the death event handler so the loot table check sees "Froglight already dropped, skip slimeballs."
+2. OR rewrite the loot table at `data/productivefrogs/loot_table/entities/resource_slime.json` to gate slimeball drops on a `killed_by_entity` condition that excludes Frogs.
+3. OR override `ResourceSlime#dropFromLootTable` (or the appropriate vanilla hook) to skip the loot table when the damage source is a frog tongue.
+
+Option 2 is the cleanest because it's declarative JSON, but verify it can express "damage source is not a Frog" — the vanilla `entity_properties` condition supports type predicates so `{"condition": "inverted", "term": {"condition": "entity_properties", "entity": "direct_killer", "predicate": {"type": "minecraft:frog"}}}` should work.
+
+### 🔴 Variant-stamped Froglights render as 2D items instead of 3D placeable blocks
+The 12 variant-stamped Froglights (the `configurable_froglight` items that ship from frog tongue kills carrying a `SLIME_VARIANT` data component — iron, copper, gold, redstone, lapis, coal, diamond, emerald, prismarine, sponge, magma_cream, ender_pearl) currently render as flat 2D item icons in inventory and as flat 2D ground entities when dropped. They cannot be placed as blocks in the world; vanilla froglights and the 6 broad-strokes category Froglights (`metallic_froglight` etc.) are real 3D `BlockItem`s with a placeable model.
+
+**Symptom**: Pick up an Iron Froglight (variant=iron `configurable_froglight`) from a frog kill → inventory shows a 2D pixel icon. Right-click on a block → nothing happens, the item isn't placed. The 3D Froglight model never appears.
+
+**Root cause**: `configurable_froglight` is registered as a plain `Item` rather than a `BlockItem` backed by a block. The 12 variant-stamping happens at the item layer via the `SLIME_VARIANT` data component, but there's no corresponding per-variant block registration to back it.
+
+**Fix path** (under consideration):
+1. Either register `configurable_froglight` as a `BlockItem` over a single `configurable_froglight` block that reads its variant from a BlockEntity / blockstate property and selects a per-variant model (one new block, 12 model variants). Heavier — needs a BlockEntity for the component-on-block.
+2. OR keep `configurable_froglight` as an `Item` but give it a `use` handler that places the matching broad-strokes category Froglight block when right-clicked on a face, and consumes the item. Lighter — reuses the 6 existing category blocks; loses per-variant color in the placed block (METALLIC variants iron/copper/gold all place as the same `metallic_froglight` block).
+3. OR retire `configurable_froglight` entirely and emit the matching broad-strokes category Froglight from `FrogTongueDropHandler` (i.e., always drop `metallic_froglight` for any METALLIC kill). Loses per-variant signal in the drop but the in-world experience is consistent with vanilla.
+
+Option 1 is the right long-term answer (per-variant block + JSON model variants); options 2/3 are lossy. Per the V1 visual lock in `docs/design_overview.md` the per-variant signal matters, so leaning toward option 1 unless the BlockEntity cost is too much for the surface.
+
 ### 🟢 Frog / Slime / Tadpole spawn eggs share one silhouette — resolved
 Three distinct base PNGs now ship at `textures/item/{frog,tadpole,slime}_spawn_egg.png`, generated via PixelLab MCP (`create_map_object`) and tone-mapped through `scripts/process_silhouette.ps1` so they render cleanly under the spawn-egg tint pipelines: body pixels brighten to (220,220,220) so the runtime `ItemTintSource` multiplication renders the category color, dark accent pixels under 64 preserved as-is so eyes stay visible across all category tints. The relevant tint sources are `productivefrogs:contained_category` (frog + tadpole eggs), `productivefrogs:slime_variant` (12 variant slime eggs), and `minecraft:constant` (4 parent-species slime eggs — Cave / Geode / Tide / Void use a fixed RGB rather than a runtime data component). `productivefrogs:bucketed_category` is the bucket-item tint and is NOT used here. Three new model JSONs at `models/item/{frog,tadpole,slime}_spawn_egg.json` route each shape to its own texture, and all 28 spawn-egg item JSONs were updated to point at the right shape model — frogs at frog, tadpoles at tadpole, all 12 variant + 4 parent-species + 6 category slime eggs at slime. The old shared `category_spawn_egg.png` / model JSON were deleted.
 
