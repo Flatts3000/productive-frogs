@@ -21,6 +21,9 @@ Datapack registry at `PFRegistries.SLIME_VARIANT` (created via `DataPackRegistry
 ### ~~Configurable Froglight item~~ — shipped
 `PFItems.CONFIGURABLE_FROGLIGHT` is registered with the `slime_variant` data component. Tint resolves via the `SlimeVariantTint` `ItemTintSource`. `FrogTongueDropHandler` emits the configurable Froglight stamped with the variant when the consumed slime carries a SlimeVariant, falling back to the category Froglight otherwise. Covered by the `variant_slime_kill_drops_configurable_froglight` GameTest.
 
+### ~~Configurable Froglight placeable block (3D variant Froglight)~~ — shipped
+Promoted `configurable_froglight` from a plain Item to a `BlockItem` backed by `ConfigurableFroglightBlock` (`RotatedPillarBlock` + `EntityBlock`) and `ConfigurableFroglightBlockEntity`. The BE stores the `SLIME_VARIANT` Identifier (written by `ConfigurableFroglightItem#updateCustomBlockEntityTag` on placement; exposed via `collectImplicitComponents` for pick-block and the `copy_components(source=block_entity)` loot function). Block break + lighting mechanics match vanilla froglight identically — `strength(0.3F)`, `lightLevel(state -> 15)`, `sound(SoundType.FROGLIGHT)`, `survives_explosion` loot, default `NORMAL` push reaction. Per-variant tint resolves at render time via a `BlockColor` reading the BE → `SlimeVariant#primaryColor` from the datapack registry. Round-trip pinned by the `variant_froglight_round_trip_preserves_variant_through_place_and_break` GameTest.
+
 ### Slime Milker block + Slime Milk fluid (V1 production keystone)
 [docs/farming.md](./farming.md) specifies the full design. Sub-PR plan (J-series):
 

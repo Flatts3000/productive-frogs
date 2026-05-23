@@ -1,7 +1,3 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "minecraft:block/ochre_froglight_top",
-    "layer1": "minecraft:block/ochre_froglight_side"
-  }
+  "parent": "productivefrogs:block/resource_froglight"
 }

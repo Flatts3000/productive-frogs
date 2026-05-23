@@ -154,8 +154,8 @@ public final class PFItems {
      */
     public static final DeferredItem<ConfigurableFroglightItem> CONFIGURABLE_FROGLIGHT = ITEMS.registerItem(
         "configurable_froglight",
-        ConfigurableFroglightItem::new,
-        () -> new Item.Properties()
+        props -> new ConfigurableFroglightItem(PFBlocks.CONFIGURABLE_FROGLIGHT.get(), props),
+        () -> new Item.Properties().useBlockDescriptionPrefix()
     );
 
     /**

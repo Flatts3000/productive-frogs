@@ -81,6 +81,49 @@ public final class PFClientEvents {
                 PFBlocks.resourceFroglight(cat)
             );
         }
+        // Variant-keyed configurable Froglight: BlockColor reads the variant
+        // identifier from the BE, looks up the matching SlimeVariant in the
+        // datapack registry, and returns its primary_color. Falls back to
+        // -1 (white, no tint) when the BlockAndTintGetter or pos is null
+        // (item-form preview rendered via the BlockColor path before the BE
+        // has a level), when the BE hasn't loaded yet, when the BE's level
+        // reference isn't set yet (transient state during chunk attach), or
+        // when the stored variant id isn't in the registry — keeps the block
+        // visible in every fallback path.
+        //
+        // We read the registry through the BE's stored {@link
+        // net.minecraft.world.level.block.entity.BlockEntity#getLevel} rather
+        // than the BlockColor lambda's BlockAndTintGetter parameter, because
+        // the latter is often a RenderChunkRegion during chunk meshing and
+        // does not expose registryAccess(). The BE's level field is set when
+        // it's added to a chunk and stays valid for the BE's lifetime.
+        event.register(
+            (state, level, pos, tintIndex) -> {
+                if (tintIndex != 0 || level == null || pos == null) {
+                    return -1;
+                }
+                var be = level.getBlockEntity(pos);
+                if (!(be instanceof com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity froglightBe)) {
+                    return -1;
+                }
+                Identifier variantId = froglightBe.getVariantId();
+                if (variantId == null) {
+                    return -1;
+                }
+                var beLevel = froglightBe.getLevel();
+                if (beLevel == null) {
+                    return -1;
+                }
+                var registry = beLevel.registryAccess()
+                    .lookup(com.flatts.productivefrogs.registry.PFRegistries.SLIME_VARIANT).orElse(null);
+                if (registry == null) {
+                    return -1;
+                }
+                var variant = registry.getValue(variantId);
+                return variant == null ? -1 : variant.primaryColor();
+            },
+            PFBlocks.CONFIGURABLE_FROGLIGHT.get()
+        );
     }
 
     @SubscribeEvent
