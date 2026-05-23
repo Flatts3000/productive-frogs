@@ -80,7 +80,7 @@ GameTests run real headless Minecraft scenarios in scripted plots. They're the r
 
 **Canonical example.** PR #27 shipped a Resource Slime where the outer translucent shell rendered solid gray instead of the category-tinted gradient. Every GameTest passed. Root cause: the outer-layer texture had source-alpha 255 where vanilla expects ~180; the render type respects source alpha so the gradient collapsed into an opaque cube. Server state was identical to a healthy build — only the screen pixels differed. The bug shipped through CI to a playtest.
 
-**Take away:** if you touch any of `client/`, `assets/<modid>/`, `Category.tintArgb`, item-model JSON, block-model JSON, lang files, or particle/sound code, schedule a manual `./gradlew runClient` pass and walk the affected surface before marking the work done. Document the playtest matrix in the PR description so the reviewer knows what was eyeballed.
+**Takeaway:** if you touch any of `client/`, `assets/<modid>/`, `Category.tintArgb`, item-model JSON, block-model JSON, lang files, or particle/sound code, schedule a manual `./gradlew runClient` pass and walk the affected surface before marking the work done. Document the playtest matrix in the PR description so the reviewer knows what was eyeballed.
 
 ### Registration pattern (MC 1.21.11)
 
