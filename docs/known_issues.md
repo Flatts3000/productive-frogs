@@ -16,6 +16,24 @@ Living tracker of playtest bugs, limitations, and workarounds for Productive Fro
 
 ## Open issues
 
+### 🔴 MC 1.21.1 port: per-category and per-variant tints not rendering on items
+**Branch:** `port/mc-1.21.1` (commit `441c786` and earlier).
+**Symptom (from creative-tab screenshot on 2026-05-23):** Most data-component-driven items render plain white/grey instead of category-tinted. Affected:
+- **Frog Egg bottle** (`productivefrogs:frog_egg`) — all 6 primed bottles show grey blob shape; only the unprimed bottle reads as blue.
+- **Primed Frog Egg blocks** (all 6 categories) — render as flat grey discs instead of category-tinted frogspawn.
+- **Slime Bucket** — plain bucket, no slime silhouette tint inside.
+- **Resource Tadpole Bucket** — plain bucket, no tadpole silhouette tint inside.
+- **All 28 spawn eggs** (4 parent slime species + 12 variant slimes + 6 frogs + 6 tadpoles) — plain grey/white instead of category/variant two-tone overlay.
+
+**Root causes (multiple, untangled during the playtest):**
+1. **Frog Egg item model layer order is wrong.** `frog_egg.json` uses vanilla `potion`/`potion_overlay` layers but the color handler tints `tintIndex == 1` (the bottle glass), not `tintIndex == 0` (the liquid). Need to swap — vanilla potion tints the *overlay* layer.
+2. **PFClientEvents only registers item-color handlers for 12 variant slime spawn eggs**, not the 4 parent species or 12 category-keyed frog/tadpole eggs. The `for (Category cat : Category.values()) { ... break; }` block (lines 190-212 of `PFClientEvents.java`) is a vestigial outer loop — the inner loop runs once and only covers `RESOURCE_SLIME_SPAWN_EGGS`.
+3. **Vanilla SpawnEggItem auto-color appears not to fire for our subclasses** under NeoForge 21.1.230. Even though `ItemColors.createDefault` should pick up `SpawnEggItem` subclasses via `BuiltInRegistries.ITEM.stream()`, none of the 4 parent slime spawn eggs (which have no custom handler) show tint. Fix: register an explicit `RegisterColorHandlersEvent.Item` lambda for every spawn egg, returning `getColor(layer)` on the SpawnEggItem.
+4. **Primed Frog Egg block tint may not be reaching the in-hand model.** `primed_frog_egg.json` block model has `tintindex: 0` on both faces, and we register a BlockColor handler for each `PFBlocks.primedEgg(cat)`. But the BlockItem in inventory uses the same model and should auto-derive from BlockColor — needs investigation; possibly the `productivefrogs:block/primed_frog_egg` parent isn't being resolved correctly in item context.
+5. **Slime / Tadpole bucket silhouette rendering is plain bucket with no overlay.** `slime_bucket.json` and `resource_tadpole_bucket.json` reference `productivefrogs:item/slime_silhouette` and `productivefrogs:item/tadpole_silhouette` as `layer1`. Textures exist at `textures/item/slime_silhouette.png` and `tadpole_silhouette.png`. The color handler tints `tintIndex == 1` correctly. So either (a) the texture isn't loading, (b) the model is being overridden somewhere, or (c) the silhouette texture is fully transparent and needs the body painted in a base color before tint.
+
+**Severity:** Blocks merging the port — every primary item in the creative tab is visually broken.
+
 ### 🟢 Coal Resource Slime's eye dots are nearly invisible (dark on dark) — resolved
 Took option 2 from the fix-path discussion: bumped `data/.../slime_variant/coal.json` `primary_color` from `0x2A2A2A` (near-black) to `0x585858` (charcoal grey), and `secondary_color` from `0x101010` to `0x202020`. Body tint now multiplies silhouette body pixels to a charcoal value while the preserved eye dots stay near-black — visible contrast restored. Coal variant still reads as "coal" but no longer flattens against its own eye dots.
 

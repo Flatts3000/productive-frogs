@@ -124,9 +124,11 @@ public final class PFClientEvents {
      */
     @SubscribeEvent
     public static void onRegisterItemColors(RegisterColorHandlersEvent.Item event) {
-        // Frog Egg bottle — tint from CONTAINED_CATEGORY data component
+        // Frog Egg bottle — vanilla potion model has layer0=potion_overlay (the
+        // liquid) and layer1=potion (the bottle glass). We want to tint the
+        // liquid, so target tintIndex == 0.
         event.register((stack, tintIndex) -> {
-            if (tintIndex != 1) return -1;
+            if (tintIndex != 0) return -1;
             Category cat = stack.get(PFDataComponents.CONTAINED_CATEGORY.get());
             return cat == null ? -1 : cat.tintRgb();
         }, PFItems.FROG_EGG.get());
@@ -186,29 +188,55 @@ public final class PFClientEvents {
         // Per-category Froglight blockitems — inherit BlockColor automatically,
         // no separate Item color registration needed.
 
-        // Variant slime spawn eggs (12 items) — each carries SLIME_VARIANT
-        for (Category cat : Category.values()) {
-            for (var entry : PFItems.RESOURCE_SLIME_SPAWN_EGGS.entrySet()) {
-                event.register((stack, tintIndex) -> {
-                    ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
-                    if (variantId == null) return -1;
+        // Spawn eggs need explicit color handlers under NeoForge 21.1.230 — the
+        // vanilla SpawnEggItem auto-registration in ItemColors.createDefault
+        // doesn't reliably fire for modded subclasses here. For every spawn egg
+        // we fall back to the underlying SpawnEggItem.getColor(layer) which
+        // returns the (primary, secondary) colors we passed to the ctor.
+
+        // Variant slime spawn eggs (12) — prefer the datapack registry's
+        // primary/secondary for richer per-variant colours; fall back to the
+        // ctor colours when the registry isn't loaded yet (creative tab
+        // preview before world load).
+        for (var entry : PFItems.RESOURCE_SLIME_SPAWN_EGGS.entrySet()) {
+            event.register((stack, tintIndex) -> {
+                ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+                if (variantId != null) {
                     Minecraft mc = Minecraft.getInstance();
-                    if (mc.level == null) {
-                        // Fallback to category tint if no level (creative tab preview)
-                        Category catFromComponent = stack.get(PFDataComponents.CONTAINED_CATEGORY.get());
-                        return catFromComponent == null ? -1 : catFromComponent.tintRgb();
+                    if (mc.level != null) {
+                        Registry<SlimeVariant> registry = mc.level.registryAccess()
+                            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+                        if (registry != null) {
+                            SlimeVariant variant = registry.get(variantId);
+                            if (variant != null) {
+                                return tintIndex == 0 ? variant.primaryColor() : variant.secondaryColor();
+                            }
+                        }
                     }
-                    Registry<SlimeVariant> registry = mc.level.registryAccess()
-                        .registry(PFRegistries.SLIME_VARIANT).orElse(null);
-                    if (registry == null) return -1;
-                    SlimeVariant variant = registry.get(variantId);
-                    if (variant != null) {
-                        return tintIndex == 0 ? variant.primaryColor() : variant.secondaryColor();
-                    }
-                    return -1;
-                }, entry.getValue().get());
-            }
-            break; // The for-Category loop is just to scope a single iteration; actual iteration is over the spawn egg map.
+                }
+                // Fallback to SpawnEggItem ctor colors (Category.tintRgb + darker shade).
+                return ((net.minecraft.world.item.SpawnEggItem) stack.getItem()).getColor(tintIndex);
+            }, entry.getValue().get());
+        }
+
+        // Parent slime species spawn eggs (4) + category frog/tadpole spawn eggs (12).
+        // All of these inherit from vanilla SpawnEggItem with explicit
+        // (primary, secondary) colours set in PFItems.
+        java.util.function.Consumer<net.minecraft.world.item.SpawnEggItem> registerCtorColors = egg ->
+            event.register((stack, tintIndex) ->
+                ((net.minecraft.world.item.SpawnEggItem) stack.getItem()).getColor(tintIndex),
+                egg);
+
+        registerCtorColors.accept(PFItems.CAVE_SLIME_SPAWN_EGG.get());
+        registerCtorColors.accept(PFItems.GEODE_SLIME_SPAWN_EGG.get());
+        registerCtorColors.accept(PFItems.TIDE_SLIME_SPAWN_EGG.get());
+        registerCtorColors.accept(PFItems.VOID_SLIME_SPAWN_EGG.get());
+
+        for (var entry : PFItems.RESOURCE_FROG_SPAWN_EGGS.entrySet()) {
+            registerCtorColors.accept(entry.getValue().get());
+        }
+        for (var entry : PFItems.RESOURCE_TADPOLE_SPAWN_EGGS.entrySet()) {
+            registerCtorColors.accept(entry.getValue().get());
         }
     }
 
