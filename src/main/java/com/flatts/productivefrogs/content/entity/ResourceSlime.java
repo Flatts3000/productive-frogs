@@ -147,6 +147,43 @@ public class ResourceSlime extends Slime implements Bucketable {
     }
 
     /**
+     * Override vanilla's hardcoded {@code ParticleTypes.ITEM_SLIME} (which
+     * carries the green slimeball texture) so each variant emits a splash
+     * tinted with its own colour. Resolution order:
+     *
+     * <ol>
+     *   <li>Variant's {@code primary_color} when this slime carries a known
+     *       SlimeVariant — gives per-resource tints like iron-silver,
+     *       copper-orange, gold-yellow.</li>
+     *   <li>Category tint ({@link Category#tintRgb}) when no variant is set
+     *       or the variant id isn't in the registry — covers the broad
+     *       6-category fallback path used by split-discovery and the
+     *       parent-species slimes.</li>
+     * </ol>
+     *
+     * <p>Vanilla's splash loop in {@code Slime#tick} reads this method once
+     * per particle, so the colour is sampled at emission time and reflects
+     * any runtime category/variant changes.
+     *
+     * <p>The particle type switches from {@code ITEM_SLIME} (slimeball icon)
+     * to {@link net.minecraft.core.particles.DustParticleOptions} (colored
+     * dust speck) — slightly different shape than vanilla, but the colour
+     * carries the per-variant signal that ITEM_SLIME couldn't.
+     */
+    @Override
+    protected net.minecraft.core.particles.ParticleOptions getParticleType() {
+        int rgb;
+        Identifier variantId = getVariantId();
+        SlimeVariant variant = variantId == null ? null : lookupVariant(variantId);
+        if (variant != null) {
+            rgb = variant.primaryColor();
+        } else {
+            rgb = getCategory().tintRgb();
+        }
+        return new net.minecraft.core.particles.DustParticleOptions(rgb, 1.0F);
+    }
+
+    /**
      * Category-aware display name. When the slime carries a SlimeVariant that
      * still resolves in the registry, builds
      * {@code entity.productivefrogs.resource_slime.<variant_path>} — e.g.
