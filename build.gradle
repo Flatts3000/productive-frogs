@@ -171,6 +171,32 @@ jar {
     }
 }
 
+// Aggregate prepare task for all moddev runs.
+//
+// `gradle clean` wipes build/moddev/*RunVmArgs.txt and friends. IntelliJ's
+// generated run configs reference those files at launch, so without this
+// task being run, "Run runClient" from IntelliJ fails with
+// `could not open clientRunVmArgs.txt` after every clean.
+//
+// scripts/ship.ps1 chains this onto its clean+build stage. You can also
+// invoke it directly: `./gradlew prepareAllRuns`.
+//
+// Defense in depth: add `prepareAllRuns` as a Before-Launch step on the
+// IntelliJ run config so launches survive any clean done outside ship.ps1.
+tasks.register('prepareAllRuns') {
+    group = 'neoforge runs'
+    description = 'Regenerate VM args / classpath files for the interactive moddev runs (client, server, gameTestServer).'
+    // clientData / serverData are intentionally excluded: their prepare tasks
+    // throw at execution time in moddev 2.0.141 ("unknown run: clientData",
+    // NFRT only knows [client, data, gameTestServer, server, junit]), and the
+    // user invokes datagen via the data run path anyway, not interactively
+    // from IntelliJ. Add them back here if a future moddev release fixes
+    // the prepare-side dispatch.
+    dependsOn 'prepareClientRun',
+              'prepareServerRun',
+              'prepareGameTestServerRun'
+}
+
 // CurseForge publish task
 //
 // Invocation: `./gradlew publishCurseForge` (after a successful `build`).
