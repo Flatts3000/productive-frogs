@@ -24,10 +24,10 @@
 # is painted out and re-emitted at (54, 33)-(73, 52) so the slot frame
 # visually matches the item position.
 #
-# Why vanilla composite rather than AI gen: GUI text rendering on gpt-image-1
-# is unreliable (it mangled "Slime Milker" into "Slivve Hilk jar"). The Java
-# screen renders the title at runtime via Component.literal anyway, so the
-# PNG just needs to be the container chrome. Vanilla is the best chrome.
+# Vanilla composite over a hand-painted GUI: the Java screen renders the
+# title at runtime via Component.literal, so the PNG only needs to be the
+# container chrome. Vanilla furnace chrome is exactly the right shape and
+# stays visually consistent with the rest of the inventory UX.
 
 Add-Type -AssemblyName System.Drawing
 
