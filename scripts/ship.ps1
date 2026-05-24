@@ -20,12 +20,14 @@
 #   .\scripts\ship.ps1 -Upload             # skip rebuild, just upload existing jar
 #   .\scripts\ship.ps1 -SkipGameTests      # build+upload without gametest gate (NOT for release)
 #   .\scripts\ship.ps1 -SkipUpload         # build+verify but don't touch GH Release
+#   .\scripts\ship.ps1 -PublishCurseForge  # also push to CurseForge after GH Release upload
 
 [CmdletBinding()]
 param(
     [switch]$Upload,
     [switch]$SkipGameTests,
     [switch]$SkipUpload,
+    [switch]$PublishCurseForge,
     [string]$JdkPath = "C:\Program Files\Java\jdk-21"
 )
 
@@ -46,7 +48,7 @@ function Fail($msg) {
     exit 1
 }
 
-$total = 7
+$total = 8
 $start = Get-Date
 
 # ----------------------------------------------------------------------------
@@ -171,6 +173,24 @@ if (-not $SkipUpload) {
 }
 
 # ----------------------------------------------------------------------------
+# 8. Publish to CurseForge (optional)
+#
+# Calls the publishCurseForge gradle task, which uses CurseForgeGradle to
+# upload via the official CF Upload API. Requires CURSEFORGE_API_KEY in .env
+# at repo root (or env var, or cfApiToken in ~/.gradle/gradle.properties).
+# Project description and metadata must still be edited by hand in the CF
+# browser dashboard - the API only covers file uploads.
+# ----------------------------------------------------------------------------
+if ($PublishCurseForge) {
+    Write-Stage 8 $total "Publishing to CurseForge"
+    & .\gradlew.bat publishCurseForge
+    if ($LASTEXITCODE -ne 0) { Fail "CurseForge publish failed (exit $LASTEXITCODE)" }
+    Write-Host "  published to https://authors.curseforge.com/#/projects/1552728/files" -ForegroundColor Green
+} else {
+    Write-Stage 8 $total "CurseForge publish (skipped; pass -PublishCurseForge to enable)"
+}
+
+# ----------------------------------------------------------------------------
 # Done
 # ----------------------------------------------------------------------------
 $elapsed = (Get-Date) - $start
@@ -179,7 +199,9 @@ Write-Host "DONE - pipeline finished in $([Math]::Round($elapsed.TotalSeconds, 1
 Write-Host ""
 Write-Host "Manual steps remaining:" -ForegroundColor Yellow
 Write-Host "  1. Smoke-test in dev client:  .\gradlew.bat runClient"
-Write-Host "  2. CurseForge upload (browser): https://www.curseforge.com/minecraft/mc-mods"
-Write-Host "     File: $jarPath"
-Write-Host "     Game ver: 1.21.1, Loader: NeoForge, Java: 21, Release type: Release"
-Write-Host "     Changelog: paste v$modVersion section from CHANGELOG.md"
+if (-not $PublishCurseForge) {
+    Write-Host "  2. CurseForge upload (browser, or re-run this script with -PublishCurseForge):"
+    Write-Host "     File: $jarPath"
+    Write-Host "     Game ver: 1.21.1, Loader: NeoForge, Java: 21, Release type: Release"
+    Write-Host "     Changelog: paste v$modVersion section from CHANGELOG.md"
+}
