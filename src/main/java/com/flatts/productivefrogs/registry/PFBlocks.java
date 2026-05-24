@@ -71,7 +71,7 @@ public final class PFBlocks {
      * The Slime Milker — V1 production keystone block. Furnace-shaped GUI
      * block with one input slot (Slime Bucket), one output slot (variant
      * Slime Milk bucket), and a 100-tick cook. Hopper-compatible via a
-     * side-aware Capabilities.Item.BLOCK provider in PFModBusEvents.
+     * side-aware Capabilities.ItemHandler.BLOCK provider in PFModBusEvents.
      * See {@link SlimeMilkerBlock} for interaction details.
      *
      * <p>Strength chosen to match the brewing stand / composter feel —

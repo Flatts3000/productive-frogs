@@ -26,7 +26,7 @@ First public release. **Minecraft 1.21.1 / NeoForge 21.1.230.**
 - **Jade** — drop-in compatible (no plugin code needed); shows species + variant in the in-world entity tooltip.
 
 ### Datapack-driven
-- Add new slime variants without recompiling: drop a JSON in `data/<modpack>/productivefrogs/slime_variant/<name>.json` plus an inner-cube texture, a primer-tag entry, and a smelting recipe. JEI Information pages auto-extend to cover the new entry.
+- Add new slime variants without recompiling: drop a JSON in `data/<modpack>/productivefrogs/slime_variant/<name>.json` (the `primer_item` field is the exact 1:1 match for infusion), an inner-cube texture, a smelting recipe, and a lang entry for the display name. JEI Information pages auto-extend to cover the new entry.
 - Cross-mod variants (Mekanism, Create, Thermal, etc.) gated by `mod_loaded` neoforge conditions — see `docs/cross_mod_compat.md`.
 
 ### Known limitations

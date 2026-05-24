@@ -76,7 +76,7 @@ Removes per-variant Java hardcoding so modpacks can add a SlimeVariant by JSON o
 
 After V1.0.x refactor lands: add every vanilla item fitting cleanly into one of the existing 6 categories. JSON-only authoring post-refactor. Full design in [v1_1_scope.md](./v1_1_scope.md). 16 new variants → 28 total post-V1.1.
 
-Per-variant work for each = 4 files: variant JSON + (optional) hand-authored inner-cube PNG OR `texture_source_block` field + primer tag entry + smelting recipe. Existing GameTests auto-cover.
+Per-variant work for each = 4 files: variant JSON (with `primer_item` exact-match field) + (optional) hand-authored inner-cube PNG OR `texture_source_block` field + smelting recipe + lang entry. Existing GameTests auto-cover.
 
 ### Locked scope (22 variants — under v1.0 species model)
 
