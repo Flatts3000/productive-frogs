@@ -91,9 +91,9 @@ Twelve shipped variants. Source-block-name guesses for the `inner_texture` field
 | magma_cream | `minecraft:block/magma` |
 | ender_pearl | `minecraft:block/end_stone` |
 
-Six parent species (TBD per-species):
+Six parent species (resolved):
 
-| Species | Inner texture (proposal) |
+| Species | Inner texture |
 |---|---|
 | Bog | `minecraft:block/moss_block` |
 | Cave | `minecraft:block/stone` |
@@ -105,7 +105,7 @@ Six parent species (TBD per-species):
 ## Backward compatibility
 
 - **Worlds**: no data migration. Slime entities don't store rendering data; they re-render with the new model on next chunk load.
-- **Modpack variant JSONs shipped between v1.0 and v1.0.1**: the new `inner_texture` field is required. Without it the renderer falls back to... TBD: either a hard error (fail loudly), or a derived guess (`minecraft:block/<variant_id>_block`), or the previous category-atlas inner cube (degraded but functional). Picking the fallback behavior is an open question - default proposal: derive from variant id; log a warning when used.
+- **Variant JSON without an `inner_texture` field** (typo, modded block from an absent mod, third-party variant not yet updated): codec accepts the missing / unresolved field; the renderer falls back to the vanilla missing-texture sprite (`MissingTextureAtlasSprite.getLocation()`, the purple/black checker). Visually loud, doesn't crash, easy to spot in playtest.
 - **Existing v1.0 variant JSONs**: this PR ships the `inner_texture` field populated for all 12 shipped variants and the 6 parent species, so the in-tree state has zero degradation.
 
 ## Risk register
@@ -115,7 +115,7 @@ Six parent species (TBD per-species):
 | Two-pass render order: translucent outer shell rendered before opaque inner cube causes Z-fighting or wrong alpha sorting | Medium | Render inner cube FIRST (opaque pass), outer shell SECOND (translucent pass). Vanilla `RenderType.entityCutout` for inner, `RenderType.entityTranslucent` for outer. Matches vanilla slime render order. |
 | Vanilla `SlimeModel.innerCube` is private; can't get the part directly | High | Subclass `SlimeModel` (or rebuild the model from scratch with the same `LayerDefinition` and our own public-field structure). The model API was redesigned in 1.21.x; verify the actual field visibility during implementation. |
 | Inner-cube vertex normals are off because we render it with a different RenderType than the outer cube | Low | Use the same lighting setup; the RenderType change is only about which texture is bound. |
-| `inner_texture` points at a missing file (typo, modded block from an absent mod) | Medium | Codec validates at load; if missing at render time, render with `minecraft:textures/missing.png` (the purple/black checker) so the failure is loud. |
+| `inner_texture` points at a missing file (typo, modded block from an absent mod) | Medium | Renderer falls back to `MissingTextureAtlasSprite.getLocation()` (vanilla missing-texture purple/black checker) at render time. Visually loud, doesn't crash. See Backward compatibility section. |
 | Animated source textures (e.g., a future variant pointing at `minecraft:block/sea_lantern`) interact weirdly with the slime's squish animation | Low | The animation is a texture-level UV cycle; our render doesn't override it. Should just work; verify in playtest if any animated variant ships. |
 | Removing the 12 variant atlas PNGs breaks anything still referencing them | Low | Grep the codebase before delete. Likely references: `SlimeVariant` codec (existing `texture` field), renderer (resolved via state). Both can be redirected. |
 | GameTests fail because they pixel-compare rendered slimes | Very low | PF tests are world-state tests, not pixel tests. |
@@ -153,8 +153,8 @@ Six parent species (TBD per-species):
 - Frog model upgrades (frogs don't have a "resource block inside" semantic)
 - Refactoring the per-category template PNGs (still useful as the outer-shell atlas for each species)
 
-## Open questions
+## Resolved decisions
 
-- **Missing-texture fallback behavior**: hard error, derive from variant id, or render the vanilla missing-texture checker? Spec proposes "derive + log warning"; willing to flip to "hard fail" if that fits the project's "fail loud" preference.
-- **Parent-species inner textures**: proposed mapping above. Particularly Bog (moss_block? mud? swamp_grass?) and Cave (stone? cobblestone? deepslate?) are subjective; flag any preference.
-- **CHANGELOG migration note**: should the v1.0.1 release notes call out modpack variant authors who shipped between v1.0 and v1.0.1 (currently none known)? Default: skip, since no third-party variants are known to exist yet.
+- **Missing-texture fallback behavior**: render the vanilla missing-texture sprite (purple/black checker) at render time. No load-time error, no derive-from-variant-id heuristic. Visually loud, doesn't crash.
+- **Parent-species inner textures**: approved per the table above (Bog -> moss_block, Cave -> stone, Geode -> amethyst_block, Tide -> prismarine, Infernal -> netherrack, Void -> end_stone).
+- **CHANGELOG migration note**: skip. No third-party variants are known to exist between v1.0 and v1.0.1.
