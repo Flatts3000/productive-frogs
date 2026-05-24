@@ -75,30 +75,37 @@ try {
 
     # 2. Slime cube accent (behind the letters, slightly bottom-right of center).
     # Drawn as a square with a highlight and shadow band, no outline so it sits
-    # softly in the background.
+    # softly in the background. Band thickness scales with cube size so the
+    # accent reads correctly at non-default $Size values (e.g., 512, 1024).
     $cubeSize = [int]($Size * 0.30)
     $cubeX = [int]($Size * 0.58)
     $cubeY = [int]($Size * 0.45)
+    $cubeBandThick = [Math]::Max(2, [int]($cubeSize / 12))  # ~6 at default $Size=256
     $cubeBrush = New-Object System.Drawing.SolidBrush $slimeFill
     try { $g.FillRectangle($cubeBrush, $cubeX, $cubeY, $cubeSize, $cubeSize) } finally { $cubeBrush.Dispose() }
     # Highlight band (top-left edge of cube).
     $hiBrush = New-Object System.Drawing.SolidBrush $slimeHi
     try {
-        $g.FillRectangle($hiBrush, $cubeX, $cubeY, $cubeSize, 6)
-        $g.FillRectangle($hiBrush, $cubeX, $cubeY, 6, $cubeSize)
+        $g.FillRectangle($hiBrush, $cubeX, $cubeY, $cubeSize, $cubeBandThick)
+        $g.FillRectangle($hiBrush, $cubeX, $cubeY, $cubeBandThick, $cubeSize)
     } finally { $hiBrush.Dispose() }
     # Shadow band (bottom-right edge of cube).
     $shdBrush = New-Object System.Drawing.SolidBrush $slimeShd
     try {
-        $g.FillRectangle($shdBrush, $cubeX, $cubeY + $cubeSize - 6, $cubeSize, 6)
-        $g.FillRectangle($shdBrush, $cubeX + $cubeSize - 6, $cubeY, 6, $cubeSize)
+        $g.FillRectangle($shdBrush, $cubeX, $cubeY + $cubeSize - $cubeBandThick, $cubeSize, $cubeBandThick)
+        $g.FillRectangle($shdBrush, $cubeX + $cubeSize - $cubeBandThick, $cubeY, $cubeBandThick, $cubeSize)
     } finally { $shdBrush.Dispose() }
 
-    # 3. Pixel-art "PF" letters. Each letter is a 6x9 grid of cells.
+    # 3. Pixel-art "PF" letters.
     # Sized to fill about 55 percent of canvas height with a small gap between.
-    $rows = 9
-    $cols = 6
-    $cell = [int]([Math]::Floor($Size * 0.55 / $rows))  # ~15 at 256
+    # Dimensions derived from the pattern arrays so future tweaks to
+    # $pPattern / $fPattern can't silently drift out of sync with the sizing math.
+    $rows = $pPattern.Length
+    $cols = $pPattern[0].Length
+    if ($fPattern.Length -ne $rows -or $fPattern[0].Length -ne $cols) {
+        throw "Letter pattern dimensions must match: pPattern=${rows}x${cols}, fPattern=$($fPattern.Length)x$($fPattern[0].Length)"
+    }
+    $cell = [int]([Math]::Floor($Size * 0.55 / $rows))  # ~15 at $Size=256, rows=9
     $letterW = $cols * $cell
     $gap = [int]($cell * 1.3)
     $totalW = ($letterW * 2) + $gap
@@ -107,40 +114,40 @@ try {
 
     function Draw-Letter {
         param([string[]]$pattern, [int]$ox, [int]$oy)
-        for ($r = 0; $r -lt $pattern.Length; $r++) {
-            $row = $pattern[$r]
-            for ($c = 0; $c -lt $row.Length; $c++) {
-                if ($row[$c] -ne '1') { continue }
-                $px = $ox + ($c * $cell)
-                $py = $oy + ($r * $cell)
-                # Main cell fill.
-                $fillBrush = New-Object System.Drawing.SolidBrush $letterFg
-                try { $g.FillRectangle($fillBrush, $px, $py, $cell, $cell) } finally { $fillBrush.Dispose() }
-                # Subtle pixel-cell shading: 1px highlight on top-left, 1px shadow on bottom-right.
-                # Only paint these if the neighbor in the relevant direction is empty (gives
-                # the letterforms a 3D-block feel without painting interior cell boundaries).
-                $shdInset = [Math]::Max(1, [int]($cell / 8))
-                $neighborBelow = if ($r + 1 -lt $pattern.Length) { $pattern[$r + 1][$c] } else { '0' }
-                $neighborRight = if ($c + 1 -lt $row.Length) { $row[$c + 1] } else { '0' }
-                $neighborAbove = if ($r - 1 -ge 0) { $pattern[$r - 1][$c] } else { '0' }
-                $neighborLeft  = if ($c - 1 -ge 0) { $row[$c - 1] } else { '0' }
-                $hiBrush2 = New-Object System.Drawing.SolidBrush $letterHi
-                try {
+        # Brushes are constant colors, so allocate once per letter and reuse
+        # across every cell instead of allocating ~4 GDI brushes per filled
+        # cell. Cuts allocation traffic from O(filled_cells * 4) to O(4) per
+        # letter without changing any output pixels.
+        $fillBrush = New-Object System.Drawing.SolidBrush $letterFg
+        $hiBrush2  = New-Object System.Drawing.SolidBrush $letterHi
+        $shdBrush2 = New-Object System.Drawing.SolidBrush $letterShd
+        $olBrush   = New-Object System.Drawing.SolidBrush $letterOl
+        try {
+            $shdInset = [Math]::Max(1, [int]($cell / 8))
+            $olThick = [Math]::Max(2, [int]($cell / 6))
+            for ($r = 0; $r -lt $pattern.Length; $r++) {
+                $row = $pattern[$r]
+                for ($c = 0; $c -lt $row.Length; $c++) {
+                    if ($row[$c] -ne '1') { continue }
+                    $px = $ox + ($c * $cell)
+                    $py = $oy + ($r * $cell)
+                    # Main cell fill.
+                    $g.FillRectangle($fillBrush, $px, $py, $cell, $cell)
+                    # Subtle pixel-cell shading: highlight on top-left, shadow on bottom-right.
+                    # Only paint these if the neighbor in the relevant direction is empty (gives
+                    # the letterforms a 3D-block feel without painting interior cell boundaries).
+                    $neighborBelow = if ($r + 1 -lt $pattern.Length) { $pattern[$r + 1][$c] } else { '0' }
+                    $neighborRight = if ($c + 1 -lt $row.Length) { $row[$c + 1] } else { '0' }
+                    $neighborAbove = if ($r - 1 -ge 0) { $pattern[$r - 1][$c] } else { '0' }
+                    $neighborLeft  = if ($c - 1 -ge 0) { $row[$c - 1] } else { '0' }
                     if ($neighborAbove -ne '1') { $g.FillRectangle($hiBrush2, $px, $py, $cell, $shdInset) }
                     if ($neighborLeft  -ne '1') { $g.FillRectangle($hiBrush2, $px, $py, $shdInset, $cell) }
-                } finally { $hiBrush2.Dispose() }
-                $shdBrush2 = New-Object System.Drawing.SolidBrush $letterShd
-                try {
                     if ($neighborBelow -ne '1') { $g.FillRectangle($shdBrush2, $px, $py + $cell - $shdInset, $cell, $shdInset) }
                     if ($neighborRight -ne '1') { $g.FillRectangle($shdBrush2, $px + $cell - $shdInset, $py, $shdInset, $cell) }
-                } finally { $shdBrush2.Dispose() }
+                }
             }
-        }
-        # Bold outline around the whole letter shape: re-walk the grid and paint
-        # a 2px dark border on any edge where the adjacent cell is empty (or off-grid).
-        $olThick = [Math]::Max(2, [int]($cell / 6))
-        $olBrush = New-Object System.Drawing.SolidBrush $letterOl
-        try {
+            # Bold outline around the whole letter shape: re-walk the grid and paint
+            # a dark border on any edge where the adjacent cell is empty (or off-grid).
             for ($r = 0; $r -lt $pattern.Length; $r++) {
                 $row = $pattern[$r]
                 for ($c = 0; $c -lt $row.Length; $c++) {
@@ -157,7 +164,12 @@ try {
                     if ($right -ne '1') { $g.FillRectangle($olBrush, $px + $cell - $olThick, $py, $olThick, $cell) }
                 }
             }
-        } finally { $olBrush.Dispose() }
+        } finally {
+            $fillBrush.Dispose()
+            $hiBrush2.Dispose()
+            $shdBrush2.Dispose()
+            $olBrush.Dispose()
+        }
     }
 
     Draw-Letter $pPattern $startX $startY
