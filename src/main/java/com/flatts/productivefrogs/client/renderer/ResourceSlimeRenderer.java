@@ -29,6 +29,13 @@ import net.minecraft.world.entity.monster.Slime;
  *       per-variant-tinted cube. Unchanged from v1.0.</li>
  * </ol>
  *
+ * <p>The three items above are listed inner-to-outer for clarity, not in
+ * layer-add order. The constructor adds the outer-shell layer before the
+ * inner-block layer, but that doesn't affect the result: with the
+ * {@code MultiBufferSource.immediate} batching used for entities, draws are
+ * grouped and flushed by {@code RenderType}, so the opaque block (solid /
+ * cutout) is drawn before the translucent shell regardless of layer order.
+ *
  * <p>See {@code docs/v1_0_1_scope.md}. The shipped implementation keeps the
  * vanilla inner model and adds the block layer (rather than the spec's
  * custom-model two-pass), which preserves the eyes/mouth and sidesteps the

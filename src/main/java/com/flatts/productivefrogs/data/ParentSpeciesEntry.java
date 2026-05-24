@@ -58,10 +58,12 @@ public record ParentSpeciesEntry(
      * the parent slime. Optional; absent for vanilla parents
      * ({@code minecraft:slime}, {@code minecraft:magma_cube}) which use their
      * own vanilla renderers and don't read this field. The PF-native parent
-     * renderers currently pin the block as a constant (the JSON value
-     * documents intent and seeds a future datapack-driven render path).
-     * Format: a plain block id (namespace + path, no {@code textures/} prefix,
-     * no {@code .png}). Example: {@code "minecraft:stone"}.
+     * renderers read this value at render time via
+     * {@code ResourceSlimeInnerBlockLayer.parentSpeciesBlock}, so a modpack can
+     * repoint a species' interior block by editing the JSON (parallel to how
+     * Resource Slime variants read their {@code inner_block}). Format: a plain
+     * block id (namespace + path, no {@code textures/} prefix, no
+     * {@code .png}). Example: {@code "minecraft:stone"}.
      */
     public static final Codec<ParentSpeciesEntry> CODEC = RecordCodecBuilder.create(
         instance -> instance.group(

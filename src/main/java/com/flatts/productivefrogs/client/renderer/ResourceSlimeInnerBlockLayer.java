@@ -28,9 +28,10 @@ import net.minecraft.world.level.block.state.BlockState;
  * at native resolution with vanilla's own UVs, mipmaps, and (where relevant)
  * animation.
  *
- * <p>This layer is purely additive: the base {@link SlimeRenderer} still draws
- * the vanilla inner cube + eyes + mouth (the eyes/mouth live on the vanilla
- * inner body layer), and {@link ResourceSlimeOuterLayer} /
+ * <p>This layer is purely additive: the base
+ * {@link net.minecraft.client.renderer.entity.SlimeRenderer} still draws the
+ * vanilla inner cube + eyes + mouth (the eyes/mouth live on the vanilla inner
+ * body layer), and {@link ResourceSlimeOuterLayer} /
  * {@link TintedSlimeOuterLayer} still draw the translucent tinted shell. The
  * opaque block here covers the inner cube's body texture; the eyes sit at
  * z=-3.5 (proud of the inner cube's front face at z=-3) so they render in
@@ -38,8 +39,9 @@ import net.minecraft.world.level.block.state.BlockState;
  *
  * <p>Block selection is supplied per-renderer via a {@link Function}: the
  * Resource Slime renderer reads each entity's variant ({@link
- * #resourceSlimeBlock}); each parent-species renderer passes a constant block
- * ({@link #constant}).
+ * #resourceSlimeBlock}); each parent-species renderer reads its species'
+ * {@code inner_block} from the parent_species registry ({@link
+ * #parentSpeciesBlock}).
  *
  * <p><b>Transform constants are first-guesses pending an in-client tuning
  * pass</b> (the render can't be verified headless). See {@link #BLOCK_EDGE} /

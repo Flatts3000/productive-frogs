@@ -16,8 +16,10 @@ import net.minecraft.world.entity.monster.Slime;
 
 /**
  * Drop-in replacement for vanilla {@code SlimeOuterLayer} that paints the
- * translucent outer shell + eyes + mouth with a constant ARGB tint instead of
- * leaving it the vanilla green from {@code SlimeRenderer.SLIME_LOCATION}. Used
+ * translucent outer shell with a constant ARGB tint instead of leaving it the
+ * vanilla green from {@code SlimeRenderer.SLIME_LOCATION}. Like vanilla's
+ * outer layer, this renders {@code ModelLayers.SLIME_OUTER} (the shell cube
+ * only); the eyes and mouth live on the base inner model, not here. Used
  * by the six PF parent species renderers ({@link BogSlimeRenderer},
  * {@link CaveSlimeRenderer}, {@link GeodeSlimeRenderer},
  * {@link TideSlimeRenderer}, {@link InfernalSlimeRenderer},
