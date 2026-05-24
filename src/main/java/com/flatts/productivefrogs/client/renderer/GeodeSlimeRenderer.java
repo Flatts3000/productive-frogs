@@ -1,36 +1,42 @@
 package com.flatts.productivefrogs.client.renderer;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.client.PFModelLayers;
+import com.flatts.productivefrogs.client.model.ResourceSlimeInnerModel;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.client.renderer.entity.layers.SlimeOuterLayer;
-
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Vanilla {@link SlimeRenderer} with a Geode-Slime-specific texture and a
- * diamond-cyan outer-shell tint. The constructor swaps vanilla's
- * {@link SlimeOuterLayer} for a {@link TintedSlimeOuterLayer} so the species
- * reads as cyan in-world instead of the vanilla green that previously
- * dominated the translucent shell. The tint matches the {@code diamond}
- * variant's {@code primary_color} so the parent species reads consistently
- * with the resource variants it spawns.
+ * Geode Slime renderer. Two-pass: outer shell + eyes + mouth use the species
+ * atlas ({@link #OUTER_TEXTURE}) with a diamond-cyan tint via
+ * {@link TintedSlimeOuterLayer}; inner cube uses {@link #INNER_TEXTURE}
+ * (vanilla amethyst block) at native 16x16 resolution via
+ * {@link ResourceSlimeInnerModel}.
+ *
+ * <p>{@link #INNER_TEXTURE} stays in sync with the {@code inner_texture}
+ * field on {@code data/productivefrogs/productivefrogs/parent_species/geode_slime.json}.
  */
 public class GeodeSlimeRenderer extends SlimeRenderer {
 
-    private static final ResourceLocation TEXTURE =
+    private static final ResourceLocation OUTER_TEXTURE =
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "textures/entity/slime/geode_slime.png");
+
+    private static final ResourceLocation INNER_TEXTURE =
+        ResourceLocation.parse("minecraft:textures/block/amethyst_block.png");
 
     private static final int OUTER_TINT_ARGB = 0xFF6CDCD7;
 
     public GeodeSlimeRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
+        this.model = new ResourceSlimeInnerModel(ctx.bakeLayer(PFModelLayers.RESOURCE_SLIME_INNER));
         this.layers.removeIf(l -> l instanceof SlimeOuterLayer);
-        this.addLayer(new TintedSlimeOuterLayer(this, ctx.getModelSet(), OUTER_TINT_ARGB));
+        this.addLayer(new TintedSlimeOuterLayer(this, ctx.getModelSet(), OUTER_TINT_ARGB, OUTER_TEXTURE));
     }
 
     @Override
     public ResourceLocation getTextureLocation(net.minecraft.world.entity.monster.Slime entity) {
-        return TEXTURE;
+        return INNER_TEXTURE;
     }
 }

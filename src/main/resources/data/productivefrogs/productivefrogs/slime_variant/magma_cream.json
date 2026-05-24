@@ -3,5 +3,5 @@
   "category": "infernal",
   "primary_color": 14904859,
   "secondary_color": 10238986,
-  "texture": "productivefrogs:textures/entity/slime/magma_cream_resource_slime.png"
+  "inner_texture": "minecraft:textures/block/magma.png"
 }

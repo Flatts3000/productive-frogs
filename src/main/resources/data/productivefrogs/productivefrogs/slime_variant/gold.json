@@ -3,5 +3,5 @@
   "category": "cave",
   "primary_color": 16576075,
   "secondary_color": 13941029,
-  "texture": "productivefrogs:textures/entity/slime/gold_resource_slime.png"
+  "inner_texture": "minecraft:textures/block/gold_block.png"
 }

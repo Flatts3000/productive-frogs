@@ -18,24 +18,28 @@ import net.minecraft.util.FastColor;
 import net.minecraft.world.entity.monster.Slime;
 
 /**
- * Drop-in replacement for vanilla {@code SlimeOuterLayer} with two changes:
+ * Renders the outer translucent shell + eyes + mouth of a Resource Slime
+ * against the per-category atlas, with a per-variant tint applied to the
+ * shell.
  *
- * <ol>
- *   <li>Texture comes from the parent renderer's {@code getTextureLocation(Slime)}
- *       instead of being hardcoded to {@code SlimeRenderer.SLIME_LOCATION}.</li>
- *   <li>The shell is tinted per-entity: variant primary colour for variant-locked
- *       slimes, category shell-tinted-gray for category-only slimes. Read directly
- *       from the {@link ResourceSlime} entity at render time.</li>
- * </ol>
+ * <p>Pre-v1.0.1 this layer routed its texture lookup through the parent
+ * renderer's {@code getTextureLocation}, which returned the same per-category
+ * atlas. v1.0.1 splits inner-vs-outer rendering: the parent renderer's
+ * {@code getTextureLocation} now returns the variant's vanilla block PNG
+ * (for the inner cube), so this layer resolves the outer atlas
+ * independently from the entity's category via
+ * {@link ResourceSlimeRenderer#OUTER_TEXTURES}.
+ *
+ * <p>The shell tint comes from the variant's {@code primary_color} (or the
+ * category's {@code shellTintArgb} when no variant is bound), preserving the
+ * v1.0 tint behavior.
  */
 public class ResourceSlimeOuterLayer extends RenderLayer<Slime, SlimeModel<Slime>> {
 
     private final SlimeModel<Slime> model;
-    private final ResourceSlimeRenderer parentRenderer;
 
     public ResourceSlimeOuterLayer(ResourceSlimeRenderer renderer, EntityModelSet modelSet) {
         super(renderer);
-        this.parentRenderer = renderer;
         this.model = new SlimeModel<>(modelSet.bakeLayer(ModelLayers.SLIME_OUTER));
     }
 
@@ -49,7 +53,7 @@ public class ResourceSlimeOuterLayer extends RenderLayer<Slime, SlimeModel<Slime
             return;
         }
 
-        ResourceLocation texture = parentRenderer.getTextureLocation(entity);
+        ResourceLocation texture = resolveOuterTexture(entity);
         VertexConsumer consumer = glowingOutline
             ? buffer.getBuffer(RenderType.outline(texture))
             : buffer.getBuffer(RenderType.entityTranslucent(texture));
@@ -65,6 +69,17 @@ public class ResourceSlimeOuterLayer extends RenderLayer<Slime, SlimeModel<Slime
         model.renderToBuffer(pose, consumer, packedLight,
             LivingEntityRenderer.getOverlayCoords(entity, 0.0F),
             shellTint);
+    }
+
+    private static ResourceLocation resolveOuterTexture(Slime entity) {
+        Category cat = Category.BOG;
+        if (entity instanceof ResourceSlime resource) {
+            Category resolved = resource.getCategory();
+            if (resolved != null) {
+                cat = resolved;
+            }
+        }
+        return ResourceSlimeRenderer.OUTER_TEXTURES.get(cat);
     }
 
     private static int resolveShellTint(Slime entity) {

@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.data;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -44,12 +45,29 @@ import net.minecraft.resources.ResourceLocation;
  * {@code PFRegistries.PARENT_SPECIES} lookups, but at V1 scale a fold is
  * cheaper than the indirection.
  */
-public record ParentSpeciesEntry(ResourceLocation entityType, Category category) {
+public record ParentSpeciesEntry(
+    ResourceLocation entityType,
+    Category category,
+    Optional<ResourceLocation> innerTexture
+) {
 
+    /**
+     * Codec for the {@code parent_species} datapack registry.
+     *
+     * <p>{@code inner_texture} (v1.0.1+): the vanilla block PNG bound to the
+     * parent slime's inner cube. Optional; absent for vanilla parents
+     * ({@code minecraft:slime}, {@code minecraft:magma_cube}) which use
+     * their own vanilla renderers and don't read this field. Required for
+     * PF-native parent species since their renderers route the inner-cube
+     * texture binding through this value. Format: full
+     * {@code RenderType.entityCutout}-compatible texture location including
+     * namespace, {@code textures/} prefix, and {@code .png} suffix.
+     */
     public static final Codec<ParentSpeciesEntry> CODEC = RecordCodecBuilder.create(
         instance -> instance.group(
             ResourceLocation.CODEC.fieldOf("entity_type").forGetter(ParentSpeciesEntry::entityType),
-            Category.CODEC.fieldOf("category").forGetter(ParentSpeciesEntry::category)
+            Category.CODEC.fieldOf("category").forGetter(ParentSpeciesEntry::category),
+            ResourceLocation.CODEC.optionalFieldOf("inner_texture").forGetter(ParentSpeciesEntry::innerTexture)
         ).apply(instance, ParentSpeciesEntry::new)
     );
 }

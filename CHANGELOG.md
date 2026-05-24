@@ -1,5 +1,39 @@
 # Changelog
 
+## v1.0.1 — 2026-05-24
+
+Visual-polish patch. **No behavior changes.** No world migration, no API surface change. Production loop, drops, AI, tints, infusion semantics, JEI subtypes: unchanged.
+
+### What changed visually
+
+- **Resource Slime inner cube now displays the variant's vanilla resource block texture at native 16x16 per face.** Pre-v1.0.1, the renderer downsampled the vanilla 16x16 block texture to 6x6 (matching vanilla `SlimeModel`'s per-face UV resolution) and stamped it into a per-variant atlas. At slime size 4 the 6x6 source visibly blurred at 60+ screen pixels; v1.0.1 binds the vanilla block PNG directly so what you see inside the slime IS the vanilla block, byte-identical.
+- Same treatment for the 6 parent species (Bog/Cave/Geode/Tide/Infernal/Void) - each now displays a themed vanilla block (moss, stone, amethyst, prismarine, netherrack, end stone) inside its translucent shell.
+
+### How
+
+Two-pass entity rendering. The slime's outer translucent shell + eyes + mouth still bind the existing per-category atlas (unchanged from v1.0). The inner cube binds to the variant's `inner_texture` field directly (e.g. `minecraft:textures/block/iron_block.png`). A new `ResourceSlimeInnerModel` swaps vanilla `SlimeModel`'s 6x6-UV inner cube for a 16x16-UV inner cube scaled down to vanilla's visual size, so the world-space geometry is identical while each face's UV spans the full bound texture.
+
+### Data layer
+
+- New optional `inner_texture` field on `SlimeVariant` and `ParentSpeciesEntry` codecs. Format: full texture path with namespace + `textures/` prefix + `.png` suffix (e.g. `minecraft:textures/block/iron_block.png`).
+- All 12 shipped variant JSONs populated.
+- All 6 parent_species JSONs populated.
+
+### Asset cleanup
+
+- 12 per-variant `<variant>_resource_slime.png` atlas PNGs deleted (no longer needed; the outer-shell atlas is per-category, the inner cube binds directly to vanilla block PNGs).
+- `scripts/generate_variant_slime_textures.ps1` deleted (the textures it produced are gone).
+
+### Fallback
+
+Variant JSON without an `inner_texture` field (typo, modded block from an absent mod) renders the vanilla missing-texture sprite (purple/black checker) at render time. Visually loud, doesn't crash, easy to spot.
+
+### Modpack-author note
+
+No migration. No third-party variants are known to ship between v1.0 and v1.0.1; if any exist, they'll continue to load (`inner_texture` is optional) and just render with the missing-texture fallback until a JSON edit adds the field.
+
+---
+
 ## v1.0.0 — 2026-05-24
 
 First public release. **Minecraft 1.21.1 / NeoForge 21.1.230.**
