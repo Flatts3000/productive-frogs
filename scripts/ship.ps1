@@ -4,7 +4,13 @@
 #   1. Verify clean git state on main, at a release tag
 #   2. Read version + tag, confirm they agree
 #   3. Override JAVA_HOME to JDK 21 (system JAVA_HOME on this box is stale)
-#   4. Clean build
+#   4. Clean build + prepareAllRuns
+#      (prepareAllRuns is an aggregate task defined in build.gradle that
+#      regenerates build/moddev/*RunVmArgs.txt and friends. IntelliJ's
+#      runClient/runServer/etc launch configs reference those files;
+#      gradle clean wipes them, so IDE launches break after every clean
+#      unless we regenerate. Chaining the prep onto the build command
+#      keeps the IDE working between pipeline runs.)
 #   5. Run GameTests (separate CI gate, not invoked by `build`)
 #   6. Sanity-check the produced jar (size, neoforge.mods.toml version)
 #   7. Optionally upload the jar to the matching GitHub Release
@@ -105,8 +111,8 @@ Write-Host "  JAVA_HOME=$JdkPath" -ForegroundColor Green
 $jarPath = "build\libs\productivefrogs-$modVersion.jar"
 
 if (-not $Upload) {
-    Write-Stage 4 $total "Clean build"
-    & .\gradlew.bat clean build
+    Write-Stage 4 $total "Clean build + prepareAllRuns (keeps IDE launch configs working)"
+    & .\gradlew.bat clean build prepareAllRuns
     if ($LASTEXITCODE -ne 0) { Fail "gradle build failed (exit $LASTEXITCODE)" }
     if (-not (Test-Path $jarPath)) { Fail "expected jar at $jarPath, not found" }
     Write-Host "  produced $jarPath" -ForegroundColor Green
