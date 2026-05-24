@@ -4,17 +4,18 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.client.renderer.entity.layers.SlimeOuterLayer;
-
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Vanilla {@link SlimeRenderer} with a Cave-Slime-specific texture and a
- * stone-grey outer-shell tint. The constructor swaps vanilla's
- * {@link SlimeOuterLayer} (which hardcodes {@code SlimeRenderer.SLIME_LOCATION}
- * and produces the vanilla green translucent shell) for a
- * {@link TintedSlimeOuterLayer} that routes texture lookups through this
- * renderer and applies a stone-grey ARGB tint, so the species reads as grey
- * in-world instead of the vanilla green that previously dominated.
+ * Cave Slime renderer. Keeps the vanilla inner model (cube + eyes + mouth)
+ * textured from the species atlas, swaps the outer shell for a stone-grey
+ * {@link TintedSlimeOuterLayer}, and adds a {@link ResourceSlimeInnerBlockLayer}
+ * that renders the species' inner block inside the slime.
+ *
+ * <p>The inner block is data-driven via
+ * {@link ResourceSlimeInnerBlockLayer#parentSpeciesBlock}, which reads the
+ * {@code inner_block} field from {@code .../parent_species/cave_slime.json}
+ * (stone).
  */
 public class CaveSlimeRenderer extends SlimeRenderer {
 
@@ -26,7 +27,9 @@ public class CaveSlimeRenderer extends SlimeRenderer {
     public CaveSlimeRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
         this.layers.removeIf(l -> l instanceof SlimeOuterLayer);
-        this.addLayer(new TintedSlimeOuterLayer(this, ctx.getModelSet(), OUTER_TINT_ARGB));
+        this.addLayer(new TintedSlimeOuterLayer(this, ctx.getModelSet(), OUTER_TINT_ARGB, TEXTURE));
+        this.addLayer(new ResourceSlimeInnerBlockLayer(this, ctx.getBlockRenderDispatcher(),
+            ResourceSlimeInnerBlockLayer::parentSpeciesBlock));
     }
 
     @Override

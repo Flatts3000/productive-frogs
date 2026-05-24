@@ -533,18 +533,19 @@ public final class PFGameTests {
         if (!iron.primerItem().equals(ResourceLocation.fromNamespaceAndPath("minecraft", "iron_ingot"))) {
             helper.fail("iron variant primer should be minecraft:iron_ingot, got " + iron.primerItem());
         }
-        // PR-F wires per-variant inner-cube PNGs: every shipped variant JSON
-        // declares a `texture` pointing at its generated PNG. Spot-check that
-        // the codec round-tripped the field rather than silently dropping it.
-        if (iron.texture().isEmpty()) {
-            helper.fail("iron variant must declare a `texture` field after the per-variant PNG ship");
+        // v1.0.1 renders the variant's vanilla resource block inside the slime
+        // via the `inner_block` field. Every shipped variant JSON declares one;
+        // spot-check that the codec round-tripped it rather than silently
+        // dropping it. (The pre-v1.0.1 per-variant atlas `texture` field is
+        // retired; the 12 atlas PNGs were deleted.)
+        if (iron.innerBlock().isEmpty()) {
+            helper.fail("iron variant must declare an `inner_block` field after the v1.0.1 inner-block ship");
             return;
         }
-        ResourceLocation expectedTexture = ResourceLocation.fromNamespaceAndPath(
-            ProductiveFrogs.MOD_ID, "textures/entity/slime/iron_resource_slime.png");
-        if (!expectedTexture.equals(iron.texture().get())) {
-            helper.fail("iron texture path should be " + expectedTexture
-                + ", got " + iron.texture().get());
+        ResourceLocation expectedInnerBlock = ResourceLocation.parse("minecraft:iron_block");
+        if (!expectedInnerBlock.equals(iron.innerBlock().get())) {
+            helper.fail("iron inner_block should be " + expectedInnerBlock
+                + ", got " + iron.innerBlock().get());
             return;
         }
         helper.succeed();

@@ -1,4 +1,5 @@
 {
   "entity_type": "productivefrogs:tide_slime",
-  "category": "tide"
+  "category": "tide",
+  "inner_block": "minecraft:prismarine"
 }

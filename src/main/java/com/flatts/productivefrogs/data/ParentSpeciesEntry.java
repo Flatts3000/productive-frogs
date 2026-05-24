@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.data;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -44,12 +45,31 @@ import net.minecraft.resources.ResourceLocation;
  * {@code PFRegistries.PARENT_SPECIES} lookups, but at V1 scale a fold is
  * cheaper than the indirection.
  */
-public record ParentSpeciesEntry(ResourceLocation entityType, Category category) {
+public record ParentSpeciesEntry(
+    ResourceLocation entityType,
+    Category category,
+    Optional<ResourceLocation> innerBlock
+) {
 
+    /**
+     * Codec for the {@code parent_species} datapack registry.
+     *
+     * <p>{@code inner_block} (v1.0.1+): the vanilla block id rendered inside
+     * the parent slime. Optional; absent for vanilla parents
+     * ({@code minecraft:slime}, {@code minecraft:magma_cube}) which use their
+     * own vanilla renderers and don't read this field. The PF-native parent
+     * renderers read this value at render time via
+     * {@code ResourceSlimeInnerBlockLayer.parentSpeciesBlock}, so a modpack can
+     * repoint a species' interior block by editing the JSON (parallel to how
+     * Resource Slime variants read their {@code inner_block}). Format: a plain
+     * block id (namespace + path, no {@code textures/} prefix, no
+     * {@code .png}). Example: {@code "minecraft:stone"}.
+     */
     public static final Codec<ParentSpeciesEntry> CODEC = RecordCodecBuilder.create(
         instance -> instance.group(
             ResourceLocation.CODEC.fieldOf("entity_type").forGetter(ParentSpeciesEntry::entityType),
-            Category.CODEC.fieldOf("category").forGetter(ParentSpeciesEntry::category)
+            Category.CODEC.fieldOf("category").forGetter(ParentSpeciesEntry::category),
+            ResourceLocation.CODEC.optionalFieldOf("inner_block").forGetter(ParentSpeciesEntry::innerBlock)
         ).apply(instance, ParentSpeciesEntry::new)
     );
 }

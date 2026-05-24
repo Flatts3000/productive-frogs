@@ -4,16 +4,18 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.client.renderer.entity.layers.SlimeOuterLayer;
-
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Vanilla {@link SlimeRenderer} with a Tide-Slime-specific texture and a
- * water-blue outer-shell tint. The constructor swaps vanilla's
- * {@link SlimeOuterLayer} for a {@link TintedSlimeOuterLayer} so the species
- * reads as blue in-world instead of the vanilla green that previously
- * dominated the translucent shell. The tint matches the vanilla water
- * particle colour so the parent species reads as an ocean-themed slime.
+ * Tide Slime renderer. Keeps the vanilla inner model (cube + eyes + mouth)
+ * textured from the species atlas, swaps the outer shell for a water-blue
+ * {@link TintedSlimeOuterLayer}, and adds a {@link ResourceSlimeInnerBlockLayer}
+ * that renders the species' inner block inside the slime.
+ *
+ * <p>The inner block is data-driven via
+ * {@link ResourceSlimeInnerBlockLayer#parentSpeciesBlock}, which reads the
+ * {@code inner_block} field from {@code .../parent_species/tide_slime.json}
+ * (prismarine).
  */
 public class TideSlimeRenderer extends SlimeRenderer {
 
@@ -25,7 +27,9 @@ public class TideSlimeRenderer extends SlimeRenderer {
     public TideSlimeRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
         this.layers.removeIf(l -> l instanceof SlimeOuterLayer);
-        this.addLayer(new TintedSlimeOuterLayer(this, ctx.getModelSet(), OUTER_TINT_ARGB));
+        this.addLayer(new TintedSlimeOuterLayer(this, ctx.getModelSet(), OUTER_TINT_ARGB, TEXTURE));
+        this.addLayer(new ResourceSlimeInnerBlockLayer(this, ctx.getBlockRenderDispatcher(),
+            ResourceSlimeInnerBlockLayer::parentSpeciesBlock));
     }
 
     @Override

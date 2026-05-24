@@ -1,4 +1,5 @@
 {
   "entity_type": "productivefrogs:bog_slime",
-  "category": "bog"
+  "category": "bog",
+  "inner_block": "minecraft:moss_block"
 }

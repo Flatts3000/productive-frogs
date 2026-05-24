@@ -4,16 +4,19 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.client.renderer.entity.layers.SlimeOuterLayer;
-
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Vanilla {@link SlimeRenderer} with a Void-Slime-specific texture and an
- * end-portal-frame purple outer-shell tint. The constructor swaps vanilla's
- * {@link SlimeOuterLayer} for a {@link TintedSlimeOuterLayer} so the species
- * reads as purple in-world instead of the vanilla green that previously
- * dominated the translucent shell. The tint is darker than the broader
- * ARCANE category lavender to evoke the End dimension specifically.
+ * Void Slime renderer. Keeps the vanilla inner model (cube + eyes + mouth)
+ * textured from the species atlas, swaps the outer shell for an
+ * end-portal-frame purple {@link TintedSlimeOuterLayer}, and adds a
+ * {@link ResourceSlimeInnerBlockLayer} that renders the species' inner block
+ * inside the slime.
+ *
+ * <p>The inner block is data-driven via
+ * {@link ResourceSlimeInnerBlockLayer#parentSpeciesBlock}, which reads the
+ * {@code inner_block} field from {@code .../parent_species/void_slime.json}
+ * (end_stone).
  */
 public class VoidSlimeRenderer extends SlimeRenderer {
 
@@ -25,7 +28,9 @@ public class VoidSlimeRenderer extends SlimeRenderer {
     public VoidSlimeRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
         this.layers.removeIf(l -> l instanceof SlimeOuterLayer);
-        this.addLayer(new TintedSlimeOuterLayer(this, ctx.getModelSet(), OUTER_TINT_ARGB));
+        this.addLayer(new TintedSlimeOuterLayer(this, ctx.getModelSet(), OUTER_TINT_ARGB, TEXTURE));
+        this.addLayer(new ResourceSlimeInnerBlockLayer(this, ctx.getBlockRenderDispatcher(),
+            ResourceSlimeInnerBlockLayer::parentSpeciesBlock));
     }
 
     @Override

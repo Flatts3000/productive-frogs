@@ -22,10 +22,10 @@ import net.minecraft.world.entity.monster.Slime;
  *
  * <ol>
  *   <li>Texture comes from the parent renderer's {@code getTextureLocation(Slime)}
- *       instead of being hardcoded to {@code SlimeRenderer.SLIME_LOCATION}.</li>
+ *       (the per-category atlas) instead of being hardcoded to
+ *       {@code SlimeRenderer.SLIME_LOCATION}.</li>
  *   <li>The shell is tinted per-entity: variant primary colour for variant-locked
- *       slimes, category shell-tinted-gray for category-only slimes. Read directly
- *       from the {@link ResourceSlime} entity at render time.</li>
+ *       slimes, category shell-tinted-gray for category-only slimes.</li>
  * </ol>
  */
 public class ResourceSlimeOuterLayer extends RenderLayer<Slime, SlimeModel<Slime>> {

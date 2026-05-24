@@ -1,4 +1,5 @@
 {
   "entity_type": "productivefrogs:void_slime",
-  "category": "void"
+  "category": "void",
+  "inner_block": "minecraft:end_stone"
 }

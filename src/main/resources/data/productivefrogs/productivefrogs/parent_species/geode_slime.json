@@ -1,4 +1,5 @@
 {
   "entity_type": "productivefrogs:geode_slime",
-  "category": "geode"
+  "category": "geode",
+  "inner_block": "minecraft:amethyst_block"
 }

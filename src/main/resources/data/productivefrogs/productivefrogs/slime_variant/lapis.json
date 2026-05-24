@@ -3,5 +3,5 @@
   "category": "cave",
   "primary_color": 3432131,
   "secondary_color": 2047884,
-  "texture": "productivefrogs:textures/entity/slime/lapis_resource_slime.png"
+  "inner_block": "minecraft:lapis_block"
 }

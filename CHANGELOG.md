@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.0.1 — 2026-05-24
+
+Visual-polish patch. **No behavior changes.** No world migration, no API surface change. Production loop, drops, AI, tints, infusion semantics, JEI subtypes: unchanged.
+
+### What changed visually
+
+- **Resource Slimes now have an actual vanilla resource block rendered inside the translucent shell.** Pre-v1.0.1, the inner cube was textured with a 6x6-downsampled copy of the block image stamped into a per-variant atlas (blurry at large slime sizes). v1.0.1 draws the real block model (iron block, copper block, ...) so the interior is the genuine vanilla block at native resolution, with vanilla's own UVs and mipmaps.
+- Same treatment for the 6 parent species (Bog/Cave/Geode/Tide/Infernal/Void) - each shows a themed vanilla block inside (moss, stone, amethyst, prismarine, netherrack, end stone).
+- The slime's face (eyes + mouth) and tinted translucent shell are unchanged.
+
+### How
+
+A new `ResourceSlimeInnerBlockLayer` renders the resource block via `BlockRenderDispatcher` in the volume vanilla's 6x6x6 inner cube occupies. The base renderer still draws the vanilla inner model (cube + eyes + mouth) and the tinted outer shell, both unchanged from v1.0 - the eyes live on the vanilla inner body layer, so keeping that model preserves the face. The opaque block covers the inner cube's body; the eyes sit proud of the cube's front face and stay visible.
+
+### Data layer
+
+- New optional `inner_block` field on `SlimeVariant` and `ParentSpeciesEntry` codecs. Format: a plain vanilla block id (e.g. `minecraft:iron_block`), resolved to its default block state at render time.
+- Fully data-driven, parallel to the existing tint config: Resource Slime variants read `inner_block` from the variant JSON (like `primary_color`); parent species read it from their `parent_species` registry entry. A modpack can repoint any slime's interior block by editing JSON, no code change.
+- All 12 shipped variant JSONs populated; all 6 parent_species JSONs populated.
+- Removed the pre-v1.0.1 per-variant atlas `texture` field from `SlimeVariant` (the renderer no longer reads it; the outer-shell atlas is per-category).
+
+### Asset cleanup
+
+- 12 per-variant `<variant>_resource_slime.png` atlas PNGs deleted (the inner content is now a rendered block; the outer-shell atlas is per-category).
+- `scripts/generate_variant_slime_textures.ps1` deleted (the textures it produced are gone).
+
+### Fallback
+
+A variant JSON without an `inner_block` field (typo, modded block from an absent mod) skips the inner-block render pass - the slime renders with its shell, eyes, and inner cube but no interior block.
+
+### Modpack-author note
+
+No migration. No third-party variants are known to ship between v1.0 and v1.0.1; if any exist, they'll continue to load (`inner_block` is optional) and just render without an interior block until a JSON edit adds the field.
+
+---
+
 ## v1.0.0 — 2026-05-24
 
 First public release. **Minecraft 1.21.1 / NeoForge 21.1.230.**

@@ -8,6 +8,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
+import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.Test;
 
@@ -50,7 +51,8 @@ class ParentSpeciesEntryTest {
     void codecRoundTrip() {
         ParentSpeciesEntry original = new ParentSpeciesEntry(
             ResourceLocation.parse("productivefrogs:void_slime"),
-            Category.VOID
+            Category.VOID,
+            Optional.empty()
         );
         JsonElement encoded = ParentSpeciesEntry.CODEC.encodeStart(JsonOps.INSTANCE, original)
             .result()
@@ -59,6 +61,24 @@ class ParentSpeciesEntryTest {
             .result()
             .orElseThrow();
         assertEquals(original, decoded);
+    }
+
+    @Test
+    void codecRoundTripWithInnerBlock() {
+        ParentSpeciesEntry original = new ParentSpeciesEntry(
+            ResourceLocation.parse("productivefrogs:cave_slime"),
+            Category.CAVE,
+            Optional.of(ResourceLocation.parse("minecraft:stone"))
+        );
+        JsonElement encoded = ParentSpeciesEntry.CODEC.encodeStart(JsonOps.INSTANCE, original)
+            .result()
+            .orElseThrow();
+        ParentSpeciesEntry decoded = ParentSpeciesEntry.CODEC.parse(JsonOps.INSTANCE, encoded)
+            .result()
+            .orElseThrow();
+        assertEquals(original, decoded);
+        assertEquals(Optional.of(ResourceLocation.parse("minecraft:stone")),
+            decoded.innerBlock());
     }
 
     @Test

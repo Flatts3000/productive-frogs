@@ -3,5 +3,5 @@
   "category": "void",
   "primary_color": 4236172,
   "secondary_color": 2056280,
-  "texture": "productivefrogs:textures/entity/slime/ender_pearl_resource_slime.png"
+  "inner_block": "minecraft:end_stone"
 }

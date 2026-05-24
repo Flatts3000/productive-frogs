@@ -12,14 +12,34 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.monster.Slime;
 
 /**
- * Resource Slime renderer. Extends vanilla {@link SlimeRenderer} to reuse the
- * vanilla model + shadow, but swaps the texture per-category (or per-variant)
- * to give each slime the "block-inside-a-translucent-shell" look.
+ * Resource Slime renderer. Three render passes:
  *
- * <p>The constructor replaces vanilla's {@link SlimeOuterLayer} with our
- * {@link ResourceSlimeOuterLayer} so the outer translucent cube reads from
- * our per-category PNG and gets a per-variant tint applied. See the layer
- * class for the tint resolution details.
+ * <ol>
+ *   <li><b>Inner cube + eyes + mouth</b> (inherited vanilla {@link SlimeRenderer}
+ *       base): drawn from the per-category atlas
+ *       ({@code <category>_resource_slime.png}). The eyes/mouth live on the
+ *       vanilla inner body layer, so keeping the vanilla model preserves the
+ *       slime's face. The inner cube's body texture is covered by the block
+ *       pass below; the eyes (z=-3.5, proud of the cube face) stay visible.</li>
+ *   <li><b>Inner block</b> ({@link ResourceSlimeInnerBlockLayer}): renders the
+ *       variant's {@code inner_block} as an actual vanilla block model in the
+ *       inner-cube volume. This is the v1.0.1 "literal block inside the slime"
+ *       upgrade over v1.0's downsampled inner-cube texture.</li>
+ *   <li><b>Outer shell</b> ({@link ResourceSlimeOuterLayer}): translucent
+ *       per-variant-tinted cube. Unchanged from v1.0.</li>
+ * </ol>
+ *
+ * <p>The three items above are listed inner-to-outer for clarity, not in
+ * layer-add order. The constructor adds the outer-shell layer before the
+ * inner-block layer, but that doesn't affect the result: with the
+ * {@code MultiBufferSource.immediate} batching used for entities, draws are
+ * grouped and flushed by {@code RenderType}, so the opaque block (solid /
+ * cutout) is drawn before the translucent shell regardless of layer order.
+ *
+ * <p>See {@code docs/v1_0_1_scope.md}. The shipped implementation keeps the
+ * vanilla inner model and adds the block layer (rather than the spec's
+ * custom-model two-pass), which preserves the eyes/mouth and sidesteps the
+ * single-tile-vs-UV-net problem.
  */
 public class ResourceSlimeRenderer extends SlimeRenderer {
 
@@ -38,17 +58,18 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
 
     public ResourceSlimeRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
+        // Keep the vanilla inner model (cube + eyes + mouth). Swap only the
+        // outer shell for our tinted variant, then add the inner-block pass.
         this.layers.removeIf(l -> l instanceof SlimeOuterLayer);
         this.addLayer(new ResourceSlimeOuterLayer(this, ctx.getModelSet()));
+        this.addLayer(new ResourceSlimeInnerBlockLayer(
+            this, ctx.getBlockRenderDispatcher(),
+            ResourceSlimeInnerBlockLayer::resourceSlimeBlock));
     }
 
     @Override
     public ResourceLocation getTextureLocation(Slime entity) {
         if (entity instanceof ResourceSlime resource) {
-            var variant = resource.getVariant();
-            if (variant != null && variant.texture().isPresent()) {
-                return variant.texture().get();
-            }
             Category cat = resource.getCategory();
             if (cat != null) {
                 return TEXTURES.get(cat);

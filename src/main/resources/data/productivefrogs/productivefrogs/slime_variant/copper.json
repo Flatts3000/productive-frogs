@@ -3,5 +3,5 @@
   "category": "cave",
   "primary_color": 14711367,
   "secondary_color": 11553069,
-  "texture": "productivefrogs:textures/entity/slime/copper_resource_slime.png"
+  "inner_block": "minecraft:copper_block"
 }

@@ -7,8 +7,15 @@ import net.minecraft.client.renderer.entity.layers.SlimeOuterLayer;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Infernal Slime renderer — vanilla {@link SlimeRenderer} with a nether-red
- * texture + outer-shell tint. Mirrors the {@link CaveSlimeRenderer} pattern.
+ * Infernal Slime renderer. Keeps the vanilla inner model (cube + eyes + mouth)
+ * textured from the species atlas, swaps the outer shell for a lava-red
+ * {@link TintedSlimeOuterLayer}, and adds a {@link ResourceSlimeInnerBlockLayer}
+ * that renders the species' inner block inside the slime.
+ *
+ * <p>The inner block is data-driven via
+ * {@link ResourceSlimeInnerBlockLayer#parentSpeciesBlock}, which reads the
+ * {@code inner_block} field from {@code .../parent_species/infernal_slime.json}
+ * (netherrack).
  */
 public class InfernalSlimeRenderer extends SlimeRenderer {
 
@@ -20,7 +27,9 @@ public class InfernalSlimeRenderer extends SlimeRenderer {
     public InfernalSlimeRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
         this.layers.removeIf(l -> l instanceof SlimeOuterLayer);
-        this.addLayer(new TintedSlimeOuterLayer(this, ctx.getModelSet(), OUTER_TINT_ARGB));
+        this.addLayer(new TintedSlimeOuterLayer(this, ctx.getModelSet(), OUTER_TINT_ARGB, TEXTURE));
+        this.addLayer(new ResourceSlimeInnerBlockLayer(this, ctx.getBlockRenderDispatcher(),
+            ResourceSlimeInnerBlockLayer::parentSpeciesBlock));
     }
 
     @Override

@@ -3,5 +3,5 @@
   "category": "geode",
   "primary_color": 5234804,
   "secondary_color": 2071616,
-  "texture": "productivefrogs:textures/entity/slime/emerald_resource_slime.png"
+  "inner_block": "minecraft:emerald_block"
 }

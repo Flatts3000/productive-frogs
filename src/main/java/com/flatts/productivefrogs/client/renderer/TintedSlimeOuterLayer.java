@@ -17,29 +17,36 @@ import net.minecraft.world.entity.monster.Slime;
 /**
  * Drop-in replacement for vanilla {@code SlimeOuterLayer} that paints the
  * translucent outer shell with a constant ARGB tint instead of leaving it the
- * vanilla green from {@code SlimeRenderer.SLIME_LOCATION}. Used by the four
- * custom parent species ({@link CaveSlimeRenderer}, {@link GeodeSlimeRenderer},
- * {@link TideSlimeRenderer}, {@link VoidSlimeRenderer}) which each pin a
- * single species colour at construction time.
+ * vanilla green from {@code SlimeRenderer.SLIME_LOCATION}. Like vanilla's
+ * outer layer, this renders {@code ModelLayers.SLIME_OUTER} (the shell cube
+ * only); the eyes and mouth live on the base inner model, not here. Used
+ * by the six PF parent species renderers ({@link BogSlimeRenderer},
+ * {@link CaveSlimeRenderer}, {@link GeodeSlimeRenderer},
+ * {@link TideSlimeRenderer}, {@link InfernalSlimeRenderer},
+ * {@link VoidSlimeRenderer}), each pinning a single species tint at
+ * construction time.
+ *
+ * <p>The outer texture is supplied explicitly via the constructor (the
+ * species atlas, e.g. {@code cave_slime.png}). The parent renderer's
+ * {@code getTextureLocation} returns the same atlas for the base inner cube +
+ * eyes/mouth; the v1.0.1 inner resource block is drawn separately by
+ * {@link ResourceSlimeInnerBlockLayer}.
  *
  * <p>For per-entity tint variation (e.g. {@link ResourceSlimeRenderer}'s
  * per-variant outer-shell colour), use {@link ResourceSlimeOuterLayer} instead.
- *
- * <p>Texture lookup routes through the parent renderer's
- * {@code getTextureLocation(Slime)} so both the inner cube and outer shell
- * pull from the same per-species PNG.
  */
 public class TintedSlimeOuterLayer extends RenderLayer<Slime, SlimeModel<Slime>> {
 
     private final SlimeModel<Slime> model;
-    private final SlimeRenderer parentRenderer;
     private final int tintArgb;
+    private final ResourceLocation outerTexture;
 
-    public TintedSlimeOuterLayer(SlimeRenderer renderer, EntityModelSet modelSet, int tintArgb) {
+    public TintedSlimeOuterLayer(SlimeRenderer renderer, EntityModelSet modelSet, int tintArgb,
+                                 ResourceLocation outerTexture) {
         super(renderer);
-        this.parentRenderer = renderer;
         this.model = new SlimeModel<>(modelSet.bakeLayer(ModelLayers.SLIME_OUTER));
         this.tintArgb = tintArgb;
+        this.outerTexture = outerTexture;
     }
 
     @Override
@@ -52,10 +59,9 @@ public class TintedSlimeOuterLayer extends RenderLayer<Slime, SlimeModel<Slime>>
             return;
         }
 
-        ResourceLocation texture = parentRenderer.getTextureLocation(entity);
         VertexConsumer consumer = glowingOutline
-            ? buffer.getBuffer(RenderType.outline(texture))
-            : buffer.getBuffer(RenderType.entityTranslucent(texture));
+            ? buffer.getBuffer(RenderType.outline(outerTexture))
+            : buffer.getBuffer(RenderType.entityTranslucent(outerTexture));
 
         getParentModel().copyPropertiesTo(model);
         model.prepareMobModel(entity, limbSwing, limbSwingAmount, partialTick);
