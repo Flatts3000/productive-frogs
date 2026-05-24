@@ -68,14 +68,15 @@ public final class PFBlocks {
     public static final Map<String, DeferredBlock<LiquidBlock>> MILK_BLOCKS = buildMilkBlocks();
 
     /**
-     * The Slime Milker — V1 production keystone block. Single appliance,
-     * no power, no GUI; right-click with a Slime Bucket → milk bucket out.
+     * The Slime Milker — V1 production keystone block. Furnace-shaped GUI
+     * block with one input slot (Slime Bucket), one output slot (variant
+     * Slime Milk bucket), and a 100-tick cook. Hopper-compatible via a
+     * side-aware Capabilities.ItemHandler.BLOCK provider in PFModBusEvents.
      * See {@link SlimeMilkerBlock} for interaction details.
      *
      * <p>Strength chosen to match the brewing stand / composter feel —
      * cheap to break with hand, sturdy enough to feel "built". Sound type
-     * METAL since the design is a "mechanical press" (themed asset still
-     * TODO; placeholder block model + texture for now).
+     * METAL since the design is a mechanical press.
      */
     public static final DeferredBlock<SlimeMilkerBlock> SLIME_MILKER = BLOCKS.registerBlock(
         "slime_milker",

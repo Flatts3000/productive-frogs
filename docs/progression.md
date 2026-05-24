@@ -1,6 +1,8 @@
 # Player Progression
 
-This is the intended player journey from a fresh world to endgame Productive Frogs content. It encodes the order in which content gates open and what unlocks each tier.
+> **⚠️ SUPERSEDED by v1.0.** This doc was written for the pre-v1.0 abstract-category design. v1.0 ships species-as-category (Bog / Cave / Geode / Tide / Infernal / Void). The tier order is reorganized in [open_questions.md](./open_questions.md#1-tier-order--decided-) §1; the quick-start walkthrough lives in the [README](../README.md). The progression walkthrough below uses the old category names (Metallic / Mineral / Gem / Aquatic / Arcane) — mapping: METALLIC→BOG (semantically — but the iron/copper/gold variants moved to Cave), MINERAL→CAVE, GEM→GEODE, AQUATIC→TIDE, ARCANE→VOID, INFERNAL unchanged. Vanilla `minecraft:slime` and `minecraft:magma_cube` are NOT parent species in v1.0 — every species has its own custom PF entity.
+
+This is the intended player journey from a fresh world to endgame Productive Frogs content (original pre-v1.0 walkthrough follows).
 
 ## Tier 0 — Vanilla Setup
 

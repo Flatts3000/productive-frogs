@@ -1,31 +1,38 @@
 # Open Questions
 
-Design decisions that are still outstanding. Each has a current "lean" I'd recommend, but they need explicit confirmation before scaffolding begins.
+Design decisions that were resolved during the V1 design phase. All entries are DECIDED ✅ — this doc is preserved as the decision log. Note: V1 used abstract category names (Metallic/Mineral/Gem/Aquatic/Arcane); v1.0 renamed them to species names (Bog/Cave/Geode/Tide/Void; Infernal unchanged) per [species_as_category_redesign.md](./species_as_category_redesign.md). The tables below have been updated to the v1.0 species names; the underlying decisions are unchanged.
 
 ## 1. Tier order — DECIDED ✅
 
-**Decision:** `Metallic → Mineral → Gem → Infernal → Arcane`
+**Decision:** progression bias `Cave → Geode → Infernal → Void` (Bog and Tide are unordered, accessible early-to-mid).
 
-| Tier | Category | Primer | Equipment gate |
+| Tier | Species | Primer (canonical) | Equipment gate |
 |---|---|---|---|
-| T1 | Metallic | Iron Ingot | Stone pickaxe |
-| T2 | Mineral | Redstone Dust | Iron pickaxe |
-| T3 | Gem | Diamond | Iron pickaxe |
-| T4 | Infernal | Magma Cream | Diamond pickaxe → Nether |
-| T5 | Arcane | Ender Pearl | Enderman kills, End for full content |
+| Early | Bog | any Bog variant primer (bone, etc.) | Stone pickaxe — accessible from swamp surface |
+| T1 | Cave | Iron Ingot | Stone pickaxe → iron ore |
+| T2 | Cave | Diamond | Iron pickaxe → diamond ore |
+| T3 | Geode | Emerald | Iron pickaxe → mountain biome |
+| T4 | Tide | Prismarine Shard | Iron gear + water breathing + ocean monument |
+| T5 | Infernal | Magma Cream | Diamond pickaxe → obsidian → Nether |
+| T6 | Void | Ender Pearl | Enderman kills + End access |
 
-**Rationale:** Reflects actual vanilla equipment-cost progression. T1–T3 are reachable in parallel on iron-pickaxe gear; T4 is the hard Nether gate (requires diamond pick for obsidian); T5 functions as endgame via End access.
+**Rationale:** Reflects actual vanilla equipment-cost progression. Cave is the workhorse species containing iron, copper, gold, redstone, lapis, coal, diamond — all reachable on iron-pickaxe gear. T4 (Tide) is a soft gate behind ocean monument access. T5 (Infernal) is a hard gate behind obsidian → Nether. T6 (Void) is endgame via the End.
 
 ---
 
-## 2. Slime sourcing — CORE MECHANIC DECIDED ✅ (sub-questions pending)
+## 2. Slime sourcing — DECIDED ✅ (with v1.0 modifications)
 
-**Decision:** Two paths, both run on the vanilla slime split event:
+**Original decision:** Two paths, both run on the vanilla slime split event:
 
-- **Random discovery path** — when a vanilla slime/magma cube is killed, each split offspring has a configurable chance to be a Resource Slime from the parent species's default category pool (green slime → metallic pool, magma cube → infernal pool).
-- **Infusion override path** — right-click slime with a primer-tagged item → 100% of offspring on next kill are Resource Slimes of that type. Overrides the default category, allowing cross-category production.
+- **Random discovery path** — when a PF parent species is killed, each split offspring has a configurable chance to be a category-only Resource Slime.
+- **Infusion path** — right-click a PF parent slime with a variant's `primer_item` → slime is immediately transformed into the matching variant Resource Slime.
 
-**No breeding, no wild Resource Slime spawns, no Slime Nursery (V2).** Full details: [slime_sourcing.md](./slime_sourcing.md).
+**v1.0 modifications (from species_as_category_redesign.md):**
+- **Vanilla `minecraft:slime` and `minecraft:magma_cube` are NOT acceptable infusion targets** (Q1=A baked in). Only the six PF parent species can be infused. Vanilla mobs split into vanilla offspring with no discovery roll.
+- **Infusion is species-locked.** Cave Slime + iron ingot → Iron Slime ✓. Cave Slime + ender pearl → rejected (Ender is a Void variant).
+- **Re-infusion is hard-rejected** (Q3). An Iron Slime cannot be re-infused into a Copper Slime.
+
+**No breeding, no wild Resource Slime spawns, no Slime Nursery (V2).**
 
 ### 2a. Tiny slime (size 1) infusion behavior — DECIDED ✅
 
@@ -39,20 +46,20 @@ Design decisions that are still outstanding. Each has a current "lean" I'd recom
 
 **Rationale:** Discovery is the "treat" path; infusion is the workhorse. At 5%, killing a big vanilla slime (which spawns ~3 medium offspring) gives a Resource Slime about 1 in 7 kills on average — frequent enough to feel rewarding, rare enough that serious production still requires infusion. The value is exposed as mod config so it can be tuned per-pack without requiring a release.
 
-### 2c. Discovery coverage for non-vanilla categories — DECIDED ✅
+### 2c. Discovery coverage for non-vanilla species — DECIDED ✅ (v1.0: ALL species custom)
 
-**Question:** Vanilla only provides parent slimes for metallic (`minecraft:slime`) and infernal (`minecraft:magma_cube`). How do players get discovery-path access to mineral, gem, aquatic, and arcane?
+**v1.0 decision:** Vanilla `minecraft:slime` and `minecraft:magma_cube` are NOT part of the production system. Every species is a custom PF entity with its own themed spawn rules.
 
-**Decision:** **(A) Add new parent slime entities, one per missing category.** Each is a vanilla-flavored slime variant (same split mechanic, themed texture and spawn rule).
-
-| Category | Parent slime species | Spawn niche |
+| Species | Parent slime entity | Spawn niche |
 |---|---|---|
-| Mineral | `productivefrogs:cave_slime` | Dripstone caves, deep dark, deep slime chunks |
-| Gem | `productivefrogs:geode_slime` | Amethyst geodes, mountain biomes |
-| Aquatic | `productivefrogs:tide_slime` | Deep / lukewarm / warm ocean biomes |
-| Arcane | `productivefrogs:void_slime` | Outer End islands |
+| Bog | `productivefrogs:bog_slime` | Swamps, mangrove swamps |
+| Cave | `productivefrogs:cave_slime` | Dripstone caves, deep dark, lush caves |
+| Geode | `productivefrogs:geode_slime` | Mountain peaks (stony / jagged / frozen) |
+| Tide | `productivefrogs:tide_slime` | Deep / lukewarm / warm ocean biomes |
+| Infernal | `productivefrogs:infernal_slime` | Nether wastes, basalt deltas, soul sand valley |
+| Void | `productivefrogs:void_slime` | Outer End islands |
 
-**Rationale:** Symmetric design across all categories — every category has both a discovery path (its themed parent) and an infusion path (any primer-tagged item on any slime). New entity scope is bounded — each new parent is a re-skin of green slime in behavior, requiring texture + spawn config + 1 JSON registration.
+**Rationale:** Symmetric design across all six species — every species has both a discovery path (its themed parent) and an infusion path. Players seeking PF slimes go to PF biomes; vanilla slime farms don't bootstrap PF production.
 
 ---
 
@@ -121,12 +128,12 @@ Design decisions that are still outstanding. Each has a current "lean" I'd recom
 
 ## 7. Frog breeding mechanic — DECIDED ✅
 
-**Decision:** Two Resource Frogs of the **same category** can be bred via the vanilla animal love-mode pattern, producing a Primed Frog Egg block of that category placed on water.
+**Decision:** Two Resource Frogs of the **same species** can be bred via the vanilla animal love-mode pattern, producing a Primed Frog Egg block of that species placed on water.
 
 - **Breed item:** slimeball (1 per parent, consumed). Vanilla frog breeding mechanic.
-- **Same-category only.** Two Metallic Frogs produce a Metallic offspring. Cross-category pairing (e.g. Metallic × Gem) is not supported.
-- **Offspring path:** the breeding pair places a Primed Frog Egg block of their shared category on a nearby water tile — same block as hand-primed eggs. Hatches into a Resource Tadpole of that category, or nettable into a Primed Frog Egg item.
-- **No primer cost on offspring.** Once a player has two same-category Resource Frogs, the population is self-sustaining. The primer pipeline (glass bottle → Frog Egg → primer item) is the one-time bootstrap per category.
+- **Same-species only.** Two Cave Frogs produce a Cave offspring. Cross-species pairing (e.g. Cave × Geode) is not supported.
+- **Offspring path:** the breeding pair places a Primed Frog Egg block of their shared species on a nearby water tile — same block as hand-primed eggs. Hatches into a Resource Tadpole of that species, or nettable into a Primed Frog Egg item.
+- **No primer cost on offspring.** Once a player has two same-species Resource Frogs, the population is self-sustaining. The primer pipeline (glass bottle → Frog Egg → primer item) is the one-time bootstrap per species.
 - **Slimes do NOT breed.** Slime breeding was earlier discussed but rejected; the breeding mechanic is exclusively on the frog side.
 
 **Subsumes Q12** (which asked the same question separately).
@@ -135,7 +142,7 @@ Full spec: [items_and_blocks.md](./items_and_blocks.md#frog-breeding).
 
 ## 8. Frog AI specifics — DECIDED ✅
 
-**Decision:** Resource Frogs inherit vanilla `minecraft:frog` AI completely. Only behavioral override is a category-match filter on prey eligibility — a Metallic Frog only considers slimes in the metallic category tag as valid tongue targets.
+**Decision:** Resource Frogs inherit vanilla `minecraft:frog` AI completely. Only behavioral override is a species-match filter on prey eligibility — a Cave Frog only considers Cave-species Resource Slimes as valid tongue targets.
 
 **Vanilla behaviors preserved:**
 
@@ -149,9 +156,9 @@ Full spec: [items_and_blocks.md](./items_and_blocks.md#frog-breeding).
 
 ## 9. Player direct-feeding — DECIDED ✅
 
-**Decision:** **(A) Yes.** Right-click a Resource Frog while holding a matching-category Slime Bucket → frog instantly tongues the bucketed slime, the bucket transforms back to empty, and the frog drops the appropriate Froglight at its position.
+**Decision:** **(A) Yes.** Right-click a Resource Frog while holding a matching-species Slime Bucket → frog instantly tongues the bucketed slime, the bucket transforms back to empty, and the frog drops the appropriate Froglight at its position.
 
-- The category-match check still applies — feeding a Gem Slime to a Metallic Frog does nothing (frog ignores it). The bucket is not consumed on mismatch.
+- The species-match check still applies — feeding a Geode Slime to a Cave Frog does nothing (frog ignores it). The bucket is not consumed on mismatch.
 - Uses the same drop logic as the in-world feed (loot table per slime variant).
 - Tongue cooldown still applies — repeat direct-feeds happen at vanilla tongue rate.
 
@@ -175,20 +182,20 @@ Full spec: [items_and_blocks.md](./items_and_blocks.md#frog-breeding).
 
 ## Decision Status
 
-Once all questions are answered, the design is frozen and scaffolding begins:
+All questions resolved; v1.0 design is frozen and shipped (2026-05-24):
 
-- [x] 1. Tier order confirmed: Metallic → Mineral → Gem → Infernal → Arcane
-- [x] 2. Slime sourcing core mechanic chosen: random-discovery + infusion override
+- [x] 1. Tier order confirmed: Cave → Geode → Tide → Infernal → Void (Bog accessible early)
+- [x] 2. Slime sourcing core mechanic chosen: PF-parent random-discovery + species-locked infusion
   - [x] 2a. Tiny slime infusion: transform in place
-  - [x] 2b. Default discovery chance: 5% per offspring (configurable)
-  - [x] 2c. Non-vanilla category discovery: new parent slime entities (Cave / Geode / Tide / Void)
+  - [x] 2b. Default discovery chance: 5% per offspring (configurable, vanilla slimes excluded)
+  - [x] 2c. Species discovery: six custom PF parent entities (Bog / Cave / Geode / Tide / Infernal / Void); vanilla mobs hard-rejected
 - [x] 3. Vanilla variant mapping decided: Option A (vanilla frogs untouched, Resource Frogs are separate entity)
 - [x] 4. Org slug chosen: com.flatts.productivefrogs
 - [x] 5. Frogspawn capture: vanilla glass bottle (no custom tool); adult frogs move via leads
 - [x] 6. Loader scope confirmed: NeoForge-only, forever (no Fabric port)
-- [x] 7. Frog breeding: same-category → Primed Frog Egg of that category (slimes do NOT breed)
-- [x] 8. Frog AI: vanilla unchanged except category-match prey filter
-- [x] 9. Player direct-feeding: yes (right-click frog with bucketed slime, category-match required)
+- [x] 7. Frog breeding: same-species → Primed Frog Egg of that species (slimes do NOT breed)
+- [x] 8. Frog AI: vanilla unchanged except species-match prey filter
+- [x] 9. Player direct-feeding: yes (right-click frog with bucketed slime, species-match required)
 - [x] 10. Resource Slime direct-kill drops: slimeballs only (vanilla parity)
 - [x] 11. Primed Frog Egg hatching conditions: vanilla frogspawn rules (water-adjacent, vanilla timer)
-- [x] 12. Subsumed by Q7 (Resource Frog breeding produces category-matching offspring)
+- [x] 12. Subsumed by Q7 (Resource Frog breeding produces species-matching offspring)

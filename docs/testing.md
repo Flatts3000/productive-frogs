@@ -82,41 +82,46 @@ GameTests run real headless Minecraft scenarios in scripted plots. They're the r
 
 **Takeaway:** if you touch any of `client/`, `assets/<modid>/`, `Category.tintArgb`, item-model JSON, block-model JSON, lang files, or particle/sound code, schedule a manual `./gradlew runClient` pass and walk the affected surface before marking the work done. Document the playtest matrix in the PR description so the reviewer knows what was eyeballed.
 
-### Registration pattern (MC 1.21.11)
+### Registration pattern (MC 1.21.1)
 
-MC 1.21.11 refactored the GameTest API — the old `@GameTestHolder`/`@GameTest` annotations are gone. The new system has three pieces:
+MC 1.21.1 uses NeoForge's annotation-based GameTest discovery. Three pieces:
 
-1. **Test function** — a `Consumer<GameTestHelper>` registered in `Registries.TEST_FUNCTION`. NeoForge unfreezes this registry after vanilla bootstrap and exposes it via standard `RegisterEvent` on the mod bus, so a regular `DeferredRegister` works:
+1. **Class-level `@GameTestHolder`** marks the holder class as a source of tests, with a namespace prefix that scopes the test ids:
 
    ```java
-   public static final DeferredRegister<Consumer<GameTestHelper>> TEST_FUNCTIONS =
-       DeferredRegister.create(BuiltInRegistries.TEST_FUNCTION, ProductiveFrogs.MOD_ID);
+   @GameTestHolder(ProductiveFrogs.MOD_ID)
+   @PrefixGameTestTemplate(false)
+   public final class PFGameTests { ... }
    ```
 
-   *Common gotcha:* `TestFunctionLoader.registerLoader(...)` is vanilla-only — it runs during `BuiltInRegistries.bootStrap()` which fires **before mod loading**, so mod static initializers and constructors are too late. Use `DeferredRegister` instead; we tried the `TestFunctionLoader` path first and it silently produced "missing test function" failures because our loader was registered after the registry was already populated and frozen.
+   `@PrefixGameTestTemplate(false)` opts out of NeoForge's default prefix on the structure id, so `template = "empty_5x5x5"` resolves to `productivefrogs:empty_5x5x5` directly.
 
-2. **Test instance** — a `FunctionGameTestInstance` registered via `RegisterGameTestsEvent`. Pairs a function holder with `TestData` (structure id, max ticks, etc):
+2. **Method-level `@GameTest`** marks each test. The annotated method must be `public static` and take a single `GameTestHelper`. Per-test attributes (template, timeout, required, etc.) live on the annotation:
+
+   ```java
+   @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+   public static void mySlimeTest(GameTestHelper helper) {
+       // ... scenario setup + assertions
+   }
+   ```
+
+3. **Holder registration** in a `RegisterGameTestsEvent` listener. Discovery walks the holder for `@GameTest` methods:
 
    ```java
    @SubscribeEvent
    public static void onRegisterGameTests(RegisterGameTestsEvent event) {
-       if (testInstancesRegistered) return;   // event can fire twice — guard it
-       testInstancesRegistered = true;
-       Holder<TestEnvironmentDefinition> env = event.registerEnvironment(
-           Identifier.fromNamespaceAndPath(MOD_ID, "default")
-       );
-       // ... build TestData, register FunctionGameTestInstance per test
+       event.register(PFGameTests.class);
    }
    ```
 
-3. **Structure NBT** — lives at `data/<modid>/structure/<name>.nbt` (singular `structure/`, like the tag dirs went singular in 1.21.x). Defines the test plot bounds. For tests that build their scenario programmatically via `helper.setBlock`, an all-air structure of suitable size is enough. We ship `empty_5x5x5.nbt` for that.
+4. **Structure NBT** — lives at `data/<modid>/structure/<name>.nbt` (singular `structure/` in this codebase — `tags/entity_type/`, `loot_table/`, `recipe/` are also singular). Defines the test plot bounds. For tests that build their scenario programmatically via `helper.setBlock`, an all-air structure of suitable size is enough. We ship `empty_5x5x5.nbt` for that.
 
-The canonical reference pattern lives in `PFGameTests.java`; copy its `registerTest(...)` helper for new tests. The full pattern was sourced from [ksoichiro/JustBlockShapes](https://github.com/ksoichiro/JustBlockShapes/blob/main/neoforge/1.21.11/src/main/java/com/justblockshapes/neoforge/gametest/JustBlockShapesGameTestNeoForge.java), one of the few working 1.21.11 NeoForge mods using the new system.
+The canonical reference pattern lives in `PFGameTests.java`; copy its `@GameTest` annotation pattern for new tests.
 
 ### Adding a new GameTest
 
-1. Write the test method as `private static void myTest(GameTestHelper helper) { ... }` in `PFGameTests`.
-2. Add a `registerTest("my_test", PFGameTests::myTest, timeoutTicks);` call in the static initializer.
+1. Write the test method as `public static void myTest(GameTestHelper helper) { ... }` in `PFGameTests`.
+2. Annotate it: `@GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)`.
 3. If the test needs a custom plot (vs the default `empty_5x5x5`), ship a new NBT at `data/productivefrogs/structure/<name>.nbt` and pass that identifier through `TestData`.
 4. Run `./gradlew runGameTestServer` locally to verify.
 5. Push — CI's `gameTest` job runs all tests.

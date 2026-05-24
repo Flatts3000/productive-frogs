@@ -2,91 +2,59 @@
 
 How features are split across releases. V1 is the foundation; V2 layers automation on top without breaking V1.
 
-## V1 — Base Mechanics + Appliances
+## V1.0 — Base Mechanics + Appliances (SHIPPED 2026-05-24)
 
 The "playable foundation" release. **Appliance blocks** (single-block hand-operated stations, like vanilla brewing stand or composter) are in scope. **Automation machinery** (power-fed, multi-block, hopper-integrated, pipe-fed) is not.
 
-**In scope:**
+Targets MC 1.21.1 / NeoForge 21.1.230 / Java 21. Sky Frogs (the modpack PF was built to anchor) is locked to MC 1.21.1 because its load-bearing dependencies (Ex Deorum, Skyblock Builder) have no 1.21.4+ NeoForge builds.
+
+**In scope (all shipped):**
 
 - **Frogspawn bottling via vanilla glass bottle** (no custom tool item — vanilla `minecraft:glass_bottle` is consumed on use against frogspawn)
-- **Frog Egg** (item + block, placed on water by hand)
-- **Slime Bucket** (item, transport mechanic)
-- **Primed Frog Eggs** (6 blocks, one per category) — primed by right-clicking with a category material
-- **Resource Tadpoles** and **Resource Frogs** (6 categories)
-- **Resource Slimes** (N data-driven variants)
-- **Parent slime species** for non-vanilla categories (Cave / Geode / Tide / Void Slime)
-- **Slime acquisition** via two paths: vanilla-slime-split random discovery + immediate-transformation infusion
-- **Slime Milker** (single appliance block, no power, hand-operated press) — converts a slime bucket to a typed milk bucket
+- **Frog Egg bottle** (item + block, placed on water by hand)
+- **Slime Bucket** (item, transport mechanic — preserves variant)
+- **Primed Frog Egg blocks** (6 blocks, one per species) — primed by right-clicking vanilla frogspawn with any variant primer item
+- **Resource Tadpoles** and **Resource Frogs** (6 species: Bog, Cave, Geode, Tide, Infernal, Void)
+- **Resource Slimes** (12 data-driven variants — iron, copper, gold, redstone, lapis, coal, diamond, emerald, prismarine, sponge, magma_cream, ender_pearl)
+- **Six parent slime species** (Bog, Cave, Geode, Tide, Infernal, Void) — each spawns in its themed biome via `neoforge:add_spawns` biome modifiers
+- **Species-locked slime infusion** — only PF parent species can be infused, and only into variants within their own species. Vanilla `minecraft:slime` and `minecraft:magma_cube` are hard-rejected as infusion targets (Q1=A baked in)
+- **Slime Milker** (furnace-shaped GUI block, 100-tick cook, hopper I/O) — converts a Slime Bucket to the matching variant Slime Milk bucket
 - **Slime Milk fluid** (lava-flow, source-block-spawns-slimes, configurable depletion)
-- **Froglight drops** (item entities — vanilla-hopper collectable)
-- **Smelting recipes** (universal across categories) — players get 1× resource yield from any Froglight via vanilla furnace
-- **Primer tags** and **slime category tags**
-- **Cross-mod compat** via JSON for variant pools (Mekanism, Create, Thermal, Mythic Metals slime-variant entries gated by `mod_loaded`). Cross-mod *recipe* compat (crush 2× yields) lives in V2.
+- **Configurable Froglight** (single block stamped with `slime_variant` data component; species Froglight blocks were dropped in v1.0)
+- **Smelting recipes** (per variant) — every variant smelts to its base resource via vanilla furnace
+- **JEI Information pages** — dynamically generated from the SlimeVariant + ParentSpecies datapack registries
+- **Cross-mod compat** via JSON for variant pools — `mod_loaded` neoforge conditions, no `compat/` Java package
 
 **The V1 rule of thumb:** if vanilla has a single-block appliance equivalent (furnace, brewing stand, composter, cauldron) that's V1 scope. If we'd be adding power, pipes, or multiblocks, that's V2.
 
-**Why this scope:** establishes the entire mechanical loop the mod is "about" *with a working scalable economy*. The Milker is the production keystone — without it, the mod has no farming loop. V2 layers automation on top of an already-functional V1.
+Full v1.0 design spec: [species_as_category_redesign.md](./species_as_category_redesign.md). Port history: [port_mc_1_21_1.md](./port_mc_1_21_1.md).
 
-## V1.0.x — Port to MC 1.21.1 / NeoForge 21.1.230 (BLOCKS EVERYTHING ELSE)
+## V1.1 — Vanilla Resource Coverage (PLANNED)
 
-[Sky Frogs](../../sky-frogs) — the modpack PF was built to anchor — is locked to MC 1.21.1 because its load-bearing dependencies (Ex Deorum, Skyblock Builder) have no 1.21.4+ NeoForge builds. PF must rebuild on 1.21.1 to ship inside the pack.
+Pure-JSON data release adding every vanilla item fitting cleanly into one of the six species. JSON-only authoring — no Java edits.
 
-This is a **port, not a version bump**. Between 1.21.1 and our current 1.21.11 target, many APIs changed: `Identifier`/`ResourceLocation` rename, `ValueInput`/`ValueOutput` (1.21.5+) revert to `CompoundTag`, NeoForge transfer API rewrite (`ItemStacksResourceHandler` → `IItemHandler`), GameTest annotation revert, tint pipeline revert (delete `items/*.json` model definitions + restore `RegisterColorHandlersEvent.Item`), several singular-plural data folder renames (`tags/item/`→`tags/items/`, `recipe/`→`recipes/`, `loot_table/`→`loot_tables/`, `structure/`→`structures/`).
+**22 new variants** (34 total after v1.1):
 
-Estimated **3-4 weeks** across 11 phase PRs on a long-lived branch.
-
-**Blocks**: the data-driven refactor, V1.1, V1.2 all wait on this. Refactoring code about to be ported is wasted effort — many of the refactor's load-bearing APIs differ between target versions.
-
-Full design in [port_mc_1_21_1.md](./port_mc_1_21_1.md).
-
-## V1.0.x — Data-Driven Variant Architecture Refactor (V1.1 prerequisite, post-port)
-
-Internal architecture refactor. Removes the per-variant Java hardcoding in `PFFluidTypes.VARIANTS` and `PFItems.buildSlimeVariantSpawnEggs()` so that modpacks can add a Resource Slime variant by JSON only — no Java edits, no recompilation, no lang file changes.
-
-**Why this lands before V1.1:** V1.1 adds 16 new variants. Shipping V1.1 on the current hardcoded architecture would lock that "hardcoded variants" debt deeper and make the refactor harder to do later (more variants to migrate). Refactor must come first.
-
-**Scope:** spawn-egg collapse to component-based item, dynamic milk-fluid registration via mod-resource scanning at boot, lang derivation pattern, asset-generation scripts that scan variant JSONs.
-
-**Estimated:** 2-3 weeks across ~4 PRs. Once shipped, V1.1 becomes a JSON-only authoring task.
-
-Full design in [refactor_data_driven_variants.md](./refactor_data_driven_variants.md).
-
-## V1.1 — Vanilla Resource Coverage
-
-After the V1.0.x refactor lands, this becomes a pure-JSON data release adding every vanilla item fitting cleanly into one of the existing 6 categories.
-
-**16 new variants** (28 total after V1.1):
-
-| Category | New variants |
+| Species | New variants |
 |---|---|
-| METALLIC (+1) | netherite_scrap |
-| MINERAL (+2) | gunpowder, clay_ball |
-| GEM (+2) | quartz, amethyst |
-| AQUATIC (+2) | ink_sac, glow_ink_sac |
-| INFERNAL (+6) | blaze, glowstone_dust, soul_sand, soul_soil, obsidian, netherrack |
-| ARCANE (+3) | echo_shard, chorus_fruit, shulker_shell |
+| Bog (+8) | bone, gunpowder, clay_ball, rotten_flesh, string, leather, feather, slime_ball |
+| Cave (+3) | glow_ink_sac, obsidian, echo_shard |
+| Geode (+1) | amethyst |
+| Tide (+1) | ink_sac |
+| Infernal (+7) | netherite_scrap, glowstone_dust, soul_sand, soul_soil, netherrack, blaze, quartz |
+| Void (+2) | chorus_fruit, shulker_shell |
 
-Tier B candidates (`prismarine_crystals`, `nautilus_shell`, `ghast_tear`, `wither_rose`, `end_stone`) tracked in [v1_1_scope.md](./v1_1_scope.md) with default decisions if not resolved by freeze.
+Tier B candidates (`prismarine_crystals`, `nautilus_shell`, `ghast_tear`) tracked in [v1_1_scope.md](./v1_1_scope.md) with default decisions if not resolved by freeze. `wither_rose` and `end_stone` are dropped (the primer-tag-only fallback they depended on is gone in v1.0).
 
-**Why not V2:** V2 is automation work that requires new blocks/code. V1.1 is content-completion that's pure JSON post-refactor, ships fast, and unblocks "the mod feels complete vs. the mod has obvious holes" — independent of when V2 is ready.
+The 5 mob-drop variants that were previously deferred to a separate V1.2 category (bone, rotten_flesh, string, leather, feather) now fit cleanly under Bog Slime — no new species needed.
 
 Full design lives in [v1_1_scope.md](./v1_1_scope.md).
 
-## V1.2 — New Category for Biological Mob Drops
+## V1.2 — Cross-Mod Variant Pools (PLANNED)
 
-Adds a 7th category covering vanilla items that are harvested from living/undead mobs and don't fit any existing category:
+Cross-mod variant entries (Mekanism osmium / tin / lead / uranium; Create zinc / brass / bronze; Thermal silver / nickel / signalum; Mythic Metals etc.) — all `mod_loaded`-gated additions to the appropriate species.
 
-- `bone` (skeleton)
-- `rotten_flesh` (zombie)
-- `string` (spider)
-- `leather` (cow / horse)
-- `feather` (chicken)
-
-**Category name** — undecided. Candidates: BESTIAL, MORTAL, VISCERAL, FAUNA, CARNAL. Could also be split into UNDEAD (bone, rotten_flesh) + BESTIAL (string, leather, feather). Decided at V1.2 design time.
-
-**Why this is V1.2 and not V1.1:** adding a new category is a Java edit — new `Category` enum constant + ARGB tint + primer tag + slime category tag + parent-species mapping for the new biome. V1.1's "JSON-only" charter excludes it.
-
-**Likely additional V1.2 work** (rounding out the new category): a parent slime species for the new category (parallel to Cave/Geode/Tide/Void Slime) and biome-conditioned natural spawning (parallel to the existing biome modifier JSONs).
+Most modded ores fit under Cave Slime (overworld mined ores) — see species_as_category_redesign.md §Cross-mod variants for the per-mod placement.
 
 ## V2 — Automation
 

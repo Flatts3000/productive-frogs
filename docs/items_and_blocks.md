@@ -1,6 +1,10 @@
 # Items and Blocks
 
-This document enumerates every new item, block, and entity in the v0.1 scope.
+> **⚠️ SUPERSEDED by v1.0.** This doc was written for the pre-v1.0 abstract-category design and uses old names (Metallic Frog, Mineral Frog, etc.) plus references to the deleted `productivefrogs:primer/<category>` tag system. The v1.0 shipping roster uses species names (Bog Frog, Cave Frog, Geode Frog, Tide Frog, Infernal Frog, Void Frog). Species Froglight blocks (`metallic_froglight` etc.) are also deleted — only `productivefrogs:configurable_froglight` (stamped with a variant data component) exists in v1.0.
+>
+> See [species_as_category_redesign.md](./species_as_category_redesign.md) for the authoritative v1.0 design and the [README](../README.md) for the player-facing item list.
+
+This document enumerates every new item, block, and entity in the original v0.1 design (preserved for historical reference).
 
 ## Items
 

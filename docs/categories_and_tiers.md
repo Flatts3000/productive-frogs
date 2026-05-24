@@ -1,6 +1,10 @@
 # Categories and Tiers
 
-## The Six Categories
+> **⚠️ SUPERSEDED by v1.0.** This doc describes the original pre-v1.0 abstract-category design (Metallic / Mineral / Gem / Aquatic / Arcane). The shipping v1.0 model is **species-as-category**: BOG / CAVE / GEODE / TIDE / INFERNAL / VOID, with the `productivefrogs:primer/<category>` tag system deleted in favour of exact `SlimeVariant.primer_item` field matching. See [species_as_category_redesign.md](./species_as_category_redesign.md) for the authoritative v1.0 design.
+>
+> Old → new name mapping: METALLIC→BOG (semantically — Bog became the overworld/swamp/mob-drop catch-all, while the metallurgy variants like iron moved to Cave), MINERAL→CAVE, GEM→GEODE, AQUATIC→TIDE, ARCANE→VOID, INFERNAL unchanged. The tier ladder below is reorganized in `species_as_category_redesign.md` and `open_questions.md` §1.
+
+## The Six Categories (HISTORICAL — pre-v1.0)
 
 | Category | Frog name (working) | Theme |
 |---|---|---|

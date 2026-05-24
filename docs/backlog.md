@@ -76,62 +76,56 @@ Removes per-variant Java hardcoding so modpacks can add a SlimeVariant by JSON o
 
 After V1.0.x refactor lands: add every vanilla item fitting cleanly into one of the existing 6 categories. JSON-only authoring post-refactor. Full design in [v1_1_scope.md](./v1_1_scope.md). 16 new variants → 28 total post-V1.1.
 
-Per-variant work for each = 4 files: variant JSON + (optional) hand-authored inner-cube PNG OR `texture_source_block` field + primer tag entry + smelting recipe. Existing GameTests auto-cover.
+Per-variant work for each = 4 files: variant JSON (with `primer_item` exact-match field) + (optional) hand-authored inner-cube PNG OR `texture_source_block` field + smelting recipe + lang entry. Existing GameTests auto-cover.
 
-### Locked scope (16 variants)
+### Locked scope (22 variants — under v1.0 species model)
 
-**METALLIC (+1)**
-- ☐ `netherite_scrap`
-
-**MINERAL (+2)**
-- ☐ `gunpowder`
-- ☐ `clay_ball` *(non-1:1 smelt — Froglight smelts to `brick`)*
-
-**GEM (+2)**
-- ☐ `quartz`
-- ☐ `amethyst`
-
-**AQUATIC (+2)**
-- ☐ `ink_sac`
-- ☐ `glow_ink_sac`
-
-**INFERNAL (+6)**
-- ☐ `blaze`
-- ☐ `glowstone_dust` *(moved from MINERAL — Nether-source classification)*
-- ☐ `soul_sand`
-- ☐ `soul_soil`
-- ☐ `obsidian`
-- ☐ `netherrack`
-
-**ARCANE (+3)**
-- ☐ `echo_shard`
-- ☐ `chorus_fruit` *(non-1:1 smelt — Froglight smelts to `popped_chorus_fruit`)*
-- ☐ `shulker_shell`
-
-### Tier B — design open (5 candidates)
-- ☐ `prismarine_crystals` (AQUATIC) — default if undecided: ship alongside existing `prismarine` (additive, no rename).
-- ☐ `nautilus_shell` (AQUATIC) — default if undecided: defer to V1.2+ (production-loop framing weak — drowned/fishing only in vanilla).
-- ☐ `ghast_tear` (INFERNAL) — default if undecided: defer to V1.2+ (single rare mob drop, rarity-break concern).
-- ☐ `wither_rose` (INFERNAL) — default if undecided: skip slime variant, primer tag entry only (flower, not a resource).
-- ☐ `end_stone` (ARCANE) — default if undecided: skip slime variant, primer tag entry only (bulk block).
-
-## V1.2 — new category for biological mob drops
-
-Adds a 7th category covering vanilla items harvested from living/undead mobs. Requires a Java edit (new `Category` enum constant + tint + tags) — that's why it's V1.2, not V1.1. Full design at V1.2 kickoff time.
-
-### Variants (5)
+**Bog (+8)** — swamp + mob drops, now under Bog species (no new category needed)
 - ☐ `bone` (skeleton)
+- ☐ `gunpowder` (creeper, broad overworld)
+- ☐ `clay_ball` (swamp clay) *(non-1:1 smelt — Froglight smelts to `brick`)*
 - ☐ `rotten_flesh` (zombie)
 - ☐ `string` (spider)
 - ☐ `leather` (cow / horse)
 - ☐ `feather` (chicken)
+- ☐ `slime_ball` (Bog Slime self-reference)
 
-### Open design questions
-- ☐ Category name: BESTIAL / MORTAL / VISCERAL / FAUNA / CARNAL — or split into UNDEAD + BESTIAL?
-- ☐ Category ARGB tint (`Category.tintArgb()`).
-- ☐ New parent slime species for the category (parallel to Cave/Geode/Tide/Void Slime).
-- ☐ Biome modifier JSONs for natural spawn rules (parallel to existing `data/productivefrogs/neoforge/biome_modifier/`).
-- ☐ Outer-shell tint for the new parent species (per the PR #77 `TintedSlimeOuterLayer` pattern).
+**Cave (+3)**
+- ☐ `glow_ink_sac` (lush caves)
+- ☐ `obsidian` (lava-lake at cave level)
+- ☐ `echo_shard` (deep dark ancient cities)
+
+**Geode (+1)**
+- ☐ `amethyst` (mountain geodes)
+
+**Tide (+1)**
+- ☐ `ink_sac` (squids in oceans)
+
+**Infernal (+7)**
+- ☐ `netherite_scrap`
+- ☐ `glowstone_dust`
+- ☐ `soul_sand`
+- ☐ `soul_soil`
+- ☐ `netherrack`
+- ☐ `blaze`
+- ☐ `quartz`
+
+**Void (+2)**
+- ☐ `chorus_fruit` *(non-1:1 smelt — Froglight smelts to `popped_chorus_fruit`)*
+- ☐ `shulker_shell`
+
+### Tier B — design open (3 candidates)
+- ☐ `prismarine_crystals` (Tide) — default if undecided: ship alongside existing `prismarine` (additive, no rename).
+- ☐ `nautilus_shell` (Tide) — default if undecided: defer to V1.2+ (production-loop framing weak — drowned/fishing only in vanilla).
+- ☐ `ghast_tear` (Infernal) — default if undecided: defer to V1.2+ (single rare mob drop, rarity-break concern).
+- ✗ `wither_rose` — dropped (the primer-tag-only fallback this depended on is gone in v1.0).
+- ✗ `end_stone` — dropped (same as wither_rose).
+
+## V1.2 — cross-mod variant pools
+
+Cross-mod variant entries (Mekanism osmium / tin / lead / uranium; Create zinc / brass / bronze; Thermal silver / nickel; Mythic Metals etc.) — all `mod_loaded`-gated JSON additions to the appropriate species. Most modded ores fit under Cave Slime per species_as_category_redesign.md §Cross-mod variants.
+
+The original V1.2 plan (add a new "biological mob drops" 7th category) is **obsolete**: under the species model those 5 vanilla items (bone, rotten_flesh, string, leather, feather) fit cleanly under Bog Slime in V1.1, no new species required.
 
 ## V2 — automation
 

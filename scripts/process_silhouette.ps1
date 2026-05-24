@@ -1,7 +1,7 @@
-# Downscale + tone-map a PixelLab silhouette generation into a 16x16
-# tintable mask for the bucket-content layer0.
+# Downscale + tone-map a source silhouette PNG into a 16x16 tintable mask
+# for the bucket-content layer0.
 #
-# Input:  32x32 PixelLab RGBA PNG with the silhouette body on transparent BG.
+# Input:  32x32 RGBA PNG with the silhouette body on transparent BG.
 # Output: 16x16 PNG, brightened so the body pixels approach near-white
 #         (multiply well with the runtime category tint) while preserving
 #         dark accent pixels (eyes, mouth) so they stay visible across all
@@ -17,10 +17,10 @@
 #   if max(R,G,B) >= 64 (it's a body pixel)  -> set to near-white (220,220,220)
 #   if max(R,G,B) <  64 (it's a dark accent) -> keep as-is (eyes / outline)
 # 64 is empirically the threshold that separates the silhouette body
-# (mid-gray PixelLab output) from the eye dots (near-black).
+# (mid-gray) from the eye dots (near-black).
 #
 # Usage:
-#   .\scripts\process_silhouette.ps1 -InputPath gen/tadpole_silhouette-*\1.png -OutputPath src/main/resources/assets/productivefrogs/textures/item/tadpole_silhouette.png
+#   .\scripts\process_silhouette.ps1 -InputPath path/to/source_silhouette.png -OutputPath src/main/resources/assets/productivefrogs/textures/item/tadpole_silhouette.png
 
 #
 # Platform: Windows. Depends on System.Drawing, which ships in-box on
