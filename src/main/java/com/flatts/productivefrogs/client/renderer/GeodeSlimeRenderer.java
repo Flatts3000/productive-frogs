@@ -10,17 +10,17 @@ import net.minecraft.resources.ResourceLocation;
  * Geode Slime renderer. Keeps the vanilla inner model (cube + eyes + mouth)
  * textured from the species atlas, swaps the outer shell for a diamond-cyan
  * {@link TintedSlimeOuterLayer}, and adds a {@link ResourceSlimeInnerBlockLayer}
- * that renders {@link #INNER_BLOCK} (vanilla amethyst block) inside the slime.
+ * that renders the species' inner block inside the slime.
  *
- * <p>{@link #INNER_BLOCK} mirrors the {@code inner_block} field on
- * {@code data/productivefrogs/productivefrogs/parent_species/geode_slime.json}.
+ * <p>The inner block is data-driven via
+ * {@link ResourceSlimeInnerBlockLayer#parentSpeciesBlock}, which reads the
+ * {@code inner_block} field from {@code .../parent_species/geode_slime.json}
+ * (amethyst_block).
  */
 public class GeodeSlimeRenderer extends SlimeRenderer {
 
     private static final ResourceLocation TEXTURE =
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "textures/entity/slime/geode_slime.png");
-
-    private static final ResourceLocation INNER_BLOCK = ResourceLocation.parse("minecraft:amethyst_block");
 
     private static final int OUTER_TINT_ARGB = 0xFF6CDCD7;
 
@@ -29,7 +29,7 @@ public class GeodeSlimeRenderer extends SlimeRenderer {
         this.layers.removeIf(l -> l instanceof SlimeOuterLayer);
         this.addLayer(new TintedSlimeOuterLayer(this, ctx.getModelSet(), OUTER_TINT_ARGB, TEXTURE));
         this.addLayer(new ResourceSlimeInnerBlockLayer(this, ctx.getBlockRenderDispatcher(),
-            ResourceSlimeInnerBlockLayer.constant(INNER_BLOCK)));
+            ResourceSlimeInnerBlockLayer::parentSpeciesBlock));
     }
 
     @Override

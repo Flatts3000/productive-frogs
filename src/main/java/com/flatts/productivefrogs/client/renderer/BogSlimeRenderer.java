@@ -10,20 +10,18 @@ import net.minecraft.resources.ResourceLocation;
  * Bog Slime renderer. Keeps the vanilla inner model (cube + eyes + mouth)
  * textured from the species atlas, swaps the outer shell for a swamp-leaf-green
  * {@link TintedSlimeOuterLayer}, and adds a {@link ResourceSlimeInnerBlockLayer}
- * that renders {@link #INNER_BLOCK} (vanilla moss block) inside the slime.
+ * that renders the species' inner block inside the slime.
  *
- * <p>{@link #INNER_BLOCK} mirrors the {@code inner_block} field on
- * {@code data/productivefrogs/productivefrogs/parent_species/bog_slime.json}.
- * The hardcoded constant is what the renderer actually uses; the JSON field
- * documents intent and lets a future PR route the render through the datapack
- * registry.
+ * <p>The inner block is data-driven, parallel to how Resource Slime variants
+ * read theirs: {@link ResourceSlimeInnerBlockLayer#parentSpeciesBlock} reads
+ * the {@code inner_block} field from this species' {@code parent_species}
+ * registry entry ({@code .../parent_species/bog_slime.json} -> moss_block), so
+ * a modpack can repoint it by editing the JSON.
  */
 public class BogSlimeRenderer extends SlimeRenderer {
 
     private static final ResourceLocation TEXTURE =
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "textures/entity/slime/bog_slime.png");
-
-    private static final ResourceLocation INNER_BLOCK = ResourceLocation.parse("minecraft:moss_block");
 
     private static final int OUTER_TINT_ARGB = 0xFF6A8540; // swamp-leaf green
 
@@ -32,7 +30,7 @@ public class BogSlimeRenderer extends SlimeRenderer {
         this.layers.removeIf(l -> l instanceof SlimeOuterLayer);
         this.addLayer(new TintedSlimeOuterLayer(this, ctx.getModelSet(), OUTER_TINT_ARGB, TEXTURE));
         this.addLayer(new ResourceSlimeInnerBlockLayer(this, ctx.getBlockRenderDispatcher(),
-            ResourceSlimeInnerBlockLayer.constant(INNER_BLOCK)));
+            ResourceSlimeInnerBlockLayer::parentSpeciesBlock));
     }
 
     @Override

@@ -10,17 +10,17 @@ import net.minecraft.resources.ResourceLocation;
  * Tide Slime renderer. Keeps the vanilla inner model (cube + eyes + mouth)
  * textured from the species atlas, swaps the outer shell for a water-blue
  * {@link TintedSlimeOuterLayer}, and adds a {@link ResourceSlimeInnerBlockLayer}
- * that renders {@link #INNER_BLOCK} (vanilla prismarine) inside the slime.
+ * that renders the species' inner block inside the slime.
  *
- * <p>{@link #INNER_BLOCK} mirrors the {@code inner_block} field on
- * {@code data/productivefrogs/productivefrogs/parent_species/tide_slime.json}.
+ * <p>The inner block is data-driven via
+ * {@link ResourceSlimeInnerBlockLayer#parentSpeciesBlock}, which reads the
+ * {@code inner_block} field from {@code .../parent_species/tide_slime.json}
+ * (prismarine).
  */
 public class TideSlimeRenderer extends SlimeRenderer {
 
     private static final ResourceLocation TEXTURE =
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "textures/entity/slime/tide_slime.png");
-
-    private static final ResourceLocation INNER_BLOCK = ResourceLocation.parse("minecraft:prismarine");
 
     private static final int OUTER_TINT_ARGB = 0xFF3F76E4;
 
@@ -29,7 +29,7 @@ public class TideSlimeRenderer extends SlimeRenderer {
         this.layers.removeIf(l -> l instanceof SlimeOuterLayer);
         this.addLayer(new TintedSlimeOuterLayer(this, ctx.getModelSet(), OUTER_TINT_ARGB, TEXTURE));
         this.addLayer(new ResourceSlimeInnerBlockLayer(this, ctx.getBlockRenderDispatcher(),
-            ResourceSlimeInnerBlockLayer.constant(INNER_BLOCK)));
+            ResourceSlimeInnerBlockLayer::parentSpeciesBlock));
     }
 
     @Override

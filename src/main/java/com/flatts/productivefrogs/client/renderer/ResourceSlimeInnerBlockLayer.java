@@ -1,7 +1,9 @@
 package com.flatts.productivefrogs.client.renderer;
 
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
+import com.flatts.productivefrogs.data.ParentSpeciesEntry;
 import com.flatts.productivefrogs.data.SlimeVariant;
+import com.flatts.productivefrogs.registry.PFRegistries;
 import com.mojang.blaze3d.vertex.PoseStack;
 import java.util.function.Function;
 import net.minecraft.client.model.SlimeModel;
@@ -10,6 +12,7 @@ import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.monster.Slime;
@@ -114,13 +117,28 @@ public class ResourceSlimeInnerBlockLayer extends RenderLayer<Slime, SlimeModel<
     }
 
     /**
-     * Build a constant-block resolver for a parent-species renderer. Resolves
-     * the id once at construction; the returned function ignores its entity
-     * argument.
+     * Resolve a parent species' inner block from the {@code parent_species}
+     * datapack registry's {@code inner_block} field, keyed by the entity's
+     * type id. This is the parent-species parallel to
+     * {@link #resourceSlimeBlock}: the block is data-driven from JSON (a
+     * modpack can repoint a species' inner block by editing the registry
+     * entry), not hardcoded in the renderer. Returns {@code null} when the
+     * registry is unavailable, the species has no entry, the entry declares
+     * no inner_block, or the id doesn't resolve to a registered block.
      */
-    public static Function<Slime, BlockState> constant(ResourceLocation blockId) {
-        BlockState state = blockStateOrNull(blockId);
-        return entity -> state;
+    public static BlockState parentSpeciesBlock(Slime entity) {
+        ResourceLocation typeId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+        Registry<ParentSpeciesEntry> registry = entity.level().registryAccess()
+            .registry(PFRegistries.PARENT_SPECIES).orElse(null);
+        if (registry == null) {
+            return null;
+        }
+        for (ParentSpeciesEntry entry : registry) {
+            if (entry.entityType().equals(typeId)) {
+                return entry.innerBlock().map(ResourceSlimeInnerBlockLayer::blockStateOrNull).orElse(null);
+            }
+        }
+        return null;
     }
 
     private static BlockState blockStateOrNull(ResourceLocation blockId) {

@@ -10,17 +10,17 @@ import net.minecraft.resources.ResourceLocation;
  * Infernal Slime renderer. Keeps the vanilla inner model (cube + eyes + mouth)
  * textured from the species atlas, swaps the outer shell for a lava-red
  * {@link TintedSlimeOuterLayer}, and adds a {@link ResourceSlimeInnerBlockLayer}
- * that renders {@link #INNER_BLOCK} (vanilla netherrack) inside the slime.
+ * that renders the species' inner block inside the slime.
  *
- * <p>{@link #INNER_BLOCK} mirrors the {@code inner_block} field on
- * {@code data/productivefrogs/productivefrogs/parent_species/infernal_slime.json}.
+ * <p>The inner block is data-driven via
+ * {@link ResourceSlimeInnerBlockLayer#parentSpeciesBlock}, which reads the
+ * {@code inner_block} field from {@code .../parent_species/infernal_slime.json}
+ * (netherrack).
  */
 public class InfernalSlimeRenderer extends SlimeRenderer {
 
     private static final ResourceLocation TEXTURE =
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "textures/entity/slime/infernal_slime.png");
-
-    private static final ResourceLocation INNER_BLOCK = ResourceLocation.parse("minecraft:netherrack");
 
     private static final int OUTER_TINT_ARGB = 0xFFC73E1D; // lava red
 
@@ -29,7 +29,7 @@ public class InfernalSlimeRenderer extends SlimeRenderer {
         this.layers.removeIf(l -> l instanceof SlimeOuterLayer);
         this.addLayer(new TintedSlimeOuterLayer(this, ctx.getModelSet(), OUTER_TINT_ARGB, TEXTURE));
         this.addLayer(new ResourceSlimeInnerBlockLayer(this, ctx.getBlockRenderDispatcher(),
-            ResourceSlimeInnerBlockLayer.constant(INNER_BLOCK)));
+            ResourceSlimeInnerBlockLayer::parentSpeciesBlock));
     }
 
     @Override

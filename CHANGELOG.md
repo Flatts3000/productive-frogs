@@ -17,8 +17,8 @@ A new `ResourceSlimeInnerBlockLayer` renders the resource block via `BlockRender
 ### Data layer
 
 - New optional `inner_block` field on `SlimeVariant` and `ParentSpeciesEntry` codecs. Format: a plain vanilla block id (e.g. `minecraft:iron_block`), resolved to its default block state at render time.
-- All 12 shipped variant JSONs populated.
-- All 6 parent_species JSONs populated.
+- Fully data-driven, parallel to the existing tint config: Resource Slime variants read `inner_block` from the variant JSON (like `primary_color`); parent species read it from their `parent_species` registry entry. A modpack can repoint any slime's interior block by editing JSON, no code change.
+- All 12 shipped variant JSONs populated; all 6 parent_species JSONs populated.
 - Removed the pre-v1.0.1 per-variant atlas `texture` field from `SlimeVariant` (the renderer no longer reads it; the outer-shell atlas is per-category).
 
 ### Asset cleanup
