@@ -6,22 +6,32 @@
 
 ## Motivation
 
-In v1.0 the Resource Slime inner-cube renders the variant's vanilla block texture downsampled from 16x16 to 6x6 nearest-neighbor. Vanilla `SlimeModel`'s inner cube is a 6x6x6 box on a 64x32 texture, so each face only has 6 pixels of resolution.
+In v1.0 the Resource Slime inner cube renders the variant's vanilla block texture **downsampled from 16x16 to 6x6** nearest-neighbor and stamped into a custom 64x32 atlas. Vanilla `SlimeModel`'s inner cube is a 6x6x6 box, and each face only gets 6 pixels of UV resolution.
 
-At small slime sizes (1-2) the difference is invisible (the box renders at ~16-20 screen pixels either way). At slime size 4 the inner cube renders at 60+ pixels and the 6x6 source visibly blurs. v1.0.1 promotes the inner cube to native 16x16 per face so the iron-block texture inside an Iron Slime IS the iron-block texture, not a downsampled approximation.
+At small slime sizes (1-2) the difference is invisible (the box renders at ~16-20 screen pixels either way). At slime size 4 the inner cube renders at 60+ pixels and the 6x6 source visibly blurs. v1.0.1 promotes the inner cube to native 16x16 per face so the iron-block texture inside an Iron Slime IS the iron-block texture, byte-identical to vanilla.
 
 Cosmetic polish only. Production loop, drops, AI, tints, infusion semantics, JEI subtypes - all unchanged.
 
 ## Approach
 
-**Path 1** (subclass SlimeModel, scale a 16x16x16 inner cube down to vanilla's visual size). Chosen over Path 2 (render an actual vanilla block via `BlockRenderDispatcher` inside the slime) because:
+**Two-pass entity rendering.** Split the slime model render into two `RenderType` bindings:
 
-- Smaller blast radius. No bridging variant ID -> Block lookup; the existing texture pipeline already maps variant -> texture path correctly.
-- No per-frame block-render cost.
-- Animated vanilla textures (sea lantern, redstone block glow) wouldn't apply anyway since the existing variant set is mostly static blocks. If a future variant wants animated source, revisit Path 2 at that point.
-- Preserves the existing `ResourceSlimeOuterLayer` / `TintedSlimeOuterLayer` tint pipeline unchanged.
+1. **Pass 1 (outer shell + eyes + mouth):** rendered against the existing per-category atlas (`<category>_resource_slime.png`, 64x32, unchanged from v1.0).
+2. **Pass 2 (inner cube only):** rendered against the variant's vanilla resource block texture directly, bound by `ResourceLocation` (e.g., `minecraft:textures/block/iron_block.png`). The inner cube's UVs span `(0, 0)..(16, 16)` of the bound texture, so each face displays the full vanilla block at native 16x16.
 
-**Geometry trick.** The 3D box dimensions and the texture pixel mapping are independent in `CubeListBuilder`. By defining the inner cube as a 16x16x16 box at the model level and applying a `0.375f` (= 6/16) scale in `setupAnim` (via `ModelPart.xScale/yScale/zScale`), the cube renders at the same visual size as vanilla's 6x6x6 inner cube but its faces UV-map to 16x16 pixel regions on the texture. No per-face UV override needed.
+This works because Minecraft's `EntityRenderer` doesn't require a single texture per model. `ModelPart#render(PoseStack, VertexConsumer, ...)` takes a single buffer; the renderer obtains one buffer per `RenderType` from the `MultiBufferSource`, and the same model can be split across multiple sub-renders by calling individual `ModelPart#render` on the parts you want grouped under each texture. Vanilla uses this pattern for paintings (per-art texture), armor stands (per-armor-layer), banner patterns, and others.
+
+**Why this beats the original "subclassed model + grow the atlas to 64x64" approach:**
+
+| Aspect | Original Path 1 (16x16x16 inner cube + atlas grow to 64x64) | Two-pass rendering (this spec) |
+|---|---|---|
+| Per-variant atlas PNG | 12 regenerated to new 64x64 layout | All 12 **deleted**; per-category template absorbs the role |
+| Generator script | Rewritten to stamp 16x16 tiles into a 64x64 atlas | **Deleted** (or trimmed to handle parent species only) |
+| Adding a v1.1 variant | 4 files (JSON + texture + recipe + lang) | 3 files (JSON + recipe + lang); the JSON's `inner_texture` field points at a vanilla block PNG, no per-variant atlas to author |
+| Animated vanilla sources (sea lantern, redstone block glow, magma) | Static tile only - the downsample collapsed animation frames | **Works for free** - the vanilla animation system runs on the directly-bound texture |
+| Modpack-custom variant migration | Required: regen against new 64x64 layout | None: third-party variants ship a `SlimeVariant` JSON with `inner_texture` pointing at any vanilla or modded block PNG |
+
+Two-pass adds slightly more renderer code (~50 lines for the split-render method) and one extra draw call per slime (negligible). The premium buys away the atlas regeneration burden, removes 12 PNGs from the jar, and unlocks animated inner textures.
 
 ## File changes
 
@@ -29,114 +39,86 @@ Cosmetic polish only. Production loop, drops, AI, tints, infusion semantics, JEI
 
 | Path | Purpose |
 |---|---|
-| `client/model/ResourceSlimeModel.java` | Subclass `SlimeModel` (or a parallel `HierarchicalModel<SlimeRenderState>`). `createBodyLayer()` builds the outer cube as vanilla does (8x8x8 at `texOffs(0, 0)`) but the inner cube as 16x16x16 at `texOffs(0, 16)`. `setupAnim` applies the 0.375 scale to the inner cube ModelPart. |
-| `client/PFModelLayers.java` (or extend an existing layer-IDs file) | Registers `RESOURCE_SLIME` `ModelLayerLocation` so the renderer can `bakeLayer(...)` it. |
+| `client/model/ResourceSlimeModel.java` | Subclass vanilla `SlimeModel` (or a parallel `HierarchicalModel<SlimeRenderState>`) that exposes `getInnerCubePart()` and `getOuterPart()` (plus eyes/mouth) as public ModelParts so the renderer can render them independently. Vanilla SlimeModel keeps the inner cube private. |
+| `client/PFModelLayers.java` | Holds the `RESOURCE_SLIME` `ModelLayerLocation` for the new model. (May already exist; if so, extend.) |
 
 ### Modified code
 
 | Path | Change |
 |---|---|
 | `event/PFModBusEvents.java` (or wherever `EntityRenderersEvent.RegisterLayerDefinitions` is wired) | Register `ResourceSlimeModel.createBodyLayer()` against the new `ModelLayerLocation`. |
-| `client/renderer/ResourceSlimeRenderer.java` | Construct with the new model in place of vanilla `SlimeModel`. The existing layer (outer-shell tint, eyes/mouth) keeps working since the outer-cube UV layout is unchanged. |
-| `client/renderer/{Bog,Cave,Geode,Tide,Infernal,Void}SlimeRenderer.java` | Same swap. Each parent species also gets the upgraded inner-cube resolution. |
+| `client/renderer/ResourceSlimeRenderer.java` | Override `render(...)` (or `extractRenderState` -> custom submit chain in 1.21.1 idiom) to do two-pass: bind the per-category atlas and render outer + eyes + mouth, then bind `state.innerTexture` and render the inner cube. The existing outer-shell `ResourceSlimeOuterLayer` keeps working since it operates on the outer cube only. |
+| `client/renderer/{Bog,Cave,Geode,Tide,Infernal,Void}SlimeRenderer.java` | Same two-pass treatment. Each parent species gets the upgraded inner-cube resolution rendering its species' canonical resource block. |
+| `data/SlimeVariant.java` | Add `inner_texture: ResourceLocation` field to the codec. Required field for new variants; default fallback to `minecraft:textures/block/<derived>` for legacy entries during migration. |
+| `data/ParentSpeciesEntry.java` | Add same `inner_texture` field to the parent-species codec. Each of the 6 shipped parent species gets a default texture in its datapack JSON. |
+| `client/renderer/state/ResourceSlimeRenderState.java` (if exists; otherwise extend the equivalent) | Carry the resolved `innerTexture: ResourceLocation` from the slime entity's variant to the renderer. |
 
-### Modified scripts
+### Deleted assets
+
+| Path | Why |
+|---|---|
+| `assets/productivefrogs/textures/entity/slime/iron_resource_slime.png` and 11 siblings | The per-category template now covers the outer-shell render. Inner cube binds to the vanilla block PNG directly. |
+
+### Deleted / trimmed scripts
 
 | Path | Change |
 |---|---|
-| `scripts/generate_variant_slime_textures.ps1` | Rewrite to (a) use the new 64x64 texture canvas, (b) stamp the vanilla 16x16 block tile onto each inner-cube face *without* downsampling, (c) preserve the outer-cube + eyes/mouth regions from the existing per-category template. |
-| `scripts/generate_parent_slime_textures.ps1` (if it exists; otherwise create) | Same treatment for the 6 parent-species PNGs. |
+| `scripts/generate_variant_slime_textures.ps1` | **Delete.** The 12 outputs it produced are no longer needed. |
 
-### Regenerated assets
+### Modified data files
 
-All 18 PNGs in `src/main/resources/assets/productivefrogs/textures/entity/slime/`:
+| Path | Change |
+|---|---|
+| `data/productivefrogs/productivefrogs/slime_variant/iron.json` and 11 siblings | Add `"inner_texture": "minecraft:block/iron_block"` (or per-variant equivalent). The existing `texture` field stays for the outer-shell atlas lookup (now equals the per-category template path). |
+| `data/productivefrogs/productivefrogs/parent_species/cave_slime.json` and 5 siblings | Add same `inner_texture` field. Each parent species points at a thematically-appropriate vanilla block (e.g., Cave -> `minecraft:block/stone`, Geode -> `minecraft:block/amethyst_block`, Tide -> `minecraft:block/prismarine`, Infernal -> `minecraft:block/netherrack`, Void -> `minecraft:block/end_stone`, Bog -> `minecraft:block/moss_block` or similar). |
 
-- 12 `<variant>_resource_slime.png` (iron, copper, gold, redstone, lapis, coal, diamond, emerald, prismarine, sponge, magma_cream, ender_pearl)
-- 6 parent species PNGs (`bog_slime`, `cave_slime`, `geode_slime`, `tide_slime`, `infernal_slime`, `void_slime`)
-- 6 per-category template PNGs (`metallic_resource_slime`, `mineral_resource_slime`, etc. - the templates that the variant generator overlays onto)
+## Variant -> vanilla block mapping
 
-Total: 24 PNGs regenerated. All bumped from 64x32 to 64x64 (the smallest power-of-2 atlas that fits 6 inner-cube faces of 16x16 each plus the existing outer-cube + eyes/mouth regions).
+Twelve shipped variants. Source-block-name guesses for the `inner_texture` field:
 
-## Texture layout
+| Variant | Inner texture |
+|---|---|
+| iron | `minecraft:block/iron_block` |
+| copper | `minecraft:block/copper_block` |
+| gold | `minecraft:block/gold_block` |
+| redstone | `minecraft:block/redstone_block` |
+| lapis | `minecraft:block/lapis_block` |
+| coal | `minecraft:block/coal_block` |
+| diamond | `minecraft:block/diamond_block` |
+| emerald | `minecraft:block/emerald_block` |
+| prismarine | `minecraft:block/prismarine` |
+| sponge | `minecraft:block/sponge` |
+| magma_cream | `minecraft:block/magma` |
+| ender_pearl | `minecraft:block/end_stone` |
 
-Proposed 64x64 atlas:
+Six parent species (TBD per-species):
 
-```
-       0      8      16     24     32     40     48     56     64
-   0  +------+------+------+------+------+------+------+------+
-      | outer cube faces: top, bottom, west, front, east, back
-      | + eyes/mouth (vanilla SlimeModel positions, unchanged)
-   16 +------+------+------+------+------+------+------+------+
-      | inner cube top    | inner cube bottom |
-   32 +-------------------+-------------------+
-      | inner cube west   | inner cube front  |
-   48 +-------------------+-------------------+
-      | inner cube east   | inner cube back   |
-   64 +-------------------+-------------------+
-```
-
-Inner cube faces are 16x16 each. Six faces in a 2x3 grid below the outer-cube band. The top 16 rows preserve vanilla `SlimeModel`'s outer-cube + eyes/mouth UV regions unchanged so the existing tint / outer-shell pipeline (`ResourceSlimeOuterLayer`, `TintedSlimeOuterLayer`, eyes color) doesn't need touching.
-
-(Final layout TBD during implementation; the key constraint is "outer cube UV regions match vanilla so we don't have to re-touch the outer-shell render path.")
-
-## Model definition
-
-```java
-public class ResourceSlimeModel<S extends SlimeRenderState> extends HierarchicalModel<S> {
-    private static final float INNER_SCALE = 6f / 16f;  // 0.375
-
-    public static LayerDefinition createBodyLayer() {
-        MeshDefinition mesh = new MeshDefinition();
-        PartDefinition root = mesh.getRoot();
-
-        // Outer cube: unchanged from vanilla
-        root.addOrReplaceChild("cube",
-            CubeListBuilder.create()
-                .texOffs(0, 0)
-                .addBox(-4f, 16f, -4f, 8f, 8f, 8f),
-            PartPose.ZERO);
-
-        // Inner cube: 16x16x16 in model space, scaled down in setupAnim
-        root.addOrReplaceChild("inner_cube",
-            CubeListBuilder.create()
-                .texOffs(0, 16)
-                .addBox(-8f, 8f, -8f, 16f, 16f, 16f),
-            PartPose.ZERO);
-
-        // Eyes + mouth: unchanged from vanilla (positions on the outer cube)
-        // ...
-
-        return LayerDefinition.create(mesh, 64, 64);
-    }
-
-    @Override
-    public void setupAnim(S state) {
-        ModelPart inner = root().getChild("inner_cube");
-        inner.xScale = INNER_SCALE;
-        inner.yScale = INNER_SCALE;
-        inner.zScale = INNER_SCALE;
-        // ... vanilla squish animation copied from SlimeModel
-    }
-}
-```
-
-Exact box positions / pose are TBD during implementation - the snippet above is illustrative.
+| Species | Inner texture (proposal) |
+|---|---|
+| Bog | `minecraft:block/moss_block` |
+| Cave | `minecraft:block/stone` |
+| Geode | `minecraft:block/amethyst_block` |
+| Tide | `minecraft:block/prismarine` |
+| Infernal | `minecraft:block/netherrack` |
+| Void | `minecraft:block/end_stone` |
 
 ## Backward compatibility
 
-- **Worlds**: no data migration. Slime entities don't store rendering data; they re-render with the new model on next chunk load. Old `<variant>_resource_slime.png` files in shipped jars are silently superseded by the new 64x64 versions.
-- **Modpacks shipping custom variant textures**: their existing 64x32 PNGs would render with the *new* model, which means the inner-cube face regions would land in the wrong place (current PNGs put inner-cube content at `(0, 16)..(24, 28)`; new model expects 16x16 faces in the 16-64 row band). Modpacks adding variants between v1.0 and v1.0.1 would need to regenerate their textures against the new layout.
-  - Mitigation: bundle a migration note in the CHANGELOG entry. Most modpacks adding variants haven't shipped yet (mod is < 1 month old at v1.0.1 cut).
+- **Worlds**: no data migration. Slime entities don't store rendering data; they re-render with the new model on next chunk load.
+- **Modpack variant JSONs shipped between v1.0 and v1.0.1**: the new `inner_texture` field is required. Without it the renderer falls back to... TBD: either a hard error (fail loudly), or a derived guess (`minecraft:block/<variant_id>_block`), or the previous category-atlas inner cube (degraded but functional). Picking the fallback behavior is an open question - default proposal: derive from variant id; log a warning when used.
+- **Existing v1.0 variant JSONs**: this PR ships the `inner_texture` field populated for all 12 shipped variants and the 6 parent species, so the in-tree state has zero degradation.
 
 ## Risk register
 
 | Risk | Likelihood | Mitigation |
 |---|---|---|
-| Subtle UV alignment bug puts wrong texture region on a face | Medium | Visual regression diff between v1.0 and v1.0.1 renders side by side |
-| Inner-cube scale-down via `ModelPart.xScale/yScale/zScale` causes lighting / normal recalc to shift visibly | Low | Test in playtest at sizes 1, 2, 4 |
-| Existing `ResourceSlimeOuterLayer` rendering breaks if I accidentally touch the outer-cube UV | Low | Keep outer-cube definition byte-identical to vanilla `SlimeModel.createBodyLayer` |
-| The `bakeLayer(...)` lookup in Renderer breaks because layer ID isn't registered | Medium | Add the layer registration in the SAME PR that adds the model, with a runClient smoke-test before merge |
-| GameTests fail because they pixel-compare rendered slimes | Very low | PF's tests are world-state tests; none assert on rendered pixels |
+| Two-pass render order: translucent outer shell rendered before opaque inner cube causes Z-fighting or wrong alpha sorting | Medium | Render inner cube FIRST (opaque pass), outer shell SECOND (translucent pass). Vanilla `RenderType.entityCutout` for inner, `RenderType.entityTranslucent` for outer. Matches vanilla slime render order. |
+| Vanilla `SlimeModel.innerCube` is private; can't get the part directly | High | Subclass `SlimeModel` (or rebuild the model from scratch with the same `LayerDefinition` and our own public-field structure). The model API was redesigned in 1.21.x; verify the actual field visibility during implementation. |
+| Inner-cube vertex normals are off because we render it with a different RenderType than the outer cube | Low | Use the same lighting setup; the RenderType change is only about which texture is bound. |
+| `inner_texture` points at a missing file (typo, modded block from an absent mod) | Medium | Codec validates at load; if missing at render time, render with `minecraft:textures/missing.png` (the purple/black checker) so the failure is loud. |
+| Animated source textures (e.g., a future variant pointing at `minecraft:block/sea_lantern`) interact weirdly with the slime's squish animation | Low | The animation is a texture-level UV cycle; our render doesn't override it. Should just work; verify in playtest if any animated variant ships. |
+| Removing the 12 variant atlas PNGs breaks anything still referencing them | Low | Grep the codebase before delete. Likely references: `SlimeVariant` codec (existing `texture` field), renderer (resolved via state). Both can be redirected. |
+| GameTests fail because they pixel-compare rendered slimes | Very low | PF tests are world-state tests, not pixel tests. |
 
 ## Test plan
 
@@ -144,34 +126,35 @@ Exact box positions / pose are TBD during implementation - the snippet above is 
 - [ ] `./gradlew runGameTestServer` green (no regression - tests are world-state, not pixel)
 - [ ] Smoke-test in `runClient`:
   - Spawn each of the 12 variant Resource Slimes at size 1, 2, 4 via `/summon` + `/data merge entity`
-  - Confirm inner-cube faces render the native 16x16 vanilla block texture
-  - Confirm outer-shell tint still applies correctly
+  - Confirm inner-cube faces render the **native 16x16** vanilla block texture (visually crisp at size 4)
+  - Confirm outer-shell tint still applies correctly (variant primary color)
   - Confirm eyes / mouth still render
   - Confirm Slime Bucket pickup + release preserves variant
   - Spawn each of the 6 parent species at size 1, 2, 4
-  - Confirm parent species inner cube also renders correctly per its per-species texture
-- [ ] Visual diff: side-by-side screenshot of v1.0 vs v1.0.1 at slime size 4 (where the upgrade is most visible)
+  - Confirm parent species inner cube renders the species' configured vanilla block at native 16x16
+  - Verify a variant with an animated source (manually point one variant's `inner_texture` at `minecraft:block/sea_lantern` for the test) animates correctly
+- [ ] Visual diff: side-by-side screenshot of v1.0 vs v1.0.1 at slime size 4
 - [ ] JEI subtype: confirm variant slime spawn eggs still surface as distinct entries in JEI
 
 ## Ship checklist
 
-- [ ] All implementation in one PR (model + renderer wiring + generator script + regenerated PNGs)
+- [ ] All implementation in one PR (new model + renderer wiring + 7 renderer touches + codec field + 18 JSON updates + 12 PNG deletions + script deletion)
 - [ ] Bump `mod_version` to `1.0.1` in `gradle.properties`
-- [ ] Write CHANGELOG.md `## v1.0.1` entry: visual-polish framing, "no behavior change", note modpack-custom-texture migration if relevant
+- [ ] Write CHANGELOG.md `## v1.0.1` entry: visual-polish framing, no behavior change, note the asset cleanup (12 fewer PNGs in the jar)
 - [ ] Tag `v1.0.1` on the merge commit
 - [ ] `gh release create v1.0.1` with the CHANGELOG section as release notes
 - [ ] `.\scripts\ship.ps1 -PublishCurseForge` ships build + GH attach + CF publish in one command
-- [ ] Update `ROADMAP.md` if the v1.0 section needs a v1.0.1 footnote (likely not - patches are CHANGELOG-tracked, ROADMAP is per-minor)
+- [ ] Update `ROADMAP.md` if needed (likely not; patches are CHANGELOG-tracked, ROADMAP is per-minor)
 
 ## Out of v1.0.1 scope
 
-- New variants (those land in v1.1)
+- New variants (those land in v1.1; v1.1 variant JSONs gain the same `inner_texture` field)
 - Cross-mod variants (v1.2)
-- Path 2 (`BlockRenderDispatcher` inside the slime) - parked unless an animated-texture variant ships and needs it
-- Frog model upgrades (frogs don't have a "resource block inside" semantic; their texture is just per-species)
+- Frog model upgrades (frogs don't have a "resource block inside" semantic)
+- Refactoring the per-category template PNGs (still useful as the outer-shell atlas for each species)
 
 ## Open questions
 
-- **Texture canvas size**: 64x64 is the proposal. If outer + eyes + 6x 16x16 inner faces don't fit, bump to 64x96 or 128x32. Decide during implementation by laying out the actual UVs.
-- **Should parent species also get this?** Yes by default - they're slimes too and their per-species inner cube benefits from the same upgrade. Spec assumes yes; flag if not wanted.
-- **Migration note in CHANGELOG**: include modpack-custom-texture warning, or assume the surface area is small enough (no shipped third-party variants known) to skip?
+- **Missing-texture fallback behavior**: hard error, derive from variant id, or render the vanilla missing-texture checker? Spec proposes "derive + log warning"; willing to flip to "hard fail" if that fits the project's "fail loud" preference.
+- **Parent-species inner textures**: proposed mapping above. Particularly Bog (moss_block? mud? swamp_grass?) and Cave (stone? cobblestone? deepslate?) are subjective; flag any preference.
+- **CHANGELOG migration note**: should the v1.0.1 release notes call out modpack variant authors who shipped between v1.0 and v1.0.1 (currently none known)? Default: skip, since no third-party variants are known to exist yet.
