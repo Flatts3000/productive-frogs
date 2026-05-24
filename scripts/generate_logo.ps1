@@ -102,8 +102,18 @@ try {
     # $pPattern / $fPattern can't silently drift out of sync with the sizing math.
     $rows = $pPattern.Length
     $cols = $pPattern[0].Length
-    if ($fPattern.Length -ne $rows -or $fPattern[0].Length -ne $cols) {
-        throw "Letter pattern dimensions must match: pPattern=${rows}x${cols}, fPattern=$($fPattern.Length)x$($fPattern[0].Length)"
+    if ($fPattern.Length -ne $rows) {
+        throw "Letter patterns must share row count: pPattern=$rows, fPattern=$($fPattern.Length)"
+    }
+    # Validate every row width across both patterns. A row-0-only check would
+    # quietly let a divergent row through, leaving sizing math against $cols
+    # while the affected cells render misaligned.
+    foreach ($pat in @(@{ name = 'pPattern'; rows = $pPattern }, @{ name = 'fPattern'; rows = $fPattern })) {
+        for ($i = 0; $i -lt $pat.rows.Length; $i++) {
+            if ($pat.rows[$i].Length -ne $cols) {
+                throw "Letter pattern row width inconsistent: $($pat.name)[$i] is $($pat.rows[$i].Length) chars, expected $cols ('$($pat.rows[$i])')"
+            }
+        }
     }
     $cell = [int]([Math]::Floor($Size * 0.55 / $rows))  # ~15 at $Size=256, rows=9
     $letterW = $cols * $cell
