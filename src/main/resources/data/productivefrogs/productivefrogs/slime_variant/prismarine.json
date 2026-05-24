@@ -3,5 +3,5 @@
   "category": "tide",
   "primary_color": 7582624,
   "secondary_color": 5277048,
-  "inner_texture": "minecraft:textures/block/prismarine.png"
+  "inner_block": "minecraft:prismarine"
 }

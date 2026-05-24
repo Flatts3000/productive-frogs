@@ -3,5 +3,5 @@
   "category": "infernal",
   "primary_color": 14904859,
   "secondary_color": 10238986,
-  "inner_texture": "minecraft:textures/block/magma.png"
+  "inner_block": "minecraft:magma_block"
 }

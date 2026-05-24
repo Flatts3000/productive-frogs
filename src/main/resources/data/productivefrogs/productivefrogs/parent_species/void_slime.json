@@ -1,5 +1,5 @@
 {
   "entity_type": "productivefrogs:void_slime",
   "category": "void",
-  "inner_texture": "minecraft:textures/block/end_stone.png"
+  "inner_block": "minecraft:end_stone"
 }

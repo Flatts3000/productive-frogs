@@ -1,5 +1,5 @@
 {
   "entity_type": "productivefrogs:tide_slime",
   "category": "tide",
-  "inner_texture": "minecraft:textures/block/prismarine.png"
+  "inner_block": "minecraft:prismarine"
 }

@@ -3,5 +3,5 @@
   "category": "void",
   "primary_color": 4236172,
   "secondary_color": 2056280,
-  "inner_texture": "minecraft:textures/block/end_stone.png"
+  "inner_block": "minecraft:end_stone"
 }

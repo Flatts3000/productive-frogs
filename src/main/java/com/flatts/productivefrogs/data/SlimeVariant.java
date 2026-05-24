@@ -38,20 +38,18 @@ import net.minecraft.util.RandomSource;
  *   <li>{@code weight} — relative weight for random discovery pool picks
  *       (per {@code docs/slime_sourcing.md} §V1 Configurability). Higher
  *       weight = more likely to spawn. Default 1.</li>
- *   <li>{@code innerTexture} (v1.0.1+) — optional vanilla resource-block PNG
- *       bound to the Resource Slime's inner cube. {@code ResourceSlimeRenderer}
- *       renders the inner cube against this texture at native 16x16 per face
- *       (the outer translucent shell + eyes/mouth still come from the
- *       per-category atlas). When absent, the renderer falls back to the
- *       vanilla missing-texture sprite (purple/black checker) so the gap is
- *       visually loud. Replaced the pre-v1.0.1 per-variant atlas {@code texture}
- *       field, which stamped a 6x6-downsampled block tile into a generated
- *       PNG; see {@code docs/v1_0_1_scope.md}.
- *       <br><b>ResourceLocation format:</b> the full
- *       {@code RenderType.entityCutout}-compatible texture location —
- *       namespace, {@code textures/} prefix, and {@code .png} suffix
- *       included. Example:
- *       {@code "minecraft:textures/block/iron_block.png"}.</li>
+ *   <li>{@code innerBlock} (v1.0.1+) — optional vanilla block id rendered
+ *       inside the Resource Slime. {@code ResourceSlimeInnerBlockLayer} draws
+ *       this block's actual model in the inner-cube volume (the outer
+ *       translucent shell + eyes/mouth come from the per-category atlas). When
+ *       absent or unresolvable, the block pass is skipped (the slime renders
+ *       with no interior block). Replaced the pre-v1.0.1 per-variant atlas
+ *       {@code texture} field, which stamped a 6x6-downsampled block tile into
+ *       a generated PNG; see {@code docs/v1_0_1_scope.md}.
+ *       <br><b>ResourceLocation format:</b> a plain block id (namespace +
+ *       path, no {@code textures/} prefix, no {@code .png}). Resolved via
+ *       {@code BuiltInRegistries.BLOCK} to its default block state. Example:
+ *       {@code "minecraft:iron_block"}.</li>
  * </ul>
  */
 public record SlimeVariant(
@@ -60,7 +58,7 @@ public record SlimeVariant(
     int primaryColor,
     int secondaryColor,
     int weight,
-    Optional<ResourceLocation> innerTexture
+    Optional<ResourceLocation> innerBlock
 ) {
 
     /**
@@ -74,13 +72,11 @@ public record SlimeVariant(
      * the discovery-pool random pick. The field is optional and defaults to
      * 1 — simple variants don't need to specify it.
      *
-     * <p>{@code inner_texture} (v1.0.1+): the vanilla block PNG bound to the
-     * Resource Slime's inner cube. Optional; renderer falls back to the
-     * vanilla missing-texture sprite (purple/black checker) when absent.
-     * Format: full {@code RenderType.entityCutout}-compatible texture
-     * location including namespace, {@code textures/} prefix, and
-     * {@code .png} suffix. Example:
-     * {@code "minecraft:textures/block/iron_block.png"}.
+     * <p>{@code inner_block} (v1.0.1+): the vanilla block id rendered inside
+     * the Resource Slime. Optional; the inner-block render pass is skipped
+     * when absent or unresolvable. Format: a plain block id (no
+     * {@code textures/} prefix, no {@code .png}). Example:
+     * {@code "minecraft:iron_block"}.
      */
     public static final Codec<SlimeVariant> CODEC = RecordCodecBuilder.create(
         instance -> instance.group(
@@ -89,7 +85,7 @@ public record SlimeVariant(
             Codec.INT.fieldOf("primary_color").forGetter(SlimeVariant::primaryColor),
             Codec.INT.fieldOf("secondary_color").forGetter(SlimeVariant::secondaryColor),
             Codec.intRange(1, Integer.MAX_VALUE).optionalFieldOf("weight", 1).forGetter(SlimeVariant::weight),
-            ResourceLocation.CODEC.optionalFieldOf("inner_texture").forGetter(SlimeVariant::innerTexture)
+            ResourceLocation.CODEC.optionalFieldOf("inner_block").forGetter(SlimeVariant::innerBlock)
         ).apply(instance, SlimeVariant::new)
     );
 

@@ -24,11 +24,11 @@ import net.minecraft.world.entity.monster.Slime;
  * {@link VoidSlimeRenderer}), each pinning a single species tint at
  * construction time.
  *
- * <p>v1.0.1+: the outer texture is supplied explicitly via the constructor
- * (decoupled from the parent renderer's {@code getTextureLocation}, which
- * now returns the inner-cube texture). This lets the inner-cube and
- * outer-shell render passes bind different textures without one stomping
- * the other.
+ * <p>The outer texture is supplied explicitly via the constructor (the
+ * species atlas, e.g. {@code cave_slime.png}). The parent renderer's
+ * {@code getTextureLocation} returns the same atlas for the base inner cube +
+ * eyes/mouth; the v1.0.1 inner resource block is drawn separately by
+ * {@link ResourceSlimeInnerBlockLayer}.
  *
  * <p>For per-entity tint variation (e.g. {@link ResourceSlimeRenderer}'s
  * per-variant outer-shell colour), use {@link ResourceSlimeOuterLayer} instead.

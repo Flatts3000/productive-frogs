@@ -64,11 +64,11 @@ class ParentSpeciesEntryTest {
     }
 
     @Test
-    void codecRoundTripWithInnerTexture() {
+    void codecRoundTripWithInnerBlock() {
         ParentSpeciesEntry original = new ParentSpeciesEntry(
             ResourceLocation.parse("productivefrogs:cave_slime"),
             Category.CAVE,
-            Optional.of(ResourceLocation.parse("minecraft:textures/block/stone.png"))
+            Optional.of(ResourceLocation.parse("minecraft:stone"))
         );
         JsonElement encoded = ParentSpeciesEntry.CODEC.encodeStart(JsonOps.INSTANCE, original)
             .result()
@@ -77,8 +77,8 @@ class ParentSpeciesEntryTest {
             .result()
             .orElseThrow();
         assertEquals(original, decoded);
-        assertEquals(Optional.of(ResourceLocation.parse("minecraft:textures/block/stone.png")),
-            decoded.innerTexture());
+        assertEquals(Optional.of(ResourceLocation.parse("minecraft:stone")),
+            decoded.innerBlock());
     }
 
     @Test

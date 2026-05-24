@@ -3,5 +3,5 @@
   "category": "tide",
   "primary_color": 14867800,
   "secondary_color": 11578160,
-  "inner_texture": "minecraft:textures/block/sponge.png"
+  "inner_block": "minecraft:sponge"
 }

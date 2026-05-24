@@ -3,5 +3,5 @@
   "category": "cave",
   "primary_color": 13120050,
   "secondary_color": 8985114,
-  "inner_texture": "minecraft:textures/block/redstone_block.png"
+  "inner_block": "minecraft:redstone_block"
 }

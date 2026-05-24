@@ -1,42 +1,39 @@
 package com.flatts.productivefrogs.client.renderer;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
-import com.flatts.productivefrogs.client.PFModelLayers;
-import com.flatts.productivefrogs.client.model.ResourceSlimeInnerModel;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.client.renderer.entity.layers.SlimeOuterLayer;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Infernal Slime renderer. Two-pass: outer shell + eyes + mouth use the
- * species atlas ({@link #OUTER_TEXTURE}) with a lava-red tint via
- * {@link TintedSlimeOuterLayer}; inner cube uses {@link #INNER_TEXTURE}
- * (vanilla netherrack block) at native 16x16 resolution via
- * {@link ResourceSlimeInnerModel}.
+ * Infernal Slime renderer. Keeps the vanilla inner model (cube + eyes + mouth)
+ * textured from the species atlas, swaps the outer shell for a lava-red
+ * {@link TintedSlimeOuterLayer}, and adds a {@link ResourceSlimeInnerBlockLayer}
+ * that renders {@link #INNER_BLOCK} (vanilla netherrack) inside the slime.
  *
- * <p>{@link #INNER_TEXTURE} stays in sync with the {@code inner_texture}
- * field on {@code data/productivefrogs/productivefrogs/parent_species/infernal_slime.json}.
+ * <p>{@link #INNER_BLOCK} mirrors the {@code inner_block} field on
+ * {@code data/productivefrogs/productivefrogs/parent_species/infernal_slime.json}.
  */
 public class InfernalSlimeRenderer extends SlimeRenderer {
 
-    private static final ResourceLocation OUTER_TEXTURE =
+    private static final ResourceLocation TEXTURE =
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "textures/entity/slime/infernal_slime.png");
 
-    private static final ResourceLocation INNER_TEXTURE =
-        ResourceLocation.parse("minecraft:textures/block/netherrack.png");
+    private static final ResourceLocation INNER_BLOCK = ResourceLocation.parse("minecraft:netherrack");
 
     private static final int OUTER_TINT_ARGB = 0xFFC73E1D; // lava red
 
     public InfernalSlimeRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
-        this.model = new ResourceSlimeInnerModel(ctx.bakeLayer(PFModelLayers.RESOURCE_SLIME_INNER));
         this.layers.removeIf(l -> l instanceof SlimeOuterLayer);
-        this.addLayer(new TintedSlimeOuterLayer(this, ctx.getModelSet(), OUTER_TINT_ARGB, OUTER_TEXTURE));
+        this.addLayer(new TintedSlimeOuterLayer(this, ctx.getModelSet(), OUTER_TINT_ARGB, TEXTURE));
+        this.addLayer(new ResourceSlimeInnerBlockLayer(this, ctx.getBlockRenderDispatcher(),
+            ResourceSlimeInnerBlockLayer.constant(INNER_BLOCK)));
     }
 
     @Override
     public ResourceLocation getTextureLocation(net.minecraft.world.entity.monster.Slime entity) {
-        return INNER_TEXTURE;
+        return TEXTURE;
     }
 }

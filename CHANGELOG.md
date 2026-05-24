@@ -6,31 +6,33 @@ Visual-polish patch. **No behavior changes.** No world migration, no API surface
 
 ### What changed visually
 
-- **Resource Slime inner cube now displays the variant's vanilla resource block texture at native 16x16 per face.** Pre-v1.0.1, the renderer downsampled the vanilla 16x16 block texture to 6x6 (matching vanilla `SlimeModel`'s per-face UV resolution) and stamped it into a per-variant atlas. At slime size 4 the 6x6 source visibly blurred at 60+ screen pixels; v1.0.1 binds the vanilla block PNG directly so what you see inside the slime IS the vanilla block, byte-identical.
-- Same treatment for the 6 parent species (Bog/Cave/Geode/Tide/Infernal/Void) - each now displays a themed vanilla block (moss, stone, amethyst, prismarine, netherrack, end stone) inside its translucent shell.
+- **Resource Slimes now have an actual vanilla resource block rendered inside the translucent shell.** Pre-v1.0.1, the inner cube was textured with a 6x6-downsampled copy of the block image stamped into a per-variant atlas (blurry at large slime sizes). v1.0.1 draws the real block model (iron block, copper block, ...) so the interior is the genuine vanilla block at native resolution, with vanilla's own UVs and mipmaps.
+- Same treatment for the 6 parent species (Bog/Cave/Geode/Tide/Infernal/Void) - each shows a themed vanilla block inside (moss, stone, amethyst, prismarine, netherrack, end stone).
+- The slime's face (eyes + mouth) and tinted translucent shell are unchanged.
 
 ### How
 
-Two-pass entity rendering. The slime's outer translucent shell + eyes + mouth still bind the existing per-category atlas (unchanged from v1.0). The inner cube binds to the variant's `inner_texture` field directly (e.g. `minecraft:textures/block/iron_block.png`). A new `ResourceSlimeInnerModel` swaps vanilla `SlimeModel`'s 6x6-UV inner cube for a 16x16-UV inner cube scaled down to vanilla's visual size, so the world-space geometry is identical while each face's UV spans the full bound texture.
+A new `ResourceSlimeInnerBlockLayer` renders the resource block via `BlockRenderDispatcher` in the volume vanilla's 6x6x6 inner cube occupies. The base renderer still draws the vanilla inner model (cube + eyes + mouth) and the tinted outer shell, both unchanged from v1.0 - the eyes live on the vanilla inner body layer, so keeping that model preserves the face. The opaque block covers the inner cube's body; the eyes sit proud of the cube's front face and stay visible.
 
 ### Data layer
 
-- New optional `inner_texture` field on `SlimeVariant` and `ParentSpeciesEntry` codecs. Format: full texture path with namespace + `textures/` prefix + `.png` suffix (e.g. `minecraft:textures/block/iron_block.png`).
+- New optional `inner_block` field on `SlimeVariant` and `ParentSpeciesEntry` codecs. Format: a plain vanilla block id (e.g. `minecraft:iron_block`), resolved to its default block state at render time.
 - All 12 shipped variant JSONs populated.
 - All 6 parent_species JSONs populated.
+- Removed the pre-v1.0.1 per-variant atlas `texture` field from `SlimeVariant` (the renderer no longer reads it; the outer-shell atlas is per-category).
 
 ### Asset cleanup
 
-- 12 per-variant `<variant>_resource_slime.png` atlas PNGs deleted (no longer needed; the outer-shell atlas is per-category, the inner cube binds directly to vanilla block PNGs).
+- 12 per-variant `<variant>_resource_slime.png` atlas PNGs deleted (the inner content is now a rendered block; the outer-shell atlas is per-category).
 - `scripts/generate_variant_slime_textures.ps1` deleted (the textures it produced are gone).
 
 ### Fallback
 
-Variant JSON without an `inner_texture` field (typo, modded block from an absent mod) renders the vanilla missing-texture sprite (purple/black checker) at render time. Visually loud, doesn't crash, easy to spot.
+A variant JSON without an `inner_block` field (typo, modded block from an absent mod) skips the inner-block render pass - the slime renders with its shell, eyes, and inner cube but no interior block.
 
 ### Modpack-author note
 
-No migration. No third-party variants are known to ship between v1.0 and v1.0.1; if any exist, they'll continue to load (`inner_texture` is optional) and just render with the missing-texture fallback until a JSON edit adds the field.
+No migration. No third-party variants are known to ship between v1.0 and v1.0.1; if any exist, they'll continue to load (`inner_block` is optional) and just render without an interior block until a JSON edit adds the field.
 
 ---
 

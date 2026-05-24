@@ -77,22 +77,6 @@ public final class PFClientEvents {
         event.registerEntityRenderer(PFEntities.INFERNAL_SLIME.get(), InfernalSlimeRenderer::new);
     }
 
-    /**
-     * Register the layer definition for {@link PFModelLayers#RESOURCE_SLIME_INNER}:
-     * the v1.0.1 native-resolution inner-cube layer used by both
-     * {@link ResourceSlimeRenderer} and the six parent species renderers.
-     * See {@link com.flatts.productivefrogs.client.model.ResourceSlimeInnerModel}
-     * for the geometry rationale; full design context in
-     * {@code docs/v1_0_1_scope.md}.
-     */
-    @SubscribeEvent
-    public static void onRegisterLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
-        event.registerLayerDefinition(
-            PFModelLayers.RESOURCE_SLIME_INNER,
-            com.flatts.productivefrogs.client.model.ResourceSlimeInnerModel::createBodyLayer
-        );
-    }
-
     @SubscribeEvent
     public static void onRegisterBlockColors(RegisterColorHandlersEvent.Block event) {
         for (Category cat : Category.values()) {

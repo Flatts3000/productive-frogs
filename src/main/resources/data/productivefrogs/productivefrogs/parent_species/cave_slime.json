@@ -1,5 +1,5 @@
 {
   "entity_type": "productivefrogs:cave_slime",
   "category": "cave",
-  "inner_texture": "minecraft:textures/block/stone.png"
+  "inner_block": "minecraft:stone"
 }

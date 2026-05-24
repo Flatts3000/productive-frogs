@@ -3,5 +3,5 @@
   "category": "cave",
   "primary_color": 14711367,
   "secondary_color": 11553069,
-  "inner_texture": "minecraft:textures/block/copper_block.png"
+  "inner_block": "minecraft:copper_block"
 }

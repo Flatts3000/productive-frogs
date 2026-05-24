@@ -48,26 +48,26 @@ import net.minecraft.resources.ResourceLocation;
 public record ParentSpeciesEntry(
     ResourceLocation entityType,
     Category category,
-    Optional<ResourceLocation> innerTexture
+    Optional<ResourceLocation> innerBlock
 ) {
 
     /**
      * Codec for the {@code parent_species} datapack registry.
      *
-     * <p>{@code inner_texture} (v1.0.1+): the vanilla block PNG bound to the
-     * parent slime's inner cube. Optional; absent for vanilla parents
-     * ({@code minecraft:slime}, {@code minecraft:magma_cube}) which use
-     * their own vanilla renderers and don't read this field. Required for
-     * PF-native parent species since their renderers route the inner-cube
-     * texture binding through this value. Format: full
-     * {@code RenderType.entityCutout}-compatible texture location including
-     * namespace, {@code textures/} prefix, and {@code .png} suffix.
+     * <p>{@code inner_block} (v1.0.1+): the vanilla block id rendered inside
+     * the parent slime. Optional; absent for vanilla parents
+     * ({@code minecraft:slime}, {@code minecraft:magma_cube}) which use their
+     * own vanilla renderers and don't read this field. The PF-native parent
+     * renderers currently pin the block as a constant (the JSON value
+     * documents intent and seeds a future datapack-driven render path).
+     * Format: a plain block id (namespace + path, no {@code textures/} prefix,
+     * no {@code .png}). Example: {@code "minecraft:stone"}.
      */
     public static final Codec<ParentSpeciesEntry> CODEC = RecordCodecBuilder.create(
         instance -> instance.group(
             ResourceLocation.CODEC.fieldOf("entity_type").forGetter(ParentSpeciesEntry::entityType),
             Category.CODEC.fieldOf("category").forGetter(ParentSpeciesEntry::category),
-            ResourceLocation.CODEC.optionalFieldOf("inner_texture").forGetter(ParentSpeciesEntry::innerTexture)
+            ResourceLocation.CODEC.optionalFieldOf("inner_block").forGetter(ParentSpeciesEntry::innerBlock)
         ).apply(instance, ParentSpeciesEntry::new)
     );
 }

@@ -3,5 +3,5 @@
   "category": "cave",
   "primary_color": 3432131,
   "secondary_color": 2047884,
-  "inner_texture": "minecraft:textures/block/lapis_block.png"
+  "inner_block": "minecraft:lapis_block"
 }

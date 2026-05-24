@@ -3,5 +3,5 @@
   "category": "cave",
   "primary_color": 16576075,
   "secondary_color": 13941029,
-  "inner_texture": "minecraft:textures/block/gold_block.png"
+  "inner_block": "minecraft:gold_block"
 }

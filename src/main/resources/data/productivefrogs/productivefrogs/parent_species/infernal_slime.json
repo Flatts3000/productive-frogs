@@ -1,5 +1,5 @@
 {
   "entity_type": "productivefrogs:infernal_slime",
   "category": "infernal",
-  "inner_texture": "minecraft:textures/block/netherrack.png"
+  "inner_block": "minecraft:netherrack"
 }
