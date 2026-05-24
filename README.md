@@ -2,6 +2,8 @@
 
 A content mod for **Minecraft 1.21.1 / NeoForge 21.1.230**. v1.0 shipped 2026-05-24.
 
+**Download:** [CurseForge](https://www.curseforge.com/minecraft/mc-mods/productive-frogs) (preferred) | [GitHub Releases](https://github.com/Flatts3000/productive-frogs/releases) (mirror)
+
 ## Concept
 
 Productive Frogs is a predator/prey resource-generation mod inspired by Productive Bees, built on Minecraft's vanilla *frog eats magma cube drops froglight* mechanic.
@@ -44,7 +46,7 @@ Six parent species spawn naturally in their biomes. Vanilla `minecraft:slime` an
 ## Install
 
 1. Install [NeoForge **21.1.230**](https://neoforged.net/) for Minecraft 1.21.1.
-2. Drop the Productive Frogs jar into `mods/`.
+2. Download the Productive Frogs jar from [CurseForge](https://www.curseforge.com/minecraft/mc-mods/productive-frogs) (or [GitHub Releases](https://github.com/Flatts3000/productive-frogs/releases) as a mirror) and drop it into `mods/`.
 3. **Recommended companion mods:**
    - [JEI 19.21.0.247+](https://www.curseforge.com/minecraft/mc-mods/jei) — surfaces Information pages on every PF item (open inventory, hover, press **U** or **R**).
    - [Jade 15.10.5+](https://www.curseforge.com/minecraft/mc-mods/jade) — shows species + variant in the in-world entity tooltip.
