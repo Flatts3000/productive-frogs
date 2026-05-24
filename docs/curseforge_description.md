@@ -47,7 +47,9 @@ Hopper-compatible. No power, no pipes, no multiblocks. The whole loop runs unatt
 
 ## Modpack-friendly
 
-Adding a new resource is a single JSON file. Drop one entry under `data/<pack>/productivefrogs/slime_variant/<name>.json`, point it at a primer item and a smelting recipe, and the variant is live. JEI Information pages auto-extend to teach the new entry. Cross-mod variants (Mekanism, Create, Thermal, and more) gate behind NeoForge `mod_loaded` conditions so they silently skip when the source mod is absent.
+Data-driven and extensible: adding a new resource variant is a single JSON file, no code or recompile needed. JEI Information pages auto-extend to teach the new entry. Cross-mod variants for Mekanism, Create, Thermal, and more are included; each gates behind a soft mod-loaded check and silently skips when the source mod is absent.
+
+Full authoring guide: [docs on GitHub](https://github.com/Flatts3000/productive-frogs/tree/main/docs).
 
 ## Companion mods (recommended, optional)
 
@@ -147,9 +149,9 @@ The scale-up release. v1 lives unchanged; v2 layers automation on top. A player 
 
 ### Compatibility promise
 
-* v2 datapacks won't break v1 worlds.
+* v2 won't break v1 worlds.
 * v2 machines remain optional. Every v1 capability stays usable without them.
-* Cross-mod compat datapacks are independent of the v1 / v2 split.
+* Cross-mod compatibility add-ons are independent of the v1 / v2 split.
 
 ### Explicitly NOT planned
 
