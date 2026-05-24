@@ -169,7 +169,7 @@ public class ResourceFrog extends Frog {
             // and the inventory updates roundtrip from the server's mutation.
             return InteractionResult.SUCCESS;
         }
-        FrogTongueDropHandler.dropFroglightAtFrog(this, bucketCategory, variantId);
+        FrogTongueDropHandler.dropFroglightAtFrog(this, variantId);
         // Apply the same brain memory vanilla Frog uses to gate repeated
         // tongue use — keeps direct-feed cadence consistent with the natural
         // tongue cooldown so a player can't out-feed the tongue path's

@@ -40,7 +40,7 @@ public final class PFEntities {
                 .eyeHeight(Tadpole.HITBOX_HEIGHT * 0.5F)
                 // 1.21.1 EntityType.Builder.build takes the registry id String,
                 // not a ResourceKey (that signature change came in 1.21.4+).
-                .build("resource_tadpole")
+                .build(ProductiveFrogs.MOD_ID + ":resource_tadpole")
         );
 
     public static final DeferredHolder<EntityType<?>, EntityType<ResourceFrog>> RESOURCE_FROG =
@@ -49,7 +49,7 @@ public final class PFEntities {
             () -> EntityType.Builder.<ResourceFrog>of(ResourceFrog::new, MobCategory.CREATURE)
                 .sized(0.5F, 0.5F)
                 .eyeHeight(0.4F)
-                .build("resource_frog")
+                .build(ProductiveFrogs.MOD_ID + ":resource_frog")
         );
 
     /**
@@ -78,7 +78,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build("resource_slime")
+                .build(ProductiveFrogs.MOD_ID + ":resource_slime")
         );
 
     /**
@@ -96,7 +96,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build("cave_slime")
+                .build(ProductiveFrogs.MOD_ID + ":cave_slime")
         );
 
     /**
@@ -113,7 +113,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build("geode_slime")
+                .build(ProductiveFrogs.MOD_ID + ":geode_slime")
         );
 
     /**
@@ -130,7 +130,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build("tide_slime")
+                .build(ProductiveFrogs.MOD_ID + ":tide_slime")
         );
 
     /**
@@ -147,7 +147,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build("void_slime")
+                .build(ProductiveFrogs.MOD_ID + ":void_slime")
         );
 
     /**
@@ -162,7 +162,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build("bog_slime")
+                .build(ProductiveFrogs.MOD_ID + ":bog_slime")
         );
 
     /**
@@ -178,7 +178,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build("infernal_slime")
+                .build(ProductiveFrogs.MOD_ID + ":infernal_slime")
         );
 
     private PFEntities() {

@@ -82,7 +82,13 @@ class PFFluidsTest {
     @MethodSource("variants")
     void liquidBlockIsRegistered(String variant) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant + "_slime_milk");
-        assertNotNull(BuiltInRegistries.BLOCK.get(id), id + " must be registered as a Block");
+        // BuiltInRegistries.BLOCK is defaulted (returns AIR for missing ids),
+        // so assertNotNull alone wouldn't catch a missing registration. Compare
+        // identity against the deferred holder to confirm the id actually
+        // resolves to OUR block.
+        assertSame(PFBlocks.MILK_BLOCKS.get(variant).get(),
+            BuiltInRegistries.BLOCK.get(id),
+            id + " must be registered to the matching PFBlocks holder (not vanilla default)");
         assertTrue(PFBlocks.MILK_BLOCKS.get(variant).get() instanceof LiquidBlock,
             variant + " milk block must be a LiquidBlock");
     }
@@ -91,7 +97,11 @@ class PFFluidsTest {
     @MethodSource("variants")
     void bucketItemIsRegistered(String variant) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant + "_slime_milk_bucket");
-        assertNotNull(BuiltInRegistries.ITEM.get(id), id + " must be registered as an Item");
+        // BuiltInRegistries.ITEM is defaulted (returns AIR item for missing ids).
+        // Compare identity to catch a missing registration.
+        assertSame(PFItems.MILK_BUCKETS.get(variant).get(),
+            BuiltInRegistries.ITEM.get(id),
+            id + " must be registered to the matching PFItems holder (not vanilla default)");
         assertTrue(PFItems.MILK_BUCKETS.get(variant).get() instanceof BucketItem,
             variant + " milk bucket must be a BucketItem");
     }

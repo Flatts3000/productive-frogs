@@ -6,18 +6,19 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.level.Level;
+import org.joml.Vector3f;
 
 /**
- * Void Slime — the ARCANE parent species. Vanilla-flavoured Slime subclass
+ * Void Slime — the VOID parent species. Vanilla-flavoured Slime subclass
  * that exists as a thin marker class so {@link com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler}
  * can tell parent species apart via {@code instanceof} when picking the
  * discovery pool's default category.
  *
  * <p>No gameplay overrides on the vanilla {@link Slime} base — same split
  * mechanic, same movement, same sounds. What changes: the default category
- * ARCANE the discovery handler picks for its split offspring, the texture
+ * VOID the discovery handler picks for its split offspring, the texture
  * (client-side via {@code VoidSlimeRenderer}), and the splash-particle
- * colour ({@link #getParticleType} returns an ARCANE-tinted
+ * colour ({@link #getParticleType} returns an VOID-tinted
  * {@link DustParticleOptions} in place of vanilla green {@code ITEM_SLIME}).
  *
  * <p>Per design Q2c ({@code docs/open_questions.md}), each non-vanilla
@@ -35,9 +36,14 @@ public class VoidSlime extends Slime {
         super(type, level);
     }
 
-    /** ARCANE-tinted splash particle in place of vanilla green. See CaveSlime. */
+    /** VOID-tinted splash particle in place of vanilla green. See CaveSlime. */
     @Override
     protected ParticleOptions getParticleType() {
-        int rgb = Category.VOID.tintRgb(); org.joml.Vector3f color = new org.joml.Vector3f(((rgb >> 16) & 0xFF) / 255.0F, ((rgb >> 8) & 0xFF) / 255.0F, (rgb & 0xFF) / 255.0F); return new DustParticleOptions(color, 1.0F);
+        int rgb = Category.VOID.tintRgb();
+        Vector3f color = new Vector3f(
+            ((rgb >> 16) & 0xFF) / 255.0F,
+            ((rgb >>  8) & 0xFF) / 255.0F,
+            (rgb         & 0xFF) / 255.0F);
+        return new DustParticleOptions(color, 1.0F);
     }
 }
