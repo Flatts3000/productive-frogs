@@ -78,7 +78,7 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 | v1.2 | New mob-drop content + cross-mod variant pools | 📋 designed |
 | v2 | Automation: hoppers/power/pipes/multiblocks | 🔭 future |
 
-Full version roadmap in [`docs/versioning.md`](./docs/versioning.md).
+Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope rationale: [`docs/versioning.md`](./docs/versioning.md).
 
 ## Documentation
 

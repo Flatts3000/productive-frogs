@@ -1,6 +1,8 @@
 # Versioning & Scope
 
-How features are split across releases. V1 is the foundation; V2 layers automation on top without breaking V1.
+How features are split across releases, with the engineering rationale for the V1 / V2 split. V1 is the foundation; V2 layers automation on top without breaking V1.
+
+For the player-facing roadmap (what's shipped, what's coming next, no engineering depth), see [`ROADMAP.md`](../ROADMAP.md) at the repo root. This doc is the source of truth for *why* the split exists; ROADMAP.md is the source of truth for *what* lands in each release.
 
 ## V1.0 — Base Mechanics + Appliances (SHIPPED 2026-05-24)
 
