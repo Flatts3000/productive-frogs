@@ -119,63 +119,30 @@ On server start / datapack reload:
   4. Tags update accordingly (slime_category/<X> resolves to live variant set)
 ```
 
-## Tag System
+## Variant resolution at runtime
 
-### Authoritative Tag List
+v1.0 deleted the `productivefrogs:primer/<category>` tag system. Variant → primer resolution now goes through the `SlimeVariant` datapack registry directly via `SlimeVariant.findByPrimerItem(registry, itemId)`. The variant JSON's `primer_item` field is the exact 1:1 match required for both slime infusion and Frog Egg priming (see `species_as_category_redesign.md` §Slime infusion).
 
-```
-productivefrogs:primer/metallic
-productivefrogs:primer/mineral
-productivefrogs:primer/infernal
-productivefrogs:primer/gem
-productivefrogs:primer/arcane
+- **"Can this primer prime a Frog Egg block?"** `SlimeVariant.findByPrimerItem(registry, held.itemId)` — if a variant matches, its `category()` selects the Primed Frog Egg block.
+- **"Will this frog eat this slime?"** `frog.getCategory() == slime.getCategory()` — direct enum equality. Both sides carry a `Category` reference.
 
-productivefrogs:slime_category/metallic
-productivefrogs:slime_category/mineral
-productivefrogs:slime_category/infernal
-productivefrogs:slime_category/gem
-productivefrogs:slime_category/arcane
+### Cross-mod variant additions
 
-productivefrogs:frog_category/metallic
-productivefrogs:frog_category/mineral
-productivefrogs:frog_category/infernal
-productivefrogs:frog_category/gem
-productivefrogs:frog_category/arcane
-```
-
-### Tag Resolution at Runtime
-
-- **"Can this primer be used on a Frog Egg block?"** Check `held_item ∈ productivefrogs:primer/<X>` for any X. If yes, get the matching X, set the block's category.
-- **"Will this frog eat this slime?"** Get `frog.category` (string like `"metallic"`), check `slime.variant.category == "productivefrogs:" + frog.category`.
-
-### Cross-Mod Tag Additions
-
-We ship our own tag JSON files. NeoForge's tag system natively supports conditional entries. Example:
-
-`data/productivefrogs/tags/item/primer/metallic.json` (note: singular `item/` per MC 1.21.x — the directory was renamed from `items/`):
+Cross-mod variants ship as JSON `SlimeVariant` entries with `neoforge:conditions → mod_loaded` wrappers. Example for a Mekanism osmium variant (`data/productivefrogs/productivefrogs/slime_variant/osmium.json`):
 
 ```json
 {
-  "replace": false,
-  "values": [
-    "minecraft:iron_ingot",
-    "minecraft:copper_ingot",
-    "minecraft:gold_ingot",
-    {
-      "id": "mekanism:ingot_osmium",
-      "required": false
-    },
-    {
-      "id": "create:bronze_ingot",
-      "required": false
-    }
-  ]
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "mekanism" }
+  ],
+  "category": "cave",
+  "primer_item": "mekanism:ingot_osmium",
+  "primary_color": 8027317,
+  "secondary_color": 5526612
 }
 ```
 
-`"required": false` makes the entry optional — if the item ID doesn't resolve (mod not loaded), it's silently skipped. No need to wrap each ID in a `mod_loaded` condition; the `required: false` shorthand handles it.
-
-For more complex compat (e.g. spawn config, loot table) where we need the whole JSON file to be conditional, we use `neoforge:conditions`.
+No tag files involved. The variant either exists in the registry (mod present) or it doesn't (mod absent); no broken-reference state. Cross-mod loot tables / recipes can still wrap entire JSON files in `neoforge:conditions` when needed.
 
 ## Project Layout (planned)
 
@@ -237,14 +204,7 @@ productive-frogs/
 │           │   ├── models/
 │           │   └── ...
 │           └── data/productivefrogs/
-│               ├── tags/item/primer/
-│               │   ├── metallic.json
-│               │   ├── mineral.json
-│               │   ├── gem.json
-│               │   ├── aquatic.json
-│               │   ├── infernal.json
-│               │   └── arcane.json
-│               ├── slime_variant/
+│               ├── productivefrogs/slime_variant/
 │               │   ├── iron.json
 │               │   ├── copper.json
 │               │   ├── gold.json
@@ -252,6 +212,13 @@ productive-frogs/
 │               │   ├── osmium.json           # mod_loaded: mekanism
 │               │   ├── bronze.json           # mod_loaded: create
 │               │   └── ...
+│               ├── productivefrogs/parent_species/
+│               │   ├── bog_slime.json
+│               │   ├── cave_slime.json
+│               │   ├── geode_slime.json
+│               │   ├── tide_slime.json
+│               │   ├── infernal_slime.json
+│               │   └── void_slime.json
 │               ├── loot_tables/entities/slime/
 │               │   ├── iron.json
 │               │   ├── copper.json
@@ -263,7 +230,7 @@ productive-frogs/
 
 ## Build Configuration
 
-- **Loader**: NeoForge 21.11.42 for MC 1.21.11
+- **Loader**: NeoForge 21.1.230 for MC 1.21.1
 - **Java**: 21
 - **Gradle**: NeoGradle plugin (latest)
 - **Mappings**: official (Mojang)

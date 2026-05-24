@@ -1,5 +1,7 @@
 # Design Overview
 
+> **⚠️ Predates v1.0 species-as-category redesign.** This doc uses the original abstract-category names (Metallic / Mineral / Gem / Aquatic / Arcane). v1.0 renamed these to species: BOG / CAVE / GEODE / TIDE / INFERNAL / VOID. The underlying two-axis model (frog category × slime resource) is unchanged — see [species_as_category_redesign.md](./species_as_category_redesign.md) for the authoritative v1.0 design and the [README](../README.md) for the player-facing overview.
+
 ## Inspiration
 
 Two existing pieces of Minecraft design seeded this mod:

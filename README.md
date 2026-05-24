@@ -1,71 +1,115 @@
 # Productive Frogs
 
-A Minecraft content mod for **NeoForge** on **Minecraft 1.21.11** (latest 1.21.x at time of scaffold).
+A content mod for **Minecraft 1.21.1 / NeoForge 21.1.230**. v1.0 shipped 2026-05-24.
 
 ## Concept
 
-Productive Frogs is a predator/prey resource-generation mod inspired by the genre established by Productive Bees, but built on Minecraft's vanilla frog-eats-magma-cube-drops-froglight mechanic.
+Productive Frogs is a predator/prey resource-generation mod inspired by Productive Bees, built on Minecraft's vanilla *frog eats magma cube drops froglight* mechanic.
 
-**Core loop:**
+**Core production loop:**
 
 ```
-Find frogspawn → bottle with a glass bottle → prime egg with category material →
-hatch into Resource Frog → feed it slime of the right category → drop resource
+Find a parent slime in the world  →  Right-click with a variant primer item
+                                  ↓
+                              Variant Resource Slime  →  Frog eats it
+                                                      ↓
+                                          Variant-stamped Configurable Froglight
+                                                      ↓
+                                          Smelt in furnace  →  Resource
 ```
 
-The design separates two roles:
+Or sustainably, via the Slime Milker:
 
-- **Frog = category** (a "guild" or diet). Six frog types: Metallic, Mineral, Gem, Aquatic, Infernal, Arcane.
-- **Slime = species**. Many slime variants — one per resource. Each has its own drop.
-- **Frogs only eat slimes whose category matches their diet.** Mismatch = ignore.
+```
+Variant Slime Bucket → Slime Milker → Slime Milk bucket
+                                    ↓
+                  Place in world → spawns more of the same variant slime
+```
 
-Variety lives on the slime side; the frog roster stays small and manageable. This makes the mod inherently data-driven and trivially extensible — adding a new modded resource is one JSON file + one tag entry, no code.
+## Six species
+
+| Species | Biome | Matching frog | Example variants |
+|---|---|---|---|
+| **Bog Slime** | swamps, mangrove swamps | Bog Frog | (V1.0 ships none — V1.1 adds bone, gunpowder, slime ball, etc.) |
+| **Cave Slime** | dripstone caves, deep dark, lush caves | Cave Frog | iron, copper, gold, redstone, lapis, coal, diamond |
+| **Geode Slime** | mountain peaks (stony / jagged / frozen) | Geode Frog | emerald |
+| **Tide Slime** | deep oceans, warm + lukewarm oceans | Tide Frog | prismarine, sponge |
+| **Infernal Slime** | nether wastes, basalt deltas, soul sand valley | Infernal Frog | magma cream |
+| **Void Slime** | end islands | Void Frog | ender pearl |
+
+Six parent species spawn naturally in their biomes. Vanilla `minecraft:slime` and `minecraft:magma_cube` are NOT part of the production system — only the PF parent species can be infused into Resource Slimes.
+
+**Variety lives on the slime side.** Adding a new variant for a future modpack is one JSON + one texture + one smelting recipe — no code change.
+
+## Install
+
+1. Install [NeoForge **21.1.230**](https://neoforged.net/) for Minecraft 1.21.1.
+2. Drop the Productive Frogs jar into `mods/`.
+3. **Recommended companion mods:**
+   - [JEI 19.21.0.247+](https://www.curseforge.com/minecraft/mc-mods/jei) — surfaces Information pages on every PF item (open inventory, hover, press **U** or **R**).
+   - [Jade 15.10.5+](https://www.curseforge.com/minecraft/mc-mods/jade) — shows species + variant in the in-world entity tooltip.
+
+Both are optional. Without them, the mod still works — just no JEI sidebar and no tooltip overlay.
+
+## Quick-start
+
+1. Find a swamp, cave, mountain peak, ocean, nether biome, or end island. A Bog/Cave/Geode/Tide/Infernal/Void Slime will eventually spawn (or `/give @s productivefrogs:cave_slime_spawn_egg` in creative).
+2. Hold an iron ingot. Right-click the Cave Slime → it becomes an **Iron Slime**.
+3. Bottle a vanilla frogspawn block with a glass bottle → unprimed Frog Egg.
+4. Hold an iron ingot, right-click vanilla frogspawn → Cave Primed Frog Egg block.
+5. Wait for the egg to hatch into Cave Tadpoles. They mature into Cave Frogs.
+6. The Cave Frog will tongue-eat your Iron Slime → drops an Iron-stamped Configurable Froglight.
+7. Smelt the Froglight → iron ingot.
+
+For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Milk. Place the milk source block; it spawns more Iron Slimes nearby.
 
 ## Status
 
-**V1 in progress.** The core egg → tadpole → frog pipeline is in; the slime side is next.
+**v1.0 — shipped 2026-05-24.** The full V1 design (hand-operated production loop, six species, twelve variants) is live.
 
-Landed so far:
+| Version line | Scope | Status |
+|---|---|---|
+| v1.0 | Base mechanics + Slime Milker | ✅ shipped |
+| v1.1 | 22 additional vanilla resource variants | 📋 designed, not yet shipped |
+| v1.2 | New mob-drop content + cross-mod variant pools | 📋 designed |
+| v2 | Automation: hoppers/power/pipes/multiblocks | 🔭 future |
 
-- **Frog Egg item** — vanilla glass bottle right-clicked on `minecraft:frogspawn` produces a bottled egg (event hook, no custom recipe).
-- **Primer system** — any item in a `productivefrogs:primer/<category>` tag converts vanilla frogspawn into the matching **Primed Frog Egg block** (one block per category).
-- **Hatching pipeline** — Primed Frog Eggs hatch into category-typed **Resource Tadpoles**, which mature into **Resource Frogs**. Resource Tadpole Bucket preserves category across bucket-and-release.
-- **V1 tint-based visuals** — every category variant (eggs, bottles, buckets, entities) shares one base texture and tints via `Category.tintArgb()` — single source of truth, no per-category artwork.
-
-Still to come for V1 (see [`docs/versioning.md`](./docs/versioning.md) for full scope): Resource Slimes + data-driven variants, parent slime species (Cave/Geode/Tide/Void), Slime Bucket, Slime Milker, Slime Milk fluid, Froglight drops, smelting/crush recipes, cross-mod compat datapacks.
-
-Full design specification lives in [`docs/`](./docs/).
+Full version roadmap in [`docs/versioning.md`](./docs/versioning.md).
 
 ## Documentation
 
 | Doc | Purpose |
 |---|---|
+| [species_as_category_redesign.md](./docs/species_as_category_redesign.md) | The v1.0 design — six species, infusion rules, JEI integration |
 | [design_overview.md](./docs/design_overview.md) | The core model and gameplay loop |
-| [categories_and_tiers.md](./docs/categories_and_tiers.md) | The 5 categories, tier ladder, primer system |
-| [items_and_blocks.md](./docs/items_and_blocks.md) | Item and block roster: Frog Eggs, Resource Slimes, Slime Milker, etc. |
-| [slime_sourcing.md](./docs/slime_sourcing.md) | How players obtain Resource Slimes (split discovery + infusion) |
-| [farming.md](./docs/farming.md) | V1 farming loop: Slime Milker, Slime Milk fluid, Froglight processing |
-| [progression.md](./docs/progression.md) | Player journey from tier 0 to tier 6 |
-| [textures_and_models.md](./docs/textures_and_models.md) | Tint-based colorization, texture roster, model templates, dev pipeline |
-| [texture_prompts.md](./docs/texture_prompts.md) | AI generation prompts for every texture, with tooling and post-processing tips |
-| [architecture.md](./docs/architecture.md) | Data-driven slime variant system, tag layout, JSON registries |
-| [cross_mod_compat.md](./docs/cross_mod_compat.md) | Strategy for Mekanism, Create, Thermal, Mythic Metals integration |
-| [versioning.md](./docs/versioning.md) | V1 / V2 scope split (V1 = base mechanics, V2 = automation) |
+| [items_and_blocks.md](./docs/items_and_blocks.md) | Item and block roster |
+| [slime_sourcing.md](./docs/slime_sourcing.md) | How players obtain Resource Slimes |
+| [farming.md](./docs/farming.md) | Slime Milker production loop |
+| [architecture.md](./docs/architecture.md) | Data-driven variant system, tag layout, JSON registries |
+| [cross_mod_compat.md](./docs/cross_mod_compat.md) | Strategy for Mekanism, Create, Thermal, Mythic Metals |
+| [versioning.md](./docs/versioning.md) | V1 / V2 scope split |
+| [textures_and_models.md](./docs/textures_and_models.md) | Tint pipeline + texture roster |
+| [dev_setup.md](./docs/dev_setup.md) | Local dev environment + companion mod install |
 
-| [open_source.md](./docs/open_source.md) | OSS structure, license, contributor conventions, CI |
-| [infrastructure.md](./docs/infrastructure.md) | gh CLI setup script for the GitHub repo (sibling `infra/` folder) |
-| [open_questions.md](./docs/open_questions.md) | Unresolved design decisions awaiting answers |
+## Target platform
 
-## Target Platform
-
-- **Minecraft**: 1.21.11 (latest 1.21.x)
-- **Loader**: NeoForge 21.11.42 **only** — no Fabric port planned, in V1 or ever
+- **Minecraft**: 1.21.1
+- **Loader**: NeoForge 21.1.230 (NeoForge-only — no Fabric port planned)
 - **Java**: 21
 - **Gradle**: 9.5.1 with `net.neoforged.moddev` 2.0.141
-- **Cross-mod focus**: Mekanism, Create, Thermal (via common tags + conditional datapacks)
 
-## Open Source
+## Building from source
 
-- **License**: MIT
-- **Repo management**: gh CLI script in sibling `F:\minecraft-repos\infra\` folder (no PAT needed, uses existing `gh auth login` session)
-- See [docs/open_source.md](./docs/open_source.md) and [docs/infrastructure.md](./docs/infrastructure.md) for details.
+```bash
+git clone https://github.com/Flatts3000/productive-frogs.git
+cd productive-frogs
+./gradlew build              # full build + unit tests
+./gradlew runGameTestServer  # in-world GameTests headless
+./gradlew runClient          # launch a dev Minecraft client with the mod loaded
+```
+
+Build output: `build/libs/productivefrogs-1.0.0.jar`.
+
+## License
+
+MIT. See `LICENSE`.

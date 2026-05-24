@@ -16,7 +16,7 @@ Result: a player with just Productive Frogs and no other mods gets the base cont
 
 ### Mekanism
 
-Adds to **Metallic** category:
+Adds to **Cave** species:
 
 | Slime | Resource | Source tag |
 |---|---|---|
@@ -25,7 +25,7 @@ Adds to **Metallic** category:
 | Lead Slime | Lead nuggets | `c:ingots/lead` |
 | Uranium Slime | Uranium nuggets | `c:ingots/uranium` |
 
-Adds to **Gem** category:
+Adds to **Geode** species:
 
 | Slime | Resource | Source tag |
 |---|---|---|
@@ -33,7 +33,7 @@ Adds to **Gem** category:
 
 ### Create
 
-Adds to **Metallic** category:
+Adds to **Cave** species:
 
 | Slime | Resource | Source tag |
 |---|---|---|
@@ -45,7 +45,7 @@ Create's bronze is the most commonly requested cross-mod addition.
 
 ### Thermal Series
 
-Adds to **Metallic** category:
+Adds to **Cave** species:
 
 | Slime | Resource | Source tag |
 |---|---|---|
@@ -61,16 +61,16 @@ Note that **Tin and Lead are shared** between Mekanism and Thermal. With both mo
 
 ### Mythic Metals
 
-Adds to **Metallic** and **Gem** categories:
+Adds to **Cave** and **Geode** species:
 
-| Slime | Category | Resource |
+| Slime | Species | Resource |
 |---|---|---|
-| Adamantite Slime | Metallic | Adamantite |
-| Orichalcum Slime | Metallic | Orichalcum |
-| Mythril Slime | Metallic | Mythril |
-| Ruby Slime | Gem | Ruby |
-| Sapphire Slime | Gem | Sapphire |
-| Topaz Slime | Gem | Topaz |
+| Adamantite Slime | Cave | Adamantite |
+| Orichalcum Slime | Cave | Orichalcum |
+| Mythril Slime | Cave | Mythril |
+| Ruby Slime | Geode | Ruby |
+| Sapphire Slime | Geode | Sapphire |
+| Topaz Slime | Geode | Topaz |
 
 Mythic Metals is Fabric-only historically, but a NeoForge fork or equivalent (Mythic Metals on Forge, or a different "many metals" mod) may exist. Status TBD.
 
@@ -87,20 +87,20 @@ When two mods (e.g. Mekanism + Thermal) both add tin:
 
 The slime is the same entity, the drop is the same item, the tag is the same. No conflict.
 
-### Category collisions
+### Species collisions
 
-Currently none anticipated. If a future mod adds a resource that could fit two of our categories (e.g. a metal-gem hybrid), we'll assign it at design time per the disjointness rule in [categories_and_tiers.md](./categories_and_tiers.md).
+Currently none anticipated. If a future mod adds a resource that could fit two species (e.g. a metal-gem hybrid), assign it at design time per the *biome-source over form-source* rule in [species_as_category_redesign.md](./species_as_category_redesign.md).
 
 ## Datapack Override Path for Modpack Authors
 
 Modpack authors can:
 
 1. **Disable a slime variant** — override its JSON file with `{ "neoforge:conditions": [{ "type": "neoforge:false" }] }`.
-2. **Add their own slime variant** — drop a JSON in their pack's `data/productivefrogs/slime_variant/`.
-3. **Re-tag materials** — override our `primer/<X>.json` tags with their own `replace: true` versions or `replace: false` additions.
-4. **Re-balance drops** — override the per-slime loot tables.
+2. **Add their own slime variant** — drop a JSON in their pack's `data/<modpack>/productivefrogs/slime_variant/<name>.json`. The `primer_item` field is the exact 1:1 match for infusion; the `category` field assigns the variant to one of the six species (`bog`, `cave`, `geode`, `tide`, `infernal`, `void`).
+3. **Re-balance drops** — override the per-slime loot tables.
+4. **Add a custom parent species** — drop a JSON in `data/<modpack>/productivefrogs/parent_species/<name>.json` mapping a modded slime mob to a Category for split-discovery routing.
 
-No code touch required for any of this.
+No code touch required for any of this. v1.0 deleted the `productivefrogs:primer/<category>` tag system — variant resolution is exact match on `SlimeVariant.primer_item` (see [species_as_category_redesign.md](./species_as_category_redesign.md) §Slime infusion).
 
 ## Crushing Compat — Froglight → 2× powder
 
@@ -119,7 +119,7 @@ Recipes ship as JSON in `data/productivefrogs/recipes/<modid>/...` wrapped in `n
 
 - `productivefrogs:crushable/metallic` — set of all metallic-category Froglight items. A crusher-mod recipe can target this tag to handle every metallic variant in one recipe definition (even modded ones added by datapack).
 
-**Why metallic only:** crushing produces "powder" which only makes sense for materials that get smelted into ingots. Gems, sponges, kelp, and ender pearls don't have an equivalent "crushed → ingot" pipeline. Smelt is the universal path; crush is the metallic-only optimization.
+**Why metal variants only:** crushing produces "powder" which only makes sense for materials that get smelted into ingots. Gems, sponges, kelp, and ender pearls don't have an equivalent "crushed → ingot" pipeline. Smelt is the universal path; crush is the metal-variant-only optimization (iron, copper, gold, plus modded metallic Cave variants).
 
 ## Out of Scope (v0.1)
 

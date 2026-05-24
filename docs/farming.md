@@ -57,9 +57,9 @@ Each milk source block independently rolls a spawn tick:
 
 ## Frog Feeding
 
-- Frogs in range of a spawned slime detect it via vanilla-style tongue AI, with a category-match check.
-- If `frog.category == slime.variant.category`, the frog targets the slime and eats it on its next tongue tick.
-- Frog drops a `<Variant> Froglight` block at its current position (item entity that vanilla hoppers can collect).
+- Frogs in range of a spawned slime detect it via vanilla-style tongue AI, with a species-match check.
+- If `frog.getCategory() == slime.getCategory()`, the frog targets the slime and eats it on its next tongue tick.
+- Frog drops a `<Variant> Configurable Froglight` block at its current position (item entity that vanilla hoppers can collect).
 - Cooldown: vanilla frog tongue has a natural cooldown (~1 second) — that pacing carries over.
 
 ## Drop Processing
@@ -67,13 +67,13 @@ Each milk source block independently rolls a spawn tick:
 | Step | What | Notes |
 |---|---|---|
 | Break the Froglight | Get 1 Froglight item | Any tool, instant break (like vanilla glowstone) |
-| Smelt the Froglight | Get 1 unit of the base resource | Works for ALL categories: Iron Froglight → Iron Ingot, Sponge Froglight → Sponge Block, Ender Froglight → Ender Pearl, etc. |
-| Crush the Froglight (metallic only) | Get 2× powder/dust | Requires an installed crushing mod — see Cross-Mod section below |
+| Smelt the Froglight | Get 1 unit of the base resource | Works for every variant: Iron Froglight → Iron Ingot, Sponge Froglight → Sponge Block, Ender Froglight → Ender Pearl, etc. |
+| Crush the Froglight (Cave variants only, V2) | Get 2× powder/dust | Requires an installed crushing mod — see Cross-Mod section below |
 | Smelt the powder | Get 1 ingot per powder (2 total from one crushed Froglight) | Net: crush+smelt path yields 2× material vs direct smelt |
 
-**Smelting**: works on all category Froglights. Each variant has its own smelt recipe → its base resource.
+**Smelting**: works on every variant Froglight. Each variant has its own smelt recipe → its base resource.
 
-**Crushing**: applies **only** to metallic-category Froglights. Non-metal Froglights have no crush recipe; if a player tries to crush one, it passes through unchanged.
+**Crushing**: applies **only** to Cave-species metal variants (iron, copper, gold). Non-metal Froglights have no crush recipe; if a player tries to crush one, it passes through unchanged. Cross-mod crush recipes are V2 scope — the `productivefrogs:crushable/metallic` tag is reserved.
 
 ## Cross-Mod: Crushing
 
@@ -112,28 +112,28 @@ These are the levers to tune balance:
 - **Crusher / Pestle.** Deferred to other mods; we ship the compat recipes.
 - **Milk in non-bucket containers** (jugs, tanks, etc.). Bucket only in V1.
 
-## Summary: V1 Farm Layout (one category, idealized)
+## Summary: V1 Farm Layout (Iron variant, idealized)
 
 ```
  +---------------------------+
- |  Vanilla slime farm       |   ← slime chunks or swamp spawn
- |  (player infuses some     |
- |   with iron, buckets at   |
+ |  Cave Slime hunt          |   ← dripstone caves, deep dark, lush caves
+ |  (player infuses with     |
+ |   iron ingot, buckets at  |
  |   size 1)                 |
  +-----------+---------------+
-             ↓ slime buckets
-       [ Slime Milker ]        ← single block, hand operation
-             ↓ milk buckets
+             ↓ Iron Slime buckets
+       [ Slime Milker ]        ← furnace-shaped block, 100-tick cook
+             ↓ Iron Slime Milk buckets
  +---------------------------+
- |  Field of milk source     |   ← lava-like flow, source blocks spawn slimes
+ |  Field of milk source     |   ← lava-like flow, source blocks spawn Iron Slimes
  |  blocks (8-16 of them)    |
- |    + Metallic Frogs       |   ← eat spawning slimes, drop Iron Froglights
+ |    + Cave Frogs           |   ← eat spawning Iron Slimes, drop Iron Froglights
  |    + hoppers below        |   ← vanilla item-collection
  +-----------+---------------+
              ↓ hopper to chest
  +---------------------------+
  |  Furnace (smelt direct)   |
  |   OR                      |
- |  Create/Mekanism/Thermal  |   ← compat crusher → 2× powder → smelt
+ |  Create/Mekanism/Thermal  |   ← compat crusher → 2× powder → smelt (V2)
  +---------------------------+
 ```

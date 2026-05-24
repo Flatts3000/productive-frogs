@@ -2,9 +2,9 @@
 
 ## Status
 
-**Draft — under design discussion** (started 2026-05-23 after the MC 1.21.1 port playtest surfaced the parent-vs-frog naming mismatch). Nothing in this doc is locked yet; everything has an Open Question pass at the end.
+**Shipped 2026-05-24 in v1.0.0.** Implementation merged via PR #81 (renamed Category enum, added Bog + Infernal entities, rewrote SlimeInfusionHandler + EggPrimerHandler for species-lock, deleted `primer/<category>` tag files, deleted species Froglight blocks, added JEI Information pages). All Q1–Q4 decisions baked into shipping code. This doc is preserved as the authoritative v1.0 design spec — the Open Questions section at the bottom records the decisions that were taken; bracketed [RESOLVED] notes mark which questions were closed by the v1.0 ship.
 
-This is a structural redesign, not a version bump. Once the design lands the implementation work is scoped as **V1.5** (the version after the V1.0.x port stabilises, before V1.1's vanilla resource expansion). V1.1 specifically needs to slot into the new species topology because variant→species mapping is the part that changes.
+Originally drafted 2026-05-23 after the MC 1.21.1 port playtest surfaced the parent-vs-frog naming mismatch. Originally scoped as V1.5 (between the V1.0.x port and V1.1 vanilla expansion); collapsed into the v1.0 ship after the design locked.
 
 ## The problem this fixes
 

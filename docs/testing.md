@@ -82,9 +82,9 @@ GameTests run real headless Minecraft scenarios in scripted plots. They're the r
 
 **Takeaway:** if you touch any of `client/`, `assets/<modid>/`, `Category.tintArgb`, item-model JSON, block-model JSON, lang files, or particle/sound code, schedule a manual `./gradlew runClient` pass and walk the affected surface before marking the work done. Document the playtest matrix in the PR description so the reviewer knows what was eyeballed.
 
-### Registration pattern (MC 1.21.11)
+### Registration pattern (MC 1.21.1)
 
-MC 1.21.11 refactored the GameTest API — the old `@GameTestHolder`/`@GameTest` annotations are gone. The new system has three pieces:
+MC 1.21.x refactored the GameTest API — the old `@GameTestHolder`/`@GameTest` annotations are gone. The new system has three pieces:
 
 1. **Test function** — a `Consumer<GameTestHelper>` registered in `Registries.TEST_FUNCTION`. NeoForge unfreezes this registry after vanilla bootstrap and exposes it via standard `RegisterEvent` on the mod bus, so a regular `DeferredRegister` works:
 
@@ -111,7 +111,7 @@ MC 1.21.11 refactored the GameTest API — the old `@GameTestHolder`/`@GameTest`
 
 3. **Structure NBT** — lives at `data/<modid>/structure/<name>.nbt` (singular `structure/`, like the tag dirs went singular in 1.21.x). Defines the test plot bounds. For tests that build their scenario programmatically via `helper.setBlock`, an all-air structure of suitable size is enough. We ship `empty_5x5x5.nbt` for that.
 
-The canonical reference pattern lives in `PFGameTests.java`; copy its `registerTest(...)` helper for new tests. The full pattern was sourced from [ksoichiro/JustBlockShapes](https://github.com/ksoichiro/JustBlockShapes/blob/main/neoforge/1.21.11/src/main/java/com/justblockshapes/neoforge/gametest/JustBlockShapesGameTestNeoForge.java), one of the few working 1.21.11 NeoForge mods using the new system.
+The canonical reference pattern lives in `PFGameTests.java`; copy its `registerTest(...)` helper for new tests.
 
 ### Adding a new GameTest
 

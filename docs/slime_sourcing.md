@@ -1,6 +1,15 @@
 # Slime Sourcing (V1)
 
-How players obtain Resource Slimes in V1. The mechanic is **"vanilla slime splits, with two paths to Resource Slime offspring"** — a configurable random-discovery path and a deterministic infusion path.
+> **⚠️ SUPERSEDED by v1.0.** This doc describes the original pre-v1.0 design where vanilla slimes and magma cubes were acceptable infusion targets and the `productivefrogs:primer/<category>` tag system gated infusion. v1.0 ships a tightened model:
+>
+> - Vanilla `minecraft:slime` and `minecraft:magma_cube` are NOT acceptable infusion targets. Only the six PF parent species (Bog / Cave / Geode / Tide / Infernal / Void) can be infused.
+> - Infusion is species-locked: a Cave Slime can only be infused into a Cave variant (iron, copper, gold, ...). Wrong-species primers are hard-rejected.
+> - Re-infusion is hard-rejected: an Iron Slime cannot be re-infused into a Copper Slime.
+> - The `productivefrogs:primer/<category>` tag files are deleted. Infusion requires exact `SlimeVariant.primer_item` match.
+>
+> See [species_as_category_redesign.md](./species_as_category_redesign.md) §Slime infusion for the authoritative v1.0 spec.
+
+How players obtain Resource Slimes (original pre-v1.0 design follows).
 
 ## Core Mechanic
 
