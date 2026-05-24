@@ -94,6 +94,7 @@ Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope ra
 | [versioning.md](./docs/versioning.md) | V1 / V2 scope split |
 | [textures_and_models.md](./docs/textures_and_models.md) | Tint pipeline + texture roster |
 | [dev_setup.md](./docs/dev_setup.md) | Local dev environment + companion mod install |
+| [curseforge_description.md](./docs/curseforge_description.md) | Canonical source for the CurseForge project Description (mirror manually when changed) |
 
 ## Target platform
 
