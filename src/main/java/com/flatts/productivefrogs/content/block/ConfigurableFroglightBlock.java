@@ -6,7 +6,7 @@ import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Placeable form of the variant Froglight item. Mirrors vanilla Froglight

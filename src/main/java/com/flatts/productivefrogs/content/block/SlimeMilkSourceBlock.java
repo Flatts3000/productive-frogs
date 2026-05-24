@@ -6,10 +6,10 @@ import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.registry.PFEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.MagmaCube;
 import net.minecraft.world.entity.monster.Slime;
@@ -22,7 +22,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.material.FlowingFluid;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Slime Milk's placeable form. Subclasses {@link LiquidBlock} to retain
@@ -234,7 +234,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
         slime.setSize(1, true);
         // Center on the block's XZ; sit on top of whatever's at spawnPos.below()
         // so the entity's feet line up with the block face rather than clipping.
-        slime.snapTo(spawnPos.getX() + 0.5,
+        slime.moveTo(spawnPos.getX() + 0.5,
                      spawnPos.getY(),
                      spawnPos.getZ() + 0.5,
                      random.nextFloat() * 360F,
@@ -245,12 +245,12 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
     @Nullable
     private Slime createSlimeForVariant(ServerLevel level) {
         if (variant.equals("vanilla")) {
-            return EntityType.SLIME.create(level, EntitySpawnReason.TRIGGERED);
+            return EntityType.SLIME.create(level);
         }
         if (variant.equals("magma")) {
-            return EntityType.MAGMA_CUBE.create(level, EntitySpawnReason.TRIGGERED);
+            return EntityType.MAGMA_CUBE.create(level);
         }
-        ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level, EntitySpawnReason.TRIGGERED);
+        ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level);
         if (resource == null) {
             return null;
         }
@@ -259,7 +259,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
         // contract that every entry in PFFluidTypes.VARIANTS (minus
         // "vanilla" / "magma") has a matching SlimeVariant is enforced by
         // SlimeMilkerBlockTest's variant-drift sanity check.
-        resource.setVariant(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant));
+        resource.setVariant(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant));
         return resource;
     }
 

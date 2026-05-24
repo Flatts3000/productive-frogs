@@ -45,3 +45,4 @@ docs/CODEMAPS/
 # Selected candidates get copied into assets/ explicitly; this folder is
 # scratch space.
 gen/
+build_errors.txt

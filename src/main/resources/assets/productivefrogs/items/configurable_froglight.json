@@ -1,9 +1,0 @@
-{
-  "model": {
-    "type": "minecraft:model",
-    "model": "productivefrogs:item/configurable_froglight",
-    "tints": [
-      { "type": "productivefrogs:slime_variant", "layer": "primary", "default": [200, 200, 200] }
-    ]
-  }
-}

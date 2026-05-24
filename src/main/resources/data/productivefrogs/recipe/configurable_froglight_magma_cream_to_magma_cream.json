@@ -1,13 +1,17 @@
 {
   "type": "minecraft:smelting",
   "ingredient": {
-    "neoforge:ingredient_type": "neoforge:components",
-    "items": "productivefrogs:configurable_froglight",
+    "type": "neoforge:components",
+    "items": [
+      "productivefrogs:configurable_froglight"
+    ],
     "components": {
       "productivefrogs:slime_variant": "productivefrogs:magma_cream"
     }
   },
-  "result": {"id": "minecraft:magma_cream"},
+  "result": {
+    "id": "minecraft:magma_cream"
+  },
   "experience": 0.5,
   "cookingtime": 200,
   "category": "misc",

@@ -1,9 +1,0 @@
-{
-  "type": "minecraft:smelting",
-  "ingredient": "productivefrogs:gem_froglight",
-  "result": {"id": "minecraft:diamond"},
-  "experience": 1.0,
-  "cookingtime": 200,
-  "category": "misc",
-  "group": "productivefrogs_froglight"
-}

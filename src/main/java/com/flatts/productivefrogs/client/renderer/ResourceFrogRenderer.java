@@ -3,43 +3,34 @@ package com.flatts.productivefrogs.client.renderer;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.FrogRenderer;
-import net.minecraft.client.renderer.entity.state.FrogRenderState;
 import net.minecraft.world.entity.animal.frog.Frog;
 
 /**
  * Resource Frog renderer — extends vanilla {@link FrogRenderer} so it inherits
- * the model, animation states, and biome-variant-driven texture selection.
- * The only difference: applies a per-category color multiply via {@link
- * #getModelTint(FrogRenderState)}.
+ * the model, animation, and biome-variant texture selection. Adds a single
+ * {@link CategoryTintLayer} that re-renders the body in the entity's category
+ * tint on top of the vanilla white pass.
  *
- * <p>The category is carried on a {@link ResourceFrogRenderState} subclass
- * substituted via {@link #createRenderState()} and populated in
- * {@link #extractRenderState(Frog, FrogRenderState, float)}.
+ * <p>1.21.1 has no {@code getModelTint} hook on {@link FrogRenderer} (that
+ * landed in 1.21.4+ with the entity render-state rewrite), so we apply the
+ * tint via a custom RenderLayer that runs after the main body render. The
+ * tinted pass uses {@link net.minecraft.client.renderer.RenderType#entityCutoutNoCull}
+ * with our colour, fully overlaying the vanilla white body — the visible
+ * result is the frog rendered in its category colour.
  */
 public class ResourceFrogRenderer extends FrogRenderer {
 
     public ResourceFrogRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
-    }
-
-    @Override
-    public FrogRenderState createRenderState() {
-        return new ResourceFrogRenderState();
-    }
-
-    @Override
-    public void extractRenderState(Frog entity, FrogRenderState state, float partialTick) {
-        super.extractRenderState(entity, state, partialTick);
-        if (entity instanceof ResourceFrog resource && state instanceof ResourceFrogRenderState rState) {
-            rState.category = resource.getCategory();
-        }
-    }
-
-    @Override
-    protected int getModelTint(FrogRenderState state) {
-        if (state instanceof ResourceFrogRenderState rState && rState.category != null) {
-            return rState.category.tintArgb();
-        }
-        return super.getModelTint(state);
+        this.addLayer(new CategoryTintLayer<Frog, net.minecraft.client.model.FrogModel<Frog>>(
+            this,
+            this::getTextureLocation,
+            entity -> {
+                if (entity instanceof ResourceFrog rf) {
+                    return 0xFF000000 | rf.getCategory().tintRgb();
+                }
+                return 0xFFFFFFFF;
+            }
+        ));
     }
 }

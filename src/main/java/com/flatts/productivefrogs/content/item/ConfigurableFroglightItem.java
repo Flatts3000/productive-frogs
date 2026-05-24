@@ -4,7 +4,7 @@ import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBloc
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -12,7 +12,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Variant-keyed Froglight item. Carries its variant identity in a
@@ -22,10 +22,10 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>Direct analog of Productive Bees' {@code configurable_honeycomb} pattern:
  * one registered Item, N visual surfaces driven by JSON data (see
- * {@code docs/productive_bees_analysis.md} §2). Distinct from the six broad-
- * category {@code <category>_froglight} blocks — those are the fixed-palette
- * decorative blocks (Metallic Froglight, etc), this one is the production-loop
- * currency that survives variant fidelity across pickup ↔ place ↔ break.
+ * {@code docs/productive_bees_analysis.md} §2). V1.5 removed the six
+ * fixed-palette decorative species Froglight blocks; the data-driven
+ * Configurable Froglight is now the sole Froglight type — every drop from a
+ * frog kill is a variant-stamped instance of this item.
  *
  * <p>Variant round-trip:
  * <ol>
@@ -60,7 +60,7 @@ public final class ConfigurableFroglightItem extends BlockItem {
      */
     @Override
     protected boolean updateCustomBlockEntityTag(BlockPos pos, Level level, @Nullable Player player, ItemStack stack, BlockState state) {
-        Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+        ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
         if (variantId == null) {
             return false;
         }
@@ -83,7 +83,7 @@ public final class ConfigurableFroglightItem extends BlockItem {
      */
     @Override
     public Component getName(ItemStack stack) {
-        Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+        ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
         if (variantId != null) {
             return Component.translatable(
                 getDescriptionId() + "." + variantId.getPath()

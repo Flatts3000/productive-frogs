@@ -8,7 +8,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
 import com.flatts.productivefrogs.data.Category;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -30,8 +30,8 @@ class PFRegistryTest {
 
     @Test
     void frogEggItemIsRegistered() {
-        Item item = BuiltInRegistries.ITEM.getValue(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "frog_egg")
+        Item item = BuiltInRegistries.ITEM.get(
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "frog_egg")
         );
         assertNotNull(item, "productivefrogs:frog_egg must be registered");
         assertEquals(PFItems.FROG_EGG.get(), item);
@@ -39,8 +39,8 @@ class PFRegistryTest {
 
     @Test
     void resourceTadpoleBucketIsRegistered() {
-        Item item = BuiltInRegistries.ITEM.getValue(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_tadpole_bucket")
+        Item item = BuiltInRegistries.ITEM.get(
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_tadpole_bucket")
         );
         assertNotNull(item, "productivefrogs:resource_tadpole_bucket must be registered");
         assertEquals(PFItems.RESOURCE_TADPOLE_BUCKET.get(), item);
@@ -49,8 +49,8 @@ class PFRegistryTest {
     @ParameterizedTest
     @EnumSource(Category.class)
     void primedFrogEggBlockRegisteredForEachCategory(Category cat) {
-        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, cat.primedEggItemName());
-        Block block = BuiltInRegistries.BLOCK.getValue(id);
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, cat.primedEggItemName());
+        Block block = BuiltInRegistries.BLOCK.get(id);
         assertNotNull(block, id + " must be registered");
         assertTrue(block instanceof PrimedFrogEggBlock, id + " must be a PrimedFrogEggBlock");
         assertEquals(cat, ((PrimedFrogEggBlock) block).getCategory());
@@ -59,8 +59,8 @@ class PFRegistryTest {
     @ParameterizedTest
     @EnumSource(Category.class)
     void primedFrogEggBlockItemRegisteredForEachCategory(Category cat) {
-        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, cat.primedEggItemName());
-        Item item = BuiltInRegistries.ITEM.getValue(id);
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, cat.primedEggItemName());
+        Item item = BuiltInRegistries.ITEM.get(id);
         assertNotNull(item, id + " item form must be registered");
         assertTrue(item instanceof BlockItem, id + " must be a BlockItem");
     }
@@ -99,11 +99,11 @@ class PFRegistryTest {
             PFItems.RESOURCE_SLIME_SPAWN_EGGS.get(variantName);
         assertNotNull(holder, variantName + " variant spawn egg must be registered");
         net.minecraft.world.item.ItemStack stack = holder.get().getDefaultInstance();
-        Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+        ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
         assertNotNull(variantId,
             variantName + " spawn egg's default stack must carry SLIME_VARIANT");
         assertEquals(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName),
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName),
             variantId,
             variantName + " spawn egg's SLIME_VARIANT id must match the variant"
         );

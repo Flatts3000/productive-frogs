@@ -8,7 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.SpawnPlacementTypes;
@@ -52,6 +52,8 @@ public final class PFModBusEvents {
         event.put(PFEntities.GEODE_SLIME.get(), Monster.createMonsterAttributes().build());
         event.put(PFEntities.TIDE_SLIME.get(), Monster.createMonsterAttributes().build());
         event.put(PFEntities.VOID_SLIME.get(), Monster.createMonsterAttributes().build());
+        event.put(PFEntities.BOG_SLIME.get(), Monster.createMonsterAttributes().build());
+        event.put(PFEntities.INFERNAL_SLIME.get(), Monster.createMonsterAttributes().build());
     }
 
     /**
@@ -101,6 +103,39 @@ public final class PFModBusEvents {
             PFModBusEvents::checkParentSlimeSpawnRules,
             RegisterSpawnPlacementsEvent.Operation.REPLACE
         );
+        event.register(
+            PFEntities.BOG_SLIME.get(),
+            SpawnPlacementTypes.ON_GROUND,
+            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+            PFModBusEvents::checkParentSlimeSpawnRules,
+            RegisterSpawnPlacementsEvent.Operation.REPLACE
+        );
+        event.register(
+            PFEntities.INFERNAL_SLIME.get(),
+            SpawnPlacementTypes.ON_GROUND,
+            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+            // Infernal Slime spawns in the nether — no darkness gate, mirroring
+            // vanilla magma cube. Use a custom predicate that drops the
+            // darkness check for this species.
+            PFModBusEvents::checkInfernalSlimeSpawnRules,
+            RegisterSpawnPlacementsEvent.Operation.REPLACE
+        );
+    }
+
+    /**
+     * Nether-mob spawn predicate — same as the standard parent-slime rule
+     * but without the darkness check (vanilla magma cubes spawn at any
+     * light level in the nether).
+     */
+    private static <T extends net.minecraft.world.entity.Mob> boolean checkInfernalSlimeSpawnRules(
+        net.minecraft.world.entity.EntityType<T> type,
+        net.minecraft.world.level.ServerLevelAccessor level,
+        net.minecraft.world.entity.MobSpawnType reason,
+        net.minecraft.core.BlockPos pos,
+        net.minecraft.util.RandomSource random
+    ) {
+        return level.getLevel().getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL
+            && net.minecraft.world.entity.Mob.checkMobSpawnRules(type, level, reason, pos, random);
     }
 
     /**
@@ -121,8 +156,11 @@ public final class PFModBusEvents {
      */
     @SubscribeEvent
     public static void onRegisterCapabilities(RegisterCapabilitiesEvent event) {
+        // 1.21.1 NeoForge: Capabilities.ItemHandler.BLOCK (returns IItemHandler).
+        // The Capabilities.Item.BLOCK rename + ResourceHandler<ItemResource>
+        // transfer-API surface only landed in 1.21.4+.
         event.registerBlockEntity(
-            Capabilities.Item.BLOCK,
+            Capabilities.ItemHandler.BLOCK,
             PFBlockEntities.SLIME_MILKER.get(),
             (be, side) -> {
                 if (side == Direction.DOWN) {
@@ -141,7 +179,7 @@ public final class PFModBusEvents {
     private static <T extends Mob> boolean checkParentSlimeSpawnRules(
         EntityType<T> type,
         ServerLevelAccessor level,
-        EntitySpawnReason reason,
+        MobSpawnType reason,
         BlockPos pos,
         RandomSource random
     ) {

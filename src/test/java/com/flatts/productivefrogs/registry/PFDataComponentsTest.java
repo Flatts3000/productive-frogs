@@ -9,7 +9,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.data.Category;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.junit.jupiter.api.Test;
@@ -27,8 +27,8 @@ class PFDataComponentsTest {
 
     @Test
     void containedCategoryComponentIsRegistered() {
-        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "contained_category");
-        DataComponentType<?> type = BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(id);
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "contained_category");
+        DataComponentType<?> type = BuiltInRegistries.DATA_COMPONENT_TYPE.get(id);
         assertNotNull(type, id + " must be registered");
         assertSame(PFDataComponents.CONTAINED_CATEGORY.get(), type,
             "Supplier must resolve to the registered DataComponentType");

@@ -1,0 +1,15 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": [
+    "minecraft:swamp",
+    "minecraft:mangrove_swamp"
+  ],
+  "spawners": [
+    {
+      "type": "productivefrogs:bog_slime",
+      "weight": 8,
+      "minCount": 1,
+      "maxCount": 3
+    }
+  ]
+}

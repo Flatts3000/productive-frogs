@@ -6,23 +6,24 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.level.Level;
+import org.joml.Vector3f;
 
 /**
- * Geode Slime — the GEM parent species. Vanilla-flavoured Slime subclass that
+ * Geode Slime — the GEODE parent species. Vanilla-flavoured Slime subclass that
  * exists as a thin marker class so {@link com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler}
  * can tell parent species apart via {@code instanceof} when picking the
  * discovery pool's default category.
  *
  * <p>No gameplay overrides on the vanilla {@link Slime} base — same split
  * mechanic, same movement, same sounds. What changes: the default category
- * GEM the discovery handler picks for its split offspring, the texture
+ * GEODE the discovery handler picks for its split offspring, the texture
  * (client-side via {@code GeodeSlimeRenderer}), and the splash-particle
- * colour ({@link #getParticleType} returns a GEM-tinted
+ * colour ({@link #getParticleType} returns a GEODE-tinted
  * {@link DustParticleOptions} in place of vanilla green {@code ITEM_SLIME}).
  *
  * <p>Per design Q2c ({@code docs/open_questions.md}), each non-vanilla
  * category gets its own parent species so all six categories have a passive
- * discovery path. GeodeSlime covers GEM; Tide/Void cover AQUATIC/ARCANE in
+ * discovery path. GeodeSlime covers GEODE; Tide/Void cover AQUATIC/ARCANE in
  * subsequent PRs.
  *
  * <p>Natural spawn rules are deferred to a polish PR — currently GeodeSlime
@@ -34,9 +35,14 @@ public class GeodeSlime extends Slime {
         super(type, level);
     }
 
-    /** GEM-tinted splash particle in place of vanilla green. See CaveSlime. */
+    /** GEODE-tinted splash particle in place of vanilla green. See CaveSlime. */
     @Override
     protected ParticleOptions getParticleType() {
-        return new DustParticleOptions(Category.GEM.tintRgb(), 1.0F);
+        int rgb = Category.GEODE.tintRgb();
+        Vector3f color = new Vector3f(
+            ((rgb >> 16) & 0xFF) / 255.0F,
+            ((rgb >>  8) & 0xFF) / 255.0F,
+            (rgb         & 0xFF) / 255.0F);
+        return new DustParticleOptions(color, 1.0F);
     }
 }

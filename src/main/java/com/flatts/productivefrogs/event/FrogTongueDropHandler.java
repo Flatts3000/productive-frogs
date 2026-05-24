@@ -3,11 +3,9 @@ package com.flatts.productivefrogs.event;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
-import com.flatts.productivefrogs.data.Category;
-import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFItems;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
@@ -16,7 +14,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * When a {@link ResourceFrog} kills a {@link ResourceSlime} of its matching
@@ -57,8 +55,7 @@ public final class FrogTongueDropHandler {
             return;
         }
 
-        Category slimeCat = slime.getCategory();
-        if (frog.getCategory() != slimeCat) {
+        if (frog.getCategory() != slime.getCategory()) {
             return;
         }
 
@@ -75,32 +72,32 @@ public final class FrogTongueDropHandler {
             return;
         }
 
-        dropFroglightAtFrog(frog, slimeCat, slime.getVariantId());
+        dropFroglightAtFrog(frog, slime.getVariantId());
     }
 
     /**
-     * Spawn the correct Froglight item entity at the frog's position. Used by
-     * both the tongue-kill path above and the player direct-feed path in
-     * {@link ResourceFrog#mobInteract}. Variant-keyed
-     * {@code configurable_froglight} wins when the slime (or bucket) carried
-     * a {@code SlimeVariant}; otherwise the broad-strokes category Froglight
-     * block falls back.
+     * Spawn a variant-stamped {@code configurable_froglight} item entity at the
+     * frog's position. Used by both the tongue-kill path above and the player
+     * direct-feed path in {@link ResourceFrog#mobInteract}.
      *
-     * <p>No category-match check here — callers verify that. This method
-     * just emits the drop.
+     * <p>V1.5: {@link ResourceSlime} always carries a variant. If somehow we
+     * reach this code path with a null {@code variantId} (legacy save or a
+     * bug), drop nothing — the kill is treated as a "wasted" eat and the
+     * player gets only the vanilla slime-ball death drop from the source mob.
+     *
+     * <p>No category-match check here — callers verify that. This method just
+     * emits the drop.
      */
-    public static void dropFroglightAtFrog(ResourceFrog frog, Category category, @Nullable Identifier variantId) {
+    public static void dropFroglightAtFrog(ResourceFrog frog, @Nullable ResourceLocation variantId) {
         Level level = frog.level();
         if (level.isClientSide()) {
             return;
         }
-        ItemStack froglight;
-        if (variantId != null) {
-            froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
-            froglight.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
-        } else {
-            froglight = new ItemStack(PFBlocks.resourceFroglight(category));
+        if (variantId == null) {
+            return;
         }
+        ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
+        froglight.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
         Vec3 pos = frog.position();
         ItemEntity drop = new ItemEntity(level, pos.x, pos.y, pos.z, froglight);
         drop.setDefaultPickUpDelay();

@@ -12,15 +12,14 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.MobSplitEvent;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Random-discovery path from {@code docs/slime_sourcing.md} (Path 1) — when a
@@ -95,7 +94,7 @@ public final class SlimeSplitDiscoveryHandler {
         }
 
         Registry<SlimeVariant> variantRegistry = level.registryAccess()
-            .lookup(PFRegistries.SLIME_VARIANT).orElse(null);
+            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
 
         List<Mob> children = event.getChildren();
         for (int i = 0; i < children.size(); i++) {
@@ -106,18 +105,18 @@ public final class SlimeSplitDiscoveryHandler {
             if (parent.getRandom().nextFloat() >= discoveryChancePerOffspring()) {
                 continue;
             }
-            ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level, EntitySpawnReason.TRIGGERED);
+            ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level);
             if (resource == null) {
                 continue;
             }
-            resource.snapTo(child.getX(), child.getY(), child.getZ(), child.getYRot(), child.getXRot());
+            resource.moveTo(child.getX(), child.getY(), child.getZ(), child.getYRot(), child.getXRot());
             resource.setSize(childSlime.getSize(), true);
             // Category first (fallback when no variants in pool), then a
             // weighted variant pick — setVariant re-syncs category from the
             // registry so the two stay consistent when a variant is picked.
             resource.setCategory(category);
             if (variantRegistry != null) {
-                Map.Entry<Identifier, SlimeVariant> picked =
+                Map.Entry<ResourceLocation, SlimeVariant> picked =
                     SlimeVariant.pickWeighted(variantRegistry, category, parent.getRandom());
                 if (picked != null) {
                     resource.setVariant(picked.getKey());
@@ -153,12 +152,12 @@ public final class SlimeSplitDiscoveryHandler {
      */
     @Nullable
     private static Category categoryForParent(Mob parent, Level level) {
-        Identifier parentTypeId = BuiltInRegistries.ENTITY_TYPE.getKey(parent.getType());
+        ResourceLocation parentTypeId = BuiltInRegistries.ENTITY_TYPE.getKey(parent.getType());
         if (parentTypeId == null) {
             return null;
         }
         Registry<ParentSpeciesEntry> registry = level.registryAccess()
-            .lookup(PFRegistries.PARENT_SPECIES).orElse(null);
+            .registry(PFRegistries.PARENT_SPECIES).orElse(null);
         if (registry == null) {
             return null;
         }

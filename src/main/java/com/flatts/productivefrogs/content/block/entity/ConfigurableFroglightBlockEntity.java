@@ -4,18 +4,17 @@ import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntity;
+// Note: BlockEntity.DataComponentInput is protected so cannot be imported;
+// the applyImplicitComponents override uses it via parent-class scoping.
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * BlockEntity for {@link com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock}.
@@ -47,14 +46,14 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * configurable-froglight model + the default tint.
      */
     @Nullable
-    private Identifier variantId;
+    private ResourceLocation variantId;
 
     public ConfigurableFroglightBlockEntity(BlockPos pos, BlockState state) {
         super(PFBlockEntities.CONFIGURABLE_FROGLIGHT.get(), pos, state);
     }
 
     @Nullable
-    public Identifier getVariantId() {
+    public ResourceLocation getVariantId() {
         return variantId;
     }
 
@@ -64,7 +63,7 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * be on the server — client-side mutations would be overwritten by the
      * next sync.
      */
-    public void setVariantId(@Nullable Identifier variantId) {
+    public void setVariantId(@Nullable ResourceLocation variantId) {
         if (java.util.Objects.equals(this.variantId, variantId)) {
             return;
         }
@@ -111,25 +110,27 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * clone to win.
      */
     @Override
-    protected void applyImplicitComponents(DataComponentGetter components) {
+    protected void applyImplicitComponents(DataComponentInput components) {
         super.applyImplicitComponents(components);
         this.variantId = components.get(PFDataComponents.SLIME_VARIANT.get());
     }
 
     @Override
-    protected void saveAdditional(ValueOutput out) {
-        super.saveAdditional(out);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
         if (variantId != null) {
-            out.putString("Variant", variantId.toString());
+            tag.putString("Variant", variantId.toString());
         }
     }
 
     @Override
-    protected void loadAdditional(ValueInput in) {
-        super.loadAdditional(in);
-        variantId = in.getString("Variant")
-            .map(Identifier::tryParse)
-            .orElse(null);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        if (tag.contains("Variant", net.minecraft.nbt.Tag.TAG_STRING)) {
+            variantId = ResourceLocation.tryParse(tag.getString("Variant"));
+        } else {
+            variantId = null;
+        }
     }
 
     /**

@@ -9,11 +9,11 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -79,13 +79,12 @@ public final class PrimedFrogEggBlock extends Block {
     }
 
     @Override
-    public BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess ticks,
-                                  BlockPos pos, Direction direction, BlockPos neighborPos,
-                                  BlockState neighborState, RandomSource random) {
+    public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
+                                  LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
         if (!canSurvive(state, level, pos)) {
             return Blocks.AIR.defaultBlockState();
         }
-        return super.updateShape(state, level, ticks, pos, direction, neighborPos, neighborState, random);
+        return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
     }
 
     @Override
@@ -103,7 +102,7 @@ public final class PrimedFrogEggBlock extends Block {
 
         int count = random.nextInt(MIN_TADPOLES_SPAWN, MAX_TADPOLES_SPAWN + 1);
         for (int i = 0; i < count; i++) {
-            ResourceTadpole tadpole = PFEntities.RESOURCE_TADPOLE.get().create(level, EntitySpawnReason.BREEDING);
+            ResourceTadpole tadpole = PFEntities.RESOURCE_TADPOLE.get().create(level);
             if (tadpole == null) {
                 continue;
             }
@@ -113,7 +112,7 @@ public final class PrimedFrogEggBlock extends Block {
             double z = pos.getZ() + clampedOffset(random);
             float yaw = random.nextInt(1, 361);
 
-            tadpole.snapTo(x, pos.getY() - 0.5, z, yaw, 0.0F);
+            tadpole.moveTo(x, pos.getY() - 0.5, z, yaw, 0.0F);
             tadpole.setPersistenceRequired();
             level.addFreshEntity(tadpole);
         }

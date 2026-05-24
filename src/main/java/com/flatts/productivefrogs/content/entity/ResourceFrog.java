@@ -13,7 +13,7 @@ import com.mojang.serialization.Dynamic;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -24,13 +24,12 @@ import net.minecraft.world.entity.ai.sensing.Sensor;
 import net.minecraft.world.entity.ai.sensing.SensorType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.frog.Frog;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 /**
  * The Resource Frog — a Productive Frogs frog locked to one of the six
@@ -62,7 +61,7 @@ public class ResourceFrog extends Frog {
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
-        builder.define(DATA_CATEGORY, Category.METALLIC.ordinal());
+        builder.define(DATA_CATEGORY, Category.BOG.ordinal());
     }
 
     public Category getCategory() {
@@ -72,7 +71,7 @@ public class ResourceFrog extends Frog {
         int ordinal = this.entityData.get(DATA_CATEGORY);
         Category[] values = Category.values();
         if (ordinal < 0 || ordinal >= values.length) {
-            return Category.METALLIC;
+            return Category.BOG;
         }
         return values[ordinal];
     }
@@ -83,7 +82,7 @@ public class ResourceFrog extends Frog {
 
     /**
      * Category-aware display name — so Jade, the F3 entity readout, and any
-     * other client surface that calls {@code getName()} reads "Metallic Frog"
+     * other client surface that calls {@code getName()} reads "Bog Frog"
      * instead of the generic "Resource Frog". Falls back to the custom name
      * (player-set via name tag) when present.
      *
@@ -100,21 +99,21 @@ public class ResourceFrog extends Frog {
     }
 
     @Override
-    protected void addAdditionalSaveData(ValueOutput out) {
-        super.addAdditionalSaveData(out);
-        out.putString("Category", getCategory().name());
+    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putString("Category", getCategory().name());
     }
 
     @Override
-    protected void readAdditionalSaveData(ValueInput in) {
-        super.readAdditionalSaveData(in);
-        in.getString("Category").ifPresent(name -> {
+    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.contains("Category", net.minecraft.nbt.Tag.TAG_STRING)) {
             try {
-                setCategory(Category.valueOf(name));
+                setCategory(Category.valueOf(tag.getString("Category")));
             } catch (IllegalArgumentException ignored) {
                 // Unknown category in save data — leave default.
             }
-        });
+        }
     }
 
     /**
@@ -158,13 +157,19 @@ public class ResourceFrog extends Frog {
             // mobInteract so slimeballs, name tags, etc. still work normally.
             return super.mobInteract(player, hand);
         }
+        // V1.5: direct-feed requires a variant-stamped bucket. Category-only
+        // buckets (a Bucket of <Species> Slime with no variant) are
+        // intermediates — frogs only "produce" from variant slimes.
+        ResourceLocation variantId = ResourceTadpoleBucketItem.readVariant(stack);
+        if (variantId == null) {
+            return super.mobInteract(player, hand);
+        }
         if (this.level().isClientSide()) {
             // Client-side returns SUCCESS so the player's swing arm animates
             // and the inventory updates roundtrip from the server's mutation.
             return InteractionResult.SUCCESS;
         }
-        Identifier variantId = ResourceTadpoleBucketItem.readVariant(stack);
-        FrogTongueDropHandler.dropFroglightAtFrog(this, bucketCategory, variantId);
+        FrogTongueDropHandler.dropFroglightAtFrog(this, variantId);
         // Apply the same brain memory vanilla Frog uses to gate repeated
         // tongue use — keeps direct-feed cadence consistent with the natural
         // tongue cooldown so a player can't out-feed the tongue path's
@@ -227,7 +232,7 @@ public class ResourceFrog extends Frog {
         // entire production loop stalled at the tongue grab. Any non-zero value
         // would technically kill a 1-HP size-1 slime — we use the vanilla number
         // so larger / armored future prey still die in one tongue eat.
-        return Animal.createAnimalAttributes()
+        return Mob.createMobAttributes()
             .add(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, 1.0)
             .add(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, 10.0)
             .add(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, 10.0)

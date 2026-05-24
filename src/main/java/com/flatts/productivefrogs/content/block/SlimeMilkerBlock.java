@@ -5,7 +5,8 @@ import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.resources.Identifier;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
@@ -28,7 +29,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The Slime Milker — furnace-style production block per {@code docs/farming.md}
@@ -127,7 +128,7 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected InteractionResult useItemOn(
+    protected net.minecraft.world.ItemInteractionResult useItemOn(
         ItemStack stack,
         BlockState state,
         Level level,
@@ -136,11 +137,13 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
         InteractionHand hand,
         BlockHitResult hit
     ) {
-        // Open the GUI regardless of held item — players can drop a Slime
-        // Bucket directly into the input slot through the inventory. The
-        // legacy "hand-swap on right-click" behavior was superseded by
-        // the furnace-style redesign tracked in known_issues.md.
-        return openMilkerMenu(state, level, pos, player);
+        // Open the GUI regardless of held item. 1.21.1 useItemOn returns
+        // ItemInteractionResult (not InteractionResult); SUCCESS / PASS_TO_DEFAULT_BLOCK_INTERACTION
+        // are the relevant return values.
+        InteractionResult openResult = openMilkerMenu(state, level, pos, player);
+        return openResult == InteractionResult.SUCCESS
+            ? net.minecraft.world.ItemInteractionResult.SUCCESS
+            : net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
     private InteractionResult openMilkerMenu(BlockState state, Level level, BlockPos pos, Player player) {
@@ -161,15 +164,13 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected void affectNeighborsAfterRemoval(BlockState state, net.minecraft.server.level.ServerLevel level, BlockPos pos, boolean movedByPiston) {
-        // Drop inventory contents when the block is broken. 1.21.11 replaced
-        // the onRemove hook with affectNeighborsAfterRemoval; the BE is
-        // already gone at this point so we can't read its inventory here.
-        // Drop-on-break is handled via Block#playerDestroy → loot table
-        // instead — see the slime_milker loot table for the simple "drop
-        // self" rule. The Milker's inventory is dropped via
-        // {@link #playerWillDestroy} before the BE is removed.
-        net.minecraft.world.Containers.updateNeighboursAfterDestroy(state, level, pos);
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock())) {
+            // Notify comparators / redstone of removal. Item-dropping is handled
+            // by playerWillDestroy above; we don't reach into the BE here.
+            level.updateNeighbourForOutputSignal(pos, this);
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     @Override
@@ -178,7 +179,7 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof SlimeMilkerBlockEntity milker) {
                 com.flatts.productivefrogs.content.block.entity.SlimeMilkerInventory inv = milker.getInventory();
-                for (int i = 0; i < inv.size(); i++) {
+                for (int i = 0; i < inv.getSlots(); i++) {
                     ItemStack stack = inv.getStackInSlot(i);
                     if (!stack.isEmpty()) {
                         net.minecraft.world.Containers.dropItemStack(
@@ -206,11 +207,15 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
         if (data == null) {
             return null;
         }
-        String raw = data.copyTag().getString("Variant").orElse(null);
+        CompoundTag tag = data.copyTag();
+        if (!tag.contains("Variant", net.minecraft.nbt.Tag.TAG_STRING)) {
+            return null;
+        }
+        String raw = tag.getString("Variant");
         if (raw == null || raw.isEmpty()) {
             return null;
         }
-        Identifier id = Identifier.tryParse(raw);
+        ResourceLocation id = ResourceLocation.tryParse(raw);
         return id == null ? null : id.getPath();
     }
 
