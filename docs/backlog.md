@@ -74,13 +74,13 @@ Removes per-variant Java hardcoding so modpacks can add a SlimeVariant by JSON o
 
 ## V1.1 — vanilla resource coverage (IMPLEMENTED, pending release)
 
-Adds every vanilla item fitting cleanly into one of the existing 6 species. JSON-only authoring (plus the one Slime Milk `VARIANTS` Java edit). Full design in [v1_1_scope.md](./v1_1_scope.md). 23 new variants → 35 total post-V1.1.
+Adds every vanilla item fitting cleanly into one of the existing 6 species. JSON-only authoring (plus the one Slime Milk `VARIANTS` Java edit). Full design in [v1_1_scope.md](./v1_1_scope.md). 22 new variants → 33 total post-V1.1 (the v1.0 `magma_cream` variant was also removed as redundant).
 
-Per-variant work for each = a `slime_variant` JSON (with `primer_item` exact-match + thematic `inner_block`) + smelting recipe + milk blockstate + milk bucket model + lang entries + one `VARIANTS` entry. The first four JSON files are emitted by `scripts/generate_v1_1_variants.ps1`; milk PNGs by `scripts/generate_slime_milk_textures.ps1`. Existing GameTests auto-cover.
+Per-variant work for each = a `slime_variant` JSON (with `primer_item` exact-match + thematic `inner_block`) + smelting recipe + milk blockstate + milk bucket model + lang entries + one `VARIANTS` entry. The first four JSON files are emitted by `scripts/generate_v1_1_variants.ps1`; the downscaled-block inner-cube texture by `scripts/generate_resource_slime_textures.py`; milk PNGs by `scripts/generate_slime_milk_textures.ps1`. Existing GameTests auto-cover.
 
-### Shipped scope (23 variants)
+### Shipped scope (22 variants)
 
-**Bog (+8)** — swamp + mob drops, under Bog species (no new category needed)
+**Bog (+7)** — swamp + mob drops, under Bog species (no new category needed)
 - ☑ `bone` (skeleton)
 - ☑ `gunpowder` (creeper, broad overworld)
 - ☑ `clay_ball` (swamp clay) *(non-1:1 smelt — Froglight smelts to `brick`)*
@@ -88,7 +88,7 @@ Per-variant work for each = a `slime_variant` JSON (with `primer_item` exact-mat
 - ☑ `string` (spider)
 - ☑ `leather` (cow / horse)
 - ☑ `feather` (chicken)
-- ☑ `slime_ball` (Bog Slime self-reference)
+- ✗ `slime_ball` — cut as redundant (a slime made of slimeballs)
 
 **Cave (+3)**
 - ☑ `glow_ink_sac` (lush caves)
@@ -168,6 +168,7 @@ Items noted in commit messages or PR descriptions as known issues but not blocki
 
 ### Tooling
 - ✅ **Jade.** Installed manually per [docs/dev_setup.md](./dev_setup.md); good enough for V1 dev. If Jade ever publishes to a maven we use cleanly, swap to a `runtimeOnly` dep like JEI — kept as a tracked nice-to-have, not a blocker.
+- **Debug observability flags for client-render diagnosis.** Client-side render bugs (tints, inner-block resolution, render types) are invisible to GameTest and slow to chase by eye. A standing `-Dproductivefrogs.debug.<area>` system-property gate that logs what the render thread resolves per entity (e.g. variant id + category + colours + inner block) to `latest.log` makes these traceable without a code edit + rebuild loop each time. The 2026-05-25 inner-block investigation added this ad-hoc to `ResourceSlimeInnerBlockLayer` and it immediately localised the issue (a stale dev build, not a logic bug — the resolver was correct). Worth promoting to a permanent, flag-gated debug logger rather than re-adding temp logging each time. **Lesson:** when a reported visual bug can't be reproduced by reading correct code, suspect a stale dev build first; a one-line render-thread log confirms it in one launch.
 
 ## Architecture lessons captured
 

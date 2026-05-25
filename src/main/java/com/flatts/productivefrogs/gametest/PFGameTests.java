@@ -509,7 +509,6 @@ public final class PFGameTests {
             "redstone", "lapis", "coal",
             "diamond", "emerald",
             "prismarine", "sponge",
-            "magma_cream",
             "ender_pearl"
         };
         for (String name : expected) {
@@ -782,8 +781,8 @@ public final class PFGameTests {
 
         ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
         slime.setSize(1, true);
-        // Magma cream is an Infernal variant — categorically wrong for the Bog frog.
-        slime.setVariant(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "magma_cream"));
+        // Blaze is an Infernal variant — categorically wrong for the Bog frog.
+        slime.setVariant(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "blaze"));
 
         slime.hurt(helper.getLevel().damageSources().mobAttack(frog), 999.0F);
 
@@ -1551,8 +1550,8 @@ public final class PFGameTests {
         assertVariantSmelts(helper, rm, level, "emerald", net.minecraft.world.item.Items.EMERALD);
         assertVariantSmelts(helper, rm, level, "prismarine", net.minecraft.world.item.Items.PRISMARINE_SHARD);
         assertVariantSmelts(helper, rm, level, "sponge", net.minecraft.world.item.Items.SPONGE);
-        assertVariantSmelts(helper, rm, level, "magma_cream", net.minecraft.world.item.Items.MAGMA_CREAM);
         assertVariantSmelts(helper, rm, level, "ender_pearl", net.minecraft.world.item.Items.ENDER_PEARL);
+        assertVariantSmelts(helper, rm, level, "blaze", net.minecraft.world.item.Items.BLAZE_POWDER);
 
         helper.succeed();
     }
@@ -1898,7 +1897,7 @@ public final class PFGameTests {
      * tank-mod compatibility for the bucket form should work out of the box.
      *
      * <p>This test verifies it: spot-check three representative variants
-     * (iron, magma_cream, vanilla) and assert each exposes a non-null
+     * (iron, blaze, vanilla) and assert each exposes a non-null
      * {@code ResourceHandler<FluidResource>} whose contents match the
      * variant's source fluid. If NeoForge ever drops the auto-registration
      * or our buckets stop being recognized as BucketItem subclasses, this
@@ -1915,7 +1914,7 @@ public final class PFGameTests {
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void milkBucketExposesFluidCapabilityForTankMods(GameTestHelper helper) {
         assertBucketExposesFluid(helper, "iron");
-        assertBucketExposesFluid(helper, "magma_cream");
+        assertBucketExposesFluid(helper, "blaze");
         assertBucketExposesFluid(helper, "vanilla");
         helper.succeed();
     }

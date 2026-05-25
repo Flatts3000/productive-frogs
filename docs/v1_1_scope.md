@@ -2,7 +2,7 @@
 
 ## Status
 
-**Implemented, pending release.** v1.0 (2026-05-24) shipped 12 Resource Slime variants under the six PF species (Bog, Cave, Geode, Tide, Infernal, Void). v1.1 adds **23 new variants** (35 total) on branch `feat/v1.1-resource-variants`; the version bump + CurseForge publish have not happened yet. Authoritative species-as-category model lives in [species_as_category_redesign.md](./species_as_category_redesign.md).
+**Implemented, pending release.** v1.0 (2026-05-24) shipped 12 Resource Slime variants under the six PF species (Bog, Cave, Geode, Tide, Infernal, Void). v1.1 adds **22 new variants** and removes the v1.0 `magma_cream` variant (**33 total**) on branch `feat/v1.1-resource-variants`; the version bump + CurseForge publish have not happened yet. Authoritative species-as-category model lives in [species_as_category_redesign.md](./species_as_category_redesign.md).
 
 ## Theme
 
@@ -10,11 +10,11 @@ v1.1's single thrust: **complete vanilla resource coverage across the six specie
 
 Adding a variant is mostly data: a `slime_variant` JSON (with an optional `inner_block` block id rendered inside the slime, v1.0.1+) + a smelting recipe + a lang entry. One one-line Java edit remains — a Slime Milk `VARIANTS` entry in `PFFluidTypes` — because fluid registration runs at mod-init, before datapack registries load. The spawn egg is a single component-driven item enumerated from the registry (CR-9), so it needs no Java edit. See the per-variant checklist below.
 
-## Shipped scope — 23 new variants
+## Shipped scope — 22 new variants
 
-After v1.1: **35 total variants** (12 v1.0 + 23 v1.1). Includes 5 mob-drop variants that were previously deferred to V1.2 under the old category model — under the species model they fit cleanly under Bog Slime (the swamp/generic species) with no new species needed. `prismarine_crystals` (Tier B) was promoted into scope to ship alongside `prismarine`.
+After v1.1: **33 total variants** (11 v1.0 + 22 v1.1). Includes 4 mob-drop variants that were previously deferred to V1.2 under the old category model — under the species model they fit cleanly under Bog Slime (the swamp/generic species) with no new species needed. `prismarine_crystals` (Tier B) was promoted into scope to ship alongside `prismarine`. Two variants were dropped as redundant: `slime_ball` (a slime made of slimeballs) was cut from this scope, and the v1.0 `magma_cream` variant was removed (see [CHANGELOG](../CHANGELOG.md)).
 
-### Bog Slime — swamps + mob drops (+8)
+### Bog Slime — swamps + mob drops (+7)
 
 | Variant | Primer item | Smelt result | Texture source |
 |---|---|---|---|
@@ -25,7 +25,6 @@ After v1.1: **35 total variants** (12 v1.0 + 23 v1.1). Includes 5 mob-drop varia
 | `string` | `minecraft:string` | `minecraft:string` | composite |
 | `leather` | `minecraft:leather` | `minecraft:leather` | composite |
 | `feather` | `minecraft:feather` | `minecraft:feather` | composite |
-| `slime_ball` | `minecraft:slime_ball` | `minecraft:slime_ball` | `block/slime_block.png` |
 
 ### Cave Slime — mining (+3)
 
@@ -71,13 +70,15 @@ After v1.1: **35 total variants** (12 v1.0 + 23 v1.1). Includes 5 mob-drop varia
 
 | Species | v1.0 | v1.1 | Total |
 |---|---|---|---|
-| Bog | 0 | 8 | 8 |
+| Bog | 0 | 7 | 7 |
 | Cave | 7 | 3 | 10 |
 | Geode | 1 | 1 | 2 |
 | Tide | 2 | 2 | 4 |
-| Infernal | 1 | 7 | 8 |
+| Infernal | 0 | 7 | 7 |
 | Void | 1 | 2 | 3 |
-| **Total** | **12** | **23** | **35** |
+| **Total** | **11** | **22** | **33** |
+
+(`magma_cream` was the lone v1.0 Infernal variant; removed in v1.1 as redundant, so Infernal v1.0 drops to 0.)
 
 Geode stays the smallest pool. v2+ may add new variants but the species roster stays at six.
 
@@ -118,10 +119,10 @@ Existing GameTests (`SlimeVariantTest`, the datapack-load spot-check, `PFRegistr
 
 ## Definition of done
 
-- [x] 23 variant JSONs (each with a thematic `inner_block`) + 23 smelting recipes + 23 `VARIANTS` entries shipped.
+- [x] 22 variant JSONs (each with a thematic `inner_block`) + 22 smelting recipes + 22 `VARIANTS` entries shipped.
 - [x] `./gradlew build` green; `./gradlew runGameTestServer` green (all 49 required GameTests pass).
 - [x] Creative tab shows the new variant slime spawn eggs, variant-stamped configurable_froglight stacks, and variant Slime Buckets (enumerated from the registry, no per-variant Java).
-- [x] All 35 variants smelt to their respective resources via vanilla furnace (with the two non-1:1 chains documented: clay_ball -> brick, chorus_fruit -> popped_chorus_fruit).
+- [x] All 33 variants smelt to their respective resources via vanilla furnace (with the two non-1:1 chains documented: clay_ball -> brick, chorus_fruit -> popped_chorus_fruit).
 - [x] Tier B `prismarine_crystals` promoted into scope; remaining Tier B items deferred per the defaults above.
 - [x] `docs/versioning.md` v1.1 section reflects shipped state.
 - [x] `docs/backlog.md` v1.1 checklist reflects shipped state.

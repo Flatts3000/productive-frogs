@@ -56,7 +56,7 @@ class SlimeBucketItemTest {
         "redstone", "lapis", "coal",
         "diamond", "emerald",
         "prismarine", "sponge",
-        "magma_cream", "ender_pearl"
+        "ender_pearl"
     })
     void variantStampedBucketResolvesPerVariantKey(String variantName) {
         ItemStack stack = new ItemStack(PFItems.SLIME_BUCKET.get());

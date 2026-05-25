@@ -57,14 +57,13 @@ public record ParentSpeciesEntry(
     /**
      * Codec for the {@code parent_species} datapack registry.
      *
-     * <p>{@code inner_block} (v1.0.1+): the vanilla block id rendered inside
-     * the parent slime. Optional. The PF-native parent renderers read this
-     * value at render time via
-     * {@code ResourceSlimeInnerBlockLayer.parentSpeciesBlock}, so a modpack can
-     * repoint a species' interior block by editing the JSON (parallel to how
-     * Resource Slime variants read their {@code inner_block}). Format: a plain
-     * block id (namespace + path, no {@code textures/} prefix, no
-     * {@code .png}). Example: {@code "minecraft:stone"}.
+     * <p>{@code inner_block}: optional vanilla block id for the species'
+     * interior. Currently unused by the renderer (the live inner-block render
+     * pass was removed; parent slimes show their species atlas inner cube). The
+     * field is retained for data compatibility and possible future use (e.g.
+     * baking a downscaled interior texture as Resource Slime variants do).
+     * Format: a plain block id (namespace + path, no {@code textures/} prefix,
+     * no {@code .png}). Example: {@code "minecraft:stone"}.
      */
     public static final Codec<ParentSpeciesEntry> CODEC = RecordCodecBuilder.create(
         instance -> instance.group(

@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.data.Category;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
@@ -12,38 +13,32 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.monster.Slime;
 
 /**
- * Resource Slime renderer. Three render passes:
+ * Resource Slime renderer. Two render passes:
  *
  * <ol>
- *   <li><b>Inner cube + eyes + mouth</b> (inherited vanilla {@link SlimeRenderer}
- *       base): drawn from the per-category atlas
- *       ({@code <category>_resource_slime.png}). The eyes/mouth live on the
- *       vanilla inner body layer, so keeping the vanilla model preserves the
- *       slime's face. The inner cube's body texture is covered by the block
- *       pass below; the eyes (z=-3.5, proud of the cube face) stay visible.</li>
- *   <li><b>Inner block</b> ({@link ResourceSlimeInnerBlockLayer}): renders the
- *       variant's {@code inner_block} as an actual vanilla block model in the
- *       inner-cube volume. This is the v1.0.1 "literal block inside the slime"
- *       upgrade over v1.0's downsampled inner-cube texture.</li>
- *   <li><b>Outer shell</b> ({@link ResourceSlimeOuterLayer}): translucent
- *       per-variant-tinted cube. Unchanged from v1.0.</li>
+ *   <li><b>Inner cube</b> (inherited vanilla {@link SlimeRenderer} base): drawn
+ *       from a per-variant texture ({@code <variant>_resource_slime.png}) whose
+ *       inner-cube faces carry a downscaled copy of the variant's vanilla
+ *       resource block (e.g. the iron-block face). Variant-less slimes fall back
+ *       to the per-category texture ({@code <category>_resource_slime.png}).</li>
+ *   <li><b>Outer shell</b> ({@link ResourceSlimeOuterLayer}): translucent cube
+ *       tinted by the variant's {@code primary_color} (category fallback).</li>
  * </ol>
  *
- * <p>The three items above are listed inner-to-outer for clarity, not in
- * layer-add order. The constructor adds the outer-shell layer before the
- * inner-block layer, but that doesn't affect the result: with the
- * {@code MultiBufferSource.immediate} batching used for entities, draws are
- * grouped and flushed by {@code RenderType}, so the opaque block (solid /
- * cutout) is drawn before the translucent shell regardless of layer order.
- *
- * <p>See {@code docs/v1_0_1_scope.md}. The shipped implementation keeps the
- * vanilla inner model and adds the block layer (rather than the spec's
- * custom-model two-pass), which preserves the eyes/mouth and sidesteps the
- * single-tile-vs-UV-net problem.
+ * <p>The interior resource is baked into the texture rather than drawn as a live
+ * block model: an opaque block rendered in a separate pass is depth-culled by
+ * the slime's translucent shell and never appears (the failure that made every
+ * variant show its category's colour). The inner-cube texture renders as part of
+ * the translucent entity, so it is reliably visible through the shell. The
+ * per-variant textures are produced by {@code scripts/generate_resource_slime_textures.py}.
  */
 public class ResourceSlimeRenderer extends SlimeRenderer {
 
     private static final Map<Category, ResourceLocation> TEXTURES = buildTextureMap();
+
+    // Per-variant texture paths, resolved lazily and cached. Render-thread only,
+    // so a plain HashMap is fine.
+    private static final Map<String, ResourceLocation> VARIANT_TEXTURES = new HashMap<>();
 
     private static Map<Category, ResourceLocation> buildTextureMap() {
         EnumMap<Category, ResourceLocation> map = new EnumMap<>(Category.class);
@@ -58,18 +53,23 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
 
     public ResourceSlimeRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
-        // Keep the vanilla inner model (cube + eyes + mouth). Swap only the
-        // outer shell for our tinted variant, then add the inner-block pass.
+        // Keep the vanilla inner model (the inner cube carries the downscaled
+        // resource block via the per-variant texture). Swap only the outer shell
+        // for our per-variant-tinted translucent cube.
         this.layers.removeIf(l -> l instanceof SlimeOuterLayer);
         this.addLayer(new ResourceSlimeOuterLayer(this, ctx.getModelSet()));
-        this.addLayer(new ResourceSlimeInnerBlockLayer(
-            this, ctx.getBlockRenderDispatcher(),
-            ResourceSlimeInnerBlockLayer::resourceSlimeBlock));
     }
 
     @Override
     public ResourceLocation getTextureLocation(Slime entity) {
         if (entity instanceof ResourceSlime resource) {
+            ResourceLocation variantId = resource.getVariantId();
+            if (variantId != null) {
+                return VARIANT_TEXTURES.computeIfAbsent(variantId.getPath(), path ->
+                    ResourceLocation.fromNamespaceAndPath(
+                        ProductiveFrogs.MOD_ID,
+                        "textures/entity/slime/" + path + "_resource_slime.png"));
+            }
             Category cat = resource.getCategory();
             if (cat != null) {
                 return TEXTURES.get(cat);

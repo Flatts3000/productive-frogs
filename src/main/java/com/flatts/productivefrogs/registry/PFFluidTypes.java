@@ -36,7 +36,7 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
  * </ul>
  *
  * <p>{@link #VARIANTS} mirrors the shipped resource variants in the
- * {@code slime_variant} datapack registry (12 from v1.0 + 23 from v1.1) plus
+ * {@code slime_variant} datapack registry (11 from v1.0 + 22 from v1.1) plus
  * two specials: {@code vanilla}
  * (from milking a vanilla green slime) and {@code magma} (from magma cubes).
  * Reordering or renaming entries here cascades to {@link PFFluids},
@@ -58,10 +58,10 @@ public final class PFFluidTypes {
         "redstone", "lapis", "coal",
         "diamond", "emerald",
         "prismarine", "sponge",
-        "magma_cream", "ender_pearl",
+        "ender_pearl",
         // v1.1 variants (vanilla resource coverage across the six species)
         "bone", "gunpowder", "clay_ball", "rotten_flesh", "string",
-        "leather", "feather", "slime_ball",
+        "leather", "feather",
         "glow_ink_sac", "obsidian", "echo_shard",
         "amethyst",
         "ink_sac", "prismarine_crystals",

@@ -29,8 +29,7 @@ import net.minecraft.world.entity.monster.Slime;
  * <p>The outer texture is supplied explicitly via the constructor (the
  * species atlas, e.g. {@code cave_slime.png}). The parent renderer's
  * {@code getTextureLocation} returns the same atlas for the base inner cube +
- * eyes/mouth; the v1.0.1 inner resource block is drawn separately by
- * {@link ResourceSlimeInnerBlockLayer}.
+ * eyes/mouth.
  *
  * <p>For per-entity tint variation (e.g. {@link ResourceSlimeRenderer}'s
  * per-variant outer-shell colour), use {@link ResourceSlimeOuterLayer} instead.

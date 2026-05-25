@@ -35,18 +35,20 @@ Full v1.0 design spec: [species_as_category_redesign.md](./species_as_category_r
 
 Mostly-data release adding every vanilla item fitting cleanly into one of the six species. Each variant is a `slime_variant` JSON + recipe + lang, plus one one-line Java edit (the Slime Milk `VARIANTS` entry; fluids register at mod-init). The spawn egg is data-driven (CR-9) - one component item enumerated from the registry, no per-variant Java. The four templated JSON files per variant are emitted by `scripts/generate_v1_1_variants.ps1`.
 
-**23 new variants** (35 total after v1.1):
+**22 new variants** (33 total after v1.1):
 
 | Species | New variants |
 |---|---|
-| Bog (+8) | bone, gunpowder, clay_ball, rotten_flesh, string, leather, feather, slime_ball |
+| Bog (+7) | bone, gunpowder, clay_ball, rotten_flesh, string, leather, feather |
 | Cave (+3) | glow_ink_sac, obsidian, echo_shard |
 | Geode (+1) | amethyst |
 | Tide (+2) | ink_sac, prismarine_crystals |
 | Infernal (+7) | netherite_scrap, glowstone_dust, soul_sand, soul_soil, netherrack, blaze, quartz |
 | Void (+2) | chorus_fruit, shulker_shell |
 
-`prismarine_crystals` (Tier B) was promoted into scope. Remaining Tier B candidates (`nautilus_shell`, `ghast_tear`) stay deferred per [v1_1_scope.md](./v1_1_scope.md). `wither_rose` and `end_stone` are dropped (the primer-tag-only fallback they depended on is gone in v1.0).
+`prismarine_crystals` (Tier B) was promoted into scope. Remaining Tier B candidates (`nautilus_shell`, `ghast_tear`) stay deferred per [v1_1_scope.md](./v1_1_scope.md). `wither_rose` and `end_stone` are dropped (the primer-tag-only fallback they depended on is gone in v1.0). Two variants were cut as redundant: `slime_ball` and the v1.0 `magma_cream` variant (the latter is a breaking removal of a shipped variant; v1.0's Infernal pool drops to zero base variants).
+
+The interior of each Resource Slime is a downscaled copy of its resource block baked onto the slime's inner-cube faces (`scripts/generate_resource_slime_textures.py`), with the per-variant tint on the translucent exterior shell. (This replaced the v1.0.1 live-block-render layer, which was depth-culled by the translucent shell and never visible.)
 
 The 5 mob-drop variants that were previously deferred to a separate V1.2 category (bone, rotten_flesh, string, leather, feather) now fit cleanly under Bog Slime — no new species needed.
 

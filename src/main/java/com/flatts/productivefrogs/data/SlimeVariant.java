@@ -39,17 +39,17 @@ import org.jetbrains.annotations.Nullable;
  *   <li>{@code weight} — relative weight for random discovery pool picks
  *       (per {@code docs/slime_sourcing.md} §V1 Configurability). Higher
  *       weight = more likely to spawn. Default 1.</li>
- *   <li>{@code innerBlock} (v1.0.1+) — optional vanilla block id rendered
- *       inside the Resource Slime. {@code ResourceSlimeInnerBlockLayer} draws
- *       this block's actual model in the inner-cube volume (the outer
- *       translucent shell + eyes/mouth come from the per-category atlas). When
- *       absent or unresolvable, the block pass is skipped (the slime renders
- *       with no interior block). Replaced the pre-v1.0.1 per-variant atlas
- *       {@code texture} field, which stamped a 6x6-downsampled block tile into
- *       a generated PNG; see {@code docs/v1_0_1_scope.md}.
+ *       <li>{@code innerBlock} — optional vanilla block id whose texture is
+ *       shown inside the Resource Slime. {@code scripts/generate_resource_slime_textures.py}
+ *       bakes a downscaled copy of this block's texture onto the inner-cube
+ *       faces of the per-variant slime texture ({@code <variant>_resource_slime.png}),
+ *       which the slime renders as part of its translucent body; the outer
+ *       shell is tinted by {@code primaryColor}. (The v1.0.1 attempt to draw a
+ *       live block model in a separate render pass was removed: the slime's
+ *       translucent shell depth-culled it, so it never appeared.) When absent,
+ *       the variant falls back to the plain per-category slime texture.
  *       <br><b>ResourceLocation format:</b> a plain block id (namespace +
- *       path, no {@code textures/} prefix, no {@code .png}). Resolved via
- *       {@code BuiltInRegistries.BLOCK} to its default block state. Example:
+ *       path, no {@code textures/} prefix, no {@code .png}). Example:
  *       {@code "minecraft:iron_block"}.</li>
  * </ul>
  */
