@@ -390,17 +390,45 @@ public final class PFGameTests {
 
     /**
      * V1.5: force discovery chance to 100% and split a Cave Slime; assert
-     * every offspring is a Resource Slime carrying a CAVE-pool variant
-     * (iron / copper / gold / redstone / lapis / coal / diamond). Verifies
-     * {@link SlimeVariant#pickWeighted} integration in
+     * every offspring is a Resource Slime carrying a variant from the live CAVE
+     * pool. Verifies {@link SlimeVariant#pickWeighted} integration in
      * {@code SlimeSplitDiscoveryHandler}.
      *
      * <p>Pre-V1.5 this test used vanilla slime + METALLIC pool. Post-V1.5,
      * vanilla slime is not a parent (Q1=A) so the test uses Cave Slime
      * (the canonical CAVE parent) which carries the bulk of V1's variants.
+     *
+     * <p>The expected CAVE pool is derived from the loaded {@code slime_variant}
+     * registry rather than a hardcoded name set, so it auto-tracks any CAVE
+     * variants added in later versions (v1.1 added echo_shard / glow_ink_sac /
+     * obsidian, which a hardcoded set would have missed). The split children are
+     * grounded on a stone floor so they cannot fall out of the structure-bounded
+     * entity query during the poll window (which previously caused an
+     * intermittent "got 0").
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void splitDiscoveryPicksVariantFromPool(GameTestHelper helper) {
+        // Derive the expected CAVE pool from the live registry (future-proof).
+        net.minecraft.core.Registry<SlimeVariant> registry =
+            helper.getLevel().registryAccess().registryOrThrow(PFRegistries.SLIME_VARIANT);
+        java.util.Set<String> cavePool = new java.util.HashSet<>();
+        registry.entrySet().forEach(entry -> {
+            if (entry.getValue().category() == Category.CAVE) {
+                cavePool.add(entry.getKey().location().getPath());
+            }
+        });
+        if (cavePool.isEmpty()) {
+            helper.fail("CAVE pool is empty in the slime_variant registry; test cannot run");
+            return;
+        }
+
+        // Ground the split children on a floor so they stay inside the
+        // structure-bounded getEntities() query for the whole poll window.
+        for (int x = 1; x <= 3; x++) {
+            for (int z = 1; z <= 3; z++) {
+                helper.setBlock(new BlockPos(x, 1, z), net.minecraft.world.level.block.Blocks.STONE);
+            }
+        }
         BlockPos pos = new BlockPos(2, 2, 2);
         Float originalOverride = SlimeSplitDiscoveryHandler.getTestOverride();
         SlimeSplitDiscoveryHandler.setTestOverride(1.0f);
@@ -423,8 +451,6 @@ public final class PFGameTests {
                     helper.fail("expected zero Cave Slime children at 100% discovery, got "
                         + remaining.size());
                 }
-                java.util.Set<String> cavePool = java.util.Set.of(
-                    "iron", "copper", "gold", "redstone", "lapis", "coal", "diamond");
                 for (ResourceSlime s : resources) {
                     ResourceLocation variantId = s.getVariantId();
                     if (variantId == null) {
