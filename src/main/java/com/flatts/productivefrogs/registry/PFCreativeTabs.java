@@ -119,15 +119,6 @@ public final class PFCreativeTabs {
         );
 
     /**
-     * Build a Slime Bucket stamped with the given variant's BUCKET_ENTITY_DATA
-     * NBT — mirrors what {@code ResourceSlime.saveToBucketTag} writes when a
-     * player buckets a variant-locked slime. Both {@code Category} and
-     * {@code Variant} go into the tag so the tint pipeline (variant-first,
-     * category fallback) lights up either way AND the canonical bucket NBT
-     * shape stays consistent with real captured buckets. The category comes
-     * straight from the variant's registry record.
-     */
-    /**
      * Build a Slime Milk bucket stamped with the given variant id (the single
      * {@code slime_milk_bucket} carries its variant in the SLIME_VARIANT
      * component, like the Configurable Froglight).
@@ -138,6 +129,14 @@ public final class PFCreativeTabs {
         return stack;
     }
 
+    /**
+     * Build a Slime Bucket stamped with the given variant's BUCKET_ENTITY_DATA
+     * NBT - mirrors what {@code ResourceSlime.saveToBucketTag} writes when a
+     * player buckets a variant-locked slime. Both {@code Category} and
+     * {@code Variant} go into the tag so the tint pipeline (variant-first,
+     * category fallback) lights up either way AND the canonical bucket NBT shape
+     * stays consistent with real captured buckets.
+     */
     private static ItemStack makeVariantSlimeBucket(ResourceLocation variantId, Category category) {
         ItemStack stack = new ItemStack(PFItems.SLIME_BUCKET.get());
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {

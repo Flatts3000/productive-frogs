@@ -110,4 +110,15 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
         return TEXTURE_EXISTS.computeIfAbsent(texture,
             t -> Minecraft.getInstance().getResourceManager().getResource(t).isPresent());
     }
+
+    /**
+     * Drop the cached texture-resolution maps. Called on resource reload (see
+     * {@code PFClientEvents}) so a pack that adds or removes a
+     * {@code <variant>_resource_slime.png} between reloads is picked up instead
+     * of serving a stale existence result from {@link #TEXTURE_EXISTS}.
+     */
+    public static void clearTextureCaches() {
+        VARIANT_TEXTURES.clear();
+        TEXTURE_EXISTS.clear();
+    }
 }

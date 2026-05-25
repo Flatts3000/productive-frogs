@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.content.block;
 
 import com.flatts.productivefrogs.PFConfig;
+import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.registry.PFDataComponents;
@@ -60,6 +61,17 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
      */
     public static final IntegerProperty SPAWNS_REMAINING =
         IntegerProperty.create("spawns_remaining", 0, MAX_SPAWNS_REMAINING);
+
+    /**
+     * Sentinel variant ids that spawn a vanilla Slime / MagmaCube instead of a
+     * {@link ResourceSlime}. Matched as full ResourceLocations (namespace + path),
+     * so a datapack variant that happens to use the path {@code vanilla} or
+     * {@code magma} in its own namespace is NOT mistaken for these.
+     */
+    private static final ResourceLocation VANILLA_SENTINEL =
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "vanilla");
+    private static final ResourceLocation MAGMA_SENTINEL =
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "magma");
 
     /**
      * Offsets to the 26 neighbours, ordered to prefer natural "rim" spawn spots:
@@ -193,11 +205,10 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
      */
     @Nullable
     private static Slime createSlimeForVariant(ServerLevel level, ResourceLocation variantId) {
-        String path = variantId.getPath();
-        if (path.equals("vanilla")) {
+        if (VANILLA_SENTINEL.equals(variantId)) {
             return EntityType.SLIME.create(level);
         }
-        if (path.equals("magma")) {
+        if (MAGMA_SENTINEL.equals(variantId)) {
             return EntityType.MAGMA_CUBE.create(level);
         }
         ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level);

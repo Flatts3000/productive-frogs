@@ -42,9 +42,12 @@ public final class ProductiveFrogs {
         PFDebug.bootstrapFromSystemProperty();
 
         PFDataComponents.register(modEventBus);
-        // FluidTypes before Fluids — BaseFlowingFluid.Properties references the
+        // FluidTypes before Fluids: BaseFlowingFluid.Properties references the
         // FluidType holder at fluid-build time, so the FluidType register pass
-        // must complete first.
+        // must complete first. Blocks come after Fluids in turn: the single
+        // SLIME_MILK_SOURCE block's factory resolves PFFluids.SLIME_MILK_SOURCE
+        // at block-build time (and PFFluids' source/flowing Properties resolve
+        // PFItems.SLIME_MILK_BUCKET + PFBlocks.SLIME_MILK_SOURCE lazily).
         PFFluidTypes.register(modEventBus);
         PFFluids.register(modEventBus);
         PFBlocks.register(modEventBus);

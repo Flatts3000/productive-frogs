@@ -37,18 +37,15 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Two-slot inventory (input Slime Bucket, output Slime Milk bucket) plus
  * a 100-tick cook timer; right-click opens a {@link SlimeMilkerBlockEntity}-
- * backed GUI rather than the legacy hand-swap. Hopper I/O is not exposed in
- * this PR — the BlockEntity ships without a {@code Capabilities.Item.BLOCK}
- * provider, so vanilla hoppers can't push into INPUT_SLOT or pull from
- * OUTPUT_SLOT yet. The follow-up that wires up the new
- * {@code ResourceHandler<ItemResource>} API is tracked in
- * {@code docs/known_issues.md}.
+ * backed GUI rather than the legacy hand-swap. Hopper I/O is wired via a
+ * side-aware {@code Capabilities.ItemHandler.BLOCK} provider in
+ * {@code PFModBusEvents} (top + horizontal faces = input view, bottom = output).
  *
- * <p>Variant resolution still goes through {@link #readBucketVariant} →
- * {@code PFFluidTypes.VARIANTS} → {@code PFItems.MILK_BUCKETS}: the cook
- * loop in {@link SlimeMilkerBlockEntity#serverTick} performs the lookup
- * each tick and fail-closes when the input bucket has no Variant tag or
- * an unknown variant.
+ * <p>Variant resolution: the cook loop in {@link SlimeMilkerBlockEntity#serverTick}
+ * reads the input Slime Bucket's full variant id via {@link #readBucketVariantId}
+ * and stamps it onto the single {@code slime_milk_bucket} output's
+ * {@code SLIME_VARIANT} component (the per-variant milk items were collapsed).
+ * It fail-closes when the input bucket carries no variant.
  *
  * <p>Future polish tracked in {@code docs/backlog.md}: press animation,
  * facing-based block model (top input port + side output spout), tighter

@@ -1069,13 +1069,13 @@ public final class PFGameTests {
     /**
      * In-world integration check for the Slime Milker's variant pipeline.
      * Capture an iron-variant Resource Slime to a slime bucket, place the
-     * milker, and verify the chain the block's {@code useItemOn} walks:
-     * the bucket's {@code BUCKET_ENTITY_DATA} carries the variant identifier,
-     * {@link PFFluidTypes#VARIANTS} recognizes the parsed path, and
-     * {@link PFItems#MILK_BUCKETS} resolves it to the matching milk bucket
-     * item. Parsing-edge cases (empty bucket, missing Variant tag, malformed
-     * id) are covered by {@code SlimeMilkerBlockTest}; this test pins the
-     * server-side data flow that the JUnit test can't reach.
+     * milker, and verify the bucket's {@code BUCKET_ENTITY_DATA} carries the
+     * variant identifier and {@code SlimeMilkerBlock.readBucketVariantId} parses
+     * it back as the full id the milker stamps onto the single output bucket.
+     * Parsing-edge cases (empty bucket, missing Variant tag, malformed id) are
+     * covered by {@code SlimeMilkerBlockTest}; the full cook loop is covered by
+     * {@code slimeMilkerBeCooksIronBucketToIronMilkAfter100Ticks}; this test
+     * pins the server-side data flow that the JUnit test can't reach.
      *
      * <p>The Slime Milker block is also placed and asserted present, which
      * confirms the block is registered and its default state is valid for

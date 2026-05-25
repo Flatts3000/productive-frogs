@@ -27,6 +27,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.component.CustomData;
@@ -37,6 +38,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
@@ -354,6 +356,18 @@ public final class PFClientEvents {
     @SubscribeEvent
     public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
         event.register(PFMenuTypes.SLIME_MILKER.get(), SlimeMilkerScreen::new);
+    }
+
+    /**
+     * Drop the Resource Slime renderer's texture-existence cache on resource
+     * reload. Without this, a pack that adds or removes a
+     * {@code <variant>_resource_slime.png} between reloads keeps serving the
+     * stale presence result (the category fallback would stick, or vice versa).
+     */
+    @SubscribeEvent
+    public static void onRegisterReloadListeners(RegisterClientReloadListenersEvent event) {
+        event.registerReloadListener(
+            (ResourceManagerReloadListener) rm -> ResourceSlimeRenderer.clearTextureCaches());
     }
 
     /**
