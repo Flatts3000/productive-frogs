@@ -1,9 +1,10 @@
 # Changelog
 
-## v1.1.0 (unreleased) - vanilla resource coverage
+## v1.1.0 - 2026-05-25 - vanilla resource coverage
 
-> Builds on the v1.0.2 changes below. The next release that includes this work
-> is a minor bump (v1.1.0), because it removes item IDs (see Breaking).
+> A minor bump that is nonetheless **breaking** (it removes item IDs and a
+> shipped variant; see Breaking). Includes the v1.0.2 housekeeping below, which
+> never shipped standalone and is folded into this release.
 
 The v1.1 content release: **22 new Resource Slime variants** (33 total) extend
 vanilla resource coverage across all six species, with no new mechanics. Plus
@@ -77,7 +78,7 @@ is now a single component-driven item instead of one item ID per variant.
   `ghast_tear` (deferred from v1.1) instead of `blaze_powder`, which became the
   `blaze` variant's primer.
 
-## v1.0.2 (unreleased)
+## v1.0.2 (folded into v1.1.0, 2026-05-25)
 
 Internal hardening + cleanup patch from the 2026-05-24 code review
 (`docs/code_review_2026_05_24.md`). **No world migration, no API or data
