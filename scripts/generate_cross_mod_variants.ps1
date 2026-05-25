@@ -67,6 +67,13 @@ $variants = @(
 $utf8 = [System.Text.UTF8Encoding]::new($false)
 $count = 0
 foreach ($v in $variants) {
+    # Guard: every row must have a tag (tag-driven primer) or a primerItem
+    # (bespoke). Without one, the JSON would emit an empty "primer_item" that
+    # fails codec decode at server boot. Catch a careless table edit here.
+    if (-not $v.tag -and -not $v.primerItem) {
+        Write-Error "variant '$($v.name)' has neither tag nor primerItem - check the data table"
+        exit 1
+    }
     # Every variant gates on mod_loaded(provider): datapack-registry entries
     # cannot use tag-based conditions (tags load after registries). primer_tag
     # still drives infusion at runtime where a common tag exists; bespoke
