@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
@@ -41,6 +42,17 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "configurable_froglight",
             () -> BlockEntityType.Builder.of(ConfigurableFroglightBlockEntity::new, PFBlocks.CONFIGURABLE_FROGLIGHT.get()).build(null)
+        );
+
+    /**
+     * BE type for the single Slime Milk source block. Stores the variant
+     * identifier so one generic fluid/block spawns + tints per-variant (see
+     * {@link SlimeMilkSourceBlockEntity}).
+     */
+    public static final Supplier<BlockEntityType<SlimeMilkSourceBlockEntity>> SLIME_MILK_SOURCE =
+        BLOCK_ENTITIES.register(
+            "slime_milk_source",
+            () -> BlockEntityType.Builder.of(SlimeMilkSourceBlockEntity::new, PFBlocks.SLIME_MILK_SOURCE.get()).build(null)
         );
 
     private PFBlockEntities() {

@@ -7,6 +7,7 @@ import com.flatts.productivefrogs.util.PFDebug;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.client.renderer.entity.layers.SlimeOuterLayer;
@@ -79,17 +80,45 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
     private ResourceLocation resolveTexture(Slime entity) {
         if (entity instanceof ResourceSlime resource) {
             ResourceLocation variantId = resource.getVariantId();
+            Category cat = resource.getCategory();
             if (variantId != null) {
-                return VARIANT_TEXTURES.computeIfAbsent(variantId.getPath(), path ->
+                ResourceLocation variantTex = VARIANT_TEXTURES.computeIfAbsent(variantId.getPath(), path ->
                     ResourceLocation.fromNamespaceAndPath(
                         ProductiveFrogs.MOD_ID,
                         "textures/entity/slime/" + path + "_resource_slime.png"));
+                // A built-in variant ships this texture; a datapack-added variant
+                // typically does not. Fall back to the category cube when the
+                // per-variant texture is absent (the shell still tints by
+                // primary_color), so a config-only variant never shows the
+                // missing-texture checkerboard.
+                if (textureExists(variantTex)) {
+                    return variantTex;
+                }
             }
-            Category cat = resource.getCategory();
             if (cat != null) {
                 return TEXTURES.get(cat);
             }
         }
         return TEXTURES.get(Category.BOG);
+    }
+
+    // Cached resource-existence check (one lookup per variant texture). Render
+    // thread only, so a plain HashMap is fine.
+    private static final Map<ResourceLocation, Boolean> TEXTURE_EXISTS = new HashMap<>();
+
+    private static boolean textureExists(ResourceLocation texture) {
+        return TEXTURE_EXISTS.computeIfAbsent(texture,
+            t -> Minecraft.getInstance().getResourceManager().getResource(t).isPresent());
+    }
+
+    /**
+     * Drop the cached texture-resolution maps. Called on resource reload (see
+     * {@code PFClientEvents}) so a pack that adds or removes a
+     * {@code <variant>_resource_slime.png} between reloads is picked up instead
+     * of serving a stale existence result from {@link #TEXTURE_EXISTS}.
+     */
+    public static void clearTextureCaches() {
+        VARIANT_TEXTURES.clear();
+        TEXTURE_EXISTS.clear();
     }
 }

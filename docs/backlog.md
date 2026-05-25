@@ -63,14 +63,25 @@ Sky Frogs is locked to 1.21.1; PF must rebuild on 1.21.1 to ship in the pack. Th
 - ☐ **Phase 10** — Final compile sweep + full manual playtest (creative-tab, milker pipeline, all 12 variants).
 - ☐ **Phase 11** — Merge to main; update `CLAUDE.md` + `docs/dev_setup.md` + `docs/architecture.md` to reflect new versions.
 
-## V1.0.x — data-driven variant architecture refactor (V1.1 prerequisite, post-port)
+## ~~Data-driven variant architecture refactor~~ — DONE
 
-Removes per-variant Java hardcoding so modpacks can add a SlimeVariant by JSON only. Full design in [refactor_data_driven_variants.md](./refactor_data_driven_variants.md). Ship in 4 PRs:
+Removed per-variant Java hardcoding so a modpack adds a SlimeVariant by datapack
+JSON only (no Java, no recompile, no per-variant assets/lang). Full design +
+decision history in [refactor_data_driven_variants.md](./refactor_data_driven_variants.md).
 
-- ☐ **Phase 1 — Spawn eggs collapse + lang derivation**: single `resource_slime_spawn_egg` with `SLIME_VARIANT` component; template lang entries with title-cased fallback. Deprecated aliases for old per-variant spawn egg items (migration safety).
-- ☐ **Phase 2 — Milk fluid auto-registration**: scan loaded mods for `slime_variant/*.json` at mod init, register fluid pipeline dynamically. Removes `PFFluidTypes.VARIANTS` hardcoded list. Carries the most risk (mod-resource scanning at mod init is non-standard).
-- ☐ **Phase 3 — Asset auto-generation from variant JSONs**: extend `generate_variant_slime_textures.ps1` + `generate_slime_milk_textures.ps1` to scan variant JSONs and use a new optional `texture_source_block` field. Document the modpack workflow in `docs/modpack_adding_variants.md`.
-- ☐ **Phase 4 — Validation with a test external variant**: ship a brand-new variant via JSON-only and verify the full production loop end-to-end.
+- ☑ **Spawn eggs collapse + lang derivation** — shipped as CR-9 (PR #100): single
+  `resource_slime_spawn_egg` carrying the variant in the `SLIME_VARIANT` component.
+- ☑ **Slime Milk collapse (Approach B)** — shipped: one `slime_milk`
+  fluid/source-block/bucket, variant on the bucket component + source BlockEntity;
+  one neutral texture set tinted per-variant at render. Replaced the
+  ~35-per-variant model. (Approach A — mod-init JSON scan — was rejected: it
+  can't make milk addable by a *world* datapack, since fluids register before
+  datapacks load.)
+- ☑ **Title-cased lang fallback** — Slime Milk bucket / Configurable Froglight /
+  spawn egg derive a readable name from the variant id when no lang key exists,
+  so a datapack variant needs no client lang.
+- ☑ **Slime texture fallback** — `ResourceSlimeRenderer` uses the category
+  texture when a variant ships no `<variant>_resource_slime.png`.
 
 ## V1.1 — vanilla resource coverage (IMPLEMENTED, pending release)
 

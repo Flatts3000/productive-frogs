@@ -6,6 +6,7 @@ import com.flatts.productivefrogs.content.item.FrogEggItem;
 import com.flatts.productivefrogs.content.item.ResourceSlimeSpawnEggItem;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.content.item.SlimeBucketItem;
+import com.flatts.productivefrogs.content.item.SlimeMilkBucketItem;
 import com.flatts.productivefrogs.data.Category;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -222,15 +223,21 @@ public final class PFItems {
     }
 
     /**
-     * Bucket of <variant> Slime Milk for each variant in
-     * {@link PFFluidTypes#VARIANTS}. Vanilla {@link net.minecraft.world.item.BucketItem}
-     * with the matching variant's Source fluid. Stack size 1, returns an empty
-     * bucket when used as a recipe input. The {@link com.flatts.productivefrogs.content.block.SlimeMilkerBlock}
-     * (J3) consumes a Slime Bucket and outputs the matching variant's milk
-     * bucket.
+     * The single Slime Milk bucket. Variant rides in the {@code SLIME_VARIANT}
+     * data component (see {@link SlimeMilkBucketItem}); collapsed from the former
+     * per-variant {@code <variant>_slime_milk_bucket} items so a datapack-added
+     * variant gets milk with no Java edit. Wraps the one {@code slime_milk}
+     * source fluid; stack size 1; leaves an empty bucket as a recipe remainder.
+     * The {@link com.flatts.productivefrogs.content.block.SlimeMilkerBlock}
+     * consumes a Slime Bucket and outputs this bucket stamped with the input's
+     * variant.
      */
-    public static final Map<String, DeferredItem<BucketItem>> MILK_BUCKETS =
-        buildMilkBuckets();
+    public static final DeferredItem<SlimeMilkBucketItem> SLIME_MILK_BUCKET = ITEMS.registerItem(
+        "slime_milk_bucket",
+        props -> new SlimeMilkBucketItem(
+            PFFluids.SLIME_MILK_SOURCE.get(),
+            props.stacksTo(1).craftRemainder(Items.BUCKET))
+    );
 
     /**
      * Slime Milker BlockItem — places {@link PFBlocks#SLIME_MILKER}. The block
@@ -242,19 +249,6 @@ public final class PFItems {
         PFBlocks.SLIME_MILKER,
         new Item.Properties()
     );
-
-    private static Map<String, DeferredItem<BucketItem>> buildMilkBuckets() {
-        LinkedHashMap<String, DeferredItem<BucketItem>> map = new LinkedHashMap<>();
-        for (String variant : PFFluidTypes.VARIANTS) {
-            map.put(variant, ITEMS.registerItem(
-                variant + "_slime_milk_bucket",
-                props -> new BucketItem(
-                    PFFluids.BY_VARIANT.get(variant).source().get(),
-                    props.stacksTo(1).craftRemainder(Items.BUCKET))
-            ));
-        }
-        return Collections.unmodifiableMap(map);
-    }
 
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);

@@ -42,9 +42,12 @@ public final class ProductiveFrogs {
         PFDebug.bootstrapFromSystemProperty();
 
         PFDataComponents.register(modEventBus);
-        // FluidTypes before Fluids — BaseFlowingFluid.Properties references the
+        // FluidTypes before Fluids: BaseFlowingFluid.Properties references the
         // FluidType holder at fluid-build time, so the FluidType register pass
-        // must complete first.
+        // must complete first. Blocks come after Fluids in turn: the single
+        // SLIME_MILK_SOURCE block's factory resolves PFFluids.SLIME_MILK_SOURCE
+        // at block-build time (and PFFluids' source/flowing Properties resolve
+        // PFItems.SLIME_MILK_BUCKET + PFBlocks.SLIME_MILK_SOURCE lazily).
         PFFluidTypes.register(modEventBus);
         PFFluids.register(modEventBus);
         PFBlocks.register(modEventBus);
@@ -88,8 +91,8 @@ public final class ProductiveFrogs {
             PFConfig.DEPLETION_ENABLED.get(), PFConfig.DEPLETION_COUNT.get(),
             PFConfig.MIN_SPAWN_INTERVAL_TICKS.get(), PFConfig.MAX_SPAWN_INTERVAL_TICKS.get(),
             PFConfig.DISCOVERY_CHANCE_PER_OFFSPRING.get()));
-        PFDebug.log(PFDebug.Area.LIFECYCLE, () -> String.format(
-            "lifecycle: %d slime-milk variants registered", PFFluidTypes.VARIANTS.size()));
+        PFDebug.log(PFDebug.Area.LIFECYCLE,
+            "lifecycle: registries + single slime_milk fluid registered; variants are datapack-driven");
 
         LOGGER.info("Productive Frogs common setup complete");
     }

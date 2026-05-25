@@ -3,10 +3,11 @@ package com.flatts.productivefrogs.content.block.entity;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
 import com.flatts.productivefrogs.content.menu.SlimeMilkerMenu;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
-import com.flatts.productivefrogs.registry.PFFluidTypes;
+import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -115,13 +116,12 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
             setWorking(level, pos, state, false);
             return;
         }
-        String variant = SlimeMilkerBlock.readBucketVariant(input);
-        if (variant == null || !PFFluidTypes.VARIANTS.contains(variant)) {
-            // Bucket has no Variant component (vanilla slime bucket / empty)
-            // or carries an unknown variant — fail closed, just like the
-            // original right-click flow did before this redesign.
-            PFDebug.logOnce(PFDebug.Area.MILKER, "failclosed#" + pos + "/" + variant,
-                () -> String.format("milker @%s fail-closed: bucket variant=%s not millable", pos, variant));
+        ResourceLocation variantId = SlimeMilkerBlock.readBucketVariantId(input);
+        if (variantId == null) {
+            // Bucket has no Variant component (vanilla slime bucket / empty) —
+            // fail closed, just like the original right-click flow did.
+            PFDebug.logOnce(PFDebug.Area.MILKER, "failclosed#" + pos,
+                () -> String.format("milker @%s fail-closed: input bucket carries no variant", pos));
             be.resetProgress();
             setWorking(level, pos, state, false);
             return;
@@ -139,24 +139,23 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
             return;
         }
         if (be.cookProgress == 0) {
-            final String startVariant = variant;
             PFDebug.log(PFDebug.Area.MILKER, () -> String.format(
-                "milker @%s: start cooking %s slime bucket", pos, startVariant));
+                "milker @%s: start cooking %s slime bucket", pos, variantId));
         }
         be.cookProgress++;
         be.setChanged();
         if (be.cookProgress >= COOK_TIME_TOTAL) {
-            BucketItem outputBucket = PFItems.MILK_BUCKETS.get(variant).get();
             // SLIME_BUCKET stacksTo(1) so consuming one always empties the
-            // input slot; explicit EMPTY write is shorter than extractItem
-            // and avoids the now-removed legacy IItemHandler API.
+            // input slot. Output is the single slime_milk_bucket stamped with
+            // the input's variant (collapsed from the per-variant milk items).
+            ItemStack milkBucket = new ItemStack(PFItems.SLIME_MILK_BUCKET.get());
+            milkBucket.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
             be.inventory.setStackInSlot(INPUT_SLOT, ItemStack.EMPTY);
-            be.inventory.setStackInSlot(OUTPUT_SLOT, new ItemStack(outputBucket));
+            be.inventory.setStackInSlot(OUTPUT_SLOT, milkBucket);
             be.cookProgress = 0;
             setWorking(level, pos, state, false);
-            final String doneVariant = variant;
             PFDebug.log(PFDebug.Area.MILKER, () -> String.format(
-                "milker @%s: produced %s milk bucket from %s slime bucket", pos, doneVariant, doneVariant));
+                "milker @%s: produced %s milk bucket", pos, variantId));
             level.playSound(
                 null, pos, SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS,
                 0.8F, 1.2F + level.getRandom().nextFloat() * 0.2F

@@ -59,8 +59,12 @@ public final class SlimeBucketItem extends MobBucketItem {
     public Component getName(ItemStack stack) {
         ResourceLocation variantId = ResourceTadpoleBucketItem.readVariant(stack);
         if (variantId != null) {
-            return Component.translatable(
-                "item.productivefrogs.slime_bucket." + variantId.getPath());
+            // Built-in variants ship an explicit key; a datapack-added variant
+            // (no lang) falls back to a title-cased name, so it reads cleanly
+            // without a resource pack - matching the milk bucket / froglight.
+            return Component.translatableWithFallback(
+                "item.productivefrogs.slime_bucket." + variantId.getPath(),
+                "Bucket of " + com.flatts.productivefrogs.util.VariantNames.titleCase(variantId) + " Slime");
         }
         Category category = ResourceTadpoleBucketItem.readCategory(stack);
         if (category != null) {

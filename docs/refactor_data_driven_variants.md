@@ -2,6 +2,34 @@
 
 > Prerequisite for V1.1. Until this lands, modpacks adding a new Resource Slime variant must edit Java source and recompile. V1.1 (which adds 16 new variants) would lock that "hardcoded variants" debt deeper if we ship it first — refactor must come before V1.1.
 
+## Decision (2026-05-25): Approach B, full component-driven milk
+
+This doc predates v1.1 and originally recommended **Approach A** (auto-register per-variant fluids by scanning JSONs at mod init). That recommendation is **superseded.** v1.1 shipped (33 variants) while milk stayed per-variant Java, and the goal has firmed to: **a variant must be addable by datapack alone, including its Slime Milk.** Approach A cannot satisfy that — fluids register at mod construction, before any *world* datapack loads, so a player-added datapack variant could never get a per-variant fluid. Only **Approach B** (one generic `slime_milk` fluid + variant on a component / BlockEntity) makes milk truly datapack-addable.
+
+Status of the four original phases:
+- **Phase 1 (spawn eggs collapse + lang derivation)** — DONE (shipped as CR-9, PR #100): single `resource_slime_spawn_egg`, template lang with title-cased fallback.
+- **Phases 2-4** — superseded by the Approach B plan below.
+
+The per-position fluid-render risk the original Approach B write-up flagged is resolved: NeoForge's `IClientFluidTypeExtensions` exposes position-aware `getTintColor(FluidState, BlockAndTintGetter, BlockPos)` and `getStillTexture(FluidState, BlockAndTintGetter, BlockPos)`, so a single greyscale milk texture tinted per-position from the source block's BlockEntity works without mixins.
+
+### Approach B implementation plan (the work)
+
+Collapse the ~35 per-variant Slime Milk registrations into one of each:
+
+- **1 `FluidType` `slime_milk`** + **1 source + 1 flowing `SlimeMilkFluid`** (replaces the `VARIANTS`-driven maps in `PFFluidTypes`/`PFFluids`).
+- **1 `SlimeMilkSourceBlock`** that is an `EntityBlock`; its **`SlimeMilkSourceBlockEntity`** stores the variant `ResourceLocation`. Only BE-backed source blocks spawn slimes (of their stored variant); flowing/spread milk is generic and spawns nothing.
+- **1 `slime_milk_bucket` item** carrying the variant in the `SLIME_VARIANT` data component (mirrors `configurable_froglight` / slime bucket). A custom bucket item: placing writes the variant to the new source block's BE; bucketing a source reads the BE back onto the stack.
+- **`SlimeMilkerBlockEntity`** outputs that single bucket stamped with the input slime bucket's variant, instead of a per-variant `MILK_BUCKETS.get(variant)` item.
+- **Render:** one greyscale `slime_milk_still`/`_flow` texture; per-position tint via `getTintColor(state, level, pos)` reading the BE → `SlimeVariant.primaryColor`. Source-block `BlockColor` + bucket item color read the same. Removes the ~70 per-variant milk PNGs/.mcmeta and the per-variant blockstate/model JSONs.
+- **In-slime texture (the other config-only blocker):** `ResourceSlimeRenderer` falls back to the category texture when no `<variant>_resource_slime.png` is shipped (keyed to membership in the built-in set), so a datapack variant with no texture renders the category cube + its `primary_color` shell instead of a missing texture.
+- **Lang:** template keys with title-cased fallback for the milk bucket + block + fluid (the 5 the original Phase 2 deferred), so a datapack variant needs no lang.
+
+**Backwards compatibility: hard break, no world migration.** The per-variant milk fluid/block/item IDs are removed; placed milk blocks in pre-existing worlds become orphaned refs. Consistent with the project norm (v1.0.0 "no migration path … regenerate worlds"; v1.1 shipped breaking removals). Documented in the CHANGELOG.
+
+**Validation:** ship a throwaway test-datapack variant (no Java, no assets) and confirm the full loop — infuse → slime renders (category fallback) → bucket → milker → milk bucket → place source → source spawns the variant slime → frog kill drops the froglight → smelt (test recipe) — works end to end.
+
+The original (superseded) Approach A/B analysis is retained below for the design history.
+
 ## Goal
 
 A modpack adds a new Resource Slime variant by **JSON only**:
@@ -129,7 +157,7 @@ Collapse all 14 per-variant fluids into ONE `productivefrogs:slime_milk` Fluid +
 - **Con**: backwards compat is harder — existing worlds have `iron_slime_milk:source` blocks in them; need a `WorldUpgrader` or block-state migration.
 - **Con**: the SlimeMilker's "input slime bucket → output milk bucket" loop changes meaningfully — output is now a `slime_milk_bucket` stack with a `SLIME_VARIANT` component, not an `iron_slime_milk_bucket` distinct item.
 
-**Recommendation**: **Approach A** (auto-register at mod init from JSON discovery). It achieves the data-driven goal with a much smaller blast radius. Approach B is architecturally cleaner long-term but the rendering-side risks (per-position fluid texture lookup) are high. Approach A also preserves existing worlds — the 14 V1 fluid IDs stay registered exactly as today.
+**Recommendation (SUPERSEDED 2026-05-25 — see the Decision section at the top):** originally **Approach A**, on smaller-blast-radius grounds. Reversed because Approach A cannot make milk addable by a *world* datapack (fluids register before world datapacks load), and the per-position fluid-render risk that pushed against B turned out to be a non-issue (NeoForge exposes position-aware `getTintColor`). Approach B is the chosen path.
 
 ### Lang derivation — translation key fallback pattern
 

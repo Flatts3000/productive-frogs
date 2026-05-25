@@ -66,7 +66,8 @@ class SlimeVariantTest {
             14188339,
             16432204,
             1,
-            Optional.of(ResourceLocation.parse("minecraft:copper_block"))
+            Optional.of(ResourceLocation.parse("minecraft:copper_block")),
+            Optional.empty()
         );
         JsonElement encoded = SlimeVariant.CODEC.encodeStart(JsonOps.INSTANCE, original)
             .result()
@@ -85,6 +86,7 @@ class SlimeVariantTest {
             16777045,
             16774260,
             1,
+            Optional.empty(),
             Optional.empty()
         );
         JsonElement encoded = SlimeVariant.CODEC.encodeStart(JsonOps.INSTANCE, original)

@@ -43,7 +43,11 @@ public final class ResourceSlimeSpawnEggItem extends SpawnEggItem {
     public Component getName(ItemStack stack) {
         ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
         if (variantId != null) {
-            return Component.translatable(getDescriptionId() + "." + variantId.getPath());
+            // Built-in variants have explicit lang keys; a datapack-added variant
+            // (no lang) falls back to a title-cased name.
+            return Component.translatableWithFallback(
+                getDescriptionId() + "." + variantId.getPath(),
+                com.flatts.productivefrogs.util.VariantNames.titleCase(variantId) + " Slime Spawn Egg");
         }
         return Component.translatable(getDescriptionId());
     }

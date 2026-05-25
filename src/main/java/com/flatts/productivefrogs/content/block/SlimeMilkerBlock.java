@@ -1,11 +1,10 @@
 package com.flatts.productivefrogs.content.block;
 
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
+import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -13,7 +12,6 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -37,18 +35,15 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Two-slot inventory (input Slime Bucket, output Slime Milk bucket) plus
  * a 100-tick cook timer; right-click opens a {@link SlimeMilkerBlockEntity}-
- * backed GUI rather than the legacy hand-swap. Hopper I/O is not exposed in
- * this PR — the BlockEntity ships without a {@code Capabilities.Item.BLOCK}
- * provider, so vanilla hoppers can't push into INPUT_SLOT or pull from
- * OUTPUT_SLOT yet. The follow-up that wires up the new
- * {@code ResourceHandler<ItemResource>} API is tracked in
- * {@code docs/known_issues.md}.
+ * backed GUI rather than the legacy hand-swap. Hopper I/O is wired via a
+ * side-aware {@code Capabilities.ItemHandler.BLOCK} provider in
+ * {@code PFModBusEvents} (top + horizontal faces = input view, bottom = output).
  *
- * <p>Variant resolution still goes through {@link #readBucketVariant} →
- * {@code PFFluidTypes.VARIANTS} → {@code PFItems.MILK_BUCKETS}: the cook
- * loop in {@link SlimeMilkerBlockEntity#serverTick} performs the lookup
- * each tick and fail-closes when the input bucket has no Variant tag or
- * an unknown variant.
+ * <p>Variant resolution: the cook loop in {@link SlimeMilkerBlockEntity#serverTick}
+ * reads the input Slime Bucket's full variant id via {@link #readBucketVariantId}
+ * and stamps it onto the single {@code slime_milk_bucket} output's
+ * {@code SLIME_VARIANT} component (the per-variant milk items were collapsed).
+ * It fail-closes when the input bucket carries no variant.
  *
  * <p>Future polish tracked in {@code docs/backlog.md}: press animation,
  * facing-based block model (top input port + side output spout), tighter
@@ -203,20 +198,22 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
      */
     @Nullable
     public static String readBucketVariant(ItemStack stack) {
-        CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
-        if (data == null) {
-            return null;
-        }
-        CompoundTag tag = data.copyTag();
-        if (!tag.contains("Variant", net.minecraft.nbt.Tag.TAG_STRING)) {
-            return null;
-        }
-        String raw = tag.getString("Variant");
-        if (raw == null || raw.isEmpty()) {
-            return null;
-        }
-        ResourceLocation id = ResourceLocation.tryParse(raw);
+        ResourceLocation id = readBucketVariantId(stack);
         return id == null ? null : id.getPath();
+    }
+
+    /**
+     * Full variant id (e.g. {@code productivefrogs:iron}) from a Slime Bucket's
+     * {@code BUCKET_ENTITY_DATA}, or null when absent/malformed. Delegates to
+     * {@link ResourceTadpoleBucketItem#readVariant} - the single canonical reader
+     * of a bucket's {@code Variant} NBT (both bucket types share the layout), so
+     * there is one parser rather than three. The milker stamps this onto the
+     * output Slime Milk bucket's {@code SLIME_VARIANT} component, preserving the
+     * namespace so cross-namespace datapack variants survive the conversion.
+     */
+    @Nullable
+    public static ResourceLocation readBucketVariantId(ItemStack stack) {
+        return ResourceTadpoleBucketItem.readVariant(stack);
     }
 
     /**
