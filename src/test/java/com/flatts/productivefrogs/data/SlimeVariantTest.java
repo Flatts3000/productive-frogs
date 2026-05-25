@@ -38,10 +38,52 @@ class SlimeVariantTest {
         }
         """;
 
+    private static final String WITH_PRIMER_TAG = """
+        {
+          "primer_tag": "c:ingots/tin",
+          "category": "cave",
+          "primary_color": 12895428,
+          "secondary_color": 14211288
+        }
+        """;
+
+    private static final String WITHOUT_ANY_PRIMER = """
+        {
+          "category": "cave",
+          "primary_color": 12895428,
+          "secondary_color": 14211288
+        }
+        """;
+
+    @Test
+    void codecDecodesVariantWithPrimerTagAndNoPrimerItem() {
+        // A tag-driven cross-mod variant: primer_item is absent, primer_tag drives
+        // infusion matching (any mod's tin ingot in c:ingots/tin primes it).
+        SlimeVariant decoded = decode(WITH_PRIMER_TAG);
+        assertTrue(decoded.primerItem().isEmpty(), "primer_item is optional, absent for a tag-driven variant");
+        assertTrue(decoded.primerTag().isPresent(), "primer_tag must decode");
+        assertEquals("c:ingots/tin", decoded.primerTag().get().location().toString());
+        assertEquals(Category.CAVE, decoded.category());
+    }
+
+    @Test
+    void codecRejectsVariantWithNoPrimer() {
+        // A variant with neither primer_item nor primer_tag can never be primed
+        // by a player, yet would still enter the discovery pool. The codec must
+        // fail the decode at the boundary (the generate script guards first-party
+        // variants, but a hand-authored datapack override has no such guard).
+        var result = SlimeVariant.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(WITHOUT_ANY_PRIMER));
+        assertTrue(result.error().isPresent(),
+            "decode must fail for a variant with no primer_item and no primer_tag");
+        assertTrue(result.error().get().message().contains("primer"),
+            "error message should explain the missing primer requirement");
+    }
+
     @Test
     void codecDecodesVariantWithoutOptionalInnerBlockField() {
         SlimeVariant decoded = decode(WITHOUT_INNER_BLOCK);
-        assertEquals(ResourceLocation.parse("minecraft:iron_ingot"), decoded.primerItem());
+        assertEquals(Optional.of(ResourceLocation.parse("minecraft:iron_ingot")), decoded.primerItem());
+        assertTrue(decoded.primerTag().isEmpty(), "primer_tag absent for an item-primed variant");
         assertEquals(Category.CAVE, decoded.category());
         assertEquals(12895428, decoded.primaryColor());
         assertEquals(14211288, decoded.secondaryColor());
@@ -61,7 +103,8 @@ class SlimeVariantTest {
     @Test
     void codecRoundTripsVariantWithInnerBlock() {
         SlimeVariant original = new SlimeVariant(
-            ResourceLocation.parse("minecraft:copper_ingot"),
+            Optional.of(ResourceLocation.parse("minecraft:copper_ingot")),
+            Optional.empty(),
             Category.CAVE,
             14188339,
             16432204,
@@ -81,7 +124,8 @@ class SlimeVariantTest {
     @Test
     void codecRoundTripsVariantWithoutInnerBlock() {
         SlimeVariant original = new SlimeVariant(
-            ResourceLocation.parse("minecraft:gold_ingot"),
+            Optional.of(ResourceLocation.parse("minecraft:gold_ingot")),
+            Optional.empty(),
             Category.CAVE,
             16777045,
             16774260,

@@ -557,7 +557,8 @@ public final class PFGameTests {
         if (iron.category() != Category.CAVE) {
             helper.fail("iron variant should be CAVE (V1.5 remap), got " + iron.category());
         }
-        if (!iron.primerItem().equals(ResourceLocation.fromNamespaceAndPath("minecraft", "iron_ingot"))) {
+        if (!iron.primerItem().equals(java.util.Optional.of(
+                ResourceLocation.fromNamespaceAndPath("minecraft", "iron_ingot")))) {
             helper.fail("iron variant primer should be minecraft:iron_ingot, got " + iron.primerItem());
         }
         // v1.0.1 renders the variant's vanilla resource block inside the slime
@@ -573,6 +574,117 @@ public final class PFGameTests {
         if (!expectedInnerBlock.equals(iron.innerBlock().get())) {
             helper.fail("iron inner_block should be " + expectedInnerBlock
                 + ", got " + iron.innerBlock().get());
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * The V1.2 cross-mod variants are each gated {@code mod_loaded(provider)}.
+     * None of those provider mods are present in the GameTest env, so every
+     * cross-mod variant must be condition-skipped at registry load. Pins that the
+     * mod_loaded gating actually works (a regression that dropped the conditions
+     * would load 24 broken variants into every pack) - and that datapack-registry
+     * conditions are honored at all.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void crossModVariantsAreConditionGatedWhenModAbsent(GameTestHelper helper) {
+        net.minecraft.core.Registry<SlimeVariant> registry =
+            helper.getLevel().registryAccess().registryOrThrow(PFRegistries.SLIME_VARIANT);
+        String[] crossMod = { "tin", "osmium", "certus_quartz", "pink_slime", "orichalcum", "blazing", "aquarium" };
+        for (String name : crossMod) {
+            ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, name);
+            if (registry.get(id) != null) {
+                helper.fail("cross-mod variant " + id
+                    + " should be condition-gated out when its provider mod is absent, but it loaded");
+                return;
+            }
+        }
+        // Sanity: a built-in variant IS present, so we're not just reading an
+        // empty registry.
+        if (registry.get(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron")) == null) {
+            helper.fail("built-in iron variant should be present");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * {@link SlimeVariant#primerMatches} resolves a tag-driven cross-mod variant
+     * by {@code primer_tag} membership (any item in the tag primes it) and an
+     * item-driven variant by exact {@code primer_item}. Uses the live
+     * {@code c:ingots/iron} tag (NeoForge populates it with the vanilla iron
+     * ingot), so this exercises the real runtime tag lookup the infusion handler
+     * walks - the path that lets one cross-mod variant accept any mod's ingot.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void primerTagResolvesAnyTaggedItem(GameTestHelper helper) {
+        SlimeVariant tagVariant = new SlimeVariant(
+            java.util.Optional.empty(),
+            java.util.Optional.of(net.minecraft.tags.TagKey.create(
+                net.minecraft.core.registries.Registries.ITEM, ResourceLocation.parse("c:ingots/iron"))),
+            Category.CAVE, 0xFFFFFF, 0xFFFFFF, 1, java.util.Optional.empty(), java.util.Optional.empty());
+        if (!SlimeVariant.primerMatches(tagVariant, new ItemStack(net.minecraft.world.item.Items.IRON_INGOT))) {
+            helper.fail("primer_tag c:ingots/iron should match an iron ingot");
+            return;
+        }
+        if (SlimeVariant.primerMatches(tagVariant, new ItemStack(net.minecraft.world.item.Items.STICK))) {
+            helper.fail("primer_tag c:ingots/iron must NOT match a stick");
+            return;
+        }
+
+        SlimeVariant itemVariant = new SlimeVariant(
+            java.util.Optional.of(ResourceLocation.parse("minecraft:diamond")),
+            java.util.Optional.empty(),
+            Category.GEODE, 0xFFFFFF, 0xFFFFFF, 1, java.util.Optional.empty(), java.util.Optional.empty());
+        if (!SlimeVariant.primerMatches(itemVariant, new ItemStack(net.minecraft.world.item.Items.DIAMOND))) {
+            helper.fail("primer_item minecraft:diamond should match a diamond");
+            return;
+        }
+        if (SlimeVariant.primerMatches(itemVariant, new ItemStack(net.minecraft.world.item.Items.IRON_INGOT))) {
+            helper.fail("primer_item minecraft:diamond must NOT match an iron ingot");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * {@link SlimeVariant#findByPrimer} must prefer an exact {@code primer_item}
+     * match over a {@code primer_tag} match when a single stack satisfies both,
+     * deterministically and regardless of registry iteration order. Guards the
+     * overlap case a datapack can create (add {@code c:ingots/iron} alongside a
+     * first-party item-primed variant): the specific item must win. The tag
+     * variant is registered FIRST here, so a naive first-match-wins resolver
+     * would return it - this pins the exact-item preference.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void findByPrimerPrefersExactItemOverTag(GameTestHelper helper) {
+        net.minecraft.core.MappedRegistry<SlimeVariant> registry = new net.minecraft.core.MappedRegistry<>(
+            PFRegistries.SLIME_VARIANT, com.mojang.serialization.Lifecycle.stable());
+        SlimeVariant tagVariant = new SlimeVariant(
+            java.util.Optional.empty(),
+            java.util.Optional.of(net.minecraft.tags.TagKey.create(
+                net.minecraft.core.registries.Registries.ITEM, ResourceLocation.parse("c:ingots/iron"))),
+            Category.CAVE, 0xFFFFFF, 0xFFFFFF, 1, java.util.Optional.empty(), java.util.Optional.empty());
+        SlimeVariant itemVariant = new SlimeVariant(
+            java.util.Optional.of(ResourceLocation.parse("minecraft:iron_ingot")),
+            java.util.Optional.empty(),
+            Category.CAVE, 0xFFFFFF, 0xFFFFFF, 1, java.util.Optional.empty(), java.util.Optional.empty());
+        // Tag variant registered first: iteration order would surface it first.
+        net.minecraft.core.Registry.register(registry,
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "test_tag_iron"), tagVariant);
+        net.minecraft.core.Registry.register(registry,
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "test_item_iron"), itemVariant);
+        registry.freeze();
+
+        java.util.Map.Entry<ResourceLocation, SlimeVariant> resolved =
+            SlimeVariant.findByPrimer(registry, new ItemStack(Items.IRON_INGOT));
+        if (resolved == null) {
+            helper.fail("an iron ingot should resolve to one of the two overlapping variants");
+            return;
+        }
+        if (!resolved.getKey().getPath().equals("test_item_iron")) {
+            helper.fail("exact primer_item must win over primer_tag, got " + resolved.getKey());
             return;
         }
         helper.succeed();

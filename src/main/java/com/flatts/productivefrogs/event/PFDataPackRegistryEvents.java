@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.data.ParentSpeciesEntry;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFRegistries;
 import com.flatts.productivefrogs.util.PFDebug;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
@@ -56,9 +57,15 @@ public final class PFDataPackRegistryEvents {
         var access = event.getServer().registryAccess();
         access.registry(PFRegistries.SLIME_VARIANT).ifPresent(registry -> {
             PFDebug.log(PFDebug.Area.REGISTRY, "slime_variant: {} entries loaded", registry.size());
-            registry.entrySet().forEach(entry -> PFDebug.log(PFDebug.Area.REGISTRY,
-                "  slime_variant {} -> category={} primer={}",
-                entry.getKey().location(), entry.getValue().category(), entry.getValue().primerItem()));
+            registry.entrySet().forEach(entry -> {
+                var v = entry.getValue();
+                String primer = v.primerItem().map(ResourceLocation::toString)
+                    .or(() -> v.primerTag().map(t -> "#" + t.location()))
+                    .orElse("(none)");
+                PFDebug.log(PFDebug.Area.REGISTRY,
+                    "  slime_variant {} -> category={} primer={}",
+                    entry.getKey().location(), v.category(), primer);
+            });
         });
         access.registry(PFRegistries.PARENT_SPECIES).ifPresent(registry -> {
             PFDebug.log(PFDebug.Area.REGISTRY, "parent_species: {} entries loaded", registry.size());

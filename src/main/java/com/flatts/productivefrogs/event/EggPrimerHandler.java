@@ -9,7 +9,6 @@ import com.flatts.productivefrogs.util.PFDebug;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -92,7 +91,6 @@ public final class EggPrimerHandler {
         Registry<SlimeVariant> registry = level.registryAccess()
             .registry(PFRegistries.SLIME_VARIANT).orElse(null);
         if (registry == null) return null;
-        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        return SlimeVariant.findByPrimerItem(registry, itemId);
+        return SlimeVariant.findByPrimer(registry, stack);
     }
 }

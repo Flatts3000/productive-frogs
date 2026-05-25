@@ -1,0 +1,9 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "powah" }
+  ],
+  "primer_item": "powah:crystal_blazing",
+  "category": "infernal",
+  "primary_color": 15241258,
+  "secondary_color": 12610068
+}
