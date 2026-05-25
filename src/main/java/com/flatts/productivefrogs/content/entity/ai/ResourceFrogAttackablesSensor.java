@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.content.entity.ai;
 
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
+import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.sensing.FrogAttackablesSensor;
 
@@ -39,7 +40,15 @@ public class ResourceFrogAttackablesSensor extends FrogAttackablesSensor {
         // Vanilla slimes/magma cubes get filtered out — they must be infused
         // (right-click with a primer-tagged item) before any frog will eat them.
         if (target instanceof ResourceSlime slime) {
-            return frog.getCategory() == slime.getCategory();
+            boolean match = frog.getCategory() == slime.getCategory();
+            if (PFDebug.on(PFDebug.Area.SENSOR)) {
+                PFDebug.logOnce(PFDebug.Area.SENSOR,
+                    "sensor#" + frog.getId() + "/" + slime.getId() + "/" + match,
+                    () -> String.format("frog id=%d category=%s vs slime id=%d category=%s -> %s",
+                        frog.getId(), frog.getCategory(), slime.getId(), slime.getCategory(),
+                        match ? "ATTACKABLE" : "filtered"));
+            }
+            return match;
         }
         return false;
     }

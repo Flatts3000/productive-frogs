@@ -301,11 +301,16 @@ hop).
 
 ### registry / config / lifecycle (Phase 3, server)
 
-- `PFDataPackRegistryEvents` + codecs -> count loaded per registry, each entry id
-  + category as it decodes (dedup by id), and decode errors with the offending
-  file.
-- `PFConfig` -> each resolved value logged at common-setup.
-- `ProductiveFrogs` constructor -> each register pass + the element count it added.
+- `registry`: a `ServerStartedEvent` handler in `PFDataPackRegistryEvents` dumps
+  each datapack registry's loaded count and every entry's mapping (slime_variant
+  -> category + primer; parent_species -> entity_type + category) once the codecs
+  have decoded all JSON. A server-started dump is simpler and more reliable than
+  hooking the codec decode path, and shows the post-merge result a datapack sees.
+- `config`: `PFConfig` values logged once at common-setup (depletion toggle +
+  count, spawn interval, discovery chance).
+- `lifecycle`: the slime-milk variant count logged at common-setup. Per-register
+  element counts aren't cheaply available from `DeferredRegister` at register
+  time, so the variant total stands in as the load-bearing count.
 
 ## Testing
 

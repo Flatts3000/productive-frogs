@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.registry.PFEntities;
+import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -194,6 +195,8 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
                 // block right back at its default state (counter resets
                 // to MAX). We need a true air swap to drain.
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+                PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
+                    "source @%s: depleted, drained to air (variant=%s)", pos, variant));
                 return;
             }
             spawn(level, pos, random);
@@ -227,6 +230,8 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
             // Defensive — EntityType.create returns null only when the
             // entity-type registry is in a broken state. Skip the spawn but
             // don't fail loud; reschedule normally so the next tick retries.
+            PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
+                "source @%s: slime create failed for variant=%s (skip)", pos, variant));
             return;
         }
         slime.setSize(1, true);
@@ -238,6 +243,9 @@ public class SlimeMilkSourceBlock extends LiquidBlock {
                      random.nextFloat() * 360F,
                      0F);
         level.addFreshEntity(slime);
+        PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
+            "source @%s: spawned %s slime at %s (%s)", pos, variant, spawnPos,
+            spawnPos.equals(pos) ? "inside-fluid fallback" : "on neighbour"));
     }
 
     @Nullable

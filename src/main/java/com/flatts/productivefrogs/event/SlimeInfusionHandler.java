@@ -7,6 +7,7 @@ import com.flatts.productivefrogs.data.ParentSpeciesEntry;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFRegistries;
+import com.flatts.productivefrogs.util.PFDebug;
 import java.util.Map;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ParticleTypes;
@@ -88,6 +89,11 @@ public final class SlimeInfusionHandler {
             event.setCancellationResult(InteractionResult.FAIL);
             event.setCanceled(true);
             rejectFeedback(event.getLevel(), sourceSlime);
+            if (!event.getLevel().isClientSide()) {
+                PFDebug.log(PFDebug.Area.INFUSION, () -> String.format(
+                    "reject: primer variant %s (%s) does not match target species %s",
+                    variantEntry.getKey(), variantEntry.getValue().category(), species));
+            }
             return;
         }
 
@@ -103,6 +109,8 @@ public final class SlimeInfusionHandler {
             return;
         }
         resource.setVariant(variantEntry.getKey());
+        PFDebug.log(PFDebug.Area.INFUSION, () -> String.format(
+            "infuse: species=%s variant=%s size=%d", species, variantEntry.getKey(), resource.getSize()));
 
         Player player = event.getEntity();
         if (!player.getAbilities().instabuild) {

@@ -4,8 +4,10 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.data.ParentSpeciesEntry;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFRegistries;
+import com.flatts.productivefrogs.util.PFDebug;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 
 /**
@@ -38,5 +40,31 @@ public final class PFDataPackRegistryEvents {
             ParentSpeciesEntry.CODEC,
             ParentSpeciesEntry.CODEC
         );
+    }
+
+    /**
+     * When the {@code registry} debug area is on, dump the loaded datapack
+     * registry contents once the server is up (codecs have decoded all JSON by
+     * now). Surfaces decode coverage (counts) and each entry's resolved mapping,
+     * which is otherwise invisible. Gated, so zero cost in normal play.
+     */
+    @SubscribeEvent
+    public static void onServerStarted(ServerStartedEvent event) {
+        if (!PFDebug.on(PFDebug.Area.REGISTRY)) {
+            return;
+        }
+        var access = event.getServer().registryAccess();
+        access.registry(PFRegistries.SLIME_VARIANT).ifPresent(registry -> {
+            PFDebug.log(PFDebug.Area.REGISTRY, "slime_variant: {} entries loaded", registry.size());
+            registry.entrySet().forEach(entry -> PFDebug.log(PFDebug.Area.REGISTRY,
+                "  slime_variant {} -> category={} primer={}",
+                entry.getKey().location(), entry.getValue().category(), entry.getValue().primerItem()));
+        });
+        access.registry(PFRegistries.PARENT_SPECIES).ifPresent(registry -> {
+            PFDebug.log(PFDebug.Area.REGISTRY, "parent_species: {} entries loaded", registry.size());
+            registry.entrySet().forEach(entry -> PFDebug.log(PFDebug.Area.REGISTRY,
+                "  parent_species {} -> entity_type={} category={}",
+                entry.getKey().location(), entry.getValue().entityType(), entry.getValue().category()));
+        });
     }
 }
