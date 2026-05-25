@@ -35,8 +35,9 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
  *   <li>{@code lightLevel 0} — milk isn't a light source.</li>
  * </ul>
  *
- * <p>{@link #VARIANTS} mirrors the 12 shipped resource variants in the
- * {@code slime_variant} datapack registry plus two specials: {@code vanilla}
+ * <p>{@link #VARIANTS} mirrors the shipped resource variants in the
+ * {@code slime_variant} datapack registry (11 from v1.0 + 22 from v1.1) plus
+ * two specials: {@code vanilla}
  * (from milking a vanilla green slime) and {@code magma} (from magma cubes).
  * Reordering or renaming entries here cascades to {@link PFFluids},
  * {@link PFBlocks}, {@link PFItems}, and the lang file — keep them in sync.
@@ -52,11 +53,23 @@ public final class PFFluidTypes {
      * tab + JEI grouping.
      */
     public static final List<String> VARIANTS = List.of(
+        // v1.0 variants
         "iron", "copper", "gold",
         "redstone", "lapis", "coal",
         "diamond", "emerald",
         "prismarine", "sponge",
-        "magma_cream", "ender_pearl",
+        "ender_pearl",
+        // v1.1 variants (vanilla resource coverage across the six species)
+        "bone", "gunpowder", "clay_ball", "rotten_flesh", "string",
+        "leather", "feather",
+        "glow_ink_sac", "obsidian", "echo_shard",
+        "amethyst",
+        "ink_sac", "prismarine_crystals",
+        "netherite_scrap", "glowstone_dust", "soul_sand", "soul_soil",
+        "netherrack", "blaze", "quartz",
+        "chorus_fruit", "shulker_shell",
+        // specials (not in the slime_variant registry; produced by milking
+        // vanilla green slimes / magma cubes directly)
         "vanilla", "magma"
     );
 

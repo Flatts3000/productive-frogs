@@ -72,52 +72,53 @@ Removes per-variant Java hardcoding so modpacks can add a SlimeVariant by JSON o
 - ☐ **Phase 3 — Asset auto-generation from variant JSONs**: extend `generate_variant_slime_textures.ps1` + `generate_slime_milk_textures.ps1` to scan variant JSONs and use a new optional `texture_source_block` field. Document the modpack workflow in `docs/modpack_adding_variants.md`.
 - ☐ **Phase 4 — Validation with a test external variant**: ship a brand-new variant via JSON-only and verify the full production loop end-to-end.
 
-## V1.1 — vanilla resource coverage
+## V1.1 — vanilla resource coverage (IMPLEMENTED, pending release)
 
-After V1.0.x refactor lands: add every vanilla item fitting cleanly into one of the existing 6 categories. JSON-only authoring post-refactor. Full design in [v1_1_scope.md](./v1_1_scope.md). 16 new variants → 28 total post-V1.1.
+Adds every vanilla item fitting cleanly into one of the existing 6 species. JSON-only authoring (plus the one Slime Milk `VARIANTS` Java edit). Full design in [v1_1_scope.md](./v1_1_scope.md). 22 new variants → 33 total post-V1.1 (the v1.0 `magma_cream` variant was also removed as redundant).
 
-Per-variant work for each = 4 files: variant JSON (with `primer_item` exact-match field) + (optional) hand-authored inner-cube PNG OR `texture_source_block` field + smelting recipe + lang entry. Existing GameTests auto-cover.
+Per-variant work for each = a `slime_variant` JSON (with `primer_item` exact-match + thematic `inner_block`) + smelting recipe + milk blockstate + milk bucket model + lang entries + one `VARIANTS` entry. The first four JSON files are emitted by `scripts/generate_v1_1_variants.ps1`; the downscaled-block inner-cube texture by `scripts/generate_resource_slime_textures.py`; milk PNGs by `scripts/generate_slime_milk_textures.ps1`. Existing GameTests auto-cover.
 
-### Locked scope (22 variants — under v1.0 species model)
+### Shipped scope (22 variants)
 
-**Bog (+8)** — swamp + mob drops, now under Bog species (no new category needed)
-- ☐ `bone` (skeleton)
-- ☐ `gunpowder` (creeper, broad overworld)
-- ☐ `clay_ball` (swamp clay) *(non-1:1 smelt — Froglight smelts to `brick`)*
-- ☐ `rotten_flesh` (zombie)
-- ☐ `string` (spider)
-- ☐ `leather` (cow / horse)
-- ☐ `feather` (chicken)
-- ☐ `slime_ball` (Bog Slime self-reference)
+**Bog (+7)** — swamp + mob drops, under Bog species (no new category needed)
+- ☑ `bone` (skeleton)
+- ☑ `gunpowder` (creeper, broad overworld)
+- ☑ `clay_ball` (swamp clay) *(non-1:1 smelt — Froglight smelts to `brick`)*
+- ☑ `rotten_flesh` (zombie)
+- ☑ `string` (spider)
+- ☑ `leather` (cow / horse)
+- ☑ `feather` (chicken)
+- ✗ `slime_ball` — cut as redundant (a slime made of slimeballs)
 
 **Cave (+3)**
-- ☐ `glow_ink_sac` (lush caves)
-- ☐ `obsidian` (lava-lake at cave level)
-- ☐ `echo_shard` (deep dark ancient cities)
+- ☑ `glow_ink_sac` (lush caves)
+- ☑ `obsidian` (lava-lake at cave level)
+- ☑ `echo_shard` (deep dark ancient cities)
 
 **Geode (+1)**
-- ☐ `amethyst` (mountain geodes)
+- ☑ `amethyst` (mountain geodes)
 
-**Tide (+1)**
-- ☐ `ink_sac` (squids in oceans)
+**Tide (+2)**
+- ☑ `ink_sac` (squids in oceans)
+- ☑ `prismarine_crystals` (ocean monuments) *(Tier B, promoted into scope)*
 
 **Infernal (+7)**
-- ☐ `netherite_scrap`
-- ☐ `glowstone_dust`
-- ☐ `soul_sand`
-- ☐ `soul_soil`
-- ☐ `netherrack`
-- ☐ `blaze`
-- ☐ `quartz`
+- ☑ `netherite_scrap`
+- ☑ `glowstone_dust`
+- ☑ `soul_sand`
+- ☑ `soul_soil`
+- ☑ `netherrack`
+- ☑ `blaze`
+- ☑ `quartz`
 
 **Void (+2)**
-- ☐ `chorus_fruit` *(non-1:1 smelt — Froglight smelts to `popped_chorus_fruit`)*
-- ☐ `shulker_shell`
+- ☑ `chorus_fruit` *(non-1:1 smelt — Froglight smelts to `popped_chorus_fruit`)*
+- ☑ `shulker_shell`
 
-### Tier B — design open (3 candidates)
-- ☐ `prismarine_crystals` (Tide) — default if undecided: ship alongside existing `prismarine` (additive, no rename).
-- ☐ `nautilus_shell` (Tide) — default if undecided: defer to V1.2+ (production-loop framing weak — drowned/fishing only in vanilla).
-- ☐ `ghast_tear` (Infernal) — default if undecided: defer to V1.2+ (single rare mob drop, rarity-break concern).
+### Tier B — remaining
+- ☑ `prismarine_crystals` (Tide) — shipped in v1.1 (promoted; inner_block `sea_lantern`).
+- ☐ `nautilus_shell` (Tide) — deferred to V1.2+ (production-loop framing weak — drowned/fishing only in vanilla).
+- ☐ `ghast_tear` (Infernal) — deferred to V1.2+ (single rare mob drop, rarity-break concern).
 - ✗ `wither_rose` — dropped (the primer-tag-only fallback this depended on is gone in v1.0).
 - ✗ `end_stone` — dropped (same as wither_rose).
 
@@ -167,6 +168,7 @@ Items noted in commit messages or PR descriptions as known issues but not blocki
 
 ### Tooling
 - ✅ **Jade.** Installed manually per [docs/dev_setup.md](./dev_setup.md); good enough for V1 dev. If Jade ever publishes to a maven we use cleanly, swap to a `runtimeOnly` dep like JEI — kept as a tracked nice-to-have, not a blocker.
+- **Debug observability flags for client-render diagnosis.** Client-side render bugs (tints, inner-block resolution, render types) are invisible to GameTest and slow to chase by eye. A standing `-Dproductivefrogs.debug.<area>` system-property gate that logs what the render thread resolves per entity (e.g. variant id + category + colours + inner block) to `latest.log` makes these traceable without a code edit + rebuild loop each time. The 2026-05-25 inner-block investigation added this ad-hoc to `ResourceSlimeInnerBlockLayer` and it immediately localised the issue (a stale dev build, not a logic bug — the resolver was correct). Worth promoting to a permanent, flag-gated debug logger rather than re-adding temp logging each time. **Lesson:** when a reported visual bug can't be reproduced by reading correct code, suspect a stale dev build first; a one-line render-thread log confirms it in one launch.
 
 ## Architecture lessons captured
 

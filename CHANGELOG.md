@@ -1,14 +1,31 @@
 # Changelog
 
-## v1.1.0 (unreleased) — data-driven spawn eggs
+## v1.1.0 (unreleased) - vanilla resource coverage
 
 > Builds on the v1.0.2 changes below. The next release that includes this work
 > is a minor bump (v1.1.0), because it removes item IDs (see Breaking).
 
-Implements code-review finding CR-9: the Resource Slime spawn egg is now a
-single component-driven item instead of one item ID per variant. This is the
-V1.1 enabler that makes adding a variant pure data (plus the one Slime Milk
-`VARIANTS` Java edit that fluids inherently require).
+The v1.1 content release: **22 new Resource Slime variants** (33 total) extend
+vanilla resource coverage across all six species, with no new mechanics. Plus
+the CR-9 enabler that made the additions pure data: the Resource Slime spawn egg
+is now a single component-driven item instead of one item ID per variant.
+
+### Added
+
+- **22 new variants** (33 total), each with a Resource Slime, Configurable
+  Froglight, Slime Bucket, Slime Milk fluid/block/bucket, smelting recipe, and a
+  downscaled in-slime block interior (the variant's `inner_block`):
+  - **Bog** (+7): bone, gunpowder, clay, rotten flesh, string, leather, feather
+  - **Cave** (+3): glow ink sac, obsidian, echo shard
+  - **Geode** (+1): amethyst
+  - **Tide** (+2): ink sac, prismarine crystals
+  - **Infernal** (+7): netherite scrap, glowstone dust, soul sand, soul soil, netherrack, blaze, quartz
+  - **Void** (+2): chorus fruit, shulker shell
+- `scripts/generate_v1_1_variants.ps1`: data-table generator that emits the four
+  templated JSON files per variant (slime_variant, smelting recipe, milk
+  blockstate, milk bucket model).
+- `scripts/generate_resource_slime_textures.py`: bakes a downscaled copy of each
+  variant's resource-block texture onto the slime's inner-cube faces.
 
 ### Breaking
 
@@ -19,6 +36,13 @@ V1.1 enabler that makes adding a variant pure data (plus the one Slime Milk
   any stashed in an existing world disappear on load (survival play never grants
   them). Use `/give @s productivefrogs:resource_slime_spawn_egg[...]` or the
   creative tab to get the new form.
+- **Removed two redundant variants:** `magma_cream` (a v1.0 variant - magma
+  cream is itself a slime-cube drop, and the Infernal pool already covers the
+  nether) and `slime_ball` (a slime made of slimeballs). Their slimes, Slime
+  Milk fluids/blocks/buckets, Configurable Froglight stacks, and smelting recipes
+  are gone. **Migration:** any `magma_cream`-variant items/slimes in an existing
+  world lose their variant on load (the entity falls back to its Infernal
+  category visuals + name); `slime_ball` never shipped.
 
 ### Changed
 
@@ -29,6 +53,29 @@ V1.1 enabler that makes adding a variant pure data (plus the one Slime Milk
 - Adding a variant no longer needs a spawn-egg Java edit; only the Slime Milk
   `VARIANTS` entry remains. Docs (`architecture.md`, `versioning.md`,
   `v1_1_scope.md`) updated.
+- `scripts/generate_slime_milk_textures.ps1` now does its per-pixel tint in a
+  compiled `LockBits` helper instead of interpreted `GetPixel`/`SetPixel`. The
+  interpreted path crashed the PowerShell engine once the variant count grew
+  past ~14; the compiled path is robust and produces byte-identical output.
+- **Resource Slime interior rendering reworked.** The v1.0.1 "live block model
+  drawn inside the slime" layer (`ResourceSlimeInnerBlockLayer`) is **deleted**:
+  an opaque block drawn in a separate render pass is depth-culled by the slime's
+  translucent shell, so it never actually showed - what players saw was the
+  per-category coloured inner cube (every Cave variant looked like a redstone
+  cube, every Void variant purple, etc.). The interior is now a downscaled copy
+  of the variant's resource block baked onto the slime's own inner-cube faces
+  (rendered as part of the translucent body, so it is reliably visible), with the
+  per-variant tint kept on the translucent exterior shell.
+
+### Tests
+
+- Removed the timing-flaky end-to-end AI tongue GameTest
+  (`frogTongueAiPathDropsConfigurableFroglight`). The category-match drop path
+  stays covered by `matchingFrogKillDropsConfigurableFroglight` (deterministic
+  manual-damage kill, no AI).
+- `infusionWithVariantPrimerSetsSpecificVariant`'s negative case now uses
+  `ghast_tear` (deferred from v1.1) instead of `blaze_powder`, which became the
+  `blaze` variant's primer.
 
 ## v1.0.2 (unreleased)
 

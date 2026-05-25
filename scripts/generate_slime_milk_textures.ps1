@@ -1,23 +1,23 @@
-# Generate the 14 per-variant Slime Milk fluid + bucket textures by tinting
+# Generate the per-variant Slime Milk fluid + bucket textures by tinting
 # vanilla milk and water textures with each variant's primary_color.
 #
-# Output:
-#   src/main/resources/assets/productivefrogs/textures/item/<variant>_slime_milk_bucket.png   (14 files, 16x16)
-#   src/main/resources/assets/productivefrogs/textures/block/<variant>_slime_milk_still.png   (14 files, 16x16)
-#   src/main/resources/assets/productivefrogs/textures/block/<variant>_slime_milk_flow.png    (14 files, 16x16)
+# Output (one set per variant in the slime_variant registry + 2 specials):
+#   src/main/resources/assets/productivefrogs/textures/item/<variant>_slime_milk_bucket.png
+#   src/main/resources/assets/productivefrogs/textures/block/<variant>_slime_milk_still.png  (+ .mcmeta)
+#   src/main/resources/assets/productivefrogs/textures/block/<variant>_slime_milk_flow.png   (+ .mcmeta)
 #
 # Inputs:
 # - Per-variant primary_color read from data/productivefrogs/productivefrogs/slime_variant/<name>.json
-#   for the 12 resource variants (iron, copper, gold, redstone, lapis, coal,
-#   diamond, emerald, prismarine, sponge, magma_cream, ender_pearl).
+#   for every shipped resource variant (auto-discovered - no hardcoded list, so
+#   adding a slime_variant JSON automatically grows the output set).
 # - Hardcoded primary_color for the two special variants `vanilla` and
 #   `magma` since they're not in the SlimeVariant datapack registry
 #   (vanilla green slime + magma cube produce milk but never register a
 #   variant). The values mirror in-game slime body / magma-cube colors.
 # - Vanilla minecraft milk_bucket.png + bucket.png (for the bucket diff that
 #   isolates milk pixels from the iron bucket pixels)
-# - Vanilla minecraft water_still.png + water_flow.png (top-frame as the
-#   fluid pattern base; gives slime-milk a watery ripple instead of solid fill)
+# - Vanilla minecraft water_still.png + water_flow.png (the animated strip as
+#   the fluid pattern base; gives slime-milk a watery ripple instead of solid fill)
 # - All vanilla textures auto-extracted at runtime from the NeoForge dev
 #   artifact, same pattern as generate_variant_slime_textures.ps1.
 #
@@ -35,13 +35,17 @@
 #   This isolates the milk region without us hand-authoring a milk mask.
 #
 # Fluid pipeline:
-#   Crop the top 16x16 frame of water_still.png / water_flow.png and apply
-#   Apply-Tint to each non-transparent pixel. Apply-Tint uses the source
-#   pixel's max(R,G,B) as a lightness factor and multiplies by the variant
-#   tint RGB - effectively a hue swap that preserves vanilla water's
-#   highlight + shadow gradient without needing an explicit grayscale pass.
-#   Single-frame for V1 - the .mcmeta animation strip is deferred to polish;
-#   the milk source-block isn't visually load-bearing day one.
+#   Tint every pixel of the full vanilla water_still / water_flow animation
+#   strip and emit a sibling .mcmeta to drive the animation cadence.
+#
+# Performance + reliability note:
+#   The per-pixel work runs in a compiled Add-Type helper using LockBits over a
+#   raw byte buffer, NOT PowerShell GetPixel/SetPixel. The interpreted per-pixel
+#   path churned millions of marshaled GDI+ calls and corrupted the PS 5.1
+#   engine (AccessViolationException) once the variant count grew past ~14. The
+#   compiled LockBits path is robust and ~100x faster while producing
+#   byte-identical output (same max-channel lightness math, same banker's
+#   rounding, same PNG encoder).
 #
 # Re-run whenever a variant's primary_color changes, or when adding a new
 # variant: drop the new entry into the slime_variant/ JSONs (for resource
@@ -84,7 +88,7 @@ foreach ($p in @($bucketPath, $milkBucketPath, $waterStillPath, $waterFlowPath))
 }
 
 # --- Variant -> color map ---
-# 12 resource variants: read primary_color from each JSON.
+# Every resource variant: read primary_color from each JSON (auto-discovered).
 $variants = @{}
 foreach ($json in Get-ChildItem -Path $variantJsonDir -Filter "*.json") {
     $name = [System.IO.Path]::GetFileNameWithoutExtension($json.Name)
@@ -98,115 +102,124 @@ foreach ($json in Get-ChildItem -Path $variantJsonDir -Filter "*.json") {
 $variants["vanilla"] = 0x52A03A
 $variants["magma"]   = 0xE36E1B
 
-# Per-pixel tint: preserve source lightness, swap hue to target.
-function Get-Lightness {
-    param([System.Drawing.Color]$c)
-    # Perceived lightness via max channel; matches the look-and-feel of how
-    # Minecraft's runtime BlockColor tints overlay vanilla textures.
-    return [int][Math]::Max([Math]::Max($c.R, $c.G), $c.B)
-}
+# --- Compiled pixel core (LockBits, not GetPixel/SetPixel) ---
+# Same tint math as the original interpreted path; runs in compiled code so the
+# millions of per-pixel ops don't corrupt the PS 5.1 engine under high variant
+# counts. See the "Performance + reliability note" in the header.
+$tinterCode = @'
+using System;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 
-function Apply-Tint {
-    param([System.Drawing.Color]$src, [int]$tintRgb)
-    $tR = ($tintRgb -shr 16) -band 0xFF
-    $tG = ($tintRgb -shr 8) -band 0xFF
-    $tB = $tintRgb -band 0xFF
-    $l = (Get-Lightness $src) / 255.0
-    $r = [int][Math]::Round($tR * $l)
-    $g = [int][Math]::Round($tG * $l)
-    $b = [int][Math]::Round($tB * $l)
-    return [System.Drawing.Color]::FromArgb($src.A, $r, $g, $b)
-}
+public static class MilkTinter {
+    // Load a PNG. We LockBits it as Format32bppArgb directly (no Graphics
+    // redraw): the vanilla source PNGs are already 32bppArgb, so locking in
+    // that format is a zero-conversion read whose bytes match a GetPixel scan
+    // exactly. A Graphics.DrawImage redraw would alpha-round the translucent
+    // water pixels by +-1 and drift from the original interpreted output.
+    static Bitmap Load32(string path) {
+        return new Bitmap(path);
+    }
 
-function Save-Png {
-    param([System.Drawing.Bitmap]$bmp, [string]$path)
-    $dir = Split-Path $path -Parent
-    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
-    $bmp.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)
+    static byte[] Read(Bitmap bmp, out int stride) {
+        var rect = new Rectangle(0, 0, bmp.Width, bmp.Height);
+        var d = bmp.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+        stride = d.Stride;
+        byte[] buf = new byte[d.Stride * bmp.Height];
+        Marshal.Copy(d.Scan0, buf, 0, buf.Length);
+        bmp.UnlockBits(d);
+        return buf;
+    }
+
+    static void Write(Bitmap bmp, byte[] buf) {
+        var rect = new Rectangle(0, 0, bmp.Width, bmp.Height);
+        var d = bmp.LockBits(rect, ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+        Marshal.Copy(buf, 0, d.Scan0, buf.Length);
+        bmp.UnlockBits(d);
+    }
+
+    // Format32bppArgb byte order in memory is B, G, R, A.
+    static int Light(byte r, byte g, byte b) {
+        int m = r; if (g > m) m = g; if (b > m) m = b; return m;
+    }
+
+    public static void TintFluid(string srcPath, string dstPath, int tintRgb) {
+        using (var bmp = Load32(srcPath)) {
+            int stride; byte[] buf = Read(bmp, out stride);
+            int tR = (tintRgb >> 16) & 0xFF, tG = (tintRgb >> 8) & 0xFF, tB = tintRgb & 0xFF;
+            for (int i = 0; i < buf.Length; i += 4) {
+                byte b = buf[i], g = buf[i + 1], r = buf[i + 2], a = buf[i + 3];
+                if (a == 0) { buf[i] = 0; buf[i + 1] = 0; buf[i + 2] = 0; buf[i + 3] = 0; continue; }
+                double l = Light(r, g, b) / 255.0;
+                buf[i]     = (byte)Math.Round(tB * l);
+                buf[i + 1] = (byte)Math.Round(tG * l);
+                buf[i + 2] = (byte)Math.Round(tR * l);
+                // alpha (buf[i + 3]) passed through untouched
+            }
+            Write(bmp, buf);
+            bmp.Save(dstPath, ImageFormat.Png);
+        }
+    }
+
+    public static void TintBucket(string emptyPath, string milkPath, string dstPath, int tintRgb) {
+        using (var empty = Load32(emptyPath))
+        using (var milk = Load32(milkPath)) {
+            int ms; byte[] mb = Read(milk, out ms);
+            int es; byte[] eb = Read(empty, out es);
+            int ew = empty.Width, eh = empty.Height, w = milk.Width, h = milk.Height;
+            int tR = (tintRgb >> 16) & 0xFF, tG = (tintRgb >> 8) & 0xFF, tB = tintRgb & 0xFF;
+            for (int y = 0; y < h; y++) {
+                for (int x = 0; x < w; x++) {
+                    int i = y * ms + x * 4;
+                    byte b = mb[i], g = mb[i + 1], r = mb[i + 2], a = mb[i + 3];
+                    if (a == 0) { mb[i] = 0; mb[i + 1] = 0; mb[i + 2] = 0; mb[i + 3] = 0; continue; }
+                    bool metal = false;
+                    if (x < ew && y < eh) {
+                        int j = y * es + x * 4;
+                        if (eb[j + 3] != 0 && eb[j + 2] == r && eb[j + 1] == g && eb[j] == b) metal = true;
+                    }
+                    if (metal) continue; // bucket-metal pixel: keep verbatim
+                    double l = Light(r, g, b) / 255.0;
+                    mb[i]     = (byte)Math.Round(tB * l);
+                    mb[i + 1] = (byte)Math.Round(tG * l);
+                    mb[i + 2] = (byte)Math.Round(tR * l);
+                }
+            }
+            Write(milk, mb);
+            milk.Save(dstPath, ImageFormat.Png);
+        }
+    }
 }
+'@
+Add-Type -ReferencedAssemblies System.Drawing -TypeDefinition $tinterCode
 
 function Build-BucketTexture {
     param([string]$variant, [int]$tintRgb)
-    $emptyBmp = New-Object System.Drawing.Bitmap $bucketPath
-    $milkBmp  = New-Object System.Drawing.Bitmap $milkBucketPath
-    try {
-        $w = $milkBmp.Width
-        $h = $milkBmp.Height
-        $out = New-Object System.Drawing.Bitmap $w, $h
-        for ($y = 0; $y -lt $h; $y++) {
-            for ($x = 0; $x -lt $w; $x++) {
-                $mp = $milkBmp.GetPixel($x, $y)
-                if ($mp.A -eq 0) { continue }
-                # If empty-bucket has a non-transparent pixel here AND the
-                # RGB matches, it's bucket-metal; pass through unchanged.
-                if ($x -lt $emptyBmp.Width -and $y -lt $emptyBmp.Height) {
-                    $ep = $emptyBmp.GetPixel($x, $y)
-                    if ($ep.A -ne 0 -and $ep.R -eq $mp.R -and $ep.G -eq $mp.G -and $ep.B -eq $mp.B) {
-                        $out.SetPixel($x, $y, $mp)
-                        continue
-                    }
-                }
-                # Otherwise it's a milk pixel -- tint it.
-                $out.SetPixel($x, $y, (Apply-Tint $mp $tintRgb))
-            }
-        }
-        # NOTE: No eye overlay on milk buckets. Slime Milk is the extracted
-        # fluid, not the live slime -- eyes belong on the Slime Bucket
-        # (the bucketed-slime entity surface, layer0 = slime_silhouette.png).
-        # An earlier revision of this script added eyes here; reverted because
-        # the milk bucket should read as "bucket of tinted liquid," not "slime
-        # in a jar." See docs/known_issues.md for the design pivot history.
-
-        try {
-            $outPath = Join-Path $itemDir "${variant}_slime_milk_bucket.png"
-            Save-Png $out $outPath
-            Write-Output "wrote $outPath"
-        } finally { $out.Dispose() }
-    } finally {
-        $emptyBmp.Dispose()
-        $milkBmp.Dispose()
-    }
+    # NOTE: No eye overlay on milk buckets. Slime Milk is the extracted fluid,
+    # not the live slime -- eyes belong on the Slime Bucket (the bucketed-slime
+    # surface). The milk bucket should read as "bucket of tinted liquid."
+    $outPath = Join-Path $itemDir "${variant}_slime_milk_bucket.png"
+    [MilkTinter]::TintBucket($bucketPath, $milkBucketPath, $outPath, $tintRgb)
+    Write-Output "wrote $outPath"
 }
 
 function Build-FluidTexture {
     param([string]$variant, [int]$tintRgb, [string]$sourcePath, [string]$kind)
-    $src = New-Object System.Drawing.Bitmap $sourcePath
-    try {
-        # Animated multi-frame strip: copy the FULL vanilla water_still /
-        # water_flow vertical strip (32 frames each) and tint every pixel.
-        # Sibling .mcmeta is emitted below to drive the animation cadence.
-        $w = $src.Width
-        $h = $src.Height
-        $out = New-Object System.Drawing.Bitmap $w, $h
-        try {
-            for ($y = 0; $y -lt $h; $y++) {
-                for ($x = 0; $x -lt $w; $x++) {
-                    $p = $src.GetPixel($x, $y)
-                    if ($p.A -eq 0) {
-                        # Explicit transparent write so we don't rely on
-                        # the Bitmap ctor's initial contents (technically
-                        # implementation-defined). Matches vanilla water
-                        # alpha which is fully opaque, but keeps the loop
-                        # invariant clear if vanilla ever ships transparent
-                        # pixels in these strips.
-                        $out.SetPixel($x, $y, [System.Drawing.Color]::FromArgb(0, 0, 0, 0))
-                        continue
-                    }
-                    $out.SetPixel($x, $y, (Apply-Tint $p $tintRgb))
-                }
-            }
-            $outPath = Join-Path $blockDir "${variant}_slime_milk_${kind}.png"
-            Save-Png $out $outPath
-            Write-Output "wrote $outPath ($w x $h)"
-            # Sibling .mcmeta declaring the animation. frametime=2 matches
-            # vanilla water_still.png.mcmeta's cadence. Width/height left
-            # implicit so MC auto-detects frame size = texture width.
-            $mcmetaPath = "$outPath.mcmeta"
-            [System.IO.File]::WriteAllText($mcmetaPath, "{`n  `"animation`": {`n    `"frametime`": 2`n  }`n}`n", [System.Text.UTF8Encoding]::new($false))
-            Write-Output "wrote $mcmetaPath"
-        } finally { $out.Dispose() }
-    } finally { $src.Dispose() }
+    $outPath = Join-Path $blockDir "${variant}_slime_milk_${kind}.png"
+    [MilkTinter]::TintFluid($sourcePath, $outPath, $tintRgb)
+    Write-Output "wrote $outPath"
+    # Sibling .mcmeta declaring the animation. frametime=2 matches vanilla
+    # water_still.png.mcmeta's cadence. Width/height left implicit so MC
+    # auto-detects frame size = texture width.
+    $mcmetaPath = "$outPath.mcmeta"
+    [System.IO.File]::WriteAllText($mcmetaPath, "{`n  `"animation`": {`n    `"frametime`": 2`n  }`n}`n", [System.Text.UTF8Encoding]::new($false))
 }
+
+# Ensure output dirs exist. The compiled MilkTinter writes via Bitmap.Save,
+# which (unlike the old Save-Png helper) does not create parent directories, so
+# the script would throw on save in a fresh checkout / alternate output root.
+New-Item -ItemType Directory -Force -Path $itemDir, $blockDir | Out-Null
 
 foreach ($variant in ($variants.Keys | Sort-Object)) {
     $tint = $variants[$variant]
@@ -215,4 +228,4 @@ foreach ($variant in ($variants.Keys | Sort-Object)) {
     Build-FluidTexture -variant $variant -tintRgb $tint -sourcePath $waterFlowPath -kind "flow"
 }
 
-Write-Output "done -- 14 variants x (1 bucket + 1 still + 1 flow) = 42 PNGs"
+Write-Output "done -- $($variants.Count) variants x (1 bucket + 1 still + 1 flow) PNGs"

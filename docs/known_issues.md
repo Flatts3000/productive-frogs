@@ -18,7 +18,8 @@ Symbols 🟢 (resolved) and 🟠 (reopened / since-reverted) live in the [archiv
 
 ## Open issues
 
-*None currently tracked. New 🔴 / 🟡 entries go here.*
+### 🔴 Resource Slime is captured with a water bucket, not an empty bucket
+Right-clicking a Resource Slime with an **empty** bucket does nothing; a **water** bucket is what currently captures it into a Slime Bucket. This is inherited vanilla `Bucketable` behaviour (the same mechanic fish/axolotls/tadpoles use), but it reads wrong for a slime: a player reaches for an empty bucket and nothing happens. Expected: capture with an empty bucket (slimes are not aquatic). Fix is to override the bucket interaction so an empty bucket is the capture item.
 
 ---
 

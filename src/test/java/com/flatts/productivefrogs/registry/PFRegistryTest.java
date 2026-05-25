@@ -78,13 +78,12 @@ class PFRegistryTest {
     }
 
     /**
-     * Each of the 12 variant slime spawn eggs must carry the {@code SLIME_VARIANT}
+     * Each shipped v1.0 variant slime spawn egg must carry the {@code SLIME_VARIANT}
      * data component on its default stack so the {@code slime_variant} ItemTintSource
      * can resolve the variant's primary colour from the datapack registry. Without
      * this component the spawn eggs would all render the (gray) JSON-default
-     * fallback — the bug captured in {@code docs/known_issues.md} under the
-     * "Per-variant + per-category items need JEI subtype interpreters" entry
-     * (tint half).
+     * fallback. (Spot-checks the shipped v1.0 variants; the v1.1 additions share
+     * the same single data-driven spawn-egg item.)
      */
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(strings = {
@@ -92,7 +91,7 @@ class PFRegistryTest {
         "redstone", "lapis", "coal",
         "diamond", "emerald",
         "prismarine", "sponge",
-        "magma_cream", "ender_pearl"
+        "ender_pearl"
     })
     void variantSlimeSpawnEggCarriesSlimeVariantComponent(String variantName) {
         ResourceLocation expected = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName);

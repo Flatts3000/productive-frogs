@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": {
+    "type": "neoforge:components",
+    "items": [
+      "productivefrogs:configurable_froglight"
+    ],
+    "components": {
+      "productivefrogs:slime_variant": "productivefrogs:obsidian"
+    }
+  },
+  "result": {
+    "id": "minecraft:obsidian"
+  },
+  "experience": 0.7,
+  "cookingtime": 200,
+  "category": "misc",
+  "group": "productivefrogs_froglight"
+}
