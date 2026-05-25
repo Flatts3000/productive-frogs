@@ -216,6 +216,11 @@ function Build-FluidTexture {
     [System.IO.File]::WriteAllText($mcmetaPath, "{`n  `"animation`": {`n    `"frametime`": 2`n  }`n}`n", [System.Text.UTF8Encoding]::new($false))
 }
 
+# Ensure output dirs exist. The compiled MilkTinter writes via Bitmap.Save,
+# which (unlike the old Save-Png helper) does not create parent directories, so
+# the script would throw on save in a fresh checkout / alternate output root.
+New-Item -ItemType Directory -Force -Path $itemDir, $blockDir | Out-Null
+
 foreach ($variant in ($variants.Keys | Sort-Object)) {
     $tint = $variants[$variant]
     Build-BucketTexture -variant $variant -tintRgb $tint

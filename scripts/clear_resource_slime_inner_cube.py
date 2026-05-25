@@ -2,24 +2,25 @@
 
 Why this exists
 ---------------
-v1.0.1 renders each Resource Slime's variant block live inside the slime
-(`ResourceSlimeInnerBlockLayer` -> `BlockRenderDispatcher.renderSingleBlock`).
-The vanilla `SlimeRenderer` still draws the model's inner body cube underneath,
-using the per-category texture `<category>_resource_slime.png`. Those textures
-(authored in V1.5) carry an OPAQUE, solidly-coloured inner-cube body
-(e.g. cave = red, void = purple). Because the slime renders in the translucent
-entity pass, that opaque coloured cube ends up obscuring the live resource
-block - so every Cave variant looked like a red (redstone) cube, every Void
-variant like a purple cube, etc., regardless of the actual variant.
+The per-category textures `<category>_resource_slime.png` (authored in V1.5)
+carry an OPAQUE, solidly-coloured inner-cube body (e.g. cave = red, void =
+purple) - a leftover generic-resource representation. v1.1 replaced that with a
+per-variant downscaled-block interior (`generate_resource_slime_textures.py`),
+so the legacy colour must be removed from the per-category textures, which now
+serve only as (a) the variant-less fallback texture and (b) the grey-outer-shell
+template that the per-variant generator builds on. Left in place, the old colour
+showed for variant-less slimes and bled into the generated per-variant textures.
+
+(Historical: v1.0.1 tried to draw the variant block as a live model inside the
+slime, but an opaque block in a separate render pass is depth-culled by the
+slime's translucent shell, so it never showed - the coloured inner cube was what
+players saw. That live-block layer was deleted in v1.1.)
 
 The slime texture is a standard 64x32 layout: the outer 8x8x8 jelly shell
 occupies y < 16; the inner 6x6x6 body cube occupies y >= 16. Clearing the
-inner-cube region (alpha 0) removes the obscuring coloured cube so the live
-per-variant block is the visible interior, seen through the translucent shell.
-
-These Resource Slime textures have no eyes in the inner region (the eyes live on
-the parent-species textures, which are left untouched here), so clearing the
-whole y >= 16 band is safe.
+inner-cube region (alpha 0) removes the legacy coloured cube. These Resource
+Slime textures have no eyes in the inner region (eyes live on the parent-species
+textures, untouched here), so clearing the whole y >= 16 band is safe.
 
 Re-run after re-authoring any `*_resource_slime.png`. Idempotent.
 
