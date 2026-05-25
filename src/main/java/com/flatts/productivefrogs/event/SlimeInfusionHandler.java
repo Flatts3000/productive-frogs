@@ -199,7 +199,6 @@ public final class SlimeInfusionHandler {
         Registry<SlimeVariant> registry = level.registryAccess()
             .registry(PFRegistries.SLIME_VARIANT).orElse(null);
         if (registry == null) return null;
-        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        return SlimeVariant.findByPrimerItem(registry, itemId);
+        return SlimeVariant.findByPrimer(registry, stack);
     }
 }

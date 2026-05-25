@@ -38,10 +38,31 @@ class SlimeVariantTest {
         }
         """;
 
+    private static final String WITH_PRIMER_TAG = """
+        {
+          "primer_tag": "c:ingots/tin",
+          "category": "cave",
+          "primary_color": 12895428,
+          "secondary_color": 14211288
+        }
+        """;
+
+    @Test
+    void codecDecodesVariantWithPrimerTagAndNoPrimerItem() {
+        // A tag-driven cross-mod variant: primer_item is absent, primer_tag drives
+        // infusion matching (any mod's tin ingot in c:ingots/tin primes it).
+        SlimeVariant decoded = decode(WITH_PRIMER_TAG);
+        assertTrue(decoded.primerItem().isEmpty(), "primer_item is optional, absent for a tag-driven variant");
+        assertTrue(decoded.primerTag().isPresent(), "primer_tag must decode");
+        assertEquals("c:ingots/tin", decoded.primerTag().get().location().toString());
+        assertEquals(Category.CAVE, decoded.category());
+    }
+
     @Test
     void codecDecodesVariantWithoutOptionalInnerBlockField() {
         SlimeVariant decoded = decode(WITHOUT_INNER_BLOCK);
-        assertEquals(ResourceLocation.parse("minecraft:iron_ingot"), decoded.primerItem());
+        assertEquals(Optional.of(ResourceLocation.parse("minecraft:iron_ingot")), decoded.primerItem());
+        assertTrue(decoded.primerTag().isEmpty(), "primer_tag absent for an item-primed variant");
         assertEquals(Category.CAVE, decoded.category());
         assertEquals(12895428, decoded.primaryColor());
         assertEquals(14211288, decoded.secondaryColor());
@@ -61,7 +82,8 @@ class SlimeVariantTest {
     @Test
     void codecRoundTripsVariantWithInnerBlock() {
         SlimeVariant original = new SlimeVariant(
-            ResourceLocation.parse("minecraft:copper_ingot"),
+            Optional.of(ResourceLocation.parse("minecraft:copper_ingot")),
+            Optional.empty(),
             Category.CAVE,
             14188339,
             16432204,
@@ -81,7 +103,8 @@ class SlimeVariantTest {
     @Test
     void codecRoundTripsVariantWithoutInnerBlock() {
         SlimeVariant original = new SlimeVariant(
-            ResourceLocation.parse("minecraft:gold_ingot"),
+            Optional.of(ResourceLocation.parse("minecraft:gold_ingot")),
+            Optional.empty(),
             Category.CAVE,
             16777045,
             16774260,

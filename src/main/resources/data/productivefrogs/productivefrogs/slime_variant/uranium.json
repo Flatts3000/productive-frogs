@@ -1,0 +1,9 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "alltheores" }
+  ],
+  "primer_tag": "c:ingots/uranium",
+  "category": "cave",
+  "primary_color": 6266928,
+  "secondary_color": 4159520
+}

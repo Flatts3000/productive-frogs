@@ -1,0 +1,9 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "powah" }
+  ],
+  "primer_item": "powah:crystal_spirited",
+  "category": "void",
+  "primary_color": 4898938,
+  "secondary_color": 3116884
+}

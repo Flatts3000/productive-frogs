@@ -1,0 +1,16 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "ae2" }
+  ],
+  "type": "minecraft:smelting",
+  "ingredient": {
+    "type": "neoforge:components",
+    "items": [ "productivefrogs:configurable_froglight" ],
+    "components": { "productivefrogs:slime_variant": "productivefrogs:silicon" }
+  },
+  "result": { "id": "ae2:silicon" },
+  "experience": 0.7,
+  "cookingtime": 200,
+  "category": "misc",
+  "group": "productivefrogs_froglight"
+}

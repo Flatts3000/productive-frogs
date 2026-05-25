@@ -1,0 +1,16 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "powah" }
+  ],
+  "type": "minecraft:smelting",
+  "ingredient": {
+    "type": "neoforge:components",
+    "items": [ "productivefrogs:configurable_froglight" ],
+    "components": { "productivefrogs:slime_variant": "productivefrogs:nitro" }
+  },
+  "result": { "id": "powah:crystal_nitro" },
+  "experience": 0.7,
+  "cookingtime": 200,
+  "category": "misc",
+  "group": "productivefrogs_froglight"
+}

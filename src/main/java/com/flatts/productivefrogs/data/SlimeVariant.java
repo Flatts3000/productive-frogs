@@ -7,8 +7,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -63,7 +68,8 @@ import org.jetbrains.annotations.Nullable;
  * </ul>
  */
 public record SlimeVariant(
-    ResourceLocation primerItem,
+    Optional<ResourceLocation> primerItem,
+    Optional<TagKey<Item>> primerTag,
     Category category,
     int primaryColor,
     int secondaryColor,
@@ -95,7 +101,8 @@ public record SlimeVariant(
      */
     public static final Codec<SlimeVariant> CODEC = RecordCodecBuilder.create(
         instance -> instance.group(
-            ResourceLocation.CODEC.fieldOf("primer_item").forGetter(SlimeVariant::primerItem),
+            ResourceLocation.CODEC.optionalFieldOf("primer_item").forGetter(SlimeVariant::primerItem),
+            TagKey.codec(Registries.ITEM).optionalFieldOf("primer_tag").forGetter(SlimeVariant::primerTag),
             Category.CODEC.fieldOf("category").forGetter(SlimeVariant::category),
             Codec.intRange(0, 0xFFFFFF).fieldOf("primary_color").forGetter(SlimeVariant::primaryColor),
             Codec.intRange(0, 0xFFFFFF).fieldOf("secondary_color").forGetter(SlimeVariant::secondaryColor),
@@ -106,20 +113,51 @@ public record SlimeVariant(
     );
 
     /**
-     * Find the variant whose {@code primer_item} matches the given item id, or
-     * {@code null} if no variant maps to it. Used by the slime infusion handler
-     * to upgrade a primer-tag match from "category only" to "specific variant"
-     * when the held item matches a shipped variant's primer.
+     * Find the variant primed by the given held stack, or {@code null}. Matches
+     * a variant's exact {@code primer_item} (by item id) OR its {@code primer_tag}
+     * (by tag membership). The tag path is what lets a single cross-mod variant
+     * (e.g. {@code primer_tag: c:ingots/tin}) be primed by any mod's tin ingot
+     * without hardcoding a specific mod's item - see {@code docs/cross_mod_compat.md}.
      *
-     * <p>Linear scan over the registry. With ~12 variants V1-shipped (or even
-     * the future ~30-50 with cross-mod compat) the cost is trivial compared to
-     * the rest of the right-click handler.
+     * <p>Linear scan over the registry; trivial next to the right-click handler.
+     */
+    @Nullable
+    public static Map.Entry<ResourceLocation, SlimeVariant> findByPrimer(
+            Registry<SlimeVariant> registry, ItemStack stack) {
+        for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
+            if (primerMatches(entry.getValue(), stack)) {
+                return Map.entry(entry.getKey().location(), entry.getValue());
+            }
+        }
+        return null;
+    }
+
+    /**
+     * True if {@code stack} primes {@code variant}: it is in the variant's
+     * {@code primer_tag} (tag membership, resolved at runtime where tags are
+     * loaded), or its item id equals the variant's exact {@code primer_item}.
+     */
+    public static boolean primerMatches(SlimeVariant variant, ItemStack stack) {
+        if (variant.primerTag().map(stack::is).orElse(false)) {
+            return true;
+        }
+        if (variant.primerItem().isPresent()) {
+            return variant.primerItem().get().equals(BuiltInRegistries.ITEM.getKey(stack.getItem()));
+        }
+        return false;
+    }
+
+    /**
+     * Exact {@code primer_item}-only match by item id (ignores {@code primer_tag}).
+     * Retained for callers/tests that resolve by a known canonical item id; the
+     * infusion + egg-priming handlers use {@link #findByPrimer} so tag-driven
+     * cross-mod variants resolve too.
      */
     @Nullable
     public static Map.Entry<ResourceLocation, SlimeVariant> findByPrimerItem(
             Registry<SlimeVariant> registry, ResourceLocation itemId) {
         for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
-            if (entry.getValue().primerItem().equals(itemId)) {
+            if (entry.getValue().primerItem().filter(id -> id.equals(itemId)).isPresent()) {
                 return Map.entry(entry.getKey().location(), entry.getValue());
             }
         }

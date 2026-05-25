@@ -4,12 +4,14 @@ Strategy for supporting other popular NeoForge 1.21.1 mods' resources as Resourc
 Slime variants, with no hard dependencies, no crashes when a mod is absent, and
 (for the bulk of it) no per-mod Java or per-mod files.
 
-> **Status:** plan of record (researched 2026-05-25). Supersedes the earlier
-> per-mod-tables draft. The load-bearing change versus that draft: key cross-mod
-> variants off **common tags** with a new `primer_tag`, not off one mod's exact
-> item id. Builds directly on the data-driven variant refactor (PR #108) - see
-> [refactor_data_driven_variants.md](./refactor_data_driven_variants.md). Nothing
-> here is implemented yet.
+> **Status:** IMPLEMENTED (2026-05-25). 24 cross-mod variants ship, primed off
+> `primer_tag` (common tags) where one exists, else `primer_item`. Two findings
+> changed the plan during implementation: (1) NeoForge forbids `tag_empty`
+> conditions on datapack-registry entries, so gating is `mod_loaded(provider)`
+> not `tag_empty` (see the mechanism note below); (2) **Thermal Series has no
+> 1.21.1 release and is not in ATM10**, so its picks (apatite, sulfur, signalum,
+> lumium, enderium) are deferred until it ports. Builds on the data-driven
+> variant refactor (PR #108).
 
 ## TL;DR
 
@@ -62,11 +64,17 @@ datapack-only":
    tag when present, else fall back to the existing exact `primer_item`. A
    cross-mod `tin` variant keys on `c:ingots/tin` and is primed by any mod's tin
    ingot. Vanilla variants keep `primer_item` (one canonical item).
-2. **`tag_empty` gating instead of `mod_loaded` OR-lists.** Wrap a cross-mod
-   variant file in `NOT(neoforge:tag_empty: "c:ingots/tin")` so it activates for
-   ANY providing mod and stays inert (out of JEI / creative) when none is
-   installed. Reserve `mod_loaded` for files that reference a specific mod's
-   block/item (e.g. a bespoke `inner_block` or a no-common-tag signature item).
+2. **`mod_loaded(provider)` gating** on the variant JSON + its smelt recipe.
+   (This was planned as `tag_empty`, but NeoForge **forbids tag-based conditions
+   when loading datapack-registry entries** - registries load before tags, so
+   `tag_empty` on a `slime_variant` entry throws "tag-based conditions not
+   permitted in this context". Verified at boot.) So each cross-mod variant +
+   its smelt recipe is gated `mod_loaded` on the provider mod whose verified item
+   the smelt outputs (e.g. `alltheores` for the metals). The trade-off: a variant
+   loads only when its canonical provider is present, not for any tin-providing
+   mod. For the ATM10 target that is fine. The **primer is still tag-driven**:
+   `primer_tag` resolves at infusion time (after tags load), so once a variant is
+   loaded it is primed by ANY mod's item in that tag.
 3. **Output (smelt-back) item resolution.** A recipe must emit a concrete item,
    not a tag. Add an optional `result_item` to the variant (the preferred output,
    e.g. `alltheores:tin_ingot`) with a "first item in `c:ingots/tin`" fallback,
@@ -78,12 +86,12 @@ tag-membership branch. Everything else is JSON.
 
 ## Authoring workflow
 
-Generate the cross-mod pool from a compact data table (extend
-`scripts/generate_v1_1_variants.ps1`), one row per
-`{resource, primer_tag, species, primary_color, secondary_color, result_item}`,
-emitting the `slime_variant` JSON + the smelting recipe + the `tag_empty`
-condition wrapper. This mirrors Productive Bees' datagen builder list: the source
-of truth stays a small table, not dozens of hand-written files.
+`scripts/generate_cross_mod_variants.ps1` generates the pool from a compact data
+table, one row per `{name, category, tag|primer_item, provider mod, result item,
+colors}`, emitting the `slime_variant` JSON + the Froglight smelt recipe, both
+wrapped in a `mod_loaded(provider)` condition. This mirrors Productive Bees'
+datagen builder list: the source of truth stays a small table, not dozens of
+hand-written files. Re-run it after editing the table.
 
 ## Curated shortlist (first pass), by species
 
@@ -108,18 +116,19 @@ is bespoke signature materials that "sell" the feature but need explicit handlin
 |---|---|---|
 | certus quartz | `c:gems/certus_quartz` | AE2 |
 | fluix | `c:gems/fluix` | AE2 (judgment call: GEODE vs VOID by lore) |
-| fluorite | `c:gems/fluorite` | Mekanism (verify) |
-| apatite | `c:gems/apatite` | Thermal |
+| fluorite | `c:gems/fluorite` | Mekanism |
 | silicon | `c:silicon` | AE2 + Refined Storage (one tag covers both) |
 
+(apatite, `c:gems/apatite`, is Thermal-only - deferred until Thermal ports to 1.21.1.)
+
 ### INFERNAL (nether/fire)
-- sulfur (`c:dusts/sulfur`, broad overlap, brimstone flavour) - sleeper Tier-1 pick.
-- signalum, lumium (Thermal alloys; energetic/glow read). Alloy-tag caveat applies.
+- blazing crystal (`powah:crystal_blazing`) - bespoke, shipped.
+- Deferred (Thermal has no 1.21.1 release): sulfur (`c:dusts/sulfur`), signalum, lumium.
 
 ### VOID (end/arcane)
-- enderium (Thermal; marquee VOID pick - verify `c:ingots/enderium`).
-- Powah crystals (blazing/niotic/spirited/nitro) - bespoke, recognisable endgame.
-- Mythic Metals fantasy metals (orichalcum, mythril, ...) - bespoke.
+- Powah crystals niotic / spirited / nitro (`powah:crystal_*`) - bespoke, shipped.
+- Mythic Metals orichalcum, mythril (`c:ingots/*`) - shipped.
+- Deferred (Thermal has no 1.21.1 release): enderium.
 
 ### BOG (swamp + mob drops)
 - **pink slime** (`industrialforegoing:pink_slime_ball`) - the must-have slime
@@ -131,19 +140,24 @@ Modded tech has almost no aquatic resources. The one strong pick is Mythic
 Metals' Aquarium (`mythicmetals:aquarium_ingot`, ocean-only ore). TIDE otherwise
 leans on vanilla aquatic content. Flagged as a design gap, not a blocker.
 
-## Decisions (confirmed 2026-05-25)
+## Decisions (confirmed 2026-05-25) and how they shipped
 
-- **Alloys:** include them keyed on `c:ingots/<alloy>` with `required: false`.
-  They catch packs that tag them; where the tag is empty the variant stays inert.
-- **Output-item resolution:** per-variant `result_item` (the preferred smelt
-  output) with a "first item in the tag" fallback, so a pack can override which
-  item is canonical for `c:ingots/tin` etc.
-- **Scope:** ship it ALL in one pass - the `primer_tag` mechanism, the Tier-1
-  tag-driven metals + gems (incl. alloys per above), AND the bespoke signature
-  items (pink slime, enderium, Powah crystals, Mystical Agriculture essences)
-  together. Larger PR, accepted.
-- **TIDE:** accept TIDE as the small, vanilla-leaning species (prismarine / ink
-  sac + Aquarium where Mythic Metals is present). No extra aquatic-resource hunt.
+- **Alloys:** decision was "include keyed on the common tag." Shipped the two with
+  a verified 1.21.1 provider - brass (`c:ingots/brass` -> `create:brass_ingot`)
+  and refined obsidian (`c:ingots/refined_obsidian` -> `mekanism:ingot_refined_obsidian`).
+  The rest (electrum, invar, constantan, signalum, lumium, enderium, steel) are
+  deferred: no verified 1.21.1 provider id, and shipping an unverified id silently
+  fails. (`required: false` was for tag-file entries; we don't ship tag files, we
+  reference the mods' own.)
+- **Output-item resolution:** the smelt-back is the per-variant recipe's output -
+  the provider's verified item, gated `mod_loaded(provider)`. A pack overrides by
+  replacing the recipe. (There is no runtime "first in tag" fallback - a furnace
+  recipe must name a concrete item; not a codec field.)
+- **Scope:** shipped ALL in one pass - the `primer_tag` mechanism + 24 variants
+  (CAVE metals + GEODE gems + Powah/Mythic VOID + Powah INFERNAL + BOG pink slime /
+  MA essences + TIDE aquarium), minus the Thermal-dependent picks (no 1.21.1 release).
+- **TIDE:** accepted as the small, vanilla-leaning species (vanilla aquatic +
+  Aquarium where Mythic Metals is present).
 
 ## Datapack override path for modpack authors
 
