@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFRegistries;
+import com.flatts.productivefrogs.util.PFDebug;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
@@ -78,6 +79,8 @@ public final class EggPrimerHandler {
         Player player = event.getEntity();
         // Replace vanilla frogspawn with the matching species's primed egg.
         level.setBlockAndUpdate(pos, PFBlocks.primedEgg(species).defaultBlockState());
+        PFDebug.log(PFDebug.Area.EGG, () -> String.format(
+            "prime: frogspawn at %s + primer %s -> primed egg species=%s", pos, variantEntry.getKey(), species));
         if (!player.getAbilities().instabuild) {
             held.shrink(1);
         }

@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFItems;
+import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -83,6 +84,10 @@ public final class FrogspawnBottlingHandler {
         }
         ItemStack result = ItemUtils.createFilledResult(held, player, filled);
         player.setItemInHand(hand, result);
+
+        final Category bottled = category;
+        PFDebug.log(PFDebug.Area.EGG, () -> String.format(
+            "bottle: %s at %s -> frog_egg (category=%s)", state.getBlock(), pos, bottled));
 
         level.playSound(
             null,

@@ -8,6 +8,7 @@ import com.flatts.productivefrogs.data.ParentSpeciesEntry;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFRegistries;
+import com.flatts.productivefrogs.util.PFDebug;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.core.Registry;
@@ -109,13 +110,14 @@ public final class SlimeSplitDiscoveryHandler {
         Registry<SlimeVariant> variantRegistry = level.registryAccess()
             .registry(PFRegistries.SLIME_VARIANT).orElse(null);
 
+        float chance = discoveryChancePerOffspring();
         List<Mob> children = event.getChildren();
         for (int i = 0; i < children.size(); i++) {
             Mob child = children.get(i);
             if (!(child instanceof Slime childSlime)) {
                 continue;
             }
-            if (parent.getRandom().nextFloat() >= discoveryChancePerOffspring()) {
+            if (parent.getRandom().nextFloat() >= chance) {
                 continue;
             }
             ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level);
@@ -136,6 +138,11 @@ public final class SlimeSplitDiscoveryHandler {
                 }
             }
             children.set(i, resource);
+            final float rolledChance = chance;
+            PFDebug.log(PFDebug.Area.SPLIT, () -> String.format(
+                "discover: parent=%s category=%s -> variant=%s (chance=%.3f)",
+                BuiltInRegistries.ENTITY_TYPE.getKey(parent.getType()), category,
+                resource.getVariantId(), rolledChance));
         }
     }
 

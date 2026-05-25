@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.client.renderer;
 
+import com.flatts.productivefrogs.util.PFDebug;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import java.util.function.Function;
@@ -53,6 +54,11 @@ public class CategoryTintLayer<T extends LivingEntity, M extends EntityModel<T>>
     ) {
         int tint = tintGetter.applyAsInt(entity);
         ResourceLocation texture = textureGetter.apply(entity);
+        if (PFDebug.on(PFDebug.Area.RENDER)) {
+            PFDebug.logOnce(PFDebug.Area.RENDER, "tintlayer#" + entity.getId() + "/" + tint,
+                () -> String.format("%s id=%d categoryTint=#%08X texture=%s",
+                    entity.getClass().getSimpleName(), entity.getId(), tint, texture));
+        }
         VertexConsumer vc = buffer.getBuffer(RenderType.entityCutoutNoCull(texture));
         int packedOverlay = LivingEntityRenderer.getOverlayCoords(entity, 0.0F);
         // Model is already setup by parent renderer (prepareMobModel + setupAnim

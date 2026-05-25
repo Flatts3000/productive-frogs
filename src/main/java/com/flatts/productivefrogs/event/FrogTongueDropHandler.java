@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFItems;
+import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -56,6 +57,10 @@ public final class FrogTongueDropHandler {
         }
 
         if (frog.getCategory() != slime.getCategory()) {
+            if (!frog.level().isClientSide()) {
+                PFDebug.log(PFDebug.Area.TONGUE, () -> String.format(
+                    "no drop: frog category=%s != slime category=%s", frog.getCategory(), slime.getCategory()));
+            }
             return;
         }
 
@@ -94,6 +99,8 @@ public final class FrogTongueDropHandler {
             return;
         }
         if (variantId == null) {
+            PFDebug.log(PFDebug.Area.TONGUE, () -> String.format(
+                "drop skipped: frog category=%s had null variant (wasted eat)", frog.getCategory()));
             return;
         }
         ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
@@ -102,5 +109,8 @@ public final class FrogTongueDropHandler {
         ItemEntity drop = new ItemEntity(level, pos.x, pos.y, pos.z, froglight);
         drop.setDefaultPickUpDelay();
         level.addFreshEntity(drop);
+        PFDebug.log(PFDebug.Area.TONGUE, () -> String.format(
+            "drop: frog category=%s -> configurable_froglight variant=%s at %s",
+            frog.getCategory(), variantId, frog.blockPosition()));
     }
 }

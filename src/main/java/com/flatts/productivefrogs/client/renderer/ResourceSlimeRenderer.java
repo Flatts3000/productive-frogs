@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.client.renderer;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.util.PFDebug;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -62,6 +63,20 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
 
     @Override
     public ResourceLocation getTextureLocation(Slime entity) {
+        ResourceLocation texture = resolveTexture(entity);
+        if (PFDebug.on(PFDebug.Area.RENDER) && entity instanceof ResourceSlime resource) {
+            ResourceLocation variantId = resource.getVariantId();
+            Category cat = resource.getCategory();
+            boolean fallback = variantId == null;
+            PFDebug.logOnce(PFDebug.Area.RENDER, "slime#" + entity.getId() + "/" + variantId,
+                () -> String.format(
+                    "ResourceSlime id=%d variant=%s category=%s fallback=%s -> %s",
+                    entity.getId(), variantId, cat, fallback, texture));
+        }
+        return texture;
+    }
+
+    private ResourceLocation resolveTexture(Slime entity) {
         if (entity instanceof ResourceSlime resource) {
             ResourceLocation variantId = resource.getVariantId();
             if (variantId != null) {

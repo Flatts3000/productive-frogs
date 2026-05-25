@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.content.menu.SlimeMilkerMenu;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFFluidTypes;
 import com.flatts.productivefrogs.registry.PFItems;
+import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
@@ -119,6 +120,8 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
             // Bucket has no Variant component (vanilla slime bucket / empty)
             // or carries an unknown variant — fail closed, just like the
             // original right-click flow did before this redesign.
+            PFDebug.logOnce(PFDebug.Area.MILKER, "failclosed#" + pos + "/" + variant,
+                () -> String.format("milker @%s fail-closed: bucket variant=%s not millable", pos, variant));
             be.resetProgress();
             setWorking(level, pos, state, false);
             return;
@@ -135,6 +138,11 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
             setWorking(level, pos, state, false);
             return;
         }
+        if (be.cookProgress == 0) {
+            final String startVariant = variant;
+            PFDebug.log(PFDebug.Area.MILKER, () -> String.format(
+                "milker @%s: start cooking %s slime bucket", pos, startVariant));
+        }
         be.cookProgress++;
         be.setChanged();
         if (be.cookProgress >= COOK_TIME_TOTAL) {
@@ -146,6 +154,9 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
             be.inventory.setStackInSlot(OUTPUT_SLOT, new ItemStack(outputBucket));
             be.cookProgress = 0;
             setWorking(level, pos, state, false);
+            final String doneVariant = variant;
+            PFDebug.log(PFDebug.Area.MILKER, () -> String.format(
+                "milker @%s: produced %s milk bucket from %s slime bucket", pos, doneVariant, doneVariant));
             level.playSound(
                 null, pos, SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS,
                 0.8F, 1.2F + level.getRandom().nextFloat() * 0.2F

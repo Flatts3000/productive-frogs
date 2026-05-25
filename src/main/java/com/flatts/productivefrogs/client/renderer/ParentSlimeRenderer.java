@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.client.renderer;
 
+import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.client.renderer.entity.layers.SlimeOuterLayer;
@@ -24,6 +25,8 @@ public class ParentSlimeRenderer extends SlimeRenderer {
         this.texture = texture;
         this.layers.removeIf(l -> l instanceof SlimeOuterLayer);
         this.addLayer(new TintedSlimeOuterLayer(this, ctx.getModelSet(), outerTintArgb, texture));
+        PFDebug.log(PFDebug.Area.RENDER,
+            () -> String.format("ParentSlimeRenderer texture=%s outerTint=#%08X", texture, outerTintArgb));
     }
 
     @Override
