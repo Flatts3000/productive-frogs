@@ -34,6 +34,12 @@ public enum Category implements StringRepresentable {
     public static final StreamCodec<ByteBuf, Category> STREAM_CODEC =
         ByteBufCodecs.idMapper(Category::byOrdinalOrThrow, Category::ordinal);
 
+    // Cached enum constants. values() clones its array on every call, so the
+    // hot-path ordinal decoders (byOrdinalOrThrow on every packet decode,
+    // fromOrdinalOrDefault in entity synced-data getters read each render/AI
+    // tick) index into this shared copy instead. Never mutate it.
+    private static final Category[] VALUES = values();
+
     private final int rgb;
 
     /**
@@ -46,11 +52,10 @@ public enum Category implements StringRepresentable {
      * connection cleanly.
      */
     private static Category byOrdinalOrThrow(int ordinal) {
-        Category[] values = values();
-        if (ordinal < 0 || ordinal >= values.length) {
+        if (ordinal < 0 || ordinal >= VALUES.length) {
             throw new DecoderException("Unknown Category ordinal: " + ordinal);
         }
-        return values[ordinal];
+        return VALUES[ordinal];
     }
 
     /**
@@ -60,11 +65,10 @@ public enum Category implements StringRepresentable {
      * a client crash on a corrupt save or version-skew sync.
      */
     public static Category fromOrdinalOrDefault(int ordinal) {
-        Category[] values = values();
-        if (ordinal < 0 || ordinal >= values.length) {
+        if (ordinal < 0 || ordinal >= VALUES.length) {
             return BOG;
         }
-        return values[ordinal];
+        return VALUES[ordinal];
     }
 
     /**
