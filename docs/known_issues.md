@@ -21,6 +21,9 @@ Symbols 🟢 (resolved) and 🟠 (reopened / since-reverted) live in the [archiv
 ### 🔴 Resource Slime is captured with a water bucket, not an empty bucket
 Right-clicking a Resource Slime with an **empty** bucket does nothing; a **water** bucket is what currently captures it into a Slime Bucket. This is inherited vanilla `Bucketable` behaviour (the same mechanic fish/axolotls/tadpoles use), but it reads wrong for a slime: a player reaches for an empty bucket and nothing happens. Expected: capture with an empty bucket (slimes are not aquatic). Fix is to override the bucket interaction so an empty bucket is the capture item.
 
+### 🔴 Object order doesn't follow the canonical species progression
+Creative tabs, JEI, and the recipe book present the six species in the `Category` enum's declared order (currently roughly alphabetical: `BOG, CAVE, GEODE, TIDE, INFERNAL, VOID`), not the intended player-progression order **CAVE → GEODE → BOG → TIDE → INFERNAL → VOID**. A player browsing the mod sees Bog before Cave and so on, out of journey order. Fix: reorder the `data.Category` enum constants and the per-species `DeferredRegister` insertion order to the canonical sequence (insertion order drives creative-tab order). `Category` serializes by name (`StringRepresentable`), so reordering is **save-safe after** auditing for any `Category.ordinal()` / `values()[i]` / `EnumMap`-iteration dependence. Full spec + checklist in [canonical_ordering.md](./canonical_ordering.md).
+
 ---
 
 ## V1 limitations (by design)
@@ -68,4 +71,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-24 (v1.0.0 ship-day cleanup: split resolved entries into [known_issues_archive.md](./known_issues_archive.md); refreshed stale API names and category labels in the surviving entries.)*
+*Last updated: 2026-05-25 (added canonical species-ordering issue; see [canonical_ordering.md](./canonical_ordering.md)).*
