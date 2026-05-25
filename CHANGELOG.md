@@ -2,9 +2,17 @@
 
 ## [Unreleased]
 
+## v1.2.0 - 2026-05-25 - cross-mod compatibility + observability
+
+The V1.2 compatibility + tooling release. Resource Slimes now extend to the
+popular ATM10 mods' resources through common tags (no hard dependencies), a
+gated debug-logging framework lands across every layer, and the Slime Milk fluid
+collapses to a single component-driven block/bucket - completing the goal that a
+new Resource Slime variant is addable by datapack alone.
+
 ### Added
 
-- **Cross-mod variant pools (V1.2).** 24 Resource Slime variants for the popular
+- **Cross-mod variant pools.** 24 Resource Slime variants for the popular
   ATM10 mods, all condition-gated so they only appear when their provider mod is
   installed: AllTheOres metals (tin, lead, osmium, nickel, silver, zinc, aluminum,
   uranium), Create brass, Mekanism refined obsidian + fluorite, AE2 certus quartz
@@ -17,7 +25,24 @@
 - **`primer_tag` on the `slime_variant` codec** (alongside the now-optional
   `primer_item`). A variant can be primed by membership in a common tag
   (`c:ingots/tin`), so one cross-mod variant accepts any mod's matching item.
-  Resolved at infusion time via `SlimeVariant.primerMatches` / `findByPrimer`.
+  Resolved at infusion time via `SlimeVariant.findByPrimer`; an exact
+  `primer_item` match wins over a `primer_tag` match, and the codec rejects a
+  variant declaring neither (it could never be primed).
+- **Observability framework (`PFDebug`).** A gated debug-logging layer across 12
+  mod subsystems (lifecycle, registry, config, infusion, split, tongue, egg,
+  sensor, milker, milk_source, render, tint). Off by default and near-zero cost
+  when disabled; enable per-area at launch with `-Dproductivefrogs.debug=<areas>`
+  or at runtime with the `/pf debug <area> on` command. Design:
+  `docs/observability.md`.
+- Single neutral Slime Milk texture set tinted per-variant at render (fluid via
+  position-aware `getTintColor` reading the source BlockEntity; bucket via a
+  2-layer model + item color on the milk layer). One greyscale set serves every
+  variant, including datapack-added ones.
+- `ResourceSlimeRenderer` falls back to the category texture when a variant ships
+  no `<variant>_resource_slime.png`, so a datapack variant renders cleanly
+  (category cube + its `primary_color` shell) instead of a missing texture.
+- Title-cased display-name fallback (`VariantNames`) on the Slime Milk bucket /
+  Configurable Froglight / spawn egg, so a datapack variant needs no lang file.
 
 ### Changed (breaking)
 
@@ -37,18 +62,6 @@
   no recompile, no per-variant assets or lang. Per-variant fluids could never be
   datapack-added because fluids register at mod construction, before any world
   datapack loads. Design: `docs/refactor_data_driven_variants.md`.
-
-### Added
-
-- Single neutral Slime Milk texture set tinted per-variant at render (fluid via
-  position-aware `getTintColor` reading the source BlockEntity; bucket via a
-  2-layer model + item color on the milk layer). One greyscale set serves every
-  variant, including datapack-added ones.
-- `ResourceSlimeRenderer` falls back to the category texture when a variant ships
-  no `<variant>_resource_slime.png`, so a datapack variant renders cleanly
-  (category cube + its `primary_color` shell) instead of a missing texture.
-- Title-cased display-name fallback (`VariantNames`) on the Slime Milk bucket /
-  Configurable Froglight / spawn egg, so a datapack variant needs no lang file.
 
 ## v1.1.0 - 2026-05-25 - vanilla resource coverage
 
