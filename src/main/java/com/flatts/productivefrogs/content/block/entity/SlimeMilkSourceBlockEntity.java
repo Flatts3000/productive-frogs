@@ -18,8 +18,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * BlockEntity for {@link com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock}.
- * Stores a single field — the {@link com.flatts.productivefrogs.data.SlimeVariant}
- * identifier — so one generic {@code slime_milk} fluid/block can spawn the right
+ * Stores a single field, the {@link com.flatts.productivefrogs.data.SlimeVariant}
+ * identifier, so one generic {@code slime_milk} fluid/block can spawn the right
  * variant slime and tint per-variant, instead of one registered block per
  * variant. Same shape as {@link ConfigurableFroglightBlockEntity}.
  *

@@ -4,12 +4,15 @@ import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
+import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
+import com.flatts.productivefrogs.registry.PFRegistries;
 import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
@@ -31,7 +34,7 @@ import net.minecraft.world.level.material.FlowingFluid;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Slime Milk's placeable form — the single source block for the one generic
+ * Slime Milk's placeable form: the single source block for the one generic
  * {@code slime_milk} fluid. Subclasses {@link LiquidBlock} for vanilla flow and
  * is an {@link EntityBlock} so its {@link SlimeMilkSourceBlockEntity} can store
  * the variant: collapsed from the former one-block-per-variant model so a
@@ -44,6 +47,12 @@ import org.jetbrains.annotations.Nullable;
  * with a non-null variant spawns slimes + tints per-variant; milk that spread
  * from a source (fluid spreading does not copy BlockEntities) carries no variant
  * and is inert decoration.
+ *
+ * <p>Edge case: placing a bucket where the fluid engine will not sustain a source
+ * (e.g. an isolated spot the engine immediately drains to flowing/air) creates a
+ * momentary variant source that the engine then removes, discarding the variant.
+ * That is intended - a milk source only persists where the engine keeps it a
+ * source, the same constraint as any vanilla fluid.
  *
  * <p>Spawn cadence + depletion are unchanged from the per-variant design:
  * uniform {@code [PFConfig.MIN_SPAWN_INTERVAL_TICKS, MAX_SPAWN_INTERVAL_TICKS]}
@@ -134,7 +143,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
             return;
         }
         // Inert unless this source carries a variant. Milk that spread from a
-        // bucket-placed source has no BE variant and just sits as decoration —
+        // bucket-placed source has no BE variant and just sits as decoration:
         // no spawn, no depletion, no reschedule.
         ResourceLocation variantId = readVariant(level, pos);
         if (variantId == null) {
@@ -144,7 +153,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
         if (depletionEnabled()) {
             int remaining = state.getValue(SPAWNS_REMAINING);
             if (remaining <= 0) {
-                // True air swap to drain — removeBlock on a fluid block would
+                // True air swap to drain: removeBlock on a fluid block would
                 // reset the source to its default state (counter back to MAX).
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                 PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
@@ -205,11 +214,20 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
      */
     @Nullable
     private static Slime createSlimeForVariant(ServerLevel level, ResourceLocation variantId) {
+        // The two built-in specials are NOT registry variants (no primer, no
+        // froglight, no spawn egg), so they are matched by sentinel id here
+        // rather than via the registry - a deliberate, contained seam.
         if (VANILLA_SENTINEL.equals(variantId)) {
             return EntityType.SLIME.create(level);
         }
         if (MAGMA_SENTINEL.equals(variantId)) {
             return EntityType.MAGMA_CUBE.create(level);
+        }
+        // A real variant can opt into a custom spawn entity (a modded Slime
+        // subtype) via its slime_variant JSON's optional spawn_entity field.
+        Slime custom = createCustomSpawnEntity(level, variantId);
+        if (custom != null) {
+            return custom;
         }
         ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level);
         if (resource == null) {
@@ -217,6 +235,29 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
         }
         resource.setVariant(variantId);
         return resource;
+    }
+
+    /**
+     * Spawn the variant's optional {@code spawn_entity} (a modded Slime subtype)
+     * if it declares one, else null so the caller falls back to a
+     * {@link ResourceSlime}. The data-driven extension point for cross-mod
+     * variants whose parent is a modded slime.
+     */
+    @Nullable
+    private static Slime createCustomSpawnEntity(ServerLevel level, ResourceLocation variantId) {
+        var registry = level.registryAccess().registry(PFRegistries.SLIME_VARIANT).orElse(null);
+        if (registry == null) {
+            return null;
+        }
+        SlimeVariant variant = registry.get(variantId);
+        if (variant == null || variant.spawnEntity().isEmpty()) {
+            return null;
+        }
+        return BuiltInRegistries.ENTITY_TYPE.getOptional(variant.spawnEntity().get())
+            .map(type -> type.create(level))
+            .filter(Slime.class::isInstance)
+            .map(Slime.class::cast)
+            .orElse(null);
     }
 
     /**

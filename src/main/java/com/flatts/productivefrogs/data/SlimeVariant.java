@@ -51,6 +51,15 @@ import org.jetbrains.annotations.Nullable;
  *       <br><b>ResourceLocation format:</b> a plain block id (namespace +
  *       path, no {@code textures/} prefix, no {@code .png}). Example:
  *       {@code "minecraft:iron_block"}.</li>
+ *   <li>{@code spawnEntity} - optional EntityType id that a Slime Milk source of
+ *       this variant spawns instead of the default {@code ResourceSlime}. The
+ *       type must be a {@code Slime} subclass; absent (the normal case) means a
+ *       variant-stamped {@code ResourceSlime}. This is the data-driven extension
+ *       point for cross-mod variants whose "parent" is a modded slime; the two
+ *       built-in specials (vanilla green slime / magma cube) are handled by
+ *       sentinel ids in {@code SlimeMilkSourceBlock} rather than registry
+ *       entries, on purpose, since they are not real resource variants (no
+ *       primer, no froglight, no spawn egg).</li>
  * </ul>
  */
 public record SlimeVariant(
@@ -59,7 +68,8 @@ public record SlimeVariant(
     int primaryColor,
     int secondaryColor,
     int weight,
-    Optional<ResourceLocation> innerBlock
+    Optional<ResourceLocation> innerBlock,
+    Optional<ResourceLocation> spawnEntity
 ) {
 
     /**
@@ -90,7 +100,8 @@ public record SlimeVariant(
             Codec.intRange(0, 0xFFFFFF).fieldOf("primary_color").forGetter(SlimeVariant::primaryColor),
             Codec.intRange(0, 0xFFFFFF).fieldOf("secondary_color").forGetter(SlimeVariant::secondaryColor),
             Codec.intRange(1, Integer.MAX_VALUE).optionalFieldOf("weight", 1).forGetter(SlimeVariant::weight),
-            ResourceLocation.CODEC.optionalFieldOf("inner_block").forGetter(SlimeVariant::innerBlock)
+            ResourceLocation.CODEC.optionalFieldOf("inner_block").forGetter(SlimeVariant::innerBlock),
+            ResourceLocation.CODEC.optionalFieldOf("spawn_entity").forGetter(SlimeVariant::spawnEntity)
         ).apply(instance, SlimeVariant::new)
     );
 

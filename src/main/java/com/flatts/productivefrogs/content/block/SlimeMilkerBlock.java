@@ -1,11 +1,10 @@
 package com.flatts.productivefrogs.content.block;
 
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
+import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -13,7 +12,6 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -200,44 +198,22 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
      */
     @Nullable
     public static String readBucketVariant(ItemStack stack) {
-        CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
-        if (data == null) {
-            return null;
-        }
-        CompoundTag tag = data.copyTag();
-        if (!tag.contains("Variant", net.minecraft.nbt.Tag.TAG_STRING)) {
-            return null;
-        }
-        String raw = tag.getString("Variant");
-        if (raw == null || raw.isEmpty()) {
-            return null;
-        }
-        ResourceLocation id = ResourceLocation.tryParse(raw);
+        ResourceLocation id = readBucketVariantId(stack);
         return id == null ? null : id.getPath();
     }
 
     /**
      * Full variant id (e.g. {@code productivefrogs:iron}) from a Slime Bucket's
-     * {@code BUCKET_ENTITY_DATA}, or null when absent/malformed. The milker
-     * stamps this onto the output Slime Milk bucket's {@code SLIME_VARIANT}
-     * component, preserving the namespace so cross-namespace datapack variants
-     * survive the slime-bucket -> milk-bucket conversion.
+     * {@code BUCKET_ENTITY_DATA}, or null when absent/malformed. Delegates to
+     * {@link ResourceTadpoleBucketItem#readVariant} - the single canonical reader
+     * of a bucket's {@code Variant} NBT (both bucket types share the layout), so
+     * there is one parser rather than three. The milker stamps this onto the
+     * output Slime Milk bucket's {@code SLIME_VARIANT} component, preserving the
+     * namespace so cross-namespace datapack variants survive the conversion.
      */
     @Nullable
     public static ResourceLocation readBucketVariantId(ItemStack stack) {
-        CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
-        if (data == null) {
-            return null;
-        }
-        CompoundTag tag = data.copyTag();
-        if (!tag.contains("Variant", net.minecraft.nbt.Tag.TAG_STRING)) {
-            return null;
-        }
-        String raw = tag.getString("Variant");
-        if (raw == null || raw.isEmpty()) {
-            return null;
-        }
-        return ResourceLocation.tryParse(raw);
+        return ResourceTadpoleBucketItem.readVariant(stack);
     }
 
     /**

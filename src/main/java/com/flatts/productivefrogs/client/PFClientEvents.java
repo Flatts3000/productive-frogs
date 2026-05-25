@@ -397,7 +397,9 @@ public final class PFClientEvents {
 
                 @Override
                 public int getTintColor(FluidState state, BlockAndTintGetter getter, BlockPos pos) {
-                    return slimeMilkTint(getter, pos);
+                    // Only source blocks carry a variant BE; flowing/spread milk
+                    // is inert, so skip the per-quad BlockEntity lookup for it.
+                    return state.isSource() ? slimeMilkTint(getter, pos) : 0xFFFFFFFF;
                 }
             },
             PFFluidTypes.SLIME_MILK.get()
