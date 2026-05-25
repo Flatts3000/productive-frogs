@@ -135,7 +135,7 @@ Per-variant work for each = a `slime_variant` JSON (with `primer_item` exact-mat
 
 ## V1.2 — cross-mod variant pools
 
-Cross-mod variant entries (Mekanism osmium / tin / lead / uranium; Create zinc / brass / bronze; Thermal silver / nickel; Mythic Metals etc.) — all `mod_loaded`-gated JSON additions to the appropriate species. Most modded ores fit under Cave Slime per species_as_category_redesign.md §Cross-mod variants.
+Cross-mod variant entries for the popular ATM10 mods (Mekanism, Create, Thermal, AE2, AllTheOres, Industrial Foregoing, ...). **Researched plan of record: [cross_mod_compat.md](./cross_mod_compat.md)** (2026-05-25). Key finding: key variants off the NeoForge `c:` common tags (`c:ingots/tin`, etc.), not one mod's exact item - one entry then covers every providing mod (incl. AllTheOres, which is a parallel ore set, not a unifying layer). Needs one small mechanism (a `primer_tag` field + `tag_empty` gating + per-variant `result_item` for the smelt-back), then the pool is generated from a data table. First pass: ~8 Tier-1 CAVE metals + GEODE gems (tag-driven), then bespoke signature items (pink slime, enderium, Powah crystals, MA essences).
 
 The original V1.2 plan (add a new "biological mob drops" 7th category) is **obsolete**: under the species model those 5 vanilla items (bone, rotten_flesh, string, leather, feather) fit cleanly under Bog Slime in V1.1, no new species required.
 
