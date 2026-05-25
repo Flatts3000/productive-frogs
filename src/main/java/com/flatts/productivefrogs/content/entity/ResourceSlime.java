@@ -30,16 +30,15 @@ import net.minecraft.world.scores.PlayerTeam;
  * The Resource Slime — Productive Frogs' category-locked slime variant. Mirrors
  * vanilla {@link Slime} behavior wholesale (movement, jump, push, sound,
  * spawn-rule eligibility) and adds a {@link Category} field that propagates
- * through split children so a {@code METALLIC} resource slime always splits into
- * smaller {@code METALLIC} resource slimes.
+ * through split children so a {@code BOG} resource slime always splits into
+ * smaller {@code BOG} resource slimes.
  *
- * <p>V1 simplification: one entity type, six categories (Category-keyed, not
- * variant-keyed). Per-resource variants within a category — {@code iron_slime}
- * vs {@code copper_slime} both inside {@code METALLIC} — layer in later via the
- * data-driven {@code SlimeVariant} registry described in
- * {@code docs/architecture.md}. We can do that without changing this entity,
- * the same way ItemTintSources layer on top of the flat Category enum on the
- * Frog Egg side.
+ * <p>One entity type, six categories (Category-keyed), with per-resource
+ * variants layered on via the data-driven {@code SlimeVariant} registry —
+ * {@code iron} vs {@code copper} both resolve their parent category through
+ * the registry (see {@code docs/architecture.md}). The variant id rides along
+ * as a second synced data field beside the category; the category is the
+ * cheap fallback that callers can read without a registry lookup.
  *
  * <p>Direct-kill drops (per design Q10): slimeballs only, vanilla parity.
  * Behavior lives in
@@ -78,14 +77,9 @@ public class ResourceSlime extends Slime implements Bucketable {
 
     public Category getCategory() {
         // Defensive: synced data is an int and could be corrupted by modded
-        // packets or save migration. Fall back to METALLIC (tier 1) rather
-        // than crashing on out-of-range ordinals.
-        int ordinal = this.entityData.get(DATA_CATEGORY);
-        Category[] values = Category.values();
-        if (ordinal < 0 || ordinal >= values.length) {
-            return Category.BOG;
-        }
-        return values[ordinal];
+        // packets or save migration. fromOrdinalOrDefault falls back to BOG
+        // rather than crashing on out-of-range ordinals.
+        return Category.fromOrdinalOrDefault(this.entityData.get(DATA_CATEGORY));
     }
 
     public void setCategory(Category category) {
@@ -168,20 +162,10 @@ public class ResourceSlime extends Slime implements Bucketable {
      */
     @Override
     protected net.minecraft.core.particles.ParticleOptions getParticleType() {
-        int rgb;
         ResourceLocation variantId = getVariantId();
         SlimeVariant variant = variantId == null ? null : lookupVariant(variantId);
-        if (variant != null) {
-            rgb = variant.primaryColor();
-        } else {
-            rgb = getCategory().tintRgb();
-        }
-        // 1.21.1 DustParticleOptions takes Vector3f (normalised RGB), not int.
-        org.joml.Vector3f color = new org.joml.Vector3f(
-            ((rgb >> 16) & 0xFF) / 255.0F,
-            ((rgb >> 8) & 0xFF) / 255.0F,
-            (rgb & 0xFF) / 255.0F);
-        return new net.minecraft.core.particles.DustParticleOptions(color, 1.0F);
+        int rgb = variant != null ? variant.primaryColor() : getCategory().tintRgb();
+        return Category.dustParticle(rgb);
     }
 
     /**

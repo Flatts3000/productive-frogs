@@ -34,13 +34,12 @@ import net.minecraft.world.level.block.state.BlockState;
  * (100 ticks = 5 s). On completion the input bucket is consumed and the
  * matching variant-typed Slime Milk bucket is written to the output slot.
  *
- * <p>Hopper I/O is wired via {@link SlimeMilkerInventory}, an
- * {@link net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler}
- * subclass exposed as {@code Capabilities.Item.BLOCK} in
- * {@code PFModBusEvents}. The side-aware capability provider returns the
- * insert-only INPUT view for the top + horizontal faces and the
- * extract-only OUTPUT view for the bottom face, mirroring the vanilla
- * furnace's "input from above, output from below" hopper convention.
+ * <p>Hopper I/O is wired via {@link SlimeMilkerInventory}, exposed as
+ * {@code Capabilities.ItemHandler.BLOCK} in {@code PFModBusEvents} (the 1.21.1
+ * capability id). The side-aware capability provider returns the insert-only
+ * INPUT view for the top + horizontal faces and the extract-only OUTPUT view
+ * for the bottom face, mirroring the vanilla furnace's "input from above,
+ * output from below" hopper convention.
  */
 public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider {
 
@@ -197,11 +196,32 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
     @Override
     protected void loadAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
-        cookProgress = tag.contains("CookProgress", net.minecraft.nbt.Tag.TAG_INT)
+        // Clamp on load: a tampered/old save could carry a negative or
+        // overlarge value. A negative cookProgress would never reach
+        // COOK_TIME_TOTAL until it wrapped through Integer.MAX_VALUE, stalling
+        // the block "working" forever; clamp into [0, COOK_TIME_TOTAL].
+        int loaded = tag.contains("CookProgress", net.minecraft.nbt.Tag.TAG_INT)
             ? tag.getInt("CookProgress") : 0;
+        cookProgress = Math.max(0, Math.min(loaded, COOK_TIME_TOTAL));
         if (tag.contains("Inventory", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
             inventory.deserialize(tag.getCompound("Inventory"));
         }
+    }
+
+    // Client sync: without these, a closed milker's inventory + cook progress
+    // aren't sent on chunk load, so info-HUD mods (Jade/WTHIT) read stale/empty
+    // contents until the GUI is opened. saveAdditional carries everything we
+    // need; reuse it for the update tag.
+    @Override
+    public net.minecraft.nbt.CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider registries) {
+        net.minecraft.nbt.CompoundTag tag = super.getUpdateTag(registries);
+        saveAdditional(tag, registries);
+        return tag;
+    }
+
+    @Override
+    public net.minecraft.network.protocol.Packet<net.minecraft.network.protocol.game.ClientGamePacketListener> getUpdatePacket() {
+        return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
     }
 
     // -------------------------------------------------------------------

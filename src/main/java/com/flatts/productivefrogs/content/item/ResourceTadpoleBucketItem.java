@@ -1,7 +1,6 @@
 package com.flatts.productivefrogs.content.item;
 
 import com.flatts.productivefrogs.data.Category;
-import java.util.Optional;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;

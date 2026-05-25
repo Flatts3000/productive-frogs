@@ -64,6 +64,19 @@ public final class ProductiveFrogs {
     }
 
     private void onCommonSetup(FMLCommonSetupEvent event) {
+        // ModConfigSpec has no cross-field validator, so warn here (config is
+        // loaded by common-setup time) if the spawn interval is inverted.
+        // SlimeMilkSourceBlock.scheduleNextSpawnTick falls back to a fixed
+        // min-tick delay in that case, silently ignoring max; surface it.
+        int min = PFConfig.MIN_SPAWN_INTERVAL_TICKS.get();
+        int max = PFConfig.MAX_SPAWN_INTERVAL_TICKS.get();
+        if (min > max) {
+            LOGGER.warn(
+                "PFConfig: minSpawnIntervalTicks ({}) > maxSpawnIntervalTicks ({}); "
+                + "Slime Milk source blocks will use minSpawnIntervalTicks as a fixed delay "
+                + "and ignore maxSpawnIntervalTicks until the config is corrected.",
+                min, max);
+        }
         LOGGER.info("Productive Frogs common setup complete");
     }
 }

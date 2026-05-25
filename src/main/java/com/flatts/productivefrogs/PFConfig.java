@@ -77,7 +77,7 @@ public final class PFConfig {
 
         DISCOVERY_CHANCE_PER_OFFSPRING = builder
             .comment(
-                "Per-offspring chance for a vanilla slime / magma cube / parent-species split to convert each child",
+                "Per-offspring chance for a parent-species slime split to convert each child",
                 "into a category-matched Resource Slime. Default 0.05 (5%) — a slime farm yields ~1 Resource Slime per dozen splits."
             )
             .defineInRange("discoveryChancePerOffspring", 0.05, 0.0, 1.0);

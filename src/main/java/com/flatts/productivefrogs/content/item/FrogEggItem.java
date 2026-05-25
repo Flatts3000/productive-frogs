@@ -103,7 +103,10 @@ public final class FrogEggItem extends Item {
                 return InteractionResultHolder.pass(held);
             }
 
-            level.playSound(null, placePos, SoundEvents.FROGSPAWN_HATCH, SoundSource.BLOCKS, 0.6F, 1.0F);
+            // Bottle-empty sound: the player is tipping frogspawn out of the
+            // glass bottle onto the water, not hatching anything (FROGSPAWN_HATCH
+            // would mislead — that's the tadpoles-emerging sound).
+            level.playSound(null, placePos, SoundEvents.BOTTLE_EMPTY, SoundSource.BLOCKS, 0.6F, 1.0F);
 
             ItemStack result = ItemUtils.createFilledResult(held, player, new ItemStack(Items.GLASS_BOTTLE));
             player.setItemInHand(hand, result);

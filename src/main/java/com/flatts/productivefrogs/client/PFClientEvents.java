@@ -1,16 +1,12 @@
 package com.flatts.productivefrogs.client;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
-import com.flatts.productivefrogs.client.renderer.BogSlimeRenderer;
-import com.flatts.productivefrogs.client.renderer.CaveSlimeRenderer;
-import com.flatts.productivefrogs.client.renderer.GeodeSlimeRenderer;
-import com.flatts.productivefrogs.client.renderer.InfernalSlimeRenderer;
+import com.flatts.productivefrogs.client.renderer.ParentSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceFrogRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
-import com.flatts.productivefrogs.client.renderer.TideSlimeRenderer;
-import com.flatts.productivefrogs.client.renderer.VoidSlimeRenderer;
 import com.flatts.productivefrogs.client.screen.SlimeMilkerScreen;
+import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
 import com.flatts.productivefrogs.content.item.FrogEggItem;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.data.Category;
@@ -22,12 +18,14 @@ import com.flatts.productivefrogs.registry.PFFluidTypes;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
 import com.flatts.productivefrogs.registry.PFRegistries;
+import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.component.CustomData;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -69,12 +67,25 @@ public final class PFClientEvents {
         event.registerEntityRenderer(PFEntities.RESOURCE_TADPOLE.get(), ResourceTadpoleRenderer::new);
         event.registerEntityRenderer(PFEntities.RESOURCE_FROG.get(), ResourceFrogRenderer::new);
         event.registerEntityRenderer(PFEntities.RESOURCE_SLIME.get(), ResourceSlimeRenderer::new);
-        event.registerEntityRenderer(PFEntities.CAVE_SLIME.get(), CaveSlimeRenderer::new);
-        event.registerEntityRenderer(PFEntities.GEODE_SLIME.get(), GeodeSlimeRenderer::new);
-        event.registerEntityRenderer(PFEntities.TIDE_SLIME.get(), TideSlimeRenderer::new);
-        event.registerEntityRenderer(PFEntities.VOID_SLIME.get(), VoidSlimeRenderer::new);
-        event.registerEntityRenderer(PFEntities.BOG_SLIME.get(), BogSlimeRenderer::new);
-        event.registerEntityRenderer(PFEntities.INFERNAL_SLIME.get(), InfernalSlimeRenderer::new);
+        // Six parent species share one parameterized ParentSlimeRenderer, each
+        // constructed with its species atlas + outer-shell tint.
+        event.registerEntityRenderer(PFEntities.BOG_SLIME.get(),
+            ctx -> new ParentSlimeRenderer(ctx, parentTexture("bog_slime"), 0xFF6A8540));
+        event.registerEntityRenderer(PFEntities.CAVE_SLIME.get(),
+            ctx -> new ParentSlimeRenderer(ctx, parentTexture("cave_slime"), 0xFF8A8A8A));
+        event.registerEntityRenderer(PFEntities.GEODE_SLIME.get(),
+            ctx -> new ParentSlimeRenderer(ctx, parentTexture("geode_slime"), 0xFF6CDCD7));
+        event.registerEntityRenderer(PFEntities.TIDE_SLIME.get(),
+            ctx -> new ParentSlimeRenderer(ctx, parentTexture("tide_slime"), 0xFF3F76E4));
+        event.registerEntityRenderer(PFEntities.INFERNAL_SLIME.get(),
+            ctx -> new ParentSlimeRenderer(ctx, parentTexture("infernal_slime"), 0xFFC73E1D));
+        event.registerEntityRenderer(PFEntities.VOID_SLIME.get(),
+            ctx -> new ParentSlimeRenderer(ctx, parentTexture("void_slime"), 0xFF5E3782));
+    }
+
+    private static ResourceLocation parentTexture(String name) {
+        return ResourceLocation.fromNamespaceAndPath(
+            ProductiveFrogs.MOD_ID, "textures/entity/slime/" + name + ".png");
     }
 
     @SubscribeEvent
@@ -95,7 +106,7 @@ public final class PFClientEvents {
                     return -1;
                 }
                 var be = level.getBlockEntity(pos);
-                if (!(be instanceof com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity froglightBe)) {
+                if (!(be instanceof ConfigurableFroglightBlockEntity froglightBe)) {
                     return -1;
                 }
                 ResourceLocation variantId = froglightBe.getVariantId();
@@ -239,16 +250,16 @@ public final class PFClientEvents {
                     }
                 }
                 // Fallback to SpawnEggItem ctor colors (Category.tintRgb + darker shade).
-                return opaque(((net.minecraft.world.item.SpawnEggItem) stack.getItem()).getColor(tintIndex));
+                return opaque(((SpawnEggItem) stack.getItem()).getColor(tintIndex));
             }, entry.getValue().get());
         }
 
         // Parent slime species spawn eggs (4) + category frog/tadpole spawn eggs (12).
         // All of these inherit from vanilla SpawnEggItem with explicit
         // (primary, secondary) colours set in PFItems.
-        java.util.function.Consumer<net.minecraft.world.item.SpawnEggItem> registerCtorColors = egg ->
+        Consumer<SpawnEggItem> registerCtorColors = egg ->
             event.register((stack, tintIndex) ->
-                opaque(((net.minecraft.world.item.SpawnEggItem) stack.getItem()).getColor(tintIndex)),
+                opaque(((SpawnEggItem) stack.getItem()).getColor(tintIndex)),
                 egg);
 
         registerCtorColors.accept(PFItems.BOG_SLIME_SPAWN_EGG.get());

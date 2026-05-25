@@ -58,14 +58,9 @@ public class ResourceTadpole extends Tadpole {
 
     public Category getCategory() {
         // Defensive: synced data can be set to any int via modded packets or
-        // corrupted save data. Fall back to METALLIC (tier 1) rather than
-        // crashing if the ordinal is out of range.
-        int ordinal = this.entityData.get(DATA_CATEGORY);
-        Category[] values = Category.values();
-        if (ordinal < 0 || ordinal >= values.length) {
-            return Category.BOG;
-        }
-        return values[ordinal];
+        // corrupted save data. fromOrdinalOrDefault falls back to BOG rather
+        // than crashing if the ordinal is out of range.
+        return Category.fromOrdinalOrDefault(this.entityData.get(DATA_CATEGORY));
     }
 
     public void setCategory(Category category) {
