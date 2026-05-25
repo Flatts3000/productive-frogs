@@ -31,22 +31,22 @@ Targets MC 1.21.1 / NeoForge 21.1.230 / Java 21. Sky Frogs (the modpack PF was b
 
 Full v1.0 design spec: [species_as_category_redesign.md](./species_as_category_redesign.md). Port history: [port_mc_1_21_1.md](./port_mc_1_21_1.md).
 
-## V1.1 — Vanilla Resource Coverage (PLANNED)
+## V1.1 — Vanilla Resource Coverage (IMPLEMENTED, pending release)
 
-Mostly-data release adding every vanilla item fitting cleanly into one of the six species. Each variant is a `slime_variant` JSON + recipe + lang, plus one one-line Java edit (the Slime Milk `VARIANTS` entry; fluids register at mod-init). The spawn egg is data-driven (CR-9) - one component item enumerated from the registry, no per-variant Java.
+Mostly-data release adding every vanilla item fitting cleanly into one of the six species. Each variant is a `slime_variant` JSON + recipe + lang, plus one one-line Java edit (the Slime Milk `VARIANTS` entry; fluids register at mod-init). The spawn egg is data-driven (CR-9) - one component item enumerated from the registry, no per-variant Java. The four templated JSON files per variant are emitted by `scripts/generate_v1_1_variants.ps1`.
 
-**22 new variants** (34 total after v1.1):
+**23 new variants** (35 total after v1.1):
 
 | Species | New variants |
 |---|---|
 | Bog (+8) | bone, gunpowder, clay_ball, rotten_flesh, string, leather, feather, slime_ball |
 | Cave (+3) | glow_ink_sac, obsidian, echo_shard |
 | Geode (+1) | amethyst |
-| Tide (+1) | ink_sac |
+| Tide (+2) | ink_sac, prismarine_crystals |
 | Infernal (+7) | netherite_scrap, glowstone_dust, soul_sand, soul_soil, netherrack, blaze, quartz |
 | Void (+2) | chorus_fruit, shulker_shell |
 
-Tier B candidates (`prismarine_crystals`, `nautilus_shell`, `ghast_tear`) tracked in [v1_1_scope.md](./v1_1_scope.md) with default decisions if not resolved by freeze. `wither_rose` and `end_stone` are dropped (the primer-tag-only fallback they depended on is gone in v1.0).
+`prismarine_crystals` (Tier B) was promoted into scope. Remaining Tier B candidates (`nautilus_shell`, `ghast_tear`) stay deferred per [v1_1_scope.md](./v1_1_scope.md). `wither_rose` and `end_stone` are dropped (the primer-tag-only fallback they depended on is gone in v1.0).
 
 The 5 mob-drop variants that were previously deferred to a separate V1.2 category (bone, rotten_flesh, string, leather, feather) now fit cleanly under Bog Slime — no new species needed.
 

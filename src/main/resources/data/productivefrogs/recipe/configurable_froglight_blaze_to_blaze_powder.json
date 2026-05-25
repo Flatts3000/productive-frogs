@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": {
+    "type": "neoforge:components",
+    "items": [
+      "productivefrogs:configurable_froglight"
+    ],
+    "components": {
+      "productivefrogs:slime_variant": "productivefrogs:blaze"
+    }
+  },
+  "result": {
+    "id": "minecraft:blaze_powder"
+  },
+  "experience": 0.7,
+  "cookingtime": 200,
+  "category": "misc",
+  "group": "productivefrogs_froglight"
+}

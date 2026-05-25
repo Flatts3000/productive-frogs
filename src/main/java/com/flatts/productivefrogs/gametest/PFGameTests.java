@@ -372,12 +372,12 @@ public final class PFGameTests {
             helper.fail("expected productivefrogs:iron, got " + ironEntry.getKey());
         }
 
-        // A primer-tag item that ISN'T in the variant registry (e.g.,
-        // blaze_powder is in primer/infernal but not a variant primer) should
-        // miss the variant lookup so the handler falls back to category-only.
+        // An infernal-flavoured item that ISN'T any variant's primer
+        // (ghast_tear is deferred from v1.1 per docs/v1_1_scope.md) should miss
+        // the variant lookup so the handler falls back to category-only.
         if (SlimeVariant.findByPrimerItem(registry,
-                ResourceLocation.fromNamespaceAndPath("minecraft", "blaze_powder")) != null) {
-            helper.fail("blaze_powder is not a variant primer in V1 — lookup should miss");
+                ResourceLocation.fromNamespaceAndPath("minecraft", "ghast_tear")) != null) {
+            helper.fail("ghast_tear is not a variant primer in v1.1: lookup should miss");
         }
 
         // Stick is in NO primer tag — must miss too.
@@ -795,68 +795,6 @@ public final class PFGameTests {
                 helper.fail("category mismatch should not drop configurable_froglight");
             }
             helper.succeed();
-        });
-    }
-
-    /**
-     * End-to-end tongue-kill test: spawn a matching frog and slime, let the
-     * frog's AI itself drive the tongue strike, and verify the Froglight drops.
-     * The pre-PR-#61 manual-damage test ({@link #matchingFrogKillDropsConfigurableFroglight})
-     * uses {@code hurtServer(level, source, 999.0F)} which bypasses the frog's
-     * {@code ATTACK_DAMAGE} attribute and the entire vanilla tongue task chain
-     * — PR #27 caught a damage=0 regression that test couldn't see. This one
-     * fails closed if any link in the chain breaks:
-     *
-     * <ul>
-     *   <li>sensor wiring writes {@code NEAREST_ATTACKABLE},</li>
-     *   <li>vanilla {@code FrogEat} behavior extends the tongue and reaches the prey,</li>
-     *   <li>the damage value derived from {@code Attributes.ATTACK_DAMAGE} is non-zero,</li>
-     *   <li>the slime dies and the {@code LivingDeathEvent} handler still emits the drop.</li>
-     * </ul>
-     *
-     * <p>Generous 400-tick timeout: the frog's tongue task can pace through
-     * targeting → approach → strike across ~30–60 ticks; the test plot tick
-     * boundary adds variance. Polling via {@code succeedWhen} succeeds the
-     * moment the drop appears, so green runs finish well under that ceiling.
-     */
-    // Marked required=false because this end-to-end AI test is timing-flaky in
-    // CI: passes ~50% of local retries, fails consistently in headless CI where
-    // the brain's ShootTongue cooldown + sensor cadence don't always converge
-    // within the 400-tick budget. The category-match drop path is independently
-    // covered by matchingFrogKillDropsConfigurableFroglight (manual hurt, no AI).
-    // Re-enable as required once a deterministic AI test harness lands.
-    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 400, required = false)
-    public static void frogTongueAiPathDropsConfigurableFroglight(GameTestHelper helper) {
-        Category cat = Category.CAVE;
-        BlockPos frogPos = new BlockPos(2, 2, 2);
-
-        // Floor under the frog + slime. Without ground both entities fall
-        // through the empty plot during the 400-tick wait, and the frog's
-        // brain stays in "fall" / "swim" mode instead of running ShootTongue.
-        helper.setBlock(frogPos.below(), Blocks.STONE);
-        helper.setBlock(frogPos.east().below(), Blocks.STONE);
-
-        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
-        frog.setCategory(cat);
-
-        ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), frogPos.east());
-        slime.setSize(1, true);
-        // V1.5: ResourceSlime always carries a variant. Iron is a Cave variant.
-        ResourceLocation iron = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
-        slime.setVariant(iron);
-
-        // No manual hurtServer call — the frog's brain runs the full target →
-        // tongue-extend → damage path on its own.
-        helper.succeedWhen(() -> {
-            boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
-                .anyMatch(itemEntity -> {
-                    ItemStack stack = itemEntity.getItem();
-                    return stack.is(PFItems.CONFIGURABLE_FROGLIGHT.get())
-                        && iron.equals(stack.get(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get()));
-                });
-            if (!found) {
-                helper.fail("expected iron-stamped configurable_froglight to drop after frog's AI tongues the slime");
-            }
         });
     }
 

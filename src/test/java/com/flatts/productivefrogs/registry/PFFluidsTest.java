@@ -108,11 +108,12 @@ class PFFluidsTest {
 
     @Test
     void allShippedVariantsAreCovered() {
-        // Sanity-check the size of the variant family — if someone removes an
+        // Sanity-check the size of the variant family. If someone removes an
         // entry from VARIANTS this catches it before the per-variant tests
         // silently lose coverage. Update this count when intentionally adding
-        // a new variant; J2 ships exactly 14 (12 resource + vanilla + magma).
-        assertEquals(14, PFFluidTypes.VARIANTS.size(),
-            "Slime Milk family must have 14 variants — see docs/farming.md");
+        // a new variant; v1.1 ships 37 (12 v1.0 + 23 v1.1 resource variants +
+        // vanilla + magma specials).
+        assertEquals(37, PFFluidTypes.VARIANTS.size(),
+            "Slime Milk family must have 37 variants (see docs/farming.md)");
     }
 }

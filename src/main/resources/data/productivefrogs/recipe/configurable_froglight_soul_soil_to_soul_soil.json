@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": {
+    "type": "neoforge:components",
+    "items": [
+      "productivefrogs:configurable_froglight"
+    ],
+    "components": {
+      "productivefrogs:slime_variant": "productivefrogs:soul_soil"
+    }
+  },
+  "result": {
+    "id": "minecraft:soul_soil"
+  },
+  "experience": 0.7,
+  "cookingtime": 200,
+  "category": "misc",
+  "group": "productivefrogs_froglight"
+}

@@ -1,14 +1,29 @@
 # Changelog
 
-## v1.1.0 (unreleased) — data-driven spawn eggs
+## v1.1.0 (unreleased) - vanilla resource coverage
 
 > Builds on the v1.0.2 changes below. The next release that includes this work
 > is a minor bump (v1.1.0), because it removes item IDs (see Breaking).
 
-Implements code-review finding CR-9: the Resource Slime spawn egg is now a
-single component-driven item instead of one item ID per variant. This is the
-V1.1 enabler that makes adding a variant pure data (plus the one Slime Milk
-`VARIANTS` Java edit that fluids inherently require).
+The v1.1 content release: **23 new Resource Slime variants** (35 total) extend
+vanilla resource coverage across all six species, with no new mechanics. Plus
+the CR-9 enabler that made the additions pure data: the Resource Slime spawn egg
+is now a single component-driven item instead of one item ID per variant.
+
+### Added
+
+- **23 new variants** (12 -> 35 total), each with a Resource Slime, Configurable
+  Froglight, Slime Bucket, Slime Milk fluid/block/bucket, smelting recipe, and an
+  in-slime `inner_block`:
+  - **Bog** (+8): bone, gunpowder, clay, rotten flesh, string, leather, feather, slimeball
+  - **Cave** (+3): glow ink sac, obsidian, echo shard
+  - **Geode** (+1): amethyst
+  - **Tide** (+2): ink sac, prismarine crystals
+  - **Infernal** (+7): netherite scrap, glowstone dust, soul sand, soul soil, netherrack, blaze, quartz
+  - **Void** (+2): chorus fruit, shulker shell
+- `scripts/generate_v1_1_variants.ps1`: data-table generator that emits the four
+  templated JSON files per variant (slime_variant, smelting recipe, milk
+  blockstate, milk bucket model).
 
 ### Breaking
 
@@ -29,6 +44,20 @@ V1.1 enabler that makes adding a variant pure data (plus the one Slime Milk
 - Adding a variant no longer needs a spawn-egg Java edit; only the Slime Milk
   `VARIANTS` entry remains. Docs (`architecture.md`, `versioning.md`,
   `v1_1_scope.md`) updated.
+- `scripts/generate_slime_milk_textures.ps1` now does its per-pixel tint in a
+  compiled `LockBits` helper instead of interpreted `GetPixel`/`SetPixel`. The
+  interpreted path crashed the PowerShell engine once the variant count grew
+  past ~14; the compiled path is robust and produces byte-identical output.
+
+### Tests
+
+- Removed the timing-flaky end-to-end AI tongue GameTest
+  (`frogTongueAiPathDropsConfigurableFroglight`). The category-match drop path
+  stays covered by `matchingFrogKillDropsConfigurableFroglight` (deterministic
+  manual-damage kill, no AI).
+- `infusionWithVariantPrimerSetsSpecificVariant`'s negative case now uses
+  `ghast_tear` (deferred from v1.1) instead of `blaze_powder`, which became the
+  `blaze` variant's primer.
 
 ## v1.0.2 (unreleased)
 

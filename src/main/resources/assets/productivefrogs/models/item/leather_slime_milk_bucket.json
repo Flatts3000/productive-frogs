@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "productivefrogs:item/leather_slime_milk_bucket"
+  }
+}
