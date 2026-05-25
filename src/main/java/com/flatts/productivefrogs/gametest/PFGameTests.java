@@ -1182,6 +1182,42 @@ public final class PFGameTests {
         }
     }
 
+    /**
+     * Round-trips the variant through the single component-driven Slime Milk
+     * plumbing: a stamped milk bucket's placement hook ({@code checkExtraContent})
+     * writes the variant to the source block's BlockEntity, and re-bucketing
+     * ({@code pickupBlock}) reads it back onto the bucket. This is the path that
+     * lets a datapack variant get milk with no per-variant registration.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkBucketRoundTripsVariantThroughSourceBlock(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(pos);
+        ResourceLocation iron = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+
+        // Placement: checkExtraContent stamps the freshly-placed source BE.
+        helper.setBlock(pos, PFBlocks.SLIME_MILK_SOURCE.get());
+        ItemStack bucket = milkBucket("iron");
+        ((com.flatts.productivefrogs.content.item.SlimeMilkBucketItem) PFItems.SLIME_MILK_BUCKET.get())
+            .checkExtraContent(null, level, bucket, abs);
+        if (!(level.getBlockEntity(abs)
+                instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity be)
+            || !iron.equals(be.getVariantId())) {
+            helper.fail("checkExtraContent should have stamped the source BlockEntity with iron");
+            return;
+        }
+
+        // Re-bucket: pickupBlock reads the BE variant back onto the filled bucket.
+        ItemStack picked = PFBlocks.SLIME_MILK_SOURCE.get()
+            .pickupBlock(null, level, abs, level.getBlockState(abs));
+        if (!isMilkBucket(picked, "iron")) {
+            helper.fail("pickupBlock should return an iron-stamped slime_milk_bucket, got " + picked);
+            return;
+        }
+        helper.succeed();
+    }
+
     // ---------------------------------------------------------------------
     // J4 — Slime Milk source-block spawning
     // ---------------------------------------------------------------------

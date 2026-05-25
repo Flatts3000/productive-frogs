@@ -1,5 +1,38 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed (breaking)
+
+- **Slime Milk collapsed to a single component-driven fluid/bucket/block.** The
+  ~35 per-variant Slime Milk registrations (one `FluidType`, Source + Flowing
+  fluids, `<variant>_slime_milk` block, and `<variant>_slime_milk_bucket` item
+  per variant) are replaced by **one** of each: a single `slime_milk` fluid, a
+  `slime_milk` source block whose BlockEntity stores the variant, and a single
+  `slime_milk_bucket` item carrying the variant in the `SLIME_VARIANT` data
+  component (the same pattern as Configurable Froglight / Slime Bucket / the
+  spawn egg). **Migration: hard break** - the per-variant `*_slime_milk_bucket`
+  item IDs and `*_slime_milk` block/fluid IDs are gone; placed milk blocks and
+  stashed milk buckets in existing worlds become orphaned refs (regenerate, per
+  the project's pre-stable policy).
+- **Why:** this is the last step of the data-driven variant refactor. A new
+  Resource Slime variant is now addable **by datapack alone** - JSON, no Java,
+  no recompile, no per-variant assets or lang. Per-variant fluids could never be
+  datapack-added because fluids register at mod construction, before any world
+  datapack loads. Design: `docs/refactor_data_driven_variants.md`.
+
+### Added
+
+- Single neutral Slime Milk texture set tinted per-variant at render (fluid via
+  position-aware `getTintColor` reading the source BlockEntity; bucket via a
+  2-layer model + item color on the milk layer). One greyscale set serves every
+  variant, including datapack-added ones.
+- `ResourceSlimeRenderer` falls back to the category texture when a variant ships
+  no `<variant>_resource_slime.png`, so a datapack variant renders cleanly
+  (category cube + its `primary_color` shell) instead of a missing texture.
+- Title-cased display-name fallback (`VariantNames`) on the Slime Milk bucket /
+  Configurable Froglight / spawn egg, so a datapack variant needs no lang file.
+
 ## v1.1.0 - 2026-05-25 - vanilla resource coverage
 
 > A minor bump that is nonetheless **breaking** (it removes item IDs and a

@@ -4,7 +4,7 @@ How the mod is structured internally to support data-driven slime variants, cros
 
 ## Guiding Principles
 
-1. **Slime variants are mostly data.** A variant is a `slime_variant` JSON, not a Java class. The spawn egg is a single component-driven item (`resource_slime_spawn_egg`) whose per-variant stacks the creative tab + JEI enumerate from the registry, so it needs no Java edit (CR-9). One one-line Java edit remains: the Slime Milk `VARIANTS` entry in `PFFluidTypes` (fluids must register at mod-init, before datapack registries load).
+1. **Slime variants are fully data — addable by datapack alone.** A variant is a `slime_variant` JSON, not a Java class, and needs no Java edit, no per-variant assets, and no lang (display names fall back to a title-cased id). The spawn egg, Configurable Froglight, Slime Bucket, and Slime Milk are all single component-driven items/blocks whose per-variant stacks the creative tab + JEI enumerate from the registry. Slime Milk's fluid/block/bucket collapsed to one of each (variant on the `SLIME_VARIANT` component + source BlockEntity), removing the last per-variant Java edit — see [refactor_data_driven_variants.md](./refactor_data_driven_variants.md).
 2. **Cross-mod support is conditional JSON.** No Java code calls Mekanism's classes; we reference `c:ingots/osmium` tags. Mod-specific JSON entries are wrapped in `neoforge:conditions → mod_loaded`.
 3. **Category membership is tag-based.** Frog categories, slime categories, and primer tags all live in NeoForge's tag system. Lookups are O(1) tag membership checks.
 4. **Drops are vanilla loot tables.** No bespoke drop logic — leverage vanilla's `LootTable` system for full flexibility (random ranges, fortune scaling, enchantment effects all work for free).
@@ -51,10 +51,10 @@ The V1 farming keystone (see [farming.md](./farming.md)) introduces two architec
 - Block entity that hosts the right-click handler. No persistent storage state in V1 (operation is instant).
 - On right-click with a `Slime Bucket` item: read the bucket's stored variant, consume one bucket count, give the player a `Bucket of <Variant> Slime Milk` (replacing the slime bucket they were holding), and emit press animation + sound.
 
-### Slime Milk fluid (one variant per slime variant)
+### Slime Milk fluid (single, component-driven)
 
-- Each slime variant has a corresponding fluid registered: `productivefrogs:<variant>_slime_milk`.
-- Implemented as a custom `Fluid` + `FluidType` per variant (NeoForge fluid API). Source block and flowing block per variant.
+- **One** `productivefrogs:slime_milk` fluid (Source + Flowing), one `slime_milk` source block, one `slime_milk_bucket` item — not one per variant. The variant rides on the bucket's `SLIME_VARIANT` data component and the source block's `SlimeMilkSourceBlockEntity`; placing the bucket writes the variant to the BE, re-bucketing reads it back. Only a source with a variant spawns slimes; spread/flowing milk is inert.
+- Per-variant colour is applied at render time: the fluid's `getTintColor(state, level, pos)` reads the source BE → `SlimeVariant.primaryColor`; the bucket's item color reads the component. One greyscale texture set serves every variant. This collapse is what lets a datapack variant get milk with no Java edit (fluids register at mod-init, before world datapacks load, so a per-variant fluid could never be datapack-added).
 - Flow behavior matches lava (slower than water, 4-block overworld flow distance).
 - Spawn behavior: each source block has a random-tick handler. On each random tick (subject to vanilla random tick speed), with low probability, attempts a spawn:
   - Check the position above is air or replaceable AND no entity is blocking spawn.
