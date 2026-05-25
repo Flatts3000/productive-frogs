@@ -63,9 +63,16 @@ The V1 farming keystone (see [farming.md](./farming.md)) introduces two architec
 - Default spawn interval is implemented as: average ~20s wall-clock between spawn ticks per source block, ± uniform jitter [-10s, +10s]. Random tick speed tuning derives from this target.
 - Default depletion: 16 spawns per source block before drying up. Configurable (mod config); can be disabled entirely (effectively ∞ counter).
 
-### Variant explosion concerns
+### No variant explosion (collapsed design)
 
-Registering one fluid per variant creates many registrations. Bounded by the number of `SlimeVariant` entries — base + Mekanism + Create + Thermal + Mythic Metals = ~30-50 fluids. This is manageable but worth designing for: fluid type generators run at registration time, reading the variant registry. Cross-mod variants conditionally register their fluid alongside.
+An earlier design registered one fluid/block/bucket per variant, which scaled
+with the variant count and could never be datapack-added (fluids register at
+mod-init, before world datapacks load). That was collapsed: there is now exactly
+**one** `slime_milk` fluid + source block + bucket, with the variant riding on
+the `SLIME_VARIANT` data component and the source `BlockEntity` (see the Slime
+Milk fluid section above and [refactor_data_driven_variants.md](./refactor_data_driven_variants.md)).
+A datapack variant therefore gets milk, a spawn egg, a Slime Bucket, and a
+Configurable Froglight with zero Java edits and zero new registrations.
 
 ## Slime Variant Pattern
 
@@ -82,30 +89,44 @@ ResourceSlime extends Slime {
 
 ### Variant JSON Schema
 
-`data/<namespace>/slime_variant/<name>.json`:
+`data/<namespace>/productivefrogs/slime_variant/<name>.json` (the doubled
+`productivefrogs/` segment is NeoForge datapack-registry path convention, not a
+typo). A first-party variant (`iron.json`):
 
 ```json
 {
-  "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "mekanism" }
-  ],
-  "display_name": { "translate": "entity.productivefrogs.osmium_slime" },
-  "category": "productivefrogs:metallic",
-  "color_rgb": [127, 178, 197],
-  "texture": "productivefrogs:textures/entity/slime/osmium.png",
-  "loot_table": "productivefrogs:entities/slime/osmium",
-  "spawn": {
-    "biomes": "#minecraft:is_overworld",
-    "weight": 5,
-    "min_count": 1,
-    "max_count": 2,
-    "y_min": 0,
-    "y_max": 64
-  }
+  "primer_item": "minecraft:iron_ingot",
+  "category": "cave",
+  "primary_color": 14211288,
+  "secondary_color": 12632256,
+  "inner_block": "minecraft:iron_block"
 }
 ```
 
-The `neoforge:conditions` block ensures the variant is only loaded when Mekanism is present. Without it, the slime simply doesn't exist in the registry — no errors, no broken references.
+Fields, decoded by `SlimeVariant.CODEC`:
+
+| Field | Required | Meaning |
+|---|---|---|
+| `primer_item` | one of `primer_item`/`primer_tag` | exact item id that primes this variant (vanilla / first-party items) |
+| `primer_tag` | one of `primer_item`/`primer_tag` | item tag whose members each prime this variant (cross-mod, e.g. `c:ingots/tin`) |
+| `category` | yes | parent category: `bog` / `cave` / `geode` / `tide` / `infernal` / `void` |
+| `primary_color` | yes | outer-shell tint, 24-bit RGB int in `[0, 0xFFFFFF]` |
+| `secondary_color` | yes | secondary tint, same range |
+| `weight` | no (default 1) | relative weight in the random discovery pool |
+| `inner_block` | no | vanilla block id whose texture is baked inside the translucent slime |
+| `spawn_entity` | no | EntityType a Slime Milk source spawns instead of the default `ResourceSlime` |
+
+The codec rejects a variant declaring neither `primer_item` nor `primer_tag` at
+datapack load (it could never be primed, yet would still enter the discovery
+pool). When both kinds of variant could match one item, an exact `primer_item`
+match wins over a `primer_tag` match, deterministically. There is no
+`display_name` / `texture` / `loot_table` / `spawn` block: names fall back to a
+title-cased id, the shell is a tinted shared texture, drops are the Configurable
+Froglight stamped with the variant, and discovery is driven off `parent_species`
++ `weight` rather than per-variant spawn rules.
+
+Optional `neoforge:conditions` gate whether the variant loads at all; cross-mod
+variants use them (see below).
 
 ### Variant Registration Flow
 
@@ -121,26 +142,28 @@ On server start / datapack reload:
 
 ## Variant resolution at runtime
 
-v1.0 deleted the `productivefrogs:primer/<category>` tag system. Variant → primer resolution now goes through the `SlimeVariant` datapack registry directly via `SlimeVariant.findByPrimerItem(registry, itemId)`. The variant JSON's `primer_item` field is the exact 1:1 match required for both slime infusion and Frog Egg priming (see `species_as_category_redesign.md` §Slime infusion).
+v1.0 deleted the `productivefrogs:primer/<category>` tag system. Variant → primer resolution now goes through the `SlimeVariant` datapack registry directly via `SlimeVariant.findByPrimer(registry, heldStack)`, which matches a held item against each variant's `primer_item` (exact item id) **or** `primer_tag` (tag membership, resolved at runtime where tags are loaded). Both slime infusion and Frog Egg priming share this resolver (see `species_as_category_redesign.md` §Slime infusion). An exact `primer_item` match always wins over a `primer_tag` match, deterministically regardless of registry order.
 
-- **"Can this primer prime a Frog Egg block?"** `SlimeVariant.findByPrimerItem(registry, held.itemId)` — if a variant matches, its `category()` selects the Primed Frog Egg block.
+- **"Can this primer prime a Frog Egg block?"** `SlimeVariant.findByPrimer(registry, held)` — if a variant matches (by item id or tag), its `category()` selects the Primed Frog Egg block.
 - **"Will this frog eat this slime?"** `frog.getCategory() == slime.getCategory()` — direct enum equality. Both sides carry a `Category` reference.
 
 ### Cross-mod variant additions
 
-Cross-mod variants ship as JSON `SlimeVariant` entries with `neoforge:conditions → mod_loaded` wrappers. Example for a Mekanism osmium variant (`data/productivefrogs/productivefrogs/slime_variant/osmium.json`):
+Cross-mod variants ship as JSON `SlimeVariant` entries, primed off a `c:` common tag where one exists (so any providing mod's item primes them) and gated `neoforge:conditions → mod_loaded` on the canonical provider whose item the smelt-back recipe emits. The full strategy, the curated list, and the gating reasoning (NeoForge forbids `tag_empty` conditions on datapack-registry entries, so the load gate is `mod_loaded`, not the tag) live in [cross_mod_compat.md](./cross_mod_compat.md). Example, the shipped tin variant (`slime_variant/tin.json`):
 
 ```json
 {
   "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "mekanism" }
+    { "type": "neoforge:mod_loaded", "modid": "alltheores" }
   ],
+  "primer_tag": "c:ingots/tin",
   "category": "cave",
-  "primer_item": "mekanism:ingot_osmium",
-  "primary_color": 8027317,
-  "secondary_color": 5526612
+  "primary_color": 13161170,
+  "secondary_color": 10463920
 }
 ```
+
+The `mod_loaded` gate keeps the variant out of the registry when its provider is absent — no errors, no broken references. The `primer_tag` then lets any mod's tin ingot prime it at infusion time. A paired `minecraft:smelting` recipe (gated the same way) smelts the resulting Configurable Froglight back to the provider's ingot. Bespoke variants with no clean common tag (e.g. Powah crystals) use `primer_item` against the mod's exact id instead.
 
 No tag files involved. The variant either exists in the registry (mod present) or it doesn't (mod absent); no broken-reference state. Cross-mod loot tables / recipes can still wrap entire JSON files in `neoforge:conditions` when needed.
 
@@ -244,12 +267,12 @@ Productive Frogs is **NeoForge-only**. No Fabric port is planned in V1 or any fu
 - Mod APIs we depend on that are NeoForge-specific:
   - `IItemExtension.interactLivingEntity` (for slime infusion right-click)
   - `neoforge:conditions → mod_loaded` for cross-mod compat
-  - NeoForge data registries for `SlimeVariant` and `slime_split_pool`
-  - Custom `Fluid` + `FluidType` for Slime Milk variants
+  - NeoForge datapack registries for `slime_variant` and `parent_species`
+  - Custom `Fluid` + `FluidType` for the single Slime Milk fluid
 - Target audience: ATM10 / NeoForge ecosystem players. Fabric audience is explicitly out of scope.
 
 ## Testing Strategy (sketch — to be expanded)
 
-- **Unit tests** for codec round-trips on SlimeVariant JSON.
-- **Game-test framework** scenarios for: priming an egg, hatching, frog eating a slime, drop appearing.
-- **Manual integration smoke test** with Mekanism + Create installed: place Frog Egg, prime with osmium, hatch, feed bronze slime, verify drop.
+- **Unit tests** for codec round-trips on SlimeVariant JSON (including the no-primer rejection and the `primer_tag` decode).
+- **Game-test framework** scenarios for: priming an egg, hatching, a frog eating a same-category slime, the drop appearing, and the cross-mod resolution paths (condition gating, `primer_tag` membership, exact-item-over-tag precedence).
+- **Manual integration smoke test** with AllTheOres installed: prime a Cave Slime with a tin ingot, confirm it becomes a tin Resource Slime, feed it to a Cave Frog, and verify the tin Configurable Froglight drops and smelts back to a tin ingot.
