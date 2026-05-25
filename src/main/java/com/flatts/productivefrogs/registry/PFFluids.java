@@ -1,9 +1,6 @@
 package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.material.Fluid;
@@ -13,60 +10,43 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * Source + Flowing fluid registrations for Slime Milk variants. One
- * {@link BaseFlowingFluid.Source} + one {@link BaseFlowingFluid.Flowing} per
- * variant in {@link PFFluidTypes#VARIANTS}, totalling
- * {@code VARIANTS.size() * 2} fluid IDs.
+ * The single Source + Flowing Slime Milk fluid pair. Collapsed from the former
+ * one-pair-per-variant model (see {@link PFFluidTypes} and
+ * {@code docs/refactor_data_driven_variants.md}). Variant identity lives on the
+ * bucket component / source BlockEntity, not on the fluid.
  *
- * <p>Flow tuning picked for V1: {@code slopeFindDistance 4} +
- * {@code levelDecreasePerBlock 2} = lava-style 4-block reach instead of
- * water's 8. Keeps farm footprints small. Per design doc
- * {@code docs/farming.md} §Slime Milk.
+ * <p>Flow tuning: {@code slopeFindDistance 4} + {@code levelDecreasePerBlock 2}
+ * = lava-style 4-block reach instead of water's 8, keeping farm footprints small.
  */
 public final class PFFluids {
 
     public static final DeferredRegister<Fluid> FLUIDS =
         DeferredRegister.create(BuiltInRegistries.FLUID, ProductiveFrogs.MOD_ID);
 
-    /** Per-variant Source + Flowing fluid pair. */
-    public record Pair(
-        DeferredHolder<Fluid, BaseFlowingFluid.Source> source,
-        DeferredHolder<Fluid, BaseFlowingFluid.Flowing> flowing
-    ) {}
+    // Non-final: assigned once in the static initializer below. They can't be
+    // final because the Properties lambdas capture them before assignment (a
+    // blank-final read in a lambda is a definite-assignment error); the lambdas
+    // are lazy, so they read the assigned value at fluid-build time.
+    public static DeferredHolder<Fluid, BaseFlowingFluid.Source> SLIME_MILK_SOURCE;
+    public static DeferredHolder<Fluid, BaseFlowingFluid.Flowing> SLIME_MILK_FLOWING;
 
-    /** Fluid pairs keyed by variant name. Iteration order matches {@link PFFluidTypes#VARIANTS}. */
-    public static final Map<String, Pair> BY_VARIANT = buildFluids();
+    static {
+        // The Properties needs Supplier<Fluid> for both Source and Flowing, but
+        // neither holder exists yet here. The lambdas are lazy (invoked at
+        // fluid-build time, after both fields are assigned below), so the
+        // forward reference resolves. Same pattern the per-variant code used.
+        BaseFlowingFluid.Properties props = new BaseFlowingFluid.Properties(
+            PFFluidTypes.SLIME_MILK,
+            () -> SLIME_MILK_SOURCE.get(),
+            () -> SLIME_MILK_FLOWING.get()
+        )
+            .bucket(() -> PFItems.SLIME_MILK_BUCKET.get())
+            .block(() -> (LiquidBlock) PFBlocks.SLIME_MILK_SOURCE.get())
+            .slopeFindDistance(4)
+            .levelDecreasePerBlock(2);
 
-    private static Map<String, Pair> buildFluids() {
-        LinkedHashMap<String, Pair> map = new LinkedHashMap<>();
-        for (String variant : PFFluidTypes.VARIANTS) {
-            // Forward references: the Properties object needs Supplier<Fluid>
-            // for both Source and Flowing, but neither holder exists yet at
-            // this point in the loop. We close over the local `map` (NOT the
-            // BY_VARIANT static field, which is still null during this
-            // static-init pass) — by the time the lambdas fire at registry-
-            // build time, both entries have been put() into `map`.
-            BaseFlowingFluid.Properties props = new BaseFlowingFluid.Properties(
-                PFFluidTypes.BY_VARIANT.get(variant),
-                () -> map.get(variant).source().get(),
-                () -> map.get(variant).flowing().get()
-            )
-                .bucket(() -> PFItems.MILK_BUCKETS.get(variant).get())
-                .block(() -> (LiquidBlock) PFBlocks.MILK_BLOCKS.get(variant).get())
-                .slopeFindDistance(4)
-                .levelDecreasePerBlock(2);
-
-            DeferredHolder<Fluid, BaseFlowingFluid.Source> source = FLUIDS.register(
-                variant + "_slime_milk",
-                () -> new BaseFlowingFluid.Source(props)
-            );
-            DeferredHolder<Fluid, BaseFlowingFluid.Flowing> flowing = FLUIDS.register(
-                variant + "_slime_milk_flowing",
-                () -> new BaseFlowingFluid.Flowing(props)
-            );
-            map.put(variant, new Pair(source, flowing));
-        }
-        return Collections.unmodifiableMap(map);
+        SLIME_MILK_SOURCE = FLUIDS.register("slime_milk", () -> new BaseFlowingFluid.Source(props));
+        SLIME_MILK_FLOWING = FLUIDS.register("slime_milk_flowing", () -> new BaseFlowingFluid.Flowing(props));
     }
 
     private PFFluids() {

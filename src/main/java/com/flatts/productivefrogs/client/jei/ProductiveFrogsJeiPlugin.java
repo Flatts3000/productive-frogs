@@ -171,16 +171,13 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
                 "productivefrogs.jei.variant_froglight.info", frogName, variantSlimeName);
             reg.addIngredientInfo(froglight, VanillaTypes.ITEM_STACK, froglightInfo);
 
-            // 4. Variant Slime Milk bucket — if shipped for this variant
-            PFItems.MILK_BUCKETS.entrySet().stream()
-                .filter(e -> e.getKey().equals(variantName))
-                .findFirst()
-                .ifPresent(e -> {
-                    Component milkInfo = Component.translatable(
-                        "productivefrogs.jei.slime_milk.info", variantSlimeName);
-                    reg.addIngredientInfo(
-                        new ItemStack(e.getValue().get()), VanillaTypes.ITEM_STACK, milkInfo);
-                });
+            // 4. Variant Slime Milk bucket — the single slime_milk_bucket item
+            // stamped with this variant (collapsed from the per-variant items).
+            ItemStack milkBucket = new ItemStack(PFItems.SLIME_MILK_BUCKET.get());
+            milkBucket.set(PFDataComponents.SLIME_VARIANT.get(), entry.getKey().location());
+            Component milkInfo = Component.translatable(
+                "productivefrogs.jei.slime_milk.info", variantSlimeName);
+            reg.addIngredientInfo(milkBucket, VanillaTypes.ITEM_STACK, milkInfo);
         }
     }
 

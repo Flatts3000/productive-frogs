@@ -64,9 +64,17 @@ public final class PFCreativeTabs {
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h ->
                         output.accept(makeVariantSlimeBucket(h.key().location(), h.value().category()))));
                     output.accept(PFItems.SLIME_MILKER.get());
-                    for (var bucket : PFItems.MILK_BUCKETS.values()) {
-                        output.accept(bucket.get());
-                    }
+                    // One Slime Milk bucket per registry variant (stamped via the
+                    // SLIME_VARIANT component), plus the vanilla / magma specials
+                    // (sentinel ids the source block maps to vanilla Slime /
+                    // MagmaCube). Collapsed from the per-variant milk items;
+                    // empty at the title screen until a world's datapacks load.
+                    variantLookup.ifPresent(reg -> reg.listElements().forEach(h ->
+                        output.accept(makeMilkBucket(h.key().location()))));
+                    output.accept(makeMilkBucket(
+                        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "vanilla")));
+                    output.accept(makeMilkBucket(
+                        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "magma")));
                     for (var entry : PFItems.PRIMED_FROG_EGG_ITEMS.values()) {
                         output.accept(entry.get());
                     }
@@ -119,6 +127,17 @@ public final class PFCreativeTabs {
      * shape stays consistent with real captured buckets. The category comes
      * straight from the variant's registry record.
      */
+    /**
+     * Build a Slime Milk bucket stamped with the given variant id (the single
+     * {@code slime_milk_bucket} carries its variant in the SLIME_VARIANT
+     * component, like the Configurable Froglight).
+     */
+    private static ItemStack makeMilkBucket(ResourceLocation variantId) {
+        ItemStack stack = new ItemStack(PFItems.SLIME_MILK_BUCKET.get());
+        stack.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
+        return stack;
+    }
+
     private static ItemStack makeVariantSlimeBucket(ResourceLocation variantId, Category category) {
         ItemStack stack = new ItemStack(PFItems.SLIME_BUCKET.get());
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {

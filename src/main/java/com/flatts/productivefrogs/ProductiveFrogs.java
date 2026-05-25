@@ -88,8 +88,8 @@ public final class ProductiveFrogs {
             PFConfig.DEPLETION_ENABLED.get(), PFConfig.DEPLETION_COUNT.get(),
             PFConfig.MIN_SPAWN_INTERVAL_TICKS.get(), PFConfig.MAX_SPAWN_INTERVAL_TICKS.get(),
             PFConfig.DISCOVERY_CHANCE_PER_OFFSPRING.get()));
-        PFDebug.log(PFDebug.Area.LIFECYCLE, () -> String.format(
-            "lifecycle: %d slime-milk variants registered", PFFluidTypes.VARIANTS.size()));
+        PFDebug.log(PFDebug.Area.LIFECYCLE,
+            "lifecycle: registries + single slime_milk fluid registered; variants are datapack-driven");
 
         LOGGER.info("Productive Frogs common setup complete");
     }

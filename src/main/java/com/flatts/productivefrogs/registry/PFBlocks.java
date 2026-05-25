@@ -60,14 +60,26 @@ public final class PFBlocks {
         );
 
     /**
-     * Slime Milk LiquidBlocks keyed by variant name. One block per variant in
-     * {@link PFFluidTypes#VARIANTS}; each wraps its source fluid from
-     * {@link PFFluids#BY_VARIANT}. The concrete type is {@link
-     * SlimeMilkSourceBlock} (a {@link LiquidBlock} subclass) — adds the J4
-     * periodic-spawn loop that turns each source block into a slime fountain
-     * for the matching variant.
+     * The single Slime Milk source block — an {@link net.minecraft.world.level.block.EntityBlock}
+     * ({@link SlimeMilkSourceBlock}) whose
+     * {@link com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity}
+     * stores the variant. Collapsed from the former one-LiquidBlock-per-variant
+     * model so a datapack-added variant gets milk with no Java edit; wraps the
+     * one {@code slime_milk} source fluid and adds the periodic-spawn loop.
      */
-    public static final Map<String, DeferredBlock<LiquidBlock>> MILK_BLOCKS = buildMilkBlocks();
+    public static final DeferredBlock<SlimeMilkSourceBlock> SLIME_MILK_SOURCE = BLOCKS.registerBlock(
+        "slime_milk",
+        props -> new SlimeMilkSourceBlock(PFFluids.SLIME_MILK_SOURCE.get(), props),
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .replaceable()
+            .noCollission()
+            .strength(100.0F)
+            .pushReaction(PushReaction.DESTROY)
+            .noLootTable()
+            .liquid()
+            .sound(SoundType.EMPTY)
+    );
 
     /**
      * The Slime Milker — V1 production keystone block. Furnace-shaped GUI
@@ -88,30 +100,6 @@ public final class PFBlocks {
             .strength(0.5F)
             .sound(SoundType.METAL)
     );
-
-    private static Map<String, DeferredBlock<LiquidBlock>> buildMilkBlocks() {
-        // Ordering note: this runs during PFBlocks static init, after PFFluids
-        // static init (the constructor registers FluidTypes -> Fluids -> Blocks),
-        // so PFFluids.BY_VARIANT.get(variant).source() is resolvable here. See
-        // the forward-reference comment in PFFluids.buildFluids.
-        LinkedHashMap<String, DeferredBlock<LiquidBlock>> map = new LinkedHashMap<>();
-        for (String variant : PFFluidTypes.VARIANTS) {
-            map.put(variant, BLOCKS.registerBlock(
-                variant + "_slime_milk",
-                props -> new SlimeMilkSourceBlock(PFFluids.BY_VARIANT.get(variant).source().get(), variant, props),
-                BlockBehaviour.Properties.of()
-                    .mapColor(MapColor.METAL)
-                    .replaceable()
-                    .noCollission()
-                    .strength(100.0F)
-                    .pushReaction(PushReaction.DESTROY)
-                    .noLootTable()
-                    .liquid()
-                    .sound(SoundType.EMPTY)
-            ));
-        }
-        return Collections.unmodifiableMap(map);
-    }
 
     private static Map<Category, DeferredBlock<PrimedFrogEggBlock>> buildPrimedEggs() {
         EnumMap<Category, DeferredBlock<PrimedFrogEggBlock>> map = new EnumMap<>(Category.class);

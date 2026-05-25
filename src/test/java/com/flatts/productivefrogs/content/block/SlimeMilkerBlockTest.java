@@ -1,10 +1,8 @@
 package com.flatts.productivefrogs.content.block;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-import com.flatts.productivefrogs.registry.PFFluidTypes;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.ItemStack;
@@ -13,14 +11,14 @@ import net.minecraft.world.item.component.CustomData;
 import org.junit.jupiter.api.Test;
 
 /**
- * Variant-resolution unit tests for {@link SlimeMilkerBlock}. The block
- * delegates its entire "iron bucket in → iron milk bucket out" mapping to
- * {@link SlimeMilkerBlock#readBucketVariant} plus the {@link PFFluidTypes#VARIANTS}
- * + {@link PFItems#MILK_BUCKETS} lookup chain. If any of those break, the
- * milker silently fails closed (the player keeps the slime bucket and gets
- * nothing) — that's a no-op masquerading as a bug. These tests pin the
- * parsing contract so a future refactor of the NBT shape or the registry
- * keys can't quietly regress the appliance.
+ * Variant-resolution unit tests for {@link SlimeMilkerBlock}. The milker reads
+ * the input Slime Bucket's variant via {@link SlimeMilkerBlock#readBucketVariant}
+ * (path, for legacy callers) / {@link SlimeMilkerBlock#readBucketVariantId} (full
+ * id, used to stamp the single output milk bucket's {@code SLIME_VARIANT}
+ * component). If parsing breaks, the milker silently fails closed (the player
+ * keeps the slime bucket and gets nothing) — a no-op masquerading as a bug.
+ * These tests pin the parsing contract so a future refactor of the NBT shape
+ * can't quietly regress the appliance.
  *
  * <p>In-world behavior (player swings the bucket, block consumes it, sound
  * plays) is covered by the GameTest in {@code PFGameTests}; here we focus on
@@ -106,19 +104,19 @@ class SlimeMilkerBlockTest {
     }
 
     @Test
-    void everyShippedVariantMapsToARegisteredMilkBucketItem() {
-        // The block looks up the variant string in PFItems.MILK_BUCKETS after
-        // verifying PFFluidTypes.VARIANTS contains it. Both data structures
-        // must agree — drift would mean a variant resolves at the
-        // VARIANTS.contains() check but then NPEs at MILK_BUCKETS.get(...).get().
-        // This test is the canary for that drift.
-        for (String variant : PFFluidTypes.VARIANTS) {
-            var deferred = PFItems.MILK_BUCKETS.get(variant);
-            assertNotNull(deferred,
-                "variant " + variant + " has no entry in MILK_BUCKETS — "
-                    + "PFFluidTypes.VARIANTS and PFItems.MILK_BUCKETS drifted");
-            assertNotNull(deferred.get(),
-                "MILK_BUCKETS[" + variant + "] deferred item never bound");
-        }
+    void readsFullVariantIdForMilkStamping() {
+        // The milker stamps the single output Slime Milk bucket with the FULL
+        // variant id (namespace preserved) via readBucketVariantId, so a
+        // cross-namespace datapack variant (e.g. mymod:adamantite) survives the
+        // slime-bucket -> milk-bucket conversion. The path-only readBucketVariant
+        // above would lose the namespace.
+        ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
+        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, bucket,
+            tag -> tag.putString("Variant", "mymod:adamantite"));
+
+        assertEquals(net.minecraft.resources.ResourceLocation.parse("mymod:adamantite"),
+            SlimeMilkerBlock.readBucketVariantId(bucket));
+        assertNull(SlimeMilkerBlock.readBucketVariantId(new ItemStack(PFItems.SLIME_BUCKET.get())),
+            "an empty Slime Bucket has no variant id");
     }
 }

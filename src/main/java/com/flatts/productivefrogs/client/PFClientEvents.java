@@ -7,6 +7,7 @@ import com.flatts.productivefrogs.client.renderer.ResourceSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
 import com.flatts.productivefrogs.client.screen.SlimeMilkerScreen;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.item.FrogEggItem;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.data.Category;
@@ -21,6 +22,7 @@ import com.flatts.productivefrogs.registry.PFRegistries;
 import com.flatts.productivefrogs.util.PFDebug;
 import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -28,6 +30,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.material.FluidState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -209,6 +214,38 @@ public final class PFClientEvents {
             return opaque(0x5DDE36);
         }, PFItems.SLIME_BUCKET.get());
 
+        // Slime Milk bucket — single item, tint the milk layer (tintIndex 1) by
+        // the SLIME_VARIANT component's registry colour. Variant-less bucket
+        // falls back to a milky off-white so the item stays visible.
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 1) {
+                return -1;
+            }
+            ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+            if (variantId == null) {
+                return opaque(0xF0F0E0);
+            }
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.level == null) {
+                return -1;
+            }
+            Registry<SlimeVariant> registry = mc.level.registryAccess()
+                .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+            if (registry == null) {
+                return -1;
+            }
+            SlimeVariant variant = registry.get(variantId);
+            if (variant == null) {
+                return -1;
+            }
+            final int argb = opaque(variant.primaryColor());
+            if (PFDebug.on(PFDebug.Area.TINT)) {
+                PFDebug.logOnce(PFDebug.Area.TINT, "slime_milk_bucket/" + variantId,
+                    () -> String.format("slime_milk_bucket variant=%s -> #%08X", variantId, argb));
+            }
+            return argb;
+        }, PFItems.SLIME_MILK_BUCKET.get());
+
         // Primed Frog Egg block items — BlockColor doesn't auto-propagate to
         // BlockItem in 1.21.1 the way it does in 1.21.4+; register explicit
         // item color handlers so the 6 in-hand bottles tint per category.
@@ -320,25 +357,62 @@ public final class PFClientEvents {
     }
 
     /**
-     * Wire each Slime Milk FluidType to its still + flowing block textures.
+     * Bind the single Slime Milk FluidType to its greyscale still + flowing
+     * textures, tinted per-position from the source block's variant. One fluid
+     * serves every variant: {@link #slimeMilkTint} reads the
+     * {@link SlimeMilkSourceBlockEntity} at the position and returns the
+     * variant's {@code primary_color} (white when there's no variant — flowing /
+     * spread milk).
      */
     @SubscribeEvent
     public static void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
-        for (String variant : PFFluidTypes.VARIANTS) {
-            ResourceLocation still = ResourceLocation.fromNamespaceAndPath(
-                ProductiveFrogs.MOD_ID, "block/" + variant + "_slime_milk_still");
-            ResourceLocation flow = ResourceLocation.fromNamespaceAndPath(
-                ProductiveFrogs.MOD_ID, "block/" + variant + "_slime_milk_flow");
-            event.registerFluidType(
-                new IClientFluidTypeExtensions() {
-                    @Override
-                    public ResourceLocation getStillTexture() { return still; }
+        ResourceLocation still = ResourceLocation.fromNamespaceAndPath(
+            ProductiveFrogs.MOD_ID, "block/slime_milk_still");
+        ResourceLocation flow = ResourceLocation.fromNamespaceAndPath(
+            ProductiveFrogs.MOD_ID, "block/slime_milk_flow");
+        event.registerFluidType(
+            new IClientFluidTypeExtensions() {
+                @Override
+                public ResourceLocation getStillTexture() { return still; }
 
-                    @Override
-                    public ResourceLocation getFlowingTexture() { return flow; }
-                },
-                PFFluidTypes.BY_VARIANT.get(variant).get()
-            );
+                @Override
+                public ResourceLocation getFlowingTexture() { return flow; }
+
+                @Override
+                public int getTintColor() { return 0xFFFFFFFF; }
+
+                @Override
+                public int getTintColor(FluidState state, BlockAndTintGetter getter, BlockPos pos) {
+                    return slimeMilkTint(getter, pos);
+                }
+            },
+            PFFluidTypes.SLIME_MILK.get()
+        );
+    }
+
+    /**
+     * Per-position Slime Milk tint: the source block's variant primary_color,
+     * or opaque white when the position carries no variant (flowing / spread
+     * milk, or the registry isn't loaded yet).
+     */
+    private static int slimeMilkTint(BlockAndTintGetter getter, BlockPos pos) {
+        if (pos == null) {
+            return 0xFFFFFFFF;
         }
+        BlockEntity be = getter.getBlockEntity(pos);
+        if (be instanceof SlimeMilkSourceBlockEntity milkBe && milkBe.getVariantId() != null) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.level != null) {
+                Registry<SlimeVariant> registry = mc.level.registryAccess()
+                    .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+                if (registry != null) {
+                    SlimeVariant variant = registry.get(milkBe.getVariantId());
+                    if (variant != null) {
+                        return opaque(variant.primaryColor());
+                    }
+                }
+            }
+        }
+        return 0xFFFFFFFF;
     }
 }

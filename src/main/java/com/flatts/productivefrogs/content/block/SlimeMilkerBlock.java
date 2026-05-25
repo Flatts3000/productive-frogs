@@ -220,6 +220,30 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
     }
 
     /**
+     * Full variant id (e.g. {@code productivefrogs:iron}) from a Slime Bucket's
+     * {@code BUCKET_ENTITY_DATA}, or null when absent/malformed. The milker
+     * stamps this onto the output Slime Milk bucket's {@code SLIME_VARIANT}
+     * component, preserving the namespace so cross-namespace datapack variants
+     * survive the slime-bucket -> milk-bucket conversion.
+     */
+    @Nullable
+    public static ResourceLocation readBucketVariantId(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
+        if (data == null) {
+            return null;
+        }
+        CompoundTag tag = data.copyTag();
+        if (!tag.contains("Variant", net.minecraft.nbt.Tag.TAG_STRING)) {
+            return null;
+        }
+        String raw = tag.getString("Variant");
+        if (raw == null || raw.isEmpty()) {
+            return null;
+        }
+        return ResourceLocation.tryParse(raw);
+    }
+
+    /**
      * Vanilla's BaseEntityBlock.createTickerHelper guards against mismatched
      * BlockEntityType subclasses at runtime, but the protected accessor on
      * BaseEntityBlock isn't visible from a Block subclass. Reimplement the
