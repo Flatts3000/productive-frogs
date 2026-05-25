@@ -47,6 +47,14 @@ class SlimeVariantTest {
         }
         """;
 
+    private static final String WITHOUT_ANY_PRIMER = """
+        {
+          "category": "cave",
+          "primary_color": 12895428,
+          "secondary_color": 14211288
+        }
+        """;
+
     @Test
     void codecDecodesVariantWithPrimerTagAndNoPrimerItem() {
         // A tag-driven cross-mod variant: primer_item is absent, primer_tag drives
@@ -56,6 +64,19 @@ class SlimeVariantTest {
         assertTrue(decoded.primerTag().isPresent(), "primer_tag must decode");
         assertEquals("c:ingots/tin", decoded.primerTag().get().location().toString());
         assertEquals(Category.CAVE, decoded.category());
+    }
+
+    @Test
+    void codecRejectsVariantWithNoPrimer() {
+        // A variant with neither primer_item nor primer_tag can never be primed
+        // by a player, yet would still enter the discovery pool. The codec must
+        // fail the decode at the boundary (the generate script guards first-party
+        // variants, but a hand-authored datapack override has no such guard).
+        var result = SlimeVariant.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(WITHOUT_ANY_PRIMER));
+        assertTrue(result.error().isPresent(),
+            "decode must fail for a variant with no primer_item and no primer_tag");
+        assertTrue(result.error().get().message().contains("primer"),
+            "error message should explain the missing primer requirement");
     }
 
     @Test

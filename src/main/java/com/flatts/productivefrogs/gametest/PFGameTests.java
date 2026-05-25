@@ -649,6 +649,48 @@ public final class PFGameTests {
     }
 
     /**
+     * {@link SlimeVariant#findByPrimer} must prefer an exact {@code primer_item}
+     * match over a {@code primer_tag} match when a single stack satisfies both,
+     * deterministically and regardless of registry iteration order. Guards the
+     * overlap case a datapack can create (add {@code c:ingots/iron} alongside a
+     * first-party item-primed variant): the specific item must win. The tag
+     * variant is registered FIRST here, so a naive first-match-wins resolver
+     * would return it - this pins the exact-item preference.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void findByPrimerPrefersExactItemOverTag(GameTestHelper helper) {
+        net.minecraft.core.MappedRegistry<SlimeVariant> registry = new net.minecraft.core.MappedRegistry<>(
+            PFRegistries.SLIME_VARIANT, com.mojang.serialization.Lifecycle.stable());
+        SlimeVariant tagVariant = new SlimeVariant(
+            java.util.Optional.empty(),
+            java.util.Optional.of(net.minecraft.tags.TagKey.create(
+                net.minecraft.core.registries.Registries.ITEM, ResourceLocation.parse("c:ingots/iron"))),
+            Category.CAVE, 0xFFFFFF, 0xFFFFFF, 1, java.util.Optional.empty(), java.util.Optional.empty());
+        SlimeVariant itemVariant = new SlimeVariant(
+            java.util.Optional.of(ResourceLocation.parse("minecraft:iron_ingot")),
+            java.util.Optional.empty(),
+            Category.CAVE, 0xFFFFFF, 0xFFFFFF, 1, java.util.Optional.empty(), java.util.Optional.empty());
+        // Tag variant registered first: iteration order would surface it first.
+        net.minecraft.core.Registry.register(registry,
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "test_tag_iron"), tagVariant);
+        net.minecraft.core.Registry.register(registry,
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "test_item_iron"), itemVariant);
+        registry.freeze();
+
+        java.util.Map.Entry<ResourceLocation, SlimeVariant> resolved =
+            SlimeVariant.findByPrimer(registry, new ItemStack(Items.IRON_INGOT));
+        if (resolved == null) {
+            helper.fail("an iron ingot should resolve to one of the two overlapping variants");
+            return;
+        }
+        if (!resolved.getKey().getPath().equals("test_item_iron")) {
+            helper.fail("exact primer_item must win over primer_tag, got " + resolved.getKey());
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
      * Verify that the {@code productivefrogs:parent_species} datapack registry
      * is populated by server boot with the 6 default entries (vanilla slime +
      * magma_cube + 4 PF parent species). Confirms the {@link

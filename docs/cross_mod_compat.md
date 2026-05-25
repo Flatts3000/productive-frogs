@@ -84,6 +84,33 @@ datapack-only":
 These are small: the infusion handler already does a registry scan; add a
 tag-membership branch. Everything else is JSON.
 
+## Known limitations (and the V1.2 resolution path)
+
+- **Canonical-provider gap.** Because `tag_empty` is forbidden on datapack-registry
+  entries, each variant is `mod_loaded(provider)`-gated on ONE canonical mod, while
+  its primer is tag-driven. So a pack with, say, Mekanism tin but **not** AllTheOres
+  gets no `tin` variant - the variant never loads, even though `c:ingots/tin` is
+  populated and the `primer_tag` would have matched. For the ATM10 target this never
+  bites (ATM10 ships AllTheOres, so every canonical provider is present). The clean
+  fix for the broader "any NeoForge pack" audience is a `neoforge:or` of providers
+  per resource (load if `alltheores` OR `mekanism` OR ... is present) plus the same
+  OR on the output item; deferred to V1.2 as it is unnecessary for the launch target.
+- **Smelt-back picks one provider's item.** A `tin` Froglight always smelts to
+  `alltheores:tin_ingot` even if you primed with Mekanism tin. Harmless (both are in
+  `c:ingots/tin`), and a pack can re-point the recipe (see override path below).
+- **Discovery weight is uniform.** Cross-mod variants all use `weight = 1`, so a heavy
+  pack widens each category's discovery pool and lowers any single resource's odds
+  proportionally. This is intentional (more mods installed = more variety), not a bug;
+  the `weight` field is available per variant if a pack wants to bias the pool.
+- **Primer precedence.** When one stack satisfies both an exact `primer_item` variant
+  and a `primer_tag` variant, the exact item wins deterministically (see
+  `SlimeVariant.findByPrimer`). Two variants colliding purely on overlapping
+  `primer_tag` resolve to the first in registry order - a tag-vs-tag collision is a
+  datapack authoring conflict the resolver cannot disambiguate.
+- **Boundary validation.** A variant JSON with neither `primer_item` nor `primer_tag`
+  is rejected by the codec at datapack load (it could never be primed yet would still
+  enter the discovery pool). The error names the offending file.
+
 ## Authoring workflow
 
 `scripts/generate_cross_mod_variants.ps1` generates the pool from a compact data
@@ -131,7 +158,7 @@ is bespoke signature materials that "sell" the feature but need explicit handlin
 - Deferred (Thermal has no 1.21.1 release): enderium.
 
 ### BOG (swamp + mob drops)
-- **pink slime** (`industrialforegoing:pink_slime_ball`) - the must-have slime
+- **pink slime** (`industrialforegoing:pink_slime`) - the must-have slime
   joke; top BOG pick. Bespoke (no common tag).
 - Mystical Agriculture essences (inferium -> supremium tiers) - bespoke, iconic.
 

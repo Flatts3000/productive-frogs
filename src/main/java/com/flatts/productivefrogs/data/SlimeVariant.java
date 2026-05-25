@@ -1,11 +1,13 @@
 package com.flatts.productivefrogs.data;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -99,7 +101,7 @@ public record SlimeVariant(
      * {@code textures/} prefix, no {@code .png}). Example:
      * {@code "minecraft:iron_block"}.
      */
-    public static final Codec<SlimeVariant> CODEC = RecordCodecBuilder.create(
+    public static final Codec<SlimeVariant> CODEC = RecordCodecBuilder.<SlimeVariant>create(
         instance -> instance.group(
             ResourceLocation.CODEC.optionalFieldOf("primer_item").forGetter(SlimeVariant::primerItem),
             TagKey.codec(Registries.ITEM).optionalFieldOf("primer_tag").forGetter(SlimeVariant::primerTag),
@@ -110,7 +112,25 @@ public record SlimeVariant(
             ResourceLocation.CODEC.optionalFieldOf("inner_block").forGetter(SlimeVariant::innerBlock),
             ResourceLocation.CODEC.optionalFieldOf("spawn_entity").forGetter(SlimeVariant::spawnEntity)
         ).apply(instance, SlimeVariant::new)
-    );
+    ).comapFlatMap(SlimeVariant::requirePrimer, Function.<SlimeVariant>identity());
+
+    /**
+     * Boundary validation for the codec: every variant must declare at least
+     * one primer ({@code primer_item} or {@code primer_tag}). A variant with
+     * neither can never be intentionally primed by a player, yet it would still
+     * enter the random discovery pool ({@link #pickWeighted}) — a silent footgun
+     * on the datapack-override path that {@code scripts/generate_cross_mod_variants.ps1}
+     * guards but a hand-authored datapack JSON does not. Failing the decode here
+     * surfaces the mistake as a datapack load error naming the offending file,
+     * rather than a mystery unprimeable slime appearing at runtime.
+     */
+    private static DataResult<SlimeVariant> requirePrimer(SlimeVariant variant) {
+        if (variant.primerItem().isPresent() || variant.primerTag().isPresent()) {
+            return DataResult.success(variant);
+        }
+        return DataResult.error(() ->
+            "SlimeVariant must define primer_item or primer_tag (a variant with neither can never be primed)");
+    }
 
     /**
      * Find the variant primed by the given held stack, or {@code null}. Matches
@@ -119,17 +139,35 @@ public record SlimeVariant(
      * (e.g. {@code primer_tag: c:ingots/tin}) be primed by any mod's tin ingot
      * without hardcoding a specific mod's item - see {@code docs/cross_mod_compat.md}.
      *
+     * <p><b>Precedence:</b> an exact {@code primer_item} match always wins over a
+     * {@code primer_tag} match (specific item beats common tag), and the result
+     * is deterministic regardless of registry iteration order. This matters once
+     * a datapack overlaps a tag-driven variant with an item-driven one (e.g. a
+     * pack adds {@code c:ingots/tin} while a first-party {@code tin} already
+     * exists): the exact item wins predictably. Two variants matching purely by
+     * overlapping {@code primer_tag} still resolve to the first in registry
+     * order — a tag-vs-tag collision is a datapack authoring conflict, not a
+     * case the resolver can disambiguate.
+     *
      * <p>Linear scan over the registry; trivial next to the right-click handler.
      */
     @Nullable
     public static Map.Entry<ResourceLocation, SlimeVariant> findByPrimer(
             Registry<SlimeVariant> registry, ItemStack stack) {
+        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        Map.Entry<ResourceLocation, SlimeVariant> tagMatch = null;
         for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
-            if (primerMatches(entry.getValue(), stack)) {
-                return Map.entry(entry.getKey().location(), entry.getValue());
+            SlimeVariant variant = entry.getValue();
+            // Exact primer_item match wins immediately — specific beats general.
+            if (variant.primerItem().filter(itemId::equals).isPresent()) {
+                return Map.entry(entry.getKey().location(), variant);
+            }
+            // Remember the first tag match but keep scanning for an exact item match.
+            if (tagMatch == null && variant.primerTag().map(stack::is).orElse(false)) {
+                tagMatch = Map.entry(entry.getKey().location(), variant);
             }
         }
-        return null;
+        return tagMatch;
     }
 
     /**
