@@ -35,8 +35,8 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
  *   <li>{@code lightLevel 0} — milk isn't a light source.</li>
  * </ul>
  *
- * <p>{@link #VARIANTS} mirrors the 12 resource variants in
- * {@link PFItems#RESOURCE_SLIME_SPAWN_EGGS} plus two specials: {@code vanilla}
+ * <p>{@link #VARIANTS} mirrors the 12 shipped resource variants in the
+ * {@code slime_variant} datapack registry plus two specials: {@code vanilla}
  * (from milking a vanilla green slime) and {@code magma} (from magma cubes).
  * Reordering or renaming entries here cascades to {@link PFFluids},
  * {@link PFBlocks}, {@link PFItems}, and the lang file — keep them in sync.

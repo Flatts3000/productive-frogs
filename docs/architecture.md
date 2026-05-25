@@ -4,7 +4,7 @@ How the mod is structured internally to support data-driven slime variants, cros
 
 ## Guiding Principles
 
-1. **Slime variants are mostly data.** A variant is a `slime_variant` JSON, not a Java class. Two one-line Java edits still register its spawn egg and Slime Milk fluid (item/fluid registration runs at mod-init, before datapack registries load); see `docs/code_review_2026_05_24.md` CR-9 for the path to removing the spawn-egg one.
+1. **Slime variants are mostly data.** A variant is a `slime_variant` JSON, not a Java class. The spawn egg is a single component-driven item (`resource_slime_spawn_egg`) whose per-variant stacks the creative tab + JEI enumerate from the registry, so it needs no Java edit (CR-9). One one-line Java edit remains: the Slime Milk `VARIANTS` entry in `PFFluidTypes` (fluids must register at mod-init, before datapack registries load).
 2. **Cross-mod support is conditional JSON.** No Java code calls Mekanism's classes; we reference `c:ingots/osmium` tags. Mod-specific JSON entries are wrapped in `neoforge:conditions → mod_loaded`.
 3. **Category membership is tag-based.** Frog categories, slime categories, and primer tags all live in NeoForge's tag system. Lookups are O(1) tag membership checks.
 4. **Drops are vanilla loot tables.** No bespoke drop logic — leverage vanilla's `LootTable` system for full flexibility (random ranges, fortune scaling, enchantment effects all work for free).

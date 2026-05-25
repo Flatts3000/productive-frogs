@@ -229,30 +229,27 @@ public final class PFClientEvents {
         // we fall back to the underlying SpawnEggItem.getColor(layer) which
         // returns the (primary, secondary) colors we passed to the ctor.
 
-        // Variant slime spawn eggs (12) — prefer the datapack registry's
-        // primary/secondary for richer per-variant colours; fall back to the
-        // ctor colours when the registry isn't loaded yet (creative tab
-        // preview before world load).
-        for (var entry : PFItems.RESOURCE_SLIME_SPAWN_EGGS.entrySet()) {
-            event.register((stack, tintIndex) -> {
-                ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
-                if (variantId != null) {
-                    Minecraft mc = Minecraft.getInstance();
-                    if (mc.level != null) {
-                        Registry<SlimeVariant> registry = mc.level.registryAccess()
-                            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
-                        if (registry != null) {
-                            SlimeVariant variant = registry.get(variantId);
-                            if (variant != null) {
-                                return opaque(tintIndex == 0 ? variant.primaryColor() : variant.secondaryColor());
-                            }
+        // The single Resource Slime spawn egg — tint per-stack from the
+        // SLIME_VARIANT component's registry colours; fall back to the item's
+        // ctor colours (BOG) when no variant is set or the registry isn't loaded
+        // yet (title-screen creative preview before world load).
+        event.register((stack, tintIndex) -> {
+            ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+            if (variantId != null) {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.level != null) {
+                    Registry<SlimeVariant> registry = mc.level.registryAccess()
+                        .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+                    if (registry != null) {
+                        SlimeVariant variant = registry.get(variantId);
+                        if (variant != null) {
+                            return opaque(tintIndex == 0 ? variant.primaryColor() : variant.secondaryColor());
                         }
                     }
                 }
-                // Fallback to SpawnEggItem ctor colors (Category.tintRgb + darker shade).
-                return opaque(((SpawnEggItem) stack.getItem()).getColor(tintIndex));
-            }, entry.getValue().get());
-        }
+            }
+            return opaque(((SpawnEggItem) stack.getItem()).getColor(tintIndex));
+        }, PFItems.RESOURCE_SLIME_SPAWN_EGG.get());
 
         // Parent slime species spawn eggs (4) + category frog/tadpole spawn eggs (12).
         // All of these inherit from vanilla SpawnEggItem with explicit
