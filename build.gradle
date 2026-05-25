@@ -105,8 +105,8 @@ dependencies {
     // public maven we depend on cleanly — see docs/dev_setup.md for the
     // drop-in-run-mods install path.
     // JEI for MC 1.21.1 lives on the 19.21.x line.
-    compileOnly "mezz.jei:jei-1.21.1-neoforge-api:19.21.0.247"
-    runtimeOnly "mezz.jei:jei-1.21.1-neoforge:19.21.0.247"
+    compileOnly "mezz.jei:jei-1.21.1-neoforge-api:19.27.0.340"
+    runtimeOnly "mezz.jei:jei-1.21.1-neoforge:19.27.0.340"
 
     testImplementation platform('org.junit:junit-bom:5.11.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
