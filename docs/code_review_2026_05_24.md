@@ -176,7 +176,12 @@ spawn eggs, and the `parent_species` registry keys.
 **Files:** `registry/PFItems.java:336-366` (`buildSlimeVariantSpawnEggs` hardcodes a
 variant->category table duplicating the JSON), `registry/PFFluidTypes.java:54-61` (`VARIANTS`
 list of 14 must be hand-edited per milkable variant).
-**Status:** verified architectural finding.
+**Status:** ADDRESSED (spawn-egg half) on branch `feat/v1.1-data-driven-spawn-eggs`. The 12
+per-variant spawn-egg item IDs were collapsed into one component-driven
+`resource_slime_spawn_egg`; the creative tab + JEI + tint now enumerate variants from the
+`slime_variant` registry. Adding a variant no longer needs a spawn-egg Java edit. The Slime
+Milk `VARIANTS` edit remains (fluids must register at mod-init) - that is the documented,
+inherent one-line touch, not a defect.
 
 `architecture.md` and `versioning.md` promise V1.1 is "JSON-only, no Java edits" for 22 new
 variants. Today each variant needs a `VariantSpec` row (with a category copy that can drift from

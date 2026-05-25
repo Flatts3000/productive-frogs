@@ -8,7 +8,7 @@
 
 v1.1's single thrust: **complete vanilla resource coverage across the six species** by adding every vanilla item that fits cleanly into one of them. No new mechanics, no new species, no schema changes — pure JSON additions flowing through the data-driven variant architecture.
 
-Adding a variant is mostly data: a `slime_variant` JSON (with an optional `inner_block` block id rendered inside the slime, v1.0.1+) + a smelting recipe + a lang entry. Two one-line Java edits remain today — a spawn-egg `VariantSpec` row and a Slime Milk `VARIANTS` entry — because item/fluid registration runs at mod-init, before datapack registries load. See the per-variant checklist below and `docs/code_review_2026_05_24.md` CR-9.
+Adding a variant is mostly data: a `slime_variant` JSON (with an optional `inner_block` block id rendered inside the slime, v1.0.1+) + a smelting recipe + a lang entry. One one-line Java edit remains — a Slime Milk `VARIANTS` entry in `PFFluidTypes` — because fluid registration runs at mod-init, before datapack registries load. The spawn egg is a single component-driven item enumerated from the registry (CR-9), so it needs no Java edit. See the per-variant checklist below.
 
 ## Locked scope — 22 new variants
 
@@ -82,14 +82,14 @@ Geode stays the smallest pool. v2+ may add new variants but the species roster s
 
 ## Per-variant file checklist
 
-Each variant needs JSON plus two one-line Java edits:
+Each variant needs JSON plus one one-line Java edit:
 
 1. `data/productivefrogs/productivefrogs/slime_variant/<name>.json` — `primer_item`, `category`, `primary_color`, `secondary_color`, optional `weight`, optional `inner_block` (a vanilla block id rendered inside the slime; v1.0.1+ replaced the old per-variant inner-cube texture with live block rendering).
 2. Smelting recipe at `data/productivefrogs/recipe/smelting/configurable_froglight_<name>_smelting.json` — match the existing variant-recipe shape (`neoforge:components` ingredient on the `slime_variant` data component).
-3. Lang entry for the spawn egg / slime / bucket display name.
-4. **Java (two one-line edits):** a `VariantSpec` row in `PFItems.buildSlimeVariantSpawnEggs` (registers the variant's spawn egg) and a `VARIANTS` entry in `PFFluidTypes` (registers its Slime Milk fluid/block/bucket). These are NOT datapack-driven: item and fluid registration run at mod-init, before datapack registries load. See `docs/code_review_2026_05_24.md` CR-9 — converting the spawn egg to a single component-driven item (the `configurable_froglight` pattern) would remove the first edit; the fluid edit is inherent to mod-init fluid registration.
+3. Lang entry for the slime / bucket display name + the spawn-egg name key `item.productivefrogs.resource_slime_spawn_egg.<variant>`.
+4. **Java (one one-line edit):** a `VARIANTS` entry in `PFFluidTypes` (registers its Slime Milk fluid/block/bucket). Fluids must register at mod-init, before datapack registries load, so this can't be datapack-driven. The spawn egg, Slime Bucket, and Configurable Froglight are all single component-driven items whose per-variant stacks the creative tab + JEI enumerate from the `slime_variant` registry, so they need no Java edit (CR-9).
 
-Existing GameTests (`SlimeVariantTest`, the datapack-load spot-check, `PFRegistryTest#variantSlimeSpawnEggCarriesSlimeVariantComponent`) auto-extend coverage as soon as the JSONs + Java rows exist.
+Existing GameTests (`SlimeVariantTest`, the datapack-load spot-check, `PFRegistryTest#variantSlimeSpawnEggCarriesSlimeVariantComponent`) auto-extend coverage as soon as the JSON + `VARIANTS` entry exist.
 
 ## Tier B candidates — open
 
@@ -110,14 +110,14 @@ Existing GameTests (`SlimeVariantTest`, the datapack-load spot-check, `PFRegistr
 
 ## Implementation notes
 
-- Adding a variant is mostly JSON (variant definition + smelting recipe + lang), but the spawn egg and Slime Milk fluid each need a one-line Java edit today — see the per-variant checklist above and `docs/code_review_2026_05_24.md` CR-9.
+- Adding a variant is mostly JSON (variant definition + smelting recipe + lang); only the Slime Milk fluid needs a one-line Java edit (the `VARIANTS` entry) — see the per-variant checklist above.
 - `inner_block` is optional: set it to the variant's canonical vanilla block (e.g. `minecraft:iron_block`) to render that block inside the slime; omit it to leave the interior empty. The pre-v1.0.1 per-variant inner-cube texture pipeline (and its generator script) was removed in v1.0.1.
 - Each variant's `primary_color` should be sampled from the variant's canonical vanilla block so the spawn-egg tint, outer-shell tint, and Froglight tint all read as the resource colour.
 - Smelting recipe shape: copy `recipe/smelting/configurable_froglight_iron_smelting.json` as the template; change the variant name in the `neoforge:components` ingredient and the result item ID. For clay_ball → brick and chorus_fruit → popped_chorus_fruit, the result item differs from the primer.
 
 ## Definition of done
 
-- 22 variant JSONs + 22 inner-cube PNGs + 22 smelting recipes shipped.
+- 22 variant JSONs (each with an `inner_block`) + 22 smelting recipes + 22 `VARIANTS` entries shipped.
 - `./gradlew build` green; `./gradlew runGameTestServer` green (existing GameTests auto-cover the new variants).
 - Creative tab shows 22 new variant slime spawn eggs, 22 new variant-stamped configurable_froglight stacks, 22 new variant Slime Buckets.
 - All 34 variants smelt to their respective resources via vanilla furnace (with the two non-1:1 chains documented: clay_ball → brick, chorus_fruit → popped_chorus_fruit).

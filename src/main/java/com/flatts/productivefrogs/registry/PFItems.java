@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.registry;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.item.ConfigurableFroglightItem;
 import com.flatts.productivefrogs.content.item.FrogEggItem;
+import com.flatts.productivefrogs.content.item.ResourceSlimeSpawnEggItem;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.content.item.SlimeBucketItem;
 import com.flatts.productivefrogs.data.Category;
@@ -21,6 +22,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MobBucketItem;
 import net.minecraft.world.item.PlaceOnWaterBlockItem;
@@ -122,20 +124,24 @@ public final class PFItems {
         "tadpole", () -> PFEntities.RESOURCE_TADPOLE.get());
 
     /**
-     * Per-variant spawn eggs for Resource Slimes — one item per SlimeVariant
-     * shipped in PR H2's datapack registry. Each preset its variant via
-     * {@code ENTITY_DATA} NBT (key "Variant", value the variant's full id)
-     * and its broad category via {@code CONTAINED_CATEGORY} so the inventory
-     * tint uses the existing category palette. JEI surfaces each as a
-     * distinct entry → "Iron Slime Spawn Egg", "Copper Slime Spawn Egg", ...
+     * The single Resource Slime spawn egg. One registered item whose variant
+     * identity lives in the {@code SLIME_VARIANT} data component (see
+     * {@link ResourceSlimeSpawnEggItem}). Per-variant stacks are built by
+     * {@link #resourceSlimeSpawnEgg(ResourceLocation)}; the creative tab + JEI
+     * enumerate variants from the {@code SLIME_VARIANT} datapack registry, so
+     * adding a variant needs no spawn-egg Java edit (CR-9).
      *
-     * <p>Variants are hardcoded here matching the JSON files in
-     * {@code data/productivefrogs/productivefrogs/slime_variant/}. If a future
-     * PR makes this list datapack-driven (auto-spawn-eggs from variant
-     * registry), it'll need a different registration path since item
-     * registration happens at mod-init, before the datapack registry loads.
+     * <p>Replaced the pre-v1.1 per-variant spawn-egg item IDs
+     * ({@code iron_slime_spawn_egg}, ...) and their hardcoded variant table.
+     * Default ctor colours fall back to BOG; the real per-variant tint comes
+     * from the registered item-colour handler reading {@code SLIME_VARIANT}.
      */
-    public static final Map<String, DeferredItem<SpawnEggItem>> RESOURCE_SLIME_SPAWN_EGGS = buildSlimeVariantSpawnEggs();
+    public static final DeferredItem<ResourceSlimeSpawnEggItem> RESOURCE_SLIME_SPAWN_EGG = ITEMS.registerItem(
+        "resource_slime_spawn_egg",
+        props -> new ResourceSlimeSpawnEggItem(
+            PFEntities.RESOURCE_SLIME.get(),
+            Category.BOG.tintRgb(), darker(Category.BOG.tintRgb()), props)
+    );
 
     /**
      * Variant-keyed Froglight item — the per-resource production currency,
@@ -306,65 +312,22 @@ public final class PFItems {
     }
 
     /**
-     * One spawn egg per SlimeVariant shipped in PR H2. Each item presets
-     * both the variant id (via ENTITY_DATA NBT) and the parent category
-     * (for the inventory tint). The variant→category mapping here mirrors
-     * the JSON files in {@code data/.../slime_variant/}; if those move, this
-     * list moves with them.
+     * Build a per-variant stack of the single {@link #RESOURCE_SLIME_SPAWN_EGG}.
+     * Stamps the variant id into the {@code SLIME_VARIANT} component (display
+     * name + inventory tint + JEI subtype) and into the vanilla
+     * {@code ENTITY_DATA} {@code "Variant"} field (so vanilla's spawn path
+     * stamps the variant onto the {@code ResourceSlime} it creates; the slime
+     * resolves its category from the variant registry on spawn). The entity
+     * type id is embedded so vanilla {@code SpawnEggItem} semantics resolve.
      */
-    private static Map<String, DeferredItem<SpawnEggItem>> buildSlimeVariantSpawnEggs() {
-        record VariantSpec(String name, Category category) {}
-        VariantSpec[] variants = new VariantSpec[]{
-            new VariantSpec("iron",        Category.CAVE),
-            new VariantSpec("copper",      Category.CAVE),
-            new VariantSpec("gold",        Category.CAVE),
-            new VariantSpec("redstone",    Category.CAVE),
-            new VariantSpec("lapis",       Category.CAVE),
-            new VariantSpec("coal",        Category.CAVE),
-            new VariantSpec("diamond",     Category.CAVE),
-            new VariantSpec("emerald",     Category.GEODE),
-            new VariantSpec("prismarine",  Category.TIDE),
-            new VariantSpec("sponge",      Category.TIDE),
-            new VariantSpec("magma_cream", Category.INFERNAL),
-            new VariantSpec("ender_pearl", Category.VOID),
-        };
-        java.util.LinkedHashMap<String, DeferredItem<SpawnEggItem>> map = new java.util.LinkedHashMap<>();
-        for (VariantSpec spec : variants) {
-            String itemName = spec.name() + "_slime_spawn_egg";
-            int primary = spec.category().tintRgb();
-            int secondary = darker(primary);
-            map.put(spec.name(), ITEMS.registerItem(
-                itemName,
-                props -> new SpawnEggItem(
-                    PFEntities.RESOURCE_SLIME.get(),
-                    primary, secondary,
-                    applyVariantSpawnEggProps(props, spec.name(), spec.category()))
-            ));
-        }
-        return map;
-    }
-
-    private static Item.Properties applyVariantSpawnEggProps(Item.Properties props, String variantName, Category category) {
-        ResourceLocation variantId =
-            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName);
+    public static ItemStack resourceSlimeSpawnEgg(ResourceLocation variantId) {
+        ItemStack stack = new ItemStack(RESOURCE_SLIME_SPAWN_EGG.get());
         CompoundTag nbt = new CompoundTag();
-        // Variant first; readAdditionalSaveData treats Variant as overriding
-        // Category via the registry lookup, but the entity also reads Category
-        // as a fast-path / fallback so include both for safety.
+        nbt.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(PFEntities.RESOURCE_SLIME.get()).toString());
         nbt.putString("Variant", variantId.toString());
-        nbt.putString("Category", category.name());
-        // 1.21.1: ENTITY_DATA is CustomData (no TypedEntityData). The entity type
-        // is inferred from the "id" string field inside the NBT, matching vanilla
-        // SpawnEggItem semantics.
-        nbt.putString("id", BuiltInRegistries.ENTITY_TYPE
-            .getKey(PFEntities.RESOURCE_SLIME.get()).toString());
-        return props
-            .component(DataComponents.ENTITY_DATA, CustomData.of(nbt))
-            // CONTAINED_CATEGORY is a fallback signal for any UI surface that wants
-            // the broader category; SLIME_VARIANT keeps the per-variant identity
-            // for JEI subtyping and (future) tint resolution.
-            .component(PFDataComponents.SLIME_VARIANT.get(), variantId)
-            .component(PFDataComponents.CONTAINED_CATEGORY.get(), category);
+        stack.set(DataComponents.ENTITY_DATA, CustomData.of(nbt));
+        stack.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
+        return stack;
     }
 
     private PFItems() {

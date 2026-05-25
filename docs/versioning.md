@@ -33,7 +33,7 @@ Full v1.0 design spec: [species_as_category_redesign.md](./species_as_category_r
 
 ## V1.1 — Vanilla Resource Coverage (PLANNED)
 
-Mostly-data release adding every vanilla item fitting cleanly into one of the six species. Each variant is a `slime_variant` JSON + recipe + lang, plus two one-line Java edits today (spawn-egg `VariantSpec` row + Slime Milk `VARIANTS` entry); see `docs/code_review_2026_05_24.md` CR-9.
+Mostly-data release adding every vanilla item fitting cleanly into one of the six species. Each variant is a `slime_variant` JSON + recipe + lang, plus one one-line Java edit (the Slime Milk `VARIANTS` entry; fluids register at mod-init). The spawn egg is data-driven (CR-9) - one component item enumerated from the registry, no per-variant Java.
 
 **22 new variants** (34 total after v1.1):
 

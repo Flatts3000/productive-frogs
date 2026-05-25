@@ -95,17 +95,16 @@ class PFRegistryTest {
         "magma_cream", "ender_pearl"
     })
     void variantSlimeSpawnEggCarriesSlimeVariantComponent(String variantName) {
-        net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.SpawnEggItem> holder =
-            PFItems.RESOURCE_SLIME_SPAWN_EGGS.get(variantName);
-        assertNotNull(holder, variantName + " variant spawn egg must be registered");
-        net.minecraft.world.item.ItemStack stack = holder.get().getDefaultInstance();
+        ResourceLocation expected = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName);
+        net.minecraft.world.item.ItemStack stack = PFItems.resourceSlimeSpawnEgg(expected);
+        // RESOURCE_SLIME_SPAWN_EGG.get() throws if the item never registered;
+        // equality confirms the helper built a stack of that registered item.
+        assertEquals(PFItems.RESOURCE_SLIME_SPAWN_EGG.get(), stack.getItem(),
+            variantName + " stack must be the registered resource_slime_spawn_egg item");
         ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
         assertNotNull(variantId,
-            variantName + " spawn egg's default stack must carry SLIME_VARIANT");
-        assertEquals(
-            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName),
-            variantId,
-            variantName + " spawn egg's SLIME_VARIANT id must match the variant"
-        );
+            variantName + " spawn-egg stack must carry SLIME_VARIANT");
+        assertEquals(expected, variantId,
+            variantName + " spawn-egg stack's SLIME_VARIANT id must match the variant");
     }
 }

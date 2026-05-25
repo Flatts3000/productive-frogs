@@ -29,6 +29,14 @@ public final class PFCreativeTabs {
                 .title(Component.translatable("itemGroup.productivefrogs"))
                 .icon(() -> PFItems.FROG_EGG.get().getDefaultInstance())
                 .displayItems((parameters, output) -> {
+                    // Variant catalog is the SLIME_VARIANT datapack registry, read
+                    // from the display params' holder lookup. Present when the tab
+                    // is (re)built in-world; absent/empty at the title screen before
+                    // a world's datapacks load, in which case the variant-driven
+                    // groups below simply show nothing until a world is joined
+                    // (standard for datapack-registry-driven creative entries).
+                    var variantLookup = parameters.holders().lookup(PFRegistries.SLIME_VARIANT);
+
                     // Default (unprimed) Frog Egg bottle, then one primed bottle
                     // per category. The JEI plugin
                     // (client/jei/ProductiveFrogsJeiPlugin) subtypes Frog Egg
@@ -53,9 +61,8 @@ public final class PFCreativeTabs {
                     // writes when a player buckets a variant-locked slime
                     // (Category + Variant strings in BUCKET_ENTITY_DATA).
                     output.accept(PFItems.SLIME_BUCKET.get());
-                    for (String variantName : PFItems.RESOURCE_SLIME_SPAWN_EGGS.keySet()) {
-                        output.accept(makeVariantSlimeBucket(variantName));
-                    }
+                    variantLookup.ifPresent(reg -> reg.listElements().forEach(h ->
+                        output.accept(makeVariantSlimeBucket(h.key().location(), h.value().category()))));
                     output.accept(PFItems.SLIME_MILKER.get());
                     for (var bucket : PFItems.MILK_BUCKETS.values()) {
                         output.accept(bucket.get());
@@ -72,12 +79,11 @@ public final class PFCreativeTabs {
                     // One configurable_froglight per shipped variant — each stack
                     // carries its variant id in the SLIME_VARIANT data component so
                     // creative testers can see what the production loop produces.
-                    for (String variantName : PFItems.RESOURCE_SLIME_SPAWN_EGGS.keySet()) {
+                    variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
                         ItemStack stack = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
-                        stack.set(PFDataComponents.SLIME_VARIANT.get(),
-                            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName));
+                        stack.set(PFDataComponents.SLIME_VARIANT.get(), h.key().location());
                         output.accept(stack);
-                    }
+                    }));
                     // Spawn eggs grouped at the end so they read as a single block
                     // in the creative tab — frogs first, tadpoles after.
                     for (var entry : PFItems.RESOURCE_FROG_SPAWN_EGGS.values()) {
@@ -86,9 +92,11 @@ public final class PFCreativeTabs {
                     for (var entry : PFItems.RESOURCE_TADPOLE_SPAWN_EGGS.values()) {
                         output.accept(entry.get());
                     }
-                    for (var entry : PFItems.RESOURCE_SLIME_SPAWN_EGGS.values()) {
-                        output.accept(entry.get());
-                    }
+                    // One stamped stack per variant (no unstamped base egg — a
+                    // variant-less Resource Slime egg isn't a meaningful creative
+                    // entry; the item still counts as "in a tab" via these stacks).
+                    variantLookup.ifPresent(reg -> reg.listElements().forEach(h ->
+                        output.accept(PFItems.resourceSlimeSpawnEgg(h.key().location()))));
                     // Parent species spawn eggs (Cave / Geode / Tide / Void) —
                     // not category-themed, kept after the variant eggs so the
                     // tab reads as: variants first, then upstream sources.
@@ -108,24 +116,11 @@ public final class PFCreativeTabs {
      * player buckets a variant-locked slime. Both {@code Category} and
      * {@code Variant} go into the tag so the tint pipeline (variant-first,
      * category fallback) lights up either way AND the canonical bucket NBT
-     * shape stays consistent with real captured buckets.
-     *
-     * <p>Category is looked up from the matching spawn egg's
-     * {@code CONTAINED_CATEGORY} component to avoid hardcoding a second copy
-     * of the variant→category map. The egg is built by
-     * {@code PFItems.slimeVariantSpawnEggProperties}, which always sets the
-     * component — a missing category here means the variant id was wrong
-     * (typo, dropped variant), which is a fail-fast bug rather than a
-     * silently degraded creative-tab stack.
+     * shape stays consistent with real captured buckets. The category comes
+     * straight from the variant's registry record.
      */
-    private static ItemStack makeVariantSlimeBucket(String variantName) {
+    private static ItemStack makeVariantSlimeBucket(ResourceLocation variantId, Category category) {
         ItemStack stack = new ItemStack(PFItems.SLIME_BUCKET.get());
-        Category category = java.util.Objects.requireNonNull(
-            PFItems.RESOURCE_SLIME_SPAWN_EGGS.get(variantName)
-                .get().getDefaultInstance().get(PFDataComponents.CONTAINED_CATEGORY.get()),
-            "variant spawn egg for '" + variantName + "' must carry CONTAINED_CATEGORY"
-        );
-        ResourceLocation variantId = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName);
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
             tag.putString("Category", category.name());
             tag.putString("Variant", variantId.toString());

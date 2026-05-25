@@ -83,8 +83,10 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         registration.registerSubtypeInterpreter(PFItems.SLIME_BUCKET.get(), bucketInterp);
         registration.registerSubtypeInterpreter(PFItems.RESOURCE_TADPOLE_BUCKET.get(), bucketInterp);
 
-        // Configurable Froglight — subtype by SLIME_VARIANT.
-        registration.registerSubtypeInterpreter(PFItems.CONFIGURABLE_FROGLIGHT.get(), new ISubtypeInterpreter<>() {
+        // Configurable Froglight + the single Resource Slime spawn egg — both
+        // carry their variant in SLIME_VARIANT, so they share one interpreter
+        // and each per-variant stack becomes a distinct JEI row.
+        ISubtypeInterpreter<ItemStack> slimeVariantInterp = new ISubtypeInterpreter<>() {
             @Override
             public Object getSubtypeData(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
                 ResourceLocation v = stack.get(PFDataComponents.SLIME_VARIANT.get());
@@ -94,7 +96,9 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             public String getLegacyStringSubtypeInfo(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
                 return (String) getSubtypeData(stack, ctx);
             }
-        });
+        };
+        registration.registerSubtypeInterpreter(PFItems.CONFIGURABLE_FROGLIGHT.get(), slimeVariantInterp);
+        registration.registerSubtypeInterpreter(PFItems.RESOURCE_SLIME_SPAWN_EGG.get(), slimeVariantInterp);
 
         // Frog Egg bottle — subtype by CONTAINED_CATEGORY.
         registration.registerSubtypeInterpreter(PFItems.FROG_EGG.get(), new ISubtypeInterpreter<>() {
@@ -147,12 +151,10 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             Component info = Component.translatable(
                 "productivefrogs.jei.variant_slime.info", variantSlimeName, frogName);
 
-            // 1. Resource Slime spawn egg (per-variant)
-            PFItems.RESOURCE_SLIME_SPAWN_EGGS.values().stream()
-                .filter(holder -> holder.getId().getPath().equals(variantName + "_slime_spawn_egg"))
-                .findFirst()
-                .ifPresent(holder ->
-                    reg.addIngredientInfo(new ItemStack(holder.get()), VanillaTypes.ITEM_STACK, info));
+            // 1. Resource Slime spawn egg (per-variant stack of the single item)
+            reg.addIngredientInfo(
+                PFItems.resourceSlimeSpawnEgg(entry.getKey().location()),
+                VanillaTypes.ITEM_STACK, info);
 
             // 2. Variant-stamped Slime Bucket
             ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());

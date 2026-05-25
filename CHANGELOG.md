@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.1.0 (unreleased) — data-driven spawn eggs
+
+> Builds on the v1.0.2 changes below. The next release that includes this work
+> is a minor bump (v1.1.0), because it removes item IDs (see Breaking).
+
+Implements code-review finding CR-9: the Resource Slime spawn egg is now a
+single component-driven item instead of one item ID per variant. This is the
+V1.1 enabler that makes adding a variant pure data (plus the one Slime Milk
+`VARIANTS` Java edit that fluids inherently require).
+
+### Breaking
+
+- The 12 per-variant spawn-egg item IDs (`productivefrogs:iron_slime_spawn_egg`,
+  `..._copper_...`, ...) are **removed** and replaced by a single
+  `productivefrogs:resource_slime_spawn_egg` whose variant rides in the
+  `slime_variant` data component. **Migration:** these are creative-only items;
+  any stashed in an existing world disappear on load (survival play never grants
+  them). Use `/give @s productivefrogs:resource_slime_spawn_egg[...]` or the
+  creative tab to get the new form.
+
+### Changed
+
+- Creative tab, JEI subtypes, and inventory tint now enumerate variants from the
+  `slime_variant` datapack registry, so a new variant's spawn egg appears with no
+  code change. (Variant-driven creative entries populate in-world; like vanilla's
+  enchanted-book entries they are empty on the title screen until a world loads.)
+- Adding a variant no longer needs a spawn-egg Java edit; only the Slime Milk
+  `VARIANTS` entry remains. Docs (`architecture.md`, `versioning.md`,
+  `v1_1_scope.md`) updated.
+
 ## v1.0.2 (unreleased)
 
 Internal hardening + cleanup patch from the 2026-05-24 code review
