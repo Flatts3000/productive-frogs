@@ -92,7 +92,9 @@ public final class PFCreativeTabs {
                     for (var entry : PFItems.RESOURCE_TADPOLE_SPAWN_EGGS.values()) {
                         output.accept(entry.get());
                     }
-                    output.accept(PFItems.RESOURCE_SLIME_SPAWN_EGG.get());
+                    // One stamped stack per variant (no unstamped base egg — a
+                    // variant-less Resource Slime egg isn't a meaningful creative
+                    // entry; the item still counts as "in a tab" via these stacks).
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h ->
                         output.accept(PFItems.resourceSlimeSpawnEgg(h.key().location()))));
                     // Parent species spawn eggs (Cave / Geode / Tide / Void) —
