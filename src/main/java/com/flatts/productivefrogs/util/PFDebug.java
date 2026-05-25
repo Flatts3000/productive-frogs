@@ -26,11 +26,12 @@ import org.slf4j.LoggerFactory;
  * one layer. The area gate is the filter; INFO (not DEBUG) keeps gated lines in
  * {@code latest.log} without raising the log4j level.
  *
- * <p><b>Zero-cost when off:</b> every call site is guarded by a {@code volatile
- * boolean} read. Hot paths (per-frame render, per-tick AI) pass a
- * {@link Supplier} so the message is only built when the area is open, and use
- * {@link #logOnce} to dedup by entity so a steady scene logs once per entity, not
- * every frame.
+ * <p><b>Cost when off:</b> the helper short-circuits on a single {@code volatile
+ * boolean} read, so no log I/O happens and a {@link Supplier} message is never
+ * built. The caller still evaluates eager args and the {@link #logOnce} dedup key
+ * before the gate, so hot paths (per-frame render, per-tick AI, item color
+ * handlers) wrap the call in {@link #on(Area)} to avoid even that allocation;
+ * rarely-firing event-driven call sites can call directly.
  */
 public final class PFDebug {
 
@@ -127,7 +128,10 @@ public final class PFDebug {
     /** Enable/disable one area. Enabling clears the area's dedup keys so one-shots re-arm. */
     public static void setEnabled(Area area, boolean enabled) {
         area.enabled = enabled;
-        resetDedup(area);
+        // Only re-arm one-shots on enable; disabling needs no dedup scan.
+        if (enabled) {
+            resetDedup(area);
+        }
     }
 
     /** Enable/disable every area at once (the {@code all} keyword). */

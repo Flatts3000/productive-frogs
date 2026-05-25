@@ -5,9 +5,10 @@ developer diagnosis. This is the design spec for a single cross-cutting debug
 framework (`PFDebug`) that replaces the ad-hoc, add-then-delete logging we have
 reached for during past investigations.
 
-> **Status:** spec. Nothing in this doc is built yet. The phased roadmap at the
-> bottom is the build order. The originally-flagged need (a client-render
-> diagnosis logger) is the `render` / `tint` areas in Phase 1.
+> **Status:** implemented (PR #106, 2026-05-25). All three phases landed: the
+> `PFDebug` core, the `/pf debug` command, and instrumentation of every area.
+> This doc is the design + per-layer contract; the phased roadmap at the bottom
+> records the build order that was followed.
 
 ## Why this exists
 
@@ -32,10 +33,12 @@ flipped on per-area when diagnosing. Add a new handler or renderer, add one
 
 ## Principles
 
-- **Zero-cost when off.** Every call site is guarded by a `volatile boolean`
-  read. When the area is off, no string is built, no allocation happens. Hot
-  paths (per-frame render, per-tick sensor) use `Supplier<String>` so the
-  message is only constructed when the gate is open.
+- **Cost when off.** The helper short-circuits on a single `volatile boolean`
+  read, so no log I/O runs and a `Supplier` message is never built. Eager args
+  and the `logOnce` dedup key are still evaluated by the caller before the gate,
+  so hot paths (per-frame render, per-tick sensor, item color handlers) wrap the
+  call in `PFDebug.on(area)` to avoid building the key + capturing lambda;
+  rarely-firing event-driven sites call directly.
 - **One mechanism, used everywhere.** No per-class loggers, no `System.out`, no
   bespoke flags. Every layer calls `PFDebug`. Consistency is the point: a dev
   who learns it once can turn on any layer.

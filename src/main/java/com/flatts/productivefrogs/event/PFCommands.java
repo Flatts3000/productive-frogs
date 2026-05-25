@@ -132,10 +132,12 @@ public final class PFCommands {
         return 1;
     }
 
+    // Accepts exactly the two tokens the command documents and tab-completes
+    // (see STATE_TOKENS), so the "Expected on or off" failure message is accurate.
     private static Boolean parseState(String token) {
         return switch (token.trim().toLowerCase(Locale.ROOT)) {
-            case "on", "true", "enable", "enabled", "1" -> Boolean.TRUE;
-            case "off", "false", "disable", "disabled", "0" -> Boolean.FALSE;
+            case "on" -> Boolean.TRUE;
+            case "off" -> Boolean.FALSE;
             default -> null;
         };
     }
