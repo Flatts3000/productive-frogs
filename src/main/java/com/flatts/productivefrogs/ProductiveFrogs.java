@@ -11,6 +11,7 @@ import com.flatts.productivefrogs.registry.PFFluids;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
 import com.flatts.productivefrogs.registry.PFSensors;
+import com.flatts.productivefrogs.util.PFDebug;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -34,6 +35,11 @@ public final class ProductiveFrogs {
 
     public ProductiveFrogs(IEventBus modEventBus, ModContainer modContainer) {
         LOGGER.info("Productive Frogs initializing");
+
+        // Read -Dproductivefrogs.debug=<areas> once, before any handler or
+        // renderer runs, so startup-enabled areas catch first-frame resolution.
+        // Areas can also be toggled live with /pf debug (see PFCommands).
+        PFDebug.bootstrapFromSystemProperty();
 
         PFDataComponents.register(modEventBus);
         // FluidTypes before Fluids — BaseFlowingFluid.Properties references the

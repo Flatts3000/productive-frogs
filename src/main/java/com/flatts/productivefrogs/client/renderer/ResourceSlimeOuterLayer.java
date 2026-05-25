@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.client.renderer;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.SlimeVariant;
+import com.flatts.productivefrogs.util.PFDebug;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
@@ -57,6 +58,14 @@ public class ResourceSlimeOuterLayer extends RenderLayer<Slime, SlimeModel<Slime
         int shellTint = resolveShellTint(entity);
         if (glowingOutline) {
             shellTint = -1;
+        }
+
+        if (PFDebug.on(PFDebug.Area.RENDER) && entity instanceof ResourceSlime resource) {
+            final int tint = shellTint;
+            final String source = resource.getVariant() != null ? "variant" : "category";
+            PFDebug.logOnce(PFDebug.Area.RENDER, "shell#" + entity.getId() + "/" + tint,
+                () -> String.format("ResourceSlime id=%d shellTint=#%08X source=%s glowing=%s",
+                    entity.getId(), tint, source, glowingOutline));
         }
 
         getParentModel().copyPropertiesTo(model);

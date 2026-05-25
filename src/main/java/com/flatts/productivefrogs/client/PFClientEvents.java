@@ -18,6 +18,7 @@ import com.flatts.productivefrogs.registry.PFFluidTypes;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
 import com.flatts.productivefrogs.registry.PFRegistries;
+import com.flatts.productivefrogs.util.PFDebug;
 import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Registry;
@@ -123,7 +124,10 @@ public final class PFClientEvents {
                     return -1;
                 }
                 SlimeVariant variant = registry.get(variantId);
-                return variant == null ? -1 : opaque(variant.primaryColor());
+                final int argb = variant == null ? -1 : opaque(variant.primaryColor());
+                PFDebug.logOnce(PFDebug.Area.TINT, "froglight_block/" + variantId,
+                    () -> String.format("configurable_froglight(block) variant=%s -> #%08X", variantId, argb));
+                return argb;
             },
             PFBlocks.CONFIGURABLE_FROGLIGHT.get()
         );
@@ -178,7 +182,13 @@ public final class PFClientEvents {
                                 .registry(PFRegistries.SLIME_VARIANT).orElse(null);
                             if (registry != null) {
                                 SlimeVariant variant = registry.get(variantId);
-                                if (variant != null) return opaque(variant.primaryColor());
+                                if (variant != null) {
+                                    final int argb = opaque(variant.primaryColor());
+                                    PFDebug.logOnce(PFDebug.Area.TINT, "slime_bucket/" + variantId,
+                                        () -> String.format(
+                                            "slime_bucket(item) tintIndex=1 variant=%s -> #%08X", variantId, argb));
+                                    return argb;
+                                }
                             }
                         }
                     }
@@ -217,7 +227,10 @@ public final class PFClientEvents {
                 .registry(PFRegistries.SLIME_VARIANT).orElse(null);
             if (registry == null) return -1;
             SlimeVariant variant = registry.get(variantId);
-            return variant == null ? -1 : opaque(variant.primaryColor());
+            final int argb = variant == null ? -1 : opaque(variant.primaryColor());
+            PFDebug.logOnce(PFDebug.Area.TINT, "froglight_item/" + variantId,
+                () -> String.format("configurable_froglight(item) variant=%s -> #%08X", variantId, argb));
+            return argb;
         }, PFItems.CONFIGURABLE_FROGLIGHT.get());
 
         // Per-category Froglight blockitems — inherit BlockColor automatically,
@@ -243,7 +256,11 @@ public final class PFClientEvents {
                     if (registry != null) {
                         SlimeVariant variant = registry.get(variantId);
                         if (variant != null) {
-                            return opaque(tintIndex == 0 ? variant.primaryColor() : variant.secondaryColor());
+                            final int argb = opaque(tintIndex == 0 ? variant.primaryColor() : variant.secondaryColor());
+                            PFDebug.logOnce(PFDebug.Area.TINT, "resource_slime_egg/" + variantId + "/" + tintIndex,
+                                () -> String.format("resource_slime_spawn_egg tintIndex=%d variant=%s -> #%08X",
+                                    tintIndex, variantId, argb));
+                            return argb;
                         }
                     }
                 }
