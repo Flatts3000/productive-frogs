@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.0.2 (unreleased)
+
+Internal hardening + cleanup patch from the 2026-05-24 code review
+(`docs/code_review_2026_05_24.md`). **No world migration, no API or data
+changes.** One small player-facing tweak; the rest is invisible in play.
+
+### Player-facing
+
+- Placing a Frog Egg now plays the bottle-empty sound instead of the frogspawn
+  hatch sound (the hatch sound is for tadpoles emerging, not for placing the egg).
+- Slime Milker block entities now sync their contents to the client, so info-HUD
+  mods (Jade/WTHIT) read the inventory + cook progress without opening the GUI.
+
+### Robustness
+
+- The `Category` network codec rejects out-of-range ordinals cleanly instead of
+  crashing the decode thread (defends the item data-component sync path).
+- Slime Milker cook progress is clamped on load; `slime_variant` colours are
+  range-checked; a warning fires if `minSpawnIntervalTicks > maxSpawnIntervalTicks`.
+
+### Internal
+
+- A modded `parent_species` JSON now wires a slime into **both** infusion and
+  split-discovery (infusion previously used a hardcoded class check).
+- Six near-identical parent-species renderers collapsed into one; dead code and
+  stale post-V1.5 docs swept. Net ~350 fewer lines. Build + all 50 GameTests green.
+
 ## v1.0.1 — 2026-05-24
 
 Visual-polish patch. **No behavior changes.** No world migration, no API surface change. Production loop, drops, AI, tints, infusion semantics, JEI subtypes: unchanged.
