@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "productivefrogs:item/glowstone_dust_slime_milk_bucket"
-  }
-}

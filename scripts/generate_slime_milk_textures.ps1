@@ -190,6 +190,38 @@ public static class MilkTinter {
             milk.Save(dstPath, ImageFormat.Png);
         }
     }
+
+    // Layer1 milk mask for the single component-driven bucket: milk pixels are
+    // greyscale (by lightness, so the item color tints them per-variant at
+    // render); bucket-metal pixels become transparent (layer0 draws the metal).
+    public static void MilkMask(string emptyPath, string milkPath, string dstPath) {
+        using (var empty = Load32(emptyPath))
+        using (var milk = Load32(milkPath)) {
+            int ms; byte[] mb = Read(milk, out ms);
+            int es; byte[] eb = Read(empty, out es);
+            int ew = empty.Width, eh = empty.Height, w = milk.Width, h = milk.Height;
+            for (int y = 0; y < h; y++) {
+                for (int x = 0; x < w; x++) {
+                    int i = y * ms + x * 4;
+                    byte b = mb[i], g = mb[i + 1], r = mb[i + 2], a = mb[i + 3];
+                    bool metal = false;
+                    if (a != 0 && x < ew && y < eh) {
+                        int j = y * es + x * 4;
+                        if (eb[j + 3] != 0 && eb[j + 2] == r && eb[j + 1] == g && eb[j] == b) metal = true;
+                    }
+                    if (a == 0 || metal) {
+                        mb[i] = 0; mb[i + 1] = 0; mb[i + 2] = 0; mb[i + 3] = 0;
+                        continue;
+                    }
+                    byte l = (byte)Light(r, g, b);
+                    mb[i] = l; mb[i + 1] = l; mb[i + 2] = l;
+                    // alpha passed through
+                }
+            }
+            Write(milk, mb);
+            milk.Save(dstPath, ImageFormat.Png);
+        }
+    }
 }
 '@
 Add-Type -ReferencedAssemblies System.Drawing -TypeDefinition $tinterCode
@@ -221,11 +253,26 @@ function Build-FluidTexture {
 # the script would throw on save in a fresh checkout / alternate output root.
 New-Item -ItemType Directory -Force -Path $itemDir, $blockDir | Out-Null
 
-foreach ($variant in ($variants.Keys | Sort-Object)) {
-    $tint = $variants[$variant]
-    Build-BucketTexture -variant $variant -tintRgb $tint
-    Build-FluidTexture -variant $variant -tintRgb $tint -sourcePath $waterStillPath -kind "still"
-    Build-FluidTexture -variant $variant -tintRgb $tint -sourcePath $waterFlowPath -kind "flow"
-}
+# Single neutral Slime Milk texture set. Variant colour is applied at render
+# time (item color tints the bucket's milk layer; fluid getTintColor tints the
+# fluid surface), so these are greyscale/white and one set serves every variant
+# -- including datapack-added ones, with no per-variant asset. This is the
+# texture half of the data-driven milk collapse (docs/refactor_data_driven_variants.md).
+$mcmeta = "{`n  `"animation`": {`n    `"frametime`": 2`n  }`n}`n"
+$utf8 = [System.Text.UTF8Encoding]::new($false)
 
-Write-Output "done -- $($variants.Count) variants x (1 bucket + 1 still + 1 flow) PNGs"
+# Bucket: layer0 = empty iron bucket (vanilla, untinted), layer1 = white milk
+# mask (tinted per-variant at render via the SLIME_VARIANT item color).
+Copy-Item -Path $bucketPath -Destination (Join-Path $itemDir "slime_milk_bucket.png") -Force
+Write-Output "wrote slime_milk_bucket.png (layer0 = empty bucket)"
+[MilkTinter]::MilkMask($bucketPath, $milkBucketPath, (Join-Path $itemDir "slime_milk_bucket_milk.png"))
+Write-Output "wrote slime_milk_bucket_milk.png (layer1 = milk mask)"
+
+# Fluid: greyscale still + flow (white tint preserves water's shading), + mcmeta.
+[MilkTinter]::TintFluid($waterStillPath, (Join-Path $blockDir "slime_milk_still.png"), 0xFFFFFF)
+[System.IO.File]::WriteAllText((Join-Path $blockDir "slime_milk_still.png.mcmeta"), $mcmeta, $utf8)
+[MilkTinter]::TintFluid($waterFlowPath, (Join-Path $blockDir "slime_milk_flow.png"), 0xFFFFFF)
+[System.IO.File]::WriteAllText((Join-Path $blockDir "slime_milk_flow.png.mcmeta"), $mcmeta, $utf8)
+Write-Output "wrote slime_milk_still.png + slime_milk_flow.png (+ mcmeta)"
+
+Write-Output "done -- single neutral Slime Milk texture set"
