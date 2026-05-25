@@ -63,13 +63,6 @@ public final class PFFluidTypes {
     /** FluidType holders keyed by variant name. */
     public static final Map<String, DeferredHolder<FluidType, FluidType>> BY_VARIANT = buildTypes();
 
-    /**
-     * Backwards-compatible alias for tests + J1 code that referenced the iron
-     * variant directly. New code should prefer {@link #BY_VARIANT} to support
-     * iteration across the whole family.
-     */
-    public static final DeferredHolder<FluidType, FluidType> IRON_SLIME_MILK = BY_VARIANT.get("iron");
-
     private static Map<String, DeferredHolder<FluidType, FluidType>> buildTypes() {
         LinkedHashMap<String, DeferredHolder<FluidType, FluidType>> map = new LinkedHashMap<>();
         for (String variant : VARIANTS) {

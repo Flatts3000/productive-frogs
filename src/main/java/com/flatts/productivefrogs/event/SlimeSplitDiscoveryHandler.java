@@ -23,16 +23,17 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Random-discovery path from {@code docs/slime_sourcing.md} (Path 1) — when a
- * vanilla {@link Slime} or {@link MagmaCube} splits on death, each child has a
- * chance to become a category-locked {@link ResourceSlime} drawn from the
- * parent species's default category pool.
+ * parent-species {@link Slime} splits on death, each child has a chance to
+ * become a category-locked {@link ResourceSlime} drawn from the parent
+ * species's category pool.
  *
  * <p>Per-parent-species category mapping is driven by the
  * {@link PFRegistries#PARENT_SPECIES} datapack registry — six default JSONs
  * at {@code data/productivefrogs/productivefrogs/parent_species/} ship with
- * the mod (vanilla {@code Slime}/{@code MagmaCube} → METALLIC/INFERNAL plus
- * the four PF parent species), and modpacks can override individual entries
- * or wire new modded slimes into the discovery loop without recompiling.
+ * the mod (the six PF parent species; vanilla {@code Slime}/{@code MagmaCube}
+ * are deliberately absent per V1.5, so a vanilla slime split is ignored), and
+ * modpacks can override individual entries or wire new modded slimes into the
+ * discovery loop without recompiling.
  *
  * <p>{@link MobSplitEvent} is the right hook for this: NeoForge fires it
  * synchronously from {@code Slime#remove(RemovalReason)} after the children
@@ -51,18 +52,30 @@ public final class SlimeSplitDiscoveryHandler {
     /**
      * Test-only override for the discovery chance. When non-null, takes
      * precedence over {@link PFConfig#DISCOVERY_CHANCE_PER_OFFSPRING} —
-     * GameTests set this to {@code 1.0f} in a try/finally so split outcomes
-     * are deterministic. Always null in production. Volatile so the test
-     * thread's write is visible to the server thread that runs the event
-     * handler.
+     * GameTests set this to {@code 1.0f} (via {@link #setTestOverride}) in a
+     * try/finally so split outcomes are deterministic. Always null in
+     * production. Volatile so the test thread's write is visible to the server
+     * thread that runs the event handler. Private + accessor-gated so nothing
+     * outside the test hooks can mutate it.
      */
     @Nullable
-    public static volatile Float testOverride = null;
+    private static volatile Float testOverride = null;
+
+    /** Test hook: read the current override (used for save/restore in tests). */
+    @Nullable
+    public static Float getTestOverride() {
+        return testOverride;
+    }
+
+    /** Test hook: set or clear ({@code null}) the discovery-chance override. */
+    public static void setTestOverride(@Nullable Float chance) {
+        testOverride = chance;
+    }
 
     /**
      * Effective discovery chance — test override wins when present,
      * otherwise reads the mod config. Production code calls this; only
-     * GameTest setup writes {@link #testOverride}.
+     * the test hooks write {@link #testOverride}.
      */
     public static float discoveryChancePerOffspring() {
         Float override = testOverride;
@@ -138,17 +151,15 @@ public final class SlimeSplitDiscoveryHandler {
      * {@code data/productivefrogs/productivefrogs/parent_species/} so the
      * mod's own out-of-the-box behavior is unchanged; datapacks can override
      * any entry or add new ones to wire modded slimes (e.g. Mythic Metals'
-     * Pyrite Slime → METALLIC) without recompiling.
+     * Pyrite Slime to CAVE) without recompiling.
      *
      * <p>The {@code EntityType} lookup is the cleaner formulation: each of
      * our PF parent species is its own {@link net.minecraft.world.entity.EntityType},
      * so we no longer need the "check subclasses before vanilla {@code Slime}
      * via getClass() strict equality" footgun that the legacy {@code instanceof}
-     * chain had — entity-type ids are inherently unique per species.
-     *
-     * <p>Linear scan over the registry is fine at V1 scale (6 entries); if
-     * the registry ever grows past a couple dozen, materialize a cache
-     * elsewhere rather than on this hot path.
+     * chain had — entity-type ids are inherently unique per species. The lookup
+     * itself is shared with {@code SlimeInfusionHandler} via
+     * {@link ParentSpeciesEntry#categoryFor}.
      */
     @Nullable
     private static Category categoryForParent(Mob parent, Level level) {
@@ -161,11 +172,6 @@ public final class SlimeSplitDiscoveryHandler {
         if (registry == null) {
             return null;
         }
-        for (ParentSpeciesEntry entry : registry) {
-            if (entry.entityType().equals(parentTypeId)) {
-                return entry.category();
-            }
-        }
-        return null;
+        return ParentSpeciesEntry.categoryFor(registry, parentTypeId);
     }
 }

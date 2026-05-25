@@ -5,6 +5,8 @@ import com.flatts.productivefrogs.data.ParentSpeciesEntry;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFRegistries;
 import com.mojang.blaze3d.vertex.PoseStack;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 import net.minecraft.client.model.SlimeModel;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -43,12 +45,11 @@ import net.minecraft.world.level.block.state.BlockState;
  * {@code inner_block} from the parent_species registry ({@link
  * #parentSpeciesBlock}).
  *
- * <p><b>Transform constants are first-guesses pending an in-client tuning
- * pass</b> (the render can't be verified headless). See {@link #BLOCK_EDGE} /
- * {@link #CENTER_Y}. Modelled on vanilla {@code CarriedBlockLayer}: at
- * layer-render time the PoseStack is block-scaled and axis-flipped (entity
- * models render with X/Y inverted), so the block is un-flipped via a negative
- * scale and centered with a final half-unit translate.
+ * <p>Transform constants ({@link #BLOCK_EDGE} / {@link #CENTER_Y}) are the
+ * values shipped in v1.0.1, confirmed acceptable in-client. Modelled on vanilla
+ * {@code CarriedBlockLayer}: at layer-render time the PoseStack is block-scaled
+ * and axis-flipped (entity models render with X/Y inverted), so the block is
+ * un-flipped via a negative scale and centered with a final half-unit translate.
  */
 public class ResourceSlimeInnerBlockLayer extends RenderLayer<Slime, SlimeModel<Slime>> {
 
@@ -59,12 +60,17 @@ public class ResourceSlimeInnerBlockLayer extends RenderLayer<Slime, SlimeModel<
     //
     // BLOCK_EDGE is set slightly above the inner cube's 6/16 so the opaque
     // block fully covers the inner cube body (no z-fight / texture peek).
-    // TUNE IN-CLIENT.
     private static final float BLOCK_EDGE = 7.0f / 16.0f; // ~0.4375 block
     private static final float CENTER_Y = 20.0f / 16.0f;  // 1.25 block, inner cube center
 
     private final BlockRenderDispatcher blockRenderer;
     private final Function<Slime, BlockState> blockResolver;
+
+    // Per-frame parent-species lookup cache (see parentSpeciesBlock). Static
+    // because the resolver is a static method-reference shared across all parent
+    // renderer instances; render-thread only, so unsynchronized is safe.
+    private static Registry<ParentSpeciesEntry> cachedParentRegistry;
+    private static final Map<ResourceLocation, BlockState> PARENT_BLOCK_CACHE = new HashMap<>();
 
     public ResourceSlimeInnerBlockLayer(RenderLayerParent<Slime, SlimeModel<Slime>> parent,
                                         BlockRenderDispatcher blockRenderer,
@@ -129,18 +135,35 @@ public class ResourceSlimeInnerBlockLayer extends RenderLayer<Slime, SlimeModel<
      * no inner_block, or the id doesn't resolve to a registered block.
      */
     public static BlockState parentSpeciesBlock(Slime entity) {
-        ResourceLocation typeId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
         Registry<ParentSpeciesEntry> registry = entity.level().registryAccess()
             .registry(PFRegistries.PARENT_SPECIES).orElse(null);
         if (registry == null) {
             return null;
         }
+        // The inner block is fixed per entity-type for the world session, but this
+        // method is called every frame per visible slime. Cache the resolved
+        // BlockState by type id, keyed off the registry instance so the cache
+        // self-clears when the datapack registry is re-synced (world join / reload).
+        // Render-thread only, so no synchronization is needed.
+        if (registry != cachedParentRegistry) {
+            PARENT_BLOCK_CACHE.clear();
+            cachedParentRegistry = registry;
+        }
+        ResourceLocation typeId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+        if (PARENT_BLOCK_CACHE.containsKey(typeId)) {
+            return PARENT_BLOCK_CACHE.get(typeId);
+        }
+        BlockState resolved = null;
         for (ParentSpeciesEntry entry : registry) {
             if (entry.entityType().equals(typeId)) {
-                return entry.innerBlock().map(ResourceSlimeInnerBlockLayer::blockStateOrNull).orElse(null);
+                resolved = entry.innerBlock().map(ResourceSlimeInnerBlockLayer::blockStateOrNull).orElse(null);
+                break;
             }
         }
-        return null;
+        // Cache misses (null) too, so a non-parent slime routed here does not
+        // rescan the registry every frame.
+        PARENT_BLOCK_CACHE.put(typeId, resolved);
+        return resolved;
     }
 
     private static BlockState blockStateOrNull(ResourceLocation blockId) {

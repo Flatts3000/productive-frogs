@@ -82,11 +82,12 @@ public final class PFEntities {
         );
 
     /**
-     * Cave Slime — the MINERAL parent species. Vanilla-shaped bounding box +
+     * Cave Slime — the CAVE parent species. Vanilla-shaped bounding box +
      * client tracking range; same {@code Slime}-derived behavior. The default
-     * discovery category MINERAL is set in
+     * discovery category CAVE is resolved in
      * {@link com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler}'s
-     * {@code categoryForParent} via an {@code instanceof CaveSlime} check.
+     * {@code categoryForParent} by an EntityType-id lookup against the
+     * {@code parent_species} datapack registry.
      */
     public static final DeferredHolder<EntityType<?>, EntityType<CaveSlime>> CAVE_SLIME =
         ENTITIES.register(
@@ -100,9 +101,10 @@ public final class PFEntities {
         );
 
     /**
-     * Geode Slime — the GEM parent species. Same shape as CaveSlime; the only
+     * Geode Slime — the GEODE parent species. Same shape as CaveSlime; the only
      * differences are the EntityType registration name, the renderer texture,
-     * and the {@code instanceof GeodeSlime → GEM} branch in
+     * and the {@code geode_slime → GEODE} entry in the {@code parent_species}
+     * datapack registry consulted by
      * {@link com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler}.
      */
     public static final DeferredHolder<EntityType<?>, EntityType<GeodeSlime>> GEODE_SLIME =
@@ -117,9 +119,10 @@ public final class PFEntities {
         );
 
     /**
-     * Tide Slime — the AQUATIC parent species. Same shape as the other parent
+     * Tide Slime — the TIDE parent species. Same shape as the other parent
      * species; differences are the registration name, the renderer texture,
-     * and the {@code instanceof TideSlime → AQUATIC} branch in
+     * and the {@code tide_slime → TIDE} entry in the {@code parent_species}
+     * datapack registry consulted by
      * {@link com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler}.
      */
     public static final DeferredHolder<EntityType<?>, EntityType<TideSlime>> TIDE_SLIME =
@@ -134,10 +137,11 @@ public final class PFEntities {
         );
 
     /**
-     * Void Slime — the ARCANE parent species. Closes the parent-species set
-     * (Cave/Geode/Tide/Void cover the four non-vanilla categories MINERAL /
-     * GEM / AQUATIC / ARCANE). The {@code instanceof VoidSlime → ARCANE}
-     * branch lives in {@link com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler}.
+     * Void Slime — the VOID parent species. Same shape as the other parent
+     * species; differences are the registration name, the renderer texture,
+     * and the {@code void_slime → VOID} entry in the {@code parent_species}
+     * datapack registry consulted by
+     * {@link com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler}.
      */
     public static final DeferredHolder<EntityType<?>, EntityType<VoidSlime>> VOID_SLIME =
         ENTITIES.register(

@@ -332,7 +332,7 @@ public final class PFGameTests {
 
         // 2. loadFromBucketTag half: a fresh tadpole of a DIFFERENT category
         //    has its category overwritten when the bucket is released. Picking
-        //    METALLIC as the starting state so the assertion fails loudly if
+        //    BOG as the starting state so the assertion fails loudly if
         //    loadFromBucketTag silently no-ops.
         ResourceTadpole released = helper.spawn(PFEntities.RESOURCE_TADPOLE.get(), pos.east());
         released.setCategory(Category.BOG);
@@ -402,8 +402,8 @@ public final class PFGameTests {
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void splitDiscoveryPicksVariantFromPool(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 2, 2);
-        Float originalOverride = SlimeSplitDiscoveryHandler.testOverride;
-        SlimeSplitDiscoveryHandler.testOverride = 1.0f;
+        Float originalOverride = SlimeSplitDiscoveryHandler.getTestOverride();
+        SlimeSplitDiscoveryHandler.setTestOverride(1.0f);
         try {
             com.flatts.productivefrogs.content.entity.CaveSlime parent =
                 helper.spawn(PFEntities.CAVE_SLIME.get(), pos);
@@ -440,13 +440,13 @@ public final class PFGameTests {
                 }
             });
         } finally {
-            SlimeSplitDiscoveryHandler.testOverride = originalOverride;
+            SlimeSplitDiscoveryHandler.setTestOverride(originalOverride);
         }
     }
 
     /**
      * Mirror of {@code matching_frog_kill_drops_category_froglight} for the
-     * variant-aware drop path: spawn a METALLIC frog, an IRON-variant slime,
+     * variant-aware drop path: spawn a CAVE frog, an IRON-variant slime,
      * deal damage from the frog → assert a {@code configurable_froglight}
      * item entity drops carrying the {@code productivefrogs:iron}
      * SLIME_VARIANT component. The original category-Froglight test still
@@ -648,9 +648,9 @@ public final class PFGameTests {
     }
 
     /**
-     * Spawn a METALLIC ResourceFrog with both a METALLIC and an INFERNAL slime
+     * Spawn a BOG ResourceFrog with both a BOG and an INFERNAL slime
      * within tongue range. The category-filtered sensor should write only the
-     * METALLIC slime into {@code NEAREST_ATTACKABLE}; the INFERNAL one must be
+     * BOG slime into {@code NEAREST_ATTACKABLE}; the INFERNAL one must be
      * filtered out. Verifies {@link
      * com.flatts.productivefrogs.content.entity.ai.ResourceFrogAttackablesSensor}
      * is wired into ResourceFrog's brain provider and the category check
@@ -801,7 +801,7 @@ public final class PFGameTests {
     /**
      * End-to-end tongue-kill test: spawn a matching frog and slime, let the
      * frog's AI itself drive the tongue strike, and verify the Froglight drops.
-     * The pre-PR-#61 manual-damage test ({@link #matchingFrogKillDropsCategoryFroglight})
+     * The pre-PR-#61 manual-damage test ({@link #matchingFrogKillDropsConfigurableFroglight})
      * uses {@code hurtServer(level, source, 999.0F)} which bypasses the frog's
      * {@code ATTACK_DAMAGE} attribute and the entire vanilla tongue task chain
      * — PR #27 caught a damage=0 regression that test couldn't see. This one
@@ -861,7 +861,7 @@ public final class PFGameTests {
     }
 
     /**
-     * Exercise the full bucket pickup→release contract: spawn a MINERAL slime,
+     * Exercise the full bucket pickup→release contract: spawn a CAVE slime,
      * write its state into a bucket via {@code saveToBucketTag}, then load
      * that bucket NBT into a fresh ResourceSlime via {@code loadFromBucketTag}.
      * Verifies (1) the bucket carries the category, (2) the released slime
@@ -1032,8 +1032,8 @@ public final class PFGameTests {
             net.minecraft.world.entity.EntityType<T> parentType,
             Category expectedCategory) {
         BlockPos pos = new BlockPos(2, 2, 2);
-        Float originalOverride = SlimeSplitDiscoveryHandler.testOverride;
-        SlimeSplitDiscoveryHandler.testOverride = 1.0f;
+        Float originalOverride = SlimeSplitDiscoveryHandler.getTestOverride();
+        SlimeSplitDiscoveryHandler.setTestOverride(1.0f);
         try {
             T parent = helper.spawn(parentType, pos);
             parent.setSize(3, true);
@@ -1061,7 +1061,7 @@ public final class PFGameTests {
                 }
             });
         } finally {
-            SlimeSplitDiscoveryHandler.testOverride = originalOverride;
+            SlimeSplitDiscoveryHandler.setTestOverride(originalOverride);
         }
     }
 
@@ -1833,9 +1833,9 @@ public final class PFGameTests {
     }
 
     /**
-     * Variant path: an iron-variant Slime Bucket fed to a METALLIC Resource
+     * Variant path: an iron-variant Slime Bucket fed to a CAVE Resource
      * Frog drops a {@code configurable_froglight} stamped with the iron
-     * variant id (NOT the broad-strokes {@code metallic_froglight}). Mirrors
+     * variant id (NOT a broad-strokes category Froglight). Mirrors
      * the variant_slime_kill_drops_configurable_froglight test but for the
      * player-driven path instead of the tongue-kill path.
      */
@@ -1885,7 +1885,7 @@ public final class PFGameTests {
     }
 
     /**
-     * Mismatch path: a METALLIC slime bucket fed to an AQUATIC Resource
+     * Mismatch path: a BOG slime bucket fed to a TIDE Resource
      * Frog must be a no-op. The bucket is NOT consumed, no froglight drops,
      * and the result returns PASS (so vanilla Animal#mobInteract continues
      * — slimeballs and name-tag still work as before).

@@ -1,7 +1,6 @@
 package com.flatts.productivefrogs.content.entity;
 
 import com.flatts.productivefrogs.data.Category;
-import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Slime;
@@ -9,10 +8,11 @@ import net.minecraft.world.level.Level;
 
 /**
  * Infernal Slime — the nether parent species. Vanilla-flavoured {@link Slime}
- * subclass that exists as a thin marker class so
- * {@link com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler}
- * can tell parent species apart via {@code instanceof} when picking the
- * discovery pool's default category.
+ * subclass that exists as a distinct {@link EntityType} so the parent species
+ * can be keyed in the {@code parent_species} datapack registry, which
+ * {@link com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler} and
+ * {@link com.flatts.productivefrogs.event.SlimeInfusionHandler} consult to map a
+ * parent slime to its category.
  *
  * <p>Per the V1.5 species-as-category redesign, Infernal Slime replaces
  * vanilla {@code minecraft:magma_cube} as the canonical INFERNAL parent
@@ -43,11 +43,6 @@ public class InfernalSlime extends Slime {
      */
     @Override
     protected ParticleOptions getParticleType() {
-        int rgb = Category.INFERNAL.tintRgb();
-        org.joml.Vector3f color = new org.joml.Vector3f(
-            ((rgb >> 16) & 0xFF) / 255.0F,
-            ((rgb >> 8) & 0xFF) / 255.0F,
-            (rgb & 0xFF) / 255.0F);
-        return new DustParticleOptions(color, 1.0F);
+        return Category.INFERNAL.tintParticle();
     }
 }

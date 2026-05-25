@@ -2,10 +2,13 @@ package com.flatts.productivefrogs.data;
 
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.DecoderException;
 import java.util.Locale;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.StringRepresentable;
+import org.joml.Vector3f;
 
 /**
  * The six parent slime species Productive Frogs is built around. Each species
@@ -29,9 +32,57 @@ public enum Category implements StringRepresentable {
 
     public static final Codec<Category> CODEC = StringRepresentable.fromEnum(Category::values);
     public static final StreamCodec<ByteBuf, Category> STREAM_CODEC =
-        ByteBufCodecs.idMapper(ordinal -> values()[ordinal], Category::ordinal);
+        ByteBufCodecs.idMapper(Category::byOrdinalOrThrow, Category::ordinal);
 
     private final int rgb;
+
+    /**
+     * Decode a wire ordinal to a Category, rejecting out-of-range values with a
+     * {@link DecoderException} instead of an {@code ArrayIndexOutOfBoundsException}.
+     * {@code ByteBufCodecs.idMapper} does no bounds check before invoking this, so a
+     * crafted or version-skewed packet (e.g. a modified client sending an item with an
+     * out-of-range {@code contained_category} ordinal) would otherwise crash the decode
+     * thread. A {@code DecoderException} is caught by the network pipeline and closes the
+     * connection cleanly.
+     */
+    private static Category byOrdinalOrThrow(int ordinal) {
+        Category[] values = values();
+        if (ordinal < 0 || ordinal >= values.length) {
+            throw new DecoderException("Unknown Category ordinal: " + ordinal);
+        }
+        return values[ordinal];
+    }
+
+    /**
+     * Decode a synced/saved ordinal to a Category, falling back to {@link #BOG} on
+     * out-of-range input rather than throwing. Used by entity synched-data getters
+     * (DATA_CATEGORY is a raw int serializer) where a lenient fallback is preferable to
+     * a client crash on a corrupt save or version-skew sync.
+     */
+    public static Category fromOrdinalOrDefault(int ordinal) {
+        Category[] values = values();
+        if (ordinal < 0 || ordinal >= values.length) {
+            return BOG;
+        }
+        return values[ordinal];
+    }
+
+    /**
+     * Splat particle tinted with an arbitrary RGB. Used by {@code ResourceSlime}, which
+     * prefers its variant's primary colour over the category tint when present.
+     */
+    public static DustParticleOptions dustParticle(int rgb) {
+        Vector3f color = new Vector3f(
+            ((rgb >> 16) & 0xFF) / 255.0F,
+            ((rgb >>  8) & 0xFF) / 255.0F,
+            (rgb         & 0xFF) / 255.0F);
+        return new DustParticleOptions(color, 1.0F);
+    }
+
+    /** Splat particle tinted with this category's colour. Used by the parent species. */
+    public DustParticleOptions tintParticle() {
+        return dustParticle(this.rgb);
+    }
 
     Category(int rgb) {
         this.rgb = rgb;
@@ -66,11 +117,11 @@ public enum Category implements StringRepresentable {
      *              + category  * {@value SHELL_TINT_WEIGHT_PERCENT}%) / 100
      * </pre>
      * where {@code light_gray} = ({@value SHELL_GRAY_R}, {@value SHELL_GRAY_G},
-     * {@value SHELL_GRAY_B}). So AQUATIC slimes look cooler-gray, INFERNAL
+     * {@value SHELL_GRAY_B}). So TIDE slimes look cooler-gray, INFERNAL
      * warmer-gray, etc., without going full red/orange/cyan.
      *
      * <p>Per the polish item in {@code docs/backlog.md}: <i>"Could tighten
-     * the gray tone per-category (cooler gray for AQUATIC, warmer for
+     * the gray tone per-category (cooler gray for TIDE, warmer for
      * INFERNAL) for visual variety."</i>
      */
     public int shellTintArgb() {

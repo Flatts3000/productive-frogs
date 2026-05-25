@@ -9,6 +9,7 @@ import java.util.Optional;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Per-resource subdivision within a {@link Category}. One {@code SlimeVariant}
@@ -26,7 +27,7 @@ import net.minecraft.util.RandomSource;
  *   <li>{@code primerItem} — the item that, when right-clicked on a vanilla
  *       slime, transforms it into this variant. Mirrors the per-category
  *       primer tag pattern but at the variant level (iron_ingot → iron_slime
- *       specifically, not just METALLIC).</li>
+ *       specifically, not just the CAVE category).</li>
  *   <li>{@code category} — parent category. Determines which Resource Frog
  *       can eat this slime and which default discovery pool the variant
  *       belongs to.</li>
@@ -34,7 +35,7 @@ import net.minecraft.util.RandomSource;
  *       Drive inventory icon and entity-render tinting. Distinct from
  *       {@link Category#tintRgb()} so variants within the same category can
  *       look different (iron silver vs copper orange vs gold yellow within
- *       METALLIC).</li>
+ *       the CAVE category).</li>
  *   <li>{@code weight} — relative weight for random discovery pool picks
  *       (per {@code docs/slime_sourcing.md} §V1 Configurability). Higher
  *       weight = more likely to spawn. Default 1.</li>
@@ -72,6 +73,10 @@ public record SlimeVariant(
      * the discovery-pool random pick. The field is optional and defaults to
      * 1 — simple variants don't need to specify it.
      *
+     * <p>{@code primary_color} / {@code secondary_color} are constrained to
+     * {@code [0, 0xFFFFFF]} (24-bit RGB) so a datapack can't supply a negative
+     * or alpha-bearing value that would render as a garbage tint.
+     *
      * <p>{@code inner_block} (v1.0.1+): the vanilla block id rendered inside
      * the Resource Slime. Optional; the inner-block render pass is skipped
      * when absent or unresolvable. Format: a plain block id (no
@@ -82,8 +87,8 @@ public record SlimeVariant(
         instance -> instance.group(
             ResourceLocation.CODEC.fieldOf("primer_item").forGetter(SlimeVariant::primerItem),
             Category.CODEC.fieldOf("category").forGetter(SlimeVariant::category),
-            Codec.INT.fieldOf("primary_color").forGetter(SlimeVariant::primaryColor),
-            Codec.INT.fieldOf("secondary_color").forGetter(SlimeVariant::secondaryColor),
+            Codec.intRange(0, 0xFFFFFF).fieldOf("primary_color").forGetter(SlimeVariant::primaryColor),
+            Codec.intRange(0, 0xFFFFFF).fieldOf("secondary_color").forGetter(SlimeVariant::secondaryColor),
             Codec.intRange(1, Integer.MAX_VALUE).optionalFieldOf("weight", 1).forGetter(SlimeVariant::weight),
             ResourceLocation.CODEC.optionalFieldOf("inner_block").forGetter(SlimeVariant::innerBlock)
         ).apply(instance, SlimeVariant::new)
@@ -99,6 +104,7 @@ public record SlimeVariant(
      * the future ~30-50 with cross-mod compat) the cost is trivial compared to
      * the rest of the right-click handler.
      */
+    @Nullable
     public static Map.Entry<ResourceLocation, SlimeVariant> findByPrimerItem(
             Registry<SlimeVariant> registry, ResourceLocation itemId) {
         for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
@@ -120,6 +126,7 @@ public record SlimeVariant(
      * species's default category determines the pool; {@code weight} biases
      * the pick within it.
      */
+    @Nullable
     public static Map.Entry<ResourceLocation, SlimeVariant> pickWeighted(
             Registry<SlimeVariant> registry, Category category, RandomSource random) {
         List<Map.Entry<ResourceLocation, SlimeVariant>> pool = new ArrayList<>();

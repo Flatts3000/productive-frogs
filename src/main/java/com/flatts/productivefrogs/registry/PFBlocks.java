@@ -6,7 +6,9 @@ import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
 import com.flatts.productivefrogs.data.Category;
+import java.util.Collections;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LiquidBlock;
@@ -87,11 +89,12 @@ public final class PFBlocks {
             .sound(SoundType.METAL)
     );
 
-    /** Backwards-compatible alias for J1 callers. New code should use {@link #MILK_BLOCKS}. */
-    public static final DeferredBlock<LiquidBlock> IRON_SLIME_MILK = MILK_BLOCKS.get("iron");
-
     private static Map<String, DeferredBlock<LiquidBlock>> buildMilkBlocks() {
-        java.util.LinkedHashMap<String, DeferredBlock<LiquidBlock>> map = new java.util.LinkedHashMap<>();
+        // Ordering note: this runs during PFBlocks static init, after PFFluids
+        // static init (the constructor registers FluidTypes -> Fluids -> Blocks),
+        // so PFFluids.BY_VARIANT.get(variant).source() is resolvable here. See
+        // the forward-reference comment in PFFluids.buildFluids.
+        LinkedHashMap<String, DeferredBlock<LiquidBlock>> map = new LinkedHashMap<>();
         for (String variant : PFFluidTypes.VARIANTS) {
             map.put(variant, BLOCKS.registerBlock(
                 variant + "_slime_milk",
@@ -107,7 +110,7 @@ public final class PFBlocks {
                     .sound(SoundType.EMPTY)
             ));
         }
-        return java.util.Collections.unmodifiableMap(map);
+        return Collections.unmodifiableMap(map);
     }
 
     private static Map<Category, DeferredBlock<PrimedFrogEggBlock>> buildPrimedEggs() {

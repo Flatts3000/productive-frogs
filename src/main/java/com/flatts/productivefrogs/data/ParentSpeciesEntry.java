@@ -3,47 +3,50 @@ package com.flatts.productivefrogs.data;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.Optional;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Maps an EntityType identifier to the {@link Category} its offspring inherit
- * during split-discovery. One entry per shipped "parent species" — the six
- * slimes that can split into Resource Slimes when the discovery roll succeeds:
+ * Maps an EntityType identifier to the {@link Category} it belongs to. One entry
+ * per shipped "parent species" — the six PF-native slimes that anchor the six
+ * categories:
  *
  * <ul>
- *   <li>{@code minecraft:slime}        → {@link Category#METALLIC}</li>
- *   <li>{@code minecraft:magma_cube}   → {@link Category#INFERNAL}</li>
- *   <li>{@code productivefrogs:cave_slime}   → {@link Category#MINERAL}</li>
- *   <li>{@code productivefrogs:geode_slime}  → {@link Category#GEM}</li>
- *   <li>{@code productivefrogs:tide_slime}   → {@link Category#AQUATIC}</li>
- *   <li>{@code productivefrogs:void_slime}   → {@link Category#ARCANE}</li>
+ *   <li>{@code productivefrogs:bog_slime}      → {@link Category#BOG}</li>
+ *   <li>{@code productivefrogs:cave_slime}     → {@link Category#CAVE}</li>
+ *   <li>{@code productivefrogs:geode_slime}    → {@link Category#GEODE}</li>
+ *   <li>{@code productivefrogs:tide_slime}     → {@link Category#TIDE}</li>
+ *   <li>{@code productivefrogs:infernal_slime} → {@link Category#INFERNAL}</li>
+ *   <li>{@code productivefrogs:void_slime}     → {@link Category#VOID}</li>
  * </ul>
  *
- * <p>Datapack-driven so modpacks can remap modded slime mobs into the
- * discovery loop (e.g. point Mythic Metals' Pyrite Slime at METALLIC) by
- * dropping a single JSON into their pack. All six defaults ship under this
- * mod's own namespace at
+ * <p>Per the V1.5 species-as-category redesign, vanilla {@code minecraft:slime}
+ * and {@code minecraft:magma_cube} are deliberately NOT parent species — they
+ * are absent from the registry, so both split-discovery and infusion ignore
+ * them.
+ *
+ * <p>Datapack-driven so modpacks can wire modded slime mobs into the system
+ * (e.g. point Mythic Metals' Pyrite Slime at CAVE) by dropping a single JSON.
+ * All six defaults ship at
  * {@code data/productivefrogs/productivefrogs/parent_species/<name>.json};
- * the two vanilla parents are encoded by setting {@code entity_type} to
- * {@code minecraft:slime} / {@code minecraft:magma_cube} inside those files,
- * not by relocating the JSONs into a {@code data/minecraft/...} tree.
- * Modpacks override or extend the table by dropping JSONs at
+ * modpacks override or extend the table at
  * {@code data/<their_ns>/productivefrogs/parent_species/<name>.json}.
  *
  * <p>Schema:
  * <pre>{@code
  * {
  *   "entity_type": "productivefrogs:cave_slime",
- *   "category":    "cave"
+ *   "category":    "cave",
+ *   "inner_block": "minecraft:stone"
  *  }
  * }</pre>
  *
- * <p>Lookup happens once per split event via
- * {@code SlimeSplitDiscoveryHandler.categoryForParent}. With six entries the
- * linear scan is trivial; if the registry ever grows past a couple dozen
- * entries we'd want to materialize a cache in
- * {@code PFRegistries.PARENT_SPECIES} lookups, but at V1 scale a fold is
- * cheaper than the indirection.
+ * <p>Resolved via {@link #categoryFor} on two paths:
+ * {@code SlimeSplitDiscoveryHandler.categoryForParent} (discovery) and
+ * {@code SlimeInfusionHandler.resolveParentSpecies} (infusion). With six entries
+ * the linear scan is trivial; if the registry ever grows past a couple dozen
+ * entries, materialize a cache rather than scanning on a hot path.
  */
 public record ParentSpeciesEntry(
     ResourceLocation entityType,
@@ -55,10 +58,8 @@ public record ParentSpeciesEntry(
      * Codec for the {@code parent_species} datapack registry.
      *
      * <p>{@code inner_block} (v1.0.1+): the vanilla block id rendered inside
-     * the parent slime. Optional; absent for vanilla parents
-     * ({@code minecraft:slime}, {@code minecraft:magma_cube}) which use their
-     * own vanilla renderers and don't read this field. The PF-native parent
-     * renderers read this value at render time via
+     * the parent slime. Optional. The PF-native parent renderers read this
+     * value at render time via
      * {@code ResourceSlimeInnerBlockLayer.parentSpeciesBlock}, so a modpack can
      * repoint a species' interior block by editing the JSON (parallel to how
      * Resource Slime variants read their {@code inner_block}). Format: a plain
@@ -72,4 +73,20 @@ public record ParentSpeciesEntry(
             ResourceLocation.CODEC.optionalFieldOf("inner_block").forGetter(ParentSpeciesEntry::innerBlock)
         ).apply(instance, ParentSpeciesEntry::new)
     );
+
+    /**
+     * Look up the category mapped to an entity-type id, or {@code null} if no
+     * entry maps to it. Shared by the split-discovery and infusion handlers so
+     * a single {@code parent_species} JSON wires a (modded) slime into both
+     * paths consistently. Linear scan; see the class javadoc on scale.
+     */
+    @Nullable
+    public static Category categoryFor(Registry<ParentSpeciesEntry> registry, ResourceLocation entityTypeId) {
+        for (ParentSpeciesEntry entry : registry) {
+            if (entry.entityType().equals(entityTypeId)) {
+                return entry.category();
+            }
+        }
+        return null;
+    }
 }

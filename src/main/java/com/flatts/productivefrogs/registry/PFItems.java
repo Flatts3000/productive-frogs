@@ -6,23 +6,30 @@ import com.flatts.productivefrogs.content.item.FrogEggItem;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.content.item.SlimeBucketItem;
 import com.flatts.productivefrogs.data.Category;
+import java.util.Collections;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MobBucketItem;
+import net.minecraft.world.item.PlaceOnWaterBlockItem;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Centralized item registry for Productive Frogs.
@@ -160,14 +167,14 @@ public final class PFItems {
             Category.CAVE.tintRgb(), darker(Category.CAVE.tintRgb()), props)
     );
 
-    /** Geode Slime spawn egg — GEM parent species. Mirrors Cave Slime. */
+    /** Geode Slime spawn egg — GEODE parent species. Mirrors Cave Slime. */
     public static final DeferredItem<SpawnEggItem> GEODE_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "geode_slime_spawn_egg",
         props -> new SpawnEggItem(PFEntities.GEODE_SLIME.get(),
             Category.GEODE.tintRgb(), darker(Category.GEODE.tintRgb()), props)
     );
 
-    /** Tide Slime spawn egg — AQUATIC parent species. Mirrors Cave Slime. */
+    /** Tide Slime spawn egg — TIDE parent species. Mirrors Cave Slime. */
     public static final DeferredItem<SpawnEggItem> TIDE_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "tide_slime_spawn_egg",
         props -> new SpawnEggItem(PFEntities.TIDE_SLIME.get(),
@@ -216,12 +223,8 @@ public final class PFItems {
      * (J3) consumes a Slime Bucket and outputs the matching variant's milk
      * bucket.
      */
-    public static final Map<String, DeferredItem<net.minecraft.world.item.BucketItem>> MILK_BUCKETS =
+    public static final Map<String, DeferredItem<BucketItem>> MILK_BUCKETS =
         buildMilkBuckets();
-
-    /** Backwards-compatible alias for J1 callers. New code should use {@link #MILK_BUCKETS}. */
-    public static final DeferredItem<net.minecraft.world.item.BucketItem> IRON_SLIME_MILK_BUCKET =
-        MILK_BUCKETS.get("iron");
 
     /**
      * Slime Milker BlockItem — places {@link PFBlocks#SLIME_MILKER}. The block
@@ -234,18 +237,17 @@ public final class PFItems {
         new Item.Properties()
     );
 
-    private static Map<String, DeferredItem<net.minecraft.world.item.BucketItem>> buildMilkBuckets() {
-        java.util.LinkedHashMap<String, DeferredItem<net.minecraft.world.item.BucketItem>> map =
-            new java.util.LinkedHashMap<>();
+    private static Map<String, DeferredItem<BucketItem>> buildMilkBuckets() {
+        LinkedHashMap<String, DeferredItem<BucketItem>> map = new LinkedHashMap<>();
         for (String variant : PFFluidTypes.VARIANTS) {
             map.put(variant, ITEMS.registerItem(
                 variant + "_slime_milk_bucket",
-                props -> new net.minecraft.world.item.BucketItem(
+                props -> new BucketItem(
                     PFFluids.BY_VARIANT.get(variant).source().get(),
-                    props.stacksTo(1).craftRemainder(net.minecraft.world.item.Items.BUCKET))
+                    props.stacksTo(1).craftRemainder(Items.BUCKET))
             ));
         }
-        return java.util.Collections.unmodifiableMap(map);
+        return Collections.unmodifiableMap(map);
     }
 
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
@@ -260,7 +262,7 @@ public final class PFItems {
             Category catCopy = cat;
             map.put(cat, ITEMS.registerItem(
                 cat.primedEggItemName(),
-                props -> new net.minecraft.world.item.PlaceOnWaterBlockItem(
+                props -> new PlaceOnWaterBlockItem(
                     PFBlocks.PRIMED_FROG_EGGS.get(catCopy).get(), props)
             ));
         }
@@ -271,7 +273,7 @@ public final class PFItems {
     @SuppressWarnings("unchecked")
     private static Map<Category, DeferredItem<SpawnEggItem>> buildSpawnEggs(
             String entitySuffix,
-            java.util.function.Supplier<EntityType<?>> entityTypeSupplier) {
+            Supplier<EntityType<?>> entityTypeSupplier) {
         EnumMap<Category, DeferredItem<SpawnEggItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {
             String name = cat.id() + "_" + entitySuffix + "_spawn_egg";
@@ -285,7 +287,7 @@ public final class PFItems {
                 props -> {
                     EntityType<?> type = entityTypeSupplier.get();
                     return new SpawnEggItem(
-                        (EntityType<? extends net.minecraft.world.entity.Mob>) type,
+                        (EntityType<? extends Mob>) type,
                         primary, secondary,
                         applySpawnEggProps(props, type, cat));
                 }
@@ -296,32 +298,9 @@ public final class PFItems {
 
     private static Item.Properties applySpawnEggProps(Item.Properties props, EntityType<?> type, Category category) {
         CompoundTag nbt = new CompoundTag();
-        nbt.putString("id", net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE
-            .getKey(type).toString());
+        nbt.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
         nbt.putString("Category", category.name());
         return props
-            .component(DataComponents.ENTITY_DATA, CustomData.of(nbt))
-            .component(PFDataComponents.CONTAINED_CATEGORY.get(), category);
-    }
-
-    /**
-     * Build properties for a category-locked spawn egg: presets the
-     * {@code ENTITY_DATA} NBT with {@code Category=&lt;name&gt;} so the spawned
-     * entity's {@code readAdditionalSaveData} picks up the right category, and
-     * sets {@code CONTAINED_CATEGORY} so the inventory tint reads it via the
-     * existing {@code productivefrogs:contained_category} ItemTintSource.
-     *
-     * <p>1.21.1 ENTITY_DATA is plain {@code CustomData} — there's no
-     * {@code TypedEntityData} in this version. We embed the entity type id
-     * under the standard "id" field so vanilla SpawnEggItem semantics resolve
-     * correctly.
-     */
-    private static Item.Properties spawnEggProperties(EntityType<?> type, Category category) {
-        CompoundTag nbt = new CompoundTag();
-        nbt.putString("id", net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE
-            .getKey(type).toString());
-        nbt.putString("Category", category.name());
-        return new Item.Properties()
             .component(DataComponents.ENTITY_DATA, CustomData.of(nbt))
             .component(PFDataComponents.CONTAINED_CATEGORY.get(), category);
     }
@@ -366,8 +345,8 @@ public final class PFItems {
     }
 
     private static Item.Properties applyVariantSpawnEggProps(Item.Properties props, String variantName, Category category) {
-        net.minecraft.resources.ResourceLocation variantId =
-            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName);
+        ResourceLocation variantId =
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName);
         CompoundTag nbt = new CompoundTag();
         // Variant first; readAdditionalSaveData treats Variant as overriding
         // Category via the registry lookup, but the entity also reads Category
@@ -377,7 +356,7 @@ public final class PFItems {
         // 1.21.1: ENTITY_DATA is CustomData (no TypedEntityData). The entity type
         // is inferred from the "id" string field inside the NBT, matching vanilla
         // SpawnEggItem semantics.
-        nbt.putString("id", net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE
+        nbt.putString("id", BuiltInRegistries.ENTITY_TYPE
             .getKey(PFEntities.RESOURCE_SLIME.get()).toString());
         return props
             .component(DataComponents.ENTITY_DATA, CustomData.of(nbt))
@@ -386,16 +365,6 @@ public final class PFItems {
             // for JEI subtyping and (future) tint resolution.
             .component(PFDataComponents.SLIME_VARIANT.get(), variantId)
             .component(PFDataComponents.CONTAINED_CATEGORY.get(), category);
-    }
-
-    /**
-     * Convenience helper for client tint code: pull the category out of a
-     * Resource Tadpole Bucket's NBT. Returns null when the bucket is empty
-     * or has no stored category.
-     */
-    @Nullable
-    public static Category tadpoleBucketCategory(ItemStack stack) {
-        return ResourceTadpoleBucketItem.readCategory(stack);
     }
 
     private PFItems() {

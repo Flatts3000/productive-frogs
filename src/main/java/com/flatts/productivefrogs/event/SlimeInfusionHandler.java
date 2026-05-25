@@ -1,14 +1,9 @@
 package com.flatts.productivefrogs.event;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
-import com.flatts.productivefrogs.content.entity.BogSlime;
-import com.flatts.productivefrogs.content.entity.CaveSlime;
-import com.flatts.productivefrogs.content.entity.GeodeSlime;
-import com.flatts.productivefrogs.content.entity.InfernalSlime;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
-import com.flatts.productivefrogs.content.entity.TideSlime;
-import com.flatts.productivefrogs.content.entity.VoidSlime;
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.data.ParentSpeciesEntry;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFRegistries;
@@ -119,26 +114,26 @@ public final class SlimeInfusionHandler {
     }
 
     /**
-     * Resolve the parent-species category for a Slime entity. Returns the
-     * matching {@link Category} for PF parent species
-     * (Bog/Cave/Geode/Tide/Infernal/Void Slime), {@code null} for vanilla
-     * {@code Slime} or {@code MagmaCube} or any non-parent slime subclass.
+     * Resolve the parent-species category for a Slime entity via the
+     * {@link PFRegistries#PARENT_SPECIES} datapack registry. Returns the
+     * matching {@link Category} for a registered parent species, or
+     * {@code null} for vanilla {@code Slime}/{@code MagmaCube} (deliberately
+     * absent from the registry per V1.5) or any slime type nobody has wired in.
      *
-     * <p>Uses {@code instanceof} dispatch on the PF subclasses (cheap and
-     * order-independent — each PF species has its own subclass). The
-     * datapack {@code parent_species} registry could also be consulted but
-     * the instanceof shape is faster and avoids per-interaction registry
-     * lookups.
+     * <p>Shares the {@link ParentSpeciesEntry#categoryFor} lookup with
+     * {@code SlimeSplitDiscoveryHandler}, so a single {@code parent_species}
+     * JSON wires a (modded) slime into both infusion and split-discovery. The
+     * 6-entry scan on a right-click path is negligible.
      */
     @Nullable
     public static Category resolveParentSpecies(Slime slime) {
-        if (slime instanceof BogSlime) return Category.BOG;
-        if (slime instanceof CaveSlime) return Category.CAVE;
-        if (slime instanceof GeodeSlime) return Category.GEODE;
-        if (slime instanceof TideSlime) return Category.TIDE;
-        if (slime instanceof VoidSlime) return Category.VOID;
-        if (slime instanceof InfernalSlime) return Category.INFERNAL;
-        return null;
+        Registry<ParentSpeciesEntry> registry = slime.level().registryAccess()
+            .registry(PFRegistries.PARENT_SPECIES).orElse(null);
+        if (registry == null) {
+            return null;
+        }
+        ResourceLocation typeId = BuiltInRegistries.ENTITY_TYPE.getKey(slime.getType());
+        return ParentSpeciesEntry.categoryFor(registry, typeId);
     }
 
     /**

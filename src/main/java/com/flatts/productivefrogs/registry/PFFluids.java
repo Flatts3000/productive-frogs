@@ -37,12 +37,6 @@ public final class PFFluids {
     /** Fluid pairs keyed by variant name. Iteration order matches {@link PFFluidTypes#VARIANTS}. */
     public static final Map<String, Pair> BY_VARIANT = buildFluids();
 
-    /** Backwards-compatible aliases for J1 callers. New code should use {@link #BY_VARIANT}. */
-    public static final DeferredHolder<Fluid, BaseFlowingFluid.Source> IRON_SLIME_MILK_SOURCE =
-        BY_VARIANT.get("iron").source();
-    public static final DeferredHolder<Fluid, BaseFlowingFluid.Flowing> IRON_SLIME_MILK_FLOWING =
-        BY_VARIANT.get("iron").flowing();
-
     private static Map<String, Pair> buildFluids() {
         LinkedHashMap<String, Pair> map = new LinkedHashMap<>();
         for (String variant : PFFluidTypes.VARIANTS) {

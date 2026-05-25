@@ -33,7 +33,7 @@ Full v1.0 design spec: [species_as_category_redesign.md](./species_as_category_r
 
 ## V1.1 — Vanilla Resource Coverage (PLANNED)
 
-Pure-JSON data release adding every vanilla item fitting cleanly into one of the six species. JSON-only authoring — no Java edits.
+Mostly-data release adding every vanilla item fitting cleanly into one of the six species. Each variant is a `slime_variant` JSON + recipe + lang, plus two one-line Java edits today (spawn-egg `VariantSpec` row + Slime Milk `VARIANTS` entry); see `docs/code_review_2026_05_24.md` CR-9.
 
 **22 new variants** (34 total after v1.1):
 
