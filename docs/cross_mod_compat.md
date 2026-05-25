@@ -131,20 +131,19 @@ Modded tech has almost no aquatic resources. The one strong pick is Mythic
 Metals' Aquarium (`mythicmetals:aquarium_ingot`, ocean-only ore). TIDE otherwise
 leans on vanilla aquatic content. Flagged as a design gap, not a blocker.
 
-## Open decisions (recommendations baked in; confirm before authoring)
+## Decisions (confirmed 2026-05-25)
 
-- **Alloys** (bronze, brass, electrum, invar, constantan, signalum, lumium,
-  enderium, steel): tag inconsistently across mods. *Recommendation:* include
-  them keyed on `c:ingots/<alloy>` with `required: false` so they catch packs
-  that tag them, and accept that some will not resolve (the variant stays inert).
-- **Output-item resolution:** *Recommendation:* per-variant `result_item` with a
-  "first in tag" fallback (pack-overridable), not bare "first in tag"
-  (nondeterministic when multiple mods are present).
-- **Scope of the first PR:** *Recommendation:* ship the 8-ish Tier-1 CAVE metals
-  plus the GEODE gems first (cheap, maximum coverage), and treat the bespoke
-  signature items (pink slime, enderium, Powah crystals, MA essences) as a
-  fast-follow once `primer_tag` is in.
-- **TIDE gap:** accept TIDE as the smallest species (vanilla-leaning) for now.
+- **Alloys:** include them keyed on `c:ingots/<alloy>` with `required: false`.
+  They catch packs that tag them; where the tag is empty the variant stays inert.
+- **Output-item resolution:** per-variant `result_item` (the preferred smelt
+  output) with a "first item in the tag" fallback, so a pack can override which
+  item is canonical for `c:ingots/tin` etc.
+- **Scope:** ship it ALL in one pass - the `primer_tag` mechanism, the Tier-1
+  tag-driven metals + gems (incl. alloys per above), AND the bespoke signature
+  items (pink slime, enderium, Powah crystals, Mystical Agriculture essences)
+  together. Larger PR, accepted.
+- **TIDE:** accept TIDE as the small, vanilla-leaning species (prismarine / ink
+  sac + Aquarium where Mythic Metals is present). No extra aquatic-resource hunt.
 
 ## Datapack override path for modpack authors
 
