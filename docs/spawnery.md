@@ -36,7 +36,7 @@ The egg is species-level (six categories), not resource-level. `FrogEggItem` is 
 
 ### Fuel economy
 
-1 slime ball = 1 bottle ("1:1 or worse" ceiling). A ball is consumed at the start of a cycle and yields a burn lasting exactly one cycle, so the flame UI behaves like a furnace while the ratio stays 1:1. Tunable via `BURN_TICKS_PER_BALL` (= production ticks) if a costlier ratio is wanted.
+1 slime ball = 1 bottle ("1:1 or worse" ceiling). A ball is consumed at the start of a cycle and yields a burn lasting exactly one cycle (`spawnery.productionTicks`), so the flame UI behaves like a furnace while the ratio stays 1:1. A costlier ratio would need a per-cycle fuel-count constant - not currently present.
 
 ### Primers (default-world resource, pack-overridable tags)
 

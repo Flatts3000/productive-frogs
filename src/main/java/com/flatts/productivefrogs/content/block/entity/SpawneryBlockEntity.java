@@ -147,7 +147,9 @@ public class SpawneryBlockEntity extends BlockEntity implements MenuProvider {
             if (be.burnTime <= 0) {
                 ItemStack fuel = be.inventory.getStackInSlot(FUEL_SLOT);
                 if (!fuel.isEmpty() && fuel.is(Items.SLIME_BALL)) {
-                    fuel.shrink(1);
+                    // extractItem (not a raw shrink on the returned stack) so fuel
+                    // consumption goes through the handler like the bottle + primer.
+                    be.inventory.extractItem(FUEL_SLOT, 1, false);
                     be.burnTime = total;
                     changed = true;
                     PFDebug.log(PFDebug.Area.SPAWNERY, () -> String.format(
@@ -200,6 +202,8 @@ public class SpawneryBlockEntity extends BlockEntity implements MenuProvider {
         inventory.extractItem(PRIMER_SLOT, 1, false);
         inventory.setStackInSlot(OUTPUT_SLOT, makeEgg(cat));
         cookProgress = 0;
+        // Burn and cook run in lockstep, so burnTime is already 0 here; reset
+        // defensively so a future caller can't leave a stale burn lit.
         burnTime = 0;
         level.playSound(null, pos, SoundEvents.FROG_LAY_SPAWN, SoundSource.BLOCKS,
             0.8F, 0.9F + level.getRandom().nextFloat() * 0.2F);

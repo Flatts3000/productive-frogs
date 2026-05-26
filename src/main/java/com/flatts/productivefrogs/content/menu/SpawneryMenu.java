@@ -173,8 +173,13 @@ public class SpawneryMenu extends AbstractContainerMenu {
                         return ItemStack.EMPTY;
                     }
                 } else if (stack.is(Items.SLIME_BALL)) {
+                    // Slime ball is valid as fuel AND as the vanilla-frogspawn primer.
+                    // Prefer fuel; fall through to the primer slot when fuel is full,
+                    // so the "one ball in each" vanilla workflow works via shift-click.
                     if (!moveItemStackTo(stack, SpawneryBlockEntity.FUEL_SLOT,
-                                         SpawneryBlockEntity.FUEL_SLOT + 1, false)) {
+                                         SpawneryBlockEntity.FUEL_SLOT + 1, false)
+                        && !moveItemStackTo(stack, SpawneryBlockEntity.PRIMER_SLOT,
+                                            SpawneryBlockEntity.PRIMER_SLOT + 1, false)) {
                         return ItemStack.EMPTY;
                     }
                 } else if (PFItemTags.primerCategory(stack) != null) {

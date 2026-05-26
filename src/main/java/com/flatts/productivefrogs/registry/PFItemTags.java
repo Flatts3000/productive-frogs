@@ -16,15 +16,20 @@ import org.jetbrains.annotations.Nullable;
  * Item {@link TagKey}s owned by Productive Frogs.
  *
  * <p>The six {@code spawnery_primer/<species>} tags drive the Spawnery's primer
- * slot - an item in one of them makes the Spawnery bottle that species' frogspawn
- * (an "egg" stamped with the matching {@link Category}); an empty/untagged primer
- * slot yields plain vanilla frogspawn. This is deliberately a <b>separate</b>
- * resolution path from {@code SlimeVariant.findByPrimer}: that maps farmed
- * resources (iron->Cave, ...) to categories, which is circular for the Spawnery's
- * skyblock bootstrap (you cannot require iron to start the frog that farms iron).
- * The defaults are thematic, skyblock-reachable signature items (cobblestone, mud,
- * kelp, amethyst shard, netherrack, ender pearl - see {@code docs/spawnery.md});
- * packs retune any species by editing one tag JSON.
+ * slot: an item in one of them makes the Spawnery bottle that species' frogspawn
+ * (a Frog Egg stamped with the matching {@link Category}). The defaults are the
+ * representative <b>normal-world</b> resource each species unlocks - iron ingot
+ * (Cave), amethyst shard (Geode), bone (Bog), prismarine shard (Tide), blaze
+ * powder (Infernal), ender pearl (Void); see {@code docs/spawnery.md}. A skyblock
+ * or otherwise restricted pack retunes any species by editing one tag JSON.
+ *
+ * <p>This is a deliberately <b>separate</b> resolution path from
+ * {@code SlimeVariant.findByPrimer}: the Spawnery wants exactly one primer per
+ * species (not the whole resource pool) and a clean per-species override surface,
+ * so a tag-with-one-entry fits where {@code findByPrimer} (which maps every
+ * resource to its category) would not. The slime ball is handled separately as the
+ * vanilla-frogspawn primer (see {@code SpawneryInventory.isValidPrimer}); a primer
+ * is required, so an empty or untagged primer slot produces nothing.
  */
 public final class PFItemTags {
 
