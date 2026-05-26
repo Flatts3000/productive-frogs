@@ -323,6 +323,7 @@
   "productivefrogs.jade.spawns_left": "Slime spawns left: %1$s / %2$s",
   "productivefrogs.jade.spawns_unlimited": "Slime spawns: unlimited",
   "productivefrogs.jade.progress": "Working: %1$s%%",
+  "config.jade.plugin_productivefrogs.appliances": "Productive Frogs Appliances",
   "productivefrogs.jei.empty_slime_bucket.info": "Right-click a size-1 Resource Slime to capture it. The bucket records the slime's variant (or species, for category-only slimes) and can be released elsewhere or fed into the Slime Milker.",
   "productivefrogs.jei.empty_tadpole_bucket.info": "Right-click a Resource Tadpole to capture it. The bucket records the tadpole's species and can be released elsewhere — released tadpoles will continue maturing into a Resource Frog.",
   "item.productivefrogs.slime_milk_bucket": "Bucket of Slime Milk",
