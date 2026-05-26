@@ -18,14 +18,19 @@ Symbols 🟢 (resolved) and 🟠 (reopened / since-reverted) live in the [archiv
 
 ## Open issues
 
-### 🔴 Cross-mod variant slimes show a raw lang key in the Froglight tooltip
-The Configurable Froglight tooltip reads "Dropped when a Cave Frog eats a **entity.productivefrogs.resource_slime.osmium**. Smelts in a furnace to the resource it represents." - the slime's name is the untranslated entity translation key instead of a readable name. (Observed on osmium; affects every cross-mod variant.)
+### 🔴 JEI info text says "Configurable Froglight" instead of "Froglight"
+Two JEI description strings call the block by its registry-flavored name instead of its display name:
 
-**Cause:** `en_us.json` ships `entity.productivefrogs.resource_slime.<variant>` entries only for the base and v1.1 variants (iron, copper, ..., bog/cave/...). Cross-mod variants (osmium, tin, lead, and the rest of the `c:`-tag pool) have no such entry, and the Froglight tooltip interpolates the slime's entity description id directly, with no title-case fallback on that path. So any variant relying on the fallback shows the raw key; hand-authored variants render fine. Note the category part ("Cave Frog") resolves correctly - only the variant-specific slime name is broken.
+- `productivefrogs.jei.variant_slime.info`: "...drops a Configurable Froglight stamped with this variant..."
+- `productivefrogs.jei.frog.info`: "...drops a Configurable Froglight stamped with that variant..."
 
-**Fix:** apply the same variant-id title-case fallback already used for the Froglight / Slime Milk bucket / spawn-egg display names to the slime name interpolated in this tooltip (so `osmium` -> "Osmium Slime"), instead of reading the entity description id raw. A data-driven variant must not need a hand-written lang entry to read correctly - that is the point of the title-case fallback. Verify in `runClient` against a cross-mod variant.
+Everywhere else PF names the block **"Froglight"** - the `block.productivefrogs.configurable_froglight` display name and every per-variant name ("Iron Froglight", etc.). So this is an internal naming inconsistency, not a deliberate term; player-facing text should read "Froglight".
 
-Recently resolved (see the [archive](./known_issues_archive.md)): empty-bucket slime capture, and canonical species ordering across tabs / JEI / recipe book. By-design V1 limitations are listed below.
+**Fix:** in `src/main/resources/assets/productivefrogs/lang/en_us.json`, change both strings to "...drops a Froglight stamped with [this/that] variant...". Pure lang edit, no code. The lang-completeness test covers key *presence*, not copy, so no test change is required - though a copy-lint assertion forbidding "Configurable Froglight" in player-facing values would prevent regressions.
+
+By-design V1 limitations are listed below.
+
+Recently resolved (see the [archive](./known_issues_archive.md)): cross-mod variant slimes showing a raw lang key in the Froglight tooltip (fixed via the JEI title-case fallback plus explicit `en_us.json` keys for all 57 shipped variants, now guarded by a lang-completeness unit test), empty-bucket slime capture, and canonical species ordering across tabs / JEI / recipe book.
 
 ---
 
@@ -74,4 +79,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-25 (staleness pass: corrected pre-V1.5 "metallic" Froglight references to Cave-species naming, and removed the false claim that a `crushable` tag already exists - it does not yet).*
+*Last updated: 2026-05-25 (logged the JEI "Configurable Froglight" -> "Froglight" naming inconsistency under Open issues; earlier the same day resolved the cross-mod variant raw-lang-key bug, now in the archive).*

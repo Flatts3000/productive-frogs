@@ -10,6 +10,17 @@ Newest-first within each section. Section ordering loosely tracks the area of th
 
 ## Resolved issues
 
+### 🟢 Cross-mod variant slimes showed a raw lang key in the Froglight tooltip - resolved
+**Original symptom**: the Configurable Froglight JEI info page read "Dropped when a Cave Frog eats a **entity.productivefrogs.resource_slime.osmium**. Smelts in a furnace to the resource it represents." - the slime name rendered as its untranslated entity translation key instead of a readable name. Affected every cross-mod variant (osmium, tin, lead, and the rest of the `c:`-tag pool); hand-authored base / v1.1 variants rendered fine.
+
+**Cause**: two gaps. (1) `ProductiveFrogsJeiPlugin` built the interpolated slime name with raw `Component.translatable("entity.productivefrogs.resource_slime." + variant)` - the one variant display path that lacked the title-case fallback the Froglight / Slime Milk bucket / spawn-egg display names already used. (2) `en_us.json` shipped per-variant keys only for the 33 base + v1.1 variants; the 24 cross-mod variants we ship JSONs for had no explicit entry in any of the five per-variant key families.
+
+**Resolution**:
+- Applied the shared `translatableWithFallback` + `VariantNames.titleCase` fallback to the JEI slime-name interpolation in `ProductiveFrogsJeiPlugin`, matching the other four variant surfaces. The shared `variantSlimeName` feeds the variant_slime / variant_froglight / slime_milk info pages, so the single change fixed all three.
+- Added explicit `en_us.json` keys for all 57 shipped variants across all five per-variant families (`entity.productivefrogs.resource_slime.*`, `item.productivefrogs.slime_bucket.*`, `item.productivefrogs.resource_slime_spawn_egg.*`, `block.productivefrogs.configurable_froglight.*`, `item.productivefrogs.slime_milk_bucket.*`) - 153 new keys. The `slime_milk_bucket` family had previously shipped zero per-variant keys (it relied entirely on the fallback). Names follow the existing convention (full resource name + " Slime", e.g. "Osmium Slime"); Powah crystals carry "Crystal" ("Blazing Crystal Slime"), and `pink_slime` collapses the redundant suffix ("Pink Slime", not "Pink Slime Slime").
+- The title-case fallback stays as the safety net for downstream datapack-only variants we don't ship (a pack-added variant cannot ship its own lang, since lang is a client asset and datapacks are server data).
+- New `scripts/audit_lang_keys.py` enumerates every shipped variant against the five families and reports/fills gaps; re-run it after adding a variant JSON to catch a missing-key regression.
+
 ### 🟢 Resource Slime captured with an empty bucket, not a water bucket - resolved (v1.2.x)
 **Original symptom**: right-clicking a size-1 Resource Slime with an empty bucket did nothing; a water bucket was what captured it into a Slime Bucket. Inherited vanilla `Bucketable` behaviour (fish/axolotl/tadpole capture with a water bucket), but it read wrong for a non-aquatic slime - a player reaches for an empty bucket and nothing happens.
 

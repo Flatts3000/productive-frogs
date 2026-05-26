@@ -146,8 +146,12 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
 
             Component frogName = Component.translatable(
                 "entity.productivefrogs.resource_frog." + variant.category().id());
-            Component variantSlimeName = Component.translatable(
-                "entity.productivefrogs.resource_slime." + variantName);
+            // Built-in variants have explicit lang keys; a cross-mod / datapack
+            // variant (no lang) falls back to a title-cased "<Name> Slime" so the
+            // info pages below don't surface the raw translation key.
+            Component variantSlimeName = Component.translatableWithFallback(
+                "entity.productivefrogs.resource_slime." + variantName,
+                com.flatts.productivefrogs.util.VariantNames.titleCase(entry.getKey().location()) + " Slime");
             Component info = Component.translatable(
                 "productivefrogs.jei.variant_slime.info", variantSlimeName, frogName);
 
