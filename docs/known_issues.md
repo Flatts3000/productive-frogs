@@ -31,8 +31,8 @@ These are intentional V1 scope cuts. Each is on the V2 roadmap unless noted othe
 ### 🔵 No Frog Terrarium / Habitat block
 Frogs in V1 live where you place them, near water. A placeable housing block with I/O inventory is V2.
 
-### 🔵 Slime Milk only in buckets (UI surface)
-Bucket-only is the shipped UI in V1 — no jugs, tanks, or custom fluid containers. The underlying fluid IS accessible to any tank-mod ecosystem (Mekanism, Thermal, Create, Fluid Tanks): the bucket item exposes `Capabilities.Fluid.ITEM` via NeoForge's automatic `BucketItem` registration, and the source block uses vanilla `LiquidBlock` bucket-pickup mechanics. Verification details live in the archive under "Slime Milk integrates with tank mods — confirmed working."
+### 🔵 Slime Milk only in buckets (by design - final)
+Bucket is the only first-party Slime Milk container, and that is the intended design - **jugs, tanks, and other custom fluid containers are not planned**. The underlying fluid IS accessible to any tank-mod ecosystem (Mekanism, Thermal, Create, Fluid Tanks): the bucket exposes `Capabilities.Fluid.ITEM` via NeoForge's automatic `BucketItem` registration and the source block uses vanilla `LiquidBlock` pickup, so bulk storage is covered by a tank mod. Verification details live in the archive under "Slime Milk integrates with tank mods".
 
 ### 🔵 No visual depletion countdown on milk source blocks
 Source blocks deplete after `depletionCount` spawns (default 16) and drain to air. The texture does NOT desaturate as the counter approaches zero — the counter lives in blockstate but has no client-side visual cue. Specced in `farming.md`; deferred to polish so J5 could ship without a custom fluid renderer.

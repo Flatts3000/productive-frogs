@@ -112,7 +112,7 @@ These are the levers to tune balance:
 - **Frog terrarium / housing block.** Frogs in V1 just live where you place them, near water.
 - **Drop-collection block.** Use vanilla hoppers under the frog area to collect Froglight item drops.
 - **Crusher / Pestle.** Deferred to other mods; we ship the compat recipes.
-- **Milk in non-bucket containers** (jugs, tanks, etc.). Bucket only in V1.
+- **Milk in non-bucket containers** (jugs, tanks, custom fluid items). Bucket-only is the final first-party design - **not planned**. The fluid is tank-mod accessible (Mekanism / Thermal / Create / Fluid Tanks) for bulk storage.
 
 ## Summary: V1 Farm Layout (Iron variant, idealized)
 

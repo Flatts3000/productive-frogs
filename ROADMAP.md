@@ -97,3 +97,5 @@ Captured during v1 design. Not on the schedule; revisited when v2 ships and we k
 **Native crusher block.** The 2x metal-Froglight crush yield is delegated to external crusher mods (Mekanism / Immersive Engineering / EnderIO, via the optional `mod_loaded` recipes shipped in v1.3.0). The mod will not ship its own crusher; packs that want the 2x payoff install one of those mods.
 
 **Drop-collection block.** Vanilla hoppers under the frog pen already collect dropped Froglights. The mod will not ship a custom collector.
+
+**Custom Slime Milk containers (jugs / tanks).** Bucket is the only first-party container. The Slime Milk fluid is already accessible to tank/pipe mods (the bucket's fluid capability + vanilla `LiquidBlock`), so bulk storage is covered by those; the mod will not ship jugs or tanks.
