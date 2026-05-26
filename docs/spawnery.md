@@ -24,13 +24,13 @@ Furnace-shaped GUI, modelled on `SlimeMilkerBlockEntity` + the vanilla furnace b
 |---|---|---|---|
 | Bottle | 0 | `minecraft:glass_bottle` | container; consumed, returned filled |
 | Fuel | 1 | `minecraft:slime_ball` | burn fuel - 1 ball = 1 bottle |
-| Primer | 2 | any item in a `spawnery_primer/<species>` tag, or empty | selects output species |
+| Primer | 2 | a slime ball, or any item in a `spawnery_primer/<species>` tag | decides the egg; **required** |
 | Output | 3 | (extract only) | the produced Frog Egg |
 
-Per completed cycle: consume **1 glass bottle** + **1 slime ball of burn**, write one `FrogEggItem` to output:
+**A primer is required - an empty (or unrecognised) primer never produces anything: no ignite, no fuel burned, no output.** Per completed cycle: consume **1 glass bottle** + **1 slime ball of burn** + **1 primer**, write one `FrogEggItem` to output:
 
-- **Primer empty / unrecognised:** plain `FrogEggItem` (no `contained_category`) = vanilla frogspawn bottle. Primer not consumed.
-- **Primer recognised:** resolve to a `Category` via the tags (canonical species order, first match wins), consume **1 primer**, stamp that category onto the egg = species-primed ("modded") egg.
+- **Primer = slime ball:** plain `FrogEggItem` (no `contained_category`) = vanilla frogspawn bottle. (Thematic: vanilla frogs make frogspawn from slimes. The slime ball doubles as the fuel, so a vanilla egg costs one slime ball in each slot.)
+- **Primer = a `spawnery_primer/<species>` item:** resolve to that `Category`, stamp it onto the egg = species egg.
 
 The egg is species-level (six categories), not resource-level. `FrogEggItem` is `stacksTo(1)`, so the output holds exactly one egg; the block stalls until the egg is removed (identical to the Milker, whose milk bucket is also `stacksTo(1)`).
 
@@ -51,7 +51,7 @@ The egg is species-level (six categories), not resource-level. `FrogEggItem` is 
 | Infernal | `minecraft:blaze_powder` | `productivefrogs:spawnery_primer/infernal` |
 | Void | `minecraft:ender_pearl` | `productivefrogs:spawnery_primer/void` |
 
-Each is an actual variant in that species' pool, so the default Spawnery primer aligns with that resource's `findByPrimer` mapping (iron -> Cave both ways) - but the tag stays the override surface. Bog uses `bone` rather than a slime ball because the slime ball is the fuel. (Earlier drafts used skyblock-reachable signature items - cobblestone/mud/kelp/netherrack - on the assumption the mod should ship skyblock-ready; that was reversed in favour of normal-world defaults + pack overrides.)
+Each is an actual variant in that species' pool, so the default Spawnery primer aligns with that resource's `findByPrimer` mapping (iron -> Cave both ways) - but the tag stays the override surface. Bog uses `bone`, not a slime ball: the slime ball is reserved as the fuel **and** as the vanilla-frogspawn primer (a slime ball in the primer slot makes plain vanilla frogspawn; the six tags above are the species primers). (Earlier drafts used skyblock-reachable signature items - cobblestone/mud/kelp/netherrack - on the assumption the mod should ship skyblock-ready; that was reversed in favour of normal-world defaults + pack overrides.)
 
 ## 4. Config gating
 
@@ -338,6 +338,7 @@ A primer selects one of the six frog **species** (Cave / Geode / Bog / Tide / In
 - **D7** Bonemeal is crafting-only, not an operating feedstock. [user]
 - **D8** `productionTicks` default 200 (10 s); 1 slime ball burns exactly one cycle. [my call, configurable]
 - **D9** Cave Slime Milk is NOT a default primer (can't bootstrap) but the resolver honours it if a pack tags it. [user idea, parked as pack-addable]
+- **D11** Primer is **required** - an empty or unrecognised primer never produces anything (no ignite, no fuel burned). A slime ball is the vanilla primer (-> plain frogspawn); the six `spawnery_primer/<species>` items prime their species. [user 2026-05-26: "There has to be a primer, full stop. For a vanilla frogspawn the primer is a slime ball." Reverses the original empty-primer -> vanilla behaviour.]
 - **D10** Primer override surface is item **tags**, NOT a custom recipe type. [decided 2026-05-26 - tags have wider first-class pack-tool support (datapack + KubeJS + CraftTweaker), fit the mod's minimal-Java/JSON ethos, and match the classification nature of the mapping; a custom recipe type would need a bespoke KubeJS/CraftTweaker bridge to be ergonomic. See the "Primer overridability" section.]
 
 ## 16. Out of scope

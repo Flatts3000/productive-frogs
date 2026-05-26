@@ -58,9 +58,20 @@ public class SpawneryInventory extends ItemStackHandler {
         return switch (slot) {
             case BOTTLE_SLOT -> stack.is(Items.GLASS_BOTTLE);
             case FUEL_SLOT -> stack.is(Items.SLIME_BALL);
-            case PRIMER_SLOT -> PFItemTags.primerCategory(stack) != null;
+            case PRIMER_SLOT -> isValidPrimer(stack);
             default -> false; // OUTPUT_SLOT rejects inserts
         };
+    }
+
+    /**
+     * A valid Spawnery primer: a slime ball (primes plain vanilla frogspawn) or any
+     * item in a {@code spawnery_primer/<species>} tag (primes that species). The
+     * Spawnery requires a primer - there is no empty-primer production. The slime
+     * ball doubles as the fuel, so a vanilla egg costs one in the fuel slot and one
+     * here.
+     */
+    public static boolean isValidPrimer(ItemStack stack) {
+        return stack.is(Items.SLIME_BALL) || PFItemTags.primerCategory(stack) != null;
     }
 
     @Override

@@ -100,7 +100,7 @@ public class SpawneryMenu extends AbstractContainerMenu {
             addSlot(new Slot(dummy, SpawneryBlockEntity.PRIMER_SLOT, PRIMER_SLOT_X, PRIMER_SLOT_Y) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
-                    return PFItemTags.primerCategory(stack) != null;
+                    return SpawneryInventory.isValidPrimer(stack);
                 }
             });
             addSlot(new Slot(dummy, SpawneryBlockEntity.OUTPUT_SLOT, OUTPUT_SLOT_X, OUTPUT_SLOT_Y) {

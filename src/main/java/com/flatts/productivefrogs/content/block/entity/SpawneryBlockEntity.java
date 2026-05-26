@@ -131,11 +131,16 @@ public class SpawneryBlockEntity extends BlockEntity implements MenuProvider {
 
         ItemStack bottle = be.inventory.getStackInSlot(BOTTLE_SLOT);
         ItemStack output = be.inventory.getStackInSlot(OUTPUT_SLOT);
-        Category cat = PFItemTags.primerCategory(be.inventory.getStackInSlot(PRIMER_SLOT));
+        ItemStack primer = be.inventory.getStackInSlot(PRIMER_SLOT);
+        // Primer is required - no empty-primer production. A slime ball primes plain
+        // vanilla frogspawn (cat stays null); a spawnery_primer/<species> item primes
+        // that species.
+        Category cat = PFItemTags.primerCategory(primer);
+        boolean hasPrimer = SpawneryInventory.isValidPrimer(primer);
 
         // FrogEgg is stacksTo(1): the output holds exactly one egg, so a new cycle
-        // can run only while the output is empty.
-        boolean canProduce = !bottle.isEmpty() && output.isEmpty();
+        // can run only while the output is empty and a primer is present.
+        boolean canProduce = !bottle.isEmpty() && output.isEmpty() && hasPrimer;
 
         boolean changed = false;
         if (canProduce) {
@@ -190,9 +195,9 @@ public class SpawneryBlockEntity extends BlockEntity implements MenuProvider {
         // fires onContentsChanged -> setChanged independently of the output write
         // below - no reliance on the ordering to persist the consumed inputs.
         inventory.extractItem(BOTTLE_SLOT, 1, false);
-        if (cat != null) {
-            inventory.extractItem(PRIMER_SLOT, 1, false);
-        }
+        // The primer is always required, so always consume it. cat == null means
+        // the primer was a slime ball -> plain vanilla frogspawn.
+        inventory.extractItem(PRIMER_SLOT, 1, false);
         inventory.setStackInSlot(OUTPUT_SLOT, makeEgg(cat));
         cookProgress = 0;
         burnTime = 0;
