@@ -111,10 +111,10 @@ The scale-up release. v1 lives unchanged; v2 layers automation on top. A player 
 
 ### Long-shot ideas (not committed)
 
-* **Alchemical slime category** tied to brewing. Infuse with a potion item, slime takes on that potion's effect, killing it drops the matching potion.
+* **Stat upgrades for your frogs and slimes.** A buff item that levels a creature's stats toward a 10/10/10 cap. Grinding one up to max becomes its own goal, and maxed creatures could show it off with cosmetic tiers.
 * **Deep genetics / breeding tree** on the frog side (Forestry-style).
+* **Alchemical slime category** tied to brewing. Infuse with a potion item, the slime takes on that potion's effect, killing it drops the matching potion.
 * **New dimensions** (Frog Realm).
-* **Tinkers-style upgradable frogs** (gold trim, diamond skin).
 * **Quest / advancement integration.**
 
 ### Compatibility promise

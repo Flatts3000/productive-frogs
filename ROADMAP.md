@@ -56,10 +56,10 @@ The scale-up release. v1 lives unchanged; v2 layers automation on top. A player 
 
 Captured during v1 design. Not on the schedule; revisited when v2 ships and we know how much hook-into-vanilla the framework supports.
 
+- **Stat upgrades for slimes and frogs.** A consumable buff item that raises a creature's stats toward a 10/10/10 cap. Stats could cover things like production rate, yield, and reach; the grind to max a creature out is the core loop, in the spirit of Productive Bees' gene maxing. Maxed creatures could earn cosmetic tiers (gold trim, diamond skin). This is the headline long-shot.
+- **Deep genetics / breeding tree** on the frog side (Forestry-style), feeding the same stat system as the upgrade item.
 - **Alchemical slime category** tied to brewing. Infuse with a potion item, the slime takes on that potion's effect, and killing it drops the matching potion (or splashes its effect in an area). Parent could be a "Brew Slime" spawning near witch huts or nether wart.
-- **Deep genetics / breeding tree** on the frog side (Forestry-style).
 - **New dimensions** (Frog Realm).
-- **Tinkers-style upgradable frogs** (gold trim, diamond skin).
 - **Quest / advancement integration.**
 
 ---
