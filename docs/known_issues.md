@@ -47,8 +47,8 @@ Use vanilla hoppers under the frog pen to collect Froglight item entities. A cus
 
 ## Cross-Mod Compat caveats
 
-### 🔵 Crush recipes (Mekanism / Immersive Engineering / EnderIO) not yet shipped
-Design ([cross_mod_compat.md](./cross_mod_compat.md), [farming.md §Cross-Mod](./farming.md)) ships `mod_loaded`-gated recipes converting 1 metal Froglight → 2 dust in a crusher, then the mod's own (or AllTheOres') dust→ingot smelt yields 2 ingots (vs 1 from direct smelting). Recipe shapes are researched and verified; not yet built (v1.3). Players can still smelt directly for 1× yield in the meantime.
+### 🔵 Crush recipes (Mekanism / Immersive Engineering / EnderIO) built, pending pre-release smoke test
+The `mod_loaded`-gated recipes ([v1_3_crush_recipes.md](./v1_3_crush_recipes.md), [cross_mod_compat.md](./cross_mod_compat.md)) converting 1 metal Froglight → 2 dust in a crusher, then the mod's own (or AllTheOres') dust→ingot smelt yields 2 ingots (vs 1 from direct smelting), are now **generated and in-tree** (33 recipes under `data/productivefrogs/recipe/<modid>/`, via `scripts/generate_crush_recipes.ps1`). JSON shape is pinned by `CrushRecipeTest` and they load cleanly (gated out) in the GameTest server. **Remaining before release:** the manual per-mod `runClient` smoke test (CI has none of the crushers installed, so it can't exercise the live recipe) - confirm Mekanism accepts the nested `neoforge:components` input, EnderIO's `"bonus": "none"` yields a flat 2x, and re-verify the IE grit set. Until released, players still smelt directly for 1× yield.
 
 Matching is per-variant via the `neoforge:components` ingredient - there is **no** `crushable` item tag (every variant is the same `configurable_froglight` item distinguished only by component, so a tag can't select metals).
 
