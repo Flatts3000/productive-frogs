@@ -29,8 +29,9 @@ Every Slime Milk variant shows in the creative tab (one stamped stack per varian
 ### 🟡 Spawnery runs without a primer (decision pending)
 As built (per the original spec the user confirmed), an empty primer slot makes the Spawnery produce a plain **vanilla frogspawn** bottle; a primer only upgrades the output to a species egg. Flagged 2026-05-26 in dev testing as possibly unwanted - the open question is whether a primer should be **required** (Spawnery stalls with an empty primer slot, dropping the vanilla-frogspawn path entirely). This is a design decision, not a malfunction. If "required": treat a null primer category like "no bottle" in `SpawneryBlockEntity.serverTick`'s `canProduce` gate, then update `docs/spawnery.md` (D-decisions) and the `spawneryProducesVanillaFrogspawnBottle` GameTest. Ties into the broader primer-design discussion that's still open.
 
-### 🔴 No item tooltips in the Spawnery GUI (reported, needs localization)
-Hovering slots in the Spawnery screen reportedly shows no tooltip. `SpawneryScreen` is structurally identical to the shipped `SlimeMilkerScreen` - both override only `renderBg` and inherit `AbstractContainerScreen`'s default `render`, which is what calls `renderTooltip` - so no Spawnery-specific code cause was found. **Do NOT blindly add a `renderTooltip` call**: the default already renders it, so that would double-render. Needs localization first: (a) does the Slime Milker GUI also lack tooltips (-> latent shared bug, investigate the render/JEI pipeline) or is it Spawnery-only (-> environmental)? (b) is it no-tooltip-at-all (vanilla render not firing) vs. just the missing JEI "hold U/R" hint? Discovered 2026-05-26 in dev testing.
+### 🔴 No item tooltips in the mod's container GUIs (Slime Milker + Spawnery)
+Hovering slots in the Spawnery screen shows no tooltip - and the **shipped Slime Milker has the same problem** (confirmed 2026-05-26), so this is a pre-existing, shared bug, not Spawnery-specific. Both `SpawneryScreen` and `SlimeMilkerScreen` override only `renderBg` and otherwise inherit `AbstractContainerScreen`; empirically that path is not surfacing slot tooltips in this build (1.21.1 / NeoForge 21.1.230 + JEI). Because the Milker is already on CurseForge, this affects shipped content.
+**Likely fix (verify before applying):** override `render(GuiGraphics, int, int, float)` - ideally in a shared screen base both GUIs extend - to call `super.render(...)` then `renderTooltip(...)`. First confirm whether it's no-tooltip-at-all (the vanilla item-name box never appears) vs. only the JEI "hold U/R for recipes" hint missing: if the vanilla box is actually fine and only JEI's line is gone, the cause is JEI integration, not the render path, and adding `renderTooltip` would double-render. Discovered 2026-05-26 during Spawnery dev testing.
 
 By-design V1 limitations are listed below.
 
@@ -83,4 +84,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-26 (Spawnery dev-testing findings: Slime Milk JEI subtype-collapse, Slime Milker missing recipe, Spawnery no-primer design question, and Spawnery GUI tooltip report).*
+*Last updated: 2026-05-26 (Spawnery dev-testing findings: Slime Milk JEI subtype-collapse, Slime Milker missing recipe, Spawnery no-primer design question, and a shared container-GUI tooltip bug affecting both the Slime Milker and the Spawnery).*

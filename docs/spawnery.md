@@ -286,6 +286,47 @@ The Spawnery is a single block, not a variant, so the per-variant `LangCompleten
 9. JUnit + GameTest.
 10. `./gradlew build` (JAVA_HOME -> jdk-21) then `./gradlew runGameTestServer`. Manual `runClient` pass for GUI/model/tint (GameTest is blind to visuals).
 
+## Primer overridability (modpacks)
+
+**Decision (2026-05-26): the override surface is item tags, not a custom recipe type.** A modpack retunes any species' primer by overriding the `spawnery_primer/<species>` tag in its own datapack - no mod change, no recipe type. Tags were chosen over a custom recipe type because they have wider, first-class support across every tool a pack author uses (datapack JSON, KubeJS, CraftTweaker), fit the mod's data-driven / minimal-Java ethos, and match what the mapping actually is - a classification ("which items prime which species"). A custom recipe type would need a bespoke KubeJS/CraftTweaker bridge to be ergonomic, which would not exist for a niche mod, so it is the *less* tweakable surface here. Reconsider only if a future need arises for richer per-mapping semantics (multiple inputs, variable consume counts, per-recipe conditions, custom output); the current single-primer -> species model uses none of that.
+
+### How a pack retunes a primer
+
+Gate the Cave frog behind diamond instead of the default cobblestone:
+
+Datapack - `data/productivefrogs/tags/item/spawnery_primer/cave.json`:
+```json
+{ "replace": true, "values": ["minecraft:diamond"] }
+```
+
+KubeJS - `server_scripts`:
+```js
+ServerEvents.tags('item', event => {
+    event.remove('productivefrogs:spawnery_primer/cave', 'minecraft:cobblestone')
+    event.add('productivefrogs:spawnery_primer/cave', 'minecraft:diamond')
+})
+```
+
+CraftTweaker:
+```zenscript
+<tag:items:productivefrogs:spawnery_primer/cave>.remove(<item:minecraft:cobblestone>);
+<tag:items:productivefrogs:spawnery_primer/cave>.add(<item:minecraft:diamond>);
+```
+
+A modded item that may be absent - list it soft so the tag still loads when the mod isn't present:
+```json
+{ "replace": false, "values": [{ "id": "othermod:special_ore", "required": false }] }
+```
+
+### Granularity: the Spawnery gates a species, not a single resource
+
+A primer selects one of the six frog **species** (Cave / Geode / Bog / Tide / Infernal / Void), and that frog farms its whole resource set. So a pack gates "access to the Cave frog" (hence all Cave resources), not "access to diamond" specifically. Per-*resource* gating lives on the slime-priming side (`SlimeVariant` primers), not the Spawnery.
+
+### Follow-ups (deferred - fix-later batch)
+
+- **Docs:** add a "retuning Spawnery primers" subsection to `docs/cross_mod_compat.md` that cross-references this section, so pack authors find it from the compat doc.
+- **Dynamic JEI display (code):** make the Spawnery JEI info read the *current* `spawnery_primer/<species>` tag contents and list them per species, so a pack's overrides surface automatically and players can discover the pack's gating. Gives the recipe-type's discoverability without the recipe type.
+
 ## 15. Decisions & assumptions (redline here)
 
 - **D1** Furnace-style 4-slot GUI (bottle, fuel, primer, output). [user: "whatever is easier" -> furnace-style]
@@ -297,6 +338,7 @@ The Spawnery is a single block, not a variant, so the per-variant `LangCompleten
 - **D7** Bonemeal is crafting-only, not an operating feedstock. [user]
 - **D8** `productionTicks` default 200 (10 s); 1 slime ball burns exactly one cycle. [my call, configurable]
 - **D9** Cave Slime Milk is NOT a default primer (can't bootstrap) but the resolver honours it if a pack tags it. [user idea, parked as pack-addable]
+- **D10** Primer override surface is item **tags**, NOT a custom recipe type. [decided 2026-05-26 - tags have wider first-class pack-tool support (datapack + KubeJS + CraftTweaker), fit the mod's minimal-Java/JSON ethos, and match the classification nature of the mapping; a custom recipe type would need a bespoke KubeJS/CraftTweaker bridge to be ergonomic. See the "Primer overridability" section.]
 
 ## 16. Out of scope
 
