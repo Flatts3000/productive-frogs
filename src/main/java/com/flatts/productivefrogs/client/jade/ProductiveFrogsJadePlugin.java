@@ -77,6 +77,9 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             }
 
             BlockEntity be = accessor.getBlockEntity();
+            if (be == null) {
+                return;
+            }
             if (be instanceof SlimeMilkerBlockEntity milker) {
                 int progress = milker.getCookProgress();
                 if (progress > 0) {
@@ -85,8 +88,12 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 }
             } else if (be instanceof SpawneryBlockEntity spawnery) {
                 int progress = spawnery.getCookProgress();
-                int total = Math.max(1, PFConfig.SPAWNERY_PRODUCTION_TICKS.get());
                 if (progress > 0) {
+                    // Guard the config read like the depletion reads above (Jade can
+                    // render a frame before COMMON config loads); fall back to the default.
+                    int total = PFConfig.SPEC.isLoaded()
+                        ? Math.max(1, PFConfig.SPAWNERY_PRODUCTION_TICKS.get())
+                        : 200;
                     tooltip.add(Component.translatable("productivefrogs.jade.progress",
                         percent(progress, total)));
                 }
