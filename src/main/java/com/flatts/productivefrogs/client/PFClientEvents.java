@@ -415,8 +415,13 @@ public final class PFClientEvents {
     /** Fallback when no variant resolves (registry not loaded, or no reachable source). */
     private static final int DEFAULT_MILK_TINT = 0xFFFFFFFF;
 
-    /** Milk reaches ~4 blocks horizontally (slopeFindDistance 4) plus vertical falls. */
-    private static final int MAX_MILK_FLOW_STEPS = 8;
+    /**
+     * Upper bound on positions inspected while walking a flowing block back to its
+     * source: the start block plus up to 8 hops. Milk reaches ~4 blocks
+     * (slopeFindDistance 4) plus short vertical falls, so this is ample headroom -
+     * the walk stops as soon as it reaches the source.
+     */
+    private static final int MAX_MILK_WALK_STEPS = 9;
 
     private static final Direction[] HORIZONTALS =
         {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
@@ -454,12 +459,16 @@ public final class PFClientEvents {
      * horizontal neighbour with the most milk (the source is the full-level high
      * point a puddle slopes down from). Returns the first source BE's variant, or
      * null if the walk dead-ends before reaching one. Bounded by
-     * {@link #MAX_MILK_FLOW_STEPS}; the whole walk stays within milk's 4-block reach,
+     * {@link #MAX_MILK_WALK_STEPS}; the whole walk stays within milk's 4-block reach,
      * well inside the chunk render region.
+     *
+     * <p>Where two different-variant pools touch, the shared boundary block tints
+     * with whichever source is upstream by fluid amount - a minor, deterministic
+     * seam artifact, preferable to the white fallback.
      */
     private static ResourceLocation findMilkVariant(BlockAndTintGetter getter, BlockPos start) {
         BlockPos pos = start;
-        for (int step = 0; step <= MAX_MILK_FLOW_STEPS; step++) {
+        for (int step = 0; step < MAX_MILK_WALK_STEPS; step++) {
             BlockEntity be = getter.getBlockEntity(pos);
             if (be instanceof SlimeMilkSourceBlockEntity milkBe && milkBe.getVariantId() != null) {
                 return milkBe.getVariantId();
