@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## v1.4.0 - 2026-05-26 - the Spawnery (skyblock bootstrap)
+
+A new V1 appliance for skyblock and other restricted-biome packs, plus a round of
+appliance/JEI fixes. The Spawnery turns glass bottles into bottled frogspawn so the
+frog side of the loop can start where swamps and mangroves are unreachable - off by
+default, and fully pack-tunable.
+
 ### Added
 
 - **Spawnery** - a skyblock-bootstrap appliance, disabled by default
@@ -22,6 +29,13 @@
 - **The Slime Milker now has a crafting recipe** (5 cobblestone + 3 planks + 1
   slime ball). It previously shipped with a loot table but no recipe, so a
   survival player had no intended way to obtain it (only creative / `/give`).
+- **Slime Milk variants now show individually in JEI.** Every variant appeared in
+  the creative tab, but JEI collapsed them into a single Slime Milk Bucket (a
+  missing subtype interpreter); each variant is now its own JEI entry with its
+  info page.
+- **Item tooltips now render in the Slime Milker and Spawnery GUIs.** Hovering a
+  slot in either appliance showed no tooltip (NeoForge 1.21.1's container screen
+  doesn't render tooltips unless the screen asks it to); both now do.
 
 ## v1.3.0 - 2026-05-26 - cross-mod crush yields
 
