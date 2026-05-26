@@ -11,7 +11,10 @@
 > their JSON shape and the GameTest server confirms they load cleanly (gated out) without the
 > crushers installed. The metals with no in-scope dust source - mythril, orichalcum, brass,
 > refined_obsidian - are skipped by the generator (no recipe), as the precedence rules require.
-> The manual per-mod `runClient` smoke test in [Testing](#testing) is the remaining pre-release gate.
+> The **Mekanism path is confirmed working** in a dev `runClient` (2026-05-26) - its loader accepts the
+> nested `neoforge:components` input, which was the one runtime-unverified ingredient codec, so no
+> `mekanism:crushing` fallback is needed. Remaining pre-release gate: the EnderIO `bonus: none` flat-2x
+> check, the IE grit-set re-verify, and an ATO-fallback spot-check (see [Testing](#testing)).
 
 ## Goal
 
@@ -187,6 +190,8 @@ adding the mods as test deps would violate the no-hard-mod-dependency rule. Veri
      recipe loader accepts the nested `neoforge:components` input (it should - standard `Ingredient`
      codec - but this is the one unverified runtime path). If Mekanism chokes, fall back to
      `mekanism:crushing` (Crusher), which has identical field names.
+     **Confirmed working 2026-05-26**: a dev `runClient` with Mekanism present loads and runs the
+     `mekanism:enriching` recipe (the component input is accepted); no fallback needed.
 3. Spot-check one ATO-fallback recipe (e.g. IE crushing tin -> `alltheores:tin_dust`) with IE + ATO
    present.
 
