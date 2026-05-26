@@ -11,10 +11,11 @@
 > their JSON shape and the GameTest server confirms they load cleanly (gated out) without the
 > crushers installed. The metals with no in-scope dust source - mythril, orichalcum, brass,
 > refined_obsidian - are skipped by the generator (no recipe), as the precedence rules require.
-> The **Mekanism path is confirmed working** in a dev `runClient` (2026-05-26) - its loader accepts the
-> nested `neoforge:components` input, which was the one runtime-unverified ingredient codec, so no
-> `mekanism:crushing` fallback is needed. Remaining pre-release gate: the EnderIO `bonus: none` flat-2x
-> check, the IE grit-set re-verify, and an ATO-fallback spot-check (see [Testing](#testing)).
+> **Smoke test complete (2026-05-26): release-ready.** All four `runClient` checks pass - Mekanism's
+> loader accepts the nested `neoforge:components` input (the one runtime-unverified ingredient codec,
+> so no `mekanism:crushing` fallback is needed), EnderIO `bonus: none` yields a flat 2x, the IE grit
+> set matches the generator's native routing, and the ATO fallback resolves. The recipes ship with the
+> next v1.3 release; see [Testing](#testing).
 
 ## Goal
 
@@ -207,10 +208,10 @@ client-tint work - GameTest is blind to it).
 
 ## Open items / decisions
 
-- **Re-verify the IE grit set** (the exact metals IE ships `dust_<metal>` for) before generating - the
-  research baseline above is partial.
-- **EnderIO `bonus` semantics** - confirm `"bonus": "none"` yields a flat 2x with no grinding-ball
-  interaction during the smoke test.
+- ~~**Re-verify the IE grit set**~~ - confirmed in the 2026-05-26 smoke test; the generator's native
+  IE routing matches IE's shipped `dust_<metal>` set.
+- ~~**EnderIO `bonus` semantics**~~ - confirmed 2026-05-26: `"bonus": "none"` yields a flat 2x with no
+  grinding-ball interaction.
 - **Create / Actually Additions** - revisit if we decide a flat "crush -> 2x ingot" exception (Create)
   or an ATO-paired path (AA) is worth the inconsistency. Not in v1.3.
 - **JEI display** - if we later want JEI to show "crushable" on the metal Froglights, add a `crushable`
