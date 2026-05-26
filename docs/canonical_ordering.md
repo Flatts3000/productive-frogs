@@ -8,10 +8,10 @@ Productive Frogs' canonical species order is the progression order of the flagsh
 
 | # | Species | Theme |
 |---|---------|-------|
-| 1 | **CAVE** | Ores & metals - iron, copper, gold, coal, lapis, redstone, diamond, ... |
-| 2 | **GEODE** | Gems & crystals - emerald, amethyst, certus quartz, fluix, ... |
+| 1 | **CAVE** | Ores & metals - iron, copper, gold, coal, lapis, redstone, ... |
+| 2 | **GEODE** | Gems & crystals - emerald, diamond, amethyst, tuff, calcite, certus quartz, fluix, ... |
 | 3 | **BOG** | Organic & mob-drops - bone, string, feather, leather, gunpowder, ... |
-| 4 | **TIDE** | Aquatic - sponge, prismarine, ink sac, ... |
+| 4 | **TIDE** | Aquatic - sponge, prismarine, sea pickle, nautilus shell, ink sac, ... |
 | 5 | **INFERNAL** | Nether - blaze, nether quartz, soul sand, netherrack, glowstone, netherite scrap |
 | 6 | **VOID** | End & endgame - ender pearl, chorus fruit, shulker shell, ... |
 
