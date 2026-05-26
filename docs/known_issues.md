@@ -18,7 +18,14 @@ Symbols 🟢 (resolved) and 🟠 (reopened / since-reverted) live in the [archiv
 
 ## Open issues
 
-*No open bugs currently.* Recently resolved (see the [archive](./known_issues_archive.md)): empty-bucket slime capture, and canonical species ordering across tabs / JEI / recipe book. By-design V1 limitations are listed below.
+### 🔴 Cross-mod variant slimes show a raw lang key in the Froglight tooltip
+The Configurable Froglight tooltip reads "Dropped when a Cave Frog eats a **entity.productivefrogs.resource_slime.osmium**. Smelts in a furnace to the resource it represents." - the slime's name is the untranslated entity translation key instead of a readable name. (Observed on osmium; affects every cross-mod variant.)
+
+**Cause:** `en_us.json` ships `entity.productivefrogs.resource_slime.<variant>` entries only for the base and v1.1 variants (iron, copper, ..., bog/cave/...). Cross-mod variants (osmium, tin, lead, and the rest of the `c:`-tag pool) have no such entry, and the Froglight tooltip interpolates the slime's entity description id directly, with no title-case fallback on that path. So any variant relying on the fallback shows the raw key; hand-authored variants render fine. Note the category part ("Cave Frog") resolves correctly - only the variant-specific slime name is broken.
+
+**Fix:** apply the same variant-id title-case fallback already used for the Froglight / Slime Milk bucket / spawn-egg display names to the slime name interpolated in this tooltip (so `osmium` -> "Osmium Slime"), instead of reading the entity description id raw. A data-driven variant must not need a hand-written lang entry to read correctly - that is the point of the title-case fallback. Verify in `runClient` against a cross-mod variant.
+
+Recently resolved (see the [archive](./known_issues_archive.md)): empty-bucket slime capture, and canonical species ordering across tabs / JEI / recipe book. By-design V1 limitations are listed below.
 
 ---
 
