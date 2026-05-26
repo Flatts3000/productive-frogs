@@ -69,9 +69,13 @@ The scale-up release. v1 lives unchanged; v2 layers automation on top. A player 
 
 ---
 
-## Proposed: slime-to-fluid processing block
+## Parked for v2: the Froglight Juicer
 
-A new processing block that converts buckets of slimes into fluids - a way to generate fluids from farmed slimes. This generalizes the Slime Milker's slime-bucket-to-Slime-Milk conversion into a broader fluid-generation mechanic. Which fluids it can produce, and whether it ships as a hand-operated V1.x appliance or an automated V2 block, is not yet scoped.
+A processing block that converts a **Froglight into a fluid** - a third Froglight cash-out lane alongside smelting (1x solid) and crushing (2x dust). Its first iteration targets renewable **water and lava**: a lava slime drops a lava Froglight, which the Juicer turns into lava (water likewise), so a skyblock or nether-locked pack can farm the two fluids it most lacks.
+
+It is **v2, not a v1.x appliance**, because it introduces two mechanics the mod has never shipped: an internal fluid tank (drained by a right-click bucket or by pipes via `Capabilities.FluidHandler.BLOCK`) and an energy requirement (NeoForge `Capabilities.EnergyStorage.BLOCK`, the FE-equivalent every power mod bridges to, no hard dep). As the lightest possible v2 block (single block, no multiblock), it is a good candidate to open v2 with and establish the energy + fluid-tank capability patterns the rest of v2 (Frog Terrarium, buffered Slime Milker) will reuse.
+
+Decided shape, the new water/lava slime variants it needs, and the open questions to resolve before building: [docs/froglight_juicer.md](./docs/froglight_juicer.md).
 
 ---
 
