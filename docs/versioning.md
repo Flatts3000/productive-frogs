@@ -70,10 +70,11 @@ Tools and blocks that let the player scale and automate the V1 loop. Built on to
 - **Frog Terrarium / Habitat** block — placeable frog housing with input/output inventory
 - **Auto-feeders** — hopper-fed slime delivery to nearby frogs (alternative to milk-spawn proximity)
 - **Capacity / efficiency upgrades** for habitat blocks
-- **Native crusher block** — optional in-house version (so the 2× crush path works without external mods)
 - **Cross-mod crush 2× recipes** for Cave-species (ore / metal) Froglights via Create / Mekanism / Thermal — conditional `mod_loaded` JSON recipes. **Pulled forward to v1.3 as the next release** (was V2): see [ROADMAP.md](../ROADMAP.md). No `crushable` tag exists yet; it is created with the recipes. The work waits on a multi-mod test environment that can validate each target mod's recipe shape.
 - **Pipe/hopper-aware fluid handling** for Slime Milk
 - Potentially: power compatibility (FE / NeoForge Energy)
+
+> **Not planned** (moved out of V2 scope): a **native crusher block** (the 2x crush is delegated to external crusher mods - Mekanism / IE / EnderIO) and a **drop-collection block** (vanilla hoppers suffice). See [ROADMAP.md](../ROADMAP.md) "Explicitly NOT planned".
 
 **Why deferred:** these are all "scaling solutions" — they make V1 faster, denser, hands-off. They don't change *what the mod is*. Building V1 first ensures the design holds up without machines propping it up.
 

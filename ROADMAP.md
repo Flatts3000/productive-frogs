@@ -58,8 +58,6 @@ The scale-up release. v1 lives unchanged; v2 layers automation on top. A player 
 
 **Capacity / efficiency upgrades** for habitat blocks.
 
-**Native crusher block:** an optional in-house implementation so the double-yield crush path works even without an external crusher mod installed.
-
 **Pipe / hopper-aware fluid handling** for Slime Milk.
 
 **Potential:** FE / NeoForge Energy power compat.
@@ -95,3 +93,7 @@ Captured during v1 design. Not on the schedule; revisited when v2 ships and we k
 ## Explicitly NOT planned
 
 **Fabric port.** Productive Frogs is NeoForge-only by design and will remain so. See [docs/architecture.md](./docs/architecture.md) for the technical reasoning.
+
+**Native crusher block.** The 2x metal-Froglight crush yield is delegated to external crusher mods (Mekanism / Immersive Engineering / EnderIO, via the optional `mod_loaded` recipes shipped in v1.3.0). The mod will not ship its own crusher; packs that want the 2x payoff install one of those mods.
+
+**Drop-collection block.** Vanilla hoppers under the frog pen already collect dropped Froglights. The mod will not ship a custom collector.

@@ -38,10 +38,10 @@ Bucket-only is the shipped UI in V1 — no jugs, tanks, or custom fluid containe
 Source blocks deplete after `depletionCount` spawns (default 16) and drain to air. The texture does NOT desaturate as the counter approaches zero — the counter lives in blockstate but has no client-side visual cue. Specced in `farming.md`; deferred to polish so J5 could ship without a custom fluid renderer.
 
 ### 🔵 No native crusher / pestle
-V1 ships no in-house crushing block. The 2× yield on metal Froglights is unlocked by installing Mekanism, Immersive Engineering, or EnderIO (compat recipes ship in v1.3; a native in-house crusher is V2 - see Cross-Mod section below).
+No in-house crushing block, and a native crusher is **not planned** (see the roadmap's "Explicitly NOT planned"). The 2× yield on metal Froglights is unlocked by installing Mekanism, Immersive Engineering, or EnderIO (the optional `mod_loaded` crush recipes shipped in v1.3.0); the 2× payoff is delegated to those crusher mods rather than reimplemented in-house.
 
 ### 🔵 No drop-collection block
-Use vanilla hoppers under the frog pen to collect Froglight item entities. A custom collection block is V2.
+Use vanilla hoppers under the frog pen to collect Froglight item entities. A custom collection block is **not planned** (see the roadmap's "Explicitly NOT planned").
 
 ---
 
