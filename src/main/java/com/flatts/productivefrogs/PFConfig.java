@@ -24,6 +24,8 @@ public final class PFConfig {
     public static final ModConfigSpec.IntValue MIN_SPAWN_INTERVAL_TICKS;
     public static final ModConfigSpec.IntValue MAX_SPAWN_INTERVAL_TICKS;
     public static final ModConfigSpec.DoubleValue DISCOVERY_CHANCE_PER_OFFSPRING;
+    public static final ModConfigSpec.BooleanValue SPAWNERY_ENABLED;
+    public static final ModConfigSpec.IntValue SPAWNERY_PRODUCTION_TICKS;
 
     public static final ModConfigSpec SPEC;
 
@@ -81,6 +83,28 @@ public final class PFConfig {
                 "into a category-matched Resource Slime. Default 0.05 (5%) — a slime farm yields ~1 Resource Slime per dozen splits."
             )
             .defineInRange("discoveryChancePerOffspring", 0.05, 0.0, 1.0);
+
+        builder.pop();
+
+        builder.push("spawnery");
+
+        SPAWNERY_ENABLED = builder
+            .comment(
+                "Whether the Spawnery is enabled. Default false.",
+                "The Spawnery is a skyblock bootstrap appliance: it turns glass bottles into bottled frogspawn",
+                "(Frog Eggs), fueled by slime balls, optionally primed to a species. In a normal world swamps",
+                "already provide frogspawn, so it ships off. When false the Spawnery is uncraftable and hidden",
+                "from JEI + the creative tab; a placed block (e.g. via /give) still functions. Toggling requires",
+                "a world reload to re-evaluate the recipe condition."
+            )
+            .define("enabled", false);
+
+        SPAWNERY_PRODUCTION_TICKS = builder
+            .comment(
+                "Ticks to produce one bottled frogspawn (one slime ball of burn, one glass bottle).",
+                "20 ticks = 1 second. Default 200 (10 seconds)."
+            )
+            .defineInRange("productionTicks", 200, 1, 24000);
 
         builder.pop();
 

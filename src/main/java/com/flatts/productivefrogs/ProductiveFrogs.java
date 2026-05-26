@@ -3,6 +3,7 @@ package com.flatts.productivefrogs;
 import com.flatts.productivefrogs.gametest.PFGameTests;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFBlocks;
+import com.flatts.productivefrogs.registry.PFConditions;
 import com.flatts.productivefrogs.registry.PFCreativeTabs;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
@@ -61,6 +62,9 @@ public final class ProductiveFrogs {
         PFSensors.register(modEventBus);
         PFCreativeTabs.register(modEventBus);
         PFGameTests.register(modEventBus);
+        // Custom datapack condition codecs (e.g. config_enabled, gating the
+        // Spawnery recipe). No ordering dependency on the registers above.
+        PFConditions.register(modEventBus);
 
         // COMMON config — depletion + spawn cadence + discovery chance.
         // Registered here so the config file is generated on first boot and

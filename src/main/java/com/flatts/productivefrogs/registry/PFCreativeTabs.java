@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.registry;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.data.Category;
 import net.minecraft.core.component.DataComponents;
@@ -64,6 +65,12 @@ public final class PFCreativeTabs {
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h ->
                         output.accept(makeVariantSlimeBucket(h.key().location(), h.value().category()))));
                     output.accept(PFItems.SLIME_MILKER.get());
+                    // Spawnery only appears in the tab when enabled (skyblock
+                    // bootstrap; off by default). isLoaded guards the title-screen
+                    // build before COMMON config is available.
+                    if (PFConfig.SPEC.isLoaded() && PFConfig.SPAWNERY_ENABLED.get()) {
+                        output.accept(PFItems.SPAWNERY.get());
+                    }
                     // One Slime Milk bucket per registry variant (stamped via the
                     // SLIME_VARIANT component), plus the vanilla / magma specials
                     // (sentinel ids the source block maps to vanilla Slime /

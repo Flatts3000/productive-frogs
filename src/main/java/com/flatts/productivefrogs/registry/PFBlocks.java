@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
+import com.flatts.productivefrogs.content.block.SpawneryBlock;
 import com.flatts.productivefrogs.data.Category;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -99,6 +100,22 @@ public final class PFBlocks {
             .mapColor(MapColor.METAL)
             .strength(0.5F)
             .sound(SoundType.METAL)
+    );
+
+    /**
+     * The Spawnery - a skyblock bootstrap appliance, config-gated and off by
+     * default. Furnace-style GUI; turns glass bottles into bottled frogspawn
+     * fueled by slime balls, optionally primed to a species. {@link SpawneryBlock#LIT}
+     * drives a furnace-style burn glow. See {@code docs/spawnery.md}.
+     */
+    public static final DeferredBlock<SpawneryBlock> SPAWNERY = BLOCKS.registerBlock(
+        "spawnery",
+        SpawneryBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.PLANT)
+            .strength(1.5F)
+            .sound(SoundType.STONE)
+            .lightLevel(state -> state.getValue(SpawneryBlock.LIT) ? 8 : 0)
     );
 
     private static Map<Category, DeferredBlock<PrimedFrogEggBlock>> buildPrimedEggs() {

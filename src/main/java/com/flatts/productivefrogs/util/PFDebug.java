@@ -67,7 +67,8 @@ public final class PFDebug {
         MILKER("milker"),
         MILK_SOURCE("milk_source"),
         RENDER("render"),
-        TINT("tint");
+        TINT("tint"),
+        SPAWNERY("spawnery");
 
         private final String id;
         // Written by the command (server thread) + startup flags; read by render

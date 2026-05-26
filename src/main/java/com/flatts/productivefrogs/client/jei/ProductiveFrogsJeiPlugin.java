@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.client.jei;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.SlimeVariant;
@@ -13,6 +14,7 @@ import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
+import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
@@ -63,6 +65,20 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
     }
 
     @Override
+    public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
+        // When the Spawnery is disabled (the default), hide its item from the JEI
+        // ingredient list so JEI doesn't surface a block players can't obtain. The
+        // recipe condition + creative-tab guard cover crafting/creative; this covers
+        // the JEI sidebar. No-op (and harmless) if the item is already absent.
+        if (PFConfig.SPEC.isLoaded() && PFConfig.SPAWNERY_ENABLED.get()) {
+            return;
+        }
+        jeiRuntime.getIngredientManager().removeIngredientsAtRuntime(
+            VanillaTypes.ITEM_STACK,
+            java.util.List.of(new ItemStack(PFItems.SPAWNERY.get())));
+    }
+
+    @Override
     public void registerItemSubtypes(ISubtypeRegistration registration) {
         // JEI 19.21 (1.21.1) has no registerFromDataComponentTypes shortcut —
         // implement the subtype interpreter manually per item.
@@ -99,6 +115,10 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         };
         registration.registerSubtypeInterpreter(PFItems.CONFIGURABLE_FROGLIGHT.get(), slimeVariantInterp);
         registration.registerSubtypeInterpreter(PFItems.RESOURCE_SLIME_SPAWN_EGG.get(), slimeVariantInterp);
+        // Slime Milk bucket also carries its variant in SLIME_VARIANT - without
+        // this, JEI dedups every variant-stamped milk bucket into one entry while
+        // the creative tab shows them all (known_issues.md).
+        registration.registerSubtypeInterpreter(PFItems.SLIME_MILK_BUCKET.get(), slimeVariantInterp);
 
         // Frog Egg bottle — subtype by CONTAINED_CATEGORY.
         registration.registerSubtypeInterpreter(PFItems.FROG_EGG.get(), new ISubtypeInterpreter<>() {
@@ -255,6 +275,16 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             new ItemStack(PFBlocks.SLIME_MILKER.get().asItem()),
             VanillaTypes.ITEM_STACK,
             Component.translatable("productivefrogs.jei.slime_milker.info"));
+
+        // Spawnery — only when enabled; when off it's removed from JEI entirely
+        // in onRuntimeAvailable, so adding an info page for a hidden item would be
+        // pointless (and JEI warns about info for an absent ingredient).
+        if (PFConfig.SPEC.isLoaded() && PFConfig.SPAWNERY_ENABLED.get()) {
+            reg.addIngredientInfo(
+                new ItemStack(PFBlocks.SPAWNERY.get().asItem()),
+                VanillaTypes.ITEM_STACK,
+                Component.translatable("productivefrogs.jei.spawnery.info"));
+        }
 
         // Empty Slime Bucket
         reg.addIngredientInfo(

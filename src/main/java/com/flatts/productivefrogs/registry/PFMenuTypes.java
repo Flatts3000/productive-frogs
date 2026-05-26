@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.menu.SlimeMilkerMenu;
+import com.flatts.productivefrogs.content.menu.SpawneryMenu;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
@@ -27,6 +28,12 @@ public final class PFMenuTypes {
         MENU_TYPES.register(
             "slime_milker",
             () -> IMenuTypeExtension.create(SlimeMilkerMenu::new)
+        );
+
+    public static final Supplier<MenuType<SpawneryMenu>> SPAWNERY =
+        MENU_TYPES.register(
+            "spawnery",
+            () -> IMenuTypeExtension.create(SpawneryMenu::new)
         );
 
     private PFMenuTypes() {

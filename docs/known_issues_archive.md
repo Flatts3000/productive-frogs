@@ -10,6 +10,18 @@ Newest-first within each section. Section ordering loosely tracks the area of th
 
 ## Resolved issues
 
+### 🟢 Slime Milker had no crafting recipe - resolved (Spawnery PR #114, 2026-05-26)
+The Slime Milker shipped with a loot table but no crafting recipe, so survival players couldn't obtain it (creative / `/give` only - or breaking an already-placed one). Added `data/productivefrogs/recipe/slime_milker.json`: shaped, planks-on-top, 5 cobblestone + 3 planks + 1 slime ball (centered), not config-gated. Shares the Spawnery's frame (centre ingredient distinguishes them). Pinned by `SpawneryRecipeTest`.
+
+### 🟢 Slime Milk buckets collapsed to one entry in JEI - resolved (Spawnery PR #114, 2026-05-26)
+JEI listed only one Slime Milk Bucket while the creative tab showed every variant, because `ProductiveFrogsJeiPlugin.registerItemSubtypes` had no `SLIME_VARIANT` subtype interpreter for `slime_milk_bucket` (it had one for the Froglight + spawn egg). Registered the existing `slimeVariantInterp` for it, so each variant is now a distinct JEI ingredient with its own info page. Pre-existing bug surfaced during Spawnery testing; confirmed in-client.
+
+### 🟢 No item tooltips in the mod's container GUIs - resolved (Spawnery PR #114, 2026-05-26)
+Neither the Slime Milker nor the Spawnery GUI rendered slot tooltips. Root cause (confirmed from `neoforge-21.1.230-sources.jar`): NeoForge 1.21.1's `AbstractContainerScreen.render` draws background / slots / labels / dragging item but never calls `renderTooltip`, so a screen overriding only `renderBg` (both of ours) shows none. Both `SpawneryScreen` and `SlimeMilkerScreen` now override `render` to call `super.render(...)` then `renderTooltip(...)`. Restored tooltips on the shipped Milker too; confirmed in-client.
+
+### 🟢 Spawnery primer-required decision - resolved (Spawnery PR #114, 2026-05-26)
+Design question on the (new) Spawnery: should an empty primer produce vanilla frogspawn? Decision: **a primer is required** - an empty or unrecognised primer produces nothing (no ignite, no fuel burned). A slime ball primes plain vanilla frogspawn; a `spawnery_primer/<species>` item primes that species. Implemented via `SpawneryBlockEntity.serverTick`'s `canProduce` gate + `SpawneryInventory.isValidPrimer`; `complete()` always consumes the primer.
+
 ### 🟢 JEI info text said "Configurable Froglight" instead of "Froglight" - resolved
 **Original symptom**: two JEI description strings called the block by its registry-flavored id rather than its display name - `productivefrogs.jei.variant_slime.info` ("...drops a Configurable Froglight stamped with this variant...") and `productivefrogs.jei.frog.info` ("...drops a Configurable Froglight stamped with that variant..."). Everywhere else the block reads "Froglight" (its `block.productivefrogs.configurable_froglight` display name and every per-variant name), so this was an internal naming leak, not a deliberate term.
 
