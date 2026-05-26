@@ -22,12 +22,12 @@ The end-to-end production loop a player runs in V1, centered on the **Slime Milk
 
 - **ID**: `productivefrogs:slime_milker`
 - **Visual**: themed as a single-block mechanical press. Animation/sound when activated.
-- **Power**: none. V1 appliance — no fuel, no redstone, no automation hookup. Sits in the same conceptual bucket as a brewing stand or composter.
+- **Power**: none. V1 appliance - no fuel, no redstone, no automation hookup. Sits in the same conceptual bucket as a brewing stand or composter.
 - **Interaction**: right-click while holding a `Slime Bucket` (size-1 slime captured, any variant):
   - The slime inside the bucket is consumed.
   - The bucket transforms into a `Bucket of <Variant> Slime Milk`.
   - Brief press animation + squelch sound feedback.
-- **No GUI / no internal storage** — instant operation, player retains immediate control. V2 may add an auto-feeding variant.
+- **No GUI / no internal storage** - instant operation, player retains immediate control. V2 may add an auto-feeding variant.
 - **Input restriction**: must be a `Slime Bucket` (i.e. only bucketed slimes work). Direct living-slime contact does nothing.
 
 ## Slime Milk (fluid)
@@ -35,7 +35,7 @@ The end-to-end production loop a player runs in V1, centered on the **Slime Milk
 - One fluid, `productivefrogs:slime_milk`, with the variant carried on the bucket's data component and the source BlockEntity (not one fluid per variant). The variant drives the per-variant render tint.
 - **Flow**: lava-style. Slower than water; 4-block flow distance in overworld. Limits sprawling milk floods.
 - **Pickup**: empty bucket scoops a source block, converting it to a typed milk bucket. Other buckets (water, etc.) do not interact.
-- **Walking on it**: passive — no damage, no slowdown beyond normal liquid penalties. Visible color tint per variant.
+- **Walking on it**: passive - no damage, no slowdown beyond normal liquid penalties. Visible color tint per variant.
 - **Spawning**: only **source blocks** spawn slimes. Flowing blocks are decorative.
 
 ## Slime spawning from milk
@@ -43,23 +43,23 @@ The end-to-end production loop a player runs in V1, centered on the **Slime Milk
 Each milk source block independently rolls a spawn tick:
 
 - **Default interval**: 20 seconds, ± uniform jitter in [-10s, +10s] (so spawns appear at irregular real times in [10s, 30s]).
-- **Cap**: 1 slime per source block per spawn event. There is no mob-occupancy gate — entities (frogs, players, other slimes) standing on or near the source do NOT block the spawn. Production is intentionally insensitive to traffic so a frog mid-tongue can't stall a fountain.
+- **Cap**: 1 slime per source block per spawn event. There is no mob-occupancy gate - entities (frogs, players, other slimes) standing on or near the source do NOT block the spawn. Production is intentionally insensitive to traffic so a frog mid-tongue can't stall a fountain.
 - **Spawned slime**: always size 1, matching the milk's variant. Vanilla milk spawns size-1 vanilla slimes; Iron Slime Milk spawns size-1 Iron Resource Slimes; etc.
-- **Spawn position**: scan the 26 surrounding blocks in the 3×3×3 cube around the source for any with a sturdy top face whose block-above is non-motion-blocking; the slime lands on top of the first match. Iteration order biases toward natural rim spawns (same-y cardinals → same-y diagonals → below plane → above plane), so a milk pool on solid ground produces horizontally-adjacent slimes by default. If no sturdy neighbour exists anywhere in the 3×3×3, the slime spawns inside the source block itself (the milk fluid is non-collision, so this fallback always succeeds — spawns never fail and never need to retry).
+- **Spawn position**: scan the 26 surrounding blocks in the 3×3×3 cube around the source for any with a sturdy top face whose block-above is non-motion-blocking; the slime lands on top of the first match. Iteration order biases toward natural rim spawns (same-y cardinals → same-y diagonals → below plane → above plane), so a milk pool on solid ground produces horizontally-adjacent slimes by default. If no sturdy neighbour exists anywhere in the 3×3×3, the slime spawns inside the source block itself (the milk fluid is non-collision, so this fallback always succeeds - spawns never fail and never need to retry).
 
 ## Depletion
 
-- **Configurable** (mod config `productivefrogs-common.toml`): `depletionEnabled` ON or OFF (default ON), `depletionCount` 1–16 (default 16).
-- **When ON**: each milk source block carries a `spawns_remaining` blockstate that starts at `depletionCount` on placement and decrements by one per spawn. When it reaches zero the next tick replaces the block with air (true drain — not a fluid-state reset).
+- **Configurable** (mod config `productivefrogs-common.toml`): `depletionEnabled` ON or OFF (default ON), `depletionCount` 1-16 (default 16).
+- **When ON**: each milk source block carries a `spawns_remaining` blockstate that starts at `depletionCount` on placement and decrements by one per spawn. When it reaches zero the next tick replaces the block with air (true drain - not a fluid-state reset).
 - **When OFF**: source blocks ignore the counter and spawn indefinitely. Best for creative-mode play or pack authors who want low-friction production.
-- **Visual countdown** (e.g. subtle color desaturation as the counter approaches zero) is deferred to the polish backlog — V1 ships with the counter persisted in the blockstate but no visual feedback.
+- **Visual countdown** (e.g. subtle color desaturation as the counter approaches zero) is deferred to the polish backlog - V1 ships with the counter persisted in the blockstate but no visual feedback.
 
 ## Frog Feeding
 
 - Frogs in range of a spawned slime detect it via vanilla-style tongue AI, with a species-match check.
 - If `frog.getCategory() == slime.getCategory()`, the frog targets the slime and eats it on its next tongue tick.
 - Frog drops a `<Variant> Configurable Froglight` block at its current position (item entity that vanilla hoppers can collect).
-- Cooldown: vanilla frog tongue has a natural cooldown (~1 second) — that pacing carries over.
+- Cooldown: vanilla frog tongue has a natural cooldown (~1 second) - that pacing carries over.
 
 ## Drop Processing
 

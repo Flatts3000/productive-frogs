@@ -9,13 +9,13 @@ Thanks for your interest in contributing! This document covers how to file issue
 - **Feature ideas**: use the **Feature Request** template. Frame it as the problem you're trying to solve, not just the solution you want.
 - **General questions**: use [GitHub Discussions](https://github.com/Flatts3000/productive-frogs/discussions) rather than the issue tracker.
 
-Don't open issues for security vulnerabilities — see [SECURITY.md](./SECURITY.md).
+Don't open issues for security vulnerabilities - see [SECURITY.md](./SECURITY.md).
 
 ## Submitting Pull Requests
 
 ### Branching
 
-- `main` is protected — all changes land via PR.
+- `main` is protected - all changes land via PR.
 - Create a feature branch from `main` named like `feat/new-resource-slime` or `fix/milker-uses-wrong-bucket`.
 - Don't push directly to `main`.
 
@@ -26,18 +26,18 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 <type>: <short subject>
 
-<body — explain WHY, not what>
+<body - explain WHY, not what>
 ```
 
 Types we use:
-- `feat:` — new feature or content
-- `fix:` — bug fix
-- `refactor:` — code restructuring with no behavior change
-- `docs:` — documentation only
-- `test:` — adding or updating tests
-- `chore:` — tooling, build config, infrastructure
-- `ci:` — CI/CD changes
-- `perf:` — performance improvements
+- `feat:` - new feature or content
+- `fix:` - bug fix
+- `refactor:` - code restructuring with no behavior change
+- `docs:` - documentation only
+- `test:` - adding or updating tests
+- `chore:` - tooling, build config, infrastructure
+- `ci:` - CI/CD changes
+- `perf:` - performance improvements
 
 One logical change per commit. Squash trivially-related work locally before PR.
 
@@ -47,7 +47,7 @@ One logical change per commit. Squash trivially-related work locally before PR.
 - **Docs**: design changes should update the relevant `/docs/*.md` file in the same PR. Lock decisions in `docs/open_questions.md` get marked DECIDED with a brief rationale.
 - **No silent dead code**: if a feature is incomplete or behind a feature flag, say so in the PR description.
 - **Cross-mod compat is JSON**: don't add hard dependencies on other mods. Use common tags + `neoforge:conditions → mod_loaded` patterns. See `docs/cross_mod_compat.md`.
-- **Stay close to vanilla**: this is a core project principle. When implementing a mechanic, use vanilla helpers (`ItemUtils.createFilledResult`, vanilla sounds, vanilla model parents), mirror vanilla UX patterns exactly (water-bottle / fish-bucket semantics, slimeball love-mode, lead-based mob transport), and reuse vanilla blocks/items as building blocks where they already fit the role. Only introduce mod-native content when vanilla has no equivalent at all — and when you do, echo vanilla idioms in the API shape.
+- **Stay close to vanilla**: this is a core project principle. When implementing a mechanic, use vanilla helpers (`ItemUtils.createFilledResult`, vanilla sounds, vanilla model parents), mirror vanilla UX patterns exactly (water-bottle / fish-bucket semantics, slimeball love-mode, lead-based mob transport), and reuse vanilla blocks/items as building blocks where they already fit the role. Only introduce mod-native content when vanilla has no equivalent at all - and when you do, echo vanilla idioms in the API shape.
 
 ### Java Style
 
@@ -56,7 +56,7 @@ One logical change per commit. Squash trivially-related work locally before PR.
 - No wildcard imports.
 - Imports: a single alphabetical block, no semantic groups (matches Mojang vanilla style and the existing files here). Do not split into `java.*` / third-party / `net.minecraft.*` groups.
 - Prefer immutable data structures; use Records for value types.
-- `null` is fair game — annotate ambiguous returns with `@Nullable` (NeoForge ships JetBrains annotations).
+- `null` is fair game - annotate ambiguous returns with `@Nullable` (NeoForge ships JetBrains annotations).
 
 ### Before You Open a PR
 
@@ -64,11 +64,11 @@ One logical change per commit. Squash trivially-related work locally before PR.
 2. CI green on your branch.
 3. New code has tests covering the happy path and at least one edge case.
 4. Docs updated where relevant.
-5. PR description explains the **why** — the **what** is in the diff.
+5. PR description explains the **why** - the **what** is in the diff.
 
 ### Review
 
-- The maintainer reviews when bandwidth permits — this is an OSS hobby project, expect days, not hours.
+- The maintainer reviews when bandwidth permits - this is an OSS hobby project, expect days, not hours.
 - Review feedback is collaborative; address comments or push back if you disagree. Both are fine.
 - Approved + green CI + no unresolved threads → maintainer squash-merges.
 
@@ -88,9 +88,9 @@ No Java changes needed for most contributions of this shape.
 ## What We Probably Won't Accept
 
 - Adding hard dependencies on other mods.
-- Multi-loader (Fabric) support — Productive Frogs is NeoForge-only by design. See `docs/architecture.md`.
-- Renaming the canonical primer items per category — these are part of the public API now.
-- Removing the per-variant `primary_color` / `secondary_color` JSON fields — modpack authors rely on them.
+- Multi-loader (Fabric) support - Productive Frogs is NeoForge-only by design. See `docs/architecture.md`.
+- Renaming the canonical primer items per category - these are part of the public API now.
+- Removing the per-variant `primary_color` / `secondary_color` JSON fields - modpack authors rely on them.
 
 ## Maintainer Cadence
 

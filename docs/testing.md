@@ -34,7 +34,7 @@ neoForge {
 }
 ```
 
-These tests boot Minecraft's class loaders and let our `DeferredRegister`s populate `BuiltInRegistries` before the tests run. They cover the silent-failure modes that pure-logic tests can't reach — a registry that wasn't wired to the mod event bus, an ID typo, a Block↔Item bijection that broke after a refactor.
+These tests boot Minecraft's class loaders and let our `DeferredRegister`s populate `BuiltInRegistries` before the tests run. They cover the silent-failure modes that pure-logic tests can't reach - a registry that wasn't wired to the mod event bus, an ID typo, a Block↔Item bijection that broke after a refactor.
 
 Example: `PFRegistryTest` verifies:
 
@@ -49,7 +49,7 @@ Example: `PFRegistryTest` verifies:
 1. Drop a `*.java` file under `src/test/java/com/flatts/productivefrogs/...`
 2. Use JUnit 5 (`@Test`, `@ParameterizedTest`, `@EnumSource`, etc.)
 3. Run `./gradlew test` to verify locally
-4. Push — CI runs it as part of `build`
+4. Push - CI runs it as part of `build`
 
 ## Layer 2: In-world GameTests
 
@@ -60,25 +60,25 @@ Example: `PFRegistryTest` verifies:
 
 GameTests run real headless Minecraft scenarios in scripted plots. They're the right tool for:
 
-- "Primed Frog Egg block breaks when its water support is removed" (canSurvive + updateShape chain) — *already shipped*
+- "Primed Frog Egg block breaks when its water support is removed" (canSurvive + updateShape chain) - *already shipped*
 - "Primed Frog Egg hatches into N tadpoles of the matching category" (block tick + entity spawn + category propagation)
 - "Resource Tadpole grows into Resource Frog of the same category" (`ageUp` override via access transformer)
 - "Two same-category Resource Frogs in water + slimeballs lay a Primed Frog Egg of that category" (LayCategoryFrogspawn brain task override)
 
-### What GameTest does NOT cover — visuals are blind
+### What GameTest does NOT cover - visuals are blind
 
-`runGameTestServer` boots a **dedicated server** — no client, no renderer, no shader pipeline. Any bug that lives entirely in the client-side render path is invisible to it. Treat GameTest as a server-state oracle, not a UI oracle. Specifically, GameTest cannot catch:
+`runGameTestServer` boots a **dedicated server** - no client, no renderer, no shader pipeline. Any bug that lives entirely in the client-side render path is invisible to it. Treat GameTest as a server-state oracle, not a UI oracle. Specifically, GameTest cannot catch:
 
-- **Tint resolution** — wrong `ItemColor` lambda registered (`RegisterColorHandlersEvent.Item`), wrong layer index, `BlockColor` returning -1, source-alpha mismatch.
-- **Texture paths** — missing PNG, typo'd path resolving to the purple-and-black missing-texture cube.
-- **UV / model transforms** — fragment sampling the wrong section of an atlas, broken display transforms.
-- **Render type** — opaque vs. translucent vs. cutout misassignment, source-alpha collapsing a layered model.
-- **Particle / animation** — frog tongue extend animation, slime jiggle, bucket pour sound (sound is server-driven but client-rendered).
-- **GUI layout** — Slime Milker's slot positions, progress arrow, tooltip wrapping.
+- **Tint resolution** - wrong `ItemColor` lambda registered (`RegisterColorHandlersEvent.Item`), wrong layer index, `BlockColor` returning -1, source-alpha mismatch.
+- **Texture paths** - missing PNG, typo'd path resolving to the purple-and-black missing-texture cube.
+- **UV / model transforms** - fragment sampling the wrong section of an atlas, broken display transforms.
+- **Render type** - opaque vs. translucent vs. cutout misassignment, source-alpha collapsing a layered model.
+- **Particle / animation** - frog tongue extend animation, slime jiggle, bucket pour sound (sound is server-driven but client-rendered).
+- **GUI layout** - Slime Milker's slot positions, progress arrow, tooltip wrapping.
 - **Creative-tab ordering and icons**.
-- **Language file coverage** — a missing translation key surfaces as the raw `item.productivefrogs.foo` string in tooltips, which is a visual regression invisible to server state.
+- **Language file coverage** - a missing translation key surfaces as the raw `item.productivefrogs.foo` string in tooltips, which is a visual regression invisible to server state.
 
-**Canonical example.** PR #27 shipped a Resource Slime where the outer translucent shell rendered solid gray instead of the category-tinted gradient. Every GameTest passed. Root cause: the outer-layer texture had source-alpha 255 where vanilla expects ~180; the render type respects source alpha so the gradient collapsed into an opaque cube. Server state was identical to a healthy build — only the screen pixels differed. The bug shipped through CI to a playtest.
+**Canonical example.** PR #27 shipped a Resource Slime where the outer translucent shell rendered solid gray instead of the category-tinted gradient. Every GameTest passed. Root cause: the outer-layer texture had source-alpha 255 where vanilla expects ~180; the render type respects source alpha so the gradient collapsed into an opaque cube. Server state was identical to a healthy build - only the screen pixels differed. The bug shipped through CI to a playtest.
 
 **Takeaway:** if you touch any of `client/`, `assets/<modid>/`, `Category.tintArgb`, item-model JSON, block-model JSON, lang files, or particle/sound code, schedule a manual `./gradlew runClient` pass and walk the affected surface before marking the work done. Document the playtest matrix in the PR description so the reviewer knows what was eyeballed.
 
@@ -114,7 +114,7 @@ MC 1.21.1 uses NeoForge's annotation-based GameTest discovery. Three pieces:
    }
    ```
 
-4. **Structure NBT** — lives at `data/<modid>/structure/<name>.nbt` (singular `structure/` in this codebase — `tags/entity_type/`, `loot_table/`, `recipe/` are also singular). Defines the test plot bounds. For tests that build their scenario programmatically via `helper.setBlock`, an all-air structure of suitable size is enough. We ship `empty_5x5x5.nbt` for that.
+4. **Structure NBT** - lives at `data/<modid>/structure/<name>.nbt` (singular `structure/` in this codebase - `tags/entity_type/`, `loot_table/`, `recipe/` are also singular). Defines the test plot bounds. For tests that build their scenario programmatically via `helper.setBlock`, an all-air structure of suitable size is enough. We ship `empty_5x5x5.nbt` for that.
 
 The canonical reference pattern lives in `PFGameTests.java`; copy its `@GameTest` annotation pattern for new tests.
 
@@ -124,7 +124,7 @@ The canonical reference pattern lives in `PFGameTests.java`; copy its `@GameTest
 2. Annotate it: `@GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)`.
 3. If the test needs a custom plot (vs the default `empty_5x5x5`), ship a new NBT at `data/productivefrogs/structure/<name>.nbt` and pass that identifier through `TestData`.
 4. Run `./gradlew runGameTestServer` locally to verify.
-5. Push — CI's `gameTest` job runs all tests.
+5. Push - CI's `gameTest` job runs all tests.
 
 ### Authoring structure NBTs
 
@@ -132,15 +132,15 @@ For empty plots, generate programmatically (see the Python recipe in `PFGameTest
 
 1. In a creative dev world, `/give @s minecraft:test_block` and `/give @s minecraft:test_instance_block`.
 2. Build the layout you want; place TestBlocks if using `BlockBasedTestInstance`.
-3. Use a `test_instance_block` to export the plot — it writes to `<world>/generated/<namespace>/structure/<name>.nbt`.
+3. Use a `test_instance_block` to export the plot - it writes to `<world>/generated/<namespace>/structure/<name>.nbt`.
 4. Copy into `src/main/resources/data/productivefrogs/structure/`.
 
 ## CI layout
 
 `.github/workflows/ci.yml` runs two parallel jobs:
 
-- **`build`** — `./gradlew build` (compile + `test` task with both JUnit flavors + jar upload)
-- **`gameTest`** — `./gradlew runGameTestServer` (boots headless MC, runs all registered tests)
+- **`build`** - `./gradlew build` (compile + `test` task with both JUnit flavors + jar upload)
+- **`gameTest`** - `./gradlew runGameTestServer` (boots headless MC, runs all registered tests)
 
 Both are required status checks on main; PR can't merge with either failing.
 
@@ -148,16 +148,16 @@ Both are required status checks on main; PR can't merge with either failing.
 
 Both automated layers target server state. They don't replace eyeballs for:
 
-- **Visuals** — tint, render layers, model transforms, alpha behavior, creative-tab layout. See [§What GameTest does NOT cover](#what-gametest-does-not-cover--visuals-are-blind) above for the full list and the PR #27 outer-shell-gray cautionary tale.
-- **Player-driven flows** — right-click semantics, hand-slot consumption, sound feedback, GUI interactions.
-- **Cross-mod compat sanity** (Mekanism, Create, etc. — future).
+- **Visuals** - tint, render layers, model transforms, alpha behavior, creative-tab layout. See [§What GameTest does NOT cover](#what-gametest-does-not-cover--visuals-are-blind) above for the full list and the PR #27 outer-shell-gray cautionary tale.
+- **Player-driven flows** - right-click semantics, hand-slot consumption, sound feedback, GUI interactions.
+- **Cross-mod compat sanity** (Mekanism, Create, etc. - future).
 
 ### Minimum playtest checklist for visual-touching PRs
 
 When a PR changes any of `client/`, `assets/`, `Category.tintArgb`, item/block model JSON, or lang entries, run `./gradlew runClient` and verify:
 
 1. The affected item / block renders the expected color in **inventory**, **dropped item**, and **placed-in-world** views (these resolve tints through different code paths).
-2. The translucent / cutout render type looks right — outer layer should not collapse into an opaque solid; gradient should not vanish.
+2. The translucent / cutout render type looks right - outer layer should not collapse into an opaque solid; gradient should not vanish.
 3. Display name reads correctly (no raw `item.productivefrogs.foo` translation-key fallback).
 4. Tooltip and JEI search find the item by every category / variant name.
 

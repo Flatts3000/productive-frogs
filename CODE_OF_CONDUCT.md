@@ -13,7 +13,7 @@ This project adopts the **[Contributor Covenant v2.1](https://www.contributor-co
 
 If you experience or witness a Code of Conduct violation in this project (issues, PRs, discussions, or any project-affiliated space), contact the maintainer at the GitHub handle linked in the repo profile. Reports will be handled confidentially.
 
-For security vulnerabilities — not conduct issues — see [SECURITY.md](./SECURITY.md).
+For security vulnerabilities - not conduct issues - see [SECURITY.md](./SECURITY.md).
 
 ## Scope
 

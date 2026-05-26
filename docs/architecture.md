@@ -4,10 +4,10 @@ How the mod is structured internally to support data-driven slime variants, cros
 
 ## Guiding Principles
 
-1. **Slime variants are fully data — addable by datapack alone.** A variant is a `slime_variant` JSON, not a Java class, and needs no Java edit, no per-variant assets, and no lang (display names fall back to a title-cased id). The spawn egg, Configurable Froglight, Slime Bucket, and Slime Milk are all single component-driven items/blocks whose per-variant stacks the creative tab + JEI enumerate from the registry. Slime Milk's fluid/block/bucket collapsed to one of each (variant on the `SLIME_VARIANT` component + source BlockEntity), removing the last per-variant Java edit — see [refactor_data_driven_variants.md](./refactor_data_driven_variants.md).
+1. **Slime variants are fully data - addable by datapack alone.** A variant is a `slime_variant` JSON, not a Java class, and needs no Java edit, no per-variant assets, and no lang (display names fall back to a title-cased id). The spawn egg, Configurable Froglight, Slime Bucket, and Slime Milk are all single component-driven items/blocks whose per-variant stacks the creative tab + JEI enumerate from the registry. Slime Milk's fluid/block/bucket collapsed to one of each (variant on the `SLIME_VARIANT` component + source BlockEntity), removing the last per-variant Java edit - see [refactor_data_driven_variants.md](./refactor_data_driven_variants.md).
 2. **Cross-mod support is conditional JSON.** No Java code calls Mekanism's classes; we reference `c:ingots/osmium` tags. Mod-specific JSON entries are wrapped in `neoforge:conditions → mod_loaded`.
 3. **Category membership is tag-based.** Frog categories, slime categories, and primer tags all live in NeoForge's tag system. Lookups are O(1) tag membership checks.
-4. **Drops are vanilla loot tables.** No bespoke drop logic — leverage vanilla's `LootTable` system for full flexibility (random ranges, fortune scaling, enchantment effects all work for free).
+4. **Drops are vanilla loot tables.** No bespoke drop logic - leverage vanilla's `LootTable` system for full flexibility (random ranges, fortune scaling, enchantment effects all work for free).
 
 ## Frogspawn Bottling Hook
 
@@ -22,7 +22,7 @@ How the mod is structured internally to support data-driven slime variants, cros
   - Set the event result to `CONSUME` so vanilla doesn't double-process.
 - If either condition fails, the event is left alone (no interference with vanilla bottle behavior).
 
-No custom item, no new recipe — entirely event-driven.
+No custom item, no new recipe - entirely event-driven.
 
 ## Slime Sourcing Hooks
 
@@ -32,13 +32,13 @@ The slime sourcing mechanic (see [slime_sourcing.md](./slime_sourcing.md)) lives
    - Despawn the original entity.
    - Spawn a new `ResourceSlime` at the same position with the same size, HP, and velocity. Variant is set to the matching primer's category-mapped variant.
    - Consume one of the held item.
-   - This is "infusion = immediate transformation" — there is no NBT-tracked infusion state.
+   - This is "infusion = immediate transformation" - there is no NBT-tracked infusion state.
 
 2. **Vanilla slime split event** (when a vanilla parent slime is killed and would spawn smaller offspring):
    - Roll the configured discovery chance per offspring (default 5%).
    - On hit: look up the parent entity's default category, pick a random `SlimeVariant` from that category pool (weighted by each variant's optional `weight` field), and spawn as `ResourceSlime` at the child size.
    - On miss: spawn vanilla as normal.
-   - Resource Slimes that split simply split into smaller Resource Slimes of the same variant — no roll needed.
+   - Resource Slimes that split simply split into smaller Resource Slimes of the same variant - no roll needed.
 
 The "parent entity → default category" mapping is itself data-driven via a small datapack registry (`data/<ns>/slime_split_pool/<entity_id>.json`), so modpack authors and mod compat can register new parent slime species without code.
 
@@ -53,7 +53,7 @@ The V1 farming keystone (see [farming.md](./farming.md)) introduces two architec
 
 ### Slime Milk fluid (single, component-driven)
 
-- **One** `productivefrogs:slime_milk` fluid (Source + Flowing), one `slime_milk` source block, one `slime_milk_bucket` item — not one per variant. The variant rides on the bucket's `SLIME_VARIANT` data component and the source block's `SlimeMilkSourceBlockEntity`; placing the bucket writes the variant to the BE, re-bucketing reads it back. Only a source with a variant spawns slimes; spread/flowing milk is inert.
+- **One** `productivefrogs:slime_milk` fluid (Source + Flowing), one `slime_milk` source block, one `slime_milk_bucket` item - not one per variant. The variant rides on the bucket's `SLIME_VARIANT` data component and the source block's `SlimeMilkSourceBlockEntity`; placing the bucket writes the variant to the BE, re-bucketing reads it back. Only a source with a variant spawns slimes; spread/flowing milk is inert.
 - Per-variant colour is applied at render time: the fluid's `getTintColor(state, level, pos)` reads the source BE → `SlimeVariant.primaryColor`; the bucket's item color reads the component. One greyscale texture set serves every variant. This collapse is what lets a datapack variant get milk with no Java edit (fluids register at mod-init, before world datapacks load, so a per-variant fluid could never be datapack-added).
 - Flow behavior matches lava (slower than water, 4-block overworld flow distance).
 - Spawn behavior: each source block has a random-tick handler. On each random tick (subject to vanilla random tick speed), with low probability, attempts a spawn:
@@ -144,8 +144,8 @@ On server start / datapack reload:
 
 v1.0 deleted the `productivefrogs:primer/<category>` tag system. Variant → primer resolution now goes through the `SlimeVariant` datapack registry directly via `SlimeVariant.findByPrimer(registry, heldStack)`, which matches a held item against each variant's `primer_item` (exact item id) **or** `primer_tag` (tag membership, resolved at runtime where tags are loaded). Both slime infusion and Frog Egg priming share this resolver (see `species_as_category_redesign.md` §Slime infusion). An exact `primer_item` match always wins over a `primer_tag` match, deterministically regardless of registry order.
 
-- **"Can this primer prime a Frog Egg block?"** `SlimeVariant.findByPrimer(registry, held)` — if a variant matches (by item id or tag), its `category()` selects the Primed Frog Egg block.
-- **"Will this frog eat this slime?"** `frog.getCategory() == slime.getCategory()` — direct enum equality. Both sides carry a `Category` reference.
+- **"Can this primer prime a Frog Egg block?"** `SlimeVariant.findByPrimer(registry, held)` - if a variant matches (by item id or tag), its `category()` selects the Primed Frog Egg block.
+- **"Will this frog eat this slime?"** `frog.getCategory() == slime.getCategory()` - direct enum equality. Both sides carry a `Category` reference.
 
 ### Cross-mod variant additions
 
@@ -163,7 +163,7 @@ Cross-mod variants ship as JSON `SlimeVariant` entries, primed off a `c:` common
 }
 ```
 
-The `mod_loaded` gate keeps the variant out of the registry when its provider is absent — no errors, no broken references. The `primer_tag` then lets any mod's tin ingot prime it at infusion time. A paired `minecraft:smelting` recipe (gated the same way) smelts the resulting Configurable Froglight back to the provider's ingot. Bespoke variants with no clean common tag (e.g. Powah crystals) use `primer_item` against the mod's exact id instead.
+The `mod_loaded` gate keeps the variant out of the registry when its provider is absent - no errors, no broken references. The `primer_tag` then lets any mod's tin ingot prime it at infusion time. A paired `minecraft:smelting` recipe (gated the same way) smelts the resulting Configurable Froglight back to the provider's ingot. Bespoke variants with no clean common tag (e.g. Powah crystals) use `primer_item` against the mod's exact id instead.
 
 No tag files involved. The variant either exists in the registry (mod present) or it doesn't (mod absent); no broken-reference state. Cross-mod loot tables / recipes can still wrap entire JSON files in `neoforge:conditions` when needed.
 
@@ -217,7 +217,7 @@ productive-frogs/
 │       │   │   ├── PFLootTableProvider.java
 │       │   │   └── PFRecipeProvider.java
 │       │   └── compat/
-│       │       └── (currently empty — compat is purely data, not code)
+│       │       └── (currently empty - compat is purely data, not code)
 │       └── resources/
 │           ├── META-INF/neoforge.mods.toml
 │           ├── pack.mcmeta
@@ -247,7 +247,7 @@ productive-frogs/
 │               │   ├── copper.json
 │               │   └── ...
 │               └── recipes/
-│                   └── (no custom recipes for frogspawn capture — vanilla glass bottle handles it via event hook)
+│                   └── (no custom recipes for frogspawn capture - vanilla glass bottle handles it via event hook)
 └── .gitignore
 ```
 
@@ -263,7 +263,7 @@ productive-frogs/
 Productive Frogs is **NeoForge-only**. No Fabric port is planned in V1 or any future version.
 
 - No Architectury abstraction layer. All code uses native NeoForge APIs directly.
-- Single Gradle module, single platform — simpler than the sibling `flatts-chem-lib` multi-loader layout.
+- Single Gradle module, single platform - simpler than the sibling `flatts-chem-lib` multi-loader layout.
 - Mod APIs we depend on that are NeoForge-specific:
   - `IItemExtension.interactLivingEntity` (for slime infusion right-click)
   - `neoforge:conditions → mod_loaded` for cross-mod compat
@@ -271,7 +271,7 @@ Productive Frogs is **NeoForge-only**. No Fabric port is planned in V1 or any fu
   - Custom `Fluid` + `FluidType` for the single Slime Milk fluid
 - Target audience: ATM10 / NeoForge ecosystem players. Fabric audience is explicitly out of scope.
 
-## Testing Strategy (sketch — to be expanded)
+## Testing Strategy (sketch - to be expanded)
 
 - **Unit tests** for codec round-trips on SlimeVariant JSON (including the no-primer rejection and the `primer_tag` decode).
 - **Game-test framework** scenarios for: priming an egg, hatching, a frog eating a same-category slime, the drop appearing, and the cross-mod resolution paths (condition gating, `primer_tag` membership, exact-item-over-tag precedence).

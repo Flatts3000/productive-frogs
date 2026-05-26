@@ -1,6 +1,6 @@
 # Known Issues
 
-Living tracker of playtest bugs, limitations, and workarounds for Productive Frogs. Player-facing concerns only — developer-facing test flakiness, code hygiene debt, and refactor ideas live in [backlog.md](./backlog.md) §Polish.
+Living tracker of playtest bugs, limitations, and workarounds for Productive Frogs. Player-facing concerns only - developer-facing test flakiness, code hygiene debt, and refactor ideas live in [backlog.md](./backlog.md) §Polish.
 
 **Resolved issues** are archived in [known_issues_archive.md](./known_issues_archive.md). When an entry here gets marked 🟢, move the whole entry to the archive so this doc stays focused on what's currently open.
 
@@ -9,7 +9,7 @@ Living tracker of playtest bugs, limitations, and workarounds for Productive Fro
 | Symbol | Meaning |
 |---|---|
 | 🔴 | Open. Fix pending. |
-| 🟡 | Open. Workaround available — see entry. |
+| 🟡 | Open. Workaround available - see entry. |
 | 🔵 | Limitation by design for V1. May revisit in V2 (see [versioning.md](./versioning.md)). |
 
 Symbols 🟢 (resolved) and 🟠 (reopened / since-reverted) live in the [archive](./known_issues_archive.md).
@@ -52,7 +52,7 @@ The `mod_loaded`-gated recipes ([v1_3_crush_recipes.md](./v1_3_crush_recipes.md)
 
 Matching is per-variant via the `neoforge:components` ingredient - there is **no** `crushable` item tag (every variant is the same `configurable_froglight` item distinguished only by component, so a tag can't select metals).
 
-### 🔵 No `compat/` Java package — deliberate
+### 🔵 No `compat/` Java package - deliberate
 Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:conditions → mod_loaded`. Variants for modded resources (e.g. Mythic Metals) similarly ship as JSON `SlimeVariant` entries with `mod_loaded` conditions. See `docs/architecture.md` for the schema.
 
 ---

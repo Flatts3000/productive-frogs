@@ -4,7 +4,7 @@ How features are split across releases, with the engineering rationale for the V
 
 For the player-facing roadmap (what's shipped, what's coming next, no engineering depth), see [`ROADMAP.md`](../ROADMAP.md) at the repo root. This doc is the source of truth for *why* the split exists; ROADMAP.md is the source of truth for *what* lands in each release.
 
-## V1.0 — Base Mechanics + Appliances (SHIPPED 2026-05-24)
+## V1.0 - Base Mechanics + Appliances (SHIPPED 2026-05-24)
 
 The "playable foundation" release. **Appliance blocks** (single-block hand-operated stations, like vanilla brewing stand or composter) are in scope. **Automation machinery** (power-fed, multi-block, hopper-integrated, pipe-fed) is not.
 
@@ -12,26 +12,26 @@ Targets MC 1.21.1 / NeoForge 21.1.230 / Java 21. Sky Frogs (the modpack PF was b
 
 **In scope (all shipped):**
 
-- **Frogspawn bottling via vanilla glass bottle** (no custom tool item — vanilla `minecraft:glass_bottle` is consumed on use against frogspawn)
+- **Frogspawn bottling via vanilla glass bottle** (no custom tool item - vanilla `minecraft:glass_bottle` is consumed on use against frogspawn)
 - **Frog Egg bottle** (item + block, placed on water by hand)
-- **Slime Bucket** (item, transport mechanic — preserves variant)
-- **Primed Frog Egg blocks** (6 blocks, one per species) — primed by right-clicking vanilla frogspawn with any variant primer item
+- **Slime Bucket** (item, transport mechanic - preserves variant)
+- **Primed Frog Egg blocks** (6 blocks, one per species) - primed by right-clicking vanilla frogspawn with any variant primer item
 - **Resource Tadpoles** and **Resource Frogs** (6 species: Bog, Cave, Geode, Tide, Infernal, Void)
-- **Resource Slimes** (12 data-driven variants — iron, copper, gold, redstone, lapis, coal, diamond, emerald, prismarine, sponge, magma_cream, ender_pearl)
-- **Six parent slime species** (Bog, Cave, Geode, Tide, Infernal, Void) — each spawns in its themed biome via `neoforge:add_spawns` biome modifiers
-- **Species-locked slime infusion** — only PF parent species can be infused, and only into variants within their own species. Vanilla `minecraft:slime` and `minecraft:magma_cube` are hard-rejected as infusion targets (Q1=A baked in)
-- **Slime Milker** (furnace-shaped GUI block, 100-tick cook, hopper I/O) — converts a Slime Bucket to the matching variant Slime Milk bucket
+- **Resource Slimes** (12 data-driven variants - iron, copper, gold, redstone, lapis, coal, diamond, emerald, prismarine, sponge, magma_cream, ender_pearl)
+- **Six parent slime species** (Bog, Cave, Geode, Tide, Infernal, Void) - each spawns in its themed biome via `neoforge:add_spawns` biome modifiers
+- **Species-locked slime infusion** - only PF parent species can be infused, and only into variants within their own species. Vanilla `minecraft:slime` and `minecraft:magma_cube` are hard-rejected as infusion targets (Q1=A baked in)
+- **Slime Milker** (furnace-shaped GUI block, 100-tick cook, hopper I/O) - converts a Slime Bucket to the matching variant Slime Milk bucket
 - **Slime Milk fluid** (lava-flow, source-block-spawns-slimes, configurable depletion)
 - **Configurable Froglight** (single block stamped with `slime_variant` data component; species Froglight blocks were dropped in v1.0)
-- **Smelting recipes** (per variant) — every variant smelts to its base resource via vanilla furnace
-- **JEI Information pages** — dynamically generated from the SlimeVariant + ParentSpecies datapack registries
-- **Cross-mod compat** via JSON for variant pools — `mod_loaded` neoforge conditions, no `compat/` Java package
+- **Smelting recipes** (per variant) - every variant smelts to its base resource via vanilla furnace
+- **JEI Information pages** - dynamically generated from the SlimeVariant + ParentSpecies datapack registries
+- **Cross-mod compat** via JSON for variant pools - `mod_loaded` neoforge conditions, no `compat/` Java package
 
 **The V1 rule of thumb:** if vanilla has a single-block appliance equivalent (furnace, brewing stand, composter, cauldron) that's V1 scope. If we'd be adding power, pipes, or multiblocks, that's V2.
 
 Full v1.0 design spec: [species_as_category_redesign.md](./species_as_category_redesign.md). Port history: [port_mc_1_21_1.md](./port_mc_1_21_1.md).
 
-## V1.1 — Vanilla Resource Coverage (SHIPPED v1.1.0, 2026-05-25)
+## V1.1 - Vanilla Resource Coverage (SHIPPED v1.1.0, 2026-05-25)
 
 Mostly-data release adding every vanilla item fitting cleanly into one of the six species. Each variant is a `slime_variant` JSON + recipe + lang, plus one one-line Java edit (the Slime Milk `VARIANTS` entry; fluids register at mod-init). The spawn egg is data-driven (CR-9) - one component item enumerated from the registry, no per-variant Java. The four templated JSON files per variant are emitted by `scripts/generate_v1_1_variants.ps1`.
 
@@ -50,11 +50,11 @@ Mostly-data release adding every vanilla item fitting cleanly into one of the si
 
 The interior of each Resource Slime is a downscaled copy of its resource block baked onto the slime's inner-cube faces (`scripts/generate_resource_slime_textures.py`), with the per-variant tint on the translucent exterior shell. (This replaced the v1.0.1 live-block-render layer, which was depth-culled by the translucent shell and never visible.)
 
-The 5 mob-drop variants that were previously deferred to a separate V1.2 category (bone, rotten_flesh, string, leather, feather) now fit cleanly under Bog Slime — no new species needed.
+The 5 mob-drop variants that were previously deferred to a separate V1.2 category (bone, rotten_flesh, string, leather, feather) now fit cleanly under Bog Slime - no new species needed.
 
 Full design lives in [v1_1_scope.md](./v1_1_scope.md).
 
-## V1.2 — Cross-Mod Variant Pools (SHIPPED v1.2.0, 2026-05-25)
+## V1.2 - Cross-Mod Variant Pools (SHIPPED v1.2.0, 2026-05-25)
 
 Cross-mod variant entries for the staple ATM10 tech mods, all `mod_loaded`-gated additions to the appropriate species. ~24 variants ship: Mekanism (osmium, tin, lead, uranium, refined_obsidian), Create / Thermal-style alloys (zinc, brass, silver, nickel), AllTheOres metals (aluminum, mythril, orichalcum, and the shared `c:` metals), Applied Energistics 2 (certus_quartz, fluix, fluorite, silicon), Mystical Agriculture (inferium, supremium), Powah (niotic, spirited, nitro), and Industrial Foregoing (pink_slime). Most modded ores fit under Cave Slime; gems under Geode.
 
@@ -70,30 +70,30 @@ The cross-mod piece that completed the V1 line. With Mekanism, Immersive Enginee
 
 **v1.4.1 - Jade tooltips + tinted milk.** Optional Jade look-at tooltips for the appliances (Slime Milk source spawn count; Slime Milker / Spawnery cook progress), plus flowing/spread Slime Milk now tints per-variant instead of falling back to the base hue.
 
-## V2 — Automation
+## V2 - Automation
 
 Tools and blocks that let the player scale and automate the V1 loop. Built on top of V1; never replaces it.
 
 **In scope:**
 
 - **Buffered / auto-upgrading Slime Milker**: basic hopper I/O on the V1 Milker (and Spawnery) already shipped (`Capabilities.ItemHandler.BLOCK`, V1.0 above). The V2 layer is the *buffered* upgrade: internal slime/milk buffers and auto-cycling so a line runs without per-item hopper handoff, not the basic hopper hookup
-- **Frog Terrarium / Habitat** block — placeable frog housing with input/output inventory
-- **Auto-feeders** — hopper-fed slime delivery to nearby frogs (alternative to milk-spawn proximity)
+- **Frog Terrarium / Habitat** block - placeable frog housing with input/output inventory
+- **Auto-feeders** - hopper-fed slime delivery to nearby frogs (alternative to milk-spawn proximity)
 - **Capacity / efficiency upgrades** for habitat blocks
 - **Pipe/hopper-aware fluid handling** for Slime Milk
 - Potentially: power compatibility (FE / NeoForge Energy)
 
 > **Not planned** (moved out of V2 scope): a **native crusher block** (the 2x crush is delegated to external crusher mods - Mekanism / IE / EnderIO) and a **drop-collection block** (vanilla hoppers suffice). See [ROADMAP.md](../ROADMAP.md) "Explicitly NOT planned".
 
-**Why deferred:** these are all "scaling solutions" — they make V1 faster, denser, hands-off. They don't change *what the mod is*. Building V1 first ensures the design holds up without machines propping it up.
+**Why deferred:** these are all "scaling solutions" - they make V1 faster, denser, hands-off. They don't change *what the mod is*. Building V1 first ensures the design holds up without machines propping it up.
 
-## V2 or V3 — Parked Ideas
+## V2 or V3 - Parked Ideas
 
 Features captured during V1 design that aren't in scope yet but should be remembered:
 
 - **Potion Slime / Alchemical category.** A 7th category (or a special variant within an existing one) tied to brewing. Possible mechanics: infuse with a potion item (instead of an ingot) → slime takes on that potion's effect → killing it drops the corresponding potion, or splashes its effect in an area. Parent could be a "Brew Slime" spawning near witch huts or nether wart. Worth scoping when V1 ships and we know how much hook-into-brewing the framework can support.
 
-## V3+ — Speculative
+## V3+ - Speculative
 
 Not committed. Possible future directions:
 
@@ -107,5 +107,5 @@ Not committed. Possible future directions:
 ## Compatibility Promise
 
 - V2 datapacks must not break V1 worlds.
-- V2 machines must remain optional — a player who never crafts a Frog Terrarium / Habitat in V2 still has every V1 capability.
+- V2 machines must remain optional - a player who never crafts a Frog Terrarium / Habitat in V2 still has every V1 capability.
 - Cross-mod compat datapacks are independent of V1/V2 split.

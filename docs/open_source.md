@@ -6,7 +6,7 @@ Productive Frogs is open source, hosted on GitHub. This document captures the OS
 
 **MIT License.** Chosen because:
 
-- Most permissive — modpack authors can bundle and redistribute trivially.
+- Most permissive - modpack authors can bundle and redistribute trivially.
 - Standard for Minecraft content mods.
 - Compatible with all major modpack license requirements.
 - Trivial to read; no surprises for contributors.
@@ -45,8 +45,8 @@ All under `.github/`:
 
 `ci.yml` is the only workflow. It runs two independent jobs on every push and PR, both required by `main` branch protection:
 
-- **`build`** — checkout, JDK 21 (Temurin), Gradle setup + wrapper validation, then `./gradlew build` (compile + JUnit suite + assemble jar), and uploads the `.jar` artifact.
-- **`gameTest`** — same setup, then `./gradlew runGameTestServer` (a headless server that runs every in-world GameTest, exits non-zero on failure). Independent of `build` so the unit-test and in-world-test layers report separately.
+- **`build`** - checkout, JDK 21 (Temurin), Gradle setup + wrapper validation, then `./gradlew build` (compile + JUnit suite + assemble jar), and uploads the `.jar` artifact.
+- **`gameTest`** - same setup, then `./gradlew runGameTestServer` (a headless server that runs every in-world GameTest, exits non-zero on failure). Independent of `build` so the unit-test and in-world-test layers report separately.
 
 ## Release (manual, not CI)
 
@@ -60,7 +60,7 @@ This Gradle task (via the `net.darkhax.curseforgegradle` plugin) uploads `build/
 
 The API key is read locally (first hit wins): `CURSEFORGE_API_KEY` from `.env` at the repo root (gitignored), then the `CURSEFORGE_API_KEY` env var, then the `cfApiToken` Gradle property. It is **not** a CI Actions secret - releases never run in GitHub Actions.
 
-Modrinth distribution is intentionally omitted — the FTB ecosystem requires CurseForge-only distribution, and Productive Frogs targets the FTB modpack audience. Players who want the mod can grab it from CurseForge or the GitHub Releases attachment.
+Modrinth distribution is intentionally omitted - the FTB ecosystem requires CurseForge-only distribution, and Productive Frogs targets the FTB modpack audience. Players who want the mod can grab it from CurseForge or the GitHub Releases attachment.
 
 ## Contributor Conventions
 

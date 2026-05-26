@@ -41,7 +41,7 @@ Variant Slime Bucket → Slime Milker → Slime Milk bucket
 | **Infernal Slime** | nether wastes, basalt deltas, soul sand valley | Infernal Frog | magma cream |
 | **Void Slime** | end islands | Void Frog | ender pearl |
 
-Six parent species spawn naturally in their biomes. Vanilla `minecraft:slime` and `minecraft:magma_cube` are NOT part of the production system — only the PF parent species can be infused into Resource Slimes.
+Six parent species spawn naturally in their biomes. Vanilla `minecraft:slime` and `minecraft:magma_cube` are NOT part of the production system - only the PF parent species can be infused into Resource Slimes.
 
 **Variety lives on the slime side.** Adding a new variant for a future modpack is one JSON (texture and lang fall back automatically for cross-mod variants), no code change.
 
@@ -50,10 +50,10 @@ Six parent species spawn naturally in their biomes. Vanilla `minecraft:slime` an
 1. Install [NeoForge **21.1.230**](https://neoforged.net/) for Minecraft 1.21.1.
 2. Download the Productive Frogs jar from [CurseForge](https://www.curseforge.com/minecraft/mc-mods/productive-frogs) (or [GitHub Releases](https://github.com/Flatts3000/productive-frogs/releases) as a mirror, used while the CF project clears initial moderation) and drop it into `mods/`.
 3. **Recommended companion mods:**
-   - [JEI 19.21.0.247+](https://www.curseforge.com/minecraft/mc-mods/jei) — surfaces Information pages on every PF item (open inventory, hover, press **U** or **R**).
-   - [Jade 15.10.5+](https://www.curseforge.com/minecraft/mc-mods/jade) — shows species + variant in the in-world entity tooltip.
+   - [JEI 19.21.0.247+](https://www.curseforge.com/minecraft/mc-mods/jei) - surfaces Information pages on every PF item (open inventory, hover, press **U** or **R**).
+   - [Jade 15.10.5+](https://www.curseforge.com/minecraft/mc-mods/jade) - shows species + variant in the in-world entity tooltip.
 
-Both are optional. Without them, the mod still works — just no JEI sidebar and no tooltip overlay.
+Both are optional. Without them, the mod still works - just no JEI sidebar and no tooltip overlay.
 
 ## Quick-start
 
@@ -86,7 +86,7 @@ Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope ra
 
 | Doc | Purpose |
 |---|---|
-| [species_as_category_redesign.md](./docs/species_as_category_redesign.md) | The v1.0 design — six species, infusion rules, JEI integration |
+| [species_as_category_redesign.md](./docs/species_as_category_redesign.md) | The v1.0 design - six species, infusion rules, JEI integration |
 | [design_overview.md](./docs/design_overview.md) | The core model and gameplay loop |
 | [items_and_blocks.md](./docs/items_and_blocks.md) | Item and block roster |
 | [slime_sourcing.md](./docs/slime_sourcing.md) | How players obtain Resource Slimes |
@@ -101,7 +101,7 @@ Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope ra
 ## Target platform
 
 - **Minecraft**: 1.21.1
-- **Loader**: NeoForge 21.1.230 (NeoForge-only — no Fabric port planned)
+- **Loader**: NeoForge 21.1.230 (NeoForge-only - no Fabric port planned)
 - **Java**: 21
 - **Gradle**: 9.5.1 with `net.neoforged.moddev` 2.0.141
 
