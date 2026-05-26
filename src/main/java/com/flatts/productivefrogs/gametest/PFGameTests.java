@@ -2440,12 +2440,12 @@ public final class PFGameTests {
     }
 
     /**
-     * Primed path: a glass bottle + a slime ball + a cobblestone primer (which is
-     * in spawnery_primer/cave) produce a Frog Egg stamped CAVE, with the
-     * cobblestone consumed.
+     * Primed path: a glass bottle + a slime ball + an iron-ingot primer (which is
+     * in spawnery_primer/cave) produce a Frog Egg stamped CAVE, with the iron
+     * ingot consumed.
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
-    public static void spawneryCobblestonePrimerProducesCaveEgg(GameTestHelper helper) {
+    public static void spawneryIronPrimerProducesCaveEgg(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 2, 2);
         helper.setBlock(pos, PFBlocks.SPAWNERY.get());
         ServerLevel level = helper.getLevel();
@@ -2457,7 +2457,7 @@ public final class PFGameTests {
         }
         spawnery.getInventory().setStackInSlot(SpawneryBlockEntity.BOTTLE_SLOT, new ItemStack(Items.GLASS_BOTTLE));
         spawnery.getInventory().setStackInSlot(SpawneryBlockEntity.FUEL_SLOT, new ItemStack(Items.SLIME_BALL));
-        spawnery.getInventory().setStackInSlot(SpawneryBlockEntity.PRIMER_SLOT, new ItemStack(Items.COBBLESTONE));
+        spawnery.getInventory().setStackInSlot(SpawneryBlockEntity.PRIMER_SLOT, new ItemStack(Items.IRON_INGOT));
 
         driveSpawnery(level, absPos, spawnery);
 
@@ -2469,11 +2469,11 @@ public final class PFGameTests {
         }
         Category stamped = output.get(com.flatts.productivefrogs.registry.PFDataComponents.CONTAINED_CATEGORY.get());
         if (stamped != Category.CAVE) {
-            helper.fail("cobblestone primer must stamp CAVE, got " + stamped);
+            helper.fail("iron ingot primer must stamp CAVE, got " + stamped);
             return;
         }
         if (!spawnery.getInventory().getStackInSlot(SpawneryBlockEntity.PRIMER_SLOT).isEmpty()) {
-            helper.fail("the cobblestone primer should have been consumed");
+            helper.fail("the iron ingot primer should have been consumed");
             return;
         }
         helper.succeed();

@@ -38,20 +38,20 @@ The egg is species-level (six categories), not resource-level. `FrogEggItem` is 
 
 1 slime ball = 1 bottle ("1:1 or worse" ceiling). A ball is consumed at the start of a cycle and yields a burn lasting exactly one cycle, so the flame UI behaves like a furnace while the ratio stays 1:1. Tunable via `BURN_TICKS_PER_BALL` (= production ticks) if a costlier ratio is wanted.
 
-### Primers (skyblock-decoupled, pack-overridable tags)
+### Primers (default-world resource, pack-overridable tags)
 
-Default `findByPrimer` maps farmed resources (iron->Cave) to categories - circular for skyblock. The Spawnery uses its own set of thematic signature items via six pack-overridable item tags:
+**Framing (updated 2026-05-26):** the defaults are tuned for a **normal world**, not skyblock. Each species' primer is **one** representative resource that species unlocks - "show the frog the resource you want and you get that species' egg." A normal-world player already has that resource; a skyblock / restricted pack overrides the tag to fit its progression (see the Primer overridability section). The Spawnery keeps its own per-species item tags (one entry each) rather than `findByPrimer` so it's exactly one primer per species (not the whole resource pool) and overridable per species.
 
 | Species | Default primer | Tag |
 |---|---|---|
-| Cave | `minecraft:cobblestone` | `productivefrogs:spawnery_primer/cave` |
-| Bog | `minecraft:mud` | `productivefrogs:spawnery_primer/bog` |
-| Tide | `minecraft:kelp` | `productivefrogs:spawnery_primer/tide` |
+| Cave | `minecraft:iron_ingot` | `productivefrogs:spawnery_primer/cave` |
 | Geode | `minecraft:amethyst_shard` | `productivefrogs:spawnery_primer/geode` |
-| Infernal | `minecraft:netherrack` | `productivefrogs:spawnery_primer/infernal` |
+| Bog | `minecraft:bone` | `productivefrogs:spawnery_primer/bog` |
+| Tide | `minecraft:prismarine_shard` | `productivefrogs:spawnery_primer/tide` |
+| Infernal | `minecraft:blaze_powder` | `productivefrogs:spawnery_primer/infernal` |
 | Void | `minecraft:ender_pearl` | `productivefrogs:spawnery_primer/void` |
 
-Cost gradient tracks rarity (Cave egg = trivial cobble, Void egg = precious pearl). Geode is the deliberate mid-game soft spot (no trivial void-world amethyst). A pack retunes any species by editing one tag JSON (and may add e.g. Cave Slime Milk to `spawnery_primer/cave` for established players; the resolver honours whatever the tags contain - not shipped as a default because milk needs a running Cave loop and so cannot bootstrap).
+Each is an actual variant in that species' pool, so the default Spawnery primer aligns with that resource's `findByPrimer` mapping (iron -> Cave both ways) - but the tag stays the override surface. Bog uses `bone` rather than a slime ball because the slime ball is the fuel. (Earlier drafts used skyblock-reachable signature items - cobblestone/mud/kelp/netherrack - on the assumption the mod should ship skyblock-ready; that was reversed in favour of normal-world defaults + pack overrides.)
 
 ## 4. Config gating
 
@@ -292,25 +292,25 @@ The Spawnery is a single block, not a variant, so the per-variant `LangCompleten
 
 ### How a pack retunes a primer
 
-Gate the Cave frog behind diamond instead of the default cobblestone:
+The default Cave primer is `iron_ingot` (a normal-world resource). A skyblock pack, where iron is gated but cobblestone is infinite, swaps it:
 
 Datapack - `data/productivefrogs/tags/item/spawnery_primer/cave.json`:
 ```json
-{ "replace": true, "values": ["minecraft:diamond"] }
+{ "replace": true, "values": ["minecraft:cobblestone"] }
 ```
 
 KubeJS - `server_scripts`:
 ```js
 ServerEvents.tags('item', event => {
-    event.remove('productivefrogs:spawnery_primer/cave', 'minecraft:cobblestone')
-    event.add('productivefrogs:spawnery_primer/cave', 'minecraft:diamond')
+    event.remove('productivefrogs:spawnery_primer/cave', 'minecraft:iron_ingot')
+    event.add('productivefrogs:spawnery_primer/cave', 'minecraft:cobblestone')
 })
 ```
 
 CraftTweaker:
 ```zenscript
-<tag:items:productivefrogs:spawnery_primer/cave>.remove(<item:minecraft:cobblestone>);
-<tag:items:productivefrogs:spawnery_primer/cave>.add(<item:minecraft:diamond>);
+<tag:items:productivefrogs:spawnery_primer/cave>.remove(<item:minecraft:iron_ingot>);
+<tag:items:productivefrogs:spawnery_primer/cave>.add(<item:minecraft:cobblestone>);
 ```
 
 A modded item that may be absent - list it soft so the tag still loads when the mod isn't present:
@@ -333,7 +333,7 @@ A primer selects one of the six frog **species** (Cave / Geode / Bog / Tide / In
 - **D2** Fuel = `minecraft:slime_ball`, 1:1 with bottles. [user]
 - **D3** Primer consumed per primed egg (mirrors slime priming). [my call]
 - **D4** Egg is species-level, not resource-level. [matches existing mod model]
-- **D5** Primers are dedicated pack-overridable tags, NOT `findByPrimer`. [required by the skyblock decoupling - user-approved set]
+- **D5** Primers are dedicated per-species pack-overridable tags (one entry each), NOT `findByPrimer` - so it's exactly one primer per species (not the whole resource pool) and overridable per species. Defaults are the representative **normal-world** resource per species: iron ingot / amethyst shard / bone / prismarine shard / blaze powder / ender pearl (Cave/Geode/Bog/Tide/Infernal/Void). [reframed 2026-05-26 from skyblock-signature items to normal-world resources; packs override for restricted worlds]
 - **D6** Disabled = uncraftable + hidden from JEI/creative; a placed block still works. [user said uncraftable + hidden; placed-inertness explicitly not requested -> keeps it test-friendly]
 - **D7** Bonemeal is crafting-only, not an operating feedstock. [user]
 - **D8** `productionTicks` default 200 (10 s); 1 slime ball burns exactly one cycle. [my call, configurable]
