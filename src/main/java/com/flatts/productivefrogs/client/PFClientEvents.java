@@ -24,6 +24,7 @@ import com.flatts.productivefrogs.util.PFDebug;
 import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -399,38 +400,99 @@ public final class PFClientEvents {
 
                 @Override
                 public int getTintColor(FluidState state, BlockAndTintGetter getter, BlockPos pos) {
-                    // Only source blocks carry a variant BE; flowing/spread milk
-                    // is inert, so skip the per-quad BlockEntity lookup for it.
-                    return state.isSource() ? slimeMilkTint(getter, pos) : 0xFFFFFFFF;
+                    // Source blocks carry the variant on their BE; flowing/spread
+                    // milk does not (fluid spreading doesn't copy BlockEntities). Milk
+                    // is meant to be poured into pools that slimes spawn from, so the
+                    // whole pool must tint per-variant, not just the source block -
+                    // slimeMilkTint walks flowing milk back to its source.
+                    return slimeMilkTint(getter, pos);
                 }
             },
             PFFluidTypes.SLIME_MILK.get()
         );
     }
 
+    /** Fallback when no variant resolves (registry not loaded, or no reachable source). */
+    private static final int DEFAULT_MILK_TINT = 0xFFFFFFFF;
+
+    /** Milk reaches ~4 blocks horizontally (slopeFindDistance 4) plus vertical falls. */
+    private static final int MAX_MILK_FLOW_STEPS = 8;
+
+    private static final Direction[] HORIZONTALS =
+        {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
+
     /**
-     * Per-position Slime Milk tint: the source block's variant primary_color,
-     * or opaque white when the position carries no variant (flowing / spread
-     * milk, or the registry isn't loaded yet).
+     * Per-position Slime Milk tint: the variant's primary_color. A source reads its
+     * own BE; flowing / spread milk has no variant BE, so {@link #findMilkVariant}
+     * walks the fluid back to the source (toward higher fluid amount / upward) and
+     * uses that. Opaque white when nothing resolves.
      */
     private static int slimeMilkTint(BlockAndTintGetter getter, BlockPos pos) {
         if (pos == null) {
-            return 0xFFFFFFFF;
+            return DEFAULT_MILK_TINT;
         }
-        BlockEntity be = getter.getBlockEntity(pos);
-        if (be instanceof SlimeMilkSourceBlockEntity milkBe && milkBe.getVariantId() != null) {
+        ResourceLocation variantId = findMilkVariant(getter, pos);
+        if (variantId != null) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.level != null) {
                 Registry<SlimeVariant> registry = mc.level.registryAccess()
                     .registry(PFRegistries.SLIME_VARIANT).orElse(null);
                 if (registry != null) {
-                    SlimeVariant variant = registry.get(milkBe.getVariantId());
+                    SlimeVariant variant = registry.get(variantId);
                     if (variant != null) {
                         return opaque(variant.primaryColor());
                     }
                 }
             }
         }
-        return 0xFFFFFFFF;
+        return DEFAULT_MILK_TINT;
+    }
+
+    /**
+     * Find the variant feeding the milk at {@code start} by walking the fluid back
+     * to its source: step straight up when a column is falling, else toward the
+     * horizontal neighbour with the most milk (the source is the full-level high
+     * point a puddle slopes down from). Returns the first source BE's variant, or
+     * null if the walk dead-ends before reaching one. Bounded by
+     * {@link #MAX_MILK_FLOW_STEPS}; the whole walk stays within milk's 4-block reach,
+     * well inside the chunk render region.
+     */
+    private static ResourceLocation findMilkVariant(BlockAndTintGetter getter, BlockPos start) {
+        BlockPos pos = start;
+        for (int step = 0; step <= MAX_MILK_FLOW_STEPS; step++) {
+            BlockEntity be = getter.getBlockEntity(pos);
+            if (be instanceof SlimeMilkSourceBlockEntity milkBe && milkBe.getVariantId() != null) {
+                return milkBe.getVariantId();
+            }
+            // A falling column is fed from above: follow it up first.
+            BlockPos above = pos.above();
+            if (milkAmount(getter, above) > 0) {
+                pos = above;
+                continue;
+            }
+            // Otherwise climb the puddle's slope toward the full-level source.
+            int current = milkAmount(getter, pos);
+            BlockPos best = null;
+            int bestAmount = current;
+            for (Direction dir : HORIZONTALS) {
+                BlockPos neighbour = pos.relative(dir);
+                int amount = milkAmount(getter, neighbour);
+                if (amount > bestAmount) {
+                    bestAmount = amount;
+                    best = neighbour;
+                }
+            }
+            if (best == null) {
+                return null;
+            }
+            pos = best;
+        }
+        return null;
+    }
+
+    /** Slime Milk fluid amount (1-8) at pos, or 0 when the position is not slime milk. */
+    private static int milkAmount(BlockAndTintGetter getter, BlockPos pos) {
+        FluidState fs = getter.getFluidState(pos);
+        return fs.getType().getFluidType() == PFFluidTypes.SLIME_MILK.get() ? fs.getAmount() : 0;
     }
 }
