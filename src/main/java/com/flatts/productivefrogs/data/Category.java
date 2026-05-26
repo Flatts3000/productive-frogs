@@ -23,9 +23,16 @@ import org.joml.Vector3f;
  * Resource Tadpole entity, and N Resource Slime variants.
  */
 public enum Category implements StringRepresentable {
-    BOG(0x6A8540),
+    // Declared in canonical player-progression order (see docs/canonical_ordering.md):
+    // CAVE -> GEODE -> BOG -> TIDE -> INFERNAL -> VOID. This order drives every
+    // surface that iterates Category.values() (creative tabs, JEI, the per-species
+    // DeferredRegister insertion). Reordering is save-safe: persistence is by name
+    // (StringRepresentable / Category.CODEC, and the entities' NBT writes
+    // getCategory().name()); ordinal() is used only for transient network sync
+    // (STREAM_CODEC + synced data), regenerated each session from name-based data.
     CAVE(0xB5651D),
     GEODE(0x7EE8FA),
+    BOG(0x6A8540),
     TIDE(0x70C7B8),
     INFERNAL(0xC73E1D),
     VOID(0x9070D0);

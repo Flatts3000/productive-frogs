@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFRegistries;
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -11,6 +12,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
@@ -22,6 +24,8 @@ import net.minecraft.world.entity.animal.Bucketable;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemUtils;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.scores.PlayerTeam;
@@ -301,18 +305,54 @@ public class ResourceSlime extends Slime implements Bucketable {
     }
 
     /**
-     * Right-click handler — bridge for {@link Bucketable#bucketMobPickup} since
-     * vanilla {@link Slime} doesn't extend AbstractFish (which is where the
-     * vanilla fish/axolotl/tadpole pattern wires this up). Only size-1 slimes
-     * are bucketable per design; larger slimes split via the standard slime
-     * mechanic and the player buckets the offspring.
+     * Right-click handler. Only size-1 slimes are bucketable per design; larger
+     * slimes split via the standard slime mechanic and the player buckets the
+     * offspring.
+     *
+     * <p>Capture uses an <b>empty</b> bucket, not a water bucket. Vanilla
+     * {@link Bucketable#bucketMobPickup} hardcodes {@code WATER_BUCKET} (the
+     * fish/axolotl/tadpole convention), which reads wrong for a non-aquatic
+     * slime — a player reaches for an empty bucket and nothing happens. So we
+     * don't bridge to {@code bucketMobPickup}; {@link #tryEmptyBucketCapture}
+     * is a minimal re-implementation keyed on the empty bucket instead.
      */
     @Override
-    protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (this.getSize() == 1) {
-            return Bucketable.bucketMobPickup(player, hand, this).orElse(super.mobInteract(player, hand));
+            InteractionResult captured = tryEmptyBucketCapture(player, hand);
+            if (captured != null) {
+                return captured;
+            }
         }
         return super.mobInteract(player, hand);
+    }
+
+    /**
+     * Capture a size-1 Resource Slime with an empty bucket ({@link Items#BUCKET})
+     * into a Slime Bucket. Mirrors vanilla {@link Bucketable#bucketMobPickup}
+     * exactly — pickup sound, {@link #saveToBucketTag} NBT write, filled-result
+     * handling that respects creative/stack semantics, and the FILLED_BUCKET
+     * advancement trigger — but matches on the empty bucket rather than the
+     * water bucket. Returns {@code null} when the held item is not an empty
+     * bucket, so the caller falls through to vanilla interaction.
+     */
+    @org.jetbrains.annotations.Nullable
+    private InteractionResult tryEmptyBucketCapture(Player player, InteractionHand hand) {
+        ItemStack held = player.getItemInHand(hand);
+        if (!held.is(Items.BUCKET) || !this.isAlive()) {
+            return null;
+        }
+        this.playSound(this.getPickupSound(), 1.0F, 1.0F);
+        ItemStack filled = this.getBucketItemStack();
+        this.saveToBucketTag(filled);
+        ItemStack result = ItemUtils.createFilledResult(held, player, filled, false);
+        player.setItemInHand(hand, result);
+        Level level = this.level();
+        if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer) {
+            CriteriaTriggers.FILLED_BUCKET.trigger(serverPlayer, filled);
+        }
+        this.discard();
+        return InteractionResult.sidedSuccess(level.isClientSide());
     }
 
     @Override

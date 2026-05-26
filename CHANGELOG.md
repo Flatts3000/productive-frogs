@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Resource Slimes are now captured with an empty bucket**, not a water bucket.
+  A size-1 Resource Slime right-clicked with an empty bucket fills a Slime
+  Bucket; the previous behaviour (inherited from vanilla `Bucketable`, which
+  fish/axolotls/tadpoles use) keyed capture on a water bucket and read wrong for
+  a non-aquatic slime.
+- **Species now display in canonical progression order** (CAVE -> GEODE -> BOG
+  -> TIDE -> INFERNAL -> VOID) across creative tabs, JEI, and the recipe book,
+  instead of the previous alphabetical order. Save-safe: `Category` persists by
+  name, so the enum reorder does not touch existing worlds.
+
 ## v1.2.0 - 2026-05-25 - cross-mod compatibility + observability
 
 The V1.2 compatibility + tooling release. Resource Slimes now extend to the

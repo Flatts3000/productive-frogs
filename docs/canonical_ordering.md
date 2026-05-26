@@ -17,7 +17,7 @@ Productive Frogs' canonical species order is the progression order of the flagsh
 
 Each species is a gated tier; players complete one to unlock the next. Presenting the mod's objects in this order makes creative tabs, JEI, and the recipe book read in journey order.
 
-> The current `data.Category` enum is declared `BOG, CAVE, GEODE, TIDE, INFERNAL, VOID` (roughly alphabetical). It should be reordered to the canonical sequence above.
+> **Done (v1.2.x):** `data.Category` is declared in this canonical order. It was previously `BOG, CAVE, GEODE, TIDE, INFERNAL, VOID` (roughly alphabetical). The reorder was confirmed save-safe (persistence is by name; `ordinal()` is transient network-sync only).
 
 ## Where the order must be baked in
 

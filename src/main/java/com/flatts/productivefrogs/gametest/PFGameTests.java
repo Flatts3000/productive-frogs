@@ -990,6 +990,89 @@ public final class PFGameTests {
     }
 
     /**
+     * Bug fix (known_issues): a size-1 Resource Slime is captured with an
+     * <b>empty</b> bucket, not a water bucket. Right-clicking with
+     * {@code Items.BUCKET} fills a Slime Bucket and removes the slime; a water
+     * bucket must NOT capture it (falls through to vanilla, water bucket
+     * unconsumed). Pins {@code ResourceSlime.tryEmptyBucketCapture} against a
+     * regression to vanilla {@code Bucketable.bucketMobPickup}, which keys on
+     * the water bucket (the fish/axolotl/tadpole convention).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void emptyBucketCapturesSlimeWaterBucketDoesNot(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        net.minecraft.world.entity.player.Player player =
+            helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+
+        // 1. Water bucket must NOT capture (the old, wrong behavior).
+        ResourceSlime water = helper.spawn(PFEntities.RESOURCE_SLIME.get(), pos);
+        water.setSize(1, true);
+        water.setCategory(Category.CAVE);
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,
+            new ItemStack(net.minecraft.world.item.Items.WATER_BUCKET));
+        net.minecraft.world.InteractionResult waterResult =
+            water.mobInteract(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (waterResult.consumesAction()) {
+            helper.fail("water bucket must NOT be handled as a capture, got " + waterResult);
+            return;
+        }
+        if (!player.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND)
+                .is(net.minecraft.world.item.Items.WATER_BUCKET)) {
+            helper.fail("water bucket must NOT capture a Resource Slime (it should remain a water bucket)");
+            return;
+        }
+        if (!water.isAlive()) {
+            helper.fail("water bucket must not consume/discard the slime");
+            return;
+        }
+        water.discard();
+
+        // 2. Empty bucket must NOT capture a size > 1 slime (size gate): larger
+        //    slimes split and the player buckets the offspring.
+        ResourceSlime big = helper.spawn(PFEntities.RESOURCE_SLIME.get(), pos);
+        big.setSize(2, true);
+        big.setCategory(Category.CAVE);
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,
+            new ItemStack(net.minecraft.world.item.Items.BUCKET));
+        net.minecraft.world.InteractionResult bigResult =
+            big.mobInteract(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (bigResult.consumesAction()) {
+            helper.fail("empty bucket must NOT capture a size-2 slime, got " + bigResult);
+            return;
+        }
+        if (!player.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND)
+                .is(net.minecraft.world.item.Items.BUCKET)) {
+            helper.fail("empty bucket must remain empty when used on a size-2 slime");
+            return;
+        }
+        big.discard();
+
+        // 3. Empty bucket captures a size-1 slime: slime gone, player holds a slime bucket.
+        ResourceSlime empty = helper.spawn(PFEntities.RESOURCE_SLIME.get(), pos);
+        empty.setSize(1, true);
+        empty.setCategory(Category.CAVE);
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,
+            new ItemStack(net.minecraft.world.item.Items.BUCKET));
+        net.minecraft.world.InteractionResult result =
+            empty.mobInteract(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (!result.consumesAction()) {
+            helper.fail("empty bucket must capture a size-1 Resource Slime, got " + result);
+            return;
+        }
+        ItemStack held = player.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (!held.is(PFItems.SLIME_BUCKET.get())) {
+            helper.fail("after capture the player must hold a slime bucket, got "
+                + BuiltInRegistries.ITEM.getKey(held.getItem()));
+            return;
+        }
+        if (empty.isAlive()) {
+            helper.fail("captured slime must be discarded");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
      * Bucket a variant-stamped Resource Slime, then assert the
      * {@code BUCKET_ENTITY_DATA} payload carries the {@code Variant} NBT
      * (read via {@code ResourceTadpoleBucketItem.readVariant}) AND that
