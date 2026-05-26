@@ -238,10 +238,10 @@ Data getters: `getCookProgress`, `getCookTotal` (fallback to `SPAWNERY_PRODUCTIO
 
 ## 10. Assets
 
-- `blockstates/spawnery.json`: variants over `facing` (n/e/s/w) x `lit` (true/false); model `spawnery` (unlit) / `spawnery_on` (lit) with y-rotation per facing.
-- `models/block/spawnery.json` + `spawnery_on.json`: `minecraft:block/orientable` parent (top, front, side). `_on` swaps `front` -> `spawnery_front_on`.
+- `blockstates/spawnery.json`: variants over `facing` (n/e/s/w) x `lit` (true/false). **As shipped on the branch:** both `lit` values map to the single `spawnery` model (no `_on` model yet); `lit` only drives the light level.
+- `models/block/spawnery.json`: `minecraft:block/orientable_with_bottom`. **As shipped: placeholder vanilla textures** - `moss_block` top, `cobblestone` side+bottom, `oak_planks` front. Renders cleanly and reads as a cobble/wood build, but is not bespoke art.
 - `models/item/spawnery.json`: `{"parent":"productivefrogs:block/spawnery"}`.
-- Textures `textures/block/`: `spawnery_top`, `spawnery_side`, `spawnery_bottom`, `spawnery_front`, `spawnery_front_on`. Hand-authored / derived from existing block art (frogspawn-green front with a bottle motif; `_on` adds a lit glow). **Art gap - functional placeholder first, polish on the manual `runClient` pass.**
+- **TEXTURES OWED (documented; not yet generated or wired).** The Spawnery needs proper bespoke block textures - thematically the same appliance family as the Slime Milker (cobblestone + wood-plank build, wood-framed window) but visually distinct: the window shows **frogspawn** (a dark teal egg pool when idle, a bright teal glow when lit) where the Milker shows green slime. A generator is prepared at `scripts/generate_spawnery_textures.ps1` - it derives the 7 textures (`spawnery_{top,front,side,bottom}` + `spawnery_{top,front,side}_on`) from the Milker's, masking the window via the Milker's `_working` green and recolouring it to a frogspawn teal. **Fix-later steps:** run the generator; add `models/block/spawnery_on.json` (front -> `spawnery_front_on`, top -> `spawnery_top_on`, side -> `spawnery_side_on`); point `models/block/spawnery.json` at the new `spawnery_*` textures; update `blockstates/spawnery.json` so `lit=true` -> `spawnery_on`; verify on the `runClient` pass.
 - GUI `textures/gui/container/spawnery.png`: composite from vanilla `furnace.png` via a `scripts/generate_spawnery_gui.ps1` (mirrors `generate_slime_milker_gui.ps1`): paint slot frames at the 7.5 positions (bottle, primer, fuel) + output, re-inline the arrow + flame sprites into the (176,*) atlas region.
 
 ## 11. Data files
