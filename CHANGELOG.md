@@ -1,6 +1,17 @@
 # Changelog
 
-## [Unreleased]
+## v1.4.1 - 2026-05-26 - Jade tooltips & tinted milk pools
+
+Optional Jade integration for at-a-glance appliance readouts, plus a fix so
+poured Slime Milk actually looks like its variant.
+
+### Added
+
+- **Jade tooltips for the appliances.** With Jade installed, looking at a Slime Milk source block shows its remaining spawn count (out of the configured depletion count, or "unlimited" when depletion is off), and the Slime Milker + Spawnery show cook progress while working. Only real variant-carrying source blocks are annotated - spread/flowing milk is not.
+
+### Fixed
+
+- **Flowing/spread Slime Milk now tints to its variant.** Slime Milk is meant to be poured into pools that slimes spawn from, but spread milk rendered pure white (fluid spreading doesn't carry the source's variant), so a copper-coloured milk flowed white. Flowing milk now resolves back to its source block and tints the whole pool to that variant's colour.
 
 ## v1.4.0 - 2026-05-26 - the Spawnery (skyblock bootstrap)
 
