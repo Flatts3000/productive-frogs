@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## v1.3.0 - 2026-05-26 - cross-mod crush yields
+
+The cross-mod crush release. With Mekanism, Immersive Engineering, or EnderIO
+installed, metal Froglights now crush to double their resource - the optional 2x
+payoff for routing them through a processing mod, with nothing required if you
+have none. Also bundles a round of JEI and naming polish.
+
 ### Added
 
 - **Cross-mod crush recipes (2x yield).** With Mekanism, Immersive Engineering,
