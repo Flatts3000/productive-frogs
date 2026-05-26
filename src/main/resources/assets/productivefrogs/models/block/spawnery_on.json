@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/orientable_with_bottom",
+  "textures": {
+    "top":    "productivefrogs:block/spawnery_top_on",
+    "bottom": "productivefrogs:block/spawnery_bottom",
+    "side":   "productivefrogs:block/spawnery_side_on",
+    "front":  "productivefrogs:block/spawnery_front_on"
+  }
+}

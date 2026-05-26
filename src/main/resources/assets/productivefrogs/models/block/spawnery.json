@@ -1,9 +1,9 @@
 {
   "parent": "minecraft:block/orientable_with_bottom",
   "textures": {
-    "top": "minecraft:block/moss_block",
-    "bottom": "minecraft:block/cobblestone",
-    "side": "minecraft:block/cobblestone",
-    "front": "minecraft:block/oak_planks"
+    "top":    "productivefrogs:block/spawnery_top",
+    "bottom": "productivefrogs:block/spawnery_bottom",
+    "side":   "productivefrogs:block/spawnery_side",
+    "front":  "productivefrogs:block/spawnery_front"
   }
 }
