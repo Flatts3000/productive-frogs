@@ -10,6 +10,11 @@ Newest-first within each section. Section ordering loosely tracks the area of th
 
 ## Resolved issues
 
+### 🟢 JEI info text said "Configurable Froglight" instead of "Froglight" - resolved
+**Original symptom**: two JEI description strings called the block by its registry-flavored id rather than its display name - `productivefrogs.jei.variant_slime.info` ("...drops a Configurable Froglight stamped with this variant...") and `productivefrogs.jei.frog.info` ("...drops a Configurable Froglight stamped with that variant..."). Everywhere else the block reads "Froglight" (its `block.productivefrogs.configurable_froglight` display name and every per-variant name), so this was an internal naming leak, not a deliberate term.
+
+**Resolution**: edited both strings in `en_us.json` to "...drops a Froglight stamped with [this/that] variant..." (pure lang edit, no code). Added a copy-lint guard to `LangCompletenessTest` (`noPlayerFacingValueSaysConfigurableFroglight`) that fails the build if any lang *value* contains "Configurable Froglight", so the registry id can't leak back into player-facing copy.
+
 ### 🟢 Cross-mod variant slimes showed a raw lang key in the Froglight tooltip - resolved
 **Original symptom**: the Configurable Froglight JEI info page read "Dropped when a Cave Frog eats a **entity.productivefrogs.resource_slime.osmium**. Smelts in a furnace to the resource it represents." - the slime name rendered as its untranslated entity translation key instead of a readable name. Affected every cross-mod variant (osmium, tin, lead, and the rest of the `c:`-tag pool); hand-authored base / v1.1 variants rendered fine.
 

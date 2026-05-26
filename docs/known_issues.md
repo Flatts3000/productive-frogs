@@ -18,19 +18,9 @@ Symbols 🟢 (resolved) and 🟠 (reopened / since-reverted) live in the [archiv
 
 ## Open issues
 
-### 🔴 JEI info text says "Configurable Froglight" instead of "Froglight"
-Two JEI description strings call the block by its registry-flavored name instead of its display name:
+No open player-facing bugs currently. By-design V1 limitations are listed below.
 
-- `productivefrogs.jei.variant_slime.info`: "...drops a Configurable Froglight stamped with this variant..."
-- `productivefrogs.jei.frog.info`: "...drops a Configurable Froglight stamped with that variant..."
-
-Everywhere else PF names the block **"Froglight"** - the `block.productivefrogs.configurable_froglight` display name and every per-variant name ("Iron Froglight", etc.). So this is an internal naming inconsistency, not a deliberate term; player-facing text should read "Froglight".
-
-**Fix:** in `src/main/resources/assets/productivefrogs/lang/en_us.json`, change both strings to "...drops a Froglight stamped with [this/that] variant...". Pure lang edit, no code. The lang-completeness test covers key *presence*, not copy, so no test change is required - though a copy-lint assertion forbidding "Configurable Froglight" in player-facing values would prevent regressions.
-
-By-design V1 limitations are listed below.
-
-Recently resolved (see the [archive](./known_issues_archive.md)): cross-mod variant slimes showing a raw lang key in the Froglight tooltip (fixed via the JEI title-case fallback plus explicit `en_us.json` keys for all 57 shipped variants, now guarded by a lang-completeness unit test), empty-bucket slime capture, and canonical species ordering across tabs / JEI / recipe book.
+Recently resolved (see the [archive](./known_issues_archive.md)): the JEI info text calling the block "Configurable Froglight" instead of its "Froglight" display name (now guarded by a copy-lint test); cross-mod variant slimes showing a raw lang key in the Froglight tooltip (fixed via the JEI title-case fallback plus explicit `en_us.json` keys for all 57 shipped variants, now guarded by a lang-completeness unit test); empty-bucket slime capture; and canonical species ordering across tabs / JEI / recipe book.
 
 ---
 
@@ -79,4 +69,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-25 (logged the JEI "Configurable Froglight" -> "Froglight" naming inconsistency under Open issues; earlier the same day resolved the cross-mod variant raw-lang-key bug, now in the archive).*
+*Last updated: 2026-05-25 (fixed the JEI "Configurable Froglight" -> "Froglight" copy and added a copy-lint test; earlier the same day resolved the cross-mod variant raw-lang-key bug. Both now in the archive; no open player-facing bugs remain).*

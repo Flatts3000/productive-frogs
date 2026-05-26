@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
@@ -49,7 +50,8 @@ class LangCompletenessTest {
     private static final Path RESOURCES_ROOT = resourcesRoot();
     private static final Path VARIANT_DIR =
         RESOURCES_ROOT.resolve("data/productivefrogs/productivefrogs/slime_variant");
-    private static final Set<String> LANG_KEYS = loadLangKeys();
+    private static final JsonObject LANG = loadLang();
+    private static final Set<String> LANG_KEYS = LANG.keySet();
 
     /**
      * Locate the resources root (e.g. {@code build/resources/main}) by navigating
@@ -66,11 +68,10 @@ class LangCompletenessTest {
         }
     }
 
-    private static Set<String> loadLangKeys() {
+    private static JsonObject loadLang() {
         Path lang = RESOURCES_ROOT.resolve("assets/productivefrogs/lang/en_us.json");
         try {
-            JsonObject obj = JsonParser.parseString(Files.readString(lang)).getAsJsonObject();
-            return obj.keySet();
+            return JsonParser.parseString(Files.readString(lang)).getAsJsonObject();
         } catch (IOException e) {
             throw new UncheckedIOException("could not read " + lang, e);
         }
@@ -150,5 +151,22 @@ class LangCompletenessTest {
         assertTrue(missing.isEmpty(),
             () -> "JEI plugin references info keys with no en_us.json entry:\n  "
                 + String.join("\n  ", missing));
+    }
+
+    /**
+     * Copy-lint: the Froglight block's display name is "Froglight" everywhere
+     * ({@code block.productivefrogs.configurable_froglight} and every per-variant
+     * name). "Configurable Froglight" is the registry-flavored id and must not
+     * leak into player-facing copy (it did in two JEI info strings).
+     */
+    @Test
+    void noPlayerFacingValueSaysConfigurableFroglight() {
+        List<String> offenders = LANG.entrySet().stream()
+            .filter(e -> e.getValue().getAsString().contains("Configurable Froglight"))
+            .map(Map.Entry::getKey)
+            .toList();
+        assertTrue(offenders.isEmpty(),
+            () -> "Player-facing lang values must say \"Froglight\", not \"Configurable Froglight\":\n  "
+                + String.join("\n  ", offenders));
     }
 }
