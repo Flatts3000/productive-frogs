@@ -43,7 +43,7 @@ TARGETS = {
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def _get_json(url: str):
+def _get_json(url: str) -> list | dict:
     req = urllib.request.Request(url, headers={"User-Agent": UA})
     with urllib.request.urlopen(req, timeout=30) as resp:
         return json.load(resp)
@@ -70,16 +70,19 @@ def primary_file(version: dict) -> dict:
 
 def download(file_meta: dict, dest_dir: Path) -> str:
     dest = dest_dir / file_meta["filename"]
+    # SHA-1 here is a download-integrity check, not a security primitive
+    # (usedforsecurity=False keeps it quiet under FIPS builds). Modrinth always
+    # ships the hash today; if it ever omits it we accept an existing file as-is.
     sha1 = file_meta.get("hashes", {}).get("sha1")
     if dest.exists():
-        if sha1 and hashlib.sha1(dest.read_bytes()).hexdigest() != sha1:
+        if sha1 and hashlib.sha1(dest.read_bytes(), usedforsecurity=False).hexdigest() != sha1:
             print(f"      present but SHA-1 mismatch, re-downloading: {dest.name}")
         else:
             return "skip (already present)"
     req = urllib.request.Request(file_meta["url"], headers={"User-Agent": UA})
     with urllib.request.urlopen(req, timeout=180) as resp:
         data = resp.read()
-    if sha1 and hashlib.sha1(data).hexdigest() != sha1:
+    if sha1 and hashlib.sha1(data, usedforsecurity=False).hexdigest() != sha1:
         raise RuntimeError(f"SHA-1 mismatch downloading {file_meta['filename']}")
     dest.write_bytes(data)
     return f"downloaded ({len(data) // 1024} KB)"
