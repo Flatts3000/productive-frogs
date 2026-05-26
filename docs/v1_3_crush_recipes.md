@@ -6,6 +6,13 @@
 > [cross_mod_compat.md](./cross_mod_compat.md) (Crushing compat section). **This doc is the
 > build plan**: what to generate, how, and how to verify it.
 
+> **Status: implemented (in-tree, pre-release).** `scripts/generate_crush_recipes.ps1` generates
+> 33 recipes (11 per crusher) under `data/productivefrogs/recipe/<modid>/`; `CrushRecipeTest` pins
+> their JSON shape and the GameTest server confirms they load cleanly (gated out) without the
+> crushers installed. The metals with no in-scope dust source - mythril, orichalcum, brass,
+> refined_obsidian - are skipped by the generator (no recipe), as the precedence rules require.
+> The manual per-mod `runClient` smoke test in [Testing](#testing) is the remaining pre-release gate.
+
 ## Goal
 
 Give players a soft 2x incentive to route Froglights through a processing mod, without ever

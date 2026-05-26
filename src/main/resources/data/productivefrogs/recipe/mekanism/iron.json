@@ -1,0 +1,12 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "mekanism" }
+  ],
+  "type": "mekanism:enriching",
+  "input": {
+    "type": "neoforge:components",
+    "items": "productivefrogs:configurable_froglight",
+    "components": { "productivefrogs:slime_variant": "productivefrogs:iron" }
+  },
+  "output": { "count": 2, "id": "mekanism:dust_iron" }
+}

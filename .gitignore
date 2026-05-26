@@ -36,6 +36,7 @@ hs_err_*.log
 # Python tooling caches (scripts/)
 __pycache__/
 *.pyc
+.ruff_cache/
 
 # Local environment / secrets
 .env
