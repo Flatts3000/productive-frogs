@@ -53,6 +53,16 @@ public class SlimeMilkerScreen extends AbstractContainerScreen<SlimeMilkerMenu> 
     }
 
     @Override
+    public void render(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+        // AbstractContainerScreen#render in NeoForge 1.21.1 draws the background,
+        // slots, and labels but does NOT render item tooltips - a renderBg-only
+        // screen shows none. Add the tooltip pass here; super.render does not
+        // render it, so there's no double-draw.
+        super.render(gui, mouseX, mouseY, partialTick);
+        this.renderTooltip(gui, mouseX, mouseY);
+    }
+
+    @Override
     protected void renderBg(GuiGraphics gui, float partialTick, int mouseX, int mouseY) {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
