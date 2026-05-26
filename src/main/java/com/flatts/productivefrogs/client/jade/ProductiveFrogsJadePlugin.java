@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
 import com.flatts.productivefrogs.content.block.SpawneryBlock;
+import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SpawneryBlockEntity;
 import net.minecraft.network.chat.Component;
@@ -58,6 +59,19 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             BlockState state = accessor.getBlockState();
 
             if (state.getBlock() instanceof SlimeMilkSourceBlock) {
+                // Only a real, variant-carrying source spawns slimes and depletes.
+                // Spread/flowing milk is the SAME LiquidBlock (so it carries the
+                // SPAWNS_REMAINING property at its default 16) but has no variant on
+                // its BE and is inert decoration - don't annotate it. Mirror the
+                // server's own gate in SlimeMilkSourceBlock#tick: the fluid must be a
+                // source AND the BE must carry a variant.
+                BlockEntity sourceBe = accessor.getBlockEntity();
+                boolean realSource = state.getFluidState().isSource()
+                    && sourceBe instanceof SlimeMilkSourceBlockEntity milkBe
+                    && milkBe.getVariantId() != null;
+                if (!realSource) {
+                    return;
+                }
                 // The fluid block depletes after SPAWNS_REMAINING spawns - surface
                 // the count (or "unlimited" when depletion is turned off in config).
                 int remaining = state.getValue(SlimeMilkSourceBlock.SPAWNS_REMAINING);
