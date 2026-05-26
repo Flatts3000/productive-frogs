@@ -18,22 +18,7 @@ Symbols 🟢 (resolved) and 🟠 (reopened / since-reverted) live in the [archiv
 
 ## Open issues
 
-### 🟡 Slime Milker had no crafting recipe (fix in `feat/spawnery`)
-The Slime Milker (`productivefrogs:slime_milker`) shipped with a loot table (it drops itself when broken) but **no crafting recipe**, so a survival player had no intended way to obtain it - only creative or `/give`, or breaking an already-placed one (a chicken-and-egg). The block is the V1 production keystone, so this blocked the survival loop. Discovered 2026-05-26 while speccing the Spawnery.
-**Fix written** (lands with the Spawnery PR): `data/productivefrogs/recipe/slime_milker.json` - shaped, 5 cobblestone + 3 planks + 1 slime ball (slime ball centered), mirroring the Spawnery's frame. Not config-gated (the Milker is always craftable). Pending `./gradlew build` verification + a JUnit recipe-shape test alongside the Spawnery's; will move to the archive once merged.
-
-### 🟡 Slime Milk buckets collapsed to a single entry in JEI (fixed in `feat/spawnery`)
-Every Slime Milk variant showed in the creative tab (one stamped stack per variant), but JEI listed only **one** Slime Milk Bucket. Root cause: `ProductiveFrogsJeiPlugin.registerItemSubtypes` registered `SLIME_VARIANT`-keyed subtype interpreters for the Configurable Froglight and the Resource Slime spawn egg, but **not** for `slime_milk_bucket` - so JEI treated every variant-stamped milk bucket as the same ingredient and deduped them to one. Discovered 2026-05-26 during Spawnery dev testing. Pre-existing bug, unrelated to the Spawnery.
-**Fixed (2026-05-26):** registered the existing `slimeVariantInterp` for `PFItems.SLIME_MILK_BUCKET` in `registerItemSubtypes`, so each variant is now a distinct JEI ingredient (and its per-variant info page attaches correctly). Pending a `runClient` confirm - JEI subtype behaviour isn't GameTest-visible.
-
-### 🟡 Spawnery requires a primer (resolved in `feat/spawnery`)
-Was a pending design question - the original spec made an empty primer produce vanilla frogspawn, which the user flagged as unwanted. **Decision (2026-05-26): a primer is required.** An empty or unrecognised primer produces nothing (no ignite, no fuel burned). A **slime ball** is the vanilla primer (-> plain frogspawn); the six `spawnery_primer/<species>` items prime their species. Implemented: `SpawneryBlockEntity.serverTick`'s `canProduce` gate now requires a valid primer (`SpawneryInventory.isValidPrimer`), and `complete()` always consumes the primer. GameTests updated (slime-ball vanilla path, iron Cave path, no-primer stall). build + 59 GameTests green.
-
-### 🟡 No item tooltips in the mod's container GUIs (Slime Milker + Spawnery) - fixed in `feat/spawnery`
-Hovering slots in either GUI showed no tooltip - the **shipped Slime Milker had the same problem**, so it was a pre-existing shared bug, not Spawnery-specific. **Root cause (confirmed from the decompiled source, `neoforge-21.1.230-sources.jar`):** NeoForge 1.21.1's `AbstractContainerScreen.render` draws background / slots / labels / the dragging item but never calls `renderTooltip`, so a screen that overrides only `renderBg` (both of ours did) renders no item tooltips. (The earlier worry about double-rendering was unfounded - the default doesn't render it at all.)
-**Fixed (2026-05-26):** both `SpawneryScreen` and `SlimeMilkerScreen` now override `render` to call `super.render(...)` then `renderTooltip(...)`. Build-clean; pending a `runClient` confirm since GUI tooltips aren't GameTest-visible. Also restores tooltips on the shipped Milker.
-
-By-design V1 limitations are listed below.
+No open player-facing bugs currently. The Spawnery dev-testing findings (Slime Milker recipe, Slime Milk JEI subtypes, container-GUI tooltips, and the Spawnery primer-required decision) are all resolved on `feat/spawnery` and moved to the [archive](./known_issues_archive.md). By-design V1 limitations are listed below.
 
 Recently resolved (see the [archive](./known_issues_archive.md)): the JEI info text calling the block "Configurable Froglight" instead of its "Froglight" display name (now guarded by a copy-lint test); cross-mod variant slimes showing a raw lang key in the Froglight tooltip (fixed via the JEI title-case fallback plus explicit `en_us.json` keys for all 57 shipped variants, now guarded by a lang-completeness unit test); empty-bucket slime capture; and canonical species ordering across tabs / JEI / recipe book.
 
@@ -84,4 +69,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-26 (worked the Spawnery dev-testing findings on `feat/spawnery`: Slime Milk JEI subtype-collapse, Slime Milker recipe, shared container-GUI tooltips, Spawnery bespoke textures, and the primer-required decision - all fixed/resolved in-branch, pending the runClient visual pass).*
+*Last updated: 2026-05-26 (Spawnery dev-testing findings - Slime Milker recipe, Slime Milk JEI subtypes, container-GUI tooltips, and the Spawnery primer-required decision - all resolved on `feat/spawnery` and moved to the archive; runClient visual pass passed; no open player-facing bugs remain).*

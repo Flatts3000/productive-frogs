@@ -169,6 +169,13 @@ Items noted in commit messages or PR descriptions as known issues but not blocki
 - ✅ **Jade.** Installed manually per [docs/dev_setup.md](./dev_setup.md); good enough for V1 dev. If Jade ever publishes to a maven we use cleanly, swap to a `runtimeOnly` dep like JEI — kept as a tracked nice-to-have, not a blocker.
 - ✅ **Debug observability framework (all layers).** Shipped in PR #106; designed in [observability.md](./observability.md). One cross-cutting `PFDebug` helper (per-layer areas, gated by `-Dproductivefrogs.debug=<areas>` system property + a `/pf debug <area> on|off` command), off by default, logs each layer's resolution decisions to `latest.log` with a greppable `[PF/<area>]` prefix. All 12 areas instrumented (render, tint, infusion, split, tongue, egg, sensor, milker, milk_source, registry, config, lifecycle); `PFDebugTest` pins the gate behaviour. Replaces the add-then-delete ad-hoc logging. **Lesson that motivated it:** client-render bugs (tints, inner-block resolution, render types) are invisible to GameTest; the 2026-05-25 inner-block investigation burned ~25 round-trips re-reading correct code while the running build diverged, and a one-line render-thread log ended it in one launch. When a visual bug can't be reproduced by reading correct code, suspect a stale dev build first.
 
+### Spawnery (v1.4) follow-ups
+Deferred while building the Spawnery ([docs/spawnery.md](./spawnery.md)); none blocking.
+- **Dynamic JEI primer display.** The Spawnery JEI info lists primers statically. Read the live `spawnery_primer/<species>` tag contents and render them per species, so a pack's overrides surface automatically and players can discover the pack's gating.
+- **`cross_mod_compat.md` cross-ref.** Add a short "retuning Spawnery primers" subsection there pointing at the `docs/spawnery.md` override examples (datapack / KubeJS / CraftTweaker), so pack authors find it from the compat doc.
+- **Durable dev-enable.** `spawnery.enabled` is off by default; testing from IntelliJ needs `run/config/productivefrogs-common.toml` flipped to `true`, which a `clean` resets. A small Gradle task wired into `prepareClientRun` could seed it so it survives (hand-flipped during dev for now).
+- **Shared container-screen base.** `SpawneryScreen` and `SlimeMilkerScreen` both carry the same `render` -> `renderTooltip` override (the 1.21.1 `AbstractContainerScreen` gap). If a third GUI lands, extract a `PFContainerScreen<T>` base rather than duplicating it.
+
 ## Architecture lessons captured
 
 From the Productive Bees survey ([productive_bees_analysis.md](./productive_bees_analysis.md)) and our PR-review history:
