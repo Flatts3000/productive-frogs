@@ -60,12 +60,18 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             if (state.getBlock() instanceof SlimeMilkSourceBlock) {
                 // The fluid block depletes after SPAWNS_REMAINING spawns - surface
                 // the count (or "unlimited" when depletion is turned off in config).
+                int remaining = state.getValue(SlimeMilkSourceBlock.SPAWNS_REMAINING);
                 if (PFConfig.SPEC.isLoaded() && !PFConfig.DEPLETION_ENABLED.get()) {
                     tooltip.add(Component.translatable("productivefrogs.jade.spawns_unlimited"));
                 } else {
-                    int remaining = state.getValue(SlimeMilkSourceBlock.SPAWNS_REMAINING);
-                    tooltip.add(Component.translatable("productivefrogs.jade.spawns_left",
-                        remaining, SlimeMilkSourceBlock.MAX_SPAWNS_REMAINING));
+                    // Denominator is the configured depletionCount (a fresh source starts
+                    // there, not always 16 - see SlimeMilkSourceBlock.onPlace), clamped to at
+                    // least the current remaining so a mid-life config change can't render
+                    // "remaining > capacity". Falls back to MAX if config isn't loaded yet.
+                    int cap = PFConfig.SPEC.isLoaded()
+                        ? Math.max(remaining, PFConfig.DEPLETION_COUNT.get())
+                        : SlimeMilkSourceBlock.MAX_SPAWNS_REMAINING;
+                    tooltip.add(Component.translatable("productivefrogs.jade.spawns_left", remaining, cap));
                 }
                 return;
             }
