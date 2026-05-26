@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Jade tooltips for the appliances.** With Jade installed, looking at a Slime Milk source block shows its remaining spawn count ("Slime spawns left: N / 16", or "unlimited" when depletion is config-disabled), and the Slime Milker + Spawnery show cook progress while working.
+
 ## v1.4.0 - 2026-05-26 - the Spawnery (skyblock bootstrap)
 
 A new V1 appliance for skyblock and other restricted-biome packs, plus a round of

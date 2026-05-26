@@ -84,6 +84,13 @@ repositories {
         name = 'BlameJared'
         url = 'https://maven.blamejared.com'
     }
+    // Jade API - served via the Modrinth maven as the full Jade jar (compileOnly
+    // only; see the dependency note below).
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
+    }
 }
 
 dependencies {
@@ -101,12 +108,18 @@ dependencies {
     // so each variant/category shows as a distinct JEI entry rather than the
     // items collapsing into one generic line.
     //
-    // Jade (the WAILA fork) for in-world entity/block ID overlay isn't on a
-    // public maven we depend on cleanly — see docs/dev_setup.md for the
-    // drop-in-run-mods install path.
     // JEI for MC 1.21.1 lives on the 19.21.x line.
     compileOnly "mezz.jei:jei-1.21.1-neoforge-api:19.27.0.340"
     runtimeOnly "mezz.jei:jei-1.21.1-neoforge:19.27.0.340"
+
+    // Jade (the WAILA fork) - compileOnly ONLY. Our @WailaPlugin
+    // (client/jade/ProductiveFrogsJadePlugin) references the Jade API at build
+    // time, but Jade stays a manual run/mods drop-in at runtime (docs/dev_setup.md):
+    // adding it runtimeOnly would double-load against the drop-in and trip
+    // NeoForge's duplicate-modid check. When Jade is present at runtime it discovers
+    // and runs our plugin; when it's absent (e.g. the CI gameTest job) the plugin
+    // class is simply never loaded. Modrinth yd8FKCmx = Jade 15.10.5+neoforge (1.21.1).
+    compileOnly "maven.modrinth:jade:yd8FKCmx"
 
     testImplementation platform('org.junit:junit-bom:5.11.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
