@@ -13,6 +13,8 @@ Slime variants, with no hard dependencies, no crashes when a mod is absent, and
 > lumium, enderium) are deferred until it ports. Builds on the data-driven
 > variant refactor (PR #108).
 
+> **Modpack authors:** [modpack_integration.md](./modpack_integration.md) is the consolidated, pack-facing entry point (config flags, variants, Spawnery primers, crush yields, the drop-in guarantee). This doc is the deep dive on the cross-mod variant strategy specifically.
+
 ## TL;DR
 
 - The cross-mod "library" is the NeoForge **`c:` common tag convention**

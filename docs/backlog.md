@@ -172,7 +172,7 @@ Items noted in commit messages or PR descriptions as known issues but not blocki
 ### Spawnery (v1.4) follow-ups
 Deferred while building the Spawnery ([docs/spawnery.md](./spawnery.md)); none blocking.
 - **Dynamic JEI primer display.** The Spawnery JEI info lists primers statically. Read the live `spawnery_primer/<species>` tag contents and render them per species, so a pack's overrides surface automatically and players can discover the pack's gating.
-- **`cross_mod_compat.md` cross-ref.** Add a short "retuning Spawnery primers" subsection there pointing at the `docs/spawnery.md` override examples (datapack / KubeJS / CraftTweaker), so pack authors find it from the compat doc.
+- ~~**`cross_mod_compat.md` cross-ref.**~~ Done - superseded by the consolidated [modpack_integration.md](./modpack_integration.md) (the pack-author entry point covering config, variants, Spawnery primers, crush yields); `cross_mod_compat.md` now points to it.
 - **Durable dev-enable.** `spawnery.enabled` is off by default; testing from IntelliJ needs `run/config/productivefrogs-common.toml` flipped to `true`, which a `clean` resets. A small Gradle task wired into `prepareClientRun` could seed it so it survives (hand-flipped during dev for now).
 - **Shared container-screen base.** `SpawneryScreen` and `SlimeMilkerScreen` both carry the same `render` -> `renderTooltip` override (the 1.21.1 `AbstractContainerScreen` gap). If a third GUI lands, extract a `PFContainerScreen<T>` base rather than duplicating it.
 
