@@ -18,11 +18,7 @@ Symbols 🟢 (resolved) and 🟠 (reopened / since-reverted) live in the [archiv
 
 ## Open issues
 
-### 🔴 Resource Slime is captured with a water bucket, not an empty bucket
-Right-clicking a Resource Slime with an **empty** bucket does nothing; a **water** bucket is what currently captures it into a Slime Bucket. This is inherited vanilla `Bucketable` behaviour (the same mechanic fish/axolotls/tadpoles use), but it reads wrong for a slime: a player reaches for an empty bucket and nothing happens. Expected: capture with an empty bucket (slimes are not aquatic). Fix is to override the bucket interaction so an empty bucket is the capture item.
-
-### 🔴 Object order doesn't follow the canonical species progression
-Creative tabs, JEI, and the recipe book present the six species in the `Category` enum's declared order (currently roughly alphabetical: `BOG, CAVE, GEODE, TIDE, INFERNAL, VOID`), not the intended player-progression order **CAVE → GEODE → BOG → TIDE → INFERNAL → VOID**. A player browsing the mod sees Bog before Cave and so on, out of journey order. Fix: reorder the `data.Category` enum constants and the per-species `DeferredRegister` insertion order to the canonical sequence (insertion order drives creative-tab order). `Category` serializes by name (`StringRepresentable`), so reordering is **save-safe after** auditing for any `Category.ordinal()` / `values()[i]` / `EnumMap`-iteration dependence. Full spec + checklist in [canonical_ordering.md](./canonical_ordering.md).
+*No open bugs currently.* Recently resolved (see the [archive](./known_issues_archive.md)): empty-bucket slime capture, and canonical species ordering across tabs / JEI / recipe book. By-design V1 limitations are listed below.
 
 ---
 
@@ -71,4 +67,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-25 (added canonical species-ordering issue; see [canonical_ordering.md](./canonical_ordering.md)).*
+*Last updated: 2026-05-25 (resolved both open bugs - empty-bucket capture + canonical species ordering - and moved them to the archive).*

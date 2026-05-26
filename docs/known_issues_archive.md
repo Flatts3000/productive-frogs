@@ -10,6 +10,16 @@ Newest-first within each section. Section ordering loosely tracks the area of th
 
 ## Resolved issues
 
+### 🟢 Resource Slime captured with an empty bucket, not a water bucket - resolved (v1.2.x)
+**Original symptom**: right-clicking a size-1 Resource Slime with an empty bucket did nothing; a water bucket was what captured it into a Slime Bucket. Inherited vanilla `Bucketable` behaviour (fish/axolotl/tadpole capture with a water bucket), but it read wrong for a non-aquatic slime - a player reaches for an empty bucket and nothing happens.
+
+**Resolution**: `ResourceSlime.mobInteract` no longer bridges to vanilla `Bucketable.bucketMobPickup` (which hardcodes `WATER_BUCKET`). A new `tryEmptyBucketCapture` is a minimal re-implementation keyed on `Items.BUCKET` - same pickup sound, `saveToBucketTag` NBT write, `ItemUtils.createFilledResult` stack handling, and FILLED_BUCKET advancement trigger (guarded `instanceof ServerPlayer`), but matching the empty bucket. Pinned by the `emptyBucketCapturesSlimeWaterBucketDoesNot` GameTest: an empty bucket captures and discards the slime; a water bucket leaves both the slime and the bucket untouched.
+
+### 🟢 Object order didn't follow the canonical species progression - resolved (v1.2.x)
+**Original symptom**: creative tabs, JEI, and the recipe book presented the six species in the `Category` enum's declared (roughly alphabetical) order - `BOG, CAVE, GEODE, TIDE, INFERNAL, VOID` - instead of the intended player-progression order `CAVE -> GEODE -> BOG -> TIDE -> INFERNAL -> VOID` (see [canonical_ordering.md](./canonical_ordering.md)).
+
+**Resolution**: reordered the `data.Category` enum constants to the canonical sequence. Every user-visible surface iterates `Category.values()` (per-species `DeferredRegister` insertion in `PFItems` / `PFBlocks`, the creative tab in `PFCreativeTabs`, JEI category pages, `PFClientEvents`), so they all follow the new order automatically - no per-surface change. Confirmed save-safe by the audit the spec required: persistence is by name (entity NBT writes `getCategory().name()` and reads `Category.valueOf`; the `contained_category` data component uses `.persistent(Category.CODEC)`, which is `StringRepresentable`-by-name). The only `ordinal()` uses are transient network sync (synced data + `STREAM_CODEC`), regenerated each session from the name-based persisted value, so nothing on disk remaps.
+
 ### 🟢 MC 1.21.1 port: per-category and per-variant tints not rendering on items - resolved (v1.0)
 Shipped as part of the 1.21.1 port (PR #81). The five root causes that surfaced from the 2026-05-23 playtest screenshot (frog egg layer order, missing spawn-egg color handler registrations, vanilla `SpawnEggItem` auto-color not firing for our subclasses, BlockColor not propagating to BlockItem, bucket silhouette textures rendering as empty overlays) all landed before v1.0.0 cut.
 
