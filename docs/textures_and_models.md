@@ -51,52 +51,27 @@ Vanilla textures stay as the base. With color-multiply tinting, the result is "v
 
 ## Per-Variant Color in JSON
 
-The `color_rgb` field on each `slime_variant` JSON drives all rendering tint for that variant:
+The `primary_color` and `secondary_color` fields on each `slime_variant` JSON drive all rendering tint for that variant. Both are packed 24-bit RGB integers (`0xRRGGBB`, range `0`..`0xFFFFFF`), not `[r, g, b]` triples. `category` is a bare species name (`cave`, not `productivefrogs:metallic`). A primer (`primer_item` or `primer_tag`) is required; there is no `display_name`, `color_rgb`, `core_color_rgb`, or `loot_table` field. A real entry (`data/productivefrogs/productivefrogs/slime_variant/iron.json`):
 
 ```json
 {
-  "display_name": { "translate": "entity.productivefrogs.iron_slime" },
-  "category": "productivefrogs:metallic",
-  "color_rgb": [180, 180, 180],
-  "core_color_rgb": [120, 120, 120],
-  "loot_table": "productivefrogs:entities/slime/iron"
+  "primer_item": "minecraft:iron_ingot",
+  "category": "cave",
+  "primary_color": 14211288,
+  "secondary_color": 12632256,
+  "inner_block": "minecraft:iron_block"
 }
 ```
 
-Suggested colors for the base variants:
+`primary_color` tints the slime body / inventory icon; `secondary_color` is the variant's accent tint. `inner_block` (optional) names the vanilla block whose texture is baked inside the slime (`scripts/generate_resource_slime_textures.py`). Cross-mod variants swap `primer_item` for a `primer_tag` (e.g. `c:ingots/tin`) gated behind `neoforge:conditions`.
 
-| Variant | `color_rgb` (body) | `core_color_rgb` (inner) |
-|---|---|---|
-| Iron Slime | `[180, 180, 180]` | `[120, 120, 120]` |
-| Copper Slime | `[200, 130, 80]` | `[140, 90, 50]` |
-| Gold Slime | `[230, 200, 50]` | `[180, 150, 30]` |
-| Redstone Slime | `[200, 30, 30]` | `[130, 20, 20]` |
-| Lapis Slime | `[40, 80, 200]` | `[20, 50, 140]` |
-| Coal Slime | `[40, 40, 40]` | `[20, 20, 20]` |
-| Diamond Slime | `[120, 230, 220]` | `[80, 180, 170]` |
-| Emerald Slime | `[40, 200, 80]` | `[20, 140, 50]` |
-| Amethyst Slime | `[180, 100, 220]` | `[130, 60, 170]` |
-| Sponge Slime | `[230, 210, 80]` | `[180, 160, 60]` |
-| Prismarine Slime | `[100, 180, 150]` | `[60, 130, 110]` |
-| Coral Slime | `[230, 80, 130]` | `[180, 50, 90]` |
-| Kelp Slime | `[40, 100, 40]` | `[20, 70, 20]` |
-| Ink Slime | `[20, 20, 30]` | `[10, 10, 20]` |
-| Nautilus Slime | `[220, 200, 180]` | `[170, 150, 130]` |
-| Blaze Slime | `[230, 130, 30]` | `[180, 90, 20]` |
-| Ghast Slime | `[230, 230, 230]` | `[200, 200, 200]` |
-| Wither Slime | `[30, 30, 40]` | `[20, 20, 30]` |
-| Ender Slime | `[20, 150, 130]` | `[10, 100, 90]` |
-| Echo Slime | `[120, 130, 180]` | `[80, 90, 130]` |
-| Vanilla Slime | `[100, 200, 100]` | `[60, 140, 60]` (matches vanilla) |
-| Magma Cube | `[230, 80, 30]` | `[180, 50, 20]` (matches vanilla) |
-
-These are starting points — easily tunable via JSON without recompiling.
+These are starting points - tunable via JSON without recompiling. Use a packed-int helper (`(r << 16) | (g << 8) | b`) when picking new colors.
 
 ## Data Flow at Render Time
 
 ```
-data/productivefrogs/slime_variant/iron.json
-  { "color_rgb": [180, 180, 180], ... }
+data/productivefrogs/productivefrogs/slime_variant/iron.json
+  { "primary_color": 14211288, "secondary_color": 12632256, ... }
               ↓  (loaded at world load / datapack reload)
        SlimeVariant registry
               ↓
@@ -104,7 +79,7 @@ ResourceSlime entity instance — variant = "iron"
               ↓
 Renderer asks: "what's my variant's color?"
               ↓
-Binds shared body texture + applies tint [180, 180, 180]
+Binds shared body texture + applies tint 0xD8D8D8
               ↓
                   Draws an iron-tinted slime
 ```
@@ -116,14 +91,19 @@ Same flow applies to:
 
 ## Texture Files Needed
 
-### Shared Base Textures (tintable, used across many variants)
+### Slime body textures (per-variant, baked)
+
+Resource Slimes are NOT a single shared body texture tinted at render. Each variant has its own pre-baked PNG (`scripts/generate_resource_slime_textures.py` bakes the `inner_block` into the body), and each parent species has a fallback texture. The outer shell is still tint-multiplied by `primary_color` on top of the baked texture.
 
 | File | Purpose |
 |---|---|
-| `textures/entity/resource_slime/body.png` | Slime body — grayscale or near-white, tintable |
-| `textures/entity/resource_slime/core.png` | Inner core overlay (the "cube inside" the slime) |
-| `textures/item/slime_bucket/contents.png` | Splash/liquid layer in the bucket item |
-| `textures/item/slime_bucket/exterior.png` | Bucket itself (vanilla bucket-style, NOT tinted) |
+| `textures/entity/slime/<variant>_resource_slime.png` | Per-variant baked Resource Slime body (e.g. `iron_resource_slime.png`); inner block baked in, shell tinted |
+| `textures/entity/slime/<species>_slime.png` | Per-species fallback body (`cave_slime.png`, `geode_slime.png`, `bog_slime.png`, `tide_slime.png`, `infernal_slime.png`, `void_slime.png`) |
+
+### Shared fluid / bucket textures (tintable)
+
+| File | Purpose |
+|---|---|
 | `textures/block/slime_milk_still.png` | Animated still fluid — lumpy slime texture |
 | `textures/block/slime_milk_flow.png` | Animated flowing fluid |
 | `textures/item/slime_milk_bucket.png` | Bucket of milk — exterior static, contents tinted |
@@ -145,12 +125,14 @@ Same flow applies to:
 
 | Entity | Body texture | Notes |
 |---|---|---|
-| Cave Slime | `entity/cave_slime.png` | Gray/stony with dust speckles |
-| Geode Slime | `entity/geode_slime.png` | Translucent prismatic with faceted overlays |
-| Tide Slime | `entity/tide_slime.png` | Translucent ocean-blue with bubble pattern |
-| Void Slime | `entity/void_slime.png` | Dark purple with starfield speckles |
+| Cave Slime | `entity/slime/cave_slime.png` | Gray/stony with dust speckles |
+| Geode Slime | `entity/slime/geode_slime.png` | Translucent prismatic with faceted overlays |
+| Bog Slime | `entity/slime/bog_slime.png` | Murky green with peat/mud overlays |
+| Tide Slime | `entity/slime/tide_slime.png` | Translucent ocean-blue with bubble pattern |
+| Infernal Slime | `entity/slime/infernal_slime.png` | Hot orange/red with ember speckles |
+| Void Slime | `entity/slime/void_slime.png` | Dark purple with starfield speckles |
 
-These are *not* tintable — each parent slime species has a fully designed texture. They're a one-time art investment (4 entities), not a per-variant cost.
+These are *not* tintable — each parent slime species has a fully designed texture. They're a one-time art investment (6 entities), not a per-variant cost.
 
 ## Item Models — JSON Format
 
@@ -177,7 +159,7 @@ For Slime Bucket (two-layer with tint on contents):
 }
 ```
 
-The mod registers an `ItemColor` provider for the `slime_bucket` item that returns the variant's `color_rgb` for `layer1` (tintindex 1) and white (no tint) for `layer0`.
+The mod registers an `ItemColor` provider for the `slime_bucket` item that returns the variant's `primary_color` for `layer1` (tintindex 1) and white (no tint) for `layer0`.
 
 ## Block Models — JSON Format
 

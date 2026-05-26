@@ -69,7 +69,7 @@ GameTests run real headless Minecraft scenarios in scripted plots. They're the r
 
 `runGameTestServer` boots a **dedicated server** — no client, no renderer, no shader pipeline. Any bug that lives entirely in the client-side render path is invisible to it. Treat GameTest as a server-state oracle, not a UI oracle. Specifically, GameTest cannot catch:
 
-- **Tint resolution** — wrong `ItemTintSource` registered, wrong layer index, `BlockColor` returning -1, source-alpha mismatch.
+- **Tint resolution** — wrong `ItemColor` lambda registered (`RegisterColorHandlersEvent.Item`), wrong layer index, `BlockColor` returning -1, source-alpha mismatch.
 - **Texture paths** — missing PNG, typo'd path resolving to the purple-and-black missing-texture cube.
 - **UV / model transforms** — fragment sampling the wrong section of an atlas, broken display transforms.
 - **Render type** — opaque vs. translucent vs. cutout misassignment, source-alpha collapsing a layered model.

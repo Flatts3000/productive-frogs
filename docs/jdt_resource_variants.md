@@ -83,10 +83,12 @@ cross-mod variant generator (`scripts/generate_cross_mod_variants.ps1`). Use BOM
 ## Dependency on the lang fallback
 
 These variants are component-driven, so their display names rely on the variant-id title-case
-fallback. The Froglight tooltip currently shows a **raw lang key** for fallback-only variants (see
-the open lang bug in [known_issues.md](./known_issues.md)). Land that fallback fix first, or
-hand-author `entity.productivefrogs.resource_slime.{ferricore,blazegold,celestigem,eclipsealloy}`
-lang entries alongside these variants, so the names read correctly in-game.
+fallback. That fallback fix already shipped (the JEI title-case fallback plus explicit `en_us.json`
+keys, guarded by a lang-completeness test - see "Recently resolved" in
+[known_issues.md](./known_issues.md)), so the raw-lang-key tooltip bug is no longer a blocker. JDT
+variants only need their own explicit
+`entity.productivefrogs.resource_slime.{ferricore,blazegold,celestigem,eclipsealloy}` lang entries
+to satisfy the lang-completeness gate and read correctly in-game.
 
 ## Verification
 

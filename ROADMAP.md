@@ -24,17 +24,11 @@ Every vanilla resource that fits cleanly under one of the six species became far
 
 Drop Productive Frogs into a modded pack and the relevant resource sets light up automatically, no configuration. Tech-mod metals and gems are covered out of the box: Mekanism, Create, Thermal, Applied Energistics 2, AllTheOres, Mystical Agriculture, Powah, Industrial Foregoing, and more. Each entry gates behind a soft mod-loaded check and silently skips when its source mod is absent, so the same jar is safe to drop into any pack. This release also added a built-in, opt-in debug-logging framework that makes troubleshooting a misbehaving setup far easier.
 
----
+### v1.3 (shipped 2026-05-26): cross-mod crush yields
 
-## v1.3 (next): cross-mod crush yields
+The one cross-mod piece that was missing from the v1 line. With Mekanism, Immersive Engineering, or EnderIO installed, crushing a metal Froglight yields double the resource instead of the single unit you get from smelting, matching how those mods already reward ore processing. It ships as optional `mod_loaded` recipes, so it activates only when one of those mods is present and changes nothing otherwise. AllTheOres, when present, broadens the metals covered. Design: [docs/v1_3_crush_recipes.md](./docs/v1_3_crush_recipes.md).
 
-The one cross-mod piece still missing from the v1 line. With Mekanism, Immersive Engineering, or EnderIO installed, crushing a metal Froglight yields double the resource instead of the single unit you get from smelting, matching how those mods already reward ore processing. It ships as optional `mod_loaded` recipes, so it activates only when one of those mods is present and changes nothing otherwise. AllTheOres, when present, broadens the metals covered.
-
-**Implemented (in-tree, pre-release):** 33 generated recipes under `data/productivefrogs/recipe/<modid>/`, pinned by `CrushRecipeTest`. The per-mod `runClient` smoke test is the remaining pre-release gate - see [docs/v1_3_crush_recipes.md](./docs/v1_3_crush_recipes.md).
-
----
-
-## v1.4 (in progress): the Spawnery (skyblock bootstrap)
+### v1.4.0 (shipped 2026-05-26): the Spawnery (skyblock bootstrap)
 
 A new V1 appliance for skyblock and other restricted-biome packs: the **Spawnery**.
 It is the frog-side analogue of the Slime Milker - a furnace-style block that turns
@@ -46,15 +40,24 @@ flips one config flag to turn it on. The primer set is pack-overridable via item
 tags. This unblocks the frog side of the loop where vanilla frogspawn is
 unreachable. Spec + design: [docs/spawnery.md](./docs/spawnery.md).
 
+### v1.4.1 (shipped 2026-05-26): Jade tooltips + tinted milk
+
+Quality-of-life polish. Optional Jade look-at tooltips for the appliances - the Slime Milk
+source block shows its remaining spawn count, and the Slime Milker / Spawnery show cook
+progress while running. Flowing and spread Slime Milk now tints per-variant, so a stream
+running off a source block matches the source's colour instead of falling back to the base hue.
+
+---
+
 ## v2: automation
 
 The scale-up release. v1 lives unchanged; v2 layers automation on top. A player who never crafts a v2 block still has every v1 capability.
 
-**Hopper-fed Slime Milker:** auto-input slime buckets, auto-output milk buckets. Drop-in upgrade over the v1 Milker.
+**Buffered / auto-upgrading Slime Milker:** the v1 Milker and Spawnery already expose basic hopper I/O (`Capabilities.ItemHandler.BLOCK`), so hoppers can feed and drain them today. The v2 layer is the buffered upgrade - internal slime/milk buffers and auto-cycling so a line keeps running without per-item hopper handoff.
 
 **Frog Terrarium / Habitat block:** placeable frog housing with input/output inventory. Houses one or more frogs in a contained system.
 
-**Auto-feeders:** hopper-fed slime delivery to nearby frogs. Alternative to milk-spawn proximity.
+**Auto-feeders:** hopper-fed slime delivery to nearby frogs (the frog side, not the appliance side - distinct from the appliance hopper I/O that already shipped in v1). Alternative to milk-spawn proximity.
 
 **Capacity / efficiency upgrades** for habitat blocks.
 

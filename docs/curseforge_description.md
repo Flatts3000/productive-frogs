@@ -47,7 +47,7 @@ Hopper-compatible. No power, no pipes, no multiblocks. The whole loop runs unatt
 
 ## Modpack-friendly
 
-Data-driven and extensible: adding a new resource variant is a single JSON file, no code or recompile needed. JEI Information pages auto-extend to teach the new entry. Cross-mod variants for Mekanism, Create, Thermal, and more are included; each gates behind a soft mod-loaded check and silently skips when the source mod is absent.
+Data-driven and extensible: adding a new resource variant is a single JSON file, no code or recompile needed. JEI Information pages auto-extend to teach the new entry. Cross-mod variants for Mekanism, Create, and more are included; each gates behind a soft mod-loaded check and silently skips when the source mod is absent.
 
 Full authoring guide: [docs on GitHub](https://github.com/Flatts3000/productive-frogs/tree/main/docs).
 
@@ -85,27 +85,25 @@ The mod is fully playable today. Everything below is live on CurseForge. Targets
 
 **v1.1 (shipped 2026-05-25): vanilla resource coverage.** Every vanilla resource that fits cleanly under one of the six species became farmable. Bog frogs gained the mob drops (bone, gunpowder, clay, rotten flesh, string, leather, feather); Cave gained glow ink sac, obsidian, echo shard; Geode gained amethyst; Tide gained ink sac and prismarine crystals; Infernal gained netherite scrap, glowstone, soul sand, soul soil, netherrack, blaze, quartz; Void gained chorus fruit and shulker shell.
 
-**v1.2 (shipped 2026-05-25): cross-mod variant pools.** Drop the jar into a modded pack and the relevant resource sets light up automatically, no configuration. Mekanism, Create, Thermal, Applied Energistics 2, AllTheOres, Mystical Agriculture, Powah, Industrial Foregoing, and more are covered out of the box. Each entry gates behind a soft mod-loaded check and silently skips when its source mod is absent, so the same jar is safe in any pack.
+**v1.2 (shipped 2026-05-25): cross-mod variant pools.** Drop the jar into a modded pack and the relevant resource sets light up automatically, no configuration. Mekanism, Create, Applied Energistics 2, AllTheOres, Mystical Agriculture, Powah, Industrial Foregoing, and more are covered out of the box. Each entry gates behind a soft mod-loaded check and silently skips when its source mod is absent, so the same jar is safe in any pack.
 
-### v1.3 (next): cross-mod crush yields
+**v1.3 (shipped): cross-mod crush yields.** With Mekanism, Immersive Engineering, or EnderIO installed, crushing a metal Froglight yields double the resource instead of the single unit you get from smelting, matching how those mods already reward ore processing. It activates only when one of those mods is present and changes nothing otherwise. Without a crusher mod, you smelt directly for the single unit.
 
-With Mekanism, Immersive Engineering, or EnderIO installed, crushing a metal Froglight yields double the resource instead of the single unit you get from smelting, matching how those mods already reward ore processing. It activates only when one of those mods is present and changes nothing otherwise.
+**v1.4.0 (shipped): the Spawnery.** An optional, config-gated skyblock bootstrap block: feed it glass bottles and slime balls and it produces bottled frogspawn so packs without a swamp can still start the loop. A slime ball primes plain frogspawn; a species primer (iron ingot, amethyst shard, bone, prismarine shard, blaze powder, ender pearl) primes that species. Off by default, and uncraftable + hidden until a pack enables it.
+
+**v1.4.1 (shipped): Jade look-at tooltips and per-variant flowing-milk tint.** Look at a slime, frog, or appliance with Jade installed and the tooltip names the species and variant. Flowing Slime Milk now picks up its per-variant color, matching the source block.
 
 ### v2: automation
 
 The scale-up release. v1 lives unchanged; v2 layers automation on top. A player who never crafts a v2 block still has every v1 capability.
 
-**Hopper-fed Slime Milker:** auto-input slime buckets, auto-output milk buckets.
+**Auto-fed Slime Milker:** an upgraded variant that pulls and pushes buckets without you standing there. (Basic hopper input/output already works in v1.)
 
 **Frog Terrarium / Habitat block:** placeable frog housing with input/output inventory.
 
 **Auto-feeders:** hopper-fed slime delivery to nearby frogs.
 
 **Capacity / efficiency upgrades** for habitat blocks.
-
-**Native crusher block:** an optional in-house double-yield crush path that works without external mods.
-
-**Pipe / hopper-aware fluid handling** for Slime Milk.
 
 **Potential:** FE / NeoForge Energy power compat.
 

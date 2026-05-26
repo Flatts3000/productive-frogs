@@ -5,7 +5,7 @@ The end-to-end production loop a player runs in V1, centered on the **Slime Milk
 ## The Loop
 
 ```
-1. Source slime  (vanilla farm, or infusion of a vanilla slime to make a Resource Slime)
+1. Source slime  (vanilla farm, or infusion of a PF parent-species slime (Cave/Geode/Bog/Tide/Infernal/Void) to make a Resource Slime)
        ↓ bucket the slime at size 1 (Slime Bucket item)
 2. Slime Milker (appliance block; right-click with slime bucket)
        ↓ consume the slime, output 1 Bucket of <Variant> Slime Milk
@@ -32,8 +32,7 @@ The end-to-end production loop a player runs in V1, centered on the **Slime Milk
 
 ## Slime Milk (fluid)
 
-- One fluid variant per slime variant: `productivefrogs:iron_slime_milk`, `productivefrogs:copper_slime_milk`, `productivefrogs:sponge_slime_milk`, `productivefrogs:ender_slime_milk`, etc.
-- Plus `productivefrogs:vanilla_slime_milk` (from milking a vanilla green slime — useful for slime farming itself) and `productivefrogs:magma_slime_milk` (from magma cubes).
+- One fluid, `productivefrogs:slime_milk`, with the variant carried on the bucket's data component and the source BlockEntity (not one fluid per variant). The variant drives the per-variant render tint.
 - **Flow**: lava-style. Slower than water; 4-block flow distance in overworld. Limits sprawling milk floods.
 - **Pickup**: empty bucket scoops a source block, converting it to a typed milk bucket. Other buckets (water, etc.) do not interact.
 - **Walking on it**: passive — no damage, no slowdown beyond normal liquid penalties. Visible color tint per variant.
@@ -136,6 +135,7 @@ These are the levers to tune balance:
  +---------------------------+
  |  Furnace (smelt direct)   |
  |   OR                      |
- |  Create/Mekanism/Thermal  |   ← compat crusher → 2× powder → smelt (V2)
+ |  Mekanism / Immersive     |   ← compat crusher → 2× powder → smelt (v1.3)
+ |  Engineering / EnderIO    |
  +---------------------------+
 ```

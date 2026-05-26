@@ -41,8 +41,8 @@ F:\minecraft-repos\
 
 1. **Repository creation** — `gh repo create` (skipped if exists).
 2. **Repository settings** — description, visibility, topics (`minecraft`, `neoforge-mod`, etc.), features (issues + discussions on, wiki + projects off), merge strategy (squash-only, delete-branch-on-merge, auto-merge enabled).
-3. **Branch protection on `main`** — required status check (`build`), no force-pushes, no deletions, no enforce-admins (owner can hotfix), no PR reviews required (solo OSS — re-enable when contributors arrive).
-4. **Labels** — 10 standard OSS labels + 6 per-category labels (`category/metallic`, `category/mineral`, `category/gem`, `category/aquatic`, `category/infernal`, `category/arcane`).
+3. **Branch protection on `main`** — required status checks (`build` **and** `gameTest`, the live repo requires both), no force-pushes, no deletions, no enforce-admins (owner can hotfix), no PR reviews required (solo OSS — re-enable when contributors arrive). (Note: `setup.ps1`'s required-contexts list still names only `build` and also needs the second context added.)
+4. **Labels** — 10 standard OSS labels + 6 per-species labels (`category/cave`, `category/geode`, `category/bog`, `category/tide`, `category/infernal`, `category/void`), one per parent slime species. (Note: `setup.ps1` still defines the old abstract label names (`category/metallic`, `category/mineral`, `category/gem`, `category/aquatic`, `category/infernal`, `category/arcane`) and also needs updating.)
 5. **Actions secrets** — `CURSEFORGE_TOKEN`, conditional on `$env:PF_CURSEFORGE_TOKEN` being set before the script runs. (Modrinth distribution is intentionally not supported — FTB ecosystem requires CurseForge-only distribution; Productive Frogs targets the FTB modpack audience.)
 
 ## What `setup.ps1` does NOT manage

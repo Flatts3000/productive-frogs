@@ -9,17 +9,17 @@ The numbered checklist in [versioning.md](./versioning.md) is the **canonical V1
 All V1 scope ("playable foundation + appliances") has shipped. The entries below are retained as a record of what landed and where; the only outstanding follow-up is cross-mod crush recipes (see Known Issues + the V2 section). New work starts from the V1.2+ sections.
 
 ### Slime sourcing — non-vanilla categories
-- ~~**Cave Slime entity**~~ — shipped in PR I1 (MINERAL).
-- ~~**Geode Slime entity**~~ — shipped in PR I2 (GEM).
-- ~~**Tide Slime entity**~~ — shipped in PR I3 (AQUATIC).
-- ~~**Void Slime entity**~~ — shipped in PR I4 (ARCANE).
+- ~~**Cave Slime entity**~~ — shipped in PR I1 (CAVE).
+- ~~**Geode Slime entity**~~ — shipped in PR I2 (GEODE).
+- ~~**Tide Slime entity**~~ — shipped in PR I3 (TIDE).
+- ~~**Void Slime entity**~~ — shipped in PR I4 (VOID).
 - ~~**Natural spawn rules for parent species**~~ — shipped. `SpawnPlacements` registered via `RegisterSpawnPlacementsEvent` in `PFModBusEvents`; biome-conditioned spawning gated by four `neoforge:add_spawns` BiomeModifier JSONs at `data/productivefrogs/neoforge/biome_modifier/`. Cave→dripstone_caves+deep_dark, Geode→stony/jagged/frozen peaks, Tide→deep/lukewarm/warm oceans (OCEAN_FLOOR heightmap so they land on the sea floor like Drowned), Void→small_end_islands. Spawn check is a Mob-typed mirror of `Monster.checkMonsterSpawnRules` (peaceful=no, dark enough, vanilla mob position checks).
 
 ### ~~SlimeVariant data registry (per-resource sub-categorization)~~ — shipped
-Datapack registry at `PFRegistries.SLIME_VARIANT` (created via `DataPackRegistryEvent.NewRegistry` in `PFDataPackRegistryEvents`). Entries live at `data/<ns>/productivefrogs/slime_variant/<name>.json`, codec-decoded by `SlimeVariant`. 12 variants ship (iron, copper, gold, redstone, lapis, coal, diamond, emerald, prismarine, sponge, magma_cream, ender_pearl). Lookups via `SlimeVariant.findByPrimerItem` (infusion) and `SlimeVariant.pickWeighted` (split discovery). `ResourceSlime` carries the variant as a SynchedEntityData id and resyncs category from the registry on load.
+Datapack registry at `PFRegistries.SLIME_VARIANT` (created via `DataPackRegistryEvent.NewRegistry` in `PFDataPackRegistryEvents`). Entries live at `data/<ns>/productivefrogs/slime_variant/<name>.json`, codec-decoded by `SlimeVariant`. 12 variants ship (iron, copper, gold, redstone, lapis, coal, diamond, emerald, prismarine, sponge, magma_cream, ender_pearl). Lookups via `SlimeVariant.findByPrimer` (infusion, item-or-tag; `findByPrimerItem` is the legacy exact-only path) and `SlimeVariant.pickWeighted` (split discovery). `ResourceSlime` carries the variant as a SynchedEntityData id and resyncs category from the registry on load.
 
 ### ~~Configurable Froglight item~~ — shipped
-`PFItems.CONFIGURABLE_FROGLIGHT` is registered with the `slime_variant` data component. Tint resolves via the `SlimeVariantTint` `ItemTintSource`. `FrogTongueDropHandler` emits the configurable Froglight stamped with the variant when the consumed slime carries a SlimeVariant, falling back to the category Froglight otherwise. Covered by the `variant_slime_kill_drops_configurable_froglight` GameTest.
+`PFItems.CONFIGURABLE_FROGLIGHT` is registered with the `slime_variant` data component. Tint resolves via an `ItemColor` lambda registered in `RegisterColorHandlersEvent.Item` (see `client/PFClientEvents.java`, the 1.21.1 form; the JSON `ItemTintSource` pipeline does not exist on 1.21.1). `FrogTongueDropHandler` emits the configurable Froglight stamped with the variant when the consumed slime carries a SlimeVariant, falling back to the category Froglight otherwise. Covered by the `variant_slime_kill_drops_configurable_froglight` GameTest.
 
 ### ~~Configurable Froglight placeable block (3D variant Froglight)~~ — shipped
 Promoted `configurable_froglight` from a plain Item to a `BlockItem` backed by `ConfigurableFroglightBlock` (`RotatedPillarBlock` + `EntityBlock`) and `ConfigurableFroglightBlockEntity`. The BE stores the `SLIME_VARIANT` Identifier (written by `ConfigurableFroglightItem#updateCustomBlockEntityTag` on placement; exposed via `collectImplicitComponents` for pick-block and the `copy_components(source=block_entity)` loot function). Block break + lighting mechanics match vanilla froglight identically — `strength(0.3F)`, `lightLevel(state -> 15)`, `sound(SoundType.FROGLIGHT)`, `survives_explosion` loot, default `NORMAL` push reaction. Per-variant tint resolves at render time via a `BlockColor` reading the BE → `SlimeVariant#primaryColor` from the datapack registry. Round-trip pinned by the `variant_froglight_round_trip_preserves_variant_through_place_and_break` GameTest.
@@ -132,13 +132,14 @@ The original V1.2 plan (add a new "biological mob drops" 7th category) is **obso
 
 Out of scope until V1 ships. [docs/versioning.md#v2--automation](./versioning.md) is canonical.
 
-- Auto-fed Slime Milker (hopper-integrated)
+- Buffered / auto-upgrading Slime Milker (basic hopper I/O already shipped in V1 via `Capabilities.ItemHandler.BLOCK`; V2 adds internal buffering + auto-cycling)
 - Frog Terrarium / Habitat block (placeable frog housing with I/O inventory)
-- Auto-feeders (hopper-fed slime delivery)
+- Auto-feeders (hopper-fed slime delivery to frogs)
 - Capacity / efficiency upgrades for habitat blocks
-- Native crusher block: an in-house double-yield crush path so the 2x bonus works without any external crusher mod. (The cross-mod crush recipes themselves are pulled forward to v1.3; see the Smelting + crush recipes section and [cross_mod_compat.md](./cross_mod_compat.md).)
 - Pipe/hopper-aware fluid handling for Slime Milk
 - FE / NeoForge Energy compat (optional)
+
+> **Not planned:** a native crusher block (an in-house double-yield crush path). The 2x crush yield is delegated to external crusher mods (Mekanism / Immersive Engineering / EnderIO) via the optional `mod_loaded` recipes shipped in v1.3.0; the mod will not ship its own crusher. Matches the "Explicitly NOT planned" lists in [ROADMAP.md](../ROADMAP.md) and [versioning.md](./versioning.md). Cross-mod crush rationale: [cross_mod_compat.md](./cross_mod_compat.md).
 
 ## Polish / debt — non-blocking, do when convenient
 
@@ -150,7 +151,7 @@ Items noted in commit messages or PR descriptions as known issues but not blocki
 
 ### Tests
 - ~~**GameTest for frog kill via actual tongue path.**~~ — resolved. New `frog_tongue_ai_path_drops_category_froglight` lets the frog's AI itself drive target selection, tongue extend, and damage dispatch (no `hurtServer` shortcut), so the test fails closed if any link breaks: sensor wiring, vanilla `FrogEat` behavior, the `Attributes.ATTACK_DAMAGE` value, or the `LivingDeathEvent` drop emitter. The original manual-damage test (`matching_frog_kill_drops_category_froglight`) is kept as a fast sanity-check of the death-event handler in isolation. 5/5 green on local repeat runs at the registered 400-tick timeout.
-- ~~**GameTest for `loadFromBucketTag` from a fresh-spawned tadpole.**~~ — resolved. `tadpole_bucket_round_trip_preserves_category` now exercises the full save→read→`loadFromBucketTag`→assert path, matching `slime_bucket_round_trip_preserves_variant`'s shape from PR #22. A fresh ResourceTadpole spawned with METALLIC is released via `loadFromBucketTag` from an INFERNAL-stamped bucket and must end up INFERNAL — silent no-ops would fail loudly.
+- ~~**GameTest for `loadFromBucketTag` from a fresh-spawned tadpole.**~~ — resolved. `tadpole_bucket_round_trip_preserves_category` now exercises the full save→read→`loadFromBucketTag`→assert path, matching `slime_bucket_round_trip_preserves_variant`'s shape from PR #22. A fresh ResourceTadpole spawned with CAVE is released via `loadFromBucketTag` from an INFERNAL-stamped bucket and must end up INFERNAL — silent no-ops would fail loudly.
 - ~~**Visual rendering verification.**~~ — resolved. `docs/testing.md` now carries a "What GameTest does NOT cover — visuals are blind" subsection enumerating the client-side surfaces GameTest can't see (tints, render types, textures, UV/transforms, particles, GUI, lang fallbacks), with the PR #27 outer-shell-gray bug as the canonical example. The bottom "manual playtesting" section also expands into an explicit minimum-checklist for visual-touching PRs (inventory + dropped + in-world tint check, render-type sanity, lang-fallback check, JEI search). Authors of `client/` / `assets/` / `Category.tintArgb` / model-JSON / lang changes are pointed at the playtest path with screenshot capture for the PR description.
 - ~~**`frog_tongue_targets_only_matching_category_slime` is flaky.**~~ — resolved. The original fixed-tick assertion raced against the two-sensor chain (`NEAREST_LIVING_ENTITIES` → `RESOURCE_FROG_ATTACKABLES`), each with a random `[0, scanRate)` first-scan offset. Switched to a polling pattern in `onEachTick`: succeed once `NEAREST_ATTACKABLE` holds the matching slime for a stability window of consecutive ticks, fail the moment the off-category slime appears, with a delayed-fallback assertion near the test timeout that fails with the last observed memory state if the sensor never settles. 5/5 green on local repeat runs.
 
@@ -163,7 +164,7 @@ Items noted in commit messages or PR descriptions as known issues but not blocki
   - ✅ **Parent slime entities** (Cave / Geode / Tide / Void) — inner-cube textures shipped + per-species outer-shell tint shipped in PR #77 (stone grey / diamond cyan / water blue / end-portal purple).
   - ✅ **`tadpole_silhouette.png` / `slime_silhouette.png`** — shipped as small head sprites peeking from the bucket mouth (PR #76).
 - ~~**Spawn eggs for ResourceFrog / ResourceSlime / ResourceTadpole.**~~ — shipped. 6 frog + 6 tadpole + 12 variant slime + 4 parent-species (Cave / Geode / Tide / Void) spawn eggs are registered in `PFItems` and exposed via `PFCreativeTabs.PRODUCTIVE_FROGS_TAB`. Variant slime eggs carry the `slime_variant` data component so each renders its resource colour rather than the broader category tint; pinned by `PFRegistryTest#variantSlimeSpawnEggCarriesSlimeVariantComponent` (12 parameterized cases).
-- ~~**Per-category SlimeOuterLayer tweaks.**~~ — shipped. `Category.shellTintArgb()` returns a desaturated tinted gray (70% light gray + 30% category colour); `ResourceSlimeRenderer.extractRenderState` writes that value into `ResourceSlimeRenderState.outerTint` for variant-less Resource Slimes. AQUATIC slimes now read cooler-gray, INFERNAL warmer-gray, etc., without going full red/orange/cyan. Variant-locked slimes still use the full-saturation `variant.primary_color` (the more specific match). Pinned by `CategoryTest#shellTintArgb*` (opacity, math, per-category distinctness).
+- ~~**Per-category SlimeOuterLayer tweaks.**~~ — shipped. `Category.shellTintArgb()` returns a desaturated tinted gray (70% light gray + 30% category colour); `ResourceSlimeRenderer.extractRenderState` writes that value into `ResourceSlimeRenderState.outerTint` for variant-less Resource Slimes. TIDE slimes now read cooler-gray, INFERNAL warmer-gray, etc., without going full red/orange/cyan. Variant-locked slimes still use the full-saturation `variant.primary_color` (the more specific match). Pinned by `CategoryTest#shellTintArgb*` (opacity, math, per-category distinctness).
 
 ### Tooling
 - ✅ **Jade.** Installed manually per [docs/dev_setup.md](./dev_setup.md); good enough for V1 dev. If Jade ever publishes to a maven we use cleanly, swap to a `runtimeOnly` dep like JEI — kept as a tracked nice-to-have, not a blocker.

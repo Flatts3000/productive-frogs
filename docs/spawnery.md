@@ -254,7 +254,7 @@ Data getters: `getCookProgress`, `getCookTotal` (fallback to `SPAWNERY_PRODUCTIO
 
 ```
 "block.productivefrogs.spawnery": "Spawnery",
-"productivefrogs.jei.spawnery.info": "Turns glass bottles into bottled frogspawn, fueled by slime balls. Leave the primer slot empty for vanilla frogspawn, or add a species primer (cobblestone, mud, kelp, amethyst, netherrack, or an ender pearl) to bottle that species' eggs. A skyblock bootstrap; off by default."
+"productivefrogs.jei.spawnery.info": "Turns glass bottles into bottled frogspawn, fueled by slime balls (one ball per bottle). A primer is required: a slime ball primes plain vanilla frogspawn, or a species primer (iron ingot for Cave, amethyst shard for Geode, bone for Bog, prismarine shard for Tide, blaze powder for Infernal, an ender pearl for Void) primes that species' eggs. Off by default; modpacks can retune the species primers."
 ```
 
 The Spawnery is a single block, not a variant, so the per-variant `LangCompletenessTest` 5-key family does not apply. The JEI key is covered by that test's `allReferencedJeiInfoKeysExist` check.
@@ -266,10 +266,11 @@ The Spawnery is a single block, not a variant, so the per-variant `LangCompleten
 - `ConfigEnabledConditionTest`: `Key.SPAWNERY.getSerializedName() == "spawnery"`; `Key.CODEC` round-trips `"spawnery"`; `Key.CODEC` rejects an unknown id.
 
 ### GameTest (`PFGameTests`, template `empty_5x5x5`, `timeoutTicks ~ 260` to clear the 200-tick default)
-- `spawneryProducesVanillaBottle`: place spawnery, set BOTTLE=glass_bottle, FUEL=slime_ball; succeedWhen OUTPUT is `FROG_EGG` with **no** `CONTAINED_CATEGORY`, bottle + fuel consumed.
-- `spawneryPrimesToSpecies`: BOTTLE + FUEL + PRIMER=cobblestone; succeedWhen OUTPUT is `FROG_EGG` with `CONTAINED_CATEGORY == CAVE`, primer consumed.
-- `spawneryStallsWithoutFuel`: BOTTLE only; assert no OUTPUT after a delay.
-- `spawneryStallsWithoutBottle`: FUEL only; assert no OUTPUT after a delay.
+- `spawnerySlimeBallPrimerProducesVanillaFrogspawn`: place spawnery, set BOTTLE=glass_bottle, FUEL=slime_ball, PRIMER=slime_ball; succeedWhen OUTPUT is `FROG_EGG` with **no** `CONTAINED_CATEGORY`, bottle + fuel + primer consumed.
+- `spawneryIronPrimerProducesCaveEgg`: BOTTLE + FUEL=slime_ball + PRIMER=iron_ingot (Cave's default primer); succeedWhen OUTPUT is `FROG_EGG` with `CONTAINED_CATEGORY == CAVE`, primer consumed.
+- `spawneryWithoutFuelDoesNotProduce`: BOTTLE + PRIMER, no fuel; assert cook progress stays 0 and no OUTPUT.
+- `spawneryWithoutBottleDoesNotConsumeFuel`: FUEL + PRIMER, no bottle; assert fuel kept and no OUTPUT.
+- `spawneryWithoutPrimerDoesNotProduce`: BOTTLE + FUEL, no primer; assert cook progress stays 0, fuel kept, no OUTPUT.
 
 (Placed-block function is config-independent, so these run under the default disabled config.)
 

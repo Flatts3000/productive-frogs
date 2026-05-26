@@ -8,7 +8,7 @@ Productive Frogs is a Minecraft content mod targeting **NeoForge 21.1.230 on Min
 
 The mod was originally built on 1.21.11 and **backported to 1.21.1** to match the Sky Frogs modpack (history in `docs/port_mc_1_21_1.md`). Several APIs differ from the newer line: the per-item tint pipeline, GameTest registration, and item/block registration shape all use the **older 1.21.1 forms** documented below. When in doubt, copy the pattern from an existing sibling file rather than reaching for a newer-MC API.
 
-v1.0 (foundation + appliances), v1.1 (vanilla resource coverage), and v1.2 (cross-mod variant pools + observability) have all shipped. Cross-mod crush recipes are the next release (v1.3); automation is V2. The runway lives in `ROADMAP.md`. The load-bearing design docs are `docs/architecture.md`, `docs/versioning.md`, `docs/species_as_category_redesign.md` (the **current** category model), and `ROADMAP.md`. Read those before non-trivial design changes; they encode decisions already litigated.
+v1.0 (foundation + appliances), v1.1 (vanilla resource coverage), v1.2 (cross-mod variant pools + observability), v1.3 (cross-mod crush yields), v1.4.0 (the Spawnery - a config-gated skyblock-bootstrap appliance), and v1.4.1 (Jade tooltips + flowing-milk tint) have all shipped. **Automation is V2** and has not started. The runway lives in `ROADMAP.md`. The load-bearing design docs are `docs/architecture.md`, `docs/versioning.md`, `docs/species_as_category_redesign.md` (the **current** category model), and `ROADMAP.md`. Read those before non-trivial design changes; they encode decisions already litigated.
 
 ## Common Commands
 
@@ -66,11 +66,28 @@ Two key interactions are **event-driven, not recipe-driven** (both `PlayerIntera
 
 This is the "stay close to vanilla" principle: where vanilla already has the right UX (water-bottle, fish-bucket, slimeball love-mode), mirror it via an event hook rather than inventing a custom recipe type or tool item.
 
+### Appliance blocks (furnace-style GUI stations)
+
+The hand-operated processing blocks - the **Slime Milker** and the **Spawnery** - share one shape; copy it for any new appliance rather than inventing a layout:
+
+- `content/block/<Name>Block` - the placed block (carries a `LIT`-style blockstate for the active glow), wires the BE ticker.
+- `content/block/entity/<Name>BlockEntity` - `implements MenuProvider`; owns the inventory, a `ContainerData` (syncs cook/burn progress to the open screen), and a **`static serverTick`** running a vanilla-furnace-style burn+cook loop (consume fuel to ignite a burn, advance `cookProgress`, `complete()` on the tick that fills the output).
+- `content/block/entity/<Name>Inventory` - the slot model behind a slot-bounded `ItemStackHandler`, exposing side-aware `inputView()` / `outputView()` slot views.
+- `content/menu/<Name>Menu` + `client/screen/<Name>Screen` - the container menu (registered via `PFMenuTypes`, screen bound in `PFClientEvents`) and its furnace-shaped GUI.
+
+**Hopper I/O is a capability, not a hook:** `PFModBusEvents.onRegisterCapabilities` registers `Capabilities.ItemHandler.BLOCK` (the **1.21.1** id - *not* the newer `Capabilities.Item.BLOCK` / `ResourceHandler<ItemResource>`) for each appliance BE, routing the down face to `outputView()` and other faces to `inputView()`. Mutate inventory through `extractItem` / `setStackInSlot` (never a raw shrink on a returned stack) so each change fires `onContentsChanged -> setChanged` independently. Appliances are **V1** (single-block); multiblocks/power are V2.
+
+### Config-gated content - the `config_enabled` datapack condition
+
+The Spawnery ships **off by default**: its crafting recipe carries `{"type":"productivefrogs:config_enabled","config":"spawnery"}`. `ConfigEnabledCondition` (`data/condition/`) is a NeoForge `ICondition` registered to `NeoForgeRegistries.Keys.CONDITION_CODECS` via `PFConditions`. When the gated flag is off the recipe drops at datapack load, so the block is uncraftable and JEI shows no recipe; the **placed block still works** (the flag gates crafting / JEI / creative visibility only). The condition reads `PFConfig` guarded by `SPEC.isLoaded()` and **fails closed** (disabled) if the spec isn't loaded yet, rather than throwing. The gateable flags are a closed enum (`ConfigEnabledCondition.Key`) so a JSON typo fails at decode time - add a `Key` to wire a new gated feature.
+
+A separate pack-override surface: the Spawnery's six `spawnery_primer/<species>` **item tags** (`PFItemTags`) decide which held item primes which species' frogspawn. This is deliberately *not* `SlimeVariant.findByPrimer` (that maps the whole resource pool); the Spawnery wants exactly one primer per species and a clean per-species override. A primer is always required - a slime ball primes vanilla frogspawn; an empty/untagged slot produces nothing. See `docs/spawnery.md` and `docs/modpack_integration.md`.
+
 ### Registry / lifecycle layout
 
-Wiring is centralized in `ProductiveFrogs.java`'s constructor: `PFDataComponents`, `PFFluidTypes`, `PFFluids`, `PFBlocks`, `PFItems`, `PFEntities`, `PFSensors`, `PFCreativeTabs` each expose a `register(IEventBus)` that hands a `DeferredRegister` to the mod bus. Game-event listeners (`EggPrimerHandler`, `FrogspawnBottlingHandler`, `SlimeInfusionHandler`, `SlimeSplitDiscoveryHandler`, `FrogTongueDropHandler`, `PFModBusEvents`, `PFClientEvents`, `PFDataPackRegistryEvents`) self-register via `@EventBusSubscriber(modid = MOD_ID)`; client-only code adds `value = Dist.CLIENT`.
+Wiring is centralized in `ProductiveFrogs.java`'s constructor: `PFDataComponents`, `PFFluidTypes`, `PFFluids`, `PFBlocks`, `PFItems`, `PFBlockEntities`, `PFMenuTypes`, `PFEntities`, `PFSensors`, `PFCreativeTabs`, `PFConditions` each expose a `register(IEventBus)` that hands a `DeferredRegister` to the mod bus. Game-event listeners (`EggPrimerHandler`, `FrogspawnBottlingHandler`, `SlimeInfusionHandler`, `SlimeSplitDiscoveryHandler`, `FrogTongueDropHandler`, `PFModBusEvents`, `PFClientEvents`, `PFDataPackRegistryEvents`) self-register via `@EventBusSubscriber(modid = MOD_ID)`; client-only code adds `value = Dist.CLIENT`.
 
-**Constructor ordering is load-bearing in one place:** `PFFluidTypes.register(...)` MUST run before `PFFluids.register(...)`. `BaseFlowingFluid.Properties` resolves its FluidType holder at fluid-build time, so the FluidType pass must complete first or the fluids fail to bind. The comment in `ProductiveFrogs.java` calls this out - don't reorder.
+**Constructor ordering is load-bearing in two places:** `PFFluidTypes` before `PFFluids` (`BaseFlowingFluid.Properties` resolves its FluidType holder at fluid-build time), and `PFBlocks` before `PFBlockEntities`/`PFMenuTypes` (each appliance `BlockEntityType.Builder.of` references its block at BE-registration time). The comments in `ProductiveFrogs.java` call both out - don't reorder. `PFConditions` has no ordering dependency.
 
 **Slime Milk is a single component-driven fluid**, not one-per-variant: one `slime_milk` fluid + source block + bucket, with the variant carried on the bucket's data component and the source BlockEntity, tinted per-variant at render. (An earlier design had ~35 per-variant milk objects; that was deliberately collapsed - don't reintroduce per-variant milk.)
 
@@ -109,6 +126,18 @@ Use `helper.succeedWhen` / `runAfterDelay` / `onEachTick` rather than busy-waiti
 
 Per-item runtime tinting uses the **legacy `RegisterColorHandlersEvent.Item` event** with `ItemColor` lambdas, registered in `client/PFClientEvents.java` (`onRegisterItemColors`). The newer JSON-driven `ItemTintSource` pipeline (a `"tints"` array in the item model) **does not exist on 1.21.1** - do not reach for it, and there are no `ItemTintSource` classes in the tree. Block-item inventory icons tint via `BlockColor` (registered in the same class). Add a content-tinted item by adding an `ItemColor` lambda to that event.
 
+**Fluid tint is position-aware.** The one `slime_milk` fluid tints per-variant via `IClientFluidTypeExtensions.getTintColor(state, getter, pos)` (registered in the same class). A source block reads its variant off its BE; **flowing/spread milk has no variant BE** (fluid spreading doesn't copy BlockEntities), so the resolver walks the fluid back to its source to tint the whole poured pool. Milk is meant to be poured into pools that slimes spawn from, so the full pool must tint - don't assume only the source needs color.
+
+### Container screens on 1.21.1 - the renderTooltip gotcha
+
+`AbstractContainerScreen#render` on **1.21.1 NeoForge does not call `renderTooltip`** - a screen that overrides only `renderBg` shows **no item tooltips** on slot hover. Every appliance screen must override `render(...)` to call `super.render(...)` then `this.renderTooltip(gui, mouseX, mouseY)` (see `SlimeMilkerScreen` / `SpawneryScreen`). `super.render` does not draw the tooltip, so there's no double-draw.
+
+### Client integrations - JEI and Jade (both `compileOnly`)
+
+Two optional integrations live under `client/` (**not** `compat/` - the same no-`compat/`-package rule applies):
+- **JEI** (`client/jei/ProductiveFrogsJeiPlugin`, `@JeiPlugin`) - registers per-component **subtype interpreters** (so Slime Bucket / Slime Milk Bucket / Frog Egg / Configurable Froglight variants show as distinct entries instead of collapsing into one) and per-item **info pages** walked from the `SlimeVariant` registry. `compileOnly` API + `runtimeOnly` jar in dev.
+- **Jade** (`client/jade/ProductiveFrogsJadePlugin`, `@WailaPlugin`) - in-world look-at tooltips for the appliances. **`compileOnly` only** - Jade stays a manual `run/mods` drop-in at runtime (adding it `runtimeOnly` double-loads against the drop-in and trips NeoForge's duplicate-modid check); when absent the plugin class never loads. **Gotcha:** every registered plugin UID needs a `config.jade.plugin_<modid>.<uid>` lang key in `en_us.json`, or Jade throws an `AssertionError` and the client resource reload fails.
+
 ### Observability - PFDebug
 
 A cross-cutting, opt-in debug logger (`PFDebug`) spans all layers (lifecycle, registry, config, infusion, split, tongue, egg, sensor, milker, milk_source, render, tint). Off by default; enable with `-Dproductivefrogs.debug=<areas>` or the `/pf debug <area> on` command. It logs each layer's resolution decisions to `latest.log` with a greppable `[PF/<area>]` prefix. Use it instead of adding ad-hoc logging when chasing a layer's behavior - client-render bugs in particular are invisible to GameTest, and this is how you trace them.
@@ -123,4 +152,4 @@ A cross-cutting, opt-in debug logger (`PFDebug`) spans all layers (lifecycle, re
 
 ## Scope Discipline (V1 vs V2)
 
-V1 is "playable foundation + appliance blocks" (hand-operated single-block stations, like a vanilla brewing stand or composter) and has shipped through v1.2. **V2 is automation** - hopper integration, power, multiblocks, terrariums. Check `docs/versioning.md` and `ROADMAP.md`: if a feature adds power/pipes/multiblocks it's V2 and shouldn't land in a V1.x branch. Rule of thumb: if vanilla has a single-block appliance equivalent, it's V1.
+V1 is "playable foundation + appliance blocks" (hand-operated single-block stations, like a vanilla brewing stand or composter) and has shipped through v1.4.1. **V2 is automation** - power, multiblocks, terrariums. Check `docs/versioning.md` and `ROADMAP.md`: if a feature adds power/pipes/multiblocks it's V2 and shouldn't land in a V1.x branch. Rule of thumb: if vanilla has a single-block appliance equivalent, it's V1.

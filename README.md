@@ -1,6 +1,6 @@
 # Productive Frogs
 
-A content mod for **Minecraft 1.21.1 / NeoForge 21.1.230**. v1.0 shipped 2026-05-24.
+A content mod for **Minecraft 1.21.1 / NeoForge 21.1.230**. Latest release: v1.4.1.
 
 **Download:** [CurseForge](https://www.curseforge.com/minecraft/mc-mods/productive-frogs) (preferred) | [GitHub Releases](https://github.com/Flatts3000/productive-frogs/releases) (mirror)
 
@@ -34,7 +34,7 @@ Variant Slime Bucket → Slime Milker → Slime Milk bucket
 
 | Species | Biome | Matching frog | Example variants |
 |---|---|---|---|
-| **Bog Slime** | swamps, mangrove swamps | Bog Frog | (V1.0 ships none — V1.1 adds bone, gunpowder, slime ball, etc.) |
+| **Bog Slime** | swamps, mangrove swamps | Bog Frog | bone, gunpowder, clay, string, leather, feather |
 | **Cave Slime** | dripstone caves, deep dark, lush caves | Cave Frog | iron, copper, gold, redstone, lapis, coal, diamond |
 | **Geode Slime** | mountain peaks (stony / jagged / frozen) | Geode Frog | emerald |
 | **Tide Slime** | deep oceans, warm + lukewarm oceans | Tide Frog | prismarine, sponge |
@@ -43,7 +43,7 @@ Variant Slime Bucket → Slime Milker → Slime Milk bucket
 
 Six parent species spawn naturally in their biomes. Vanilla `minecraft:slime` and `minecraft:magma_cube` are NOT part of the production system — only the PF parent species can be infused into Resource Slimes.
 
-**Variety lives on the slime side.** Adding a new variant for a future modpack is one JSON + one texture + one smelting recipe — no code change.
+**Variety lives on the slime side.** Adding a new variant for a future modpack is one JSON (texture and lang fall back automatically for cross-mod variants), no code change.
 
 ## Install
 
@@ -69,14 +69,16 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 
 ## Status
 
-**v1.0 — shipped 2026-05-24.** The full V1 design (hand-operated production loop, six species, twelve variants) is live.
+**Latest release: v1.4.1.** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, and the Spawnery.
 
 | Version line | Scope | Status |
 |---|---|---|
 | v1.0 | Base mechanics + Slime Milker | ✅ shipped |
-| v1.1 | 22 additional vanilla resource variants | 📋 designed, not yet shipped |
-| v1.2 | New mob-drop content + cross-mod variant pools | 📋 designed |
-| v2 | Automation: hoppers/power/pipes/multiblocks | 🔭 future |
+| v1.1 | Vanilla resource coverage | ✅ shipped |
+| v1.2 | Cross-mod variant pools + observability | ✅ shipped |
+| v1.3 | Cross-mod crush yields | ✅ shipped |
+| v1.4 | The Spawnery + Jade look-at tooltips | ✅ shipped |
+| v2 | Automation: power/multiblocks/terrariums | 🔭 future |
 
 Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope rationale: [`docs/versioning.md`](./docs/versioning.md).
 
@@ -90,7 +92,7 @@ Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope ra
 | [slime_sourcing.md](./docs/slime_sourcing.md) | How players obtain Resource Slimes |
 | [farming.md](./docs/farming.md) | Slime Milker production loop |
 | [architecture.md](./docs/architecture.md) | Data-driven variant system, tag layout, JSON registries |
-| [cross_mod_compat.md](./docs/cross_mod_compat.md) | Strategy for Mekanism, Create, Thermal, Mythic Metals |
+| [cross_mod_compat.md](./docs/cross_mod_compat.md) | Strategy for Mekanism, Create, Mythic Metals, and more |
 | [versioning.md](./docs/versioning.md) | V1 / V2 scope split |
 | [textures_and_models.md](./docs/textures_and_models.md) | Tint pipeline + texture roster |
 | [dev_setup.md](./docs/dev_setup.md) | Local dev environment + companion mod install |
@@ -113,7 +115,7 @@ cd productive-frogs
 ./gradlew runClient          # launch a dev Minecraft client with the mod loaded
 ```
 
-Build output: `build/libs/productivefrogs-1.0.0.jar`.
+Build output: `build/libs/productivefrogs-<version>.jar`.
 
 ## License
 

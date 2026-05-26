@@ -54,7 +54,7 @@ One logical change per commit. Squash trivially-related work locally before PR.
 - Java 21, target compatibility 21.
 - 4-space indent, no tabs.
 - No wildcard imports.
-- Imports ordered: `java.*`, `javax.*`, third-party, `net.minecraft.*` / `net.neoforged.*`, `com.flatts.productivefrogs.*`.
+- Imports: a single alphabetical block, no semantic groups (matches Mojang vanilla style and the existing files here). Do not split into `java.*` / third-party / `net.minecraft.*` groups.
 - Prefer immutable data structures; use Records for value types.
 - `null` is fair game — annotate ambiguous returns with `@Nullable` (NeoForge ships JetBrains annotations).
 
@@ -76,10 +76,10 @@ One logical change per commit. Squash trivially-related work locally before PR.
 
 The mod is data-driven. Most new slimes need no Java code:
 
-1. Add a JSON to `src/main/resources/data/productivefrogs/slime_variant/<name>.json` with the standard schema (see `docs/architecture.md`).
-2. Add the variant's ID to its category tag at `src/main/resources/data/productivefrogs/tags/slime_category/<category>.json`.
-3. Add a loot table at `src/main/resources/data/productivefrogs/loot_tables/entities/slime/<name>.json`.
-4. If the variant is from a specific other mod, wrap the JSONs in `neoforge:conditions → mod_loaded`.
+1. Add a JSON to `src/main/resources/data/productivefrogs/productivefrogs/slime_variant/<name>.json` (the double `productivefrogs` is the NeoForge datapack-registry convention, not a typo) with the standard schema (see `docs/architecture.md`). The variant's parent species is set by the `category` field **inside** that JSON (a bare name like `"cave"`); there is no separate category tag to update.
+2. No loot table needed per variant: all Resource Slimes share `src/main/resources/data/productivefrogs/loot_table/entities/resource_slime.json` (singular `loot_table/` on 1.21.1). The drop is variant-stamped at runtime, not authored per file.
+3. Fill the five required `en_us.json` lang keys for the variant (the build's `LangCompletenessTest` fails otherwise; `scripts/audit_lang_keys.py` lists what's missing).
+4. If the variant is from a specific other mod, wrap the JSON in `neoforge:conditions → mod_loaded` and key off a `c:` common tag via `primer_tag`.
 5. Run `./gradlew runData` to regenerate auto-data if any.
 6. Open a PR with the new files plus an entry in `CHANGELOG.md`.
 
@@ -90,7 +90,7 @@ No Java changes needed for most contributions of this shape.
 - Adding hard dependencies on other mods.
 - Multi-loader (Fabric) support — Productive Frogs is NeoForge-only by design. See `docs/architecture.md`.
 - Renaming the canonical primer items per category — these are part of the public API now.
-- Removing the per-variant `color_rgb` JSON field — modpack authors rely on it.
+- Removing the per-variant `primary_color` / `secondary_color` JSON fields — modpack authors rely on them.
 
 ## Maintainer Cadence
 

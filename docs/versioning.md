@@ -60,17 +60,26 @@ Cross-mod variant entries for the staple ATM10 tech mods, all `mod_loaded`-gated
 
 The enabling mechanism shipped in the same release: the `SlimeVariant` codec gained a `primer_tag` field (item-or-tag primer), and cross-mod entries key off the NeoForge `c:` common tags (`c:ingots/tin`, etc.) so one entry covers every mod that provides the tag. Each variant's smelt-back result is encoded in its own generated recipe JSON (`mod_loaded`-gated for cross-mod variants), not on the variant. See [cross_mod_compat.md](./cross_mod_compat.md) and species_as_category_redesign.md §Cross-mod variants for the per-mod placement. A cross-cutting debug-logging framework (`PFDebug`) also landed in this release.
 
+## V1.3 - Cross-Mod Crush Yields (SHIPPED v1.3.0, 2026-05-26)
+
+The cross-mod piece that completed the V1 line. With Mekanism, Immersive Engineering, or EnderIO installed, crushing a metal Froglight yields 2x the resource (matching how those mods already reward ore processing) instead of the single unit a vanilla smelt gives. Shipped as optional `mod_loaded` JSON recipes (33 generated recipes under `data/productivefrogs/recipe/<modid>/`, pinned by `CrushRecipeTest`), so it activates only when one of those crusher mods is present and is a no-op otherwise. AllTheOres broadens the metals covered. Per-variant `neoforge:components` recipes (no `crushable` tag, all variants are one item distinguished by component); each outputs the crusher's own dust, and the dust-to-ingot smelt closes the loop so PF ships no smelt-back. Build spec: [v1_3_crush_recipes.md](./v1_3_crush_recipes.md).
+
+## V1.4 - The Spawnery + Jade tooltips (SHIPPED v1.4.0 / v1.4.1, 2026-05-26)
+
+**v1.4.0 - the Spawnery.** A V1 appliance for skyblock and other restricted-biome packs: the frog-side analogue of the Slime Milker. A furnace-style block that turns glass bottles into bottled frogspawn, fueled by slime balls; an empty primer slot yields plain vanilla frogspawn, a species primer (cobblestone, mud, kelp, amethyst shard, netherrack, ender pearl) bottles that species' eggs. **Disabled by default** (a normal world has swamps); a pack flips one config flag to turn it on, and the primer set is pack-overridable via item tags. Like the Milker, it exposes basic hopper I/O (`Capabilities.ItemHandler.BLOCK`). Spec: [spawnery.md](./spawnery.md).
+
+**v1.4.1 - Jade tooltips + tinted milk.** Optional Jade look-at tooltips for the appliances (Slime Milk source spawn count; Slime Milker / Spawnery cook progress), plus flowing/spread Slime Milk now tints per-variant instead of falling back to the base hue.
+
 ## V2 — Automation
 
 Tools and blocks that let the player scale and automate the V1 loop. Built on top of V1; never replaces it.
 
 **In scope:**
 
-- **Auto-fed Slime Milker** — hopper-integrated variant of the V1 Milker, accepts slime buckets from a hopper and pushes milk buckets to an output side
+- **Buffered / auto-upgrading Slime Milker**: basic hopper I/O on the V1 Milker (and Spawnery) already shipped (`Capabilities.ItemHandler.BLOCK`, V1.0 above). The V2 layer is the *buffered* upgrade: internal slime/milk buffers and auto-cycling so a line runs without per-item hopper handoff, not the basic hopper hookup
 - **Frog Terrarium / Habitat** block — placeable frog housing with input/output inventory
 - **Auto-feeders** — hopper-fed slime delivery to nearby frogs (alternative to milk-spawn proximity)
 - **Capacity / efficiency upgrades** for habitat blocks
-- **Cross-mod crush 2× recipes** for Cave-species (ore / metal) Froglights via Create / Mekanism / Thermal — conditional `mod_loaded` JSON recipes. **Pulled forward to v1.3 as the next release** (was V2): see [ROADMAP.md](../ROADMAP.md). No `crushable` tag exists yet; it is created with the recipes. The work waits on a multi-mod test environment that can validate each target mod's recipe shape.
 - **Pipe/hopper-aware fluid handling** for Slime Milk
 - Potentially: power compatibility (FE / NeoForge Energy)
 
@@ -98,5 +107,5 @@ Not committed. Possible future directions:
 ## Compatibility Promise
 
 - V2 datapacks must not break V1 worlds.
-- V2 machines must remain optional — a player who never crafts a Slime Nursery in V2 still has every V1 capability.
+- V2 machines must remain optional — a player who never crafts a Frog Terrarium / Habitat in V2 still has every V1 capability.
 - Cross-mod compat datapacks are independent of V1/V2 split.

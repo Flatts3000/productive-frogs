@@ -11,7 +11,7 @@ Productive Frogs is open source, hosted on GitHub. This document captures the OS
 - Compatible with all major modpack license requirements.
 - Trivial to read; no surprises for contributors.
 
-The full license text lives in `LICENSE` at the repo root. Copyright header: `Copyright (c) 2026 Flatts`.
+The full license text lives in `LICENSE` at the repo root. Copyright header: `Copyright (c) 2026 Flatts3000`.
 
 ## Required Files
 
@@ -39,29 +39,28 @@ All under `.github/`:
 | `.github/PULL_REQUEST_TEMPLATE.md` | PR checklist (tests pass, docs updated, CHANGELOG entry) |
 | `.github/dependabot.yml` | Auto-PRs for Gradle dep updates |
 | `.github/FUNDING.yml` | Sponsor links (optional, can omit) |
-| `.github/workflows/ci.yml` | Build + test on every push and PR |
-| `.github/workflows/release.yml` | Publish to CurseForge on tag push (when ready) |
+| `.github/workflows/ci.yml` | Two required jobs (`build` + `gameTest`) on every push and PR |
 
 ## CI Pipeline (GitHub Actions)
 
-`ci.yml` runs on every push and PR:
+`ci.yml` is the only workflow. It runs two independent jobs on every push and PR, both required by `main` branch protection:
 
-1. Checkout code
-2. Set up JDK 21 (Temurin)
-3. Set up Gradle cache (key: `gradle-${{ hashFiles('**/*.gradle', 'gradle/wrapper/gradle-wrapper.properties') }}`)
-4. `./gradlew build` — full build + tests
-5. Upload build artifact (`.jar`) for review
+- **`build`** — checkout, JDK 21 (Temurin), Gradle setup + wrapper validation, then `./gradlew build` (compile + JUnit suite + assemble jar), and uploads the `.jar` artifact.
+- **`gameTest`** — same setup, then `./gradlew runGameTestServer` (a headless server that runs every in-world GameTest, exits non-zero on failure). Independent of `build` so the unit-test and in-world-test layers report separately.
 
-`release.yml` runs on tag push (`v*.*.*`):
+## Release (manual, not CI)
 
-1. Same build steps
-2. Verify tag matches `mod_version` in `gradle.properties`
-3. Publish to CurseForge via [Kir-Antipov/mc-publish](https://github.com/Kir-Antipov/mc-publish)
-4. Create GitHub Release with the jar attached and CHANGELOG section as body
+There is **no** release workflow. Publishing is a manual local step:
+
+```
+./gradlew publishCurseForge
+```
+
+This Gradle task (via the `net.darkhax.curseforgegradle` plugin) uploads `build/libs/*.jar` to CurseForge project **1552728**, with the per-version section of `CHANGELOG.md` as the file changelog, tagged MC 1.21.1 / NeoForge / Java 21. It depends on `build`, so a clean build runs first.
+
+The API key is read locally (first hit wins): `CURSEFORGE_API_KEY` from `.env` at the repo root (gitignored), then the `CURSEFORGE_API_KEY` env var, then the `cfApiToken` Gradle property. It is **not** a CI Actions secret - releases never run in GitHub Actions.
 
 Modrinth distribution is intentionally omitted — the FTB ecosystem requires CurseForge-only distribution, and Productive Frogs targets the FTB modpack audience. Players who want the mod can grab it from CurseForge or the GitHub Releases attachment.
-
-Secret required: `CURSEFORGE_TOKEN`. Set via `gh secret set` from the sibling `infra/setup.ps1` script (see [infrastructure.md](./infrastructure.md)).
 
 ## Contributor Conventions
 
