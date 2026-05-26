@@ -31,7 +31,7 @@ Targets MC 1.21.1 / NeoForge 21.1.230 / Java 21. Sky Frogs (the modpack PF was b
 
 Full v1.0 design spec: [species_as_category_redesign.md](./species_as_category_redesign.md). Port history: [port_mc_1_21_1.md](./port_mc_1_21_1.md).
 
-## V1.1 — Vanilla Resource Coverage (IMPLEMENTED, pending release)
+## V1.1 — Vanilla Resource Coverage (SHIPPED v1.1.0, 2026-05-25)
 
 Mostly-data release adding every vanilla item fitting cleanly into one of the six species. Each variant is a `slime_variant` JSON + recipe + lang, plus one one-line Java edit (the Slime Milk `VARIANTS` entry; fluids register at mod-init). The spawn egg is data-driven (CR-9) - one component item enumerated from the registry, no per-variant Java. The four templated JSON files per variant are emitted by `scripts/generate_v1_1_variants.ps1`.
 
@@ -54,11 +54,11 @@ The 5 mob-drop variants that were previously deferred to a separate V1.2 categor
 
 Full design lives in [v1_1_scope.md](./v1_1_scope.md).
 
-## V1.2 — Cross-Mod Variant Pools (PLANNED)
+## V1.2 — Cross-Mod Variant Pools (SHIPPED v1.2.0, 2026-05-25)
 
-Cross-mod variant entries (Mekanism osmium / tin / lead / uranium; Create zinc / brass / bronze; Thermal silver / nickel / signalum; Mythic Metals etc.) — all `mod_loaded`-gated additions to the appropriate species.
+Cross-mod variant entries for the staple ATM10 tech mods, all `mod_loaded`-gated additions to the appropriate species. ~24 variants ship: Mekanism (osmium, tin, lead, uranium, refined_obsidian), Create / Thermal-style alloys (zinc, brass, silver, nickel), AllTheOres metals (aluminum, mythril, orichalcum, and the shared `c:` metals), Applied Energistics 2 (certus_quartz, fluix, fluorite, silicon), Mystical Agriculture (inferium, supremium), Powah (niotic, spirited, nitro), and Industrial Foregoing (pink_slime). Most modded ores fit under Cave Slime; gems under Geode.
 
-Most modded ores fit under Cave Slime (overworld mined ores) — see species_as_category_redesign.md §Cross-mod variants for the per-mod placement.
+The enabling mechanism shipped in the same release: the `SlimeVariant` codec gained a `primer_tag` field (item-or-tag primer) and a per-variant `result_item` for the smelt-back, and cross-mod entries key off the NeoForge `c:` common tags (`c:ingots/tin`, etc.) so one entry covers every mod that provides the tag. See [cross_mod_compat.md](./cross_mod_compat.md) and species_as_category_redesign.md §Cross-mod variants for the per-mod placement. A cross-cutting debug-logging framework (`PFDebug`) also landed in this release.
 
 ## V2 — Automation
 
@@ -71,7 +71,7 @@ Tools and blocks that let the player scale and automate the V1 loop. Built on to
 - **Auto-feeders** — hopper-fed slime delivery to nearby frogs (alternative to milk-spawn proximity)
 - **Capacity / efficiency upgrades** for habitat blocks
 - **Native crusher block** — optional in-house version (so the 2× crush path works without external mods)
-- **Cross-mod crush 2× recipes** for metallic Froglights via Create / Mekanism / Thermal — conditional `mod_loaded` JSON recipes. The `productivefrogs:crushable/metallic` item tag is already reserved in V1; the recipes themselves wait on a multi-mod test environment that can validate each target mod's recipe shape.
+- **Cross-mod crush 2× recipes** for Cave-species (ore / metal) Froglights via Create / Mekanism / Thermal — conditional `mod_loaded` JSON recipes. **Pulled forward to v1.3 as the next release** (was V2): see [ROADMAP.md](../ROADMAP.md). No `crushable` tag exists yet; it is created with the recipes. The work waits on a multi-mod test environment that can validate each target mod's recipe shape.
 - **Pipe/hopper-aware fluid handling** for Slime Milk
 - Potentially: power compatibility (FE / NeoForge Energy)
 

@@ -4,9 +4,9 @@ Work that's been **deferred from a PR**, **planned in design docs but not yet sh
 
 The numbered checklist in [versioning.md](./versioning.md) is the **canonical V1 scope**; this doc is the implementation backlog tracking which V1 items are done vs outstanding, plus the polish/post-V1 work picked up along the way.
 
-## V1 — remaining work
+## ~~V1 — remaining work~~ — COMPLETE
 
-What's left to land before "playable foundation + appliances" is complete. Each item is a PR-sized slice.
+All V1 scope ("playable foundation + appliances") has shipped. The entries below are retained as a record of what landed and where; the only outstanding follow-up is cross-mod crush recipes (see Known Issues + the V2 section). New work starts from the V1.2+ sections.
 
 ### Slime sourcing — non-vanilla categories
 - ~~**Cave Slime entity**~~ — shipped in PR I1 (MINERAL).
@@ -34,8 +34,8 @@ Promoted `configurable_froglight` from a plain Item to a `BlockItem` backed by `
 - **J5** ✅ — Depletion counter + mod config wiring. `SlimeMilkSourceBlock` carries a `spawns_remaining` IntegerProperty (range [0, 16]); decrements on each successful spawn, drains to air on zero. New `PFConfig` (COMMON `ModConfigSpec`) exposes `depletionEnabled`, `depletionCount`, `minSpawnIntervalTicks`, `maxSpawnIntervalTicks`, `discoveryChancePerOffspring`. `SlimeSplitDiscoveryHandler.discoveryChancePerOffspring` promoted from public-static hack to a config read with a test-only override field (`testOverride`) that GameTests set in try/finally. Covered by 3 GameTests (decrement, drain on zero, default-state-is-max).
 
 ### Smelting + crush recipes
-- ✅ Froglight → base resource smelt recipes. 18 recipes shipped: 6 broad-strokes category Froglights (each → canonical resource: iron, redstone, diamond, prismarine_shard, magma_cream, ender_pearl) plus 12 variant configurable_froglight recipes that match via NeoForge's `neoforge:components` ingredient on the `slime_variant` data component. Covered by 3 GameTests (category lookup × 6, variant lookup × 12, negative case for unstamped configurable_froglight).
-- ✅ Crush tag `productivefrogs:crushable/metallic` ships with `metallic_froglight` as its only entry. Tag is reserved for V2; cross-mod crush recipes themselves are V2 scope (see V2 section).
+- ✅ Froglight → base-resource smelt recipes. Shipped for every category Froglight (`<category>_froglight` → that category's canonical resource) plus every variant `configurable_froglight` (matched via NeoForge's `neoforge:components` ingredient on the `slime_variant` data component). Covered by GameTests for category lookup, variant lookup, and the unstamped-froglight negative case.
+- ☐ Crush recipes (Create / Mekanism / Thermal) — NOT yet shipped. No `crushable` tag exists in the repo yet; it gets created alongside the recipes. Pulled forward as the current next-up task (was V2). Tracked in [known_issues.md](./known_issues.md) + the V2 section.
 
 ### ~~Player direct-feeding (Q9)~~ — shipped
 [docs/open_questions.md#9](./open_questions.md). `ResourceFrog.mobInteract` checks for a Slime Bucket, reads the bucket's stored Category + Variant via `ResourceTadpoleBucketItem.readCategory` / `readVariant`, and if the category matches the frog's, calls `FrogTongueDropHandler.dropFroglightAtFrog` to emit the matching Froglight (variant-stamped configurable_froglight when the bucket carried a Variant, broad-strokes category Froglight otherwise) and replaces the held bucket with vanilla `Items.BUCKET`. Mismatch falls through to `super.mobInteract` (vanilla `Frog.mobInteract` → `Animal.mobInteract` — slimeballs / name-tag still work). Covered by 3 GameTests (matching no-variant, matching iron-variant, mismatched category).
@@ -46,22 +46,11 @@ Promoted `configurable_froglight` from a plain Item to a `BlockItem` backed by `
 - ✅ Milk spawn interval: `PFConfig.MIN_SPAWN_INTERVAL_TICKS` + `PFConfig.MAX_SPAWN_INTERVAL_TICKS`.
 - ~~Per-parent-species default categories (config or datapack)~~ — shipped. New `productivefrogs:parent_species` datapack registry; entries at `data/<ns>/productivefrogs/parent_species/<name>.json` with shape `{ "entity_type": "...", "category": "..." }`. Six defaults ship (vanilla `Slime`/`MagmaCube` + the four PF parent species). `SlimeSplitDiscoveryHandler.categoryForParent` now does an EntityType-id lookup against the registry instead of an `instanceof` chain — drops the subclass-ordering footgun and lets modpacks wire modded slime mobs into the discovery loop. Pinned by `ParentSpeciesEntryTest` (codec round-trips + error paths) and the new `parent_species_datapack_registry_loads_six_defaults` GameTest.
 
-## V1.0.x — port to MC 1.21.1 / NeoForge 21.1.230 (blocks everything else)
+## ~~V1.0.x — port to MC 1.21.1 / NeoForge 21.1.230~~ — DONE
 
-Sky Frogs is locked to 1.21.1; PF must rebuild on 1.21.1 to ship in the pack. This is a port, not a version bump — ~10 minor versions of API changes to revert. Full design in [port_mc_1_21_1.md](./port_mc_1_21_1.md). Estimated 3-4 weeks across 11 phases on a long-lived branch:
+Productive Frogs was rebuilt from 1.21.11 down onto **MC 1.21.1 / NeoForge 21.1.230** to match Sky Frogs (PR #80 + #81). `gradle.properties` now pins 1.21.1 / 21.1.230, and v1.0.0 through v1.2.0 all shipped on the ported codebase. Full design is preserved in [port_mc_1_21_1.md](./port_mc_1_21_1.md).
 
-- ☐ **Phase 0** — Branch + gradle setup (gradle.properties, neoforge.mods.toml version ranges, moddev plugin version check).
-- ☐ **Phase 1** — `Identifier` → `ResourceLocation` mechanical sweep (33 files).
-- ☐ **Phase 2** — BE save/load: revert `ValueInput`/`ValueOutput` → `CompoundTag` (5 BlockEntities).
-- ☐ **Phase 3** — NeoForge resource handler API revert: `ItemStacksResourceHandler` → `IItemHandler` / `ItemStackHandler` (3 files).
-- ☐ **Phase 4** — GameTest annotation revert: `@GameTestHolder` + `@GameTest`, remove the `DeferredRegister<Consumer<GameTestHelper>>` scaffolding.
-- ☐ **Phase 5** — Tint pipeline revert: delete `assets/.../items/*.json` (~70 files), delete 3 `ItemTintSource` classes, register `ItemColor` lambdas via `RegisterColorHandlersEvent.Item`.
-- ☐ **Phase 6** — Data path renames: `tags/item/`→`tags/items/`, `tags/entity_type/`→`tags/entity_types/`, `structure/`→`structures/`, `loot_table/`→`loot_tables/`, `recipe/`→`recipes/`; bump `pack.mcmeta` `pack_format` to 48.
-- ☐ **Phase 7** — Item / Block registration shape revert (`registerItem(name, Function, props)` → `register(name, () -> new Item(props))`).
-- ☐ **Phase 8** — `DataPackRegistryEvent.NewRegistry` + codec adjustments for SlimeVariant / ParentSpecies registries.
-- ☐ **Phase 9** — Biome modifier JSON adjustments (4 files at `data/.../neoforge/biome_modifier/`).
-- ☐ **Phase 10** — Final compile sweep + full manual playtest (creative-tab, milker pipeline, all 12 variants).
-- ☐ **Phase 11** — Merge to main; update `CLAUDE.md` + `docs/dev_setup.md` + `docs/architecture.md` to reflect new versions.
+The **V1.5 species-as-category redesign** ([species_as_category_redesign.md](./species_as_category_redesign.md)) rode in on the same branch: the `Category` enum is now CAVE / GEODE / BOG / TIDE / INFERNAL / VOID (named for the parent species, not abstract categories). The 1.21.x singular datapack dirs (`recipe/`, `loot_table/`, `structure/`, `tags/item/`) were already correct for 1.21.1, so the planned plural-rename phase was a no-op.
 
 ## ~~Data-driven variant architecture refactor~~ — DONE
 
@@ -83,7 +72,7 @@ decision history in [refactor_data_driven_variants.md](./refactor_data_driven_va
 - ☑ **Slime texture fallback** — `ResourceSlimeRenderer` uses the category
   texture when a variant ships no `<variant>_resource_slime.png`.
 
-## V1.1 — vanilla resource coverage (IMPLEMENTED, pending release)
+## ~~V1.1 — vanilla resource coverage~~ — SHIPPED (v1.1.0)
 
 Adds every vanilla item fitting cleanly into one of the existing 6 species. JSON-only authoring (plus the one Slime Milk `VARIANTS` Java edit). Full design in [v1_1_scope.md](./v1_1_scope.md). 22 new variants → 33 total post-V1.1 (the v1.0 `magma_cream` variant was also removed as redundant).
 
@@ -133,9 +122,9 @@ Per-variant work for each = a `slime_variant` JSON (with `primer_item` exact-mat
 - ✗ `wither_rose` — dropped (the primer-tag-only fallback this depended on is gone in v1.0).
 - ✗ `end_stone` — dropped (same as wither_rose).
 
-## V1.2 — cross-mod variant pools
+## ~~V1.2 — cross-mod variant pools~~ — SHIPPED (v1.2.0)
 
-Cross-mod variant entries for the popular ATM10 mods (Mekanism, Create, Thermal, AE2, AllTheOres, Industrial Foregoing, ...). **Researched plan of record: [cross_mod_compat.md](./cross_mod_compat.md)** (2026-05-25). Key finding: key variants off the NeoForge `c:` common tags (`c:ingots/tin`, etc.), not one mod's exact item - one entry then covers every providing mod (incl. AllTheOres, which is a parallel ore set, not a unifying layer). Needs one small mechanism (a `primer_tag` field + `tag_empty` gating + per-variant `result_item` for the smelt-back), then the pool is generated from a data table. First pass: ~8 Tier-1 CAVE metals + GEODE gems (tag-driven), then bespoke signature items (pink slime, enderium, Powah crystals, MA essences).
+Cross-mod variant entries for the popular ATM10 mods, shipped in PR #109. Design of record: [cross_mod_compat.md](./cross_mod_compat.md). The `SlimeVariant` codec gained a `primer_tag` field (item-or-tag primer) and a per-variant `result_item` for the smelt-back; cross-mod entries are gated by `neoforge:conditions → mod_loaded` and key off the NeoForge `c:` common tags (`c:ingots/tin`, etc.) so one entry covers every providing mod (incl. AllTheOres, a parallel ore set). ~24 cross-mod variants ship: metals (aluminum, tin, lead, nickel, osmium, silver, zinc, brass, uranium, mythril, orichalcum), AE2 (certus_quartz, fluix, fluorite, silicon), Mystical Agriculture (inferium, supremium), Industrial Foregoing (pink_slime), Powah (niotic, spirited, nitro), Mekanism (refined_obsidian), and more. The observability framework (PFDebug) also rode this release.
 
 The original V1.2 plan (add a new "biological mob drops" 7th category) is **obsolete**: under the species model those 5 vanilla items (bone, rotten_flesh, string, leather, feather) fit cleanly under Bog Slime in V1.1, no new species required.
 
@@ -148,7 +137,7 @@ Out of scope until V1 ships. [docs/versioning.md#v2--automation](./versioning.md
 - Auto-feeders (hopper-fed slime delivery)
 - Capacity / efficiency upgrades for habitat blocks
 - Native crusher block (in-house 2× path so we don't depend on Create/Mekanism/Thermal)
-- Cross-mod crush 2× recipes for metallic Froglights via Create / Mekanism / Thermal — conditional `mod_loaded` JSON recipes. The `productivefrogs:crushable/metallic` tag is already reserved in V1; the recipes wait on a multi-mod test environment.
+- Cross-mod crush 2× recipes via Create / Mekanism / Thermal — conditional `mod_loaded` JSON recipes that crush Cave-species (ore / metal) Froglights for a 2× yield. No `crushable` tag exists yet; it gets created with the recipes. Waiting on a multi-mod test environment. (Currently pulled forward as the active next-up task — see top of the Smelting + crush recipes section.)
 - Pipe/hopper-aware fluid handling for Slime Milk
 - FE / NeoForge Energy compat (optional)
 

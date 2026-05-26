@@ -36,7 +36,7 @@ Bucket-only is the shipped UI in V1 — no jugs, tanks, or custom fluid containe
 Source blocks deplete after `depletionCount` spawns (default 16) and drain to air. The texture does NOT desaturate as the counter approaches zero — the counter lives in blockstate but has no client-side visual cue. Specced in `farming.md`; deferred to polish so J5 could ship without a custom fluid renderer.
 
 ### 🔵 No native crusher / pestle
-V1 ships no in-house crushing block. The 2× metallic yield is unlocked by installing Create, Mekanism, or Thermal (compat recipes still pending — see Cross-Mod section below).
+V1 ships no in-house crushing block. The 2× yield on Cave-species (ore / metal) Froglights is unlocked by installing Create, Mekanism, or Thermal (compat recipes still pending — see Cross-Mod section below).
 
 ### 🔵 No drop-collection block
 Use vanilla hoppers under the frog pen to collect Froglight item entities. A custom collection block is V2.
@@ -46,9 +46,9 @@ Use vanilla hoppers under the frog pen to collect Froglight item entities. A cus
 ## Cross-Mod Compat caveats
 
 ### 🔵 Crush recipes (Create / Mekanism / Thermal) not yet shipped
-Design ([farming.md §Cross-Mod](./farming.md)) calls for conditional `mod_loaded` JSON recipes converting 1 metallic Froglight → 2 dust / crushed material. Not in V1 — will ship as a follow-up once we have a test environment that can validate the cross-mod recipe shapes. Players can still smelt directly for 1× yield in the meantime.
+Design ([farming.md §Cross-Mod](./farming.md)) calls for conditional `mod_loaded` JSON recipes converting 1 Cave-species (ore / metal) Froglight → 2 dust / crushed material. Not yet shipped — pending a multi-mod test environment that can validate the cross-mod recipe shapes. Players can still smelt directly for 1× yield in the meantime.
 
-The `productivefrogs:crushable/metallic` item tag is reserved for this purpose and will be populated alongside the recipes.
+A `crushable` item tag will be created and populated alongside the recipes (none exists in the repo yet).
 
 ### 🔵 No `compat/` Java package — deliberate
 Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:conditions → mod_loaded`. Variants for modded resources (e.g. Mythic Metals) similarly ship as JSON `SlimeVariant` entries with `mod_loaded` conditions. See `docs/architecture.md` for the schema.
@@ -67,4 +67,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-25 (resolved both open bugs - empty-bucket capture + canonical species ordering - and moved them to the archive).*
+*Last updated: 2026-05-25 (staleness pass: corrected pre-V1.5 "metallic" Froglight references to Cave-species naming, and removed the false claim that a `crushable` tag already exists - it does not yet).*

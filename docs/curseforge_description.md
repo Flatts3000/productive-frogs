@@ -30,7 +30,7 @@ below, then paste this file's body into CF.
 ## How it works
 
 1. Find a slime (they spawn in themed biomes).
-2. Right-click it with the resource you want: iron ingot, copper ingot, diamond, prismarine shard, magma cream, ender pearl, and more.
+2. Right-click it with the resource you want: iron ingot, copper ingot, diamond, prismarine shard, ender pearl, and more.
 3. Feed the slime to the matching frog.
 4. The frog drops a Froglight tied to that resource.
 5. Smelt the Froglight in a vanilla furnace. Get your resource back.
@@ -77,47 +77,19 @@ Where the mod is going. The [CHANGELOG](https://github.com/Flatts3000/productive
 
 Living document. Anything below a "shipped" version can move between tracks based on player feedback, modpack-author requests, or scope realities.
 
-### v1.0 (shipped 2026-05-24)
+### Shipped
 
-The playable foundation. Hand-operated production loop, no automation. Targets Minecraft 1.21.1 / NeoForge 21.1.230 / Java 21.
+The mod is fully playable today. Everything below is live on CurseForge. Targets Minecraft 1.21.1 / NeoForge 21.1.230 / Java 21.
 
-**Frog species (one per biome):** Bog, Cave, Geode, Tide, Infernal, Void. Each spawns naturally in its themed biome and only eats slimes that match it.
+**v1.0 (shipped 2026-05-24): foundation + appliances.** Six frog species (Bog, Cave, Geode, Tide, Infernal, Void), each spawning in its themed biome and only eating the slimes that match it. The starter resource set: iron, copper, gold, redstone, lapis, coal, diamond, emerald, prismarine, sponge, ender pearl. The Slime Milker appliance and Slime Milk source blocks keep production going hands-off. JEI Information pages and Jade tooltips out of the box. Adding a new resource is a single JSON file, no Java.
 
-**Resource variants:** iron, copper, gold, redstone, lapis, coal, diamond, emerald, prismarine, sponge, magma cream, ender pearl. Right-click any wild slime with the resource item to convert it.
+**v1.1 (shipped 2026-05-25): vanilla resource coverage.** Every vanilla resource that fits cleanly under one of the six species became farmable. Bog frogs gained the mob drops (bone, gunpowder, clay, rotten flesh, string, leather, feather); Cave gained glow ink sac, obsidian, echo shard; Geode gained amethyst; Tide gained ink sac and prismarine crystals; Infernal gained netherite scrap, glowstone, soul sand, soul soil, netherrack, blaze, quartz; Void gained chorus fruit and shulker shell.
 
-**Production blocks:** Slime Milker (furnace-style appliance), Slime Milk source blocks (place to spawn more of the same variant slime nearby).
+**v1.2 (shipped 2026-05-25): cross-mod variant pools.** Drop the jar into a modded pack and the relevant resource sets light up automatically, no configuration. Mekanism, Create, Thermal, Applied Energistics 2, AllTheOres, Mystical Agriculture, Powah, Industrial Foregoing, and more are covered out of the box. Each entry gates behind a soft mod-loaded check and silently skips when its source mod is absent, so the same jar is safe in any pack.
 
-**Companion mod integration:** JEI Information pages and Jade in-world tooltips ship out of the box.
+### v1.3 (next): cross-mod crush yields
 
-**Modpack authoring:** new variants are one JSON file, no Java required. Cross-mod variants gate behind NeoForge `mod_loaded` conditions and silently skip when the source mod isn't present.
-
-### v1.1 (next): vanilla resource coverage
-
-Expanding the variant roster to cover every vanilla resource that fits cleanly into one of the six species. JSON-only release: no new Java, no new species.
-
-**Bog Slime gains:** bone, gunpowder, clay ball, rotten flesh, string, leather, feather, slime ball.
-
-**Cave Slime gains:** glow ink sac, obsidian, echo shard.
-
-**Geode Slime gains:** amethyst.
-
-**Tide Slime gains:** ink sac.
-
-**Infernal Slime gains:** netherite scrap, glowstone dust, soul sand, soul soil, netherrack, blaze, quartz.
-
-**Void Slime gains:** chorus fruit, shulker shell.
-
-### v1.2 (designed): cross-mod variant pools
-
-Modded variants gated by `mod_loaded` conditions for the staple tech mods. Drop the Productive Frogs jar into a modded pack and the relevant variant set activates automatically. No PF code touches the dependent mods' classes.
-
-**Mekanism:** osmium, tin, lead, uranium.
-
-**Create:** zinc, brass, bronze.
-
-**Thermal Series:** silver, nickel, signalum.
-
-**Mythic Metals:** full integration scope TBD.
+With Create, Mekanism, or Thermal installed, crushing an ore or metal Froglight yields double the resource instead of the single unit you get from smelting, matching how those mods already reward ore processing. It activates only when one of those mods is present and changes nothing otherwise.
 
 ### v2: automation
 
@@ -131,9 +103,7 @@ The scale-up release. v1 lives unchanged; v2 layers automation on top. A player 
 
 **Capacity / efficiency upgrades** for habitat blocks.
 
-**Crush 2x recipes** for metallic Froglights via Create / Mekanism / Thermal crushers.
-
-**Native crusher block** (optional in-house implementation).
+**Native crusher block:** an optional in-house double-yield crush path that works without external mods.
 
 **Pipe / hopper-aware fluid handling** for Slime Milk.
 
