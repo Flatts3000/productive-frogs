@@ -18,14 +18,9 @@ Symbols 🟢 (resolved) and 🟠 (reopened / since-reverted) live in the [archiv
 
 ## Open issues
 
-### 🔴 Cross-mod variant slimes show a raw lang key in the Froglight tooltip
-The Configurable Froglight tooltip reads "Dropped when a Cave Frog eats a **entity.productivefrogs.resource_slime.osmium**. Smelts in a furnace to the resource it represents." - the slime's name is the untranslated entity translation key instead of a readable name. (Observed on osmium; affects every cross-mod variant.)
+No open player-facing bugs currently. By-design V1 limitations are listed below.
 
-**Cause:** `en_us.json` ships `entity.productivefrogs.resource_slime.<variant>` entries only for the base and v1.1 variants (iron, copper, ..., bog/cave/...). Cross-mod variants (osmium, tin, lead, and the rest of the `c:`-tag pool) have no such entry, and the Froglight tooltip interpolates the slime's entity description id directly, with no title-case fallback on that path. So any variant relying on the fallback shows the raw key; hand-authored variants render fine. Note the category part ("Cave Frog") resolves correctly - only the variant-specific slime name is broken.
-
-**Fix:** apply the same variant-id title-case fallback already used for the Froglight / Slime Milk bucket / spawn-egg display names to the slime name interpolated in this tooltip (so `osmium` -> "Osmium Slime"), instead of reading the entity description id raw. A data-driven variant must not need a hand-written lang entry to read correctly - that is the point of the title-case fallback. Verify in `runClient` against a cross-mod variant.
-
-Recently resolved (see the [archive](./known_issues_archive.md)): empty-bucket slime capture, and canonical species ordering across tabs / JEI / recipe book. By-design V1 limitations are listed below.
+Recently resolved (see the [archive](./known_issues_archive.md)): the JEI info text calling the block "Configurable Froglight" instead of its "Froglight" display name (now guarded by a copy-lint test); cross-mod variant slimes showing a raw lang key in the Froglight tooltip (fixed via the JEI title-case fallback plus explicit `en_us.json` keys for all 57 shipped variants, now guarded by a lang-completeness unit test); empty-bucket slime capture; and canonical species ordering across tabs / JEI / recipe book.
 
 ---
 
@@ -74,4 +69,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-25 (staleness pass: corrected pre-V1.5 "metallic" Froglight references to Cave-species naming, and removed the false claim that a `crushable` tag already exists - it does not yet).*
+*Last updated: 2026-05-25 (fixed the JEI "Configurable Froglight" -> "Froglight" copy and added a copy-lint test; earlier the same day resolved the cross-mod variant raw-lang-key bug. Both now in the archive; no open player-facing bugs remain).*

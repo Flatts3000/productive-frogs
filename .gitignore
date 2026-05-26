@@ -33,6 +33,10 @@ desktop.ini
 logs/
 hs_err_*.log
 
+# Python tooling caches (scripts/)
+__pycache__/
+*.pyc
+
 # Local environment / secrets
 .env
 .env.local
