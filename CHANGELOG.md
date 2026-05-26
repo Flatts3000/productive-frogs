@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.4.2 - 2026-05-26 - Geode & Tide roster rebalance
+
+More to farm in the two thinnest species, plus a balance move.
+
+### Added
+
+- **Geode** gained **tuff** and **calcite** - the stony, crystal-adjacent blocks that make up an amethyst geode, now farmable through the Geode frog.
+- **Tide** gained **sea pickle** and **nautilus shell** - renewable nautilus shells are handy for conduits.
+
+### Changed
+
+- **Diamond is now a Geode resource** (was Cave), so the Geode frog eats diamond slimes. A balance move that gives the sparser Geode species a marquee resource. Existing diamond slimes and Froglights keep working - only which frog eats them changes.
+
 ## v1.4.1 - 2026-05-26 - Jade tooltips & tinted milk pools
 
 Optional Jade integration for at-a-glance appliance readouts, plus a fix so
