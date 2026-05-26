@@ -35,7 +35,7 @@ Promoted `configurable_froglight` from a plain Item to a `BlockItem` backed by `
 
 ### Smelting + crush recipes
 - ✅ Froglight → base-resource smelt recipes. Shipped for every category Froglight (`<category>_froglight` → that category's canonical resource) plus every variant `configurable_froglight` (matched via NeoForge's `neoforge:components` ingredient on the `slime_variant` data component). Covered by GameTests for category lookup, variant lookup, and the unstamped-froglight negative case.
-- ☐ Crush recipes (Create / Mekanism / Thermal) — NOT yet shipped. No `crushable` tag exists in the repo yet; it gets created alongside the recipes. Pulled forward as the current next-up task (was V2). Tracked in [known_issues.md](./known_issues.md) + the V2 section.
+- ☐ Crush recipes (Mekanism / Immersive Engineering / EnderIO, + AllTheOres dust layer) — NOT yet shipped; the current next-up task (v1.3). Per-variant `neoforge:components` recipes (no `crushable` tag - all variants are one item distinguished by component). Each outputs 2x the crusher's own dust; the mod's own (or ATO's tag-driven) dust→ingot smelt closes the loop, so PF ships no smelt-back. Create + Actually Additions deferred (no native dust); Just Dire Things (no crusher) and Thermal (no 1.21.1) ruled out. Full design in [cross_mod_compat.md](./cross_mod_compat.md).
 
 ### ~~Player direct-feeding (Q9)~~ — shipped
 [docs/open_questions.md#9](./open_questions.md). `ResourceFrog.mobInteract` checks for a Slime Bucket, reads the bucket's stored Category + Variant via `ResourceTadpoleBucketItem.readCategory` / `readVariant`, and if the category matches the frog's, calls `FrogTongueDropHandler.dropFroglightAtFrog` to emit the matching Froglight (variant-stamped configurable_froglight when the bucket carried a Variant, broad-strokes category Froglight otherwise) and replaces the held bucket with vanilla `Items.BUCKET`. Mismatch falls through to `super.mobInteract` (vanilla `Frog.mobInteract` → `Animal.mobInteract` — slimeballs / name-tag still work). Covered by 3 GameTests (matching no-variant, matching iron-variant, mismatched category).
@@ -136,8 +136,7 @@ Out of scope until V1 ships. [docs/versioning.md#v2--automation](./versioning.md
 - Frog Terrarium / Habitat block (placeable frog housing with I/O inventory)
 - Auto-feeders (hopper-fed slime delivery)
 - Capacity / efficiency upgrades for habitat blocks
-- Native crusher block (in-house 2× path so we don't depend on Create/Mekanism/Thermal)
-- Cross-mod crush 2× recipes via Create / Mekanism / Thermal — conditional `mod_loaded` JSON recipes that crush Cave-species (ore / metal) Froglights for a 2× yield. No `crushable` tag exists yet; it gets created with the recipes. Waiting on a multi-mod test environment. (Currently pulled forward as the active next-up task — see top of the Smelting + crush recipes section.)
+- Native crusher block: an in-house double-yield crush path so the 2x bonus works without any external crusher mod. (The cross-mod crush recipes themselves are pulled forward to v1.3; see the Smelting + crush recipes section and [cross_mod_compat.md](./cross_mod_compat.md).)
 - Pipe/hopper-aware fluid handling for Slime Milk
 - FE / NeoForge Energy compat (optional)
 

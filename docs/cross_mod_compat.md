@@ -200,22 +200,146 @@ No code touch required for any of this:
    force `c:ingots/tin` to smelt to a specific mod's ingot).
 4. **Wire a modded slime mob into discovery** - drop a `parent_species` JSON.
 
-## Crushing compat - Froglight to 2x powder (separate feature)
+## Crushing compat - Froglight to 2x dust (v1.3, plan of record)
 
-V1 does not ship a crusher. The 2x path needs a processing mod. We ship
-conditional `mod_loaded` compat recipes for the popular options:
+V1 ships no crusher; the 2x yield path needs an installed processing mod. We ship
+`mod_loaded`-gated compat recipes for the 1.21.1 mods that have a crusher with a clean dust
+pipeline. This is **broad-audience compat**: each recipe activates for whoever has the mod,
+independent of any particular pack's mod list.
 
-| Mod | Block | Recipe |
-|---|---|---|
-| Create | Crushing Wheels / Millstone | 1 metallic Froglight to 2 crushed (Create's tag) |
-| Mekanism | Crusher / Enrichment Chamber | 1 metallic Froglight to 2 dust |
-| Thermal | Pulverizer | 1 metallic Froglight to 2 pulverized |
+### Target mods (1.21.1, source-verified 2026-05)
 
-Recipes ship as JSON under `data/productivefrogs/recipe/<modid>/...` wrapped in
-`neoforge:conditions -> mod_loaded`. Tag we publish for crusher mods to target:
-`productivefrogs:crushable/metallic` (all metallic Froglight items, including
-modded ones added by datapack). Metals only - gems/organics have no "crushed to
-ingot" pipeline.
+**Crushers we ship recipes for** - all three deserialize their recipe input with vanilla
+`Ingredient.CODEC`, ship their own per-metal dust, and ship the dust -> ingot smelt:
+
+| Mod | Build | Recipe type | Dust item | Notes |
+|---|---|---|---|---|
+| Mekanism | 10.7.x | `mekanism:enriching` (Enrichment Chamber) | `mekanism:dust_<metal>` | input codec is `SizedIngredient.FLAT_CODEC` (wraps vanilla `Ingredient`) |
+| Immersive Engineering | 12.x | `immersiveengineering:crusher` | `immersiveengineering:dust_<metal>` ("grit") | requires `energy` field |
+| EnderIO | 8.x | `enderio:sag_milling` | `enderio:powdered_<metal>` | requires `energy`; set `"bonus": "none"` (default `multiply_output` adds grinding-ball RNG) |
+
+**AllTheOres (ATO) - the dust + smelt-back layer, not a crusher.** ATO registers no machine
+of its own; it is a parallel metal set. Its value here is twofold: (1) it ships
+`alltheores:<metal>_dust` for the **full** metal range (tin, lead, osmium, nickel, silver,
+zinc, aluminum, uranium, platinum, iridium, ...), far wider than any single crusher's dust set;
+(2) its dust -> ingot furnace recipes key off the **`c:dusts/<metal>` tag**, so they smelt back
+*any* mod's dust in that tag, not just ATO's own. So ATO both fills dust gaps for metals a
+crusher lacks and backstops the smelt-back loop. Output `alltheores:<metal>_dust` (gated on the
+crusher mod + `alltheores`) for any (crusher, metal) where the crusher has no native dust.
+
+**Deferred / excluded:**
+- **Create** - deferred. Has a 1.21.1 build and accepts the ingredient, but ships **no metal
+  dust** (its model is ore -> crushed -> wash -> nuggets), so it can't join the native-dust
+  design cleanly. Revisit only if we decide a flat "crush -> 2x ingot" exception for Create is
+  worth the inconsistency.
+- **Actually Additions** - deferred. `actuallyadditions:crushing` accepts the ingredient
+  (vanilla `Ingredient.CODEC_NONEMPTY`), but AA ships **no dust ecosystem** (its crushing does
+  ore -> 2x raw ore), so it would only work paired with ATO for the output. Low marginal value;
+  add later if requested (same recipe family).
+- **Just Dire Things** - excluded. It is an automation/utility mod (block placers, fluid/item
+  movers, "Goo" resource-growing) with **no crusher, grinder, or ore-doubling machine** - a
+  source search for `crush` returns zero hits and it ships no dust items. Nothing to target.
+- **Thermal Series** - excluded. No 1.21.1 release exists (CoFH stalled at 1.20.1, last build
+  2024-06); a `mod_loaded("thermal")` recipe would never resolve.
+
+### Matching the Froglight (the key mechanism)
+
+There is **one** `configurable_froglight` item; the resource rides in its `slime_variant`
+data component. An item tag therefore **cannot** select "metal variants" - every variant shares
+the same item - so the old `productivefrogs:crushable/metallic` tag plan is dead. Each recipe
+instead matches per-variant with NeoForge's data-component ingredient. **On 1.21.1 the key is
+`"type": "neoforge:components"`** (the `neoforge:ingredient_type` key is 1.21.4+); `strict`
+defaults to `false` (partial match), which is what we want.
+
+This works because every crusher we target deserializes its input with vanilla `Ingredient.CODEC`,
+which dispatches on `"type"` to NeoForge's ingredient registry and so accepts `neoforge:components`
+transparently. Verified at source: Mekanism `ItemStackIngredient` = `SizedIngredient.FLAT_CODEC`;
+IE `CrusherRecipe.input` = `DualCodecs.INGREDIENT`; EnderIO `SagMillingRecipe.input` =
+`Ingredient.CODEC_NONEMPTY`. **Smoke-test one Mekanism recipe in a dev run before generating the
+full set** - Mekanism never uses a component ingredient in its own datagen, so confirm its loader
+accepts the nested type (it should; the codec is the standard one).
+
+Mekanism (Enrichment Chamber):
+
+    {
+      "neoforge:conditions": [ { "type": "neoforge:mod_loaded", "modid": "mekanism" } ],
+      "type": "mekanism:enriching",
+      "input": {
+        "type": "neoforge:components",
+        "items": "productivefrogs:configurable_froglight",
+        "components": { "productivefrogs:slime_variant": "productivefrogs:iron" }
+      },
+      "output": { "count": 2, "id": "mekanism:dust_iron" }
+    }
+
+Immersive Engineering (Crusher - `energy` is the RF cost; 3000 matches IE's own ingot recipes):
+
+    {
+      "neoforge:conditions": [ { "type": "neoforge:mod_loaded", "modid": "immersiveengineering" } ],
+      "type": "immersiveengineering:crusher",
+      "energy": 3000,
+      "input": {
+        "type": "neoforge:components",
+        "items": "productivefrogs:configurable_froglight",
+        "components": { "productivefrogs:slime_variant": "productivefrogs:iron" }
+      },
+      "result": { "id": "immersiveengineering:dust_iron", "count": 2 }
+    }
+
+EnderIO (SAG Mill - `outputs` is a list; `"bonus": "none"` pins a flat 2x, no grinding-ball RNG):
+
+    {
+      "neoforge:conditions": [ { "type": "neoforge:mod_loaded", "modid": "enderio" } ],
+      "type": "enderio:sag_milling",
+      "energy": 2400,
+      "bonus": "none",
+      "input": {
+        "type": "neoforge:components",
+        "items": "productivefrogs:configurable_froglight",
+        "components": { "productivefrogs:slime_variant": "productivefrogs:iron" }
+      },
+      "outputs": [ { "item": { "count": 2, "id": "enderio:powdered_iron" } } ]
+    }
+
+ATO fallback for a metal the crusher lacks a native dust for (here IE crushing tin -> ATO tin dust):
+
+    {
+      "neoforge:conditions": [
+        { "type": "neoforge:mod_loaded", "modid": "immersiveengineering" },
+        { "type": "neoforge:mod_loaded", "modid": "alltheores" }
+      ],
+      "type": "immersiveengineering:crusher",
+      "energy": 3000,
+      "input": {
+        "type": "neoforge:components",
+        "items": "productivefrogs:configurable_froglight",
+        "components": { "productivefrogs:slime_variant": "productivefrogs:tin" }
+      },
+      "result": { "id": "alltheores:tin_dust", "count": 2 }
+    }
+
+### Closing the loop to 2x
+
+Output 2x the dust; the player smelts it to 2 ingots. **PF ships no smelt-back recipe** - the
+producing mod already does (Mekanism, IE, and EnderIO each ship a `<dust> -> ingot` furnace
+recipe for every metal they have a dust for), and ATO's `c:dusts/<metal> -> ingot` smelt
+backstops anything tagged. Outputs must be **concrete item ids** (none of the three crushers
+accept a tag in the result), so the generator pins the exact dust per (mod, metal).
+
+### Which variants, and how they're generated
+
+Crushable = **metals only**. Metal-ness is not derivable from `category` (CAVE also holds coal,
+redstone, lapis, diamond, emerald), so the metal set is a **curated list in the crush-recipe
+generator** (`scripts/`), not a tag and not a `SlimeVariant` field. The script iterates
+(crusher mod x metal variant) and, per pair, picks the output by precedence:
+
+1. The crusher mod's own dust, if it ships one for that metal -> gate on `mod_loaded: <crusher>`.
+2. Else `alltheores:<metal>_dust`, if ATO has it -> gate on `mod_loaded: <crusher>` **and** `mod_loaded: alltheores`.
+3. Else no recipe for that pair.
+
+Recipes are written under `data/productivefrogs/recipe/<modid>/<variant>.json`. (A `crushable`
+flag on `SlimeVariant` is a possible future add if JEI needs to surface "crushable" in-game;
+not needed for generation.)
 
 ## Prior art (why this approach)
 

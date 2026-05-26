@@ -89,7 +89,7 @@ The mod is fully playable today. Everything below is live on CurseForge. Targets
 
 ### v1.3 (next): cross-mod crush yields
 
-With Create, Mekanism, or Thermal installed, crushing an ore or metal Froglight yields double the resource instead of the single unit you get from smelting, matching how those mods already reward ore processing. It activates only when one of those mods is present and changes nothing otherwise.
+With Mekanism, Immersive Engineering, or EnderIO installed, crushing a metal Froglight yields double the resource instead of the single unit you get from smelting, matching how those mods already reward ore processing. It activates only when one of those mods is present and changes nothing otherwise.
 
 ### v2: automation
 

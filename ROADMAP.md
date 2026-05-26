@@ -28,7 +28,7 @@ Drop Productive Frogs into a modded pack and the relevant resource sets light up
 
 ## v1.3 (next): cross-mod crush yields
 
-The one cross-mod piece still missing from the v1 line. With Create, Mekanism, or Thermal installed, crushing an ore or metal Froglight (the Cave-species resources) yields double the resource instead of the single unit you get from smelting, matching how those mods already reward ore processing. It ships as optional `mod_loaded` recipes, so it activates only when one of those mods is present and changes nothing otherwise. A `crushable` item tag is created alongside the recipes to mark which Froglights qualify.
+The one cross-mod piece still missing from the v1 line. With Mekanism, Immersive Engineering, or EnderIO installed, crushing a metal Froglight yields double the resource instead of the single unit you get from smelting, matching how those mods already reward ore processing. It ships as optional `mod_loaded` recipes, so it activates only when one of those mods is present and changes nothing otherwise. AllTheOres, when present, broadens the metals covered.
 
 ---
 

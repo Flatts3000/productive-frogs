@@ -68,26 +68,28 @@ Each milk source block independently rolls a spawn tick:
 |---|---|---|
 | Break the Froglight | Get 1 Froglight item | Any tool, instant break (like vanilla glowstone) |
 | Smelt the Froglight | Get 1 unit of the base resource | Works for every variant: Iron Froglight → Iron Ingot, Sponge Froglight → Sponge Block, Ender Froglight → Ender Pearl, etc. |
-| Crush the Froglight (Cave variants only, V2) | Get 2× powder/dust | Requires an installed crushing mod — see Cross-Mod section below |
-| Smelt the powder | Get 1 ingot per powder (2 total from one crushed Froglight) | Net: crush+smelt path yields 2× material vs direct smelt |
+| Crush the Froglight (metal variants, v1.3) | Get 2x dust | Requires an installed crusher (Mekanism / Immersive Engineering / EnderIO); see Cross-Mod section below |
+| Smelt the dust | Get 1 ingot per dust (2 total from one crushed Froglight) | Net: crush+smelt yields 2x material vs direct smelt. The crusher mod (or AllTheOres) ships the dust-to-ingot smelt. |
 
 **Smelting**: works on every variant Froglight. Each variant has its own smelt recipe → its base resource.
 
-**Crushing**: applies **only** to Cave-species metal variants (iron, copper, gold). Non-metal Froglights have no crush recipe; if a player tries to crush one, it passes through unchanged. Cross-mod crush recipes are V2 scope — the `productivefrogs:crushable/metallic` tag is reserved.
+**Crushing**: applies **only** to metal variants (vanilla iron, copper, gold plus cross-mod metals like tin, lead, osmium). Non-metal Froglights have no crush recipe and pass through a crusher unchanged. Because every variant is the same `configurable_froglight` item distinguished only by its `slime_variant` component, there is **no `crushable` item tag** (a tag can't select by component); each crush recipe matches per-variant via the `neoforge:components` ingredient. Shipped as v1.3, `mod_loaded`-gated. See Cross-Mod: Crushing below.
 
 ## Cross-Mod: Crushing
 
-V1 does NOT ship its own crusher block or pestle tool. Crushing requires an installed processing mod. We ship compat recipes (conditional `mod_loaded` JSON) for the popular options:
+We ship no crusher block or pestle (a native crusher is V2). Crushing needs an installed processing mod; we ship `mod_loaded`-gated compat recipes for the 1.21.1 crushers that have a clean dust pipeline. This is broad-audience compat - a recipe activates for whoever has the mod, independent of any pack.
 
-| Mod | Block | Recipe consumed |
-|---|---|---|
-| Create | Crushing Wheels / Millstone | 1 Iron Froglight → 2 Crushed Iron |
-| Mekanism | Crusher / Enrichment Chamber | 1 Iron Froglight → 2 Iron Dust |
-| Thermal Series | Pulverizer | 1 Iron Froglight → 2 Iron Dust |
+| Mod | Block | Recipe type | Output |
+|---|---|---|---|
+| Mekanism | Enrichment Chamber | `mekanism:enriching` | 2x `mekanism:dust_<metal>` |
+| Immersive Engineering | Crusher | `immersiveengineering:crusher` | 2x `immersiveengineering:dust_<metal>` |
+| EnderIO | SAG Mill | `enderio:sag_milling` | 2x `enderio:powdered_<metal>` |
 
-We tag Froglights with `productivefrogs:crushable/metallic` so other mods can reference the full set. Mods produce their tag-standard outputs (`c:dusts/iron`, `c:raw_materials/iron`, etc.), which smelt back into ingots via vanilla furnace recipes the mods ship anyway.
+Each crush recipe outputs 2x that mod's own dust, and the mod's own dust-to-ingot furnace recipe closes the loop to 2 ingots, so PF ships no smelt-back. For metals a crusher has no native dust for, the recipe outputs `alltheores:<metal>_dust` (gated on the crusher + AllTheOres); AllTheOres' `c:dusts/<metal>`-keyed smelt-back handles those. Full design, recipe JSON, and the per-mod matrix live in [cross_mod_compat.md](./cross_mod_compat.md).
 
-If no crushing mod is installed, players can still smelt directly. The 2× path is a soft incentive to install a processing mod — but it's never required.
+Not targeted: Create (no metal dust) and Actually Additions (no dust ecosystem) are deferred; Just Dire Things (no crusher) and Thermal (no 1.21.1 build) are ruled out.
+
+If no crushing mod is installed, players smelt directly for 1x. The 2x crush path is a soft incentive, never required.
 
 ## Throughput Sketch (default settings)
 
