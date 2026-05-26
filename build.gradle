@@ -102,7 +102,7 @@ dependencies {
     //     item in JEI's sidebar (smelting recipes auto-discovered via
     //     BuiltInRegistries.ITEM + BuiltInRegistries.RECIPE_TYPE).
     //
-    // Our plugin (com.flatts.productivefrogs.compat.jei.ProductiveFrogsJeiPlugin)
+    // Our plugin (com.flatts.productivefrogs.client.jei.ProductiveFrogsJeiPlugin)
     // teaches JEI to subtype Slime Bucket / Resource Tadpole Bucket / Frog Egg
     // bottle / Configurable Froglight by their variant/category data components,
     // so each variant/category shows as a distinct JEI entry rather than the
