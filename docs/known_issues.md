@@ -22,6 +22,16 @@ Symbols 🟢 (resolved) and 🟠 (reopened / since-reverted) live in the [archiv
 The Slime Milker (`productivefrogs:slime_milker`) shipped with a loot table (it drops itself when broken) but **no crafting recipe**, so a survival player had no intended way to obtain it - only creative or `/give`, or breaking an already-placed one (a chicken-and-egg). The block is the V1 production keystone, so this blocked the survival loop. Discovered 2026-05-26 while speccing the Spawnery.
 **Fix written** (lands with the Spawnery PR): `data/productivefrogs/recipe/slime_milker.json` - shaped, 5 cobblestone + 3 planks + 1 slime ball (slime ball centered), mirroring the Spawnery's frame. Not config-gated (the Milker is always craftable). Pending `./gradlew build` verification + a JUnit recipe-shape test alongside the Spawnery's; will move to the archive once merged.
 
+### 🔴 Slime Milk buckets collapse to a single entry in JEI
+Every Slime Milk variant shows in the creative tab (one stamped stack per variant), but JEI lists only **one** Slime Milk Bucket. Root cause: `ProductiveFrogsJeiPlugin.registerItemSubtypes` registers `SLIME_VARIANT`-keyed subtype interpreters for the Configurable Froglight and the Resource Slime spawn egg, but **not** for `slime_milk_bucket` - so JEI treats every variant-stamped milk bucket as the same ingredient and dedups them to one. (The per-variant `addIngredientInfo` calls in `registerRecipes` then also collapse onto that single entry.) Discovered 2026-05-26 during Spawnery dev testing. Pre-existing bug, unrelated to the Spawnery.
+**Fix:** register the existing `slimeVariantInterp` for `PFItems.SLIME_MILK_BUCKET` in `registerItemSubtypes` (one line), mirroring the Configurable Froglight; then verify each variant shows a distinct JEI row with its own info page.
+
+### 🟡 Spawnery runs without a primer (decision pending)
+As built (per the original spec the user confirmed), an empty primer slot makes the Spawnery produce a plain **vanilla frogspawn** bottle; a primer only upgrades the output to a species egg. Flagged 2026-05-26 in dev testing as possibly unwanted - the open question is whether a primer should be **required** (Spawnery stalls with an empty primer slot, dropping the vanilla-frogspawn path entirely). This is a design decision, not a malfunction. If "required": treat a null primer category like "no bottle" in `SpawneryBlockEntity.serverTick`'s `canProduce` gate, then update `docs/spawnery.md` (D-decisions) and the `spawneryProducesVanillaFrogspawnBottle` GameTest. Ties into the broader primer-design discussion that's still open.
+
+### 🔴 No item tooltips in the Spawnery GUI (reported, needs localization)
+Hovering slots in the Spawnery screen reportedly shows no tooltip. `SpawneryScreen` is structurally identical to the shipped `SlimeMilkerScreen` - both override only `renderBg` and inherit `AbstractContainerScreen`'s default `render`, which is what calls `renderTooltip` - so no Spawnery-specific code cause was found. **Do NOT blindly add a `renderTooltip` call**: the default already renders it, so that would double-render. Needs localization first: (a) does the Slime Milker GUI also lack tooltips (-> latent shared bug, investigate the render/JEI pipeline) or is it Spawnery-only (-> environmental)? (b) is it no-tooltip-at-all (vanilla render not firing) vs. just the missing JEI "hold U/R" hint? Discovered 2026-05-26 in dev testing.
+
 By-design V1 limitations are listed below.
 
 Recently resolved (see the [archive](./known_issues_archive.md)): the JEI info text calling the block "Configurable Froglight" instead of its "Froglight" display name (now guarded by a copy-lint test); cross-mod variant slimes showing a raw lang key in the Froglight tooltip (fixed via the JEI title-case fallback plus explicit `en_us.json` keys for all 57 shipped variants, now guarded by a lang-completeness unit test); empty-bucket slime capture; and canonical species ordering across tabs / JEI / recipe book.
@@ -73,4 +83,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-26 (logged the Slime Milker missing-crafting-recipe gap, discovered while speccing the Spawnery).*
+*Last updated: 2026-05-26 (Spawnery dev-testing findings: Slime Milk JEI subtype-collapse, Slime Milker missing recipe, Spawnery no-primer design question, and Spawnery GUI tooltip report).*
