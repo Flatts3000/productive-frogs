@@ -44,11 +44,17 @@ The scale-up release. v1 lives unchanged; v2 layers automation on top. A player 
 
 **Capacity / efficiency upgrades** for habitat blocks.
 
-**Native crusher block:** an optional in-house implementation so the double-yield crush path works even without Create / Mekanism / Thermal installed.
+**Native crusher block:** an optional in-house implementation so the double-yield crush path works even without an external crusher mod installed.
 
 **Pipe / hopper-aware fluid handling** for Slime Milk.
 
 **Potential:** FE / NeoForge Energy power compat.
+
+---
+
+## Proposed: slime-to-fluid processing block
+
+A new processing block that converts buckets of slimes into fluids - a way to generate fluids from farmed slimes. This generalizes the Slime Milker's slime-bucket-to-Slime-Milk conversion into a broader fluid-generation mechanic. Which fluids it can produce, and whether it ships as a hand-operated V1.x appliance or an automated V2 block, is not yet scoped.
 
 ---
 
