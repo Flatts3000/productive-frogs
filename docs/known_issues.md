@@ -18,7 +18,7 @@ Symbols 🟢 (resolved) and 🟠 (reopened / since-reverted) live in the [archiv
 
 ## Open issues
 
-No open player-facing bugs currently. The Spawnery dev-testing findings (Slime Milker recipe, Slime Milk JEI subtypes, container-GUI tooltips, and the Spawnery primer-required decision) are all resolved on `feat/spawnery` and moved to the [archive](./known_issues_archive.md). By-design V1 limitations are listed below.
+No open player-facing bugs currently. The Spawnery dev-testing findings (Slime Milker recipe, Slime Milk JEI subtypes, container-GUI tooltips, and the Spawnery primer-required decision) shipped in v1.4.0 and are in the [archive](./known_issues_archive.md). By-design V1 limitations are listed below.
 
 Recently resolved (see the [archive](./known_issues_archive.md)): the JEI info text calling the block "Configurable Froglight" instead of its "Froglight" display name (now guarded by a copy-lint test); cross-mod variant slimes showing a raw lang key in the Froglight tooltip (fixed via the JEI title-case fallback plus explicit `en_us.json` keys for all 57 shipped variants, now guarded by a lang-completeness unit test); empty-bucket slime capture; and canonical species ordering across tabs / JEI / recipe book.
 
@@ -47,8 +47,8 @@ Use vanilla hoppers under the frog pen to collect Froglight item entities. A cus
 
 ## Cross-Mod Compat caveats
 
-### 🔵 Crush recipes (Mekanism / Immersive Engineering / EnderIO) built + verified, ship in v1.3
-The `mod_loaded`-gated recipes ([v1_3_crush_recipes.md](./v1_3_crush_recipes.md), [cross_mod_compat.md](./cross_mod_compat.md)) converting 1 metal Froglight → 2 dust in a crusher, then the mod's own (or AllTheOres') dust→ingot smelt yields 2 ingots (vs 1 from direct smelting), are **generated, in-tree, and verified** (33 recipes under `data/productivefrogs/recipe/<modid>/`, via `scripts/generate_crush_recipes.ps1`). JSON shape is pinned by `CrushRecipeTest`; they load cleanly (gated out) in the GameTest server; and the full per-mod `runClient` smoke test passed 2026-05-26 (Mekanism accepts the nested `neoforge:components` input, EnderIO `"bonus": "none"` is a flat 2x, the IE grit routing matches, and the ATO fallback resolves - `scripts/fetch_dev_mods.py` + [dev_setup.md](./dev_setup.md) set this up). They become player-available when v1.3 publishes to CurseForge; until then players smelt directly for 1× yield.
+### 🔵 Crush recipes (Mekanism / Immersive Engineering / EnderIO) - 2x yield needs an external crusher mod (shipped v1.3.0)
+The `mod_loaded`-gated recipes ([v1_3_crush_recipes.md](./v1_3_crush_recipes.md), [cross_mod_compat.md](./cross_mod_compat.md)) converting 1 metal Froglight → 2 dust in a crusher, then the mod's own (or AllTheOres') dust→ingot smelt yields 2 ingots (vs 1 from direct smelting), are **generated, in-tree, and verified** (33 recipes under `data/productivefrogs/recipe/<modid>/`, via `scripts/generate_crush_recipes.ps1`). JSON shape is pinned by `CrushRecipeTest`; they load cleanly (gated out) in the GameTest server; and the full per-mod `runClient` smoke test passed 2026-05-26 (Mekanism accepts the nested `neoforge:components` input, EnderIO `"bonus": "none"` is a flat 2x, the IE grit routing matches, and the ATO fallback resolves - `scripts/fetch_dev_mods.py` + [dev_setup.md](./dev_setup.md) set this up). They are player-available as of v1.3.0 (with one of those crusher mods installed); without a crusher mod, players smelt directly for 1× yield.
 
 Matching is per-variant via the `neoforge:components` ingredient - there is **no** `crushable` item tag (every variant is the same `configurable_froglight` item distinguished only by component, so a tag can't select metals).
 
