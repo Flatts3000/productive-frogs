@@ -1,6 +1,8 @@
 # Port to Minecraft 1.21.1 / NeoForge 21.1.230
 
-> **Blocks every other roadmap item.** The data-driven variant refactor, V1.1, and V1.2 all wait on this port landing. Refactoring on the current 1.21.11 codebase is wasted effort because most of the refactor's load-bearing APIs (mod resource scanning at init, fluid registration, lang derivation) differ between 1.21.1 and 1.21.11.
+> **STATUS: DONE (shipped).** This port landed via PR #80 + #81, bundled with the V1.5 species-as-category redesign. `main` now targets **MC 1.21.1 / NeoForge 21.1.230**, and v1.0.0 through v1.2.0 all shipped on the ported codebase. The phase checklist below is complete; this document is retained as historical design and rationale. For current state see [CLAUDE.md](../CLAUDE.md) and [ROADMAP.md](../ROADMAP.md).
+>
+> *Original framing (for context): this was the blocker for the data-driven variant refactor, V1.1, and V1.2 - refactoring on the old 1.21.11 codebase was wasted effort because the load-bearing APIs (mod resource scanning at init, fluid registration, lang derivation) differ between 1.21.1 and 1.21.11.*
 
 ## Why this is happening
 
