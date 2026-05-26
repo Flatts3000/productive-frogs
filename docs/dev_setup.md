@@ -42,6 +42,45 @@ We don't depend on Jade in `build.gradle` because it doesn't ship to a maven rep
 
 Steps 1–2 are one-time setup; the jar stays in `run/mods/` across runs.
 
+## Smoke-testing the cross-mod crush recipes (pre-release)
+
+The v1.3 crush recipes (`data/productivefrogs/recipe/<modid>/`) are `mod_loaded`-gated, so they are inert - and untestable - unless an actual crusher mod is present. CI can't install Mekanism / Immersive Engineering / EnderIO (heavy, version-churning, and it would cut against the no-hard-mod-dependency rule), so this is a **manual `runClient` pass before each release** - the same posture as the client-tint work that GameTest is blind to. `CrushRecipeTest` already pins the JSON shape; this confirms the recipes actually *load and run* with the mods present.
+
+These mods are **not** dependencies of Productive Frogs - they are drop-ins for the dev run, exactly like Jade above.
+
+### 1. Fetch the crusher mods
+
+```
+python scripts/fetch_dev_mods.py
+```
+
+Queries Modrinth for the latest 1.21.1 / NeoForge build of Mekanism, Immersive Engineering, EnderIO, and AllTheOres (the dust + smelt-back layer), verifies each SHA-1, and drops them into `run/mods/`. Re-runnable (skips files already present). Manual alternative: download the 1.21.1 NeoForge jar for each from its CurseForge/Modrinth page into `run/mods/`. If EnderIO logs a missing-library error at launch, grab its companion lib from the same page (Modrinth currently reports no required deps for the 8.x build).
+
+### 2. Launch and verify
+
+```
+.\gradlew runClient
+```
+
+Give yourself a variant-stamped Froglight (component syntax - the value is the variant id):
+
+```
+/give @s productivefrogs:configurable_froglight[productivefrogs:slime_variant="productivefrogs:iron"]
+/give @s productivefrogs:configurable_froglight[productivefrogs:slime_variant="productivefrogs:tin"]
+```
+
+Then walk the checklist:
+
+| # | Check |
+|---|---|
+| 1 | **No datapack error in `run/logs/latest.log`** - with the mods present the recipes now resolve instead of being gated out. A parse error here is the headline failure. |
+| 2 | **Mekanism first** (the one runtime-unverified path): crush an iron Froglight in an Enrichment Chamber -> **2 dust** -> smelt -> **2 ingots**. Mekanism never uses a `neoforge:components` ingredient in its own datagen, so this confirms its loader accepts the nested type. If it chokes, switch the recipe `type` to `mekanism:crushing` in `scripts/generate_crush_recipes.ps1` and regenerate. |
+| 3 | **EnderIO**: crush iron in a SAG Mill; confirm `"bonus": "none"` yields a flat 2x with no grinding-ball RNG. |
+| 4 | **Immersive Engineering**: crush iron in a Crusher; **re-verify the grit set** - confirm IE actually ships `dust_<metal>` for the metals the generator routes natively (the per-mod map in the generator is the documented research baseline, not runtime-verified). |
+| 5 | **ATO fallback spot-check**: with IE **and** AllTheOres present, crush a `tin` Froglight in the IE Crusher and confirm it yields `alltheores:tin_dust` (IE has no native tin grit). |
+
+Record the results in the release PR description. To return to vanilla behavior, just delete the jars from `run/mods/`.
+
 ## Recommended workflow
 
 1. **Make a change** in Java code or assets.
