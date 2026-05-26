@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Spawnery** - a skyblock-bootstrap appliance, disabled by default
+  (`spawnery.enabled`). A furnace-style block that turns glass bottles into
+  bottled frogspawn, fueled by slime balls (one ball per bottle): leave the
+  primer slot empty for plain vanilla frogspawn, or add a species primer
+  (cobblestone for Cave, mud for Bog, kelp for Tide, amethyst shard for Geode,
+  netherrack for Infernal, an ender pearl for Void) to bottle that species' eggs.
+  Hopper-aware. Crafted from 5 cobblestone + 3 planks + 1 bonemeal. When disabled
+  it is uncraftable and hidden from JEI + the creative tab. The primer set is
+  pack-overridable via the `spawnery_primer/<species>` item tags. See
+  `docs/spawnery.md`.
+
+### Fixed
+
+- **The Slime Milker now has a crafting recipe** (5 cobblestone + 3 planks + 1
+  slime ball). It previously shipped with a loot table but no recipe, so a
+  survival player had no intended way to obtain it (only creative / `/give`).
+
 ## v1.3.0 - 2026-05-26 - cross-mod crush yields
 
 The cross-mod crush release. With Mekanism, Immersive Engineering, or EnderIO

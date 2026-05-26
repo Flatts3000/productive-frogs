@@ -34,6 +34,18 @@ The one cross-mod piece still missing from the v1 line. With Mekanism, Immersive
 
 ---
 
+## v1.4 (in progress): the Spawnery (skyblock bootstrap)
+
+A new V1 appliance for skyblock and other restricted-biome packs: the **Spawnery**.
+It is the frog-side analogue of the Slime Milker - a furnace-style block that turns
+glass bottles into bottled frogspawn, fueled by slime balls. Leave the primer slot
+empty for plain vanilla frogspawn, or add a species primer (cobblestone, mud, kelp,
+amethyst shard, netherrack, or an ender pearl) to bottle that species' eggs. It is
+**disabled by default** - a normal world has swamps and never needs it - and a pack
+flips one config flag to turn it on. The primer set is pack-overridable via item
+tags. This unblocks the frog side of the loop where vanilla frogspawn is
+unreachable. Spec + design: [docs/spawnery.md](./docs/spawnery.md).
+
 ## v2: automation
 
 The scale-up release. v1 lives unchanged; v2 layers automation on top. A player who never crafts a v2 block still has every v1 capability.

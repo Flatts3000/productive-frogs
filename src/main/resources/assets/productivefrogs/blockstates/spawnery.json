@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,lit=false": { "model": "productivefrogs:block/spawnery" },
+    "facing=north,lit=true":  { "model": "productivefrogs:block/spawnery" },
+    "facing=east,lit=false":  { "model": "productivefrogs:block/spawnery", "y": 90 },
+    "facing=east,lit=true":   { "model": "productivefrogs:block/spawnery", "y": 90 },
+    "facing=south,lit=false": { "model": "productivefrogs:block/spawnery", "y": 180 },
+    "facing=south,lit=true":  { "model": "productivefrogs:block/spawnery", "y": 180 },
+    "facing=west,lit=false":  { "model": "productivefrogs:block/spawnery", "y": 270 },
+    "facing=west,lit=true":   { "model": "productivefrogs:block/spawnery", "y": 270 }
+  }
+}

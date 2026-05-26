@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.gametest;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
+import com.flatts.productivefrogs.content.block.entity.SpawneryBlockEntity;
 import com.flatts.productivefrogs.content.entity.CaveSlime;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
@@ -2388,6 +2389,172 @@ public final class PFGameTests {
             return;
         }
         helper.succeed();
+    }
+
+    // ---------------------------------------------------------------------
+    // Spawnery (skyblock bootstrap appliance)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Happy path, no primer: a glass bottle + a slime ball produce one plain
+     * vanilla frogspawn bottle (a Frog Egg with no contained_category), with both
+     * the bottle and the slime ball consumed. Drives serverTick by hand for the
+     * configured production duration (mirrors the Slime Milker cook-loop test).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void spawneryProducesVanillaFrogspawnBottle(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos, PFBlocks.SPAWNERY.get());
+        ServerLevel level = helper.getLevel();
+        BlockPos absPos = helper.absolutePos(pos);
+        net.minecraft.world.level.block.entity.BlockEntity be = level.getBlockEntity(absPos);
+        if (!(be instanceof SpawneryBlockEntity spawnery)) {
+            helper.fail("expected SpawneryBlockEntity at " + absPos + ", got "
+                + (be == null ? "null" : be.getClass().getSimpleName()));
+            return;
+        }
+        spawnery.getInventory().setStackInSlot(SpawneryBlockEntity.BOTTLE_SLOT, new ItemStack(Items.GLASS_BOTTLE));
+        spawnery.getInventory().setStackInSlot(SpawneryBlockEntity.FUEL_SLOT, new ItemStack(Items.SLIME_BALL));
+
+        driveSpawnery(level, absPos, spawnery);
+
+        ItemStack output = spawnery.getInventory().getStackInSlot(SpawneryBlockEntity.OUTPUT_SLOT);
+        if (!output.is(PFItems.FROG_EGG.get())) {
+            helper.fail("expected a frog egg output, got "
+                + (output.isEmpty() ? "EMPTY" : BuiltInRegistries.ITEM.getKey(output.getItem())));
+            return;
+        }
+        if (output.get(com.flatts.productivefrogs.registry.PFDataComponents.CONTAINED_CATEGORY.get()) != null) {
+            helper.fail("no-primer output must be plain vanilla frogspawn (no contained_category)");
+            return;
+        }
+        if (!spawnery.getInventory().getStackInSlot(SpawneryBlockEntity.BOTTLE_SLOT).isEmpty()) {
+            helper.fail("the glass bottle should have been consumed");
+            return;
+        }
+        if (!spawnery.getInventory().getStackInSlot(SpawneryBlockEntity.FUEL_SLOT).isEmpty()) {
+            helper.fail("the slime ball should have been consumed");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Primed path: a glass bottle + a slime ball + a cobblestone primer (which is
+     * in spawnery_primer/cave) produce a Frog Egg stamped CAVE, with the
+     * cobblestone consumed.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void spawneryCobblestonePrimerProducesCaveEgg(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos, PFBlocks.SPAWNERY.get());
+        ServerLevel level = helper.getLevel();
+        BlockPos absPos = helper.absolutePos(pos);
+        net.minecraft.world.level.block.entity.BlockEntity be = level.getBlockEntity(absPos);
+        if (!(be instanceof SpawneryBlockEntity spawnery)) {
+            helper.fail("expected SpawneryBlockEntity at " + absPos);
+            return;
+        }
+        spawnery.getInventory().setStackInSlot(SpawneryBlockEntity.BOTTLE_SLOT, new ItemStack(Items.GLASS_BOTTLE));
+        spawnery.getInventory().setStackInSlot(SpawneryBlockEntity.FUEL_SLOT, new ItemStack(Items.SLIME_BALL));
+        spawnery.getInventory().setStackInSlot(SpawneryBlockEntity.PRIMER_SLOT, new ItemStack(Items.COBBLESTONE));
+
+        driveSpawnery(level, absPos, spawnery);
+
+        ItemStack output = spawnery.getInventory().getStackInSlot(SpawneryBlockEntity.OUTPUT_SLOT);
+        if (!output.is(PFItems.FROG_EGG.get())) {
+            helper.fail("expected a frog egg output, got "
+                + (output.isEmpty() ? "EMPTY" : BuiltInRegistries.ITEM.getKey(output.getItem())));
+            return;
+        }
+        Category stamped = output.get(com.flatts.productivefrogs.registry.PFDataComponents.CONTAINED_CATEGORY.get());
+        if (stamped != Category.CAVE) {
+            helper.fail("cobblestone primer must stamp CAVE, got " + stamped);
+            return;
+        }
+        if (!spawnery.getInventory().getStackInSlot(SpawneryBlockEntity.PRIMER_SLOT).isEmpty()) {
+            helper.fail("the cobblestone primer should have been consumed");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * No fuel: a glass bottle with an empty fuel slot never ignites, so cook
+     * progress stays at 0 and no egg is produced.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void spawneryWithoutFuelDoesNotProduce(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos, PFBlocks.SPAWNERY.get());
+        ServerLevel level = helper.getLevel();
+        BlockPos absPos = helper.absolutePos(pos);
+        net.minecraft.world.level.block.entity.BlockEntity be = level.getBlockEntity(absPos);
+        if (!(be instanceof SpawneryBlockEntity spawnery)) {
+            helper.fail("expected SpawneryBlockEntity at " + absPos);
+            return;
+        }
+        spawnery.getInventory().setStackInSlot(SpawneryBlockEntity.BOTTLE_SLOT, new ItemStack(Items.GLASS_BOTTLE));
+
+        driveSpawnery(level, absPos, spawnery);
+
+        if (spawnery.getCookProgress() != 0) {
+            helper.fail("cook progress must stay 0 without fuel, got " + spawnery.getCookProgress());
+            return;
+        }
+        ItemStack output = spawnery.getInventory().getStackInSlot(SpawneryBlockEntity.OUTPUT_SLOT);
+        if (!output.isEmpty()) {
+            helper.fail("no egg should be produced without fuel, got "
+                + BuiltInRegistries.ITEM.getKey(output.getItem()));
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * No bottle: a slime ball with an empty bottle slot must not be consumed and
+     * must not produce anything (no container to fill).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void spawneryWithoutBottleDoesNotConsumeFuel(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos, PFBlocks.SPAWNERY.get());
+        ServerLevel level = helper.getLevel();
+        BlockPos absPos = helper.absolutePos(pos);
+        net.minecraft.world.level.block.entity.BlockEntity be = level.getBlockEntity(absPos);
+        if (!(be instanceof SpawneryBlockEntity spawnery)) {
+            helper.fail("expected SpawneryBlockEntity at " + absPos);
+            return;
+        }
+        spawnery.getInventory().setStackInSlot(SpawneryBlockEntity.FUEL_SLOT, new ItemStack(Items.SLIME_BALL));
+
+        driveSpawnery(level, absPos, spawnery);
+
+        ItemStack fuel = spawnery.getInventory().getStackInSlot(SpawneryBlockEntity.FUEL_SLOT);
+        if (fuel.isEmpty() || !fuel.is(Items.SLIME_BALL)) {
+            helper.fail("the slime ball must NOT be consumed without a bottle to fill");
+            return;
+        }
+        ItemStack output = spawnery.getInventory().getStackInSlot(SpawneryBlockEntity.OUTPUT_SLOT);
+        if (!output.isEmpty()) {
+            helper.fail("no egg should be produced without a bottle, got "
+                + BuiltInRegistries.ITEM.getKey(output.getItem()));
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Drive the Spawnery's serverTick by hand for one full production cycle plus
+     * a margin (mirrors the Slime Milker cook-loop test). serverTick advances
+     * burn + cook by one per call; after the configured production ticks the cycle
+     * completes once and then stalls on the stacksTo(1) output.
+     */
+    private static void driveSpawnery(ServerLevel level, BlockPos absPos, SpawneryBlockEntity spawnery) {
+        int total = Math.max(1, com.flatts.productivefrogs.PFConfig.SPAWNERY_PRODUCTION_TICKS.get());
+        for (int i = 0; i < total + 5; i++) {
+            SpawneryBlockEntity.serverTick(level, absPos, level.getBlockState(absPos), spawnery);
+        }
     }
 
     // ---------------------------------------------------------------------

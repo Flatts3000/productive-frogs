@@ -171,6 +171,17 @@ public final class PFModBusEvents {
             }
         );
 
+        // Spawnery: bottom face = extract-only output; every other face = the
+        // insert view over the three input slots (bottle / fuel / primer), which
+        // routes each pushed item to the slot that accepts it.
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            PFBlockEntities.SPAWNERY.get(),
+            (be, side) -> side == Direction.DOWN
+                ? be.getInventory().outputView()
+                : be.getInventory().inputView()
+        );
+
         // The single Slime Milk bucket extends BucketItem; NeoForge only
         // auto-registers the FluidHandler.ITEM capability for the exact
         // BucketItem class, not subclasses, so wire it up explicitly. Lets tank

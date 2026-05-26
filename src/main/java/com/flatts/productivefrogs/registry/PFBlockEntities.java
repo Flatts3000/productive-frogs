@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.SpawneryBlockEntity;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -53,6 +54,13 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "slime_milk_source",
             () -> BlockEntityType.Builder.of(SlimeMilkSourceBlockEntity::new, PFBlocks.SLIME_MILK_SOURCE.get()).build(null)
+        );
+
+    /** BE type for the {@code spawnery} block - holds the 4-slot inventory + cook/burn timers. */
+    public static final Supplier<BlockEntityType<SpawneryBlockEntity>> SPAWNERY =
+        BLOCK_ENTITIES.register(
+            "spawnery",
+            () -> BlockEntityType.Builder.of(SpawneryBlockEntity::new, PFBlocks.SPAWNERY.get()).build(null)
         );
 
     private PFBlockEntities() {

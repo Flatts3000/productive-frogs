@@ -6,6 +6,7 @@ import com.flatts.productivefrogs.client.renderer.ResourceFrogRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
 import com.flatts.productivefrogs.client.screen.SlimeMilkerScreen;
+import com.flatts.productivefrogs.client.screen.SpawneryScreen;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.item.FrogEggItem;
@@ -351,11 +352,12 @@ public final class PFClientEvents {
     }
 
     /**
-     * Bind the Slime Milker's MenuType to its client screen.
+     * Bind the appliance MenuTypes to their client screens.
      */
     @SubscribeEvent
     public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
         event.register(PFMenuTypes.SLIME_MILKER.get(), SlimeMilkerScreen::new);
+        event.register(PFMenuTypes.SPAWNERY.get(), SpawneryScreen::new);
     }
 
     /**

@@ -18,7 +18,11 @@ Symbols 🟢 (resolved) and 🟠 (reopened / since-reverted) live in the [archiv
 
 ## Open issues
 
-No open player-facing bugs currently. By-design V1 limitations are listed below.
+### 🟡 Slime Milker had no crafting recipe (fix in `feat/spawnery`)
+The Slime Milker (`productivefrogs:slime_milker`) shipped with a loot table (it drops itself when broken) but **no crafting recipe**, so a survival player had no intended way to obtain it - only creative or `/give`, or breaking an already-placed one (a chicken-and-egg). The block is the V1 production keystone, so this blocked the survival loop. Discovered 2026-05-26 while speccing the Spawnery.
+**Fix written** (lands with the Spawnery PR): `data/productivefrogs/recipe/slime_milker.json` - shaped, 5 cobblestone + 3 planks + 1 slime ball (slime ball centered), mirroring the Spawnery's frame. Not config-gated (the Milker is always craftable). Pending `./gradlew build` verification + a JUnit recipe-shape test alongside the Spawnery's; will move to the archive once merged.
+
+By-design V1 limitations are listed below.
 
 Recently resolved (see the [archive](./known_issues_archive.md)): the JEI info text calling the block "Configurable Froglight" instead of its "Froglight" display name (now guarded by a copy-lint test); cross-mod variant slimes showing a raw lang key in the Froglight tooltip (fixed via the JEI title-case fallback plus explicit `en_us.json` keys for all 57 shipped variants, now guarded by a lang-completeness unit test); empty-bucket slime capture; and canonical species ordering across tabs / JEI / recipe book.
 
@@ -69,4 +73,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-25 (fixed the JEI "Configurable Froglight" -> "Froglight" copy and added a copy-lint test; earlier the same day resolved the cross-mod variant raw-lang-key bug. Both now in the archive; no open player-facing bugs remain).*
+*Last updated: 2026-05-26 (logged the Slime Milker missing-crafting-recipe gap, discovered while speccing the Spawnery).*

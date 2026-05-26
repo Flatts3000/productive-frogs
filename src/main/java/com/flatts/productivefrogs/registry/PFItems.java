@@ -250,6 +250,17 @@ public final class PFItems {
         new Item.Properties()
     );
 
+    /**
+     * Spawnery BlockItem - places {@link PFBlocks#SPAWNERY}. Config-gated: only
+     * craftable + shown in JEI/creative when {@code spawnery.enabled} is true (the
+     * item is always registered so a placed block functions if obtained via /give).
+     */
+    public static final DeferredItem<BlockItem> SPAWNERY = ITEMS.registerSimpleBlockItem(
+        "spawnery",
+        PFBlocks.SPAWNERY,
+        new Item.Properties()
+    );
+
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {
