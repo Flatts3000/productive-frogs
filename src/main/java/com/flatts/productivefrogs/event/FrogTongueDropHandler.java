@@ -111,9 +111,7 @@ public final class FrogTongueDropHandler {
         // Bounty multiplies the yield: 1 Froglight at low Bounty up to
         // bountyMaxDrops at the cap (FrogStats step curve). Each ItemEntity gets
         // the constructor's natural random spread so the stack scatters.
-        int cap = PFConfig.SPEC.isLoaded() ? PFConfig.BREEDING_STAT_CAP.get() : 10;
-        int maxDrops = PFConfig.SPEC.isLoaded() ? PFConfig.STATS_BOUNTY_MAX_DROPS.get() : 3;
-        int count = FrogStats.bountyDropCount(frog.getBounty(), maxDrops, cap);
+        int count = FrogStats.bountyDropCount(frog.getBounty(), PFConfig.bountyMaxDrops(), PFConfig.statCap());
         Vec3 pos = frog.position();
         for (int i = 0; i < count; i++) {
             ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());

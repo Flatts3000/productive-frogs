@@ -83,10 +83,8 @@ public class ResourceFrogAttackablesSensor extends FrogAttackablesSensor {
 
     /** The frog's Reach-scaled prey-scan radius (config-tunable; defaults 8..16). */
     private static int reachRadius(ResourceFrog frog) {
-        int min = PFConfig.SPEC.isLoaded() ? PFConfig.STATS_REACH_RADIUS_MIN.get() : 8;
-        int max = PFConfig.SPEC.isLoaded() ? PFConfig.STATS_REACH_RADIUS_MAX.get() : 16;
-        int cap = PFConfig.SPEC.isLoaded() ? PFConfig.BREEDING_STAT_CAP.get() : 10;
-        return FrogStats.reachRadius(frog.getReach(), min, max, cap);
+        return FrogStats.reachRadius(
+            frog.getReach(), PFConfig.reachRadiusMin(), PFConfig.reachRadiusMax(), PFConfig.statCap());
     }
 
     /**

@@ -158,23 +158,48 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         }
     }
 
+    // ---- shared stat-readout helpers (used by all three stat providers) ----
+
+    /** Append the three breeding-stat lines as {@code value/cap} to a tooltip. */
+    private static void appendStatLines(ITooltip tooltip, int appetite, int bounty, int reach, int cap) {
+        tooltip.add(Component.translatable("productivefrogs.jade.appetite", appetite, cap));
+        tooltip.add(Component.translatable("productivefrogs.jade.bounty", bounty, cap));
+        tooltip.add(Component.translatable("productivefrogs.jade.reach", reach, cap));
+    }
+
+    /** Server-side: stamp pending offspring stats (+ the cap) into the look-at data tag. */
+    private static void writePendingStats(CompoundTag data, int appetite, int bounty, int reach) {
+        data.putBoolean("HasStats", true);
+        data.putInt("Appetite", appetite);
+        data.putInt("Bounty", bounty);
+        data.putInt("Reach", reach);
+        // Cap travels with the data so the client needs no config read.
+        data.putInt("Cap", PFConfig.statCap());
+    }
+
+    /** Client-side: render the pending stat lines from server data when present (egg + tadpole). */
+    private static void appendPendingStats(ITooltip tooltip, CompoundTag data) {
+        if (data == null || !data.getBoolean("HasStats")) {
+            return;
+        }
+        appendStatLines(tooltip, data.getInt("Appetite"), data.getInt("Bounty"),
+            data.getInt("Reach"), data.getInt("Cap"));
+    }
+
     /**
      * Look-at readout for a {@link ResourceFrog}: its three breeding stats
      * (Appetite / Bounty / Reach) as {@code value/cap} lines. Stats are synced
      * to the client on the entity ({@code DATA_APPETITE}/{@code _BOUNTY}/{@code _REACH}),
-     * so no server-data round-trip is needed. See {@code docs/frog_breeding.md}.
+     * so this reads them straight off the entity (no server-data round-trip).
+     * See {@code docs/frog_breeding.md}.
      */
     private static final class FrogStatsProvider implements IEntityComponentProvider {
 
         @Override
         public void appendTooltip(ITooltip tooltip, EntityAccessor accessor, IPluginConfig config) {
-            if (!(accessor.getEntity() instanceof ResourceFrog frog)) {
-                return;
+            if (accessor.getEntity() instanceof ResourceFrog frog) {
+                appendStatLines(tooltip, frog.getAppetite(), frog.getBounty(), frog.getReach(), frog.getStatCap());
             }
-            int cap = frog.getStatCap();
-            tooltip.add(Component.translatable("productivefrogs.jade.appetite", frog.getAppetite(), cap));
-            tooltip.add(Component.translatable("productivefrogs.jade.bounty", frog.getBounty(), cap));
-            tooltip.add(Component.translatable("productivefrogs.jade.reach", frog.getReach(), cap));
         }
 
         @Override
@@ -203,13 +228,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 return;
             }
             if (egg.hasStats()) {
-                data.putBoolean("HasStats", true);
-                data.putInt("Appetite", egg.getAppetite());
-                data.putInt("Bounty", egg.getBounty());
-                data.putInt("Reach", egg.getReach());
-                // Cap travels with the data so the client needs no config read.
-                int cap = PFConfig.SPEC.isLoaded() ? PFConfig.BREEDING_STAT_CAP.get() : 10;
-                data.putInt("Cap", cap);
+                writePendingStats(data, egg.getAppetite(), egg.getBounty(), egg.getReach());
             }
             // Ticks until the scheduled hatch, recomputed server-side each time
             // Jade re-requests, so the tooltip counts down live while watched.
@@ -226,12 +245,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             if (data == null) {
                 return;
             }
-            if (data.getBoolean("HasStats")) {
-                int cap = data.getInt("Cap");
-                tooltip.add(Component.translatable("productivefrogs.jade.appetite", data.getInt("Appetite"), cap));
-                tooltip.add(Component.translatable("productivefrogs.jade.bounty", data.getInt("Bounty"), cap));
-                tooltip.add(Component.translatable("productivefrogs.jade.reach", data.getInt("Reach"), cap));
-            }
+            appendPendingStats(tooltip, data);
             if (data.contains("HatchTicks")) {
                 tooltip.add(Component.translatable(
                     "productivefrogs.jade.hatch_countdown", formatTime(data.getInt("HatchTicks"))));
@@ -264,25 +278,14 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         @Override
         public void appendServerData(CompoundTag data, EntityAccessor accessor) {
             if (accessor.getEntity() instanceof ResourceTadpole tadpole && tadpole.hasPendingStats()) {
-                data.putBoolean("HasStats", true);
-                data.putInt("Appetite", tadpole.getPendingAppetite());
-                data.putInt("Bounty", tadpole.getPendingBounty());
-                data.putInt("Reach", tadpole.getPendingReach());
-                int cap = PFConfig.SPEC.isLoaded() ? PFConfig.BREEDING_STAT_CAP.get() : 10;
-                data.putInt("Cap", cap);
+                writePendingStats(data, tadpole.getPendingAppetite(), tadpole.getPendingBounty(),
+                    tadpole.getPendingReach());
             }
         }
 
         @Override
         public void appendTooltip(ITooltip tooltip, EntityAccessor accessor, IPluginConfig config) {
-            CompoundTag data = accessor.getServerData();
-            if (data == null || !data.getBoolean("HasStats")) {
-                return;
-            }
-            int cap = data.getInt("Cap");
-            tooltip.add(Component.translatable("productivefrogs.jade.appetite", data.getInt("Appetite"), cap));
-            tooltip.add(Component.translatable("productivefrogs.jade.bounty", data.getInt("Bounty"), cap));
-            tooltip.add(Component.translatable("productivefrogs.jade.reach", data.getInt("Reach"), cap));
+            appendPendingStats(tooltip, accessor.getServerData());
         }
 
         @Override

@@ -37,7 +37,7 @@ stat-1 and stat-10 anchors unless noted):
 | Stat | At 1 | At 10 |
 |---|---|---|
 | Appetite | baseline eat cooldown (`APPETITE_COOLDOWN_MAX`, e.g. 100 ticks) | fast (`APPETITE_COOLDOWN_MIN`, e.g. 30 ticks) |
-| Bounty | 1 Froglight per slime | 3 Froglights per slime (step curve: 1 at 1-3, 2 at 4-7, 3 at 8-10) |
+| Bounty | 1 Froglight per slime | 3 Froglights per slime (equal-band step curve: at the defaults, 1 at 1-4, 2 at 5-8, 3 at 9-10) |
 | Reach | baseline scan radius (`REACH_RADIUS_MIN`, e.g. 8) | extended (`REACH_RADIUS_MAX`, e.g. 16) |
 
 The variant-aware drop (a `ConfigurableFroglightItem` stamped with the
