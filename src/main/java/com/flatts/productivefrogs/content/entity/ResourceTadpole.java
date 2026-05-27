@@ -95,6 +95,23 @@ public class ResourceTadpole extends Tadpole {
     }
 
     /**
+     * The inherited stats this tadpole will mature into (only meaningful when
+     * {@link #hasPendingStats()} is true). Server-side payload - exposed so the
+     * Jade look-at tooltip can preview the offspring before it grows up.
+     */
+    public int getPendingAppetite() {
+        return pendingAppetite;
+    }
+
+    public int getPendingBounty() {
+        return pendingBounty;
+    }
+
+    public int getPendingReach() {
+        return pendingReach;
+    }
+
+    /**
      * Category-aware display name. See {@code ResourceFrog#getName} for the
      * rationale — same pattern, different entity type id.
      */

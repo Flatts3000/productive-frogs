@@ -39,6 +39,14 @@ public class PrimedFrogEggBlockEntity extends BlockEntity {
     private int bounty;
     private int reach;
 
+    // Absolute level game-time the egg is scheduled to hatch, stamped at
+    // placement by PrimedFrogEggBlock#onPlace. Lets the Jade readout show a
+    // live hatch countdown (the scheduled tick itself lives in the level's tick
+    // scheduler, which holds no queryable "ticks remaining"). 0 = unset (an egg
+    // from a save predating this field, or one placed by an odd path); the
+    // countdown is simply hidden then.
+    private long hatchGameTime;
+
     public PrimedFrogEggBlockEntity(BlockPos pos, BlockState state) {
         super(PFBlockEntities.PRIMED_FROG_EGG.get(), pos, state);
     }
@@ -46,6 +54,17 @@ public class PrimedFrogEggBlockEntity extends BlockEntity {
     /** Whether this egg carries bred offspring stats (vs. a non-bred placement). */
     public boolean hasStats() {
         return hasStats;
+    }
+
+    /** Absolute level game-time the egg hatches, or 0 if unknown. Drives the Jade countdown. */
+    public long getHatchGameTime() {
+        return hatchGameTime;
+    }
+
+    /** Record the scheduled hatch game-time so the Jade tooltip can count down to it. */
+    public void setHatchGameTime(long gameTime) {
+        this.hatchGameTime = gameTime;
+        setChanged();
     }
 
     public int getAppetite() {
@@ -82,6 +101,9 @@ public class PrimedFrogEggBlockEntity extends BlockEntity {
             tag.putInt("Bounty", bounty);
             tag.putInt("Reach", reach);
         }
+        if (hatchGameTime > 0) {
+            tag.putLong("HatchGameTime", hatchGameTime);
+        }
     }
 
     @Override
@@ -93,5 +115,6 @@ public class PrimedFrogEggBlockEntity extends BlockEntity {
             bounty = tag.getInt("Bounty");
             reach = tag.getInt("Reach");
         }
+        hatchGameTime = tag.getLong("HatchGameTime");
     }
 }

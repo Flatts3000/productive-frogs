@@ -2,13 +2,17 @@ package com.flatts.productivefrogs.client.jade;
 
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
 import com.flatts.productivefrogs.content.block.SpawneryBlock;
+import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SpawneryBlockEntity;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
+import com.flatts.productivefrogs.content.entity.ResourceTadpole;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -17,8 +21,10 @@ import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.EntityAccessor;
 import snownee.jade.api.IBlockComponentProvider;
 import snownee.jade.api.IEntityComponentProvider;
+import snownee.jade.api.IServerDataProvider;
 import snownee.jade.api.ITooltip;
 import snownee.jade.api.IWailaClientRegistration;
+import snownee.jade.api.IWailaCommonRegistration;
 import snownee.jade.api.IWailaPlugin;
 import snownee.jade.api.WailaPlugin;
 import snownee.jade.api.config.IPluginConfig;
@@ -47,6 +53,26 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "appliances");
     private static final ResourceLocation FROG_STATS_UID =
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "frog_stats");
+    private static final ResourceLocation PRIMED_EGG_STATS_UID =
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "primed_egg_stats");
+    private static final ResourceLocation TADPOLE_STATS_UID =
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tadpole_stats");
+
+    /** Shared instances: each is both the client tooltip and the server-data fetcher. */
+    private static final PrimedEggStatsProvider PRIMED_EGG_STATS = new PrimedEggStatsProvider();
+    private static final TadpoleStatsProvider TADPOLE_STATS = new TadpoleStatsProvider();
+
+    /**
+     * Common (server-side) registration. The pending offspring stats on a laid
+     * egg and on a bred tadpole live only in server-side state (never synced),
+     * so we fetch them on look via {@link IServerDataProvider}s rather than
+     * permanently syncing them to every client.
+     */
+    @Override
+    public void register(IWailaCommonRegistration registration) {
+        registration.registerBlockDataProvider(PRIMED_EGG_STATS, PrimedFrogEggBlock.class);
+        registration.registerEntityDataProvider(TADPOLE_STATS, ResourceTadpole.class);
+    }
 
     @Override
     public void registerClient(IWailaClientRegistration registration) {
@@ -55,6 +81,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         registration.registerBlockComponent(provider, SlimeMilkerBlock.class);
         registration.registerBlockComponent(provider, SpawneryBlock.class);
         registration.registerEntityComponent(new FrogStatsProvider(), ResourceFrog.class);
+        registration.registerBlockComponent(PRIMED_EGG_STATS, PrimedFrogEggBlock.class);
+        registration.registerEntityComponent(TADPOLE_STATS, ResourceTadpole.class);
     }
 
     /** One provider for all three appliances; branches on the block / BlockEntity. */
@@ -152,6 +180,114 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         @Override
         public ResourceLocation getUid() {
             return FROG_STATS_UID;
+        }
+    }
+
+    /**
+     * Look-at readout for a laid (bred) Primed Frog Egg block: the offspring
+     * stats it will hatch into. Those stats live only in the egg's server-side
+     * {@link PrimedFrogEggBlockEntity} (deliberately never synced - the egg
+     * renders identically regardless), so this is both an
+     * {@link IServerDataProvider} (server: read the BE, write the stats into the
+     * look-at packet) and an {@link IBlockComponentProvider} (client: read that
+     * packet back and render the lines). A non-bred egg (creative placement,
+     * Spawnery output, {@code /setblock}) carries no stats and shows nothing -
+     * its hatchlings roll fresh starter stats. See {@code docs/frog_breeding.md}.
+     */
+    private static final class PrimedEggStatsProvider
+            implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
+
+        @Override
+        public void appendServerData(CompoundTag data, BlockAccessor accessor) {
+            if (!(accessor.getBlockEntity() instanceof PrimedFrogEggBlockEntity egg)) {
+                return;
+            }
+            if (egg.hasStats()) {
+                data.putBoolean("HasStats", true);
+                data.putInt("Appetite", egg.getAppetite());
+                data.putInt("Bounty", egg.getBounty());
+                data.putInt("Reach", egg.getReach());
+                // Cap travels with the data so the client needs no config read.
+                int cap = PFConfig.SPEC.isLoaded() ? PFConfig.BREEDING_STAT_CAP.get() : 10;
+                data.putInt("Cap", cap);
+            }
+            // Ticks until the scheduled hatch, recomputed server-side each time
+            // Jade re-requests, so the tooltip counts down live while watched.
+            long hatchAt = egg.getHatchGameTime();
+            if (hatchAt > 0) {
+                long remaining = hatchAt - accessor.getLevel().getGameTime();
+                data.putInt("HatchTicks", (int) Math.max(0, remaining));
+            }
+        }
+
+        @Override
+        public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
+            CompoundTag data = accessor.getServerData();
+            if (data == null) {
+                return;
+            }
+            if (data.getBoolean("HasStats")) {
+                int cap = data.getInt("Cap");
+                tooltip.add(Component.translatable("productivefrogs.jade.appetite", data.getInt("Appetite"), cap));
+                tooltip.add(Component.translatable("productivefrogs.jade.bounty", data.getInt("Bounty"), cap));
+                tooltip.add(Component.translatable("productivefrogs.jade.reach", data.getInt("Reach"), cap));
+            }
+            if (data.contains("HatchTicks")) {
+                tooltip.add(Component.translatable(
+                    "productivefrogs.jade.hatch_countdown", formatTime(data.getInt("HatchTicks"))));
+            }
+        }
+
+        @Override
+        public ResourceLocation getUid() {
+            return PRIMED_EGG_STATS_UID;
+        }
+
+        /** Ticks -> {@code m:ss} (20 ticks per second). */
+        private static String formatTime(int ticks) {
+            int totalSeconds = ticks / 20;
+            return String.format("%d:%02d", totalSeconds / 60, totalSeconds % 60);
+        }
+    }
+
+    /**
+     * Look-at readout for a bred Resource Tadpole: the stats it will mature into.
+     * Like the egg, a tadpole's inherited stats are a server-side payload (carried
+     * to {@code ResourceTadpole#ageUp}, never synced), so this is both an
+     * {@link IServerDataProvider} (server) and an {@link IEntityComponentProvider}
+     * (client). A non-bred tadpole carries no pending stats and shows nothing - it
+     * rolls fresh starter stats when it matures. See {@code docs/frog_breeding.md}.
+     */
+    private static final class TadpoleStatsProvider
+            implements IEntityComponentProvider, IServerDataProvider<EntityAccessor> {
+
+        @Override
+        public void appendServerData(CompoundTag data, EntityAccessor accessor) {
+            if (accessor.getEntity() instanceof ResourceTadpole tadpole && tadpole.hasPendingStats()) {
+                data.putBoolean("HasStats", true);
+                data.putInt("Appetite", tadpole.getPendingAppetite());
+                data.putInt("Bounty", tadpole.getPendingBounty());
+                data.putInt("Reach", tadpole.getPendingReach());
+                int cap = PFConfig.SPEC.isLoaded() ? PFConfig.BREEDING_STAT_CAP.get() : 10;
+                data.putInt("Cap", cap);
+            }
+        }
+
+        @Override
+        public void appendTooltip(ITooltip tooltip, EntityAccessor accessor, IPluginConfig config) {
+            CompoundTag data = accessor.getServerData();
+            if (data == null || !data.getBoolean("HasStats")) {
+                return;
+            }
+            int cap = data.getInt("Cap");
+            tooltip.add(Component.translatable("productivefrogs.jade.appetite", data.getInt("Appetite"), cap));
+            tooltip.add(Component.translatable("productivefrogs.jade.bounty", data.getInt("Bounty"), cap));
+            tooltip.add(Component.translatable("productivefrogs.jade.reach", data.getInt("Reach"), cap));
+        }
+
+        @Override
+        public ResourceLocation getUid() {
+            return TADPOLE_STATS_UID;
         }
     }
 }

@@ -81,7 +81,17 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
 
     @Override
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
-        level.scheduleTick(pos, this, getHatchDelay(level.getRandom()));
+        if (level.isClientSide()) {
+            return;
+        }
+        int delay = getHatchDelay(level.getRandom());
+        level.scheduleTick(pos, this, delay);
+        // Stamp the absolute hatch time on the BE so the Jade tooltip can count
+        // down to it (the scheduled tick lives in the level scheduler, which
+        // exposes no "ticks remaining"). The BE is created before onPlace runs.
+        if (level.getBlockEntity(pos) instanceof PrimedFrogEggBlockEntity egg) {
+            egg.setHatchGameTime(level.getGameTime() + delay);
+        }
     }
 
     private static int getHatchDelay(RandomSource random) {
