@@ -1,9 +1,11 @@
 # Frog Stat Breeding
 
-> **Status: SPECCED, not yet implemented.** This is the design of record for the
-> frog stat-upgrade system, ready to build. Targeted as its own minor release.
-> Captured 2026-05-26. Decisions are recorded in the Decisions section; build from
-> this doc, not from memory of the design chat.
+> **Status: IMPLEMENTED.** This is the design of record for the frog stat-upgrade
+> system. Captured 2026-05-26; built 2026-05-27 on `feat/frog-stat-breeding`.
+> Decisions are recorded in the Decisions section. The two former open questions
+> are resolved (see Open questions, below). Cosmetic tiers are the one deferred
+> piece - the stats already sync client-side, so a later render-layer PR can read
+> them with no data change.
 
 ## Summary
 
@@ -231,12 +233,22 @@ Pure additive feature; no existing data shapes change. Likely touch points:
 
 ## Open questions
 
-- The exact vanilla hook for the frog eat cadence (which brain behaviour/cooldown to
-  scale for Appetite) - an implementation-time discovery.
-- The frogspawn -> tadpole stat-carry plumbing is the main implementation risk; the
-  capture-at-breeding / stamp-on-tadpole approach needs an in-world verification pass.
+- ~~The exact vanilla hook for the frog eat cadence (which brain behaviour/cooldown to
+  scale for Appetite).~~ **Resolved:** vanilla frogs have no eat cooldown, but
+  `FrogAttackablesSensor` already refuses to surface prey while the
+  `HAS_HUNTING_COOLDOWN` memory is present. That memory is absent from
+  `Frog.MEMORY_TYPES`, so `ResourceFrog#brainProvider` registers it, and
+  `ResourceFrog#startEatCooldown` sets it (expiry = `FrogStats.appetiteCooldownTicks`)
+  after every eat. The expiry auto-decrements in `Brain#tick`; no countdown behaviour.
+- ~~The frogspawn -> tadpole stat-carry plumbing.~~ **Resolved:** stats are computed at
+  conception (`ResourceFrog#spawnChildFromBreeding`), stamped onto the
+  `PrimedFrogEggBlockEntity` when the egg is laid (`LayCategoryFrogspawn`), read back at
+  hatch onto each `ResourceTadpole`, and applied to the matured frog in
+  `ResourceTadpole#ageUp` (after `finalizeSpawn`, overriding the starter roll). The egg
+  BE persists the stats so a chunk unload between lay and hatch doesn't lose them.
 - Cosmetic tier visuals (the art pass) - the maxed "gold trim + sparkle" look in
-  particular.
+  particular. **Still open / deferred** to a follow-up PR; the synced stat total is
+  ready for a render layer to consume.
 
 ## Related
 

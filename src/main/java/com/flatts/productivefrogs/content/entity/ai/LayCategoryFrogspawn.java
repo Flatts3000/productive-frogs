@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.content.entity.ai;
 
+import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import net.minecraft.core.BlockPos;
@@ -92,6 +93,22 @@ public final class LayCategoryFrogspawn {
                             1.0F,
                             1.0F
                         );
+                        // Hand the offspring stats computed at conception
+                        // (ResourceFrog#spawnChildFromBreeding) off to the egg's
+                        // BlockEntity so they survive the frogspawn intermediary
+                        // and reach the hatched tadpoles. A non-bred lay (no
+                        // pending roll) leaves the egg statless, and the hatch
+                        // falls back to a fresh starter roll on each tadpole.
+                        // See docs/frog_breeding.md.
+                        if (resourceFrog.hasPendingOffspring()
+                            && level.getBlockEntity(placePos) instanceof PrimedFrogEggBlockEntity eggBe) {
+                            eggBe.setPendingStats(
+                                resourceFrog.getPendingOffspringAppetite(),
+                                resourceFrog.getPendingOffspringBounty(),
+                                resourceFrog.getPendingOffspringReach()
+                            );
+                            resourceFrog.clearPendingOffspring();
+                        }
                         isPregnant.erase();
                         return true;
                     }

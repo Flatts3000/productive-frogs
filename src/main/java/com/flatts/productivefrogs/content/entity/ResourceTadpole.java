@@ -56,6 +56,16 @@ public class ResourceTadpole extends Tadpole {
         builder.define(DATA_CATEGORY, Category.BOG.ordinal());
     }
 
+    // Pending breeding stats inherited at conception, carried from the hatched
+    // egg through to the matured ResourceFrog (docs/frog_breeding.md). Not
+    // synced - the tadpole never displays them; they are server-side payload
+    // consumed in ageUp(). Absent (hasPendingStats false) for a non-bred
+    // tadpole, which matures with a fresh starter roll instead.
+    private boolean hasPendingStats;
+    private int pendingAppetite;
+    private int pendingBounty;
+    private int pendingReach;
+
     public Category getCategory() {
         // Defensive: synced data can be set to any int via modded packets or
         // corrupted save data. fromOrdinalOrDefault falls back to BOG rather
@@ -65,6 +75,40 @@ public class ResourceTadpole extends Tadpole {
 
     public void setCategory(Category category) {
         this.entityData.set(DATA_CATEGORY, category.ordinal());
+    }
+
+    /**
+     * Stamp the inherited offspring stats onto this tadpole. Called at hatch
+     * time by {@link com.flatts.productivefrogs.content.block.PrimedFrogEggBlock}
+     * when the egg carried bred stats. Consumed in {@link #ageUp()} when the
+     * tadpole matures into a {@link ResourceFrog}.
+     */
+    public void setPendingStats(int appetite, int bounty, int reach) {
+        this.hasPendingStats = true;
+        this.pendingAppetite = appetite;
+        this.pendingBounty = bounty;
+        this.pendingReach = reach;
+    }
+
+    public boolean hasPendingStats() {
+        return hasPendingStats;
+    }
+
+    /**
+     * The inherited stats this tadpole will mature into (only meaningful when
+     * {@link #hasPendingStats()} is true). Server-side payload - exposed so the
+     * Jade look-at tooltip can preview the offspring before it grows up.
+     */
+    public int getPendingAppetite() {
+        return pendingAppetite;
+    }
+
+    public int getPendingBounty() {
+        return pendingBounty;
+    }
+
+    public int getPendingReach() {
+        return pendingReach;
     }
 
     /**
@@ -85,6 +129,12 @@ public class ResourceTadpole extends Tadpole {
     public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putString("Category", getCategory().name());
+        if (hasPendingStats) {
+            tag.putBoolean("HasPendingStats", true);
+            tag.putInt("PendingAppetite", pendingAppetite);
+            tag.putInt("PendingBounty", pendingBounty);
+            tag.putInt("PendingReach", pendingReach);
+        }
     }
 
     @Override
@@ -96,6 +146,12 @@ public class ResourceTadpole extends Tadpole {
             } catch (IllegalArgumentException ignored) {
                 // Unknown category in save data — leave default.
             }
+        }
+        hasPendingStats = tag.getBoolean("HasPendingStats");
+        if (hasPendingStats) {
+            pendingAppetite = tag.getInt("PendingAppetite");
+            pendingBounty = tag.getInt("PendingBounty");
+            pendingReach = tag.getInt("PendingReach");
         }
     }
 
@@ -153,6 +209,13 @@ public class ResourceTadpole extends Tadpole {
             MobSpawnType.CONVERSION,
             null
         );
+        // Apply inherited stats AFTER finalizeSpawn so they override the
+        // starter roll finalizeSpawn would otherwise apply. A non-bred tadpole
+        // (no pending stats) keeps the starter roll. This is the final hop of
+        // the conception->egg->tadpole->frog stat carry.
+        if (hasPendingStats) {
+            frog.setStats(pendingAppetite, pendingBounty, pendingReach);
+        }
         frog.setNoAi(this.isNoAi());
         if (this.hasCustomName()) {
             frog.setCustomName(this.getCustomName());

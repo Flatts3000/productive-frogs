@@ -61,6 +61,21 @@ public final class PFItems {
     );
 
     /**
+     * Sweetslime — the dedicated Resource Frog breeding treat (slime ball +
+     * sugar; see {@code docs/frog_breeding.md} D5/D6). A plain item: the
+     * breeding behaviour lives entirely in
+     * {@link com.flatts.productivefrogs.content.entity.ResourceFrog#isFood}
+     * keying off this id, so it needs no custom class. Deliberately NOT the slime ball
+     * (which is ubiquitous in a slime farm and would trigger accidental
+     * breeding) — feeding two same-species frogs a Sweetslime each is the
+     * intentional act that starts a cross.
+     */
+    public static final DeferredItem<Item> SWEETSLIME = ITEMS.registerItem(
+        "sweetslime",
+        Item::new
+    );
+
+    /**
      * Slime Bucket — the V1 transport mechanism for size-1 Resource Slimes
      * (per {@code docs/slime_sourcing.md}). Vanilla {@link MobBucketItem}
      * handles the actual capture/release flow; the slime's category is

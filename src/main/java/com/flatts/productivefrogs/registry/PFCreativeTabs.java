@@ -71,6 +71,10 @@ public final class PFCreativeTabs {
                     if (PFConfig.SPEC.isLoaded() && PFConfig.SPAWNERY_ENABLED.get()) {
                         output.accept(PFItems.SPAWNERY.get());
                     }
+                    // The Sweetslime breeding treat (slime ball + sugar), placed
+                    // after the appliances so the two machines stay adjacent in the
+                    // tab. It's the hand-fed item that drives same-species breeding.
+                    output.accept(PFItems.SWEETSLIME.get());
                     // One Slime Milk bucket per registry variant (stamped via the
                     // SLIME_VARIANT component), plus the vanilla / magma specials
                     // (sentinel ids the source block maps to vanilla Slime /
