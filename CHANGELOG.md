@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.5.2 - 2026-05-27 - Steel joins the Cave frog
+
+A new metal for the Cave roster.
+
+### Added
+
+- **Steel Slimes.** Infuse a Cave Slime with a steel ingot to make Steel Slimes, and a
+  Cave frog will hunt them down for Steel Froglights that smelt back into steel. Priming
+  vanilla frogspawn with a steel ingot raises a Cave frog too. Steel Froglights smelt back
+  into Mekanism steel, so Steel Slimes appear only when Mekanism is installed; with Mekanism
+  present, infusing accepts steel ingots from any mod that uses the common steel-ingot tag.
+
 ## v1.5.1 - 2026-05-27 - Lapis joins the Geode frog
 
 A small correctness fix to the Geode roster.

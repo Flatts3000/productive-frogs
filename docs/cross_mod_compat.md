@@ -171,13 +171,14 @@ leans on vanilla aquatic content. Flagged as a design gap, not a blocker.
 
 ## Decisions (confirmed 2026-05-25) and how they shipped
 
-- **Alloys:** decision was "include keyed on the common tag." Shipped the two with
-  a verified 1.21.1 provider - brass (`c:ingots/brass` -> `create:brass_ingot`)
-  and refined obsidian (`c:ingots/refined_obsidian` -> `mekanism:ingot_refined_obsidian`).
-  The rest (electrum, invar, constantan, signalum, lumium, enderium, steel) are
-  deferred: no verified 1.21.1 provider id, and shipping an unverified id silently
-  fails. (`required: false` was for tag-file entries; we don't ship tag files, we
-  reference the mods' own.)
+- **Alloys:** decision was "include keyed on the common tag." Shipped the ones with
+  a verified 1.21.1 provider - brass (`c:ingots/brass` -> `create:brass_ingot`),
+  refined obsidian (`c:ingots/refined_obsidian` -> `mekanism:ingot_refined_obsidian`),
+  and steel (`c:ingots/steel` -> `mekanism:ingot_steel`; Mekanism is the verified
+  present provider, same as refined obsidian). The rest (electrum, invar, constantan,
+  signalum, lumium, enderium) stay deferred: no verified 1.21.1 provider id, and
+  shipping an unverified id silently fails. (`required: false` was for tag-file
+  entries; we don't ship tag files, we reference the mods' own.)
 - **Output-item resolution:** the smelt-back is the per-variant recipe's output -
   the provider's verified item, gated `mod_loaded(provider)`. A pack overrides by
   replacing the recipe. (There is no runtime "first in tag" fallback - a furnace
