@@ -21,7 +21,7 @@ $recipeBase = Join-Path $root 'src\main\resources\data\productivefrogs\recipe'
 $metals = @(
     'iron', 'copper', 'gold',
     'aluminum', 'tin', 'lead', 'nickel', 'osmium', 'silver', 'zinc', 'uranium',
-    'mythril', 'orichalcum', 'brass', 'refined_obsidian'
+    'mythril', 'orichalcum', 'brass', 'refined_obsidian', 'steel'
 )
 
 # AllTheOres dust set (the fallback layer). alltheores:<metal>_dust exists for
