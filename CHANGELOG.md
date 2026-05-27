@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.5.1 - 2026-05-27 - Lapis joins the Geode frog
+
+A small correctness fix to the Geode roster.
+
+### Changed
+
+- **Lapis moved from the Cave frog to the Geode frog.** Lapis lazuli is a gem, so it
+  now sits with diamond, emerald, and amethyst on the Geode roster. Infuse a Geode Slime
+  with lapis lazuli to make Lapis Slimes (the Cave frog no longer accepts it), and
+  priming vanilla frogspawn with lapis lazuli now raises a Geode frog instead of a Cave
+  one. The Lapis Slime, Froglight, and milk keep their familiar blue colour.
+
 ## v1.5.0 - 2026-05-27 - Frog stat breeding
 
 Your frogs are no longer interchangeable. Each one now has three stats you can
