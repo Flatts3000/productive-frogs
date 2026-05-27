@@ -2892,4 +2892,104 @@ public final class PFGameTests {
             }
         });
     }
+
+    /**
+     * Inheritance bound, in-world: two 1/1/1 parents can never produce an
+     * offspring stat above 2 (the better parent {@code hi=1}, plus at most the
+     * +1 improvement). Drives the real {@link ResourceFrog#spawnChildFromBreeding}
+     * capture on live entities, looped many times to exercise the RNG branches.
+     * Regression pin for "first breed jumped a stat from 1 to 3" reports - if the
+     * capture ever inflates a stat past hi+1, this fails.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 40)
+    public static void breedingOffspringNeverExceedsBetterParentPlusOne(GameTestHelper helper) {
+        ResourceFrog a = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 1));
+        ResourceFrog b = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 3));
+        a.setCategory(Category.CAVE);
+        b.setCategory(Category.CAVE);
+        a.setStats(1, 1, 1);
+        b.setStats(1, 1, 1);
+
+        for (int i = 0; i < 50; i++) {
+            a.spawnChildFromBreeding(helper.getLevel(), b);
+            int app = a.getPendingOffspringAppetite();
+            int bou = a.getPendingOffspringBounty();
+            int rea = a.getPendingOffspringReach();
+            if (app > 2 || bou > 2 || rea > 2) {
+                helper.fail("offspring of two 1/1/1 parents exceeded hi+1: A" + app + "/B" + bou + "/R" + rea
+                    + " (max possible is 2)");
+                return;
+            }
+            if (app < 1 || bou < 1 || rea < 1) {
+                helper.fail("offspring stat fell below the floor: A" + app + "/B" + bou + "/R" + rea);
+                return;
+            }
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Stat carry, in-world: the offspring stats captured at breeding survive the
+     * egg BlockEntity and the hatch onto each tadpole unchanged. Replicates the
+     * lay step the way {@link com.flatts.productivefrogs.content.entity.ai.LayCategoryFrogspawn}
+     * does (stamp the egg BE from the pregnant frog's pending stats), then forces
+     * the hatch via the block's {@code tick}. Catches any inflation or field
+     * mix-up in the capture -> egg -> tadpole chain that a "1 to 3" report would
+     * imply.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void bredStatsCarryFromEggToTadpoleUnchanged(GameTestHelper helper) {
+        Category cat = Category.CAVE;
+        BlockPos eggPos = new BlockPos(2, 2, 2);
+        helper.setBlock(eggPos.below(), Blocks.WATER);
+
+        ResourceFrog a = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 1));
+        ResourceFrog b = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 3));
+        a.setCategory(cat);
+        b.setCategory(cat);
+        a.setStats(1, 1, 1);
+        b.setStats(1, 1, 1);
+        a.spawnChildFromBreeding(helper.getLevel(), b);
+        int pa = a.getPendingOffspringAppetite();
+        int pb = a.getPendingOffspringBounty();
+        int pr = a.getPendingOffspringReach();
+
+        // Lay: place the egg and stamp its BE exactly as LayCategoryFrogspawn does.
+        PrimedFrogEggBlock eggBlock = PFBlocks.primedEgg(cat);
+        helper.setBlock(eggPos, eggBlock);
+        ServerLevel level = helper.getLevel();
+        BlockPos absEgg = helper.absolutePos(eggPos);
+        if (!(level.getBlockEntity(absEgg)
+                instanceof com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity eggBe)) {
+            helper.fail("Primed Frog Egg BlockEntity missing after placement");
+            return;
+        }
+        eggBe.setPendingStats(pa, pb, pr);
+
+        // Hatch immediately (bypassing the 3600..12000-tick schedule).
+        eggBlock.tick(level.getBlockState(absEgg), level, absEgg, level.getRandom());
+
+        List<ResourceTadpole> tadpoles = helper.getEntities(PFEntities.RESOURCE_TADPOLE.get());
+        if (tadpoles.isEmpty()) {
+            helper.fail("no tadpoles hatched from the bred egg");
+            return;
+        }
+        for (ResourceTadpole t : tadpoles) {
+            if (!t.hasPendingStats()) {
+                helper.fail("hatched tadpole lost its bred stats");
+                return;
+            }
+            if (t.getPendingAppetite() != pa || t.getPendingBounty() != pb || t.getPendingReach() != pr) {
+                helper.fail("tadpole stats A" + t.getPendingAppetite() + "/B" + t.getPendingBounty()
+                    + "/R" + t.getPendingReach() + " != bred stats A" + pa + "/B" + pb + "/R" + pr);
+                return;
+            }
+            if (t.getPendingAppetite() > 2 || t.getPendingBounty() > 2 || t.getPendingReach() > 2) {
+                helper.fail("carried stat exceeded the (1,1)-parent ceiling of 2: A" + t.getPendingAppetite()
+                    + "/B" + t.getPendingBounty() + "/R" + t.getPendingReach());
+                return;
+            }
+        }
+        helper.succeed();
+    }
 }
