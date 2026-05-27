@@ -117,7 +117,7 @@ These are the levers to tune balance:
 
 ```
  +---------------------------+
- |  Cave Slime hunt          |   ← dripstone caves, deep dark, lush caves
+ |  Cave Slime hunt          |   ← dripstone caves, lush caves
  |  (player infuses with     |
  |   iron ingot, buckets at  |
  |   size 1)                 |
