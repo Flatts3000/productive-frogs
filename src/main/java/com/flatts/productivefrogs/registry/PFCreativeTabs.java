@@ -65,16 +65,16 @@ public final class PFCreativeTabs {
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h ->
                         output.accept(makeVariantSlimeBucket(h.key().location(), h.value().category()))));
                     output.accept(PFItems.SLIME_MILKER.get());
-                    // The Sweetslime breeding treat (slime ball + sugar). Grouped
-                    // with the appliances/tools rather than the eggs - it's the
-                    // hand-fed item that drives same-species frog breeding.
-                    output.accept(PFItems.SWEETSLIME.get());
                     // Spawnery only appears in the tab when enabled (skyblock
                     // bootstrap; off by default). isLoaded guards the title-screen
                     // build before COMMON config is available.
                     if (PFConfig.SPEC.isLoaded() && PFConfig.SPAWNERY_ENABLED.get()) {
                         output.accept(PFItems.SPAWNERY.get());
                     }
+                    // The Sweetslime breeding treat (slime ball + sugar), placed
+                    // after the appliances so the two machines stay adjacent in the
+                    // tab. It's the hand-fed item that drives same-species breeding.
+                    output.accept(PFItems.SWEETSLIME.get());
                     // One Slime Milk bucket per registry variant (stamped via the
                     // SLIME_VARIANT component), plus the vanilla / magma specials
                     // (sentinel ids the source block maps to vanilla Slime /
