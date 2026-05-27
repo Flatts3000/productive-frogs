@@ -13,7 +13,7 @@ Productive Frogs' canonical species order is the progression order of the flagsh
 | 3 | **BOG** | Organic & mob-drops - bone, string, feather, leather, gunpowder, ... |
 | 4 | **TIDE** | Aquatic - sponge, prismarine, sea pickle, nautilus shell, ink sac, ... |
 | 5 | **INFERNAL** | Nether - blaze, nether quartz, soul sand, netherrack, glowstone, netherite scrap |
-| 6 | **VOID** | End & endgame - ender pearl, chorus fruit, shulker shell, ... |
+| 6 | **VOID** | End & endgame - ender pearl, chorus fruit, shulker shell, echo shard, sculk, end stone, ... |
 
 Each species is a gated tier; players complete one to unlock the next. Presenting the mod's objects in this order makes creative tabs, JEI, and the recipe book read in journey order.
 

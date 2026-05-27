@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.4.3 - 2026-05-26 - Deep dark to the Void
+
+A balance and correctness pass on the deep dark and the Void roster.
+
+### Added
+
+- **Sculk** and **end stone** are now farmable through the **Void** frog - sculk is renewable for sculk sensors, end stone for bulk building.
+
+### Changed
+
+- **Echo shard moved from Cave to Void.** The deep-dark loot now sits on the Void roster, which thematically fits (the deep dark is the eerie, endgame kin of the End) and pulls a high-value resource off the heavily-stacked Cave species.
+
+### Fixed
+
+- **Cave Slimes no longer spawn in the deep dark**, matching vanilla (the deep dark suppresses natural mob spawns). Cave Slimes spawn in dripstone caves and lush caves - lush caves was always the intended coverage but had never actually been wired up.
+
 ## v1.4.2 - 2026-05-26 - Geode & Tide roster rebalance
 
 More to farm in the two thinnest species, plus a balance move.

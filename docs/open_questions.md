@@ -53,7 +53,7 @@ Design decisions that were resolved during the V1 design phase. All entries are 
 | Species | Parent slime entity | Spawn niche |
 |---|---|---|
 | Bog | `productivefrogs:bog_slime` | Swamps, mangrove swamps |
-| Cave | `productivefrogs:cave_slime` | Dripstone caves, deep dark, lush caves |
+| Cave | `productivefrogs:cave_slime` | Dripstone caves, lush caves |
 | Geode | `productivefrogs:geode_slime` | Mountain peaks (stony / jagged / frozen) |
 | Tide | `productivefrogs:tide_slime` | Deep / lukewarm / warm ocean biomes |
 | Infernal | `productivefrogs:infernal_slime` | Nether wastes, basalt deltas, soul sand valley |
