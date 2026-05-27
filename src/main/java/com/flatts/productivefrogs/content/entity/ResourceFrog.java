@@ -438,12 +438,41 @@ public class ResourceFrog extends Frog {
         // priority in both activities so it runs alongside the vanilla pacing.
         AnimalMakeLove resourceMakeLove =
             new AnimalMakeLove((EntityType<? extends Animal>) (EntityType<?>) PFEntities.RESOURCE_FROG.get());
-        brain.addActivity(Activity.IDLE, ImmutableList.of(Pair.of(0, resourceMakeLove)));
-        brain.addActivity(Activity.SWIM, ImmutableList.of(Pair.of(0, resourceMakeLove)));
+        // Re-add IDLE/SWIM via addActivityWithConditions, NOT addActivity. In
+        // 1.21.1 Brain#addActivity(activity, list) routes to
+        // addActivityAndRemoveMemoriesWhenStopped with an EMPTY condition set,
+        // and that does activityRequirements.put(activity, conditions) - a PUT
+        // that would WIPE the land/water gating FrogAi already installed (IDLE
+        // requires IS_IN_WATER absent, SWIM requires it present). With SWIM's
+        // requirements wiped to "always met" and FrogAi.updateActivity checking
+        // SWIM before IDLE, a frog on land gets stuck in SWIM. Re-supplying
+        // vanilla's exact requirement sets adds resourceMakeLove while keeping
+        // the gating intact (the behavior list is merged, not replaced).
+        brain.addActivityWithConditions(
+            Activity.IDLE,
+            ImmutableList.of(Pair.of(0, resourceMakeLove)),
+            ImmutableSet.of(
+                Pair.of(MemoryModuleType.LONG_JUMP_MID_JUMP, MemoryStatus.VALUE_ABSENT),
+                Pair.of(MemoryModuleType.IS_IN_WATER, MemoryStatus.VALUE_ABSENT)
+            )
+        );
+        brain.addActivityWithConditions(
+            Activity.SWIM,
+            ImmutableList.of(Pair.of(0, resourceMakeLove)),
+            ImmutableSet.of(
+                Pair.of(MemoryModuleType.LONG_JUMP_MID_JUMP, MemoryStatus.VALUE_ABSENT),
+                Pair.of(MemoryModuleType.IS_IN_WATER, MemoryStatus.VALUE_PRESENT)
+            )
+        );
+        // LAY_SPAWN: include LONG_JUMP_MID_JUMP-absent too (vanilla's full set),
+        // so a pregnant frog doesn't try to lay mid-jump.
         brain.addActivityWithConditions(
             Activity.LAY_SPAWN,
             ImmutableList.of(Pair.of(2, LayCategoryFrogspawn.create())),
-            ImmutableSet.of(Pair.of(MemoryModuleType.IS_PREGNANT, MemoryStatus.VALUE_PRESENT))
+            ImmutableSet.of(
+                Pair.of(MemoryModuleType.LONG_JUMP_MID_JUMP, MemoryStatus.VALUE_ABSENT),
+                Pair.of(MemoryModuleType.IS_PREGNANT, MemoryStatus.VALUE_PRESENT)
+            )
         );
         return brain;
     }

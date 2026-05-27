@@ -3141,6 +3141,34 @@ public final class PFGameTests {
         helper.runAfterDelay(40L, helper::succeed);
     }
 
+    /**
+     * Brain activity-gating regression: a Resource Frog on land must settle into
+     * the IDLE activity, not get stuck in SWIM. makeBrain adds the same-species
+     * AnimalMakeLove with vanilla's exact IDLE/SWIM requirement sets; the bare
+     * {@code addActivity} overload would PUT an empty requirement set, wiping the
+     * land/water gating - and since FrogAi.updateActivity checks SWIM before IDLE,
+     * a land frog would be permanently locked in SWIM. This pins the fix.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 40)
+    public static void landFrogEntersIdleNotStuckInSwim(GameTestHelper helper) {
+        floorPlot(helper, 5); // solid floor, no water -> unambiguously on land
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 2));
+        frog.setCategory(Category.CAVE);
+        // By tick 20 the spawn long-jump cooldown is still active (so LONG_JUMP is
+        // ineligible) and there's no prey/pregnancy, so the frog should be in IDLE.
+        helper.runAfterDelay(20L, () -> {
+            if (frog.getBrain().isActive(net.minecraft.world.entity.schedule.Activity.SWIM)) {
+                helper.fail("Resource Frog on land is stuck in SWIM - IDLE/SWIM activity requirements were clobbered");
+                return;
+            }
+            if (!frog.getBrain().isActive(net.minecraft.world.entity.schedule.Activity.IDLE)) {
+                helper.fail("Resource Frog on land did not settle into the IDLE activity");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
     /** Lay a stone floor across the full {@code 5 x length} plot base so test entities don't fall. */
     private static void floorPlot(GameTestHelper helper, int length) {
         for (int x = 0; x < 5; x++) {

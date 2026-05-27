@@ -90,11 +90,14 @@ public final class FrogStats {
     }
 
     /**
-     * Map a Bounty stat to a Froglight drop count via the step curve from the
-     * spec: 1 drop at Bounty 1-3, 2 drops at 4-7, 3 drops at 8-10 (with the top
-     * step capped by {@code maxDrops}). The thresholds are derived from
-     * {@code maxDrops} so a config bump to {@code maxDrops} keeps a sensible
-     * laddered curve. Always returns at least 1.
+     * Map a Bounty stat to a Froglight drop count via a step curve: split
+     * {@code [STAT_MIN, cap]} into {@code maxDrops} equal bands (width rounded up
+     * so the top band reaches the cap), and the band index + 1 is the drop count.
+     * For the shipped defaults ({@code maxDrops=3}, {@code cap=10}) the band width
+     * is 4, giving <b>1 drop at Bounty 1-4, 2 at 5-8, 3 at 9-10</b>. (The spec's
+     * illustrative "1-3 / 4-7 / 8-10" was approximate; the equal-band rule is what
+     * generalizes when a pack changes {@code maxDrops} or {@code cap}.) Always
+     * returns at least 1 and never more than {@code maxDrops}.
      */
     public static int bountyDropCount(int bounty, int maxDrops, int cap) {
         int b = clamp(bounty, cap);
