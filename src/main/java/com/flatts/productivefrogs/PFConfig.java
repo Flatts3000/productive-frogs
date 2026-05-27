@@ -41,6 +41,21 @@ public final class PFConfig {
     public static final ModConfigSpec.IntValue STATS_REACH_RADIUS_MAX;
     public static final ModConfigSpec.BooleanValue FROGS_PERSISTENT;
 
+    // Single source of truth for the breeding/stats defaults: used both by the
+    // ModConfigSpec definitions below AND by the accessor methods' pre-config-load
+    // fallbacks, so the spec default and the fallback can never drift apart.
+    public static final int DEFAULT_STAT_CAP = 10;
+    public static final double DEFAULT_IMPROVEMENT_CHANCE = 0.20;
+    public static final double DEFAULT_REGRESSION_CHANCE = 0.30;
+    public static final int DEFAULT_STARTER_STAT_MIN = 1;
+    public static final int DEFAULT_STARTER_STAT_MAX = 3;
+    public static final int DEFAULT_APPETITE_COOLDOWN_MIN = 30;
+    public static final int DEFAULT_APPETITE_COOLDOWN_MAX = 100;
+    public static final int DEFAULT_BOUNTY_MAX_DROPS = 3;
+    public static final int DEFAULT_REACH_RADIUS_MIN = 8;
+    public static final int DEFAULT_REACH_RADIUS_MAX = 16;
+    public static final boolean DEFAULT_FROGS_PERSISTENT = true;
+
     public static final ModConfigSpec SPEC;
 
     static {
@@ -137,7 +152,7 @@ public final class PFConfig {
                 "Per-stat chance the offspring rolls one above the better parent (min(cap, hi + 1)).",
                 "Default 0.20. Raising this makes the climb to a maxed frog brisker."
             )
-            .defineInRange("improvementChance", 0.20, 0.0, 1.0);
+            .defineInRange("improvementChance", DEFAULT_IMPROVEMENT_CHANCE, 0.0, 1.0);
 
         BREEDING_REGRESSION_CHANCE = builder
             .comment(
@@ -145,15 +160,15 @@ public final class PFConfig {
                 "Default 0.30. Sampled after improvementChance from the same draw, so",
                 "improvementChance + regressionChance must stay <= 1.0; the remainder is the 'hold at better parent' chance."
             )
-            .defineInRange("regressionChance", 0.30, 0.0, 1.0);
+            .defineInRange("regressionChance", DEFAULT_REGRESSION_CHANCE, 0.0, 1.0);
 
         BREEDING_STAT_CAP = builder
             .comment("Maximum value any single stat can reach. Default 10 (the 'maxed' cap).")
-            .defineInRange("statCap", 10, 1, 100);
+            .defineInRange("statCap", DEFAULT_STAT_CAP, 1, 100);
 
         BREEDING_STARTER_STAT_MIN = builder
             .comment("Lowest starter (non-bred) stat roll, inclusive. Default 1.")
-            .defineInRange("starterStatMin", 1, 1, 100);
+            .defineInRange("starterStatMin", DEFAULT_STARTER_STAT_MIN, 1, 100);
 
         BREEDING_STARTER_STAT_MAX = builder
             .comment(
@@ -161,7 +176,7 @@ public final class PFConfig {
                 "A freshly-acquired frog rolls each stat uniformly in [starterStatMin, starterStatMax];",
                 "breeding is the only way to climb past this band."
             )
-            .defineInRange("starterStatMax", 3, 1, 100);
+            .defineInRange("starterStatMax", DEFAULT_STARTER_STAT_MAX, 1, 100);
 
         builder.pop();
 
@@ -169,29 +184,29 @@ public final class PFConfig {
 
         STATS_APPETITE_COOLDOWN_MIN = builder
             .comment("Eat cooldown in ticks at Appetite = statCap (fastest). Default 30 (1.5s).")
-            .defineInRange("appetiteCooldownMin", 30, 1, 24000);
+            .defineInRange("appetiteCooldownMin", DEFAULT_APPETITE_COOLDOWN_MIN, 1, 24000);
 
         STATS_APPETITE_COOLDOWN_MAX = builder
             .comment(
                 "Eat cooldown in ticks at Appetite = 1 (slowest). Default 100 (5s).",
                 "Should be >= appetiteCooldownMin; the curve interpolates linearly between the two."
             )
-            .defineInRange("appetiteCooldownMax", 100, 1, 24000);
+            .defineInRange("appetiteCooldownMax", DEFAULT_APPETITE_COOLDOWN_MAX, 1, 24000);
 
         STATS_BOUNTY_MAX_DROPS = builder
             .comment("Froglights dropped per slime at Bounty = statCap. Default 3 (step curve: 1 / 2 / 3).")
-            .defineInRange("bountyMaxDrops", 3, 1, 64);
+            .defineInRange("bountyMaxDrops", DEFAULT_BOUNTY_MAX_DROPS, 1, 64);
 
         STATS_REACH_RADIUS_MIN = builder
             .comment("Prey-scan radius in blocks at Reach = 1. Default 8.")
-            .defineInRange("reachRadiusMin", 8, 1, 64);
+            .defineInRange("reachRadiusMin", DEFAULT_REACH_RADIUS_MIN, 1, 64);
 
         STATS_REACH_RADIUS_MAX = builder
             .comment(
                 "Prey-scan radius in blocks at Reach = statCap. Default 16.",
                 "Should be >= reachRadiusMin; the curve interpolates linearly between the two."
             )
-            .defineInRange("reachRadiusMax", 16, 1, 64);
+            .defineInRange("reachRadiusMax", DEFAULT_REACH_RADIUS_MAX, 1, 64);
 
         builder.pop();
 
@@ -203,11 +218,78 @@ public final class PFConfig {
                 "A bred-up frog is valuable; persistence prevents losing a stat line to despawn.",
                 "They can still die to damage. Set false to let frogs despawn like vanilla animals."
             )
-            .define("persistent", true);
+            .define("persistent", DEFAULT_FROGS_PERSISTENT);
 
         builder.pop();
 
         SPEC = builder.build();
+    }
+
+    // ------------------------------------------------------------------
+    // Breeding/stats accessors: read the live config when loaded, else the
+    // compile-time default. These collapse the `SPEC.isLoaded() ? X.get() : lit`
+    // pattern that was hand-copied across ResourceFrog, the drop handler, the
+    // sensor, and the Jade plugin into one place per value.
+    // ------------------------------------------------------------------
+
+    /** Per-stat cap ({@code breeding.statCap}); fallback {@value #DEFAULT_STAT_CAP}. */
+    public static int statCap() {
+        return SPEC.isLoaded() ? BREEDING_STAT_CAP.get() : DEFAULT_STAT_CAP;
+    }
+
+    /** Whether the same-species breeding gate is on ({@code breeding.sameSpeciesOnly}); fallback true. */
+    public static boolean sameSpeciesOnly() {
+        return !SPEC.isLoaded() || BREEDING_SAME_SPECIES_ONLY.get();
+    }
+
+    /** Per-stat improvement chance ({@code breeding.improvementChance}); fallback {@value #DEFAULT_IMPROVEMENT_CHANCE}. */
+    public static double improvementChance() {
+        return SPEC.isLoaded() ? BREEDING_IMPROVEMENT_CHANCE.get() : DEFAULT_IMPROVEMENT_CHANCE;
+    }
+
+    /** Per-stat regression chance ({@code breeding.regressionChance}); fallback {@value #DEFAULT_REGRESSION_CHANCE}. */
+    public static double regressionChance() {
+        return SPEC.isLoaded() ? BREEDING_REGRESSION_CHANCE.get() : DEFAULT_REGRESSION_CHANCE;
+    }
+
+    /** Lowest starter stat roll ({@code breeding.starterStatMin}); fallback {@value #DEFAULT_STARTER_STAT_MIN}. */
+    public static int starterStatMin() {
+        return SPEC.isLoaded() ? BREEDING_STARTER_STAT_MIN.get() : DEFAULT_STARTER_STAT_MIN;
+    }
+
+    /** Highest starter stat roll ({@code breeding.starterStatMax}); fallback {@value #DEFAULT_STARTER_STAT_MAX}. */
+    public static int starterStatMax() {
+        return SPEC.isLoaded() ? BREEDING_STARTER_STAT_MAX.get() : DEFAULT_STARTER_STAT_MAX;
+    }
+
+    /** Eat cooldown (ticks) at max Appetite ({@code stats.appetiteCooldownMin}); fallback {@value #DEFAULT_APPETITE_COOLDOWN_MIN}. */
+    public static int appetiteCooldownMin() {
+        return SPEC.isLoaded() ? STATS_APPETITE_COOLDOWN_MIN.get() : DEFAULT_APPETITE_COOLDOWN_MIN;
+    }
+
+    /** Eat cooldown (ticks) at Appetite 1 ({@code stats.appetiteCooldownMax}); fallback {@value #DEFAULT_APPETITE_COOLDOWN_MAX}. */
+    public static int appetiteCooldownMax() {
+        return SPEC.isLoaded() ? STATS_APPETITE_COOLDOWN_MAX.get() : DEFAULT_APPETITE_COOLDOWN_MAX;
+    }
+
+    /** Froglight drops at max Bounty ({@code stats.bountyMaxDrops}); fallback {@value #DEFAULT_BOUNTY_MAX_DROPS}. */
+    public static int bountyMaxDrops() {
+        return SPEC.isLoaded() ? STATS_BOUNTY_MAX_DROPS.get() : DEFAULT_BOUNTY_MAX_DROPS;
+    }
+
+    /** Prey-scan radius at Reach 1 ({@code stats.reachRadiusMin}); fallback {@value #DEFAULT_REACH_RADIUS_MIN}. */
+    public static int reachRadiusMin() {
+        return SPEC.isLoaded() ? STATS_REACH_RADIUS_MIN.get() : DEFAULT_REACH_RADIUS_MIN;
+    }
+
+    /** Prey-scan radius at max Reach ({@code stats.reachRadiusMax}); fallback {@value #DEFAULT_REACH_RADIUS_MAX}. */
+    public static int reachRadiusMax() {
+        return SPEC.isLoaded() ? STATS_REACH_RADIUS_MAX.get() : DEFAULT_REACH_RADIUS_MAX;
+    }
+
+    /** Whether Resource Frogs are persistent ({@code frogs.persistent}); fallback true. */
+    public static boolean frogsPersistent() {
+        return !SPEC.isLoaded() || FROGS_PERSISTENT.get();
     }
 
     private PFConfig() {

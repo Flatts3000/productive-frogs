@@ -104,9 +104,7 @@ public class ResourceFrog extends Frog {
     }
 
     private static int statCap() {
-        // Config is loaded by the time any frog exists in a world; fall back to
-        // the spec default of 10 if read before load (e.g. a unit-test stub).
-        return PFConfig.SPEC.isLoaded() ? PFConfig.BREEDING_STAT_CAP.get() : 10;
+        return PFConfig.statCap();
     }
 
     public int getAppetite() {
@@ -239,8 +237,8 @@ public class ResourceFrog extends Frog {
     }
 
     private void rollStarterStats(RandomSource random) {
-        int lo = PFConfig.SPEC.isLoaded() ? PFConfig.BREEDING_STARTER_STAT_MIN.get() : 1;
-        int hi = PFConfig.SPEC.isLoaded() ? PFConfig.BREEDING_STARTER_STAT_MAX.get() : 3;
+        int lo = PFConfig.starterStatMin();
+        int hi = PFConfig.starterStatMax();
         if (hi < lo) {
             hi = lo;
         }
@@ -255,7 +253,7 @@ public class ResourceFrog extends Frog {
 
     /** Config-gated persistence (frogs.persistent, default true) so a bred line isn't lost to despawn. */
     private void applyPersistence() {
-        if (!PFConfig.SPEC.isLoaded() || PFConfig.FROGS_PERSISTENT.get()) {
+        if (PFConfig.frogsPersistent()) {
             setPersistenceRequired();
         }
     }
@@ -352,7 +350,7 @@ public class ResourceFrog extends Frog {
         if (!super.canMate(other)) {
             return false;
         }
-        boolean sameSpeciesOnly = !PFConfig.SPEC.isLoaded() || PFConfig.BREEDING_SAME_SPECIES_ONLY.get();
+        boolean sameSpeciesOnly = PFConfig.sameSpeciesOnly();
         if (sameSpeciesOnly && other instanceof ResourceFrog partner) {
             return this.getCategory() == partner.getCategory();
         }
@@ -377,9 +375,9 @@ public class ResourceFrog extends Frog {
     }
 
     private void captureOffspringStats(ResourceFrog mate, RandomSource random) {
-        double improvement = PFConfig.SPEC.isLoaded() ? PFConfig.BREEDING_IMPROVEMENT_CHANCE.get() : 0.20;
-        double regression = PFConfig.SPEC.isLoaded() ? PFConfig.BREEDING_REGRESSION_CHANCE.get() : 0.30;
-        int cap = statCap();
+        double improvement = PFConfig.improvementChance();
+        double regression = PFConfig.regressionChance();
+        int cap = PFConfig.statCap();
         this.pendingOffspringAppetite =
             FrogStats.inheritStat(getAppetite(), mate.getAppetite(), improvement, regression, cap, random);
         this.pendingOffspringBounty =
@@ -535,9 +533,8 @@ public class ResourceFrog extends Frog {
      * a tongue kill and from {@link #mobInteract} on a direct-feed.
      */
     public void startEatCooldown() {
-        int min = PFConfig.SPEC.isLoaded() ? PFConfig.STATS_APPETITE_COOLDOWN_MIN.get() : 30;
-        int max = PFConfig.SPEC.isLoaded() ? PFConfig.STATS_APPETITE_COOLDOWN_MAX.get() : 100;
-        int ticks = FrogStats.appetiteCooldownTicks(getAppetite(), min, max, statCap());
+        int ticks = FrogStats.appetiteCooldownTicks(
+            getAppetite(), PFConfig.appetiteCooldownMin(), PFConfig.appetiteCooldownMax(), PFConfig.statCap());
         getBrain().setMemoryWithExpiry(MemoryModuleType.HAS_HUNTING_COOLDOWN, true, ticks);
     }
 
