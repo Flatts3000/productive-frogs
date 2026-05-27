@@ -79,12 +79,19 @@ Decided shape, the new water/lava slime variants it needs, and the open question
 
 ---
 
+## Specced: frog stat breeding
+
+The headline progression system, now designed and ready to build. Resource Frogs gain three stats - **Appetite**, **Bounty**, and **Reach** (1-10 each, 10/10/10 maxed) - that govern how productive they are in the loop. You improve a frog by **breeding** it: feed two same-species frogs a **Sweetslime** treat (slime ball + sugar), run the stock vanilla frog breeding process, and the offspring inherits a blend of its parents' stats with a chance to roll better than either. Keep the winners, cull the duds, re-breed, and ladder a species' line to maxed, in the spirit of Productive Bees' gene-maxing. Maxed frogs earn a cosmetic "prize" look. Frog-only and self-contained (no Terrarium dependency); ships as its own minor release.
+
+Full spec, decisions, and config: [docs/frog_breeding.md](./docs/frog_breeding.md).
+
+---
+
 ## Long-shot ideas (not committed)
 
 Captured during v1 design. Not on the schedule; revisited when v2 ships and we know how much hook-into-vanilla the framework supports.
 
-- **Stat upgrades for slimes and frogs.** A consumable buff item that raises a creature's stats toward a 10/10/10 cap. Stats could cover things like production rate, yield, and reach; the grind to max a creature out is the core loop, in the spirit of Productive Bees' gene maxing. Maxed creatures could earn cosmetic tiers (gold trim, diamond skin). This is the headline long-shot.
-- **Deep genetics / breeding tree** on the frog side (Forestry-style), feeding the same stat system as the upgrade item.
+- **Deep genetics / breeding tree** (Forestry-style multi-trait inheritance + mutation) layered on top of the specced frog stat breeding above - the next depth pass once that ships.
 - **Alchemical slime category** tied to brewing. Infuse with a potion item, the slime takes on that potion's effect, and killing it drops the matching potion (or splashes its effect in an area). Parent could be a "Brew Slime" spawning near witch huts or nether wart.
 - **New dimensions** (Frog Realm).
 - **Quest / advancement integration.**
