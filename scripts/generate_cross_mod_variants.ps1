@@ -43,6 +43,7 @@ $variants = @(
     # CAVE - alloy / processed (tag-driven, single verified provider)
     @{ name = "brass";     category = "cave";     tag = "c:ingots/brass";            mod = "create";     result = "create:brass_ingot";       primary = 0xC9A23A; secondary = 0xA67F22 }
     @{ name = "refined_obsidian"; category = "cave"; tag = "c:ingots/refined_obsidian"; mod = "mekanism"; result = "mekanism:ingot_refined_obsidian"; primary = 0x5A3FA0; secondary = 0x3F2A78 }
+    @{ name = "steel";     category = "cave";     tag = "c:ingots/steel";            mod = "mekanism";   result = "mekanism:ingot_steel";      primary = 0x8E9CAA; secondary = 0x5E6B78 }
     # GEODE - gems/crystals
     @{ name = "certus_quartz"; category = "geode"; tag = "c:gems/certus_quartz";     mod = "ae2";        result = "ae2:certus_quartz_crystal"; primary = 0xC0CDDA; secondary = 0x90A4B8 }
     @{ name = "fluix";     category = "geode";    tag = "c:gems/fluix";              mod = "ae2";        result = "ae2:fluix_crystal";        primary = 0x7A5AC0; secondary = 0x57408F }
