@@ -1,6 +1,6 @@
 {
   "primer_item": "minecraft:lapis_lazuli",
-  "category": "cave",
+  "category": "geode",
   "primary_color": 3432131,
   "secondary_color": 2047884,
   "inner_block": "minecraft:lapis_block"
