@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.5.0 - 2026-05-27 - Frog stat breeding
+
+Your frogs are no longer interchangeable. Each one now has three stats you can
+improve by breeding - the headline progression system.
+
+### Added
+
+- **Frog stats: Appetite, Bounty, and Reach.** Every frog now carries three stats.
+  **Appetite** sets how fast it eats, **Bounty** how many Froglights it drops per
+  slime, and **Reach** how far away it spots prey. A fresh frog rolls low - breeding
+  is how you climb.
+- **Breed your frogs to improve them.** Feed two frogs of the same species a new
+  **Sweetslime** treat and let them breed the normal way; the offspring inherits a
+  blend of its parents' stats with a chance to come out better than either. Keep the
+  winners, cull the duds, re-breed the best pair, and ladder a species toward a fully
+  maxed frog.
+- **Sweetslime**, the breeding treat - crafted from a slime ball and sugar (makes
+  two, enough for one pair). It is the only thing that puts frogs in the mood, so a
+  loose slime ball in your farm won't set off accidental breeding.
+- **Frog stats in the Jade tooltip.** With Jade installed, look at a frog to read its
+  Appetite, Bounty, and Reach at a glance.
+
+### Changed
+
+- **Frogs no longer despawn.** A frog you've bred up is valuable, so it now stays put
+  instead of wandering off into the despawn timer.
+
 ## v1.4.3 - 2026-05-26 - Deep dark to the Void
 
 A balance and correctness pass on the deep dark and the Void roster.

@@ -79,11 +79,11 @@ Decided shape, the new water/lava slime variants it needs, and the open question
 
 ---
 
-## Specced: frog stat breeding
+## Shipped: frog stat breeding (v1.5.0)
 
-The headline progression system, now designed and ready to build. Resource Frogs gain three stats - **Appetite**, **Bounty**, and **Reach** (1-10 each, 10/10/10 maxed) - that govern how productive they are in the loop. You improve a frog by **breeding** it: feed two same-species frogs a **Sweetslime** treat (slime ball + sugar), run the stock vanilla frog breeding process, and the offspring inherits a blend of its parents' stats with a chance to roll better than either. Keep the winners, cull the duds, re-breed, and ladder a species' line to maxed, in the spirit of Productive Bees' gene-maxing. Maxed frogs earn a cosmetic "prize" look. Frog-only and self-contained (no Terrarium dependency); ships as its own minor release.
+The headline progression system. Resource Frogs gain three stats - **Appetite**, **Bounty**, and **Reach** (1-10 each, 10/10/10 maxed) - that govern how productive they are in the loop. You improve a frog by **breeding** it: feed two same-species frogs a **Sweetslime** treat (slime ball + sugar), run the stock vanilla frog breeding process, and the offspring inherits a blend of its parents' stats with a chance to roll better than either. Keep the winners, cull the duds, re-breed, and ladder a species' line to maxed, in the spirit of Productive Bees' gene-maxing. Frog-only and self-contained (no Terrarium dependency).
 
-Full spec, decisions, and config: [docs/frog_breeding.md](./docs/frog_breeding.md).
+The one deferred piece is the **cosmetic "prize" look** for high-total / maxed frogs - the stats already sync client-side, so it's a follow-up render-layer / art pass, not a redesign. Full spec, decisions, and config: [docs/frog_breeding.md](./docs/frog_breeding.md).
 
 ---
 

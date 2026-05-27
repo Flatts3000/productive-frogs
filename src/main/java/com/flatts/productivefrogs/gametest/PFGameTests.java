@@ -2801,4 +2801,95 @@ public final class PFGameTests {
             }
         });
     }
+
+    // =================================================================
+    // Frog stat breeding (docs/frog_breeding.md)
+    // =================================================================
+
+    /**
+     * The same-species breeding gate (D4): two in-love Resource Frogs of the
+     * same {@link Category} can mate, but a cross-species pair cannot (with the
+     * default {@code breeding.sameSpeciesOnly}). The full breed -> lay -> hatch
+     * cycle takes thousands of ticks and is verified manually in {@code runClient};
+     * this pins the gate that {@link ResourceFrog#canMate} enforces.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 20)
+    public static void sameSpeciesFrogsMateButCrossSpeciesDoNot(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        ResourceFrog a = helper.spawn(PFEntities.RESOURCE_FROG.get(), pos);
+        ResourceFrog b = helper.spawn(PFEntities.RESOURCE_FROG.get(), pos.east());
+        a.setCategory(Category.CAVE);
+        b.setCategory(Category.CAVE);
+        // Both must be in love for vanilla Animal#canMate to even consider them.
+        a.setInLove(null);
+        b.setInLove(null);
+        if (!a.canMate(b)) {
+            helper.fail("two in-love same-species (CAVE) frogs should be able to mate");
+            return;
+        }
+        // Flip one to a different species: the gate must now reject the pair.
+        b.setCategory(Category.BOG);
+        if (a.canMate(b)) {
+            helper.fail("a CAVE frog must not mate a BOG frog with sameSpeciesOnly on");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * A Resource Frog is persistent (never despawns) so a bred-up stat line is
+     * not lost (D10). {@code finalizeSpawn} applies the config-gated persistence;
+     * {@code helper.spawn} alone does not call it, so we invoke it like the real
+     * conversion/spawn paths do.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 20)
+    public static void resourceFrogIsPersistentAfterFinalizeSpawn(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), pos);
+        frog.finalizeSpawn(
+            helper.getLevel(),
+            helper.getLevel().getCurrentDifficultyAt(frog.blockPosition()),
+            net.minecraft.world.entity.MobSpawnType.NATURAL,
+            null);
+        if (!frog.isPersistenceRequired()) {
+            helper.fail("Resource Frog should be persistence-required (frogs.persistent default true)");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Bounty multiplies the Froglight yield: a frog at the stat cap drops
+     * {@code bountyMaxDrops} Froglights for one slime (the top band always
+     * reaches the cap). Counts the summed stack size so item merging doesn't
+     * skew the assertion.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void highBountyFrogDropsMaxFroglights(GameTestHelper helper) {
+        BlockPos frogPos = new BlockPos(2, 2, 2);
+        BlockPos slimePos = new BlockPos(3, 2, 2);
+
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
+        frog.setCategory(Category.CAVE);
+        frog.setBounty(frog.getStatCap());
+
+        ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
+        slime.setSize(1, true);
+        // iron is a CAVE variant; setVariant syncs the slime's category to match.
+        slime.setVariant(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+
+        int expected = com.flatts.productivefrogs.PFConfig.STATS_BOUNTY_MAX_DROPS.get();
+        slime.hurt(helper.getLevel().damageSources().mobAttack(frog), 999.0F);
+
+        helper.succeedWhen(() -> {
+            int total = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                .map(itemEntity -> itemEntity.getItem())
+                .filter(stack -> stack.is(PFItems.CONFIGURABLE_FROGLIGHT.get()))
+                .mapToInt(ItemStack::getCount)
+                .sum();
+            if (total != expected) {
+                helper.fail("Bounty-capped frog should drop " + expected + " Froglights, counted " + total);
+            }
+        });
+    }
 }

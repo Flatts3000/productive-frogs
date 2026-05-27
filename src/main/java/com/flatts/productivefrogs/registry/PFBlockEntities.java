@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SpawneryBlockEntity;
@@ -61,6 +62,25 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "spawnery",
             () -> BlockEntityType.Builder.of(SpawneryBlockEntity::new, PFBlocks.SPAWNERY.get()).build(null)
+        );
+
+    /**
+     * BE type bound to all six Primed Frog Egg blocks. Carries the pending
+     * offspring stats a breeding pair computed at conception so they survive
+     * the frogspawn intermediary and reach the hatched tadpoles (see
+     * {@link com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity}).
+     * One BE type validates against every per-category egg block via the
+     * Builder's block varargs.
+     */
+    public static final Supplier<BlockEntityType<PrimedFrogEggBlockEntity>> PRIMED_FROG_EGG =
+        BLOCK_ENTITIES.register(
+            "primed_frog_egg",
+            () -> BlockEntityType.Builder.of(
+                PrimedFrogEggBlockEntity::new,
+                PFBlocks.PRIMED_FROG_EGGS.values().stream()
+                    .map(java.util.function.Supplier::get)
+                    .toArray(net.minecraft.world.level.block.Block[]::new)
+            ).build(null)
         );
 
     private PFBlockEntities() {

@@ -27,6 +27,20 @@ public final class PFConfig {
     public static final ModConfigSpec.BooleanValue SPAWNERY_ENABLED;
     public static final ModConfigSpec.IntValue SPAWNERY_PRODUCTION_TICKS;
 
+    // Frog stat breeding (docs/frog_breeding.md).
+    public static final ModConfigSpec.BooleanValue BREEDING_SAME_SPECIES_ONLY;
+    public static final ModConfigSpec.DoubleValue BREEDING_IMPROVEMENT_CHANCE;
+    public static final ModConfigSpec.DoubleValue BREEDING_REGRESSION_CHANCE;
+    public static final ModConfigSpec.IntValue BREEDING_STAT_CAP;
+    public static final ModConfigSpec.IntValue BREEDING_STARTER_STAT_MIN;
+    public static final ModConfigSpec.IntValue BREEDING_STARTER_STAT_MAX;
+    public static final ModConfigSpec.IntValue STATS_APPETITE_COOLDOWN_MIN;
+    public static final ModConfigSpec.IntValue STATS_APPETITE_COOLDOWN_MAX;
+    public static final ModConfigSpec.IntValue STATS_BOUNTY_MAX_DROPS;
+    public static final ModConfigSpec.IntValue STATS_REACH_RADIUS_MIN;
+    public static final ModConfigSpec.IntValue STATS_REACH_RADIUS_MAX;
+    public static final ModConfigSpec.BooleanValue FROGS_PERSISTENT;
+
     public static final ModConfigSpec SPEC;
 
     static {
@@ -105,6 +119,91 @@ public final class PFConfig {
                 "20 ticks = 1 second. Default 200 (10 seconds)."
             )
             .defineInRange("productionTicks", 200, 1, 24000);
+
+        builder.pop();
+
+        builder.push("breeding");
+
+        BREEDING_SAME_SPECIES_ONLY = builder
+            .comment(
+                "Whether a Resource Frog only breeds with another frog of the same species/category.",
+                "Default true - a Cave frog breeds only with another Cave frog, keeping each species' stat line clean.",
+                "When false, any two Resource Frogs can breed (the offspring inherits the initiating frog's species)."
+            )
+            .define("sameSpeciesOnly", true);
+
+        BREEDING_IMPROVEMENT_CHANCE = builder
+            .comment(
+                "Per-stat chance the offspring rolls one above the better parent (min(cap, hi + 1)).",
+                "Default 0.20. Raising this makes the climb to a maxed frog brisker."
+            )
+            .defineInRange("improvementChance", 0.20, 0.0, 1.0);
+
+        BREEDING_REGRESSION_CHANCE = builder
+            .comment(
+                "Per-stat chance the offspring regresses to the parent average (round((hi + lo) / 2)).",
+                "Default 0.30. Sampled after improvementChance from the same draw, so",
+                "improvementChance + regressionChance must stay <= 1.0; the remainder is the 'hold at better parent' chance."
+            )
+            .defineInRange("regressionChance", 0.30, 0.0, 1.0);
+
+        BREEDING_STAT_CAP = builder
+            .comment("Maximum value any single stat can reach. Default 10 (the 'maxed' cap).")
+            .defineInRange("statCap", 10, 1, 100);
+
+        BREEDING_STARTER_STAT_MIN = builder
+            .comment("Lowest starter (non-bred) stat roll, inclusive. Default 1.")
+            .defineInRange("starterStatMin", 1, 1, 100);
+
+        BREEDING_STARTER_STAT_MAX = builder
+            .comment(
+                "Highest starter (non-bred) stat roll, inclusive. Default 3.",
+                "A freshly-acquired frog rolls each stat uniformly in [starterStatMin, starterStatMax];",
+                "breeding is the only way to climb past this band."
+            )
+            .defineInRange("starterStatMax", 3, 1, 100);
+
+        builder.pop();
+
+        builder.push("stats");
+
+        STATS_APPETITE_COOLDOWN_MIN = builder
+            .comment("Eat cooldown in ticks at Appetite = statCap (fastest). Default 30 (1.5s).")
+            .defineInRange("appetiteCooldownMin", 30, 1, 24000);
+
+        STATS_APPETITE_COOLDOWN_MAX = builder
+            .comment(
+                "Eat cooldown in ticks at Appetite = 1 (slowest). Default 100 (5s).",
+                "Should be >= appetiteCooldownMin; the curve interpolates linearly between the two."
+            )
+            .defineInRange("appetiteCooldownMax", 100, 1, 24000);
+
+        STATS_BOUNTY_MAX_DROPS = builder
+            .comment("Froglights dropped per slime at Bounty = statCap. Default 3 (step curve: 1 / 2 / 3).")
+            .defineInRange("bountyMaxDrops", 3, 1, 64);
+
+        STATS_REACH_RADIUS_MIN = builder
+            .comment("Prey-scan radius in blocks at Reach = 1. Default 8.")
+            .defineInRange("reachRadiusMin", 8, 1, 64);
+
+        STATS_REACH_RADIUS_MAX = builder
+            .comment(
+                "Prey-scan radius in blocks at Reach = statCap. Default 16.",
+                "Should be >= reachRadiusMin; the curve interpolates linearly between the two."
+            )
+            .defineInRange("reachRadiusMax", 16, 1, 64);
+
+        builder.pop();
+
+        builder.push("frogs");
+
+        FROGS_PERSISTENT = builder
+            .comment(
+                "Whether Resource Frogs are persistent (never despawn). Default true.",
+                "A bred-up frog is valuable; persistence prevents losing a stat line to despawn.",
+                "They can still die to damage. Set false to let frogs despawn like vanilla animals."
+            )
+            .define("persistent", true);
 
         builder.pop();
 

@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.content.block;
 
+import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFEntities;
@@ -16,10 +17,13 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A Primed Frog Egg block — vanilla frogspawn that's been primed with a
@@ -39,7 +43,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  *       Resource Frogs (more valuable than vanilla frogs).</li>
  * </ul>
  */
-public final class PrimedFrogEggBlock extends Block {
+public final class PrimedFrogEggBlock extends Block implements EntityBlock {
 
     private static final VoxelShape SHAPE = Block.box(0.0, 0.0, 0.0, 16.0, 1.5, 16.0);
 
@@ -57,6 +61,12 @@ public final class PrimedFrogEggBlock extends Block {
 
     public Category getCategory() {
         return category;
+    }
+
+    @Override
+    @Nullable
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new PrimedFrogEggBlockEntity(pos, state);
     }
 
     @Override
@@ -97,6 +107,17 @@ public final class PrimedFrogEggBlock extends Block {
     }
 
     private void hatch(ServerLevel level, BlockPos pos, RandomSource random) {
+        // Read the pending offspring stats off the BE BEFORE destroying the
+        // block (destroy removes the BE). A non-bred egg (creative placement,
+        // /setblock) has no stats; hatched tadpoles then mature with a fresh
+        // starter roll. This is the back half of the conception->egg->tadpole
+        // stat carry (docs/frog_breeding.md).
+        PrimedFrogEggBlockEntity eggBe = level.getBlockEntity(pos) instanceof PrimedFrogEggBlockEntity be ? be : null;
+        boolean carryStats = eggBe != null && eggBe.hasStats();
+        int appetite = carryStats ? eggBe.getAppetite() : 0;
+        int bounty = carryStats ? eggBe.getBounty() : 0;
+        int reach = carryStats ? eggBe.getReach() : 0;
+
         destroy(level, pos);
         level.playSound(null, pos, SoundEvents.FROGSPAWN_HATCH, SoundSource.BLOCKS, 1.0F, 1.0F);
 
@@ -107,6 +128,9 @@ public final class PrimedFrogEggBlock extends Block {
                 continue;
             }
             tadpole.setCategory(this.category);
+            if (carryStats) {
+                tadpole.setPendingStats(appetite, bounty, reach);
+            }
 
             double x = pos.getX() + clampedOffset(random);
             double z = pos.getZ() + clampedOffset(random);

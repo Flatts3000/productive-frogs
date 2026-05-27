@@ -1,6 +1,8 @@
 package com.flatts.productivefrogs.event;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.entity.FrogStats;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.registry.PFDataComponents;
@@ -77,6 +79,9 @@ public final class FrogTongueDropHandler {
             return;
         }
 
+        // The kill IS the eat - start the Appetite-scaled hunting cooldown that
+        // gates how soon the frog can target its next slime (docs/frog_breeding.md).
+        frog.startEatCooldown();
         dropFroglightAtFrog(frog, slime.getVariantId());
     }
 
@@ -103,14 +108,22 @@ public final class FrogTongueDropHandler {
                 "drop skipped: frog category=%s had null variant (wasted eat)", frog.getCategory()));
             return;
         }
-        ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
-        froglight.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
+        // Bounty multiplies the yield: 1 Froglight at low Bounty up to
+        // bountyMaxDrops at the cap (FrogStats step curve). Each ItemEntity gets
+        // the constructor's natural random spread so the stack scatters.
+        int cap = PFConfig.SPEC.isLoaded() ? PFConfig.BREEDING_STAT_CAP.get() : 10;
+        int maxDrops = PFConfig.SPEC.isLoaded() ? PFConfig.STATS_BOUNTY_MAX_DROPS.get() : 3;
+        int count = FrogStats.bountyDropCount(frog.getBounty(), maxDrops, cap);
         Vec3 pos = frog.position();
-        ItemEntity drop = new ItemEntity(level, pos.x, pos.y, pos.z, froglight);
-        drop.setDefaultPickUpDelay();
-        level.addFreshEntity(drop);
+        for (int i = 0; i < count; i++) {
+            ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
+            froglight.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
+            ItemEntity drop = new ItemEntity(level, pos.x, pos.y, pos.z, froglight);
+            drop.setDefaultPickUpDelay();
+            level.addFreshEntity(drop);
+        }
         PFDebug.log(PFDebug.Area.TONGUE, () -> String.format(
-            "drop: frog category=%s -> configurable_froglight variant=%s at %s",
-            frog.getCategory(), variantId, frog.blockPosition()));
+            "drop: frog category=%s bounty=%d -> %d x configurable_froglight variant=%s at %s",
+            frog.getCategory(), frog.getBounty(), count, variantId, frog.blockPosition()));
     }
 }

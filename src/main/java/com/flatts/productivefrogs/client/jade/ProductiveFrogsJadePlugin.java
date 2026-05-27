@@ -8,12 +8,15 @@ import com.flatts.productivefrogs.content.block.SpawneryBlock;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SpawneryBlockEntity;
+import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import snownee.jade.api.BlockAccessor;
+import snownee.jade.api.EntityAccessor;
 import snownee.jade.api.IBlockComponentProvider;
+import snownee.jade.api.IEntityComponentProvider;
 import snownee.jade.api.ITooltip;
 import snownee.jade.api.IWailaClientRegistration;
 import snownee.jade.api.IWailaPlugin;
@@ -42,6 +45,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
 
     private static final ResourceLocation UID =
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "appliances");
+    private static final ResourceLocation FROG_STATS_UID =
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "frog_stats");
 
     @Override
     public void registerClient(IWailaClientRegistration registration) {
@@ -49,6 +54,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         registration.registerBlockComponent(provider, SlimeMilkSourceBlock.class);
         registration.registerBlockComponent(provider, SlimeMilkerBlock.class);
         registration.registerBlockComponent(provider, SpawneryBlock.class);
+        registration.registerEntityComponent(new FrogStatsProvider(), ResourceFrog.class);
     }
 
     /** One provider for all three appliances; branches on the block / BlockEntity. */
@@ -121,6 +127,31 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
 
         private static int percent(int value, int total) {
             return total <= 0 ? 0 : Math.min(100, value * 100 / total);
+        }
+    }
+
+    /**
+     * Look-at readout for a {@link ResourceFrog}: its three breeding stats
+     * (Appetite / Bounty / Reach) as {@code value/cap} lines. Stats are synced
+     * to the client on the entity ({@code DATA_APPETITE}/{@code _BOUNTY}/{@code _REACH}),
+     * so no server-data round-trip is needed. See {@code docs/frog_breeding.md}.
+     */
+    private static final class FrogStatsProvider implements IEntityComponentProvider {
+
+        @Override
+        public void appendTooltip(ITooltip tooltip, EntityAccessor accessor, IPluginConfig config) {
+            if (!(accessor.getEntity() instanceof ResourceFrog frog)) {
+                return;
+            }
+            int cap = frog.getStatCap();
+            tooltip.add(Component.translatable("productivefrogs.jade.appetite", frog.getAppetite(), cap));
+            tooltip.add(Component.translatable("productivefrogs.jade.bounty", frog.getBounty(), cap));
+            tooltip.add(Component.translatable("productivefrogs.jade.reach", frog.getReach(), cap));
+        }
+
+        @Override
+        public ResourceLocation getUid() {
+            return FROG_STATS_UID;
         }
     }
 }
