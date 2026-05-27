@@ -2992,4 +2992,161 @@ public final class PFGameTests {
         }
         helper.succeed();
     }
+
+    // =================================================================
+    // Frog stat EFFECTS (docs/frog_breeding.md) - the gameplay payoff of
+    // the three stats, verified in-world (curve math is in FrogStatsTest).
+    // =================================================================
+
+    /**
+     * Appetite effect: after an eat the frog enters a hunting cooldown that
+     * gates how soon it can target the next slime. Verifies the wiring
+     * end-to-end - {@code startEatCooldown} sets {@code HAS_HUNTING_COOLDOWN}
+     * (which silently no-ops unless our brain registers it), and while that
+     * memory is present the sensor refuses to surface an otherwise-valid,
+     * in-range, matching slime. A low Appetite (1) gives the long cooldown, so
+     * the gate clearly outlasts the assertion window.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 80)
+    public static void appetiteCooldownGatesTongueTargeting(GameTestHelper helper) {
+        BlockPos frogPos = new BlockPos(2, 2, 2);
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
+        frog.setCategory(Category.CAVE);
+        frog.setStats(1, 1, 5); // Appetite 1 -> longest cooldown; Reach 5 keeps the adjacent slime in range.
+
+        ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), frogPos.east());
+        slime.setSize(1, true);
+        slime.setVariant(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron")); // CAVE
+
+        frog.startEatCooldown();
+        // Wiring: if HAS_HUNTING_COOLDOWN weren't registered on the brain,
+        // setMemoryWithExpiry would be a no-op and Appetite would do nothing.
+        if (!frog.getBrain().hasMemoryValue(
+                net.minecraft.world.entity.ai.memory.MemoryModuleType.HAS_HUNTING_COOLDOWN)) {
+            helper.fail("startEatCooldown did not set HAS_HUNTING_COOLDOWN (memory not registered on the brain)");
+            return;
+        }
+        // While the cooldown is active, the matching in-range slime must never be targeted.
+        helper.onEachTick(() -> {
+            if (frog.getBrain().getMemory(
+                    net.minecraft.world.entity.ai.memory.MemoryModuleType.NEAREST_ATTACKABLE).orElse(null) == slime) {
+                helper.fail("frog targeted prey while its eat cooldown was active - the Appetite gate is broken");
+            }
+        });
+        helper.runAfterDelay(40L, () -> {
+            if (!frog.getBrain().hasMemoryValue(
+                    net.minecraft.world.entity.ai.memory.MemoryModuleType.HAS_HUNTING_COOLDOWN)) {
+                helper.fail("Appetite-1 eat cooldown expired before 40 ticks (expected ~100)");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /**
+     * Bounty effect, low end: a Bounty-1 frog drops exactly one Froglight per
+     * slime (complements {@link #highBountyFrogDropsMaxFroglights}, which pins
+     * the cap end). Together they prove the Bounty curve is wired to the actual
+     * drop loop, not just unit-tested in isolation.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void lowBountyFrogDropsOneFroglight(GameTestHelper helper) {
+        BlockPos frogPos = new BlockPos(2, 2, 2);
+        BlockPos slimePos = new BlockPos(3, 2, 2);
+
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
+        frog.setCategory(Category.CAVE);
+        frog.setBounty(1);
+
+        ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
+        slime.setSize(1, true);
+        slime.setVariant(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+
+        slime.hurt(helper.getLevel().damageSources().mobAttack(frog), 999.0F);
+
+        helper.succeedWhen(() -> {
+            int total = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                .map(itemEntity -> itemEntity.getItem())
+                .filter(stack -> stack.is(PFItems.CONFIGURABLE_FROGLIGHT.get()))
+                .mapToInt(ItemStack::getCount)
+                .sum();
+            if (total != 1) {
+                helper.fail("Bounty-1 frog should drop exactly 1 Froglight, counted " + total);
+            }
+        });
+    }
+
+    /**
+     * Reach effect, upper end: a max-Reach frog (radius 16) targets a matching
+     * slime 12 blocks away - beyond vanilla {@code FrogAttackablesSensor}'s
+     * hard-coded 10-block detection distance. Proves our sensor swapped that
+     * constant for the Reach radius. Uses the longer {@code empty_5x5x21} plot
+     * since 12 blocks does not fit the 5x5x5 one.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x21", timeoutTicks = 200)
+    public static void highReachFrogTargetsSlimeBeyondVanillaRange(GameTestHelper helper) {
+        floorPlot(helper, 21);
+        BlockPos frogPos = new BlockPos(2, 2, 2);
+        BlockPos slimePos = new BlockPos(2, 2, 14); // 12 blocks away (> vanilla's 10 cap, < radius 16)
+
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
+        frog.setCategory(Category.CAVE);
+        frog.setReach(frog.getStatCap()); // radius 16 at the cap
+
+        ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
+        slime.setSize(1, true);
+        slime.setVariant(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+
+        java.util.concurrent.atomic.AtomicInteger stable = new java.util.concurrent.atomic.AtomicInteger(0);
+        helper.onEachTick(() -> {
+            if (frog.getBrain().getMemory(
+                    net.minecraft.world.entity.ai.memory.MemoryModuleType.NEAREST_ATTACKABLE).orElse(null) == slime) {
+                if (stable.incrementAndGet() >= 3) {
+                    helper.succeed();
+                }
+            } else {
+                stable.set(0);
+            }
+        });
+        helper.runAfterDelay(160L, () ->
+            helper.fail("max-Reach frog never targeted a slime 12 blocks away - Reach radius not applied"));
+    }
+
+    /**
+     * Reach effect, lower end: a Reach-1 frog (radius 8) must NOT target a
+     * matching slime 16 blocks away, even though the slime is in the frog's
+     * candidate pool (FOLLOW_RANGE 32). Proves the radius actually narrows
+     * detection rather than defaulting to the candidate-pool size.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x21", timeoutTicks = 80)
+    public static void lowReachFrogIgnoresDistantSlime(GameTestHelper helper) {
+        floorPlot(helper, 21);
+        BlockPos frogPos = new BlockPos(2, 2, 2);
+        BlockPos slimePos = new BlockPos(2, 2, 18); // 16 blocks away, far outside radius 8
+
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
+        frog.setCategory(Category.CAVE);
+        frog.setReach(1); // radius 8
+
+        ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
+        slime.setSize(1, true);
+        slime.setVariant(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+
+        helper.onEachTick(() -> {
+            if (frog.getBrain().getMemory(
+                    net.minecraft.world.entity.ai.memory.MemoryModuleType.NEAREST_ATTACKABLE).orElse(null) == slime) {
+                helper.fail("Reach-1 frog targeted a slime 16 blocks away - radius 8 should exclude it");
+            }
+        });
+        helper.runAfterDelay(40L, helper::succeed);
+    }
+
+    /** Lay a stone floor across the full {@code 5 x length} plot base so test entities don't fall. */
+    private static void floorPlot(GameTestHelper helper, int length) {
+        for (int x = 0; x < 5; x++) {
+            for (int z = 0; z < length; z++) {
+                helper.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
+            }
+        }
+    }
 }
