@@ -449,24 +449,37 @@ public class ResourceFrog extends Frog {
     }
 
     /**
-     * Override the brain provider sensor list to swap vanilla's
-     * {@code FROG_ATTACKABLES} for our category-filtering equivalent. Everything
-     * else (memory types, other sensors) reuses vanilla {@link Frog}'s
-     * {@code SENSOR_TYPES} and {@code MEMORY_TYPES} lists — only the
-     * prey-detection sensor changes, matching the Q8 "vanilla AI except for
-     * prey eligibility filter" design constraint.
+     * Override the brain provider to make three targeted changes to vanilla
+     * {@link Frog}'s sensor and memory lists, leaving everything else intact:
+     * <ul>
+     *   <li>swap {@code FROG_ATTACKABLES} for our category-filtering prey sensor;</li>
+     *   <li>swap {@code FROG_TEMPTATIONS} (slime-ball / {@code FROG_FOOD}) for the
+     *       Sweetslime temptation sensor, so frogs are lured by the item they
+     *       actually breed on;</li>
+     *   <li>register {@code HAS_HUNTING_COOLDOWN} (absent from vanilla
+     *       {@code Frog.MEMORY_TYPES}) so it becomes our Appetite eat-cooldown.</li>
+     * </ul>
+     * The first two keep the Q8 "vanilla AI except for prey eligibility + the
+     * breeding-item swap" constraint.
      *
-     * <p>Both source lists are made directly readable via the access
-     * transformer (see {@code META-INF/accesstransformer.cfg}) so this
-     * implementation stays a one-line stream substitution. If Mojang ever adds
-     * a new sensor to the frog brain, ResourceFrog inherits it automatically —
-     * no maintenance burden tracking vanilla churn.
+     * <p>Both source lists are made directly readable via the access transformer
+     * (see {@code META-INF/accesstransformer.cfg}). Starting from vanilla's lists
+     * means a new sensor Mojang adds to the frog brain is inherited automatically.
      */
     @Override
     public Brain.Provider<Frog> brainProvider() {
         ImmutableList<SensorType<? extends Sensor<? super Frog>>> sensors = SENSOR_TYPES.stream()
-            .<SensorType<? extends Sensor<? super Frog>>>map(t ->
-                t == SensorType.FROG_ATTACKABLES ? PFSensors.RESOURCE_FROG_ATTACKABLES.get() : t)
+            .<SensorType<? extends Sensor<? super Frog>>>map(t -> {
+                if (t == SensorType.FROG_ATTACKABLES) {
+                    return PFSensors.RESOURCE_FROG_ATTACKABLES.get();
+                }
+                // Swap the slime-ball temptation for our Sweetslime one so frogs
+                // follow the item they actually breed on, not loose slime balls.
+                if (t == SensorType.FROG_TEMPTATIONS) {
+                    return PFSensors.RESOURCE_FROG_TEMPTATIONS.get();
+                }
+                return t;
+            })
             .collect(ImmutableList.toImmutableList());
         // Register HAS_HUNTING_COOLDOWN, which vanilla Frog.MEMORY_TYPES omits.
         // FrogAttackablesSensor already refuses to surface prey while this

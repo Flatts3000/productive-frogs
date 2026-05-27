@@ -5,13 +5,15 @@ import com.flatts.productivefrogs.content.entity.ai.ResourceFrogAttackablesSenso
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.ai.sensing.SensorType;
+import net.minecraft.world.entity.ai.sensing.TemptingSensor;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * Brain sensor registry. Single entry today — the category-filtered prey sensor
- * that replaces vanilla's {@code FROG_ATTACKABLES} in {@link
- * com.flatts.productivefrogs.content.entity.ResourceFrog}'s brain.
+ * Brain sensor registry for the two vanilla frog sensors {@link
+ * com.flatts.productivefrogs.content.entity.ResourceFrog} swaps out: the
+ * category-filtered prey sensor (replacing {@code FROG_ATTACKABLES}) and the
+ * Sweetslime temptation sensor (replacing {@code FROG_TEMPTATIONS}).
  *
  * <p>NeoForge ATs {@code SensorType}'s constructor to public, so we can
  * register custom sensors via the standard {@code DeferredRegister} pattern
@@ -26,6 +28,21 @@ public final class PFSensors {
         SENSOR_TYPES.register(
             "resource_frog_attackables",
             () -> new SensorType<>(ResourceFrogAttackablesSensor::new)
+        );
+
+    /**
+     * Temptation sensor keyed to the Sweetslime treat. Vanilla {@code FROG_TEMPTATIONS}
+     * tempts on the {@code ItemTags.FROG_FOOD} tag (slime balls); ResourceFrog swaps
+     * this in so a modded frog follows / is lured by the same item it breeds on
+     * ({@link com.flatts.productivefrogs.content.entity.ResourceFrog#isFood}), not by
+     * loose slime balls. Matches the {@code TemptingSensor(Predicate<ItemStack>)}
+     * shape vanilla uses on 1.21.1.
+     */
+    public static final Supplier<SensorType<TemptingSensor>> RESOURCE_FROG_TEMPTATIONS =
+        SENSOR_TYPES.register(
+            "resource_frog_temptations",
+            () -> new SensorType<>(() -> new TemptingSensor(
+                stack -> stack.is(PFItems.SWEETSLIME.get())))
         );
 
     private PFSensors() {
