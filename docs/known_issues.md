@@ -18,77 +18,9 @@ Symbols 🟢 (resolved) and 🟠 (reopened / since-reverted) live in the [archiv
 
 ## Open issues
 
-### 🔴 Flowing Slime Milk displaces blocks it shouldn't
-Flowing **Slime Milk** (from a placed source block, or a bucket emptied nearby) washes other blocks away the way flowing water sweeps off a non-solid plant block. Three cases it should leave intact but currently doesn't:
+*None currently open.*
 
-- **Frogspawn / Primed Frog Eggs** - running milk next to where frogs lay spawn can destroy the spawn before it hatches.
-- **Water source blocks** - flowing milk should not overwrite or displace adjacent water sources.
-- **Other Slime Milk source blocks** - flowing milk should not displace neighboring milk source blocks.
-
-- **Expected:** flowing Slime Milk leaves frogspawn, water source blocks, and other Slime Milk source blocks intact - it should not displace or break any of them.
-- **Observed:** flowing Slime Milk removes/replaces all three.
-
-*Reported via the Sky Frogs pack, 2026-05-28.*
-
-### 🔴 Frogs drown in Slime Milk
-A Resource Frog standing in / submerged by **Slime Milk** takes drowning damage and can die. Slime Milk is meant to be poured into pools that frogs work over (the milk-fountain production loop), so frogs are routinely in contact with it - they should treat it as safe, not as a suffocating fluid.
-
-- **Expected:** frogs are unharmed by Slime Milk (no air-supply drain, no drowning damage) - they can sit in it like vanilla frogs sit in water.
-- **Observed:** frogs lose air and take drowning damage in Slime Milk.
-
-*Reported via the Sky Frogs pack, 2026-05-28.*
-
-### 🔴 Bucketing and replacing Slime Milk resets its spawns-remaining counter
-A Slime Milk source block tracks how many slime spawns it has left before it depletes (`depletionCount`, default 16, surfaced via Jade and the `SPAWNS_REMAINING` blockstate). Picking the milk up with a bucket and placing it back down **resets that counter to full** - so a partially-depleted source can be topped back to 16 just by re-bucketing, defeating depletion.
-
-- **Expected:** the remaining-spawns count survives a bucket pickup -> place round-trip (carried on the Slime Milk bucket, restored on placement).
-- **Observed:** re-placed Slime Milk starts fresh at the full `depletionCount`.
-
-*Reported via the Sky Frogs pack, 2026-05-28.*
-
-### 🔴 Jade "Slime spawns left" readout doesn't update as the source depletes
-The Slime Milk source block's Jade look-at tooltip ("Slime spawns left: N / cap") **stays pinned at the full count** (e.g. `16 / 16`) even after the source has spawned slimes and its remaining count has dropped. The number only ever shows the cap, never the live remaining value.
-
-- **Expected:** the readout counts down (`15 / 16`, `14 / 16`, ...) as the source depletes, matching the actual remaining spawns.
-- **Observed:** it stays at `cap / cap` regardless of how many spawns have been consumed.
-
-Likely a Jade server-data sync gap: the remaining count lives on the server-side BlockEntity and isn't being pushed to the client tooltip (Jade needs the value via its `IServerDataProvider`/`appendServerData` path, or the synced blockstate `SPAWNS_REMAINING` read instead of a server-only field). Client-only - invisible to `build` / GameTest, needs a `runClient` check (see [[jade_plugin_config_lang_key]] for the Jade-is-manual-drop-in caveat).
-
-*Reported via the Sky Frogs pack with a Jade screenshot (source reading 16 / 16). 2026-05-28.*
-
-### 🔴 Primed frogspawn hatch delay should be deterministic
-Primed Frog Egg blocks currently inherit vanilla's **randomized** hatch window: `PrimedFrogEggBlock` rolls a uniform delay in `[3600, 12000)` ticks (**3-10 minutes** at 20 TPS) on placement, matching `minecraft:frogspawn` exactly. The earlier "hatched at 3 minutes" report was the **floor** of that range, not a timer bug.
-
-For modded (primed) frogspawn we want a **deterministic** hatch delay instead of the random 3-10 min spread, so hatch timing is predictable for automation and progression pacing.
-
-- **Current:** random delay in `[3600, 12000)` ticks per egg (vanilla parity).
-- **Wanted:** a single fixed hatch delay for primed frogspawn (ideally config-exposed via `PFConfig`). Vanilla `minecraft:frogspawn` keeps its random window untouched.
-
-*Reframed from a "timer is wrong" report; the random window is vanilla-parity, the deterministic delay is a Sky Frogs design request. 2026-05-28.*
-
-### 🔴 Tadpole growth and frog breeding times should be deterministic
-Same intent as the hatch-delay request above, extended to the rest of the lifecycle. Currently both inherit vanilla pacing rather than a mod-controlled deterministic value:
-
-- **Tadpole -> frog growth:** `ResourceTadpole` inherits vanilla `Tadpole`'s age counter (a fixed ~24000-tick / 20-min maturation, slimeball-accelerated). Deterministic today, but **not config-exposed** - packs can't tune it.
-- **Frog breeding / re-breed cooldown:** `ResourceFrog` inherits vanilla `Animal` love-mode and post-breed cooldown pacing, which carries vanilla's **randomized** component. Conception -> lay is handled by `LayCategoryFrogspawn` (fires when the pregnant frog reaches a valid water tile - no fixed timer of its own).
-
-- **Current:** vanilla-inherited timings (growth fixed-but-unexposed; breeding partly randomized).
-- **Wanted:** deterministic, **config-exposed** (`PFConfig`) growth and breeding/re-breed delays for the modded lifecycle, so progression and automation pacing are predictable. Vanilla frogs/tadpoles keep their stock pacing.
-
-*Companion to the hatch-delay request; same Sky Frogs determinism goal across the full egg -> tadpole -> frog -> breed loop. 2026-05-28.*
-
-### 🔴 Frogs from crafted frogspawn should start at baseline stats (not a starter roll)
-A Resource Frog matured from a **crafted** (Spawnery / bottled Frog Egg, i.e. non-bred) frogspawn came out with stats **Appetite 2 / Bounty 1 / Reach 3** - i.e. a random above-baseline roll.
-
-**Current code behavior:** `ResourceFrog.finalizeSpawn()` rolls starter stats for *any* non-bred frog, uniformly in `[starterStatMin, starterStatMax]` = **`[1, 3]`** by default (`PFConfig` `breeding.starterStatMin` / `starterStatMax`; documented in `docs/frog_breeding.md`). So `2 / 1 / 3` is a legal starter roll under today's rules - this is a design change, not a code defect.
-
-**Confirmed intended behavior (2026-05-28):** crafted / Spawnery / non-bred frogspawn should produce a **baseline** frog - **all stats at the floor (`FrogStats.STAT_MIN` = 1)**. Breeding (with its improvement chance) is the **only** way to climb above baseline; there is no random starter roll for crafted-egg frogs.
-
-- **Expected:** a frog from crafted/non-bred frogspawn shows `1 / 1 / 1`.
-- **Observed:** it shows a random `[1, 3]` roll (here `2 / 1 / 3`).
-- **Fix:** in `ResourceFrog.finalizeSpawn()` (or `rollStarterStats`), set non-bred frogs to `STAT_MIN` across the board instead of rolling `[starterStatMin, starterStatMax]`. Bred frogs (inherited stats applied after `finalizeSpawn`) and disk-loaded frogs (`statsInitialized`) are unaffected. Update `docs/frog_breeding.md` and retire / repurpose the now-unused `starterStatMin` / `starterStatMax` config keys.
-
-*Reported via the Sky Frogs pack with a Jade screenshot (frog at 2/1/3). Intent confirmed: baseline (all 1s). 2026-05-28.*
+The eight Sky-Frogs-reported issues logged on 2026-05-28 (flowing-milk displacement, frogs drowning in milk, the re-bucket depletion reset, the stale Jade spawns-left readout, deterministic hatch timing, config-exposed growth + breeding times, baseline stats for crafted-frogspawn frogs, and the Clay Ball Froglight smelting to a brick instead of clay balls) were all fixed in branch `fix/known-issues-batch` and moved to the [archive](./known_issues_archive.md). Four of them (milk displacement, drowning, the Jade readout, and the growth/breeding timing) are code-complete with `build` + `runGameTestServer` green but carry a **runClient-pending** note in the archive - their behavior is a client-render / fluid-flow / time-and-AI surface GameTest cannot observe, so they want an in-world smoke pass before the next release.
 
 ---
 
@@ -143,4 +75,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-28 (logged: flowing Slime Milk displaces frogspawn / water sources / other milk sources; frogs drown in Slime Milk; bucketing and replacing Slime Milk resets spawns-remaining; Jade spawns-left readout doesn't update as the source depletes; primed frogspawn hatch delay should be deterministic; tadpole growth and frog breeding times should be deterministic; frogs from crafted frogspawn should start at baseline stats - reported via the Sky Frogs pack).*
+*Last updated: 2026-05-28 (eight Sky-Frogs-reported issues fixed in `fix/known-issues-batch` and moved to the archive; no open issues remain. Four archived fixes carry a runClient-pending verification note).*

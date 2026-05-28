@@ -38,7 +38,7 @@ $bucketModelDir = Join-Path $repoRoot "src\main\resources\assets\productivefrogs
 $variants = @(
     @{ Name = "bone";                Primer = "minecraft:bone";              Category = "bog";      Smelt = "minecraft:bone";                 Inner = "minecraft:bone_block";        Primary = 0xE3DEC8; Exp = 0.2; Label = "Bone" }
     @{ Name = "gunpowder";           Primer = "minecraft:gunpowder";         Category = "bog";      Smelt = "minecraft:gunpowder";            Inner = "minecraft:tnt";               Primary = 0x8C8C8C; Exp = 0.2; Label = "Gunpowder" }
-    @{ Name = "clay_ball";           Primer = "minecraft:clay_ball";         Category = "bog";      Smelt = "minecraft:brick";                Inner = "minecraft:clay";              Primary = 0xA4A8B8; Exp = 0.2; Label = "Clay" }
+    @{ Name = "clay_ball";           Primer = "minecraft:clay_ball";         Category = "bog";      Smelt = "minecraft:clay_ball";            Inner = "minecraft:clay";              Primary = 0xA4A8B8; Exp = 0.2; Label = "Clay" }
     @{ Name = "rotten_flesh";        Primer = "minecraft:rotten_flesh";      Category = "bog";      Smelt = "minecraft:rotten_flesh";         Inner = "minecraft:mud";               Primary = 0x7E4D3A; Exp = 0.2; Label = "Rotten Flesh" }
     @{ Name = "string";              Primer = "minecraft:string";            Category = "bog";      Smelt = "minecraft:string";               Inner = "minecraft:cobweb";            Primary = 0xD4D4D4; Exp = 0.2; Label = "String" }
     @{ Name = "leather";             Primer = "minecraft:leather";           Category = "bog";      Smelt = "minecraft:leather";              Inner = "minecraft:brown_terracotta";  Primary = 0x9C6B3F; Exp = 0.2; Label = "Leather" }

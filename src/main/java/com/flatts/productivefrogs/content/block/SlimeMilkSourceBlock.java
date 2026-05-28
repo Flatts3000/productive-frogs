@@ -261,16 +261,23 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
     }
 
     /**
-     * Re-bucketing, the inverse of placement: read the source's variant from its
-     * BE (before super removes the block) and stamp it onto the filled bucket so
-     * the variant survives the world -> bucket round-trip.
+     * Re-bucketing, the inverse of placement: read the source's variant and
+     * depletion counter from its BE / blockstate (before super removes the block)
+     * and stamp both onto the filled bucket so they survive the world -> bucket
+     * round-trip. Carrying SPAWNS_REMAINING stops a partially-depleted source from
+     * refilling to full just by re-bucketing it (docs/known_issues.md).
      */
     @Override
     public ItemStack pickupBlock(@Nullable Player player, LevelAccessor level, BlockPos pos, BlockState state) {
         ResourceLocation variantId = readVariant(level, pos);
+        int remaining = state.getValue(SPAWNS_REMAINING);
         ItemStack bucket = super.pickupBlock(player, level, pos, state);
+        // Only a variant-carrying source actually spawns + depletes, so stamp
+        // both the variant and the counter only for one. An inert spread-milk
+        // grab has no variant and must not stamp a misleading count.
         if (variantId != null && bucket.is(PFItems.SLIME_MILK_BUCKET.get())) {
             bucket.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
+            bucket.set(PFDataComponents.SPAWNS_REMAINING.get(), remaining);
         }
         return bucket;
     }

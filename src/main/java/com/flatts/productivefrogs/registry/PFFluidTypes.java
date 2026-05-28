@@ -22,8 +22,10 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
  * (reads the source BE's variant), so one greyscale texture serves every variant.
  *
  * <p>Properties give milk a "slower than water, doesn't flow forever" feel:
- * density 1500 (sinks slowly), viscosity 2000 (slower than water), swimmable +
- * drownable like water, not a light source.
+ * density 1500 (sinks slowly), viscosity 2000 (slower than water), swimmable but
+ * <b>not drownable</b>, not a light source. Milk is poured into shallow
+ * production pools that frogs work over, so it must be safe to stand in - frogs
+ * (and players) take no air-loss / drowning damage in it (docs/known_issues.md).
  */
 public final class PFFluidTypes {
 
@@ -40,7 +42,7 @@ public final class PFFluidTypes {
             .viscosity(2000)
             .lightLevel(0)
             .canSwim(true)
-            .canDrown(true);
+            .canDrown(false);
     }
 
     private PFFluidTypes() {

@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.content.entity;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
@@ -60,17 +61,64 @@ public class ResourceTadpole extends Tadpole {
     // egg through to the matured ResourceFrog (docs/frog_breeding.md). Not
     // synced - the tadpole never displays them; they are server-side payload
     // consumed in ageUp(). Absent (hasPendingStats false) for a non-bred
-    // tadpole, which matures with a fresh starter roll instead.
+    // tadpole, which matures into a baseline (1/1/1) frog instead.
     private boolean hasPendingStats;
     private int pendingAppetite;
     private int pendingBounty;
     private int pendingReach;
+
+    // Fractional carry for the config-tunable growth accelerator (see aiStep).
+    // Transient: losing the sub-tick remainder across a reload is negligible.
+    private double growthCarry;
 
     public Category getCategory() {
         // Defensive: synced data can be set to any int via modded packets or
         // corrupted save data. fromOrdinalOrDefault falls back to BOG rather
         // than crashing if the ordinal is out of range.
         return Category.fromOrdinalOrDefault(this.entityData.get(DATA_CATEGORY));
+    }
+
+    /**
+     * Honor the config-exposed {@link PFConfig#tadpoleGrowthTicks()} for modded
+     * tadpoles without touching vanilla's shared {@code Tadpole.ticksToBeFrog}
+     * static (vanilla tadpoles keep stock pacing).
+     *
+     * <p>Vanilla {@code Tadpole.aiStep()} (run via {@code super}) increments the
+     * age counter by 1 each server tick and matures the tadpole when age reaches
+     * {@code ticksToBeFrog} (24000 / 20 min). To mature in a shorter configured
+     * window we add extra age per tick so the counter reaches 24000 in
+     * {@code tadpoleGrowthTicks} ticks. This is purely additive, so slime-ball
+     * feeding (which also advances age) still accelerates growth on top.
+     *
+     * <p>Only acceleration is supported: a configured value at or above vanilla's
+     * 24000-tick ceiling leaves the stock pace untouched (raising the ceiling
+     * would require mutating the shared static). The default (24000) is a no-op.
+     */
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        int vanilla = Tadpole.ticksToBeFrog;
+        // Cheap early-outs before the config read: never on the client, and once
+        // age has reached vanilla's ceiling super.aiStep already matured us.
+        if (this.level().isClientSide() || this.age >= vanilla) {
+            return;
+        }
+        int target = PFConfig.tadpoleGrowthTicks();
+        if (target >= vanilla) {
+            return;
+        }
+        // Extra age units to add per tick so total age (1 from super + extra)
+        // reaches `vanilla` in `target` ticks.
+        this.growthCarry += (double) vanilla / target - 1.0;
+        int extra = (int) this.growthCarry;
+        if (extra <= 0) {
+            return;
+        }
+        this.growthCarry -= extra;
+        this.age = Math.min(vanilla, this.age + extra);
+        if (this.age >= vanilla) {
+            this.ageUp();
+        }
     }
 
     public void setCategory(Category category) {
@@ -210,8 +258,8 @@ public class ResourceTadpole extends Tadpole {
             null
         );
         // Apply inherited stats AFTER finalizeSpawn so they override the
-        // starter roll finalizeSpawn would otherwise apply. A non-bred tadpole
-        // (no pending stats) keeps the starter roll. This is the final hop of
+        // baseline stats finalizeSpawn would otherwise apply. A non-bred tadpole
+        // (no pending stats) keeps the baseline (1/1/1). This is the final hop of
         // the conception->egg->tadpole->frog stat carry.
         if (hasPendingStats) {
             frog.setStats(pendingAppetite, pendingBounty, pendingReach);

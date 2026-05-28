@@ -1,16 +1,20 @@
 package com.flatts.productivefrogs.content.item;
 
+import com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.util.VariantNames;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +53,22 @@ public final class SlimeMilkBucketItem extends BucketItem {
         BlockEntity be = level.getBlockEntity(pos);
         if (be instanceof SlimeMilkSourceBlockEntity milkBe) {
             milkBe.setVariantId(variantId);
+        }
+        // Restore the depletion counter if this bucket was filled by re-bucketing
+        // a partially-depleted source (set in SlimeMilkSourceBlock#pickupBlock).
+        // Runs after the fluid block is placed and onPlace seeded the default
+        // count, so this overrides it back to the carried value. A freshly-milked
+        // bucket has no such component and keeps the full default. See
+        // docs/known_issues.md.
+        Integer remaining = stack.get(PFDataComponents.SPAWNS_REMAINING.get());
+        if (remaining != null) {
+            BlockState state = level.getBlockState(pos);
+            if (state.getBlock() instanceof SlimeMilkSourceBlock
+                && state.hasProperty(SlimeMilkSourceBlock.SPAWNS_REMAINING)) {
+                int clamped = Mth.clamp(remaining, 0, SlimeMilkSourceBlock.MAX_SPAWNS_REMAINING);
+                level.setBlock(pos, state.setValue(SlimeMilkSourceBlock.SPAWNS_REMAINING, clamped),
+                    Block.UPDATE_CLIENTS);
+            }
         }
     }
 

@@ -97,8 +97,8 @@ public final class LayCategoryFrogspawn {
                         // (ResourceFrog#spawnChildFromBreeding) off to the egg's
                         // BlockEntity so they survive the frogspawn intermediary
                         // and reach the hatched tadpoles. A non-bred lay (no
-                        // pending roll) leaves the egg statless, and the hatch
-                        // falls back to a fresh starter roll on each tadpole.
+                        // pending roll) leaves the egg statless, and the hatchlings
+                        // mature into baseline (1/1/1) frogs.
                         // See docs/frog_breeding.md.
                         if (resourceFrog.hasPendingOffspring()
                             && level.getBlockEntity(placePos) instanceof PrimedFrogEggBlockEntity eggBe) {

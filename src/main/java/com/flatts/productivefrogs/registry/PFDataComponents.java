@@ -2,9 +2,11 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.data.Category;
+import com.mojang.serialization.Codec;
 import java.util.function.Supplier;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -55,6 +57,24 @@ public final class PFDataComponents {
         () -> DataComponentType.<ResourceLocation>builder()
             .persistent(ResourceLocation.CODEC)
             .networkSynchronized(ResourceLocation.STREAM_CODEC)
+            .build()
+    );
+
+    /**
+     * Spawns-remaining counter carried by a Slime Milk bucket filled by
+     * re-bucketing a placed source. Lets the depletion progress survive the
+     * world -> bucket -> world round-trip: {@code SlimeMilkSourceBlock.pickupBlock}
+     * stamps the source's {@code SPAWNS_REMAINING} blockstate value here, and
+     * {@code SlimeMilkBucketItem.checkExtraContent} restores it onto the
+     * re-placed source. Absent on a freshly-milked bucket (from the Slime Milker),
+     * so such a bucket places a full source. Prevents the re-bucket "refill to
+     * full" exploit (docs/known_issues.md).
+     */
+    public static final Supplier<DataComponentType<Integer>> SPAWNS_REMAINING = COMPONENTS.register(
+        "spawns_remaining",
+        () -> DataComponentType.<Integer>builder()
+            .persistent(Codec.INT)
+            .networkSynchronized(ByteBufCodecs.VAR_INT)
             .build()
     );
 

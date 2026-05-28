@@ -1416,6 +1416,111 @@ public final class PFGameTests {
         helper.succeed();
     }
 
+    /**
+     * Re-bucketing a partially-depleted source preserves its spawns-remaining
+     * counter through the world -> bucket -> world round-trip, so it can't be
+     * refilled to full by re-bucketing (docs/known_issues.md). Place a variant
+     * source at SPAWNS_REMAINING=5, re-bucket it (the bucket should carry 5),
+     * then re-place via {@code checkExtraContent} and assert the restored source
+     * reads 5 - not the default MAX.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkBucketRoundTripPreservesSpawnsRemaining(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(pos);
+        var block = (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
+
+        // Partially-depleted iron source: 5 spawns left.
+        helper.setBlock(pos, block.defaultBlockState().setValue(
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.SPAWNS_REMAINING, 5));
+        stampMilkVariant(helper, pos, "iron");
+
+        // Re-bucket: the filled bucket must carry the remaining count.
+        ItemStack picked = block.pickupBlock(null, level, abs, level.getBlockState(abs));
+        Integer carried = picked.get(com.flatts.productivefrogs.registry.PFDataComponents.SPAWNS_REMAINING.get());
+        if (carried == null || carried != 5) {
+            helper.fail("re-bucketing a source with 5 spawns left should stamp SPAWNS_REMAINING=5 on the bucket, got "
+                + carried);
+            return;
+        }
+
+        // Re-place a fresh (default-16) source, then run the placement hook with
+        // the carried bucket: it must restore the count to 5, not leave it full.
+        helper.setBlock(pos, block);
+        ((com.flatts.productivefrogs.content.item.SlimeMilkBucketItem) PFItems.SLIME_MILK_BUCKET.get())
+            .checkExtraContent(null, level, picked, abs);
+        int restored = level.getBlockState(abs).getValue(
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.SPAWNS_REMAINING);
+        if (restored != 5) {
+            helper.fail("re-placing the carried bucket should restore SPAWNS_REMAINING=5, got " + restored);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * A Primed Frog Egg schedules a <b>deterministic</b> hatch delay equal to the
+     * config-exposed {@link com.flatts.productivefrogs.PFConfig#hatchTicks()}, not
+     * vanilla's random {@code [3600, 12000)} window (docs/known_issues.md).
+     * {@code onPlace} stamps the absolute hatch time on the BE, so we read it back
+     * and assert the delay equals the fixed config value.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 20)
+    public static void primedEggSchedulesDeterministicHatchDelay(GameTestHelper helper) {
+        BlockPos eggPos = new BlockPos(2, 2, 2);
+        helper.setBlock(eggPos.below(), Blocks.WATER);
+        helper.setBlock(eggPos, PFBlocks.primedEgg(Category.CAVE));
+
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(eggPos);
+        if (!(level.getBlockEntity(abs)
+                instanceof com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity egg)) {
+            helper.fail("primed egg should have a PrimedFrogEggBlockEntity after placement");
+            return;
+        }
+        long delay = egg.getHatchGameTime() - level.getGameTime();
+        int expected = com.flatts.productivefrogs.PFConfig.hatchTicks();
+        if (delay != expected) {
+            helper.fail("hatch delay should be the fixed config value " + expected + " ticks, got " + delay);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * A frog matured from a non-bred (crafted / Spawnery) frogspawn starts at
+     * <b>baseline</b> stats - all {@code FrogStats.STAT_MIN} (1/1/1) - rather than
+     * a random starter roll. Breeding is the only path above baseline
+     * (docs/known_issues.md). A tadpole with no pending stats ages up through
+     * {@code finalizeSpawn -> applyBaselineStats}.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void nonBredFrogMaturesToBaselineStats(GameTestHelper helper) {
+        Category cat = Category.TIDE;
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos.below(), Blocks.WATER);
+
+        ResourceTadpole tadpole = helper.spawn(PFEntities.RESOURCE_TADPOLE.get(), pos);
+        tadpole.setCategory(cat);
+        // No setPendingStats() call -> non-bred. ageUp() runs finalizeSpawn.
+        tadpole.ageUp();
+
+        helper.succeedWhen(() -> {
+            List<ResourceFrog> frogs = helper.getEntities(PFEntities.RESOURCE_FROG.get());
+            if (frogs.size() != 1) {
+                helper.fail("expected 1 Resource Frog after maturation, got " + frogs.size());
+                return;
+            }
+            ResourceFrog frog = frogs.get(0);
+            int min = com.flatts.productivefrogs.content.entity.FrogStats.STAT_MIN;
+            if (frog.getAppetite() != min || frog.getBounty() != min || frog.getReach() != min) {
+                helper.fail("non-bred frog should be baseline " + min + "/" + min + "/" + min + ", got "
+                    + frog.getAppetite() + "/" + frog.getBounty() + "/" + frog.getReach());
+            }
+        });
+    }
+
     // ---------------------------------------------------------------------
     // J4 — Slime Milk source-block spawning
     // ---------------------------------------------------------------------

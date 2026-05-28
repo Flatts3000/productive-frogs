@@ -57,10 +57,13 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "primed_egg_stats");
     private static final ResourceLocation TADPOLE_STATS_UID =
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tadpole_stats");
+    private static final ResourceLocation MILK_SOURCE_UID =
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "milk_source");
 
     /** Shared instances: each is both the client tooltip and the server-data fetcher. */
     private static final PrimedEggStatsProvider PRIMED_EGG_STATS = new PrimedEggStatsProvider();
     private static final TadpoleStatsProvider TADPOLE_STATS = new TadpoleStatsProvider();
+    private static final MilkSourceProvider MILK_SOURCE = new MilkSourceProvider();
 
     /**
      * Common (server-side) registration. The pending offspring stats on a laid
@@ -72,58 +75,28 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
     public void register(IWailaCommonRegistration registration) {
         registration.registerBlockDataProvider(PRIMED_EGG_STATS, PrimedFrogEggBlock.class);
         registration.registerEntityDataProvider(TADPOLE_STATS, ResourceTadpole.class);
+        // The spawns-remaining readout reads the authoritative server-side
+        // blockstate so it updates live as the source depletes (the prior
+        // client-blockstate read could show a stale full count).
+        registration.registerBlockDataProvider(MILK_SOURCE, SlimeMilkSourceBlock.class);
     }
 
     @Override
     public void registerClient(IWailaClientRegistration registration) {
         ApplianceProvider provider = new ApplianceProvider();
-        registration.registerBlockComponent(provider, SlimeMilkSourceBlock.class);
         registration.registerBlockComponent(provider, SlimeMilkerBlock.class);
         registration.registerBlockComponent(provider, SpawneryBlock.class);
+        registration.registerBlockComponent(MILK_SOURCE, SlimeMilkSourceBlock.class);
         registration.registerEntityComponent(new FrogStatsProvider(), ResourceFrog.class);
         registration.registerBlockComponent(PRIMED_EGG_STATS, PrimedFrogEggBlock.class);
         registration.registerEntityComponent(TADPOLE_STATS, ResourceTadpole.class);
     }
 
-    /** One provider for all three appliances; branches on the block / BlockEntity. */
+    /** Provider for the Slime Milker + Spawnery appliances; branches on the BlockEntity. */
     private static final class ApplianceProvider implements IBlockComponentProvider {
 
         @Override
         public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
-            BlockState state = accessor.getBlockState();
-
-            if (state.getBlock() instanceof SlimeMilkSourceBlock) {
-                // Only a real, variant-carrying source spawns slimes and depletes.
-                // Spread/flowing milk is the SAME LiquidBlock (so it carries the
-                // SPAWNS_REMAINING property at its default 16) but has no variant on
-                // its BE and is inert decoration - don't annotate it. Mirror the
-                // server's own gate in SlimeMilkSourceBlock#tick: the fluid must be a
-                // source AND the BE must carry a variant.
-                BlockEntity sourceBe = accessor.getBlockEntity();
-                boolean realSource = state.getFluidState().isSource()
-                    && sourceBe instanceof SlimeMilkSourceBlockEntity milkBe
-                    && milkBe.getVariantId() != null;
-                if (!realSource) {
-                    return;
-                }
-                // The fluid block depletes after SPAWNS_REMAINING spawns - surface
-                // the count (or "unlimited" when depletion is turned off in config).
-                int remaining = state.getValue(SlimeMilkSourceBlock.SPAWNS_REMAINING);
-                if (PFConfig.SPEC.isLoaded() && !PFConfig.DEPLETION_ENABLED.get()) {
-                    tooltip.add(Component.translatable("productivefrogs.jade.spawns_unlimited"));
-                } else {
-                    // Denominator is the configured depletionCount (a fresh source starts
-                    // there, not always 16 - see SlimeMilkSourceBlock.onPlace), clamped to at
-                    // least the current remaining so a mid-life config change can't render
-                    // "remaining > capacity". Falls back to MAX if config isn't loaded yet.
-                    int cap = PFConfig.SPEC.isLoaded()
-                        ? Math.max(remaining, PFConfig.DEPLETION_COUNT.get())
-                        : SlimeMilkSourceBlock.MAX_SPAWNS_REMAINING;
-                    tooltip.add(Component.translatable("productivefrogs.jade.spawns_left", remaining, cap));
-                }
-                return;
-            }
-
             BlockEntity be = accessor.getBlockEntity();
             if (be == null) {
                 return;
@@ -155,6 +128,72 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
 
         private static int percent(int value, int total) {
             return total <= 0 ? 0 : Math.min(100, value * 100 / total);
+        }
+    }
+
+    /**
+     * Look-at readout for a Slime Milk source block: spawns remaining before it
+     * depletes ("Slime spawns left: N / cap"), or "unlimited" when depletion is
+     * config-disabled. This reads the authoritative <b>server-side</b> blockstate
+     * via {@link IServerDataProvider} and re-requests it on Jade's interval, so
+     * the count updates live as the source depletes - the earlier client-side
+     * blockstate read could show a stale full count (docs/known_issues.md). Same
+     * server-fetch shape as the egg hatch countdown above.
+     *
+     * <p>Only a real, variant-carrying source spawns + depletes; spread/flowing
+     * milk is the same LiquidBlock (carrying the SPAWNS_REMAINING property at its
+     * default) but has no variant on its BE and is inert decoration, so it is not
+     * annotated - mirroring the server's own gate in {@code SlimeMilkSourceBlock#tick}.
+     */
+    private static final class MilkSourceProvider
+            implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
+
+        @Override
+        public void appendServerData(CompoundTag data, BlockAccessor accessor) {
+            BlockState state = accessor.getBlockState();
+            if (!(state.getBlock() instanceof SlimeMilkSourceBlock)) {
+                return;
+            }
+            boolean realSource = state.getFluidState().isSource()
+                && accessor.getBlockEntity() instanceof SlimeMilkSourceBlockEntity milkBe
+                && milkBe.getVariantId() != null;
+            if (!realSource) {
+                return;
+            }
+            data.putBoolean("MilkSource", true);
+            if (PFConfig.SPEC.isLoaded() && !PFConfig.DEPLETION_ENABLED.get()) {
+                data.putBoolean("Unlimited", true);
+                return;
+            }
+            int remaining = state.getValue(SlimeMilkSourceBlock.SPAWNS_REMAINING);
+            // Denominator is the configured depletionCount (a fresh source starts
+            // there, not always 16 - see SlimeMilkSourceBlock.onPlace), clamped to
+            // at least the current remaining so a mid-life config change can't
+            // render "remaining > capacity". Falls back to MAX if config isn't loaded.
+            int cap = PFConfig.SPEC.isLoaded()
+                ? Math.max(remaining, PFConfig.DEPLETION_COUNT.get())
+                : SlimeMilkSourceBlock.MAX_SPAWNS_REMAINING;
+            data.putInt("SpawnsRemaining", remaining);
+            data.putInt("SpawnsCap", cap);
+        }
+
+        @Override
+        public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
+            CompoundTag data = accessor.getServerData();
+            if (data == null || !data.getBoolean("MilkSource")) {
+                return;
+            }
+            if (data.getBoolean("Unlimited")) {
+                tooltip.add(Component.translatable("productivefrogs.jade.spawns_unlimited"));
+            } else {
+                tooltip.add(Component.translatable("productivefrogs.jade.spawns_left",
+                    data.getInt("SpawnsRemaining"), data.getInt("SpawnsCap")));
+            }
+        }
+
+        @Override
+        public ResourceLocation getUid() {
+            return MILK_SOURCE_UID;
         }
     }
 
@@ -217,7 +256,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
      * look-at packet) and an {@link IBlockComponentProvider} (client: read that
      * packet back and render the lines). A non-bred egg (creative placement,
      * Spawnery output, {@code /setblock}) carries no stats and shows nothing -
-     * its hatchlings roll fresh starter stats. See {@code docs/frog_breeding.md}.
+     * its hatchlings mature into baseline (1/1/1) frogs. See {@code docs/frog_breeding.md}.
      */
     private static final class PrimedEggStatsProvider
             implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
@@ -270,7 +309,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
      * to {@code ResourceTadpole#ageUp}, never synced), so this is both an
      * {@link IServerDataProvider} (server) and an {@link IEntityComponentProvider}
      * (client). A non-bred tadpole carries no pending stats and shows nothing - it
-     * rolls fresh starter stats when it matures. See {@code docs/frog_breeding.md}.
+     * matures into a baseline (1/1/1) frog. See {@code docs/frog_breeding.md}.
      */
     private static final class TadpoleStatsProvider
             implements IEntityComponentProvider, IServerDataProvider<EntityAccessor> {

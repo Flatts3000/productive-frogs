@@ -32,8 +32,6 @@ public final class PFConfig {
     public static final ModConfigSpec.DoubleValue BREEDING_IMPROVEMENT_CHANCE;
     public static final ModConfigSpec.DoubleValue BREEDING_REGRESSION_CHANCE;
     public static final ModConfigSpec.IntValue BREEDING_STAT_CAP;
-    public static final ModConfigSpec.IntValue BREEDING_STARTER_STAT_MIN;
-    public static final ModConfigSpec.IntValue BREEDING_STARTER_STAT_MAX;
     public static final ModConfigSpec.IntValue STATS_APPETITE_COOLDOWN_MIN;
     public static final ModConfigSpec.IntValue STATS_APPETITE_COOLDOWN_MAX;
     public static final ModConfigSpec.IntValue STATS_BOUNTY_MAX_DROPS;
@@ -41,20 +39,31 @@ public final class PFConfig {
     public static final ModConfigSpec.IntValue STATS_REACH_RADIUS_MAX;
     public static final ModConfigSpec.BooleanValue FROGS_PERSISTENT;
 
+    // Deterministic, config-exposed lifecycle timings (docs/known_issues.md).
+    // These are fixed (non-random) delays for the MODDED frog lifecycle; vanilla
+    // frogspawn/tadpoles/frogs keep their own stock pacing.
+    public static final ModConfigSpec.IntValue LIFECYCLE_HATCH_TICKS;
+    public static final ModConfigSpec.IntValue LIFECYCLE_TADPOLE_GROWTH_TICKS;
+    public static final ModConfigSpec.IntValue LIFECYCLE_BREEDING_COOLDOWN_TICKS;
+
     // Single source of truth for the breeding/stats defaults: used both by the
     // ModConfigSpec definitions below AND by the accessor methods' pre-config-load
     // fallbacks, so the spec default and the fallback can never drift apart.
     public static final int DEFAULT_STAT_CAP = 10;
     public static final double DEFAULT_IMPROVEMENT_CHANCE = 0.20;
     public static final double DEFAULT_REGRESSION_CHANCE = 0.30;
-    public static final int DEFAULT_STARTER_STAT_MIN = 1;
-    public static final int DEFAULT_STARTER_STAT_MAX = 3;
     public static final int DEFAULT_APPETITE_COOLDOWN_MIN = 30;
     public static final int DEFAULT_APPETITE_COOLDOWN_MAX = 100;
     public static final int DEFAULT_BOUNTY_MAX_DROPS = 3;
     public static final int DEFAULT_REACH_RADIUS_MIN = 8;
     public static final int DEFAULT_REACH_RADIUS_MAX = 16;
     public static final boolean DEFAULT_FROGS_PERSISTENT = true;
+    // Lifecycle defaults chosen to preserve current playable feel: hatch fixed at
+    // the low end of vanilla's old random window (3 min), tadpole growth at
+    // vanilla's 24000-tick maturation, re-breed cooldown at vanilla's 6000.
+    public static final int DEFAULT_HATCH_TICKS = 3600;
+    public static final int DEFAULT_TADPOLE_GROWTH_TICKS = 24000;
+    public static final int DEFAULT_BREEDING_COOLDOWN_TICKS = 6000;
 
     public static final ModConfigSpec SPEC;
 
@@ -166,18 +175,6 @@ public final class PFConfig {
             .comment("Maximum value any single stat can reach. Default 10 (the 'maxed' cap).")
             .defineInRange("statCap", DEFAULT_STAT_CAP, 1, 100);
 
-        BREEDING_STARTER_STAT_MIN = builder
-            .comment("Lowest starter (non-bred) stat roll, inclusive. Default 1.")
-            .defineInRange("starterStatMin", DEFAULT_STARTER_STAT_MIN, 1, 100);
-
-        BREEDING_STARTER_STAT_MAX = builder
-            .comment(
-                "Highest starter (non-bred) stat roll, inclusive. Default 3.",
-                "A freshly-acquired frog rolls each stat uniformly in [starterStatMin, starterStatMax];",
-                "breeding is the only way to climb past this band."
-            )
-            .defineInRange("starterStatMax", DEFAULT_STARTER_STAT_MAX, 1, 100);
-
         builder.pop();
 
         builder.push("stats");
@@ -222,6 +219,35 @@ public final class PFConfig {
 
         builder.pop();
 
+        builder.push("lifecycle");
+
+        LIFECYCLE_HATCH_TICKS = builder
+            .comment(
+                "Ticks a Primed Frog Egg block waits before hatching into tadpoles.",
+                "Deterministic (fixed), unlike vanilla frogspawn's random 3600-12000-tick window.",
+                "20 ticks = 1 second. Default 3600 (3 minutes). Vanilla frogspawn is unaffected."
+            )
+            .defineInRange("primedFrogspawnHatchTicks", DEFAULT_HATCH_TICKS, 1, 24000);
+
+        LIFECYCLE_TADPOLE_GROWTH_TICKS = builder
+            .comment(
+                "Ticks a Resource Tadpole takes to mature into a Resource Frog.",
+                "Default 24000 (20 minutes), matching vanilla. Lower values speed maturation;",
+                "values at or above vanilla's 24000-tick ceiling leave the stock 20-minute pace",
+                "(raising the ceiling would require changing the shared vanilla tadpole timer).",
+                "Vanilla tadpoles are unaffected; slime-ball feeding still accelerates growth."
+            )
+            .defineInRange("tadpoleGrowthTicks", DEFAULT_TADPOLE_GROWTH_TICKS, 1, 24000);
+
+        LIFECYCLE_BREEDING_COOLDOWN_TICKS = builder
+            .comment(
+                "Ticks two Resource Frogs must wait after breeding before they can breed again.",
+                "Deterministic. Default 6000 (5 minutes), matching vanilla animals."
+            )
+            .defineInRange("breedingCooldownTicks", DEFAULT_BREEDING_COOLDOWN_TICKS, 1, 24000);
+
+        builder.pop();
+
         SPEC = builder.build();
     }
 
@@ -252,16 +278,6 @@ public final class PFConfig {
         return SPEC.isLoaded() ? BREEDING_REGRESSION_CHANCE.get() : DEFAULT_REGRESSION_CHANCE;
     }
 
-    /** Lowest starter stat roll ({@code breeding.starterStatMin}); fallback {@value #DEFAULT_STARTER_STAT_MIN}. */
-    public static int starterStatMin() {
-        return SPEC.isLoaded() ? BREEDING_STARTER_STAT_MIN.get() : DEFAULT_STARTER_STAT_MIN;
-    }
-
-    /** Highest starter stat roll ({@code breeding.starterStatMax}); fallback {@value #DEFAULT_STARTER_STAT_MAX}. */
-    public static int starterStatMax() {
-        return SPEC.isLoaded() ? BREEDING_STARTER_STAT_MAX.get() : DEFAULT_STARTER_STAT_MAX;
-    }
-
     /** Eat cooldown (ticks) at max Appetite ({@code stats.appetiteCooldownMin}); fallback {@value #DEFAULT_APPETITE_COOLDOWN_MIN}. */
     public static int appetiteCooldownMin() {
         return SPEC.isLoaded() ? STATS_APPETITE_COOLDOWN_MIN.get() : DEFAULT_APPETITE_COOLDOWN_MIN;
@@ -290,6 +306,21 @@ public final class PFConfig {
     /** Whether Resource Frogs are persistent ({@code frogs.persistent}); fallback true. */
     public static boolean frogsPersistent() {
         return !SPEC.isLoaded() || FROGS_PERSISTENT.get();
+    }
+
+    /** Fixed hatch delay in ticks for primed frogspawn ({@code lifecycle.primedFrogspawnHatchTicks}); fallback {@value #DEFAULT_HATCH_TICKS}. */
+    public static int hatchTicks() {
+        return SPEC.isLoaded() ? LIFECYCLE_HATCH_TICKS.get() : DEFAULT_HATCH_TICKS;
+    }
+
+    /** Tadpole maturation time in ticks ({@code lifecycle.tadpoleGrowthTicks}); fallback {@value #DEFAULT_TADPOLE_GROWTH_TICKS}. */
+    public static int tadpoleGrowthTicks() {
+        return SPEC.isLoaded() ? LIFECYCLE_TADPOLE_GROWTH_TICKS.get() : DEFAULT_TADPOLE_GROWTH_TICKS;
+    }
+
+    /** Post-breed re-breed cooldown in ticks ({@code lifecycle.breedingCooldownTicks}); fallback {@value #DEFAULT_BREEDING_COOLDOWN_TICKS}. */
+    public static int breedingCooldownTicks() {
+        return SPEC.isLoaded() ? LIFECYCLE_BREEDING_COOLDOWN_TICKS.get() : DEFAULT_BREEDING_COOLDOWN_TICKS;
     }
 
     private PFConfig() {
