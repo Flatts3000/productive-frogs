@@ -51,20 +51,18 @@ Same intent as the hatch-delay request above, extended to the rest of the lifecy
 
 *Companion to the hatch-delay request; same Sky Frogs determinism goal across the full egg -> tadpole -> frog -> breed loop. 2026-05-28.*
 
-### 🔴 Frogs from crafted frogspawn roll starter stats (intent TBD)
-A Resource Frog matured from a **crafted** (Spawnery / bottled Frog Egg, i.e. non-bred) frogspawn came out with stats **Appetite 2 / Bounty 1 / Reach 3**. Two concerns reported:
+### 🔴 Frogs from crafted frogspawn should start at baseline stats (not a starter roll)
+A Resource Frog matured from a **crafted** (Spawnery / bottled Frog Egg, i.e. non-bred) frogspawn came out with stats **Appetite 2 / Bounty 1 / Reach 3** - i.e. a random above-baseline roll.
 
-1. A crafted (non-bred) frogspawn produced a **stat-bearing** frog - the expectation is that crafted frogspawn yields a **baseline** frog, with above-baseline stats reserved for breeding.
-2. A stat came out at **3**.
+**Current code behavior:** `ResourceFrog.finalizeSpawn()` rolls starter stats for *any* non-bred frog, uniformly in `[starterStatMin, starterStatMax]` = **`[1, 3]`** by default (`PFConfig` `breeding.starterStatMin` / `starterStatMax`; documented in `docs/frog_breeding.md`). So `2 / 1 / 3` is a legal starter roll under today's rules - this is a design change, not a code defect.
 
-**Current code behavior (may be working as designed):** `ResourceFrog.finalizeSpawn()` rolls starter stats for *any* non-bred frog, uniformly in `[starterStatMin, starterStatMax]` = **`[1, 3]`** by default (`PFConfig` `breeding.starterStatMin` / `starterStatMax`; documented in `docs/frog_breeding.md`). Under those rules, `2 / 1 / 3` is a legal starter roll and `3` is exactly the starter ceiling - so neither observation is necessarily a code defect.
+**Confirmed intended behavior (2026-05-28):** crafted / Spawnery / non-bred frogspawn should produce a **baseline** frog - **all stats at the floor (`FrogStats.STAT_MIN` = 1)**. Breeding (with its improvement chance) is the **only** way to climb above baseline; there is no random starter roll for crafted-egg frogs.
 
-**Intended behavior to confirm** (pick one, then this becomes either a fix or a config/doc change):
-- **(a) Baseline crafted eggs:** crafted/Spawnery frogspawn should produce a floor-stat frog (e.g. all `1`s); starter rolls / breeding are the only way above baseline. -> change `finalizeSpawn` to skip the starter roll for crafted-egg frogs.
-- **(b) Lower starter band:** starter rolls are fine but `[1, 3]` is too high - retune `starterStatMax` (config/doc change, no code).
-- **(c) Crafted-with-stats carry:** if the crafted egg was *meant* to carry specific stats and they were lost to a re-roll, that's a real stat-carry bug in the bottling/Spawnery path.
+- **Expected:** a frog from crafted/non-bred frogspawn shows `1 / 1 / 1`.
+- **Observed:** it shows a random `[1, 3]` roll (here `2 / 1 / 3`).
+- **Fix:** in `ResourceFrog.finalizeSpawn()` (or `rollStarterStats`), set non-bred frogs to `STAT_MIN` across the board instead of rolling `[starterStatMin, starterStatMax]`. Bred frogs (inherited stats applied after `finalizeSpawn`) and disk-loaded frogs (`statsInitialized`) are unaffected. Update `docs/frog_breeding.md` and retire / repurpose the now-unused `starterStatMin` / `starterStatMax` config keys.
 
-*Reported via the Sky Frogs pack with a Jade screenshot (frog at 2/1/3). Flagged working-as-designed pending intent confirmation, same as the hatch-timer reframe. 2026-05-28.*
+*Reported via the Sky Frogs pack with a Jade screenshot (frog at 2/1/3). Intent confirmed: baseline (all 1s). 2026-05-28.*
 
 ---
 
@@ -119,4 +117,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-28 (logged: flowing Slime Milk displaces frogspawn / water sources / other milk sources; primed frogspawn hatch delay should be deterministic; tadpole growth and frog breeding times should be deterministic; frogs from crafted frogspawn roll starter stats (intent TBD) - reported via the Sky Frogs pack).*
+*Last updated: 2026-05-28 (logged: flowing Slime Milk displaces frogspawn / water sources / other milk sources; primed frogspawn hatch delay should be deterministic; tadpole growth and frog breeding times should be deterministic; frogs from crafted frogspawn should start at baseline stats - reported via the Sky Frogs pack).*
