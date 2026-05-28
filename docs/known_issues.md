@@ -26,13 +26,15 @@ Flowing **Slime Milk** (from a placed source block, or a bucket emptied nearby) 
 
 *Reported via the Sky Frogs pack, 2026-05-28.*
 
-### 🔴 Frogspawn hatching timer is wrong
-Primed frogspawn appears to hatch at the **wrong time** - it hatched at roughly **3 minutes** rather than the expected near-immediate (~0) hatch. The countdown / hatch-delay logic looks off: the spawn sits far longer than intended before tadpoles emerge.
+### 🔴 Primed frogspawn hatch delay should be deterministic
+Primed Frog Egg blocks currently inherit vanilla's **randomized** hatch window: `PrimedFrogEggBlock` rolls a uniform delay in `[3600, 12000)` ticks (**3-10 minutes** at 20 TPS) on placement, matching `minecraft:frogspawn` exactly. The earlier "hatched at 3 minutes" report was the **floor** of that range, not a timer bug.
 
-- **Expected:** frogspawn hatches at the intended delay (effectively ~0 / near-immediate).
-- **Observed:** hatch fired around the 3-minute mark instead.
+For modded (primed) frogspawn we want a **deterministic** hatch delay instead of the random 3-10 min spread, so hatch timing is predictable for automation and progression pacing.
 
-*Reported via the Sky Frogs pack, 2026-05-28.*
+- **Current:** random delay in `[3600, 12000)` ticks per egg (vanilla parity).
+- **Wanted:** a single fixed hatch delay for primed frogspawn (ideally config-exposed via `PFConfig`). Vanilla `minecraft:frogspawn` keeps its random window untouched.
+
+*Reframed from a "timer is wrong" report; the random window is vanilla-parity, the deterministic delay is a Sky Frogs design request. 2026-05-28.*
 
 ---
 
@@ -87,4 +89,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-28 (logged: flowing Slime Milk displaces frogspawn; frogspawn hatching timer is wrong - reported via the Sky Frogs pack).*
+*Last updated: 2026-05-28 (logged: flowing Slime Milk displaces frogspawn; primed frogspawn hatch delay should be deterministic - reported via the Sky Frogs pack).*
