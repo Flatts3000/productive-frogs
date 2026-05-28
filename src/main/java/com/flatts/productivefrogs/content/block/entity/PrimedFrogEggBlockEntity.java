@@ -27,8 +27,8 @@ import net.minecraft.world.level.block.state.BlockState;
  *
  * <p>Stats are optional: an egg placed by means other than breeding (creative
  * placement, {@code /setblock}, a vanilla-style natural lay if that ever
- * happens) has {@link #hasStats} false, and the hatch falls back to a fresh
- * starter roll on each tadpole-to-frog maturation. There is no client sync -
+ * happens) has {@link #hasStats} false, and the hatchlings mature into baseline
+ * (1/1/1) frogs on each tadpole-to-frog maturation. There is no client sync -
  * the egg renders identically regardless of its pending stats, so the data is
  * server-only persisted state.
  */

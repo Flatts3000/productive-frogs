@@ -272,16 +272,12 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
         ResourceLocation variantId = readVariant(level, pos);
         int remaining = state.getValue(SPAWNS_REMAINING);
         ItemStack bucket = super.pickupBlock(player, level, pos, state);
-        if (bucket.is(PFItems.SLIME_MILK_BUCKET.get())) {
-            if (variantId != null) {
-                bucket.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
-            }
-            // Only a variant-carrying source actually depletes, so only preserve
-            // the counter for one (an inert spread-milk grab has no variant and
-            // should not stamp a misleading count).
-            if (variantId != null) {
-                bucket.set(PFDataComponents.SPAWNS_REMAINING.get(), remaining);
-            }
+        // Only a variant-carrying source actually spawns + depletes, so stamp
+        // both the variant and the counter only for one. An inert spread-milk
+        // grab has no variant and must not stamp a misleading count.
+        if (variantId != null && bucket.is(PFItems.SLIME_MILK_BUCKET.get())) {
+            bucket.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
+            bucket.set(PFDataComponents.SPAWNS_REMAINING.get(), remaining);
         }
         return bucket;
     }

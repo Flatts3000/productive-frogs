@@ -2,9 +2,11 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.data.Category;
+import com.mojang.serialization.Codec;
 import java.util.function.Supplier;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -71,8 +73,8 @@ public final class PFDataComponents {
     public static final Supplier<DataComponentType<Integer>> SPAWNS_REMAINING = COMPONENTS.register(
         "spawns_remaining",
         () -> DataComponentType.<Integer>builder()
-            .persistent(com.mojang.serialization.Codec.INT)
-            .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT)
+            .persistent(Codec.INT)
+            .networkSynchronized(ByteBufCodecs.VAR_INT)
             .build()
     );
 

@@ -123,8 +123,8 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
     private void hatch(ServerLevel level, BlockPos pos, RandomSource random) {
         // Read the pending offspring stats off the BE BEFORE destroying the
         // block (destroy removes the BE). A non-bred egg (creative placement,
-        // /setblock) has no stats; hatched tadpoles then mature with a fresh
-        // starter roll. This is the back half of the conception->egg->tadpole
+        // /setblock) has no stats; hatched tadpoles then mature into baseline
+        // (1/1/1) frogs. This is the back half of the conception->egg->tadpole
         // stat carry (docs/frog_breeding.md).
         PrimedFrogEggBlockEntity eggBe = level.getBlockEntity(pos) instanceof PrimedFrogEggBlockEntity be ? be : null;
         boolean carryStats = eggBe != null && eggBe.hasStats();

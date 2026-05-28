@@ -256,7 +256,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
      * look-at packet) and an {@link IBlockComponentProvider} (client: read that
      * packet back and render the lines). A non-bred egg (creative placement,
      * Spawnery output, {@code /setblock}) carries no stats and shows nothing -
-     * its hatchlings roll fresh starter stats. See {@code docs/frog_breeding.md}.
+     * its hatchlings mature into baseline (1/1/1) frogs. See {@code docs/frog_breeding.md}.
      */
     private static final class PrimedEggStatsProvider
             implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
@@ -309,7 +309,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
      * to {@code ResourceTadpole#ageUp}, never synced), so this is both an
      * {@link IServerDataProvider} (server) and an {@link IEntityComponentProvider}
      * (client). A non-bred tadpole carries no pending stats and shows nothing - it
-     * rolls fresh starter stats when it matures. See {@code docs/frog_breeding.md}.
+     * matures into a baseline (1/1/1) frog. See {@code docs/frog_breeding.md}.
      */
     private static final class TadpoleStatsProvider
             implements IEntityComponentProvider, IServerDataProvider<EntityAccessor> {

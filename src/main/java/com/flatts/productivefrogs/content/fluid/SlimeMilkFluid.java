@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.content.fluid;
 
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
+import com.flatts.productivefrogs.registry.PFFluids;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
@@ -8,6 +9,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 
 /**
@@ -45,9 +47,15 @@ public final class SlimeMilkFluid {
         if (spreadState.is(Blocks.FROGSPAWN) || spreadState.getBlock() instanceof PrimedFrogEggBlock) {
             return true;
         }
-        // Never displace a fluid source - covers water sources and other Slime
-        // Milk source blocks. Flowing fluid (isSource() == false) is unaffected.
-        return fluidState.isSource();
+        // Never displace a WATER source or another Slime Milk source - the two
+        // cases reported. Scoped to those two fluids on purpose: a blanket
+        // isSource() check would also wall milk out of (and refuse to interact
+        // with) every modded fluid source, which is a cross-mod surprise. Flowing
+        // fluid (isSource() == false) is left to vanilla displacement.
+        if (!fluidState.isSource()) {
+            return false;
+        }
+        return fluidState.is(Fluids.WATER) || fluidState.is(PFFluids.SLIME_MILK_SOURCE.get());
     }
 
     /** The placeable source fluid. */

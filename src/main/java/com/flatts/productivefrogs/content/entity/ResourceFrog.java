@@ -71,10 +71,10 @@ public class ResourceFrog extends Frog {
     private static final EntityDataAccessor<Integer> DATA_REACH =
         SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.INT);
 
-    // Set true once stats are established (starter roll or inheritance) so a
+    // Set true once stats are established (baseline or inheritance) so a
     // re-fired finalizeSpawn (vanilla can call it more than once) doesn't
-    // re-roll over an established frog. Transient: a loaded frog has stats in
-    // NBT and never re-rolls anyway.
+    // re-apply baseline over an established frog. Transient: a loaded frog has
+    // stats in NBT and never re-applies anyway.
     private boolean statsInitialized;
 
     // Pending offspring stats captured at conception (spawnChildFromBreeding),
