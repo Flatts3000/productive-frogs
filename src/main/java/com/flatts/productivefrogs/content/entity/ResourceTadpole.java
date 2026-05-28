@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.content.entity;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
@@ -66,11 +67,56 @@ public class ResourceTadpole extends Tadpole {
     private int pendingBounty;
     private int pendingReach;
 
+    // Fractional carry for the config-tunable growth accelerator (see aiStep).
+    // Transient: losing the sub-tick remainder across a reload is negligible.
+    private double growthCarry;
+
     public Category getCategory() {
         // Defensive: synced data can be set to any int via modded packets or
         // corrupted save data. fromOrdinalOrDefault falls back to BOG rather
         // than crashing if the ordinal is out of range.
         return Category.fromOrdinalOrDefault(this.entityData.get(DATA_CATEGORY));
+    }
+
+    /**
+     * Honor the config-exposed {@link PFConfig#tadpoleGrowthTicks()} for modded
+     * tadpoles without touching vanilla's shared {@code Tadpole.ticksToBeFrog}
+     * static (vanilla tadpoles keep stock pacing).
+     *
+     * <p>Vanilla {@code Tadpole.aiStep()} (run via {@code super}) increments the
+     * age counter by 1 each server tick and matures the tadpole when age reaches
+     * {@code ticksToBeFrog} (24000 / 20 min). To mature in a shorter configured
+     * window we add extra age per tick so the counter reaches 24000 in
+     * {@code tadpoleGrowthTicks} ticks. This is purely additive, so slime-ball
+     * feeding (which also advances age) still accelerates growth on top.
+     *
+     * <p>Only acceleration is supported: a configured value at or above vanilla's
+     * 24000-tick ceiling leaves the stock pace untouched (raising the ceiling
+     * would require mutating the shared static). The default (24000) is a no-op.
+     */
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        if (this.level().isClientSide()) {
+            return;
+        }
+        int vanilla = Tadpole.ticksToBeFrog;
+        int target = PFConfig.tadpoleGrowthTicks();
+        if (target >= vanilla || this.age >= vanilla) {
+            return;
+        }
+        // Extra age units to add per tick so total age (1 from super + extra)
+        // reaches `vanilla` in `target` ticks.
+        this.growthCarry += (double) vanilla / target - 1.0;
+        int extra = (int) this.growthCarry;
+        if (extra <= 0) {
+            return;
+        }
+        this.growthCarry -= extra;
+        this.age = Math.min(vanilla, this.age + extra);
+        if (this.age >= vanilla) {
+            this.ageUp();
+        }
     }
 
     public void setCategory(Category category) {

@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.content.block;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import com.flatts.productivefrogs.data.Category;
@@ -34,9 +35,12 @@ import org.jetbrains.annotations.Nullable;
  * <ul>
  *   <li>Frogspawn voxel shape, no collision, instant break, frogspawn sound type.</li>
  *   <li>Must sit on a water source; gets destroyed if the water vanishes.</li>
- *   <li>On placement, schedules a tick at {@code [3600, 12000)} ticks later
- *       (3-10 minutes wall-clock at 20 TPS, upper bound exclusive). Matches
- *       vanilla {@code FrogspawnBlock}'s hatch range exactly.</li>
+ *   <li>On placement, schedules a tick at a <b>fixed, config-exposed</b> delay
+ *       ({@link PFConfig#hatchTicks()}, default 3600 ticks / 3 min). Unlike
+ *       vanilla {@code FrogspawnBlock}'s random {@code [3600, 12000)} window,
+ *       primed-egg hatch timing is deterministic so packs can pace progression
+ *       and automation predictably (docs/known_issues.md). Vanilla frogspawn is
+ *       unaffected.</li>
  *   <li>On tick, spawns 1-3 {@link ResourceTadpole}s of this block's
  *       category and removes itself. Vanilla spawns 2-5 vanilla tadpoles;
  *       we tighten the range slightly because Resource Tadpoles mature into
@@ -47,8 +51,6 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
 
     private static final VoxelShape SHAPE = Block.box(0.0, 0.0, 0.0, 16.0, 1.5, 16.0);
 
-    private static final int MIN_HATCH_TICK_DELAY = 3600;
-    private static final int MAX_HATCH_TICK_DELAY = 12000;
     private static final int MIN_TADPOLES_SPAWN = 1;
     private static final int MAX_TADPOLES_SPAWN = 3;
 
@@ -84,7 +86,7 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
         if (level.isClientSide()) {
             return;
         }
-        int delay = getHatchDelay(level.getRandom());
+        int delay = getHatchDelay();
         level.scheduleTick(pos, this, delay);
         // Stamp the absolute hatch time on the BE so the Jade tooltip can count
         // down to it (the scheduled tick lives in the level scheduler, which
@@ -94,8 +96,10 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
         }
     }
 
-    private static int getHatchDelay(RandomSource random) {
-        return random.nextInt(MIN_HATCH_TICK_DELAY, MAX_HATCH_TICK_DELAY);
+    private static int getHatchDelay() {
+        // Fixed, config-tunable delay (default 3600 ticks). Deterministic by
+        // design - see the class javadoc and docs/known_issues.md.
+        return PFConfig.hatchTicks();
     }
 
     @Override

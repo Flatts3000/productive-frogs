@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.fluid.SlimeMilkFluid;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.material.Fluid;
@@ -27,8 +28,8 @@ public final class PFFluids {
     // final because the Properties lambdas capture them before assignment (a
     // blank-final read in a lambda is a definite-assignment error); the lambdas
     // are lazy, so they read the assigned value at fluid-build time.
-    public static DeferredHolder<Fluid, BaseFlowingFluid.Source> SLIME_MILK_SOURCE;
-    public static DeferredHolder<Fluid, BaseFlowingFluid.Flowing> SLIME_MILK_FLOWING;
+    public static DeferredHolder<Fluid, SlimeMilkFluid.Source> SLIME_MILK_SOURCE;
+    public static DeferredHolder<Fluid, SlimeMilkFluid.Flowing> SLIME_MILK_FLOWING;
 
     static {
         // The Properties needs Supplier<Fluid> for both Source and Flowing, but
@@ -45,8 +46,11 @@ public final class PFFluids {
             .slopeFindDistance(4)
             .levelDecreasePerBlock(2);
 
-        SLIME_MILK_SOURCE = FLUIDS.register("slime_milk", () -> new BaseFlowingFluid.Source(props));
-        SLIME_MILK_FLOWING = FLUIDS.register("slime_milk_flowing", () -> new BaseFlowingFluid.Flowing(props));
+        // Custom subclasses (not the bare BaseFlowingFluid forms) so flowing milk
+        // refuses to wash away frogspawn / Primed Frog Eggs and never displaces a
+        // fluid source block - see SlimeMilkFluid and docs/known_issues.md.
+        SLIME_MILK_SOURCE = FLUIDS.register("slime_milk", () -> new SlimeMilkFluid.Source(props));
+        SLIME_MILK_FLOWING = FLUIDS.register("slime_milk_flowing", () -> new SlimeMilkFluid.Flowing(props));
     }
 
     private PFFluids() {

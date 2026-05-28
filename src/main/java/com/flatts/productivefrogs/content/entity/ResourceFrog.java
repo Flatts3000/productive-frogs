@@ -217,38 +217,33 @@ public class ResourceFrog extends Frog {
     }
 
     /**
-     * Roll starter stats for a non-bred frog and apply config-gated persistence.
-     * A frog matured from a bred egg has its inherited stats applied by
-     * {@link ResourceTadpole#ageUp()} AFTER this runs, overriding the starter
-     * roll. A frog loaded from disk has {@code statsInitialized} set by
-     * readAdditionalSaveData and skips the roll. The {@code statsInitialized}
-     * guard also makes a double finalizeSpawn (vanilla can call it more than
-     * once) idempotent.
+     * Apply <b>baseline</b> stats to a non-bred frog and config-gated persistence.
+     * A non-bred frog - one matured from crafted / Spawnery / non-bred frogspawn -
+     * starts at the floor ({@link FrogStats#STAT_MIN} across all three stats, i.e.
+     * {@code 1/1/1}); breeding is the only way to climb above baseline
+     * (docs/known_issues.md, docs/frog_breeding.md). A frog matured from a bred
+     * egg has its inherited stats applied by {@link ResourceTadpole#ageUp()} AFTER
+     * this runs, overriding the baseline. A frog loaded from disk has
+     * {@code statsInitialized} set by readAdditionalSaveData and skips this. The
+     * {@code statsInitialized} guard also makes a double finalizeSpawn (vanilla
+     * can call it more than once) idempotent.
      */
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
                                         MobSpawnType reason, @Nullable SpawnGroupData spawnData) {
         SpawnGroupData result = super.finalizeSpawn(level, difficulty, reason, spawnData);
         if (!statsInitialized) {
-            rollStarterStats(level.getRandom());
+            applyBaselineStats();
         }
         applyPersistence();
         return result;
     }
 
-    private void rollStarterStats(RandomSource random) {
-        int lo = PFConfig.starterStatMin();
-        int hi = PFConfig.starterStatMax();
-        if (hi < lo) {
-            hi = lo;
-        }
-        setStats(rollInRange(random, lo, hi), rollInRange(random, lo, hi), rollInRange(random, lo, hi));
+    private void applyBaselineStats() {
+        setStats(FrogStats.STAT_MIN, FrogStats.STAT_MIN, FrogStats.STAT_MIN);
         PFDebug.log(PFDebug.Area.LIFECYCLE, () -> String.format(
-            "starter stats: frog category=%s -> A%d/B%d/R%d", getCategory(), getAppetite(), getBounty(), getReach()));
-    }
-
-    private static int rollInRange(RandomSource random, int lo, int hi) {
-        return lo + random.nextInt(hi - lo + 1);
+            "baseline stats: non-bred frog category=%s -> A%d/B%d/R%d",
+            getCategory(), getAppetite(), getBounty(), getReach()));
     }
 
     /** Config-gated persistence (frogs.persistent, default true) so a bred line isn't lost to despawn. */
@@ -372,6 +367,14 @@ public class ResourceFrog extends Frog {
             captureOffspringStats(mate, level.getRandom());
         }
         super.spawnChildFromBreeding(level, partner);
+        // Vanilla's finalizeSpawnChildFromBreeding sets both parents' age to a
+        // fixed 6000-tick re-breed cooldown. Re-apply our config-exposed,
+        // deterministic value (default 6000 = vanilla) so packs can tune the
+        // breeding cadence (docs/known_issues.md). setAge on an adult is the
+        // re-breed cooldown countdown.
+        int cooldown = PFConfig.breedingCooldownTicks();
+        this.setAge(cooldown);
+        partner.setAge(cooldown);
     }
 
     private void captureOffspringStats(ResourceFrog mate, RandomSource random) {
