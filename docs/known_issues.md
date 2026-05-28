@@ -26,6 +26,14 @@ Flowing **Slime Milk** (from a placed source block, or a bucket emptied nearby) 
 
 *Reported via the Sky Frogs pack, 2026-05-28.*
 
+### 🔴 Frogspawn hatching timer is wrong
+Primed frogspawn appears to hatch at the **wrong time** - it hatched at roughly **3 minutes** rather than the expected near-immediate (~0) hatch. The countdown / hatch-delay logic looks off: the spawn sits far longer than intended before tadpoles emerge.
+
+- **Expected:** frogspawn hatches at the intended delay (effectively ~0 / near-immediate).
+- **Observed:** hatch fired around the 3-minute mark instead.
+
+*Reported via the Sky Frogs pack, 2026-05-28.*
+
 ---
 
 The Spawnery dev-testing findings (Slime Milker recipe, Slime Milk JEI subtypes, container-GUI tooltips, and the Spawnery primer-required decision) shipped in v1.4.0 and are in the [archive](./known_issues_archive.md). By-design V1 limitations are listed below.
@@ -79,4 +87,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-28 (logged: flowing Slime Milk displaces frogspawn, reported via the Sky Frogs pack).*
+*Last updated: 2026-05-28 (logged: flowing Slime Milk displaces frogspawn; frogspawn hatching timer is wrong - reported via the Sky Frogs pack).*
