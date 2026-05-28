@@ -350,6 +350,34 @@ public final class PFItems {
         return stack;
     }
 
+    /**
+     * Build a Slime Bucket carrying a variant's {@code BUCKET_ENTITY_DATA} NBT -
+     * the canonical minimal {@code Category}+{@code Variant} shape mirrored by
+     * what {@code ResourceSlime.saveToBucketTag} writes (minus the vanilla
+     * mob-bucket keys a real capture also adds). Single source for these NBT key
+     * names; shared by the creative tab and the JEI plugin so all display stacks
+     * stay consistent with real captured buckets.
+     */
+    public static ItemStack variantSlimeBucket(ResourceLocation variantId, Category category) {
+        ItemStack stack = new ItemStack(SLIME_BUCKET.get());
+        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
+            tag.putString("Category", category.name());
+            tag.putString("Variant", variantId.toString());
+        });
+        return stack;
+    }
+
+    /**
+     * Build a Slime Milk bucket stamped with the given variant id in the
+     * {@code SLIME_VARIANT} component (the single {@code slime_milk_bucket}
+     * carries its variant on the component, like the Configurable Froglight).
+     */
+    public static ItemStack slimeMilkBucket(ResourceLocation variantId) {
+        ItemStack stack = new ItemStack(SLIME_MILK_BUCKET.get());
+        stack.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
+        return stack;
+    }
+
     private PFItems() {
         // utility class
     }

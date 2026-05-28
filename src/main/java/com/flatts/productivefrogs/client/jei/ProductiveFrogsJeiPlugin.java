@@ -6,27 +6,37 @@ import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFDataComponents;
+import com.flatts.productivefrogs.registry.PFItemTags;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFRegistries;
+import java.util.ArrayList;
+import java.util.List;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
+import mezz.jei.api.registration.IRecipeCatalystRegistration;
+import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 
 /**
- * JEI plugin for Productive Frogs. Surfaces two things:
+ * JEI plugin for Productive Frogs. Surfaces three things:
  *
  * <ol>
  *   <li>Per-item <b>subtype interpreters</b> so items that share a single
@@ -37,6 +47,12 @@ import net.minecraft.world.level.Level;
  *       explain each PF item's role in the production loop — what it's
  *       hunted by, what it drops, what it smelts to, where it spawns, etc.
  *       Hover the item in JEI and press <kbd>U</kbd> or <kbd>R</kbd> to see.</li>
+ *   <li><b>Recipe categories</b> for the two custom-block transforms that have
+ *       no vanilla-recipe analogue: the {@link SpawneryRecipeCategory} (glass
+ *       bottle + primer -> bottled frogspawn) and the
+ *       {@link SlimeMilkerRecipeCategory} (variant Slime Bucket -> matching
+ *       Slime Milk bucket). Both enumerate the same datapack data the info
+ *       pages do, so pack tag overrides and new variants display automatically.</li>
  * </ol>
  *
  * <p>Info pages are populated dynamically by walking the {@code SlimeVariant}
@@ -64,13 +80,22 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         return PLUGIN_UID;
     }
 
+    /**
+     * Whether the Spawnery is enabled. Fails closed (disabled) until the config
+     * spec loads, so every Spawnery JEI surface - ingredient visibility, the
+     * recipe category + catalyst, and the info page - shares one gate.
+     */
+    private static boolean spawneryEnabled() {
+        return PFConfig.SPEC.isLoaded() && PFConfig.SPAWNERY_ENABLED.get();
+    }
+
     @Override
     public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
         // When the Spawnery is disabled (the default), hide its item from the JEI
         // ingredient list so JEI doesn't surface a block players can't obtain. The
         // recipe condition + creative-tab guard cover crafting/creative; this covers
         // the JEI sidebar. No-op (and harmless) if the item is already absent.
-        if (PFConfig.SPEC.isLoaded() && PFConfig.SPAWNERY_ENABLED.get()) {
+        if (spawneryEnabled()) {
             return;
         }
         jeiRuntime.getIngredientManager().removeIngredientsAtRuntime(
@@ -79,21 +104,34 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
     }
 
     @Override
+    public void registerCategories(IRecipeCategoryRegistration registration) {
+        var guiHelper = registration.getJeiHelpers().getGuiHelper();
+        registration.addRecipeCategories(
+            new SlimeMilkerRecipeCategory(guiHelper),
+            new SpawneryRecipeCategory(guiHelper));
+    }
+
+    @Override
     public void registerItemSubtypes(ISubtypeRegistration registration) {
-        // JEI 19.21 (1.21.1) has no registerFromDataComponentTypes shortcut —
+        // JEI 19.27 (1.21.1) has no registerFromDataComponentTypes shortcut —
         // implement the subtype interpreter manually per item.
 
-        // Buckets — subtype by BUCKET_ENTITY_DATA (carries Category + Variant).
+        // Buckets — subtype by ONLY the Category + Variant inside BUCKET_ENTITY_DATA,
+        // not the whole tag. A real captured bucket also carries the vanilla
+        // mob-bucket keys (Health, NoAI, ... via saveDefaultDataToBucketTag), so
+        // keying on the full tag string would give it a different JEI subtype than
+        // the minimal {Category,Variant} stacks the creative tab, info pages, and
+        // recipe categories build — pressing U/R on a captured bucket would then
+        // fail to find its recipes (e.g. the Slime Milker). Keying on just these two
+        // collapses every same-variant bucket to one stable entry.
         ISubtypeInterpreter<ItemStack> bucketInterp = new ISubtypeInterpreter<>() {
             @Override
             public Object getSubtypeData(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
-                CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
-                return data == null ? "" : data.copyTag().toString();
+                return bucketSubtypeKey(stack);
             }
             @Override
             public String getLegacyStringSubtypeInfo(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
-                Object d = getSubtypeData(stack, ctx);
-                return d == null ? "" : d.toString();
+                return bucketSubtypeKey(stack);
             }
         };
         registration.registerSubtypeInterpreter(PFItems.SLIME_BUCKET.get(), bucketInterp);
@@ -134,6 +172,22 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         });
     }
 
+    /**
+     * Stable JEI subtype key for a Slime / Resource Tadpole bucket: the Category
+     * and Variant strings from {@code BUCKET_ENTITY_DATA}, ignoring the vanilla
+     * mob-bucket NBT (Health, NoAI, ...) a real captured bucket also carries.
+     * Absent keys read as empty (a category-only slime or a tadpole bucket has no
+     * Variant), so every stack still gets a deterministic key.
+     */
+    private static String bucketSubtypeKey(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
+        if (data == null) {
+            return "";
+        }
+        CompoundTag tag = data.copyTag();
+        return tag.getString("Category") + "|" + tag.getString("Variant");
+    }
+
     @Override
     public void registerRecipes(IRecipeRegistration reg) {
         Level level = Minecraft.getInstance().level;
@@ -151,6 +205,75 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         addVariantInfoPages(reg, variants);
         addSpeciesInfoPages(reg);
         addStaticInfoPages(reg);
+
+        addMilkerRecipes(reg, variants);
+        addSpawneryRecipes(reg);
+    }
+
+    @Override
+    public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
+        registration.addRecipeCatalyst(PFBlocks.SLIME_MILKER.get(), SlimeMilkerRecipeCategory.TYPE);
+        // Spawnery catalyst only when enabled - the block is removed from JEI in
+        // onRuntimeAvailable when off, and addSpawneryRecipes adds no recipes then,
+        // so registering the catalyst would surface an empty category for a hidden
+        // block. Same guard the static info page uses.
+        if (spawneryEnabled()) {
+            registration.addRecipeCatalyst(PFBlocks.SPAWNERY.get(), SpawneryRecipeCategory.TYPE);
+        }
+    }
+
+    /**
+     * One Slime Milker recipe per shipped SlimeVariant: a variant Slime Bucket
+     * converts to the matching variant-stamped Slime Milk bucket. Builds both
+     * stacks through the shared {@link PFItems} builders (same as the creative
+     * tab + info pages) so a datapack variant produces its recipe with no code
+     * change and the bucket NBT shape stays single-sourced.
+     */
+    private static void addMilkerRecipes(IRecipeRegistration reg, Registry<SlimeVariant> variants) {
+        List<SlimeMilkerRecipeCategory.Recipe> recipes = new ArrayList<>();
+        for (java.util.Map.Entry<ResourceKey<SlimeVariant>, SlimeVariant> entry : variants.entrySet()) {
+            ResourceLocation variantId = entry.getKey().location();
+            ItemStack input = PFItems.variantSlimeBucket(variantId, entry.getValue().category());
+            ItemStack output = PFItems.slimeMilkBucket(variantId);
+            recipes.add(new SlimeMilkerRecipeCategory.Recipe(input, output));
+        }
+        reg.addRecipes(SlimeMilkerRecipeCategory.TYPE, recipes);
+    }
+
+    /**
+     * Spawnery recipes - one per species plus the vanilla case. Each species
+     * recipe's primer slot cycles every item in that species'
+     * {@code spawnery_primer/<species>} tag, so pack tag overrides display.
+     * Gated on {@code spawnery.enabled} to stay consistent with the block being
+     * removed from JEI when the appliance is off.
+     */
+    private static void addSpawneryRecipes(IRecipeRegistration reg) {
+        if (!spawneryEnabled()) {
+            return;
+        }
+        List<SpawneryRecipeCategory.Recipe> recipes = new ArrayList<>();
+        for (Category cat : Category.values()) {
+            List<ItemStack> primers = primerStacks(cat);
+            if (primers.isEmpty()) {
+                continue; // No primer for this species in the current tags - skip.
+            }
+            ItemStack egg = new ItemStack(PFItems.FROG_EGG.get());
+            egg.set(PFDataComponents.CONTAINED_CATEGORY.get(), cat);
+            recipes.add(new SpawneryRecipeCategory.Recipe(primers, egg));
+        }
+        // Vanilla case: a slime ball primes plain frogspawn (no contained category).
+        recipes.add(new SpawneryRecipeCategory.Recipe(
+            List.of(new ItemStack(Items.SLIME_BALL)),
+            new ItemStack(PFItems.FROG_EGG.get())));
+        reg.addRecipes(SpawneryRecipeCategory.TYPE, recipes);
+    }
+
+    /** Every item in a species' {@code spawnery_primer/<species>} tag, as stacks. */
+    private static List<ItemStack> primerStacks(Category cat) {
+        TagKey<Item> tag = PFItemTags.spawneryPrimer(cat);
+        return BuiltInRegistries.ITEM.getTag(tag)
+            .map(set -> set.stream().map(h -> new ItemStack(h.value())).toList())
+            .orElse(List.of());
     }
 
     /**
@@ -181,11 +304,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
                 VanillaTypes.ITEM_STACK, info);
 
             // 2. Variant-stamped Slime Bucket
-            ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
-            net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
-            tag.putString("Variant", entry.getKey().location().toString());
-            tag.putString("Category", variant.category().name());
-            bucket.set(DataComponents.BUCKET_ENTITY_DATA, CustomData.of(tag));
+            ItemStack bucket = PFItems.variantSlimeBucket(entry.getKey().location(), variant.category());
             reg.addIngredientInfo(bucket, VanillaTypes.ITEM_STACK, info);
 
             // 3. Variant-stamped Configurable Froglight
@@ -197,8 +316,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
 
             // 4. Variant Slime Milk bucket — the single slime_milk_bucket item
             // stamped with this variant (collapsed from the per-variant items).
-            ItemStack milkBucket = new ItemStack(PFItems.SLIME_MILK_BUCKET.get());
-            milkBucket.set(PFDataComponents.SLIME_VARIANT.get(), entry.getKey().location());
+            ItemStack milkBucket = PFItems.slimeMilkBucket(entry.getKey().location());
             Component milkInfo = Component.translatable(
                 "productivefrogs.jei.slime_milk.info", variantSlimeName);
             reg.addIngredientInfo(milkBucket, VanillaTypes.ITEM_STACK, milkInfo);
@@ -279,7 +397,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         // Spawnery — only when enabled; when off it's removed from JEI entirely
         // in onRuntimeAvailable, so adding an info page for a hidden item would be
         // pointless (and JEI warns about info for an absent ingredient).
-        if (PFConfig.SPEC.isLoaded() && PFConfig.SPAWNERY_ENABLED.get()) {
+        if (spawneryEnabled()) {
             reg.addIngredientInfo(
                 new ItemStack(PFBlocks.SPAWNERY.get().asItem()),
                 VanillaTypes.ITEM_STACK,

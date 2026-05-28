@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.5.3 - 2026-05-28 - Recipe lookups for the Spawnery and Slime Milker
+
+JEI now shows you how to make the two things it couldn't before.
+
+### Added
+
+- **Recipe pages for bottled frogspawn and slime milk.** Look up slime milk in JEI
+  and it shows the Slime Milker pressing a captured slime into milk; look up bottled
+  frogspawn and it shows the Spawnery's bottle-and-primer recipe, including which
+  primer raises which kind of frog. The pages follow your installed setup, so a
+  modpack that changes the Spawnery's primers shows those changes automatically.
+
 ## v1.5.2 - 2026-05-27 - Steel joins the Cave frog
 
 A new metal for the Cave roster.
