@@ -30,6 +30,14 @@ Flowing **Slime Milk** (from a placed source block, or a bucket emptied nearby) 
 
 *Reported via the Sky Frogs pack, 2026-05-28.*
 
+### 🔴 Frogs drown in Slime Milk
+A Resource Frog standing in / submerged by **Slime Milk** takes drowning damage and can die. Slime Milk is meant to be poured into pools that frogs work over (the milk-fountain production loop), so frogs are routinely in contact with it - they should treat it as safe, not as a suffocating fluid.
+
+- **Expected:** frogs are unharmed by Slime Milk (no air-supply drain, no drowning damage) - they can sit in it like vanilla frogs sit in water.
+- **Observed:** frogs lose air and take drowning damage in Slime Milk.
+
+*Reported via the Sky Frogs pack, 2026-05-28.*
+
 ### 🔴 Primed frogspawn hatch delay should be deterministic
 Primed Frog Egg blocks currently inherit vanilla's **randomized** hatch window: `PrimedFrogEggBlock` rolls a uniform delay in `[3600, 12000)` ticks (**3-10 minutes** at 20 TPS) on placement, matching `minecraft:frogspawn` exactly. The earlier "hatched at 3 minutes" report was the **floor** of that range, not a timer bug.
 
@@ -117,4 +125,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-28 (logged: flowing Slime Milk displaces frogspawn / water sources / other milk sources; primed frogspawn hatch delay should be deterministic; tadpole growth and frog breeding times should be deterministic; frogs from crafted frogspawn should start at baseline stats - reported via the Sky Frogs pack).*
+*Last updated: 2026-05-28 (logged: flowing Slime Milk displaces frogspawn / water sources / other milk sources; frogs drown in Slime Milk; primed frogspawn hatch delay should be deterministic; tadpole growth and frog breeding times should be deterministic; frogs from crafted frogspawn should start at baseline stats - reported via the Sky Frogs pack).*
