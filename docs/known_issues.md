@@ -18,7 +18,13 @@ Symbols 🟢 (resolved) and 🟠 (reopened / since-reverted) live in the [archiv
 
 ## Open issues
 
-No open player-facing bugs. The most recent fix (Lapis moved from Cave to Geode, v1.5.1) is in the [archive](./known_issues_archive.md).
+### 🔴 Flowing Slime Milk displaces frogspawn
+Flowing **Slime Milk** (from a placed source block, or a bucket emptied nearby) washes **frogspawn** away the way flowing water sweeps off a non-solid plant block. Running milk next to where frogs lay spawn can destroy the spawn before it hatches.
+
+- **Expected:** flowing Slime Milk leaves frogspawn intact - it should not displace or break it.
+- **Observed:** flowing Slime Milk removes/replaces the frogspawn.
+
+*Reported via the Sky Frogs pack, 2026-05-28.*
 
 ---
 
@@ -73,4 +79,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-27 (Lapis recategorized Cave -> Geode in v1.5.1 and moved to the archive; no open player-facing bugs remain).*
+*Last updated: 2026-05-28 (logged: flowing Slime Milk displaces frogspawn, reported via the Sky Frogs pack).*
