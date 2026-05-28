@@ -18,11 +18,15 @@ Symbols 🟢 (resolved) and 🟠 (reopened / since-reverted) live in the [archiv
 
 ## Open issues
 
-### 🔴 Flowing Slime Milk displaces frogspawn
-Flowing **Slime Milk** (from a placed source block, or a bucket emptied nearby) washes **frogspawn** away the way flowing water sweeps off a non-solid plant block. Running milk next to where frogs lay spawn can destroy the spawn before it hatches.
+### 🔴 Flowing Slime Milk displaces blocks it shouldn't
+Flowing **Slime Milk** (from a placed source block, or a bucket emptied nearby) washes other blocks away the way flowing water sweeps off a non-solid plant block. Three cases it should leave intact but currently doesn't:
 
-- **Expected:** flowing Slime Milk leaves frogspawn intact - it should not displace or break it.
-- **Observed:** flowing Slime Milk removes/replaces the frogspawn.
+- **Frogspawn / Primed Frog Eggs** - running milk next to where frogs lay spawn can destroy the spawn before it hatches.
+- **Water source blocks** - flowing milk should not overwrite or displace adjacent water sources.
+- **Other Slime Milk source blocks** - flowing milk should not displace neighboring milk source blocks.
+
+- **Expected:** flowing Slime Milk leaves frogspawn, water source blocks, and other Slime Milk source blocks intact - it should not displace or break any of them.
+- **Observed:** flowing Slime Milk removes/replaces all three.
 
 *Reported via the Sky Frogs pack, 2026-05-28.*
 
@@ -100,4 +104,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-28 (logged: flowing Slime Milk displaces frogspawn; primed frogspawn hatch delay should be deterministic; tadpole growth and frog breeding times should be deterministic - reported via the Sky Frogs pack).*
+*Last updated: 2026-05-28 (logged: flowing Slime Milk displaces frogspawn / water sources / other milk sources; primed frogspawn hatch delay should be deterministic; tadpole growth and frog breeding times should be deterministic - reported via the Sky Frogs pack).*
