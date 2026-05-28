@@ -52,6 +52,10 @@ public final class SpawneryRecipeCategory implements IRecipeCategory<SpawneryRec
     /** Fallback animation duration when the config spec isn't loaded yet. */
     private static final int DEFAULT_PRODUCTION_TICKS = 200;
 
+    /** Constant ingredients in every recipe (only the primer + output vary). */
+    private static final ItemStack GLASS_BOTTLE = new ItemStack(Items.GLASS_BOTTLE);
+    private static final ItemStack SLIME_BALL = new ItemStack(Items.SLIME_BALL);
+
     private static final int WIDTH = 100;
     private static final int HEIGHT = 54;
     private static final int BOTTLE_X = 0;
@@ -109,13 +113,13 @@ public final class SpawneryRecipeCategory implements IRecipeCategory<SpawneryRec
     public void setRecipe(IRecipeLayoutBuilder builder, Recipe recipe, IFocusGroup focuses) {
         builder.addSlot(RecipeIngredientRole.INPUT, BOTTLE_X, BOTTLE_Y)
             .setStandardSlotBackground()
-            .addItemStack(new ItemStack(Items.GLASS_BOTTLE));
+            .addItemStack(GLASS_BOTTLE);
         builder.addSlot(RecipeIngredientRole.INPUT, PRIMER_X, PRIMER_Y)
             .setStandardSlotBackground()
             .addItemStacks(recipe.primers());
         builder.addSlot(RecipeIngredientRole.INPUT, FUEL_X, FUEL_Y)
             .setStandardSlotBackground()
-            .addItemStack(new ItemStack(Items.SLIME_BALL));
+            .addItemStack(SLIME_BALL);
         builder.addSlot(RecipeIngredientRole.OUTPUT, OUTPUT_X, OUTPUT_Y)
             .setOutputSlotBackground()
             .addItemStack(recipe.output());

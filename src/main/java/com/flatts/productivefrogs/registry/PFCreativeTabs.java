@@ -63,7 +63,7 @@ public final class PFCreativeTabs {
                     // (Category + Variant strings in BUCKET_ENTITY_DATA).
                     output.accept(PFItems.SLIME_BUCKET.get());
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h ->
-                        output.accept(makeVariantSlimeBucket(h.key().location(), h.value().category()))));
+                        output.accept(PFItems.variantSlimeBucket(h.key().location(), h.value().category()))));
                     output.accept(PFItems.SLIME_MILKER.get());
                     // Spawnery only appears in the tab when enabled (skyblock
                     // bootstrap; off by default). isLoaded guards the title-screen
@@ -81,10 +81,10 @@ public final class PFCreativeTabs {
                     // MagmaCube). Collapsed from the per-variant milk items;
                     // empty at the title screen until a world's datapacks load.
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h ->
-                        output.accept(makeMilkBucket(h.key().location()))));
-                    output.accept(makeMilkBucket(
+                        output.accept(PFItems.slimeMilkBucket(h.key().location()))));
+                    output.accept(PFItems.slimeMilkBucket(
                         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "vanilla")));
-                    output.accept(makeMilkBucket(
+                    output.accept(PFItems.slimeMilkBucket(
                         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "magma")));
                     for (var entry : PFItems.PRIMED_FROG_EGG_ITEMS.values()) {
                         output.accept(entry.get());
@@ -128,34 +128,6 @@ public final class PFCreativeTabs {
                 })
                 .build()
         );
-
-    /**
-     * Build a Slime Milk bucket stamped with the given variant id (the single
-     * {@code slime_milk_bucket} carries its variant in the SLIME_VARIANT
-     * component, like the Configurable Froglight).
-     */
-    private static ItemStack makeMilkBucket(ResourceLocation variantId) {
-        ItemStack stack = new ItemStack(PFItems.SLIME_MILK_BUCKET.get());
-        stack.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
-        return stack;
-    }
-
-    /**
-     * Build a Slime Bucket stamped with the given variant's BUCKET_ENTITY_DATA
-     * NBT - mirrors what {@code ResourceSlime.saveToBucketTag} writes when a
-     * player buckets a variant-locked slime. Both {@code Category} and
-     * {@code Variant} go into the tag so the tint pipeline (variant-first,
-     * category fallback) lights up either way AND the canonical bucket NBT shape
-     * stays consistent with real captured buckets.
-     */
-    private static ItemStack makeVariantSlimeBucket(ResourceLocation variantId, Category category) {
-        ItemStack stack = new ItemStack(PFItems.SLIME_BUCKET.get());
-        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
-            tag.putString("Category", category.name());
-            tag.putString("Variant", variantId.toString());
-        });
-        return stack;
-    }
 
     /**
      * Build a Resource Tadpole Bucket stamped with a category — mirrors
