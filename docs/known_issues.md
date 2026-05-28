@@ -36,6 +36,17 @@ For modded (primed) frogspawn we want a **deterministic** hatch delay instead of
 
 *Reframed from a "timer is wrong" report; the random window is vanilla-parity, the deterministic delay is a Sky Frogs design request. 2026-05-28.*
 
+### 🔴 Tadpole growth and frog breeding times should be deterministic
+Same intent as the hatch-delay request above, extended to the rest of the lifecycle. Currently both inherit vanilla pacing rather than a mod-controlled deterministic value:
+
+- **Tadpole -> frog growth:** `ResourceTadpole` inherits vanilla `Tadpole`'s age counter (a fixed ~24000-tick / 20-min maturation, slimeball-accelerated). Deterministic today, but **not config-exposed** - packs can't tune it.
+- **Frog breeding / re-breed cooldown:** `ResourceFrog` inherits vanilla `Animal` love-mode and post-breed cooldown pacing, which carries vanilla's **randomized** component. Conception -> lay is handled by `LayCategoryFrogspawn` (fires when the pregnant frog reaches a valid water tile - no fixed timer of its own).
+
+- **Current:** vanilla-inherited timings (growth fixed-but-unexposed; breeding partly randomized).
+- **Wanted:** deterministic, **config-exposed** (`PFConfig`) growth and breeding/re-breed delays for the modded lifecycle, so progression and automation pacing are predictable. Vanilla frogs/tadpoles keep their stock pacing.
+
+*Companion to the hatch-delay request; same Sky Frogs determinism goal across the full egg -> tadpole -> frog -> breed loop. 2026-05-28.*
+
 ---
 
 The Spawnery dev-testing findings (Slime Milker recipe, Slime Milk JEI subtypes, container-GUI tooltips, and the Spawnery primer-required decision) shipped in v1.4.0 and are in the [archive](./known_issues_archive.md). By-design V1 limitations are listed below.
@@ -89,4 +100,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-28 (logged: flowing Slime Milk displaces frogspawn; primed frogspawn hatch delay should be deterministic - reported via the Sky Frogs pack).*
+*Last updated: 2026-05-28 (logged: flowing Slime Milk displaces frogspawn; primed frogspawn hatch delay should be deterministic; tadpole growth and frog breeding times should be deterministic - reported via the Sky Frogs pack).*
