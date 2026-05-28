@@ -51,10 +51,13 @@ multiplies the existing drop, it does not change which item drops.
   (`addAdditionalSaveData` / `readAdditionalSaveData`) and synced to clients for the
   Jade tooltip and the cosmetic render tier. Values are clamped to `[1, 10]` on read
   and write (a tampered/migrated save cannot inject out-of-range stats).
-- **Starter stats:** a Resource Frog that was not bred (matured from a Primed Frog
-  Egg, the Spawnery, or any other first-acquisition path) rolls each stat uniformly
-  in `[STARTER_MIN, STARTER_MAX]` (default `[1, 3]`). You start with weak frogs and
-  breed up; there is no other way to raise a stat.
+- **Baseline stats (non-bred frogs):** a Resource Frog that was not bred (matured
+  from a Primed Frog Egg, the Spawnery, or any other first-acquisition path) starts
+  at **baseline** - every stat at `STAT_MIN` (`1/1/1`). There is no random starter
+  roll; **breeding is the only way to raise a stat.** (Earlier builds rolled a random
+  starter band `[1, 3]`; that was removed - see docs/known_issues.md - so every
+  crafted/Spawnery frog is a clean, predictable `1/1/1` and all variance comes from
+  the breeding line.)
 
 ## Breeding mechanic
 
@@ -147,11 +150,17 @@ ship in a follow-up if art lags. Exact visuals are an art-pass decision.
 | `breeding.improvementChance` | 0.20 | per-stat chance offspring rolls `hi + 1` |
 | `breeding.regressionChance` | 0.30 | per-stat chance offspring rolls the average |
 | `breeding.statCap` | 10 | maximum per-stat value |
-| `breeding.starterStatMin` / `Max` | 1 / 3 | starter (non-bred) frog stat roll range |
 | `stats.appetiteCooldownMin` / `Max` | 30 / 100 | eat cooldown (ticks) at stat 10 / 1 |
 | `stats.bountyMaxDrops` | 3 | Froglights per slime at stat 10 |
 | `stats.reachRadiusMin` / `Max` | 8 / 16 | scan radius at stat 1 / 10 |
 | `frogs.persistent` | true | Resource Frogs do not despawn |
+| `lifecycle.primedFrogspawnHatchTicks` | 3600 | fixed hatch delay for primed frogspawn (deterministic) |
+| `lifecycle.tadpoleGrowthTicks` | 24000 | tadpole -> frog maturation time (<= vanilla 24000; lower = faster) |
+| `lifecycle.breedingCooldownTicks` | 6000 | deterministic post-breed re-breed cooldown |
+
+> The `breeding.starterStatMin` / `starterStatMax` keys were **removed** - non-bred
+> frogs now start at baseline `1/1/1` (see "Baseline stats" above), so there is no
+> starter roll to configure.
 
 ## Decisions
 
@@ -171,7 +180,8 @@ ship in a follow-up if art lags. Exact visuals are an art-pass decision.
 - **D6 - Sweetslime recipe:** shapeless slime ball + sugar, yields 2.
 - **D7 - Inheritance:** hi-biased with an improvement chance and a regression-to-mean
   chance (the climb plus the culling), all config-tunable.
-- **D8 - Starter frogs roll low** (1-3); breeding is the only way to climb.
+- **D8 - Non-bred frogs start at baseline** (`1/1/1`); breeding is the only way to
+  climb. (Superseded the original "starter roll `[1, 3]`" - see docs/known_issues.md.)
 - **D9 - Stat readout via Jade**, no new analyzer item.
 - **D10 - Resource Frogs are persistent** so a bred line is not lost to despawn.
 - **D11 - Cosmetic tiers** keyed off stat total; the maxed look is the headline reward.
@@ -183,8 +193,9 @@ ship in a follow-up if art lags. Exact visuals are an art-pass decision.
 Pure additive feature; no existing data shapes change. Likely touch points:
 
 - **`content/entity/ResourceFrog`** - add the three `SynchedEntityData` int
-  accessors + NBT save/load + clamped getters/setters + a `statTotal()` helper. Roll
-  starter stats in `finalizeSpawn` when the frog was not bred.
+  accessors + NBT save/load + clamped getters/setters + a `statTotal()` helper. Apply
+  baseline stats (`STAT_MIN` across the board) in `finalizeSpawn` when the frog was
+  not bred.
 - **Stat effects:**
   - *Appetite* -> the frog's eat cadence. Locate where the eat/tongue cooldown is
     governed (vanilla `Frog` brain `EAT`/`TONGUE` behaviours) and scale it by Appetite.
@@ -244,7 +255,7 @@ Pure additive feature; no existing data shapes change. Likely touch points:
   conception (`ResourceFrog#spawnChildFromBreeding`), stamped onto the
   `PrimedFrogEggBlockEntity` when the egg is laid (`LayCategoryFrogspawn`), read back at
   hatch onto each `ResourceTadpole`, and applied to the matured frog in
-  `ResourceTadpole#ageUp` (after `finalizeSpawn`, overriding the starter roll). The egg
+  `ResourceTadpole#ageUp` (after `finalizeSpawn`, overriding the baseline stats). The egg
   BE persists the stats so a chunk unload between lay and hatch doesn't lose them.
 - Cosmetic tier visuals (the art pass) - the maxed "gold trim + sparkle" look in
   particular. **Still open / deferred** to a follow-up PR; the synced stat total is
