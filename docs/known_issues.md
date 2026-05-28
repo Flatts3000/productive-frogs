@@ -38,6 +38,14 @@ A Resource Frog standing in / submerged by **Slime Milk** takes drowning damage 
 
 *Reported via the Sky Frogs pack, 2026-05-28.*
 
+### 🔴 Bucketing and replacing Slime Milk resets its spawns-remaining counter
+A Slime Milk source block tracks how many slime spawns it has left before it depletes (`depletionCount`, default 16, surfaced via Jade and the `SPAWNS_REMAINING` blockstate). Picking the milk up with a bucket and placing it back down **resets that counter to full** - so a partially-depleted source can be topped back to 16 just by re-bucketing, defeating depletion.
+
+- **Expected:** the remaining-spawns count survives a bucket pickup -> place round-trip (carried on the Slime Milk bucket, restored on placement).
+- **Observed:** re-placed Slime Milk starts fresh at the full `depletionCount`.
+
+*Reported via the Sky Frogs pack, 2026-05-28.*
+
 ### 🔴 Primed frogspawn hatch delay should be deterministic
 Primed Frog Egg blocks currently inherit vanilla's **randomized** hatch window: `PrimedFrogEggBlock` rolls a uniform delay in `[3600, 12000)` ticks (**3-10 minutes** at 20 TPS) on placement, matching `minecraft:frogspawn` exactly. The earlier "hatched at 3 minutes" report was the **floor** of that range, not a timer bug.
 
@@ -125,4 +133,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-28 (logged: flowing Slime Milk displaces frogspawn / water sources / other milk sources; frogs drown in Slime Milk; primed frogspawn hatch delay should be deterministic; tadpole growth and frog breeding times should be deterministic; frogs from crafted frogspawn should start at baseline stats - reported via the Sky Frogs pack).*
+*Last updated: 2026-05-28 (logged: flowing Slime Milk displaces frogspawn / water sources / other milk sources; frogs drown in Slime Milk; bucketing and replacing Slime Milk resets spawns-remaining; primed frogspawn hatch delay should be deterministic; tadpole growth and frog breeding times should be deterministic; frogs from crafted frogspawn should start at baseline stats - reported via the Sky Frogs pack).*
