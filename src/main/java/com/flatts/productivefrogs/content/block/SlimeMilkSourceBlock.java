@@ -369,6 +369,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
         SlimeMilkSourceBlockEntity be = getSourceBE(level, pos);
         ResourceLocation variantId = be != null ? be.getVariantId() : null;
         int remaining = be != null ? be.getSpawnsRemaining() : 0;
+        int capacity = be != null ? be.getSpawnsCapacity() : 0;
         int speed = be != null ? be.getSpeedLevel() : 0;
         int quantity = be != null ? be.getQuantityLevel() : 0;
         boolean infinite = be != null && be.isInfinite();
@@ -379,6 +380,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
         if (variantId != null && bucket.is(PFItems.SLIME_MILK_BUCKET.get())) {
             bucket.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
             bucket.set(PFDataComponents.SPAWNS_REMAINING.get(), remaining);
+            bucket.set(PFDataComponents.MILK_CAPACITY.get(), capacity);
             if (speed > 0) {
                 bucket.set(PFDataComponents.MILK_SPEED.get(), speed);
             }

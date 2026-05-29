@@ -120,6 +120,22 @@ public final class PFDataComponents {
             .build()
     );
 
+    /**
+     * Spawn <i>capacity</i> (high-water mark) carried by a Slime Milk bucket -
+     * the source's total budget, which Count catalysts raise above the base.
+     * Tracked separately from {@link #SPAWNS_REMAINING} so the "N / cap" readout
+     * (Jade + the bucket tooltip) has a stable denominator as the source depletes,
+     * instead of the cap tracking the remaining count downward. Same round-trip
+     * role as {@link #MILK_SPEED}; absent = the configured default.
+     */
+    public static final Supplier<DataComponentType<Integer>> MILK_CAPACITY = COMPONENTS.register(
+        "milk_capacity",
+        () -> DataComponentType.<Integer>builder()
+            .persistent(Codec.INT)
+            .networkSynchronized(ByteBufCodecs.VAR_INT)
+            .build()
+    );
+
     private PFDataComponents() {
         // utility class
     }

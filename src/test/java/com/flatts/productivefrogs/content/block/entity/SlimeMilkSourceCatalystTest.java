@@ -105,10 +105,29 @@ class SlimeMilkSourceCatalystTest {
     @Test
     void restoreUpgradesClampsToConfigBounds() {
         SlimeMilkSourceBlockEntity be = newSource();
-        be.restoreUpgrades(999, 999, 999, true);
+        be.restoreUpgrades(999, 1500, 999, 999, true);
         assertEquals(999, be.getSpawnsRemaining(), "remaining restored as-is (below the storage ceiling)");
+        assertEquals(1500, be.getSpawnsCapacity(), "capacity restored as-is");
         assertEquals(PFConfig.catalystMaxSpeedLevel(), be.getSpeedLevel(), "speed clamped to max");
         assertEquals(PFConfig.catalystMaxQuantityLevel(), be.getQuantityLevel(), "quantity clamped to max");
         assertTrue(be.isInfinite());
+    }
+
+    @Test
+    void capacityTracksHighWaterMarkNotRemaining() {
+        SlimeMilkSourceBlockEntity be = newSource();
+        be.seedIfUnset();
+        int base = be.getSpawnsRemaining();
+        assertEquals(base, be.getSpawnsCapacity(), "fresh source: capacity == seeded budget");
+        // A Count catalyst raises capacity alongside remaining.
+        be.applyCatalyst(MilkCatalyst.COUNT);
+        int grown = base + PFConfig.catalystCountPer();
+        assertEquals(grown, be.getSpawnsRemaining());
+        assertEquals(grown, be.getSpawnsCapacity(), "count catalyst raises capacity too");
+        // Draining lowers remaining but NOT capacity (the denominator stays put).
+        be.decrementSpawns();
+        be.decrementSpawns();
+        assertEquals(grown - 2, be.getSpawnsRemaining());
+        assertEquals(grown, be.getSpawnsCapacity(), "capacity holds as the source drains");
     }
 }

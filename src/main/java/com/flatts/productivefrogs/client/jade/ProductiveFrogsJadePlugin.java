@@ -179,16 +179,12 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 data.putBoolean("Unlimited", true);
                 return;
             }
-            int remaining = be.getSpawnsRemaining();
-            // Denominator is the configured depletionCount (a fresh source starts
-            // there), clamped to at least the current remaining so a Count catalyst
-            // (which can push remaining above the base) never renders as
-            // "remaining > capacity". Falls back to MAX if config isn't loaded.
-            int cap = PFConfig.SPEC.isLoaded()
-                ? Math.max(remaining, PFConfig.DEPLETION_COUNT.get())
-                : SlimeMilkSourceBlock.MAX_SPAWNS_REMAINING;
-            data.putInt("SpawnsRemaining", remaining);
-            data.putInt("SpawnsCap", cap);
+            // Denominator is the source's tracked CAPACITY (high-water mark), not
+            // max(remaining, base): Count catalysts raise capacity alongside
+            // remaining, and it stays put as the source drains, so the readout
+            // counts down N / cap instead of the cap chasing N downward.
+            data.putInt("SpawnsRemaining", be.getSpawnsRemaining());
+            data.putInt("SpawnsCap", be.getSpawnsCapacity());
         }
 
         @Override

@@ -54,20 +54,26 @@ whole game.
 The depletion counter used to be a blockstate `IntegerProperty` capped at 16.
 Uncapped Count needs an unbounded counter, which a finite-range blockstate
 property can't hold, so the **whole spawn economy moved onto
-`SlimeMilkSourceBlockEntity`**: `spawnsRemaining`, `speedLevel`, `quantityLevel`,
-`infinite`. This also shrinks the block's state-combination count.
+`SlimeMilkSourceBlockEntity`**: `spawnsRemaining`, `spawnsCapacity`, `speedLevel`,
+`quantityLevel`, `infinite`. This also shrinks the block's state-combination count.
 
-- **Persistence:** the four fields are saved in `saveAdditional`/`loadAdditional`
+- **`spawnsCapacity` (high-water mark):** the source's total budget, tracked
+  separately from `spawnsRemaining`. Count catalysts raise both; draining lowers
+  only `spawnsRemaining`. This is what gives the "N / cap" readout a **stable
+  denominator** - without it the cap was computed as `max(remaining, base)` and
+  chased the remaining count downward (so a buffed source showed 30/30, 29/29, ...
+  instead of 30/32, 29/32).
+- **Persistence:** the five fields are saved in `saveAdditional`/`loadAdditional`
   and exposed as implicit components.
-- **Bucket round-trip:** `SlimeMilkSourceBlock#pickupBlock` stamps all four onto
-  the filled bucket (`SPAWNS_REMAINING` + new `MILK_SPEED` / `MILK_QUANTITY` /
-  `MILK_INFINITE` components); `SlimeMilkBucketItem#checkExtraContent` restores
-  them onto the re-placed source via `restoreUpgrades(...)`. A freshly-milked
-  bucket carries none and places a default source. This is the same component
-  round-trip the variant + spawns-remaining already used.
-- **Seeding:** `setVariantId` seeds `spawnsRemaining` to the configured
-  `depletionCount` the first time a real variant is attached, so a fresh source
-  starts with a full budget without a carried component.
+- **Bucket round-trip:** `SlimeMilkSourceBlock#pickupBlock` stamps all five onto
+  the filled bucket (`SPAWNS_REMAINING` + `MILK_CAPACITY` + `MILK_SPEED` /
+  `MILK_QUANTITY` / `MILK_INFINITE`); `SlimeMilkBucketItem#checkExtraContent`
+  restores them onto the re-placed source via `restoreUpgrades(...)`, reading each
+  component independently. A freshly-milked bucket carries none and places a
+  default source.
+- **Seeding:** `setVariantId` seeds `spawnsRemaining` + `spawnsCapacity` to the
+  configured `depletionCount` the first time a real variant is attached, so a
+  fresh source starts with a full budget without a carried component.
 
 **Save-compat note:** existing worlds' sources carried `spawns_remaining` in their
 blockstate, which NeoForge drops when the property is removed. Those in-progress
@@ -94,6 +100,11 @@ the items hard-code each other.
   into the pool auto-feeds catalysts), but each catalyst is a `MilkCatalystItem`
   carrying two hover tooltip lines - its effect, plus "Drop into a Slime Milk
   source to apply" - so the interaction is learnable without JEI.
+- **Slime Milk bucket tooltip:** hovering a Slime Milk bucket shows its source
+  state - spawns left / capacity (or "unlimited" for Endless / depletion-off) and
+  any installed Speed / Quantity levels - read straight off the bucket's
+  components, so you can read a buffed source without placing it. Reuses the Jade
+  format keys so the bucket and the look-at readout match.
 - **Apply feedback:** a slime-plop sound + a small green particle burst when a
   catalyst is consumed.
 - **In-world tell:** an **Endless** (infinite) source emits a faint slow-rising

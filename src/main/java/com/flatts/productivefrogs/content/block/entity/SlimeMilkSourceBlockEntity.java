@@ -57,6 +57,7 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
     private ResourceLocation variantId;
 
     private int spawnsRemaining = UNINITIALIZED;
+    private int spawnsCapacity = UNINITIALIZED;
     private int speedLevel = 0;
     private int quantityLevel = 0;
     private boolean infinite = false;
@@ -93,10 +94,11 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
 
     // ---- spawn economy -------------------------------------------------
 
-    /** Seed the spawn counter from {@link PFConfig#DEPLETION_COUNT} if not yet set. */
+    /** Seed the spawn counter + capacity from {@link PFConfig#DEPLETION_COUNT} if not yet set. */
     public void seedIfUnset() {
         if (spawnsRemaining == UNINITIALIZED) {
             spawnsRemaining = defaultSpawnCount();
+            spawnsCapacity = spawnsRemaining;
             setChanged();
         }
     }
@@ -113,10 +115,22 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
         return spawnsRemaining == UNINITIALIZED ? defaultSpawnCount() : spawnsRemaining;
     }
 
-    /** Set the remaining-spawn counter directly (clamped). Used by the bucket round-trip and tests. */
+    /** Set the remaining-spawn counter directly (clamped). Capacity tracks the high-water mark. Used by tests + setup. */
     public void setSpawnsRemaining(int remaining) {
         this.spawnsRemaining = Mth.clamp(remaining, 0, MAX_STORED_SPAWNS);
+        this.spawnsCapacity = Math.max(getSpawnsCapacity(), this.spawnsRemaining);
         setChanged();
+    }
+
+    /**
+     * Total spawn budget (high-water mark): the source's capacity, which Count
+     * catalysts raise above the configured default. The "N / cap" denominator in
+     * Jade and the bucket tooltip; stays put as {@code spawnsRemaining} drains.
+     * Never reported below the current remaining count.
+     */
+    public int getSpawnsCapacity() {
+        int cap = spawnsCapacity == UNINITIALIZED ? defaultSpawnCount() : spawnsCapacity;
+        return Math.max(cap, getSpawnsRemaining());
     }
 
     /** Decrement the remaining-spawn counter by one (floored at 0). No-op when infinite. */
@@ -157,7 +171,14 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
                 if (spawnsRemaining >= MAX_STORED_SPAWNS) {
                     yield false;
                 }
-                spawnsRemaining = Mth.clamp(spawnsRemaining + PFConfig.catalystCountPer(), 0, MAX_STORED_SPAWNS);
+                int added = PFConfig.catalystCountPer();
+                spawnsRemaining = Mth.clamp(spawnsRemaining + added, 0, MAX_STORED_SPAWNS);
+                // Capacity grows with the budget so the "N / cap" denominator
+                // rises with the catalyst rather than the remaining count. Add to
+                // the raw field (seedIfUnset just set it) - NOT getSpawnsCapacity(),
+                // which maxes with the already-incremented remaining and would
+                // double-count the addition.
+                spawnsCapacity = Mth.clamp(spawnsCapacity + added, 0, MAX_STORED_SPAWNS);
                 yield true;
             }
             case SPEED -> {
@@ -197,8 +218,9 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
      * leaves the client BE's {@code infinite} flag stale until the next chunk load,
      * because this runs after the placement's initial sync.
      */
-    public void restoreUpgrades(int spawnsRemaining, int speedLevel, int quantityLevel, boolean infinite) {
+    public void restoreUpgrades(int spawnsRemaining, int spawnsCapacity, int speedLevel, int quantityLevel, boolean infinite) {
         this.spawnsRemaining = Mth.clamp(spawnsRemaining, 0, MAX_STORED_SPAWNS);
+        this.spawnsCapacity = Mth.clamp(Math.max(spawnsCapacity, this.spawnsRemaining), 0, MAX_STORED_SPAWNS);
         this.speedLevel = Mth.clamp(speedLevel, 0, PFConfig.catalystMaxSpeedLevel());
         this.quantityLevel = Mth.clamp(quantityLevel, 0, PFConfig.catalystMaxQuantityLevel());
         this.infinite = infinite;
@@ -214,6 +236,7 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
         if (variantId != null) {
             builder.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
             builder.set(PFDataComponents.SPAWNS_REMAINING.get(), getSpawnsRemaining());
+            builder.set(PFDataComponents.MILK_CAPACITY.get(), getSpawnsCapacity());
             if (speedLevel > 0) {
                 builder.set(PFDataComponents.MILK_SPEED.get(), speedLevel);
             }
@@ -234,6 +257,10 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
         if (remaining != null) {
             this.spawnsRemaining = Mth.clamp(remaining, 0, MAX_STORED_SPAWNS);
         }
+        Integer capacity = components.get(PFDataComponents.MILK_CAPACITY.get());
+        if (capacity != null) {
+            this.spawnsCapacity = Mth.clamp(Math.max(capacity, getSpawnsRemaining()), 0, MAX_STORED_SPAWNS);
+        }
         Integer speed = components.get(PFDataComponents.MILK_SPEED.get());
         this.speedLevel = speed != null ? Mth.clamp(speed, 0, PFConfig.catalystMaxSpeedLevel()) : 0;
         Integer quantity = components.get(PFDataComponents.MILK_QUANTITY.get());
@@ -250,6 +277,9 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
         }
         if (spawnsRemaining != UNINITIALIZED) {
             tag.putInt("SpawnsRemaining", spawnsRemaining);
+        }
+        if (spawnsCapacity != UNINITIALIZED) {
+            tag.putInt("SpawnsCapacity", spawnsCapacity);
         }
         if (speedLevel > 0) {
             tag.putInt("SpeedLevel", speedLevel);
@@ -269,6 +299,8 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
             ? ResourceLocation.tryParse(tag.getString("Variant")) : null;
         spawnsRemaining = tag.contains("SpawnsRemaining", Tag.TAG_INT)
             ? Mth.clamp(tag.getInt("SpawnsRemaining"), 0, MAX_STORED_SPAWNS) : UNINITIALIZED;
+        spawnsCapacity = tag.contains("SpawnsCapacity", Tag.TAG_INT)
+            ? Mth.clamp(tag.getInt("SpawnsCapacity"), 0, MAX_STORED_SPAWNS) : UNINITIALIZED;
         speedLevel = tag.contains("SpeedLevel", Tag.TAG_INT) ? Math.max(0, tag.getInt("SpeedLevel")) : 0;
         quantityLevel = tag.contains("QuantityLevel", Tag.TAG_INT) ? Math.max(0, tag.getInt("QuantityLevel")) : 0;
         infinite = tag.getBoolean("Infinite");
