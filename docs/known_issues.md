@@ -20,7 +20,7 @@ Symbols 🟢 (resolved) and 🟠 (reopened / since-reverted) live in the [archiv
 
 *None currently open.*
 
-The eight Sky-Frogs-reported issues logged on 2026-05-28 (flowing-milk displacement, frogs drowning in milk, the re-bucket depletion reset, the stale Jade spawns-left readout, deterministic hatch timing, config-exposed growth + breeding times, baseline stats for crafted-frogspawn frogs, and the Clay Ball Froglight smelting to a brick instead of clay balls) were all fixed in branch `fix/known-issues-batch` and moved to the [archive](./known_issues_archive.md). Four of them (milk displacement, drowning, the Jade readout, and the growth/breeding timing) are code-complete with `build` + `runGameTestServer` green but carry a **runClient-pending** note in the archive - their behavior is a client-render / fluid-flow / time-and-AI surface GameTest cannot observe, so they want an in-world smoke pass before the next release.
+The eight Sky-Frogs-reported issues logged on 2026-05-28 (flowing-milk displacement, frogs drowning in milk, the re-bucket depletion reset, the stale Jade spawns-left readout, deterministic hatch timing, config-exposed growth + breeding times, baseline stats for crafted-frogspawn frogs, and the Clay Ball Froglight smelting to a brick instead of clay balls) were all fixed in branch `fix/known-issues-batch` and moved to the [archive](./known_issues_archive.md). The four whose behavior GameTest cannot observe (milk displacement, drowning, the Jade readout, and the growth/breeding timing - client-render / fluid-flow / time-and-AI surfaces) were **runClient-verified in-world on 2026-05-28**.
 
 ---
 
@@ -75,4 +75,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-28 (eight Sky-Frogs-reported issues fixed in `fix/known-issues-batch` and moved to the archive; no open issues remain. Four archived fixes carry a runClient-pending verification note).*
+*Last updated: 2026-05-28 (eight Sky-Frogs-reported issues fixed and archived; no open issues remain. The four client-render / fluid-flow / time-and-AI fixes were runClient-verified in-world).*

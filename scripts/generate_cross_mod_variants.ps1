@@ -49,7 +49,9 @@ $variants = @(
     @{ name = "fluix";     category = "geode";    tag = "c:gems/fluix";              mod = "ae2";        result = "ae2:fluix_crystal";        primary = 0x7A5AC0; secondary = 0x57408F }
     @{ name = "fluorite";  category = "geode";    tag = "c:gems/fluorite";           mod = "mekanism";   result = "mekanism:fluorite_gem";    primary = 0xCFE0C0; secondary = 0xA8C090 }
     @{ name = "silicon";   category = "geode";    tag = "c:silicon";                 mod = "ae2";        result = "ae2:silicon";              primary = 0x4A4A52; secondary = 0x32323A }
-    # VOID - mythic metals (tag-driven) + Powah crystals (bespoke, no per-type tag)
+    # VOID - mythic metals (tag-driven) + Powah crystals (bespoke) + Mystical Agriculture essences (magic/arcane)
+    @{ name = "inferium";  category = "void";     tag = $null; primerItem = "mysticalagriculture:inferium_essence";  mod = "mysticalagriculture"; result = "mysticalagriculture:inferium_essence";  primary = 0x8FD060; secondary = 0x6FA840 }
+    @{ name = "supremium"; category = "void";     tag = $null; primerItem = "mysticalagriculture:supremium_essence"; mod = "mysticalagriculture"; result = "mysticalagriculture:supremium_essence"; primary = 0xE05A7A; secondary = 0xB83F5A }
     @{ name = "orichalcum"; category = "void";    tag = "c:ingots/orichalcum";       mod = "mythicmetals"; result = "mythicmetals:orichalcum_ingot"; primary = 0x3FB890; secondary = 0x2A8568 }
     @{ name = "mythril";   category = "void";     tag = "c:ingots/mythril";          mod = "mythicmetals"; result = "mythicmetals:mythril_ingot"; primary = 0x9FD0E0; secondary = 0x70AEC4 }
     @{ name = "niotic";    category = "void";     tag = $null; primerItem = "powah:crystal_niotic";   mod = "powah"; result = "powah:crystal_niotic";   primary = 0xD04A6A; secondary = 0x9F2F4A }
@@ -57,10 +59,9 @@ $variants = @(
     @{ name = "nitro";     category = "void";     tag = $null; primerItem = "powah:crystal_nitro";    mod = "powah"; result = "powah:crystal_nitro";    primary = 0x3FC0D0; secondary = 0x2A92A0 }
     # INFERNAL - Powah blazing crystal
     @{ name = "blazing";   category = "infernal"; tag = $null; primerItem = "powah:crystal_blazing";  mod = "powah"; result = "powah:crystal_blazing";  primary = 0xE8902A; secondary = 0xC06A14 }
-    # BOG - mob/organic drops
+    # BOG - organic / swamp (slime + organic-derived synthetics)
     @{ name = "pink_slime"; category = "bog";     tag = $null; primerItem = "industrialforegoing:pink_slime"; mod = "industrialforegoing"; result = "industrialforegoing:pink_slime"; primary = 0xE87AB0; secondary = 0xC04F8A }
-    @{ name = "inferium";  category = "bog";      tag = $null; primerItem = "mysticalagriculture:inferium_essence";  mod = "mysticalagriculture"; result = "mysticalagriculture:inferium_essence";  primary = 0x8FD060; secondary = 0x6FA840 }
-    @{ name = "supremium"; category = "bog";      tag = $null; primerItem = "mysticalagriculture:supremium_essence"; mod = "mysticalagriculture"; result = "mysticalagriculture:supremium_essence"; primary = 0xE05A7A; secondary = 0xB83F5A }
+    @{ name = "plastic";   category = "bog";      tag = $null; primerItem = "industrialforegoing:plastic"; mod = "industrialforegoing"; result = "industrialforegoing:plastic"; primary = 0xE6E2D8; secondary = 0xB8B5AC }
     # TIDE - the one strong modded aquatic resource
     @{ name = "aquarium";  category = "tide";     tag = "c:ingots/aquarium";         mod = "mythicmetals"; result = "mythicmetals:aquarium_ingot"; primary = 0x4FC0C8; secondary = 0x2F95A0 }
 )

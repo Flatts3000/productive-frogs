@@ -6,13 +6,13 @@
       "productivefrogs:configurable_froglight"
     ],
     "components": {
-      "productivefrogs:slime_variant": "productivefrogs:rotten_flesh"
+      "productivefrogs:slime_variant": "productivefrogs:lily_pad"
     }
   },
   "result": {
-    "id": "minecraft:rotten_flesh"
+    "id": "minecraft:lily_pad"
   },
-  "experience": 0.2,
+  "experience": 0.1,
   "cookingtime": 200,
   "category": "misc",
   "group": "productivefrogs_froglight"

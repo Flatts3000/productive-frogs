@@ -46,12 +46,12 @@ The egg is species-level (six categories), not resource-level. `FrogEggItem` is 
 |---|---|---|
 | Cave | `minecraft:iron_ingot` | `productivefrogs:spawnery_primer/cave` |
 | Geode | `minecraft:amethyst_shard` | `productivefrogs:spawnery_primer/geode` |
-| Bog | `minecraft:bone` | `productivefrogs:spawnery_primer/bog` |
+| Bog | `minecraft:clay_ball` | `productivefrogs:spawnery_primer/bog` |
 | Tide | `minecraft:prismarine_shard` | `productivefrogs:spawnery_primer/tide` |
 | Infernal | `minecraft:blaze_powder` | `productivefrogs:spawnery_primer/infernal` |
 | Void | `minecraft:ender_pearl` | `productivefrogs:spawnery_primer/void` |
 
-Each is an actual variant in that species' pool, so the default Spawnery primer aligns with that resource's `findByPrimer` mapping (iron -> Cave both ways) - but the tag stays the override surface. Bog uses `bone`, not a slime ball: the slime ball is reserved as the fuel **and** as the vanilla-frogspawn primer (a slime ball in the primer slot makes plain vanilla frogspawn; the six tags above are the species primers). (Earlier drafts used skyblock-reachable signature items - cobblestone/mud/kelp/netherrack - on the assumption the mod should ship skyblock-ready; that was reversed in favour of normal-world defaults + pack overrides.)
+Each is an actual variant in that species' pool, so the default Spawnery primer aligns with that resource's `findByPrimer` mapping (iron -> Cave both ways) - but the tag stays the override surface. Bog uses `clay_ball` (clay is the iconic swamp resource and a Bog variant; updated 2026-05-28 from `bone`, which was cut in the Bog recategorization), not a slime ball: the slime ball is reserved as the fuel **and** as the vanilla-frogspawn primer (a slime ball in the primer slot makes plain vanilla frogspawn; the six tags above are the species primers). (Earlier drafts used skyblock-reachable signature items - cobblestone/mud/kelp/netherrack - on the assumption the mod should ship skyblock-ready; that was reversed in favour of normal-world defaults + pack overrides.)
 
 ## 4. Config gating
 
@@ -254,7 +254,7 @@ Data getters: `getCookProgress`, `getCookTotal` (fallback to `SPAWNERY_PRODUCTIO
 
 ```
 "block.productivefrogs.spawnery": "Spawnery",
-"productivefrogs.jei.spawnery.info": "Turns glass bottles into bottled frogspawn, fueled by slime balls (one ball per bottle). A primer is required: a slime ball primes plain vanilla frogspawn, or a species primer (iron ingot for Cave, amethyst shard for Geode, bone for Bog, prismarine shard for Tide, blaze powder for Infernal, an ender pearl for Void) primes that species' eggs. Off by default; modpacks can retune the species primers."
+"productivefrogs.jei.spawnery.info": "Turns glass bottles into bottled frogspawn, fueled by slime balls (one ball per bottle). A primer is required: a slime ball primes plain vanilla frogspawn, or a species primer (iron ingot for Cave, amethyst shard for Geode, clay ball for Bog, prismarine shard for Tide, blaze powder for Infernal, an ender pearl for Void) primes that species' eggs. Off by default; modpacks can retune the species primers."
 ```
 
 The Spawnery is a single block, not a variant, so the per-variant `LangCompletenessTest` 5-key family does not apply. The JEI key is covered by that test's `allReferencedJeiInfoKeysExist` check.
@@ -334,7 +334,7 @@ A primer selects one of the six frog **species** (Cave / Geode / Bog / Tide / In
 - **D2** Fuel = `minecraft:slime_ball`, 1:1 with bottles. [user]
 - **D3** Primer consumed per primed egg (mirrors slime priming). [my call]
 - **D4** Egg is species-level, not resource-level. [matches existing mod model]
-- **D5** Primers are dedicated per-species pack-overridable tags (one entry each), NOT `findByPrimer` - so it's exactly one primer per species (not the whole resource pool) and overridable per species. Defaults are the representative **normal-world** resource per species: iron ingot / amethyst shard / bone / prismarine shard / blaze powder / ender pearl (Cave/Geode/Bog/Tide/Infernal/Void). [reframed 2026-05-26 from skyblock-signature items to normal-world resources; packs override for restricted worlds]
+- **D5** Primers are dedicated per-species pack-overridable tags (one entry each), NOT `findByPrimer` - so it's exactly one primer per species (not the whole resource pool) and overridable per species. Defaults are the representative **normal-world** resource per species: iron ingot / amethyst shard / clay ball / prismarine shard / blaze powder / ender pearl (Cave/Geode/Bog/Tide/Infernal/Void). [reframed 2026-05-26 from skyblock-signature items to normal-world resources; packs override for restricted worlds. Bog updated 2026-05-28 from `bone` to `clay_ball` when bone was cut from the Bog pool.]
 - **D6** Disabled = uncraftable + hidden from JEI/creative; a placed block still works. [user said uncraftable + hidden; placed-inertness explicitly not requested -> keeps it test-friendly]
 - **D7** Bonemeal is crafting-only, not an operating feedstock. [user]
 - **D8** `productionTicks` default 200 (10 s); 1 slime ball burns exactly one cycle. [my call, configurable]
