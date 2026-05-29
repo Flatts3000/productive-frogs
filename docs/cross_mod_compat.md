@@ -157,12 +157,16 @@ is bespoke signature materials that "sell" the feature but need explicit handlin
 ### VOID (end/arcane)
 - Powah crystals niotic / spirited / nitro (`powah:crystal_*`) - bespoke, shipped.
 - Mythic Metals orichalcum, mythril (`c:ingots/*`) - shipped.
+- Mystical Agriculture essences (inferium, supremium) - bespoke, iconic. (Moved
+  here from BOG in the 2026-05-28 Bog recategorization: essences are a magic line,
+  not organic/swamp.)
 - Deferred (Thermal has no 1.21.1 release): enderium.
 
-### BOG (swamp + mob drops)
+### BOG (swamp / organic)
 - **pink slime** (`industrialforegoing:pink_slime`) - the must-have slime
   joke; top BOG pick. Bespoke (no common tag).
-- Mystical Agriculture essences (inferium -> supremium tiers) - bespoke, iconic.
+- **plastic** (`industrialforegoing:plastic`) - latex-derived synthetic, fits the
+  organic Bog identity. Bespoke (no common tag). Added 2026-05-28.
 
 ### TIDE (aquatic) - the weak species
 Modded tech has almost no aquatic resources. The one strong pick is Mythic
@@ -183,9 +187,10 @@ leans on vanilla aquatic content. Flagged as a design gap, not a blocker.
   the provider's verified item, gated `mod_loaded(provider)`. A pack overrides by
   replacing the recipe. (There is no runtime "first in tag" fallback - a furnace
   recipe must name a concrete item; not a codec field.)
-- **Scope:** shipped ALL in one pass - the `primer_tag` mechanism + 24 variants
-  (CAVE metals + GEODE gems + Powah/Mythic VOID + Powah INFERNAL + BOG pink slime /
-  MA essences + TIDE aquarium), minus the Thermal-dependent picks (no 1.21.1 release).
+- **Scope:** shipped ALL in one pass - the `primer_tag` mechanism + the cross-mod
+  variants (CAVE metals + GEODE gems + Powah/Mythic/MA-essence VOID + Powah INFERNAL
+  + BOG pink slime / plastic + TIDE aquarium), minus the Thermal-dependent picks
+  (no 1.21.1 release). (MA essences moved CAVE-adjacent BOG -> VOID on 2026-05-28.)
 - **TIDE:** accepted as the small, vanilla-leaning species (vanilla aquatic +
   Aquarium where Mythic Metals is present).
 

@@ -52,7 +52,12 @@ $variants = @(
     @{ Name = "mud";                 Primer = "minecraft:mud";               Category = "bog";      Smelt = "minecraft:mud";                  Inner = "minecraft:mud";               Primary = 0x4A433D; Exp = 0.1; Label = "Mud" }
     @{ Name = "moss";                Primer = "minecraft:moss_block";        Category = "bog";      Smelt = "minecraft:moss_block";           Inner = "minecraft:moss_block";        Primary = 0x5E7A33; Exp = 0.1; Label = "Moss" }
     @{ Name = "mycelium";            Primer = "minecraft:mycelium";          Category = "bog";      Smelt = "minecraft:mycelium";             Inner = "minecraft:mycelium";          Primary = 0x6E5F69; Exp = 0.1; Label = "Mycelium" }
-    @{ Name = "lily_pad";            Primer = "minecraft:lily_pad";          Category = "bog";      Smelt = "minecraft:lily_pad";             Inner = "minecraft:lily_pad";          Primary = 0x4F7A3A; Exp = 0.1; Label = "Lily Pad" }
+    # NOTE: lily_pad is a hand-authored Bog variant NOT in this table - its vanilla
+    # texture (lily_pad.png) is grayscale foliage (biome-tinted at runtime), so an
+    # inner-block bake would render a gray interior. It ships tint-only (no
+    # inner_block), green via primary_color 0x6FB04A. See the committed
+    # slime_variant/lily_pad.json + the Bog recategorization note in
+    # docs/species_as_category_redesign.md.
     @{ Name = "glow_ink_sac";        Primer = "minecraft:glow_ink_sac";      Category = "cave";     Smelt = "minecraft:glow_ink_sac";         Inner = "minecraft:verdant_froglight"; Primary = 0x3DBEB6; Exp = 0.2; Label = "Glow Ink Sac" }
     @{ Name = "obsidian";            Primer = "minecraft:obsidian";          Category = "cave";     Smelt = "minecraft:obsidian";             Inner = "minecraft:obsidian";          Primary = 0x2A2440; Exp = 0.7; Label = "Obsidian" }
     @{ Name = "echo_shard";          Primer = "minecraft:echo_shard";        Category = "cave";     Smelt = "minecraft:echo_shard";           Inner = "minecraft:sculk";             Primary = 0x1E6B72; Exp = 1.0; Label = "Echo Shard" }

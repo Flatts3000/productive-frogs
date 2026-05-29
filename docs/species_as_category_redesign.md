@@ -468,6 +468,8 @@ Changes from the old pool:
 
 The "dedicated Fauna species" idea in the original decision is therefore moot - mob drops are simply not a Bog (or current) theme.
 
+**Save / pack compatibility (breaking).** Cutting `bone`/`gunpowder`/`rotten_flesh`/`string` is a destructive registry removal. It does **not** crash - `SlimeVariant` lookups are null-safe (`ResourceSlime` falls back, the `slime_variant` data component is a plain `ResourceLocation` with no key validation) - but any item already in a world that carries one of those four variant ids **orphans**: a Bone Slime / Bone Froglight / Bone Slime(-Milk) Bucket loses its display name (the per-variant lang keys are gone, so it shows the fallback/raw key), its froglight smelt-back recipe (deleted), and its JEI page. The Spawnery bog primer also moved off `bone` -> `clay_ball`, so a pack that handed players `bone` to bootstrap Bog frogspawn must switch to `clay_ball` (or re-point the `spawnery_primer/bog` tag). **Pack action for Sky Frogs:** scan quests/KubeJS/recipes for `productivefrogs:{bone,gunpowder,rotten_flesh,string}` slime/froglight/bucket references and the old `bone` bog primer; add a CHANGELOG breaking-change entry at release.
+
 ---
 
 ### Bog Slime variant pool - confirmed for V1.5 (SUPERSEDED 2026-05-28, see above)
