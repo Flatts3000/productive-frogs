@@ -1,5 +1,33 @@
 # Changelog
 
+## v1.6.0 - 2026-05-28 - The Bog grows up, and Slime Milk settles down
+
+A swamp-and-soil makeover for the Bog frog, plus a batch of reliability fixes to Slime Milk and predictable, pack-tunable timings for the whole frog life cycle.
+
+### Added
+
+- **New Bog resources.** The Bog frog now farms **clay, dirt, mud, moss, mycelium, and lily pad**, plus **plastic** (when Industrial Foregoing is installed) - leaning into a swamp-and-soil identity.
+- **Tunable life-cycle timers.** New config options set a fixed, predictable **hatch time** for primed frogspawn, a **tadpole growth time**, and a **breeding cooldown**, so a modpack can pace progression instead of relying on the random vanilla timings. Vanilla frogs and frogspawn keep their stock pacing.
+
+### Changed
+
+- **The Bog frog is now an organic / swamp species** - earth, plants, and slime, rather than mob loot.
+- **Mystical Agriculture essences moved to the Void frog.** Inferium and Supremium are a magic line, so they sit with the Void frog's arcane resources.
+- **Frogs raised from crafted or Spawnery frogspawn now start at baseline stats** (the lowest values); breeding is the only way to raise them. (They used to roll a small random head start.)
+- **The Bog Spawnery primer is now a clay ball** (was a bone), matching the Bog frog's new theme.
+- **Clay Froglights smelt back into clay balls** (they used to turn into a brick).
+
+### Removed
+
+- **Bone, Gunpowder, Rotten Flesh, and String slimes** - they no longer fit the Bog frog's identity. **Modpack note:** items already carrying these variants (slimes, froglights, buckets) will lose their names and smelt recipes after updating; re-point any quests or recipes that used them, and the old `bone` Bog Spawnery primer is now `clay_ball`.
+
+### Fixed
+
+- **Flowing Slime Milk no longer washes away** frogspawn, water source blocks, or neighboring Slime Milk sources.
+- **Frogs (and players) no longer drown in Slime Milk** - it's safe to stand in.
+- **Bucketing and replacing a Slime Milk source keeps its remaining-spawns count** instead of refilling to full.
+- **The Jade "slime spawns left" readout counts down live** as a source depletes, instead of sticking at the full number.
+
 ## v1.5.3 - 2026-05-28 - Recipe lookups for the Spawnery and Slime Milker
 
 JEI now shows you how to make the two things it couldn't before.
