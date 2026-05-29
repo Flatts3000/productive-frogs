@@ -1,6 +1,6 @@
 # Productive Frogs
 
-A content mod for **Minecraft 1.21.1 / NeoForge 21.1.230**. Latest release: v1.6.0.
+A content mod for **Minecraft 1.21.1 / NeoForge 21.1.230**. Latest release: v1.7.0.
 
 **Download:** [CurseForge](https://www.curseforge.com/minecraft/mc-mods/productive-frogs) (preferred) | [GitHub Releases](https://github.com/Flatts3000/productive-frogs/releases) (mirror)
 
@@ -69,7 +69,7 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 
 ## Status
 
-**Latest release: v1.6.0.** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, the Spawnery, and frog stat breeding.
+**Latest release: v1.7.0.** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, the Spawnery, frog stat breeding, and Slime Milk catalysts that buff a placed source.
 
 | Version line | Scope | Status |
 |---|---|---|
@@ -80,6 +80,7 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 | v1.4 | The Spawnery + Jade look-at tooltips | ✅ shipped |
 | v1.5 | Frog stat breeding | ✅ shipped |
 | v1.6 | Bog recategorization + Slime Milk reliability | ✅ shipped |
+| v1.7 | Slime Milk catalysts | ✅ shipped |
 | v2 | Automation: power/multiblocks/terrariums | 🔭 future |
 
 Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope rationale: [`docs/versioning.md`](./docs/versioning.md).
@@ -93,6 +94,7 @@ Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope ra
 | [items_and_blocks.md](./docs/items_and_blocks.md) | Item and block roster |
 | [slime_sourcing.md](./docs/slime_sourcing.md) | How players obtain Resource Slimes |
 | [farming.md](./docs/farming.md) | Slime Milker production loop |
+| [slime_milk_catalysts.md](./docs/slime_milk_catalysts.md) | Catalysts that buff a placed Slime Milk source (count / speed / quantity / infinite) |
 | [architecture.md](./docs/architecture.md) | Data-driven variant system, tag layout, JSON registries |
 | [cross_mod_compat.md](./docs/cross_mod_compat.md) | Strategy for Mekanism, Create, Mythic Metals, and more |
 | [versioning.md](./docs/versioning.md) | V1 / V2 scope split |

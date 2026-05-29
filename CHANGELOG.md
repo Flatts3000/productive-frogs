@@ -7,10 +7,10 @@ Hands-off production gets its first real boost. Four craftable **catalysts** let
 ### Added
 
 - **Slime Milk catalysts.** Craft and drop them into a placed Slime Milk source to upgrade it:
-  - **Count** - adds more slimes before the source runs dry (stack as many as you like; uncapped).
-  - **Speed** - the source spawns slimes faster, up to a cap.
-  - **Quantity** - the source spawns more slimes at once, up to a cap.
-  - **Infinite Count** - the source never runs dry. Built from Count catalysts, it's the top of the count line.
+  - **Bountiful** - more slimes before the source runs dry (stack as many as you like; uncapped).
+  - **Rapid** - the source spawns slimes faster, up to a cap.
+  - **Teeming** - the source spawns more slimes at once, up to a cap.
+  - **Endless** - the source never runs dry. Built from Bountiful catalysts, it's the top of the count line.
 - **Jade upgrade readout.** Look at a buffed source and Jade shows its Speed and Quantity levels alongside the spawns-remaining count (or "unlimited").
 - **Config section `slime_milk_catalysts`.** Turn the whole feature off (catalysts become uncraftable and hidden from JEI), and tune the per-catalyst amounts, the Speed/Quantity caps, and the spawn-rate floor.
 

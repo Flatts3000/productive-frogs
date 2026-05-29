@@ -97,6 +97,8 @@ The mod is fully playable today. Everything below is live on CurseForge. Targets
 
 **v1.6.0 (shipped): the Bog makeover + Slime Milk reliability.** The Bog frog became an organic/swamp species - it gained dirt, mud, moss, mycelium, lily pad, and plastic, while a few resources moved to better-fitting frogs. Alongside it, a batch of Slime Milk fixes (flowing milk no longer washes away frogspawn, water, or other milk; frogs no longer drown in it; the Jade spawn counter updates live) and predictable, pack-tunable hatch, growth, and breeding timers.
 
+**v1.7.0 (shipped): Slime Milk catalysts.** The first real boost to hands-off production. Craft four catalysts and just toss them into a placed Slime Milk source to buff it: more spawns before it runs dry (uncapped), faster spawning, more slimes per spawn, or an Endless catalyst that makes the source never run dry. The buffs save to the source and ride along when you bucket it back up, the in-world tooltip and the bucket itself tell you what a source carries, and a dropper aimed into the pool feeds catalysts automatically. Enabled by default; a pack can disable or retune them.
+
 ### v2: automation
 
 The scale-up release. v1 lives unchanged; v2 layers automation on top. A player who never crafts a v2 block still has every v1 capability.
