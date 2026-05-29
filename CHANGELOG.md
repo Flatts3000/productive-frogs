@@ -459,7 +459,7 @@ First public release. **Minecraft 1.21.1 / NeoForge 21.1.230.**
 - Cross-mod variants (Mekanism, Create, Thermal, etc.) gated by `mod_loaded` neoforge conditions — see `docs/cross_mod_compat.md`.
 
 ### Known limitations
-- One end-to-end AI tongue gametest (`frogTongueAiPathDropsConfigurableFroglight`) is timing-flaky in CI and runs as `required = false`. The drop path is independently covered by `matchingFrogKillDropsConfigurableFroglight` (manual hurt damage, no AI).
+- One end-to-end AI tongue gametest (`frogTongueAiPathDropsConfigurableFroglight`) shipped `required = false` in v1.0 due to CI timing flakiness. It was **removed in v1.1** as redundant: the AI path is covered by `frogTongueTargetsOnlyMatchingCategorySlime` (sensor/targeting, polling pattern) and the drop path by `matchingFrogKillDropsConfigurableFroglight` (manual damage). No flaky `required = false` test remains.
 - No automation (hoppers, power, pipes, multiblocks) in v1.0 — that's the V2 scope; v1.0 is the playable foundation + hand-operated appliance layer.
 
 ### Modpack note
