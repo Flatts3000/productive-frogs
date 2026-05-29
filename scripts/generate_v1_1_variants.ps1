@@ -1,10 +1,19 @@
 # Generate the data + model JSON files for the v1.1 Resource Slime variants.
 #
+# WARNING (2026-05-28): items #3/#4 below (per-variant milk blockstate + bucket
+# model) are SUPERSEDED. Slime Milk was collapsed to ONE component-driven fluid,
+# so those per-variant files no longer exist in the tree - re-running this script
+# as-is would recreate that deleted cruft. The $variants table is kept current as
+# the roster of record (the single source of truth for the v1.1 vanilla pool),
+# but new/changed variant JSONs + recipes are now hand-authored to match the
+# committed shape, and slime textures come from generate_resource_slime_textures.py.
+# Do not run this script wholesale until the #3/#4 emit is removed.
+#
 # This emits the four templated JSON files per new variant:
 #   1. data/productivefrogs/productivefrogs/slime_variant/<name>.json
 #   2. data/productivefrogs/recipe/configurable_froglight_<name>_to_<result>.json
-#   3. assets/productivefrogs/blockstates/<name>_slime_milk.json
-#   4. assets/productivefrogs/models/item/<name>_slime_milk_bucket.json
+#   3. assets/productivefrogs/blockstates/<name>_slime_milk.json   (SUPERSEDED - milk collapsed)
+#   4. assets/productivefrogs/models/item/<name>_slime_milk_bucket.json   (SUPERSEDED - milk collapsed)
 #
 # It does NOT touch:
 #   - lang/en_us.json (printed below for manual insertion at 7 section anchors)
@@ -36,13 +45,14 @@ $bucketModelDir = Join-Path $repoRoot "src\main\resources\assets\productivefrogs
 # Exp       : furnace experience for the froglight smelt recipe
 # Label     : human-readable display name
 $variants = @(
-    @{ Name = "bone";                Primer = "minecraft:bone";              Category = "bog";      Smelt = "minecraft:bone";                 Inner = "minecraft:bone_block";        Primary = 0xE3DEC8; Exp = 0.2; Label = "Bone" }
-    @{ Name = "gunpowder";           Primer = "minecraft:gunpowder";         Category = "bog";      Smelt = "minecraft:gunpowder";            Inner = "minecraft:tnt";               Primary = 0x8C8C8C; Exp = 0.2; Label = "Gunpowder" }
     @{ Name = "clay_ball";           Primer = "minecraft:clay_ball";         Category = "bog";      Smelt = "minecraft:clay_ball";            Inner = "minecraft:clay";              Primary = 0xA4A8B8; Exp = 0.2; Label = "Clay" }
-    @{ Name = "rotten_flesh";        Primer = "minecraft:rotten_flesh";      Category = "bog";      Smelt = "minecraft:rotten_flesh";         Inner = "minecraft:mud";               Primary = 0x7E4D3A; Exp = 0.2; Label = "Rotten Flesh" }
-    @{ Name = "string";              Primer = "minecraft:string";            Category = "bog";      Smelt = "minecraft:string";               Inner = "minecraft:cobweb";            Primary = 0xD4D4D4; Exp = 0.2; Label = "String" }
     @{ Name = "leather";             Primer = "minecraft:leather";           Category = "bog";      Smelt = "minecraft:leather";              Inner = "minecraft:brown_terracotta";  Primary = 0x9C6B3F; Exp = 0.2; Label = "Leather" }
     @{ Name = "feather";             Primer = "minecraft:feather";           Category = "bog";      Smelt = "minecraft:feather";              Inner = "minecraft:white_wool";        Primary = 0xEFEFEF; Exp = 0.2; Label = "Feather" }
+    @{ Name = "dirt";                Primer = "minecraft:dirt";              Category = "bog";      Smelt = "minecraft:dirt";                 Inner = "minecraft:dirt";              Primary = 0x9B7653; Exp = 0.1; Label = "Dirt" }
+    @{ Name = "mud";                 Primer = "minecraft:mud";               Category = "bog";      Smelt = "minecraft:mud";                  Inner = "minecraft:mud";               Primary = 0x4A433D; Exp = 0.1; Label = "Mud" }
+    @{ Name = "moss";                Primer = "minecraft:moss_block";        Category = "bog";      Smelt = "minecraft:moss_block";           Inner = "minecraft:moss_block";        Primary = 0x5E7A33; Exp = 0.1; Label = "Moss" }
+    @{ Name = "mycelium";            Primer = "minecraft:mycelium";          Category = "bog";      Smelt = "minecraft:mycelium";             Inner = "minecraft:mycelium";          Primary = 0x6E5F69; Exp = 0.1; Label = "Mycelium" }
+    @{ Name = "lily_pad";            Primer = "minecraft:lily_pad";          Category = "bog";      Smelt = "minecraft:lily_pad";             Inner = "minecraft:lily_pad";          Primary = 0x4F7A3A; Exp = 0.1; Label = "Lily Pad" }
     @{ Name = "glow_ink_sac";        Primer = "minecraft:glow_ink_sac";      Category = "cave";     Smelt = "minecraft:glow_ink_sac";         Inner = "minecraft:verdant_froglight"; Primary = 0x3DBEB6; Exp = 0.2; Label = "Glow Ink Sac" }
     @{ Name = "obsidian";            Primer = "minecraft:obsidian";          Category = "cave";     Smelt = "minecraft:obsidian";             Inner = "minecraft:obsidian";          Primary = 0x2A2440; Exp = 0.7; Label = "Obsidian" }
     @{ Name = "echo_shard";          Primer = "minecraft:echo_shard";        Category = "cave";     Smelt = "minecraft:echo_shard";           Inner = "minecraft:sculk";             Primary = 0x1E6B72; Exp = 1.0; Label = "Echo Shard" }

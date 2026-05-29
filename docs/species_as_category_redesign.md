@@ -454,7 +454,23 @@ When a vanilla slime / magma cube splits, every offspring stays vanilla. No conv
 
 **Implementation note:** `SlimeSplitDiscoveryHandler.categoryForParent()` already does the EntityType-id lookup against the `parent_species` datapack registry. With vanilla `minecraft:slime` and `minecraft:magma_cube` entries **removed** from the registry (per the slime infusion section above), this lookup returns null for vanilla mobs and the handler's existing early-return guard handles it. No new code; the registry edit drives the behaviour.
 
-### Bog Slime variant pool - confirmed for V1.5
+### Bog recategorization - 2026-05-28 (SUPERSEDES the V1.5 pool below)
+
+Bog was retired as the mob-drop catch-all and retightened to **organic / swamp matter** - earth, plant, and slime materials, plus a couple of organic animal products. The roster below ("confirmed for V1.5") is superseded by this set:
+
+**Bog (10):** `clay_ball`, `leather`, `feather`, `pink_slime` (Industrial Foregoing), `plastic` (Industrial Foregoing - latex-derived synthetic), `dirt`, `mud`, `moss` (`moss_block`), `mycelium`, `lily_pad`.
+
+Changes from the old pool:
+- **Removed from the mod entirely:** `bone`, `gunpowder`, `rotten_flesh`, `string` (the mob drops that didn't fit the tighter identity; `leather` + `feather` were kept as the organic-drop exceptions).
+- **Moved Bog -> Void:** `inferium`, `supremium` (Mystical Agriculture essences are a magic/arcane line, grouped with the modded magic resources already in Void).
+- **Added:** `plastic`, `dirt`, `mud`, `moss`, `mycelium`, `lily_pad`.
+- `glow_ink_sac` stays in **Cave** (a mob drop, not brought into Bog).
+
+The "dedicated Fauna species" idea in the original decision is therefore moot - mob drops are simply not a Bog (or current) theme.
+
+---
+
+### Bog Slime variant pool - confirmed for V1.5 (SUPERSEDED 2026-05-28, see above)
 
 Decision (2026-05-23): **Mob-drop variants (bone, leather, feather, gunpowder, string, rotten_flesh, clay_ball) stay under Bog Slime for V1.5.** The "Bog as catch-all" pattern noted in Open Question #2 is accepted as-is for the initial ship; a dedicated Fauna species is deferred to V2 or later if the variant pool gets large enough to warrant the split.
 
