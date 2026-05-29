@@ -49,6 +49,18 @@ source block shows its remaining spawn count, and the Slime Milker / Spawnery sh
 progress while running. Flowing and spread Slime Milk now tints per-variant, so a stream
 running off a source block matches the source's colour instead of falling back to the base hue.
 
+### v1.5.0 (shipped 2026-05-27): frog stat breeding
+
+The headline progression system. Resource Frogs gain three stats - **Appetite**, **Bounty**, and **Reach** (1-10 each, 10/10/10 maxed) - that govern how productive they are in the loop. You improve a frog by **breeding** it: feed two same-species frogs a **Sweetslime** treat (slime ball + sugar), run the stock vanilla frog breeding process, and the offspring inherits a blend of its parents' stats with a chance to roll better than either. Keep the winners, cull the duds, re-breed, and ladder a species' line to maxed, in the spirit of Productive Bees' gene-maxing. Frog-only and self-contained (no Terrarium dependency). The deferred piece is the cosmetic "prize" look for maxed frogs - a follow-up render-layer / art pass, not a redesign. Full spec: [docs/frog_breeding.md](./docs/frog_breeding.md).
+
+### v1.5.1 - v1.5.3 (shipped 2026-05-27 to 2026-05-28): roster + JEI polish
+
+Small follow-ups: lapis moved to the Geode frog where it belongs (v1.5.1); the Cave frog gained steel (v1.5.2); and JEI gained recipe pages for the Spawnery and Slime Milker so you can look up how to make bottled frogspawn and slime milk (v1.5.3).
+
+### v1.6.0 (shipped 2026-05-28): the Bog makeover + Slime Milk reliability
+
+The **Bog frog became an organic / swamp species**: it gained clay's neighbours - dirt, mud, moss, mycelium, and lily pad - plus Industrial Foregoing **plastic**, while the Mystical Agriculture essences moved to the **Void** frog and four mob-drop slimes (bone, gunpowder, rotten flesh, string) were retired. The Bog Spawnery primer is now a **clay ball** (was a bone). Alongside the makeover, a batch of **Slime Milk reliability fixes** - flowing milk no longer washes away frogspawn, water sources, or other milk sources; frogs (and players) no longer drown in milk; re-bucketing a source keeps its remaining-spawns count; and the Jade spawn counter updates live - plus **deterministic, pack-tunable hatch / tadpole-growth / breeding timers**. Frogs raised from crafted or Spawnery frogspawn now start at baseline stats (breeding is the only way up). **Breaking for modpacks:** items carrying a retired variant lose their names + recipes; see [CHANGELOG.md](./CHANGELOG.md).
+
 ---
 
 ## v2: automation
@@ -76,14 +88,6 @@ A processing block that converts a **Froglight into a fluid** - a third Frogligh
 It is **v2, not a v1.x appliance**, because it introduces two mechanics the mod has never shipped: an internal fluid tank (drained by a right-click bucket or by pipes via `Capabilities.FluidHandler.BLOCK`) and an energy requirement (NeoForge `Capabilities.EnergyStorage.BLOCK`, the FE-equivalent every power mod bridges to, no hard dep). As the lightest possible v2 block (single block, no multiblock), it is a good candidate to open v2 with and establish the energy + fluid-tank capability patterns the rest of v2 (Frog Terrarium, buffered Slime Milker) will reuse.
 
 Decided shape, the new water/lava slime variants it needs, and the open questions to resolve before building: [docs/froglight_juicer.md](./docs/froglight_juicer.md).
-
----
-
-## Shipped: frog stat breeding (v1.5.0)
-
-The headline progression system. Resource Frogs gain three stats - **Appetite**, **Bounty**, and **Reach** (1-10 each, 10/10/10 maxed) - that govern how productive they are in the loop. You improve a frog by **breeding** it: feed two same-species frogs a **Sweetslime** treat (slime ball + sugar), run the stock vanilla frog breeding process, and the offspring inherits a blend of its parents' stats with a chance to roll better than either. Keep the winners, cull the duds, re-breed, and ladder a species' line to maxed, in the spirit of Productive Bees' gene-maxing. Frog-only and self-contained (no Terrarium dependency).
-
-The one deferred piece is the **cosmetic "prize" look** for high-total / maxed frogs - the stats already sync client-side, so it's a follow-up render-layer / art pass, not a redesign. Full spec, decisions, and config: [docs/frog_breeding.md](./docs/frog_breeding.md).
 
 ---
 

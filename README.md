@@ -1,6 +1,6 @@
 # Productive Frogs
 
-A content mod for **Minecraft 1.21.1 / NeoForge 21.1.230**. Latest release: v1.4.1.
+A content mod for **Minecraft 1.21.1 / NeoForge 21.1.230**. Latest release: v1.6.0.
 
 **Download:** [CurseForge](https://www.curseforge.com/minecraft/mc-mods/productive-frogs) (preferred) | [GitHub Releases](https://github.com/Flatts3000/productive-frogs/releases) (mirror)
 
@@ -34,11 +34,11 @@ Variant Slime Bucket → Slime Milker → Slime Milk bucket
 
 | Species | Biome | Matching frog | Example variants |
 |---|---|---|---|
-| **Bog Slime** | swamps, mangrove swamps | Bog Frog | bone, gunpowder, clay, string, leather, feather |
+| **Bog Slime** | swamps, mangrove swamps | Bog Frog | clay, dirt, mud, moss, mycelium, lily pad, leather |
 | **Cave Slime** | dripstone caves, lush caves | Cave Frog | iron, copper, gold, redstone, lapis, coal |
 | **Geode Slime** | mountain peaks (stony / jagged / frozen) | Geode Frog | emerald, diamond, amethyst, tuff, calcite |
 | **Tide Slime** | deep oceans, warm + lukewarm oceans | Tide Frog | prismarine, sponge, sea pickle, nautilus shell |
-| **Infernal Slime** | nether wastes, basalt deltas, soul sand valley | Infernal Frog | magma cream |
+| **Infernal Slime** | nether wastes, basalt deltas, soul sand valley | Infernal Frog | blaze, quartz, glowstone, soul sand, netherite scrap |
 | **Void Slime** | end islands | Void Frog | ender pearl, echo shard, sculk, end stone |
 
 Six parent species spawn naturally in their biomes. Vanilla `minecraft:slime` and `minecraft:magma_cube` are NOT part of the production system - only the PF parent species can be infused into Resource Slimes.
@@ -69,7 +69,7 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 
 ## Status
 
-**Latest release: v1.4.1.** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, and the Spawnery.
+**Latest release: v1.6.0.** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, the Spawnery, and frog stat breeding.
 
 | Version line | Scope | Status |
 |---|---|---|
@@ -78,6 +78,8 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 | v1.2 | Cross-mod variant pools + observability | ✅ shipped |
 | v1.3 | Cross-mod crush yields | ✅ shipped |
 | v1.4 | The Spawnery + Jade look-at tooltips | ✅ shipped |
+| v1.5 | Frog stat breeding | ✅ shipped |
+| v1.6 | Bog recategorization + Slime Milk reliability | ✅ shipped |
 | v2 | Automation: power/multiblocks/terrariums | 🔭 future |
 
 Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope rationale: [`docs/versioning.md`](./docs/versioning.md).

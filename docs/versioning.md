@@ -37,6 +37,8 @@ Mostly-data release adding every vanilla item fitting cleanly into one of the si
 
 **22 new variants** (33 total after v1.1):
 
+> The Bog row below is the v1.1-era roster. The Bog pool was recategorized in **v1.6** (organic/swamp); `bone`/`gunpowder`/`rotten_flesh`/`string` were cut and `dirt`/`mud`/`moss`/`mycelium`/`lily_pad`/`plastic` added. See the V1.6 section below.
+
 | Species | New variants |
 |---|---|
 | Bog (+7) | bone, gunpowder, clay_ball, rotten_flesh, string, leather, feather |
@@ -69,6 +71,22 @@ The cross-mod piece that completed the V1 line. With Mekanism, Immersive Enginee
 **v1.4.0 - the Spawnery.** A V1 appliance for skyblock and other restricted-biome packs: the frog-side analogue of the Slime Milker. A furnace-style block that turns glass bottles into bottled frogspawn, fueled by slime balls; an empty primer slot yields plain vanilla frogspawn, a species primer (cobblestone, mud, kelp, amethyst shard, netherrack, ender pearl) bottles that species' eggs. **Disabled by default** (a normal world has swamps); a pack flips one config flag to turn it on, and the primer set is pack-overridable via item tags. Like the Milker, it exposes basic hopper I/O (`Capabilities.ItemHandler.BLOCK`). Spec: [spawnery.md](./spawnery.md).
 
 **v1.4.1 - Jade tooltips + tinted milk.** Optional Jade look-at tooltips for the appliances (Slime Milk source spawn count; Slime Milker / Spawnery cook progress), plus flowing/spread Slime Milk now tints per-variant instead of falling back to the base hue.
+
+## V1.5 - Frog Stat Breeding (SHIPPED v1.5.0 - v1.5.3, 2026-05-27 / 05-28)
+
+**v1.5.0 - stat breeding.** The headline V1 progression system. Resource Frogs carry three stats - Appetite (eat cadence), Bounty (Froglight drops per slime), Reach (prey-scan radius), each `1..10`. Breeding two same-species frogs on a Sweetslime treat (slime ball + sugar) runs vanilla frog breeding; the offspring inherits a hi-biased blend with an improvement/regression roll. Stats carry conception -> egg BE -> tadpole -> frog, surface via Jade, and are fully config-tunable. Frog-only, no Terrarium dependency. Spec: [frog_breeding.md](./frog_breeding.md). (Cosmetic maxed-frog visuals deferred.)
+
+**v1.5.1 - v1.5.3 - data/polish.** Lapis recategorized Cave -> Geode (v1.5.1); steel added to the Cave pool (v1.5.2); JEI recipe-category pages for the Spawnery + Slime Milker (v1.5.3).
+
+## V1.6 - Bog Recategorization + Reliability (SHIPPED v1.6.0, 2026-05-28)
+
+A data + reliability release, still firmly V1 (no power/pipes/multiblocks).
+
+**Bog recategorization.** The Bog species was retightened from a mob-drop catch-all to **organic / swamp** matter: added `dirt`, `mud`, `moss`, `mycelium`, `lily_pad`, and Industrial Foregoing `plastic`; moved the Mystical Agriculture essences (`inferium`, `supremium`) to **Void**; and cut `bone`, `gunpowder`, `rotten_flesh`, `string` (a breaking registry removal - see the save-compat note in [species_as_category_redesign.md](./species_as_category_redesign.md)). The Bog Spawnery primer moved `bone` -> `clay_ball`.
+
+**Slime Milk reliability.** Flowing milk no longer displaces frogspawn / water sources / other milk sources (custom `SlimeMilkFluid` `canSpreadTo` override); frogs no longer drown in milk (`FluidType.canDrown(false)`); re-bucketing a source preserves its depletion count (new `spawns_remaining` component); the Jade spawns-left readout updates live (server-data provider).
+
+**Deterministic life-cycle timings.** New `lifecycle.*` config: fixed primed-frogspawn hatch delay, config-exposed tadpole growth, and re-breed cooldown (vanilla frogs/tadpoles keep stock pacing). Non-bred frogs now start at baseline (`1/1/1`) stats - breeding is the only climb.
 
 ## V2 - Automation
 
