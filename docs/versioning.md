@@ -88,6 +88,22 @@ A data + reliability release, still firmly V1 (no power/pipes/multiblocks).
 
 **Deterministic life-cycle timings.** New `lifecycle.*` config: fixed primed-frogspawn hatch delay, config-exposed tadpole growth, and re-breed cooldown (vanilla frogs/tadpoles keep stock pacing). Non-bred frogs now start at baseline (`1/1/1`) stats - breeding is the only climb.
 
+## V1.7 - Slime Milk Catalysts (SHIPPED v1.7.0, 2026-05-29)
+
+The early-game **stopgap** toward hands-off production, ahead of the V2 Frog
+Habitat that closes the loop properly. Four hand-crafted **catalysts** dropped
+into a placed Slime Milk source buff it in place: **Count** (more spawns,
+uncapped), **Speed** (faster cadence), **Quantity** (more slimes per spawn), and
+**Infinite Count** (never depletes; built from Count catalysts). All four buffs
+live on the source's BlockEntity and round-trip through the bucket. Config-gated
+(`slime_milk_catalysts.enabled`, on by default) via the same
+`ConfigEnabledCondition` machinery as the Spawnery.
+
+Still firmly **V1**: a hand-applied buff to a single block, no power / pipes /
+multiblocks. The one structural change is that the depletion counter moved from a
+blockstate property (capped at 16) onto the BlockEntity, so uncapped Count is
+representable. Spec: [slime_milk_catalysts.md](./slime_milk_catalysts.md).
+
 ## V2 - Automation
 
 Tools and blocks that let the player scale and automate the V1 loop. Built on top of V1; never replaces it.

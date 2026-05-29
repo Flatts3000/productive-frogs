@@ -1381,6 +1381,30 @@ public final class PFGameTests {
     }
 
     /**
+     * The source's spawn economy lives on its BlockEntity (v1.7; it used to be a
+     * blockstate property). These two helpers read/write the remaining-spawn
+     * counter for the depletion tests.
+     */
+    @org.jetbrains.annotations.Nullable
+    private static com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity milkBE(
+            GameTestHelper helper, BlockPos pos) {
+        return helper.getLevel().getBlockEntity(helper.absolutePos(pos))
+                instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity be ? be : null;
+    }
+
+    private static void setMilkSpawns(GameTestHelper helper, BlockPos pos, int remaining) {
+        var be = milkBE(helper, pos);
+        if (be != null) {
+            be.setSpawnsRemaining(remaining);
+        }
+    }
+
+    private static int getMilkSpawns(GameTestHelper helper, BlockPos pos) {
+        var be = milkBE(helper, pos);
+        return be != null ? be.getSpawnsRemaining() : -1;
+    }
+
+    /**
      * Round-trips the variant through the single component-driven Slime Milk
      * plumbing: a stamped milk bucket's placement hook ({@code checkExtraContent})
      * writes the variant to the source block's BlockEntity, and re-bucketing
@@ -1431,10 +1455,10 @@ public final class PFGameTests {
         BlockPos abs = helper.absolutePos(pos);
         var block = (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
 
-        // Partially-depleted iron source: 5 spawns left.
-        helper.setBlock(pos, block.defaultBlockState().setValue(
-            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.SPAWNS_REMAINING, 5));
+        // Partially-depleted iron source: 5 spawns left (counter lives on the BE).
+        helper.setBlock(pos, block);
         stampMilkVariant(helper, pos, "iron");
+        setMilkSpawns(helper, pos, 5);
 
         // Re-bucket: the filled bucket must carry the remaining count.
         ItemStack picked = block.pickupBlock(null, level, abs, level.getBlockState(abs));
@@ -1445,15 +1469,14 @@ public final class PFGameTests {
             return;
         }
 
-        // Re-place a fresh (default-16) source, then run the placement hook with
+        // Re-place a fresh (default) source, then run the placement hook with
         // the carried bucket: it must restore the count to 5, not leave it full.
         helper.setBlock(pos, block);
         ((com.flatts.productivefrogs.content.item.SlimeMilkBucketItem) PFItems.SLIME_MILK_BUCKET.get())
             .checkExtraContent(null, level, picked, abs);
-        int restored = level.getBlockState(abs).getValue(
-            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.SPAWNS_REMAINING);
+        int restored = getMilkSpawns(helper, pos);
         if (restored != 5) {
-            helper.fail("re-placing the carried bucket should restore SPAWNS_REMAINING=5, got " + restored);
+            helper.fail("re-placing the carried bucket should restore the count to 5, got " + restored);
             return;
         }
         helper.succeed();
@@ -1751,10 +1774,9 @@ public final class PFGameTests {
 
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
             (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
-        BlockState stateWithFive = block.defaultBlockState().setValue(
-            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.SPAWNS_REMAINING, 5);
-        helper.setBlock(sourcePos, stateWithFive);
+        helper.setBlock(sourcePos, block);
         stampMilkVariant(helper, sourcePos, "iron");
+        setMilkSpawns(helper, sourcePos, 5);
         ServerLevel level = helper.getLevel();
         BlockPos absSourcePos = helper.absolutePos(sourcePos);
 
@@ -1764,9 +1786,7 @@ public final class PFGameTests {
         try {
             block.tick(level.getBlockState(absSourcePos), level, absSourcePos, level.getRandom());
 
-            BlockState after = level.getBlockState(absSourcePos);
-            int afterCount = after.getValue(
-                com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.SPAWNS_REMAINING);
+            int afterCount = getMilkSpawns(helper, sourcePos);
             if (afterCount != 4) {
                 helper.fail("expected SPAWNS_REMAINING=4 after one tick (started at 5), got " + afterCount);
                 return;
@@ -1799,10 +1819,9 @@ public final class PFGameTests {
 
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
             (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
-        BlockState drainedState = block.defaultBlockState().setValue(
-            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.SPAWNS_REMAINING, 0);
-        helper.setBlock(sourcePos, drainedState);
+        helper.setBlock(sourcePos, block);
         stampMilkVariant(helper, sourcePos, "iron");
+        setMilkSpawns(helper, sourcePos, 0);
         ServerLevel level = helper.getLevel();
         BlockPos absSourcePos = helper.absolutePos(sourcePos);
 
@@ -1832,21 +1851,26 @@ public final class PFGameTests {
     }
 
     /**
-     * Sanity check: the block's default state has SPAWNS_REMAINING set to
-     * MAX_SPAWNS_REMAINING (16). Pins the {@code registerDefaultState}
-     * call in the constructor — if a refactor drops it, fresh placements
-     * via {@code setBlock(pos, block)} would default to 0 and drain
-     * immediately on first tick.
+     * Sanity check: a freshly-placed source, once its variant is set, seeds the
+     * BlockEntity's remaining-spawn counter to the configured default
+     * ({@code DEPLETION_COUNT}, default 16). The counter moved from a blockstate
+     * property to the BE in v1.7 (so Count catalysts can raise it without bound);
+     * this pins the {@code setVariantId -> seedIfUnset} path so a fresh placement
+     * starts with a full budget rather than 0 (which would drain on first tick).
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
-    public static void slimeMilkSourceDefaultStateHasMaxSpawnsRemaining(GameTestHelper helper) {
+    public static void slimeMilkSourceSeedsDefaultSpawnCountOnPlacement(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
             (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
-        int defaultCount = block.defaultBlockState().getValue(
-            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.SPAWNS_REMAINING);
-        if (defaultCount != com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.MAX_SPAWNS_REMAINING) {
-            helper.fail("default state SPAWNS_REMAINING=" + defaultCount
-                + ", expected " + com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.MAX_SPAWNS_REMAINING);
+        helper.setBlock(pos, block);
+        stampMilkVariant(helper, pos, "iron");
+        int expected = com.flatts.productivefrogs.PFConfig.SPEC.isLoaded()
+            ? com.flatts.productivefrogs.PFConfig.DEPLETION_COUNT.get()
+            : com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.MAX_SPAWNS_REMAINING;
+        int seeded = getMilkSpawns(helper, pos);
+        if (seeded != expected) {
+            helper.fail("a fresh variant-stamped source should seed " + expected + " spawns, got " + seeded);
             return;
         }
         helper.succeed();
@@ -1867,10 +1891,9 @@ public final class PFGameTests {
         helper.setBlock(sourcePos.east(), Blocks.STONE);
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
             (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
-        BlockState start = block.defaultBlockState().setValue(
-            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.SPAWNS_REMAINING, 2);
-        helper.setBlock(sourcePos, start);
+        helper.setBlock(sourcePos, block);
         stampMilkVariant(helper, sourcePos, "iron");
+        setMilkSpawns(helper, sourcePos, 2);
         ServerLevel level = helper.getLevel();
         BlockPos abs = helper.absolutePos(sourcePos);
         ResourceLocation iron = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
@@ -1905,6 +1928,185 @@ public final class PFGameTests {
         } finally {
             com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = original;
         }
+    }
+
+    // ---------------------------------------------------------------------
+    // Slime Milk catalysts (docs/slime_milk_catalysts.md)
+    // ---------------------------------------------------------------------
+
+    /**
+     * De-risk the {@code entityInside} hook: a Count catalyst dropped INTO a real
+     * milk source pool is consumed and raises the source's remaining-spawn count,
+     * with no manual call - the item ticks naturally while overlapping the fluid
+     * block. If {@code entityInside} does not fire for a pooled item this test
+     * fails, flagging the need for the per-tick AABB-scan fallback.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 60)
+    public static void catalystDroppedInPoolIsConsumed(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
+            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
+        helper.setBlock(sourcePos, block);
+        stampMilkVariant(helper, sourcePos, "iron");
+        setMilkSpawns(helper, sourcePos, 4);
+        int baseline = getMilkSpawns(helper, sourcePos);
+
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(sourcePos);
+        net.minecraft.world.entity.item.ItemEntity item = new net.minecraft.world.entity.item.ItemEntity(
+            level, abs.getX() + 0.5, abs.getY() + 0.5, abs.getZ() + 0.5,
+            new ItemStack(PFItems.COUNT_CATALYST.get()));
+        item.setNoGravity(true);
+        item.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        level.addFreshEntity(item);
+
+        helper.succeedWhen(() -> helper.assertTrue(getMilkSpawns(helper, sourcePos) > baseline,
+            "a Count catalyst in the pool should raise remaining spawns (entityInside must fire for pooled items)"));
+    }
+
+    /**
+     * An infinite source (Infinite Count catalyst) never drains: even with the
+     * remaining counter set to 1 and depletion forced on, repeated ticks keep
+     * spawning without draining the block to air.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void catalystInfiniteSourceNeverDrains(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+        helper.setBlock(sourcePos.east(), Blocks.STONE);
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
+            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
+        helper.setBlock(sourcePos, block);
+        stampMilkVariant(helper, sourcePos, "iron");
+        var be = milkBE(helper, sourcePos);
+        if (be == null) {
+            helper.fail("source BE missing after placement");
+            return;
+        }
+        be.applyCatalyst(com.flatts.productivefrogs.content.item.MilkCatalyst.INFINITE);
+        be.setSpawnsRemaining(1);
+
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(sourcePos);
+        Boolean original =
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride;
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = true;
+        try {
+            for (int i = 0; i < 5; i++) {
+                block.tick(level.getBlockState(abs), level, abs, level.getRandom());
+            }
+            if (level.getBlockState(abs).isAir()) {
+                helper.fail("an infinite source must not drain to air");
+                return;
+            }
+            var beAfter = milkBE(helper, sourcePos);
+            if (beAfter == null || beAfter.getSpawnsRemaining() != 1) {
+                helper.fail("an infinite source must not decrement its counter, got "
+                    + (beAfter == null ? "no BE" : beAfter.getSpawnsRemaining()));
+                return;
+            }
+            helper.succeed();
+        } finally {
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = original;
+        }
+    }
+
+    /**
+     * A catalyst that would no-op (here: a Speed catalyst on an already-maxed
+     * source) is left unconsumed - the item floats for the player to retrieve
+     * rather than being silently eaten. Pins the {@code applyCatalyst -> false ->
+     * don't shrink} contract through the real {@code entityInside} path.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 60)
+    public static void catalystAtCapIsNotConsumed(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
+            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
+        helper.setBlock(sourcePos, block);
+        stampMilkVariant(helper, sourcePos, "iron");
+        var be = milkBE(helper, sourcePos);
+        if (be == null) {
+            helper.fail("source BE missing after placement");
+            return;
+        }
+        // Max out speed so a further Speed catalyst is a no-op.
+        while (be.applyCatalyst(com.flatts.productivefrogs.content.item.MilkCatalyst.SPEED)) {
+            // saturate
+        }
+        int maxedSpeed = be.getSpeedLevel();
+
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(sourcePos);
+        net.minecraft.world.entity.item.ItemEntity item = new net.minecraft.world.entity.item.ItemEntity(
+            level, abs.getX() + 0.5, abs.getY() + 0.5, abs.getZ() + 0.5,
+            new ItemStack(PFItems.SPEED_CATALYST.get()));
+        item.setNoGravity(true);
+        item.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        level.addFreshEntity(item);
+
+        helper.runAfterDelay(20L, () -> {
+            if (item.isRemoved() || item.getItem().getCount() != 1) {
+                helper.fail("a maxed-out Speed catalyst must not be consumed");
+                return;
+            }
+            var beNow = milkBE(helper, sourcePos);
+            if (beNow == null || beNow.getSpeedLevel() != maxedSpeed) {
+                helper.fail("speed level should stay at the cap");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /**
+     * The full upgrade set (speed + quantity + infinite + remaining count) survives
+     * the world -> bucket -> world round-trip: re-bucketing a buffed source stamps
+     * the components, and re-placing the bucket restores them onto the new source.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void catalystUpgradesSurviveBucketRoundTrip(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(pos);
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
+            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
+        helper.setBlock(pos, block);
+        stampMilkVariant(helper, pos, "iron");
+        var be = milkBE(helper, pos);
+        if (be == null) {
+            helper.fail("source BE missing after placement");
+            return;
+        }
+        be.applyCatalyst(com.flatts.productivefrogs.content.item.MilkCatalyst.SPEED);
+        be.applyCatalyst(com.flatts.productivefrogs.content.item.MilkCatalyst.QUANTITY);
+        be.applyCatalyst(com.flatts.productivefrogs.content.item.MilkCatalyst.QUANTITY);
+        be.applyCatalyst(com.flatts.productivefrogs.content.item.MilkCatalyst.INFINITE);
+        int speed = be.getSpeedLevel();
+        int quantity = be.getQuantityLevel();
+
+        ItemStack picked = block.pickupBlock(null, level, abs, level.getBlockState(abs));
+        Integer cSpeed = picked.get(com.flatts.productivefrogs.registry.PFDataComponents.MILK_SPEED.get());
+        Integer cQuantity = picked.get(com.flatts.productivefrogs.registry.PFDataComponents.MILK_QUANTITY.get());
+        Boolean cInfinite = picked.get(com.flatts.productivefrogs.registry.PFDataComponents.MILK_INFINITE.get());
+        if (cSpeed == null || cSpeed != speed || cQuantity == null || cQuantity != quantity
+                || !Boolean.TRUE.equals(cInfinite)) {
+            helper.fail("re-bucketing must stamp speed=" + speed + " quantity=" + quantity
+                + " infinite=true, got speed=" + cSpeed + " quantity=" + cQuantity + " infinite=" + cInfinite);
+            return;
+        }
+
+        // Re-place a fresh source, run the placement hook, and confirm restore.
+        helper.setBlock(pos, block);
+        ((com.flatts.productivefrogs.content.item.SlimeMilkBucketItem) PFItems.SLIME_MILK_BUCKET.get())
+            .checkExtraContent(null, level, picked, abs);
+        var be2 = milkBE(helper, pos);
+        if (be2 == null || be2.getSpeedLevel() != speed || be2.getQuantityLevel() != quantity || !be2.isInfinite()) {
+            helper.fail("re-placing the bucket must restore the upgrades, got "
+                + (be2 == null ? "no BE"
+                    : "speed=" + be2.getSpeedLevel() + " quantity=" + be2.getQuantityLevel()
+                        + " infinite=" + be2.isInfinite()));
+            return;
+        }
+        helper.succeed();
     }
 
     /**

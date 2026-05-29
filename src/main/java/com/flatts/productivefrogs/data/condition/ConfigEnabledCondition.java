@@ -56,6 +56,12 @@ public record ConfigEnabledCondition(Key config) implements ICondition {
             boolean read() {
                 return PFConfig.SPAWNERY_ENABLED.get();
             }
+        },
+        MILK_CATALYSTS("milk_catalysts") {
+            @Override
+            boolean read() {
+                return PFConfig.MILK_CATALYSTS_ENABLED.get();
+            }
         };
 
         public static final StringRepresentable.EnumCodec<Key> CODEC =

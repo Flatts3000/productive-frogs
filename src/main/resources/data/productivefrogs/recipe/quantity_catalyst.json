@@ -1,0 +1,16 @@
+{
+  "neoforge:conditions": [
+    { "type": "productivefrogs:config_enabled", "config": "milk_catalysts" }
+  ],
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "productivefrogs:sweetslime" },
+    { "item": "productivefrogs:sweetslime" },
+    { "item": "minecraft:glowstone_dust" }
+  ],
+  "result": {
+    "id": "productivefrogs:quantity_catalyst",
+    "count": 1
+  }
+}

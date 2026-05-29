@@ -49,10 +49,11 @@ Each milk source block independently rolls a spawn tick:
 
 ## Depletion
 
-- **Configurable** (mod config `productivefrogs-common.toml`): `depletionEnabled` ON or OFF (default ON), `depletionCount` 1-16 (default 16).
-- **When ON**: each milk source block carries a `spawns_remaining` blockstate that starts at `depletionCount` on placement and decrements by one per spawn. When it reaches zero the next tick replaces the block with air (true drain - not a fluid-state reset).
+- **Configurable** (mod config `productivefrogs-common.toml`): `depletionEnabled` ON or OFF (default ON), `depletionCount` (default 16).
+- **When ON**: each milk source block carries a `spawnsRemaining` counter on its BlockEntity that starts at `depletionCount` on placement and decrements by one per spawn. When it reaches zero the next tick replaces the block with air (true drain - not a fluid-state reset). (Pre-v1.7 this was a blockstate property capped at 16; it moved to the BE so Count catalysts can raise it without bound.)
 - **When OFF**: source blocks ignore the counter and spawn indefinitely. Best for creative-mode play or pack authors who want low-friction production.
-- **Visual countdown** (e.g. subtle color desaturation as the counter approaches zero) is deferred to the polish backlog - V1 ships with the counter persisted in the blockstate but no visual feedback.
+- **Catalysts** (v1.7): drop **Count / Speed / Quantity / Infinite** catalysts into a placed source to raise its remaining count, spawn faster, spawn more per event, or never deplete. The buffs save to the source and survive re-bucketing. Full spec: [slime_milk_catalysts.md](./slime_milk_catalysts.md).
+- **Look-at readout**: Jade shows the spawns-remaining count (or "unlimited") plus any catalyst Speed/Quantity levels. A standalone in-world visual countdown remains deferred to the polish backlog.
 
 ## Frog Feeding
 

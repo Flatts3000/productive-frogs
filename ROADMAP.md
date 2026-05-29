@@ -61,6 +61,18 @@ Small follow-ups: lapis moved to the Geode frog where it belongs (v1.5.1); the C
 
 The **Bog frog became an organic / swamp species**: it gained clay's neighbours - dirt, mud, moss, mycelium, and lily pad - plus Industrial Foregoing **plastic**, while the Mystical Agriculture essences moved to the **Void** frog and four mob-drop slimes (bone, gunpowder, rotten flesh, string) were retired. The Bog Spawnery primer is now a **clay ball** (was a bone). Alongside the makeover, a batch of **Slime Milk reliability fixes** - flowing milk no longer washes away frogspawn, water sources, or other milk sources; frogs (and players) no longer drown in milk; re-bucketing a source keeps its remaining-spawns count; and the Jade spawn counter updates live - plus **deterministic, pack-tunable hatch / tadpole-growth / breeding timers**. Frogs raised from crafted or Spawnery frogspawn now start at baseline stats (breeding is the only way up). **Breaking for modpacks:** items carrying a retired variant lose their names + recipes; see [CHANGELOG.md](./CHANGELOG.md).
 
+### v1.7.0 (shipped 2026-05-29): Slime Milk catalysts
+
+The first real boost to hands-off production - an early-game stopgap ahead of the
+V2 Frog Habitat. Four craftable **catalysts** dropped into a placed Slime Milk
+source buff it in place: **Count** (more slimes before it runs dry, uncapped),
+**Speed** (spawns faster), **Quantity** (more slimes per spawn), and **Infinite
+Count** (never runs dry; built from Count catalysts). The buffs save to the source
+and survive re-bucketing, Jade shows the upgrade levels, and a dropper aimed into
+the pool feeds catalysts automatically. Enabled by default; a pack can disable or
+retune them. Still a single-block, hand-applied V1 buff - no power or pipes. Spec:
+[docs/slime_milk_catalysts.md](./docs/slime_milk_catalysts.md).
+
 ---
 
 ## v2: automation
