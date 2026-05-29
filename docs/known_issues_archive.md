@@ -10,24 +10,24 @@ Newest-first within each section. Section ordering loosely tracks the area of th
 
 ## Resolved issues
 
-> **Batch fix `fix/known-issues-batch` (2026-05-28).** Seven Sky-Frogs-reported issues fixed together: four in the Slime Milk fluid/block/bucket subsystem and three in the frog lifecycle. All land with `build` + `runGameTestServer` green (73 GameTests, 3 new). Items marked **(runClient pending)** are code-complete and pass the automated gates, but their behavior is a client-render / fluid-flow / time-and-AI surface that GameTest cannot observe (per docs/testing.md), so they want an in-world smoke pass before the release is cut.
+> **Batch fix `fix/known-issues-batch` (2026-05-28).** Seven Sky-Frogs-reported issues fixed together: four in the Slime Milk fluid/block/bucket subsystem and three in the frog lifecycle. All land with `build` + `runGameTestServer` green (73 GameTests, 3 new). The four items whose behavior is a client-render / fluid-flow / time-and-AI surface that GameTest cannot observe were **runClient-verified in-world on 2026-05-28** (originally marked runClient-pending).
 
-### 🟢 Flowing Slime Milk displaced frogspawn / water sources / other milk sources - resolved (2026-05-28) (runClient pending)
+### 🟢 Flowing Slime Milk displaced frogspawn / water sources / other milk sources - resolved (2026-05-28) (runClient-verified)
 Flowing Slime Milk washed away frogspawn / Primed Frog Eggs, water source blocks, and neighboring Slime Milk source blocks the way flowing water sweeps off a plant. Fix: `slime_milk` now uses custom `SlimeMilkFluid.Source` / `Flowing` subclasses (`content/fluid/SlimeMilkFluid`) that override `FlowingFluid#canSpreadTo` - the choke point vanilla checks before `spreadTo` replaces (destroys) the block at a target - to refuse to spread into frogspawn, `PrimedFrogEggBlock`, or any fluid SOURCE (`FluidState#isSource()`, covering water + other milk sources). Flowing-into-flowing, air, and the normal slope/level math are unchanged. Wired in `PFFluids` (holder types updated to the subclasses). Flow behavior is GameTest-unfriendly - confirm in-world.
 
-### 🟢 Frogs drowned in Slime Milk - resolved (2026-05-28) (runClient pending)
+### 🟢 Frogs drowned in Slime Milk - resolved (2026-05-28) (runClient-verified)
 Resource Frogs (and players) took air-loss / drowning damage standing in Slime Milk, which is poured into the shallow pools frogs work over. Fix: `PFFluidTypes` Slime Milk `FluidType` now sets `.canDrown(false)` (was `true`); `FluidType#canDrownIn` returns false so no mob drains air or drowns in milk. Still swimmable. Air-supply behavior isn't covered by GameTest - confirm in-world.
 
 ### 🟢 Bucketing + replacing Slime Milk reset its spawns-remaining counter - resolved (2026-05-28)
 Re-bucketing a partially-depleted source and re-placing it refilled the `SPAWNS_REMAINING` depletion counter to full, defeating depletion. Fix: a new `productivefrogs:spawns_remaining` int data component (`PFDataComponents`); `SlimeMilkSourceBlock#pickupBlock` stamps the source's current count onto the filled bucket (only for a variant-carrying source), and `SlimeMilkBucketItem#checkExtraContent` restores it onto the re-placed source (after `onPlace` seeds the default). A freshly-milked bucket carries no such component and still makes a full source. Verified by the new `slimeMilkBucketRoundTripPreservesSpawnsRemaining` GameTest.
 
-### 🟢 Jade "Slime spawns left" readout stuck at full count - resolved (2026-05-28) (runClient pending)
+### 🟢 Jade "Slime spawns left" readout stuck at full count - resolved (2026-05-28) (runClient-verified)
 The Slime Milk source's Jade tooltip stayed pinned at `cap / cap` and never reflected the live remaining count (the server-side counter decremented correctly - proven by `slimeMilkSourceDecrementsSpawnsRemainingEachSpawn` - so this was a client display/sync gap). Fix: the spawns-left readout moved from a plain client-blockstate read to a dedicated `MilkSourceProvider` that is both `IServerDataProvider` and `IBlockComponentProvider` (the same live-server-fetch shape as the egg hatch countdown), registered in both `register` and `registerClient` with the new `milk_source` UID and its required `config.jade.plugin_productivefrogs.milk_source` lang key. It now re-reads the authoritative server count on Jade's interval, so it counts down live. Client-only - confirm in-world.
 
 ### 🟢 Primed frogspawn hatch delay made deterministic + config-exposed - resolved (2026-05-28)
 Primed Frog Eggs inherited vanilla's random `[3600, 12000)`-tick hatch window. Fix: `PrimedFrogEggBlock` now schedules a fixed delay from the new `lifecycle.primedFrogspawnHatchTicks` config (default 3600 / 3 min); vanilla frogspawn keeps its random window. Verified by the new `primedEggSchedulesDeterministicHatchDelay` GameTest.
 
-### 🟢 Tadpole growth + frog breeding times made config-exposed - resolved (2026-05-28) (runClient pending)
+### 🟢 Tadpole growth + frog breeding times made config-exposed - resolved (2026-05-28) (runClient-verified)
 Both inherited vanilla pacing with no pack-facing knob. Fix: new `lifecycle.tadpoleGrowthTicks` (default 24000) - `ResourceTadpole#aiStep` adds extra age per tick to mature in the configured window (accelerate-only: values at/above vanilla's 24000-tick ceiling keep stock pace; slime-ball feeding still composes additively; vanilla tadpoles untouched; `Tadpole.age` exposed via AT). And `lifecycle.breedingCooldownTicks` (default 6000) - `ResourceFrog#spawnChildFromBreeding` re-applies the configured re-breed cooldown after `super`. Defaults are no-ops vs vanilla. The time/AI behavior isn't GameTest-friendly - confirm faster maturation + cooldown in-world.
 
 ### 🟢 Clay Ball Froglight smelted into a brick instead of clay balls - resolved (2026-05-28)
