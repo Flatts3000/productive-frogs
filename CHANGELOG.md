@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.7.0 - 2026-05-29 - Slime Milk catalysts
+
+Hands-off production gets its first real boost. Four craftable **catalysts** let you buff a placed Slime Milk source: just toss one into the pool. The buffs save to the source and ride along when you bucket it back up.
+
+### Added
+
+- **Slime Milk catalysts.** Craft and drop them into a placed Slime Milk source to upgrade it:
+  - **Count** - adds more slimes before the source runs dry (stack as many as you like; uncapped).
+  - **Speed** - the source spawns slimes faster, up to a cap.
+  - **Quantity** - the source spawns more slimes at once, up to a cap.
+  - **Infinite Count** - the source never runs dry. Built from Count catalysts, it's the top of the count line.
+- **Jade upgrade readout.** Look at a buffed source and Jade shows its Speed and Quantity levels alongside the spawns-remaining count (or "unlimited").
+- **Config section `slime_milk_catalysts`.** Turn the whole feature off (catalysts become uncraftable and hidden from JEI), and tune the per-catalyst amounts, the Speed/Quantity caps, and the spawn-rate floor.
+
+### Changed
+
+- **A Slime Milk source's spawn count is no longer capped at 16.** The depletion counter moved onto the source's block entity so Count catalysts can raise it without limit; the default starting budget is unchanged.
+
+### Notes
+
+- Catalysts are enabled by default. A dropper aimed into the pool will feed them automatically - a small taste of the automation to come.
+- Upgrades already applied to a source are always honoured, even if the feature is later disabled in the config.
+
 ## v1.6.0 - 2026-05-28 - The Bog grows up, and Slime Milk settles down
 
 A swamp-and-soil makeover for the Bog frog, plus a batch of reliability fixes to Slime Milk and predictable, pack-tunable timings for the whole frog life cycle.

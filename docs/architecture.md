@@ -59,7 +59,7 @@ The V1 farming keystone (see [farming.md](./farming.md)) introduces two architec
 - Spawn behavior: each source block has a random-tick handler. On each random tick (subject to vanilla random tick speed), with low probability, attempts a spawn:
   - Check the position above is air or replaceable AND no entity is blocking spawn.
   - Spawn a `ResourceSlime` (or vanilla slime / magma cube for the vanilla/magma milk variants) at size 1 of the matching variant.
-  - Decrement the source block's depletion counter (stored in block state via integer property `spawns_remaining`, or in block entity if more granular range is needed). When counter hits zero, replace the source block with air.
+  - Decrement the source block's depletion counter (stored on the source `BlockEntity` since v1.7 - it moved off a blockstate `IntegerProperty` so Slime Milk **Count catalysts** can raise it without an upper bound; see [slime_milk_catalysts.md](./slime_milk_catalysts.md)). When the counter hits zero, replace the source block with air. The BE also carries the catalyst speed/quantity levels and the infinite flag, all round-tripped through the bucket.
 - Default spawn interval is implemented as: average ~20s wall-clock between spawn ticks per source block, ± uniform jitter [-10s, +10s]. Random tick speed tuning derives from this target.
 - Default depletion: 16 spawns per source block before drying up. Configurable (mod config); can be disabled entirely (effectively ∞ counter).
 

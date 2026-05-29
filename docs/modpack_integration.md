@@ -26,9 +26,13 @@ A COMMON config, generated on first launch. Toggling a value that gates a recipe
 | `[spawnery]` | `enabled` | `false` | Enable the Spawnery (skyblock frogspawn bootstrap). Off by default; a normal world has swamps. When off it is uncraftable + hidden from JEI/creative. |
 | `[spawnery]` | `productionTicks` | `200` | Ticks per bottled egg (one slime ball of burn). |
 | `[slime_milk]` | `depletionEnabled` | `true` | Whether Slime Milk source blocks deplete after a fixed number of spawns. Set `false` for infinite (low-friction) production. |
-| `[slime_milk]` | `depletionCount` | `16` | Spawns before a source drains (max 16). |
+| `[slime_milk]` | `depletionCount` | `16` | Spawns before a fresh source drains. (Count catalysts raise a placed source past this.) |
 | `[slime_milk_spawning]` | `minSpawnIntervalTicks` | `200` | Min delay between slime spawns from a source. |
 | `[slime_milk_spawning]` | `maxSpawnIntervalTicks` | `600` | Max delay (uniform random in [min, max]). |
+| `[slime_milk_catalysts]` | `enabled` | `true` | Slime Milk catalysts (Count / Speed / Quantity / Infinite, dropped into a source to buff it). Off = uncraftable + hidden from JEI; placed sources and existing upgrades still work. See [slime_milk_catalysts.md](./slime_milk_catalysts.md). |
+| `[slime_milk_catalysts]` | `countPerCatalyst` | `16` | Spawns added per Count catalyst. |
+| `[slime_milk_catalysts]` | `maxSpeedLevel` / `maxQuantityLevel` | `4` / `3` | Caps on the Speed / Quantity upgrades. |
+| `[slime_milk_catalysts]` | `speedReductionPerLevel` / `minIntervalFloorTicks` | `0.20` / `20` | Speed scaling and the spawn-interval floor. |
 | `[discovery]` | `discoveryChancePerOffspring` | `0.05` | Per-offspring chance a parent-species split converts to a Resource Slime. |
 
 ## 2. Adding a farmable resource (the `slime_variant` registry)

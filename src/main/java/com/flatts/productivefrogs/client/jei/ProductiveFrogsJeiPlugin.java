@@ -415,5 +415,18 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get()),
             VanillaTypes.ITEM_STACK,
             Component.translatable("productivefrogs.jei.empty_tadpole_bucket.info"));
+
+        // Slime Milk catalysts - only when enabled (uncraftable + untaught when
+        // the feature is config-off), mirroring the Spawnery guard above.
+        if (PFConfig.SPEC.isLoaded() && PFConfig.MILK_CATALYSTS_ENABLED.get()) {
+            reg.addIngredientInfo(new ItemStack(PFItems.COUNT_CATALYST.get()),
+                VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.count_catalyst.info"));
+            reg.addIngredientInfo(new ItemStack(PFItems.SPEED_CATALYST.get()),
+                VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.speed_catalyst.info"));
+            reg.addIngredientInfo(new ItemStack(PFItems.QUANTITY_CATALYST.get()),
+                VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.quantity_catalyst.info"));
+            reg.addIngredientInfo(new ItemStack(PFItems.INFINITE_CATALYST.get()),
+                VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.infinite_catalyst.info"));
+        }
     }
 }

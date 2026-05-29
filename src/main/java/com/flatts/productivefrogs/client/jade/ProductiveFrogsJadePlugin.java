@@ -34,10 +34,11 @@ import snownee.jade.api.config.IPluginConfig;
  * Jade's default block-name display does not surface:
  *
  * <ul>
- *   <li><b>Slime Milk source block</b> - spawns remaining (from the
- *       {@code SPAWNS_REMAINING} blockstate), or "unlimited" when depletion is
- *       config-disabled. This resolves the long-standing "no depletion countdown"
- *       limitation without a custom block/fluid renderer.</li>
+ *   <li><b>Slime Milk source block</b> - spawns remaining (read from the source
+ *       BlockEntity), or "unlimited" when the source is infinite or depletion is
+ *       config-disabled, plus any catalyst upgrade levels (Speed / Quantity).
+ *       Resolves the "no depletion countdown" limitation without a custom
+ *       block/fluid renderer.</li>
  *   <li><b>Slime Milker / Spawnery</b> - cook progress while working.</li>
  * </ul>
  *
@@ -154,27 +155,36 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             if (!(state.getBlock() instanceof SlimeMilkSourceBlock)) {
                 return;
             }
-            boolean realSource = state.getFluidState().isSource()
-                && accessor.getBlockEntity() instanceof SlimeMilkSourceBlockEntity milkBe
-                && milkBe.getVariantId() != null;
-            if (!realSource) {
+            if (!(state.getFluidState().isSource()
+                    && accessor.getBlockEntity() instanceof SlimeMilkSourceBlockEntity be
+                    && be.getVariantId() != null)) {
                 return;
             }
             data.putBoolean("MilkSource", true);
-            if (PFConfig.SPEC.isLoaded() && !PFConfig.DEPLETION_ENABLED.get()) {
+            // Catalyst upgrade levels (v1.7): written before the count branch so
+            // they still show on an infinite source. SpeedMax/QuantityMax travel
+            // with the data so the client needs no config read.
+            if (be.getSpeedLevel() > 0) {
+                data.putInt("Speed", be.getSpeedLevel());
+                data.putInt("SpeedMax", PFConfig.catalystMaxSpeedLevel());
+            }
+            if (be.getQuantityLevel() > 0) {
+                data.putInt("Quantity", be.getQuantityLevel());
+                data.putInt("QuantityMax", PFConfig.catalystMaxQuantityLevel());
+            }
+            // Count line: "unlimited" when the source is infinite (Infinite Count
+            // catalyst) or depletion is globally config-off; else remaining / cap.
+            boolean depletionOff = PFConfig.SPEC.isLoaded() && !PFConfig.DEPLETION_ENABLED.get();
+            if (be.isInfinite() || depletionOff) {
                 data.putBoolean("Unlimited", true);
                 return;
             }
-            int remaining = state.getValue(SlimeMilkSourceBlock.SPAWNS_REMAINING);
-            // Denominator is the configured depletionCount (a fresh source starts
-            // there, not always 16 - see SlimeMilkSourceBlock.onPlace), clamped to
-            // at least the current remaining so a mid-life config change can't
-            // render "remaining > capacity". Falls back to MAX if config isn't loaded.
-            int cap = PFConfig.SPEC.isLoaded()
-                ? Math.max(remaining, PFConfig.DEPLETION_COUNT.get())
-                : SlimeMilkSourceBlock.MAX_SPAWNS_REMAINING;
-            data.putInt("SpawnsRemaining", remaining);
-            data.putInt("SpawnsCap", cap);
+            // Denominator is the source's tracked CAPACITY (high-water mark), not
+            // max(remaining, base): Count catalysts raise capacity alongside
+            // remaining, and it stays put as the source drains, so the readout
+            // counts down N / cap instead of the cap chasing N downward.
+            data.putInt("SpawnsRemaining", be.getSpawnsRemaining());
+            data.putInt("SpawnsCap", be.getSpawnsCapacity());
         }
 
         @Override
@@ -188,6 +198,14 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             } else {
                 tooltip.add(Component.translatable("productivefrogs.jade.spawns_left",
                     data.getInt("SpawnsRemaining"), data.getInt("SpawnsCap")));
+            }
+            if (data.contains("Speed")) {
+                tooltip.add(Component.translatable("productivefrogs.jade.catalyst_speed",
+                    data.getInt("Speed"), data.getInt("SpeedMax")));
+            }
+            if (data.contains("Quantity")) {
+                tooltip.add(Component.translatable("productivefrogs.jade.catalyst_quantity",
+                    data.getInt("Quantity"), data.getInt("QuantityMax")));
             }
         }
 

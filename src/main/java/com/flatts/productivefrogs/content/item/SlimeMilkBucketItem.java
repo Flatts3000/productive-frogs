@@ -1,20 +1,19 @@
 package com.flatts.productivefrogs.content.item;
 
-import com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock;
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.util.VariantNames;
+import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,25 +49,35 @@ public final class SlimeMilkBucketItem extends BucketItem {
         if (variantId == null) {
             return;
         }
-        BlockEntity be = level.getBlockEntity(pos);
-        if (be instanceof SlimeMilkSourceBlockEntity milkBe) {
-            milkBe.setVariantId(variantId);
+        if (!(level.getBlockEntity(pos) instanceof SlimeMilkSourceBlockEntity milkBe)) {
+            return;
         }
-        // Restore the depletion counter if this bucket was filled by re-bucketing
-        // a partially-depleted source (set in SlimeMilkSourceBlock#pickupBlock).
-        // Runs after the fluid block is placed and onPlace seeded the default
-        // count, so this overrides it back to the carried value. A freshly-milked
-        // bucket has no such component and keeps the full default. See
-        // docs/known_issues.md.
+        // setVariantId seeds the default spawn budget onto a fresh source. A
+        // bucket filled by re-bucketing a buffed source also carries the
+        // upgrade components; restore them over the seeded defaults so a
+        // partially-depleted or catalyst-buffed source is faithfully replaced.
+        // A freshly-milked bucket (from the Slime Milker) carries none of these
+        // and keeps the seeded full default. See docs/slime_milk_catalysts.md.
+        milkBe.setVariantId(variantId);
         Integer remaining = stack.get(PFDataComponents.SPAWNS_REMAINING.get());
-        if (remaining != null) {
-            BlockState state = level.getBlockState(pos);
-            if (state.getBlock() instanceof SlimeMilkSourceBlock
-                && state.hasProperty(SlimeMilkSourceBlock.SPAWNS_REMAINING)) {
-                int clamped = Mth.clamp(remaining, 0, SlimeMilkSourceBlock.MAX_SPAWNS_REMAINING);
-                level.setBlock(pos, state.setValue(SlimeMilkSourceBlock.SPAWNS_REMAINING, clamped),
-                    Block.UPDATE_CLIENTS);
-            }
+        Integer capacity = stack.get(PFDataComponents.MILK_CAPACITY.get());
+        Integer speed = stack.get(PFDataComponents.MILK_SPEED.get());
+        Integer quantity = stack.get(PFDataComponents.MILK_QUANTITY.get());
+        Boolean infinite = stack.get(PFDataComponents.MILK_INFINITE.get());
+        // Restore if the bucket carries ANY upgrade component, reading each
+        // independently - they're independent on the bucket, so don't gate the
+        // whole restore behind the count component (a /give or future fill path
+        // could stamp infinite without a count). For the count/capacity args,
+        // fall back to the source's seeded default when absent, so a
+        // speed/quantity-only bucket doesn't reset the freshly-seeded budget.
+        if (remaining != null || capacity != null || speed != null || quantity != null
+                || Boolean.TRUE.equals(infinite)) {
+            milkBe.restoreUpgrades(
+                remaining != null ? remaining : milkBe.getSpawnsRemaining(),
+                capacity != null ? capacity : milkBe.getSpawnsCapacity(),
+                speed != null ? speed : 0,
+                quantity != null ? quantity : 0,
+                Boolean.TRUE.equals(infinite));
         }
     }
 
@@ -81,5 +90,49 @@ public final class SlimeMilkBucketItem extends BucketItem {
                 "Bucket of " + VariantNames.titleCase(variantId) + " Slime Milk");
         }
         return Component.translatable(getDescriptionId());
+    }
+
+    /**
+     * Surface the source's state on the bucket so a player can read it without
+     * placing it: spawns left / capacity (or "unlimited" for an Endless source or
+     * when depletion is config-off), plus any installed Speed / Quantity upgrades.
+     * The values come straight off the bucket's data components - the same set
+     * {@link #checkExtraContent} writes onto the placed source - with the
+     * configured default used when a freshly-milked bucket carries none. Reuses
+     * the Jade format keys so the bucket and the look-at readout read identically.
+     */
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltip, flag);
+        if (stack.get(PFDataComponents.SLIME_VARIANT.get()) == null) {
+            return;
+        }
+        boolean infinite = Boolean.TRUE.equals(stack.get(PFDataComponents.MILK_INFINITE.get()));
+        boolean depletionOff = PFConfig.SPEC.isLoaded() && !PFConfig.DEPLETION_ENABLED.get();
+        if (infinite || depletionOff) {
+            tooltip.add(Component.translatable("productivefrogs.jade.spawns_unlimited")
+                .withStyle(ChatFormatting.GRAY));
+        } else {
+            Integer remaining = stack.get(PFDataComponents.SPAWNS_REMAINING.get());
+            Integer capacity = stack.get(PFDataComponents.MILK_CAPACITY.get());
+            int rem = remaining != null ? remaining : defaultSpawnCount();
+            int cap = Math.max(capacity != null ? capacity : defaultSpawnCount(), rem);
+            tooltip.add(Component.translatable("productivefrogs.jade.spawns_left", rem, cap)
+                .withStyle(ChatFormatting.GRAY));
+        }
+        Integer speed = stack.get(PFDataComponents.MILK_SPEED.get());
+        if (speed != null && speed > 0) {
+            tooltip.add(Component.translatable("productivefrogs.jade.catalyst_speed",
+                speed, PFConfig.catalystMaxSpeedLevel()).withStyle(ChatFormatting.GRAY));
+        }
+        Integer quantity = stack.get(PFDataComponents.MILK_QUANTITY.get());
+        if (quantity != null && quantity > 0) {
+            tooltip.add(Component.translatable("productivefrogs.jade.catalyst_quantity",
+                quantity, PFConfig.catalystMaxQuantityLevel()).withStyle(ChatFormatting.GRAY));
+        }
+    }
+
+    private static int defaultSpawnCount() {
+        return PFConfig.SPEC.isLoaded() ? PFConfig.DEPLETION_COUNT.get() : 16;
     }
 }

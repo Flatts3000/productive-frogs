@@ -33,6 +33,17 @@ class ConfigEnabledConditionTest {
     }
 
     @Test
+    void milkCatalystsKeySerializesToItsId() {
+        assertEquals("milk_catalysts", ConfigEnabledCondition.Key.MILK_CATALYSTS.getSerializedName());
+    }
+
+    @Test
+    void codecRoundTripsMilkCatalystsKey() {
+        assertSame(ConfigEnabledCondition.Key.MILK_CATALYSTS,
+            ConfigEnabledCondition.Key.CODEC.byName("milk_catalysts"));
+    }
+
+    @Test
     void codecRejectsUnknownKey() {
         assertNull(ConfigEnabledCondition.Key.CODEC.byName("does_not_exist"));
     }

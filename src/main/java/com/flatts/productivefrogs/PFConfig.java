@@ -23,6 +23,16 @@ public final class PFConfig {
     public static final ModConfigSpec.IntValue DEPLETION_COUNT;
     public static final ModConfigSpec.IntValue MIN_SPAWN_INTERVAL_TICKS;
     public static final ModConfigSpec.IntValue MAX_SPAWN_INTERVAL_TICKS;
+
+    // Slime Milk catalysts: hand-dropped upgrade items that buff a placed source
+    // block (docs/slime_milk_catalysts.md). The early-game stopgap toward
+    // lower-friction production before the V2 Frog Habitat.
+    public static final ModConfigSpec.BooleanValue MILK_CATALYSTS_ENABLED;
+    public static final ModConfigSpec.IntValue CATALYST_COUNT_PER;
+    public static final ModConfigSpec.IntValue CATALYST_MAX_SPEED_LEVEL;
+    public static final ModConfigSpec.IntValue CATALYST_MAX_QUANTITY_LEVEL;
+    public static final ModConfigSpec.DoubleValue CATALYST_SPEED_REDUCTION_PER_LEVEL;
+    public static final ModConfigSpec.IntValue CATALYST_MIN_INTERVAL_FLOOR_TICKS;
     public static final ModConfigSpec.DoubleValue DISCOVERY_CHANCE_PER_OFFSPRING;
     public static final ModConfigSpec.BooleanValue SPAWNERY_ENABLED;
     public static final ModConfigSpec.IntValue SPAWNERY_PRODUCTION_TICKS;
@@ -64,6 +74,12 @@ public final class PFConfig {
     public static final int DEFAULT_HATCH_TICKS = 3600;
     public static final int DEFAULT_TADPOLE_GROWTH_TICKS = 24000;
     public static final int DEFAULT_BREEDING_COOLDOWN_TICKS = 6000;
+    // Slime Milk catalyst defaults (single source of truth for spec + fallbacks).
+    public static final int DEFAULT_CATALYST_COUNT_PER = 16;
+    public static final int DEFAULT_CATALYST_MAX_SPEED_LEVEL = 4;
+    public static final int DEFAULT_CATALYST_MAX_QUANTITY_LEVEL = 3;
+    public static final double DEFAULT_CATALYST_SPEED_REDUCTION_PER_LEVEL = 0.20;
+    public static final int DEFAULT_CATALYST_MIN_INTERVAL_FLOOR_TICKS = 20;
 
     public static final ModConfigSpec SPEC;
 
@@ -80,17 +96,17 @@ public final class PFConfig {
             )
             .define("depletionEnabled", true);
 
-        // Capped at 16 because the SPAWNS_REMAINING block-state property has
-        // range [0, 16] — values above 16 would not fit. The cap can be
-        // raised by widening the IntegerProperty range, at the cost of more
-        // blockstate combinations (each extra value × 14 milk variants × 9
-        // fluid LEVEL values).
+        // Since v1.7 the spawns-remaining counter lives on the source's
+        // BlockEntity (not a blockstate property), so the old "ceiling is 16"
+        // blockstate constraint is gone and Count catalysts can push a live
+        // source's remaining count arbitrarily high. The configured starting
+        // budget below is still bounded for sane defaults.
         DEPLETION_COUNT = builder
             .comment(
-                "Number of slimes a source block produces before draining (depletionEnabled=true).",
-                "Hard ceiling is 16 — that's the blockstate property's range. Default 16 (the full budget)."
+                "Number of slimes a freshly-placed source block produces before draining (depletionEnabled=true).",
+                "Default 16. Count catalysts (if enabled) raise a placed source's remaining count beyond this."
             )
-            .defineInRange("depletionCount", 16, 1, 16);
+            .defineInRange("depletionCount", 16, 1, 4096);
 
         builder.pop();
 
@@ -110,6 +126,59 @@ public final class PFConfig {
                 "Default 600 (30 seconds)."
             )
             .defineInRange("maxSpawnIntervalTicks", 600, 1, 24000);
+
+        builder.pop();
+
+        builder.push("slime_milk_catalysts");
+
+        MILK_CATALYSTS_ENABLED = builder
+            .comment(
+                "Whether Slime Milk catalysts are enabled. Default true.",
+                "Catalysts are hand-crafted items you drop into a placed Slime Milk source to buff it:",
+                "Count (+more spawns), Speed (faster), Quantity (more slimes per spawn), and Infinite Count.",
+                "When false the catalysts are uncraftable and hidden from JEI; a placed source still works,",
+                "and any upgrades already applied to existing sources are still honoured. Toggling the recipes",
+                "off/on requires a world reload to re-evaluate the recipe condition."
+            )
+            .define("enabled", true);
+
+        CATALYST_COUNT_PER = builder
+            .comment(
+                "Spawns added to a source's remaining count per Count catalyst consumed.",
+                "Default 16 (one full bucket's worth). Count is uncapped - keep feeding to extend a source."
+            )
+            .defineInRange("countPerCatalyst", DEFAULT_CATALYST_COUNT_PER, 1, 4096);
+
+        CATALYST_MAX_SPEED_LEVEL = builder
+            .comment(
+                "Maximum Speed catalyst level a source can reach. Default 4.",
+                "Each level shortens the spawn interval by speedReductionPerLevel, down to the floor below."
+            )
+            .defineInRange("maxSpeedLevel", DEFAULT_CATALYST_MAX_SPEED_LEVEL, 1, 64);
+
+        CATALYST_MAX_QUANTITY_LEVEL = builder
+            .comment(
+                "Maximum Quantity catalyst level a source can reach. Default 3.",
+                "Slimes spawned per spawn event = 1 + quantityLevel (so level 3 = 4 slimes per spawn).",
+                "Ceiling capped at 16 so a misconfiguration can't make one source spawn a swarm per",
+                "event (no per-event entity-density guard exists); raise the source code bound if you",
+                "genuinely want more."
+            )
+            .defineInRange("maxQuantityLevel", DEFAULT_CATALYST_MAX_QUANTITY_LEVEL, 1, 16);
+
+        CATALYST_SPEED_REDUCTION_PER_LEVEL = builder
+            .comment(
+                "Fraction the spawn interval is reduced per Speed level. Default 0.20 (-20% per level).",
+                "Applied to both the min and max interval; the result is clamped to minIntervalFloorTicks."
+            )
+            .defineInRange("speedReductionPerLevel", DEFAULT_CATALYST_SPEED_REDUCTION_PER_LEVEL, 0.0, 0.95);
+
+        CATALYST_MIN_INTERVAL_FLOOR_TICKS = builder
+            .comment(
+                "Hard floor (ticks) the Speed-reduced spawn interval cannot drop below. Default 20 (1s).",
+                "Stops stacked Speed levels from driving the interval to zero."
+            )
+            .defineInRange("minIntervalFloorTicks", DEFAULT_CATALYST_MIN_INTERVAL_FLOOR_TICKS, 1, 24000);
 
         builder.pop();
 
@@ -321,6 +390,42 @@ public final class PFConfig {
     /** Post-breed re-breed cooldown in ticks ({@code lifecycle.breedingCooldownTicks}); fallback {@value #DEFAULT_BREEDING_COOLDOWN_TICKS}. */
     public static int breedingCooldownTicks() {
         return SPEC.isLoaded() ? LIFECYCLE_BREEDING_COOLDOWN_TICKS.get() : DEFAULT_BREEDING_COOLDOWN_TICKS;
+    }
+
+    // ------------------------------------------------------------------
+    // Slime Milk catalyst accessors (docs/slime_milk_catalysts.md). Read the
+    // live config when loaded, else the compile-time default - the source block
+    // and its BlockEntity touch these on the server tick path.
+    // ------------------------------------------------------------------
+
+    /** Whether catalysts are enabled ({@code slime_milk_catalysts.enabled}); fallback true. */
+    public static boolean milkCatalystsEnabled() {
+        return !SPEC.isLoaded() || MILK_CATALYSTS_ENABLED.get();
+    }
+
+    /** Spawns added per Count catalyst ({@code slime_milk_catalysts.countPerCatalyst}); fallback {@value #DEFAULT_CATALYST_COUNT_PER}. */
+    public static int catalystCountPer() {
+        return SPEC.isLoaded() ? CATALYST_COUNT_PER.get() : DEFAULT_CATALYST_COUNT_PER;
+    }
+
+    /** Max Speed catalyst level ({@code slime_milk_catalysts.maxSpeedLevel}); fallback {@value #DEFAULT_CATALYST_MAX_SPEED_LEVEL}. */
+    public static int catalystMaxSpeedLevel() {
+        return SPEC.isLoaded() ? CATALYST_MAX_SPEED_LEVEL.get() : DEFAULT_CATALYST_MAX_SPEED_LEVEL;
+    }
+
+    /** Max Quantity catalyst level ({@code slime_milk_catalysts.maxQuantityLevel}); fallback {@value #DEFAULT_CATALYST_MAX_QUANTITY_LEVEL}. */
+    public static int catalystMaxQuantityLevel() {
+        return SPEC.isLoaded() ? CATALYST_MAX_QUANTITY_LEVEL.get() : DEFAULT_CATALYST_MAX_QUANTITY_LEVEL;
+    }
+
+    /** Spawn-interval reduction per Speed level ({@code slime_milk_catalysts.speedReductionPerLevel}); fallback {@value #DEFAULT_CATALYST_SPEED_REDUCTION_PER_LEVEL}. */
+    public static double catalystSpeedReductionPerLevel() {
+        return SPEC.isLoaded() ? CATALYST_SPEED_REDUCTION_PER_LEVEL.get() : DEFAULT_CATALYST_SPEED_REDUCTION_PER_LEVEL;
+    }
+
+    /** Floor (ticks) the Speed-reduced interval cannot drop below ({@code slime_milk_catalysts.minIntervalFloorTicks}); fallback {@value #DEFAULT_CATALYST_MIN_INTERVAL_FLOOR_TICKS}. */
+    public static int catalystMinIntervalFloorTicks() {
+        return SPEC.isLoaded() ? CATALYST_MIN_INTERVAL_FLOOR_TICKS.get() : DEFAULT_CATALYST_MIN_INTERVAL_FLOOR_TICKS;
     }
 
     private PFConfig() {

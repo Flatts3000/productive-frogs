@@ -3,6 +3,8 @@ package com.flatts.productivefrogs.registry;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.item.ConfigurableFroglightItem;
 import com.flatts.productivefrogs.content.item.FrogEggItem;
+import com.flatts.productivefrogs.content.item.MilkCatalyst;
+import com.flatts.productivefrogs.content.item.MilkCatalystItem;
 import com.flatts.productivefrogs.content.item.ResourceSlimeSpawnEggItem;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.content.item.SlimeBucketItem;
@@ -74,6 +76,25 @@ public final class PFItems {
         "sweetslime",
         Item::new
     );
+
+    /**
+     * The four Slime Milk catalysts - hand-crafted items dropped into a placed
+     * Slime Milk source to buff it (the early-game stopgap toward lower-friction
+     * production; see {@code docs/slime_milk_catalysts.md}). All plain
+     * {@link Item}s: the apply logic lives in {@code SlimeMilkSourceBlock} +
+     * {@code SlimeMilkSourceBlockEntity}, keyed off
+     * {@link com.flatts.productivefrogs.content.item.MilkCatalyst}, so the items
+     * carry no behaviour themselves. Config-gated ({@code slime_milk_catalysts.enabled})
+     * at the recipe layer, like the Spawnery.
+     */
+    public static final DeferredItem<MilkCatalystItem> COUNT_CATALYST = ITEMS.registerItem(
+        "count_catalyst", props -> new MilkCatalystItem(MilkCatalyst.COUNT, props));
+    public static final DeferredItem<MilkCatalystItem> SPEED_CATALYST = ITEMS.registerItem(
+        "speed_catalyst", props -> new MilkCatalystItem(MilkCatalyst.SPEED, props));
+    public static final DeferredItem<MilkCatalystItem> QUANTITY_CATALYST = ITEMS.registerItem(
+        "quantity_catalyst", props -> new MilkCatalystItem(MilkCatalyst.QUANTITY, props));
+    public static final DeferredItem<MilkCatalystItem> INFINITE_CATALYST = ITEMS.registerItem(
+        "infinite_catalyst", props -> new MilkCatalystItem(MilkCatalyst.INFINITE, props));
 
     /**
      * Slime Bucket — the V1 transport mechanism for size-1 Resource Slimes

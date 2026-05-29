@@ -1,0 +1,20 @@
+{
+  "neoforge:conditions": [
+    { "type": "productivefrogs:config_enabled", "config": "milk_catalysts" }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "BBB",
+    "BDB",
+    "BBB"
+  ],
+  "key": {
+    "B": { "item": "productivefrogs:count_catalyst" },
+    "D": { "item": "minecraft:diamond" }
+  },
+  "result": {
+    "id": "productivefrogs:infinite_catalyst",
+    "count": 1
+  }
+}
