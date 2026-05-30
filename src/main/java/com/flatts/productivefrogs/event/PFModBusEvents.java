@@ -4,7 +4,6 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFEntities;
-import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFVariantMilk;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;

@@ -232,8 +232,13 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         List<SlimeMilkerRecipeCategory.Recipe> recipes = new ArrayList<>();
         for (java.util.Map.Entry<ResourceKey<SlimeVariant>, SlimeVariant> entry : variants.entrySet()) {
             ResourceLocation variantId = entry.getKey().location();
-            ItemStack input = PFItems.variantSlimeBucket(variantId, entry.getValue().category());
             ItemStack output = PFItems.slimeMilkBucket(variantId);
+            // A content-only variant (no per-variant milk fluid minted at mod-init)
+            // has no milk bucket - skip it rather than show a broken empty-output recipe.
+            if (output.isEmpty()) {
+                continue;
+            }
+            ItemStack input = PFItems.variantSlimeBucket(variantId, entry.getValue().category());
             recipes.add(new SlimeMilkerRecipeCategory.Recipe(input, output));
         }
         reg.addRecipes(SlimeMilkerRecipeCategory.TYPE, recipes);
@@ -313,12 +318,15 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
                 "productivefrogs.jei.variant_froglight.info", frogName, variantSlimeName);
             reg.addIngredientInfo(froglight, VanillaTypes.ITEM_STACK, froglightInfo);
 
-            // 4. Variant Slime Milk bucket — the single slime_milk_bucket item
-            // stamped with this variant (collapsed from the per-variant items).
+            // 4. The variant's own Slime Milk bucket (per-variant, v1.8). A
+            // content-only variant with no milk fluid yields EMPTY - JEI rejects an
+            // empty ingredient, so only add the info page when a bucket exists.
             ItemStack milkBucket = PFItems.slimeMilkBucket(entry.getKey().location());
-            Component milkInfo = Component.translatable(
-                "productivefrogs.jei.slime_milk.info", variantSlimeName);
-            reg.addIngredientInfo(milkBucket, VanillaTypes.ITEM_STACK, milkInfo);
+            if (!milkBucket.isEmpty()) {
+                Component milkInfo = Component.translatable(
+                    "productivefrogs.jei.slime_milk.info", variantSlimeName);
+                reg.addIngredientInfo(milkBucket, VanillaTypes.ITEM_STACK, milkInfo);
+            }
         }
     }
 

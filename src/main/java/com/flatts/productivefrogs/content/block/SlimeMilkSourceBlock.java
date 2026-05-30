@@ -8,7 +8,6 @@ import com.flatts.productivefrogs.content.item.MilkCatalyst;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
-import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFRegistries;
 import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
@@ -39,19 +38,21 @@ import net.minecraft.world.level.material.FlowingFluid;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Slime Milk's placeable form: the single source block for the one generic
- * {@code slime_milk} fluid. Subclasses {@link LiquidBlock} for vanilla flow and
- * is an {@link EntityBlock} so its {@link SlimeMilkSourceBlockEntity} can store
- * the variant + catalyst upgrades: collapsed from the former one-block-per-variant
- * model so a datapack-added variant gets milk with no Java edit (see
- * {@code docs/refactor_data_driven_variants.md}).
+ * Slime Milk's placeable form. As of v1.8 each variant has its own source block
+ * ({@code <variant>_slime_milk}, minted by
+ * {@link com.flatts.productivefrogs.registry.PFVariantMilk}), so the block carries
+ * its variant baked in at registration ({@link #blockVariant()}). Subclasses
+ * {@link LiquidBlock} for vanilla flow and is an {@link EntityBlock} so its
+ * {@link SlimeMilkSourceBlockEntity} can store the spawn economy + catalyst upgrades.
  *
- * <p>The variant + upgrades are written to the BE on placement (by
+ * <p>The variant is authoritative on the block ({@link #effectiveVariant}); the BE
+ * keeps a mirror, seeded in {@link #onPlace} so a tank-mod raw {@code setBlock}
+ * placement still spawns the right variant. Catalyst/budget upgrades are written to
+ * the BE on placement (by
  * {@link com.flatts.productivefrogs.content.item.SlimeMilkBucketItem#checkExtraContent})
- * and read back when re-bucketing ({@link #pickupBlock}). Only a source block
- * with a non-null variant spawns slimes + tints per-variant; milk that spread
- * from a source (fluid spreading does not copy BlockEntities) carries no variant
- * and is inert decoration.
+ * and read back when re-bucketing ({@link #pickupBlock}). Only a source block with a
+ * variant spawns slimes + tints; milk that spread from a source (fluid spreading does
+ * not copy BlockEntities) carries no variant and is inert decoration.
  *
  * <p><b>Spawn economy (v1.7):</b> remaining-spawn count, speed level, quantity
  * level, and the infinite flag all live on the {@link SlimeMilkSourceBlockEntity}
