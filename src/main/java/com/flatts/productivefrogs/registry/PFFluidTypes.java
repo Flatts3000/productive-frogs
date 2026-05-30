@@ -36,7 +36,7 @@ public final class PFFluidTypes {
     public static final DeferredHolder<FluidType, FluidType> SLIME_MILK =
         TYPES.register("slime_milk", () -> new FluidType(milkProperties()));
 
-    private static FluidType.Properties milkProperties() {
+    static FluidType.Properties milkProperties() {
         return FluidType.Properties.create()
             .density(1500)
             .viscosity(2000)

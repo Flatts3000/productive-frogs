@@ -102,8 +102,28 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
     @Nullable
     public static volatile Boolean depletionEnabledOverride = null;
 
+    /**
+     * The variant this block produces, baked in at registration (per-variant
+     * fluids, v1.8). Authoritative over the BE's mirror, so a source placed by a
+     * tank/pipe mod that never wrote the BE (e.g. JDT's raw {@code setBlock})
+     * still spawns the right variant. Null for the legacy single source block.
+     */
+    @Nullable
+    private final ResourceLocation blockVariant;
+
     public SlimeMilkSourceBlock(FlowingFluid fluid, Properties properties) {
+        this(fluid, null, properties);
+    }
+
+    public SlimeMilkSourceBlock(FlowingFluid fluid, @Nullable ResourceLocation variant, Properties properties) {
         super(fluid, properties);
+        this.blockVariant = variant;
+    }
+
+    /** The variant baked into this block at registration, or null for the legacy block. */
+    @Nullable
+    public ResourceLocation blockVariant() {
+        return blockVariant;
     }
 
     @Override

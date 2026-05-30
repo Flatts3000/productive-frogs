@@ -12,6 +12,8 @@ import com.flatts.productivefrogs.registry.PFFluids;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
 import com.flatts.productivefrogs.registry.PFSensors;
+import com.flatts.productivefrogs.registry.PFVariantMilk;
+import com.flatts.productivefrogs.setup.VariantFluidDiscovery;
 import com.flatts.productivefrogs.util.PFDebug;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -43,6 +45,12 @@ public final class ProductiveFrogs {
         PFDebug.bootstrapFromSystemProperty();
 
         PFDataComponents.register(modEventBus);
+        // Per-variant Slime Milk (v1.8): discover the variant ids that get their
+        // own fluid (built-in index + config/productivefrogs/variants) and mint a
+        // fluid/block/bucket for each. Must run BEFORE the Fluid/Block/Item
+        // DeferredRegisters fire - BuiltInRegistries.FLUID freezes right after mod
+        // construction, so a fluid can only exist for a variant known now.
+        PFVariantMilk.bootstrap(VariantFluidDiscovery.discover());
         // FluidTypes before Fluids: BaseFlowingFluid.Properties references the
         // FluidType holder at fluid-build time, so the FluidType register pass
         // must complete first. Blocks come after Fluids in turn: the single
