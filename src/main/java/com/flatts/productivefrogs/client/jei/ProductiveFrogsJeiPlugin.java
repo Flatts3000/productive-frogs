@@ -153,10 +153,9 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         };
         registration.registerSubtypeInterpreter(PFItems.CONFIGURABLE_FROGLIGHT.get(), slimeVariantInterp);
         registration.registerSubtypeInterpreter(PFItems.RESOURCE_SLIME_SPAWN_EGG.get(), slimeVariantInterp);
-        // Slime Milk bucket also carries its variant in SLIME_VARIANT - without
-        // this, JEI dedups every variant-stamped milk bucket into one entry while
-        // the creative tab shows them all (known_issues.md).
-        registration.registerSubtypeInterpreter(PFItems.SLIME_MILK_BUCKET.get(), slimeVariantInterp);
+        // Slime Milk buckets are per-variant distinct items (v1.8) - no subtype
+        // interpreter needed; each <variant>_slime_milk_bucket is already its own
+        // JEI entry.
 
         // Frog Egg bottle — subtype by CONTAINED_CATEGORY.
         registration.registerSubtypeInterpreter(PFItems.FROG_EGG.get(), new ISubtypeInterpreter<>() {

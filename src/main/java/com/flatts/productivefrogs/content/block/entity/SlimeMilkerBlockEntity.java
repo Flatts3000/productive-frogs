@@ -3,8 +3,8 @@ package com.flatts.productivefrogs.content.block.entity;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
 import com.flatts.productivefrogs.content.menu.SlimeMilkerMenu;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
-import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFItems;
+import com.flatts.productivefrogs.registry.PFVariantMilk;
 import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -17,6 +17,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.BucketItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -126,6 +127,17 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
             setWorking(level, pos, state, false);
             return;
         }
+        // Per-variant milk (v1.8): the output is the variant's own milk bucket.
+        // A variant with no per-variant fluid (not declared at mod-init) gets no
+        // milk - fail closed rather than minting an inert generic bucket.
+        Item milkBucketItem = PFVariantMilk.bucket(variantId);
+        if (milkBucketItem == null) {
+            PFDebug.logOnce(PFDebug.Area.MILKER, "nomilk#" + pos,
+                () -> String.format("milker @%s fail-closed: no per-variant milk fluid for %s", pos, variantId));
+            be.resetProgress();
+            setWorking(level, pos, state, false);
+            return;
+        }
         ItemStack output = be.inventory.getStackInSlot(OUTPUT_SLOT);
         if (!output.isEmpty()) {
             // Slime Milk Buckets are stacksTo(1), so the output slot has to
@@ -146,10 +158,10 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
         be.setChanged();
         if (be.cookProgress >= COOK_TIME_TOTAL) {
             // SLIME_BUCKET stacksTo(1) so consuming one always empties the
-            // input slot. Output is the single slime_milk_bucket stamped with
-            // the input's variant (collapsed from the per-variant milk items).
-            ItemStack milkBucket = new ItemStack(PFItems.SLIME_MILK_BUCKET.get());
-            milkBucket.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
+            // input slot. Output is the variant's own Slime Milk bucket - the
+            // item identity carries the variant (per-variant fluids, v1.8), so
+            // no SLIME_VARIANT component stamp is needed.
+            ItemStack milkBucket = new ItemStack(milkBucketItem);
             be.inventory.setStackInSlot(INPUT_SLOT, ItemStack.EMPTY);
             be.inventory.setStackInSlot(OUTPUT_SLOT, milkBucket);
             be.cookProgress = 0;

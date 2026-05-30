@@ -1,7 +1,6 @@
 package com.flatts.productivefrogs.content.fluid;
 
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
-import com.flatts.productivefrogs.registry.PFFluids;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
@@ -55,7 +54,10 @@ public final class SlimeMilkFluid {
         if (!fluidState.isSource()) {
             return false;
         }
-        return fluidState.is(Fluids.WATER) || fluidState.is(PFFluids.SLIME_MILK_SOURCE.get());
+        // Any per-variant Slime Milk source counts (v1.8): match the fluid class,
+        // not a single registry object, so an iron pool won't displace a copper
+        // source next to it.
+        return fluidState.is(Fluids.WATER) || fluidState.getType() instanceof Source;
     }
 
     /** The placeable source fluid. */

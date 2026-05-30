@@ -61,29 +61,11 @@ public final class PFBlocks {
         );
 
     /**
-     * The single Slime Milk source block — an {@link net.minecraft.world.level.block.EntityBlock}
-     * ({@link SlimeMilkSourceBlock}) whose
-     * {@link com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity}
-     * stores the variant. Collapsed from the former one-LiquidBlock-per-variant
-     * model so a datapack-added variant gets milk with no Java edit; wraps the
-     * one {@code slime_milk} source fluid and adds the periodic-spawn loop.
-     */
-    public static final DeferredBlock<SlimeMilkSourceBlock> SLIME_MILK_SOURCE = BLOCKS.registerBlock(
-        "slime_milk",
-        props -> new SlimeMilkSourceBlock(PFFluids.SLIME_MILK_SOURCE.get(), props),
-        BlockBehaviour.Properties.of()
-            .mapColor(MapColor.METAL)
-            .replaceable()
-            .noCollission()
-            .strength(100.0F)
-            .pushReaction(PushReaction.DESTROY)
-            .noLootTable()
-            .liquid()
-            .sound(SoundType.EMPTY)
-    );
-
-    /**
-     * The Slime Milker — V1 production keystone block. Furnace-shaped GUI
+     * The Slime Milk source blocks are <b>per-variant</b> ({@code <variant>_slime_milk}),
+     * minted dynamically at mod-init by {@link PFVariantMilk} into {@link #BLOCKS}
+     * - there is no single source block. See {@code docs/automated_milk_variants.md}.
+     *
+     * <p>The Slime Milker — V1 production keystone block. Furnace-shaped GUI
      * block with one input slot (Slime Bucket), one output slot (variant
      * Slime Milk bucket), and a 100-tick cook. Hopper-compatible via a
      * side-aware Capabilities.ItemHandler.BLOCK provider in PFModBusEvents.

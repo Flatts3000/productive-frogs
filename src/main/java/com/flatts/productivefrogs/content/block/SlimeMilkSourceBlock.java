@@ -408,18 +408,19 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
     @Override
     public ItemStack pickupBlock(@Nullable Player player, LevelAccessor level, BlockPos pos, BlockState state) {
         SlimeMilkSourceBlockEntity be = getSourceBE(level, pos);
-        ResourceLocation variantId = be != null ? be.getVariantId() : null;
+        ResourceLocation variantId = effectiveVariant(be);
         int remaining = be != null ? be.getSpawnsRemaining() : 0;
         int capacity = be != null ? be.getSpawnsCapacity() : 0;
         int speed = be != null ? be.getSpeedLevel() : 0;
         int quantity = be != null ? be.getQuantityLevel() : 0;
         boolean infinite = be != null && be.isInfinite();
+        // super returns the per-variant bucket (this block's fluid.getBucket()),
+        // which already carries the variant via its item identity (v1.8) - no
+        // SLIME_VARIANT component needed. Stamp the catalyst/budget upgrades so a
+        // buffed source survives the world -> bucket round-trip. An inert
+        // spread-milk grab has no variant and must not stamp misleading values.
         ItemStack bucket = super.pickupBlock(player, level, pos, state);
-        // Only a variant-carrying source actually spawns + depletes, so stamp the
-        // variant + upgrades only for one. An inert spread-milk grab has no variant
-        // and must not stamp misleading values.
-        if (variantId != null && bucket.is(PFItems.SLIME_MILK_BUCKET.get())) {
-            bucket.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
+        if (variantId != null && !bucket.isEmpty()) {
             bucket.set(PFDataComponents.SPAWNS_REMAINING.get(), remaining);
             bucket.set(PFDataComponents.MILK_CAPACITY.get(), capacity);
             if (speed > 0) {

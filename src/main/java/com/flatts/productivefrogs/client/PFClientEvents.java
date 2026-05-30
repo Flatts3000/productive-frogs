@@ -8,7 +8,6 @@ import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
 import com.flatts.productivefrogs.client.screen.SlimeMilkerScreen;
 import com.flatts.productivefrogs.client.screen.SpawneryScreen;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
-import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.item.FrogEggItem;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.data.Category;
@@ -16,15 +15,14 @@ import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
-import com.flatts.productivefrogs.registry.PFFluidTypes;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
 import com.flatts.productivefrogs.registry.PFRegistries;
+import com.flatts.productivefrogs.registry.PFVariantMilk;
 import com.flatts.productivefrogs.util.PFDebug;
 import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -34,7 +32,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.material.FluidState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -45,6 +42,7 @@ import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
+import net.neoforged.neoforge.fluids.FluidType;
 
 /**
  * Client-only setup. Registers:
@@ -218,37 +216,20 @@ public final class PFClientEvents {
             return opaque(0x5DDE36);
         }, PFItems.SLIME_BUCKET.get());
 
-        // Slime Milk bucket — single item, tint the milk layer (tintIndex 1) by
-        // the SLIME_VARIANT component's registry colour. Variant-less bucket
-        // falls back to a milky off-white so the item stays visible.
-        event.register((stack, tintIndex) -> {
-            if (tintIndex != 1) {
-                return -1;
-            }
-            ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
-            if (variantId == null) {
-                return opaque(0xF0F0E0);
-            }
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.level == null) {
-                return -1;
-            }
-            Registry<SlimeVariant> registry = mc.level.registryAccess()
-                .registry(PFRegistries.SLIME_VARIANT).orElse(null);
-            if (registry == null) {
-                return -1;
-            }
-            SlimeVariant variant = registry.get(variantId);
-            if (variant == null) {
-                return -1;
-            }
-            final int argb = opaque(variant.primaryColor());
-            if (PFDebug.on(PFDebug.Area.TINT)) {
-                PFDebug.logOnce(PFDebug.Area.TINT, "slime_milk_bucket/" + variantId,
-                    () -> String.format("slime_milk_bucket variant=%s -> #%08X", variantId, argb));
-            }
-            return argb;
-        }, PFItems.SLIME_MILK_BUCKET.get());
+        // Slime Milk buckets — one item per variant (v1.8). Each tints its milk
+        // layer (tintIndex 1) by its OWN variant's registry colour (the variant is
+        // the item identity, no component lookup). Falls back to milky off-white
+        // before the registry is available so the item stays visible.
+        for (ResourceLocation variantId : PFVariantMilk.registeredVariants()) {
+            final ResourceLocation vid = variantId;
+            event.register((stack, tintIndex) -> {
+                if (tintIndex != 1) {
+                    return -1;
+                }
+                int color = variantTint(vid);
+                return color != -1 ? color : opaque(0xF0F0E0);
+            }, PFVariantMilk.bucket(vid));
+        }
 
         // Primed Frog Egg block items — BlockColor doesn't auto-propagate to
         // BlockItem in 1.21.1 the way it does in 1.21.4+; register explicit
@@ -374,12 +355,11 @@ public final class PFClientEvents {
     }
 
     /**
-     * Bind the single Slime Milk FluidType to its greyscale still + flowing
-     * textures, tinted per-position from the source block's variant. One fluid
-     * serves every variant: {@link #slimeMilkTint} reads the
-     * {@link SlimeMilkSourceBlockEntity} at the position and returns the
-     * variant's {@code primary_color} (white when there's no variant — flowing /
-     * spread milk).
+     * Bind each per-variant Slime Milk FluidType (v1.8) to the shared greyscale
+     * still + flowing textures, tinted by that variant's {@code primary_color}.
+     * Because the variant IS the fluid (one FluidType per variant), the tint is a
+     * simple per-type colour lookup - no position walk-back: every block of a
+     * variant's pool, source or flowing, tints the same.
      */
     @SubscribeEvent
     public static void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
@@ -387,121 +367,53 @@ public final class PFClientEvents {
             ProductiveFrogs.MOD_ID, "block/slime_milk_still");
         ResourceLocation flow = ResourceLocation.fromNamespaceAndPath(
             ProductiveFrogs.MOD_ID, "block/slime_milk_flow");
-        event.registerFluidType(
-            new IClientFluidTypeExtensions() {
-                @Override
-                public ResourceLocation getStillTexture() { return still; }
-
-                @Override
-                public ResourceLocation getFlowingTexture() { return flow; }
-
-                @Override
-                public int getTintColor() { return 0xFFFFFFFF; }
-
-                @Override
-                public int getTintColor(FluidState state, BlockAndTintGetter getter, BlockPos pos) {
-                    // Source blocks carry the variant on their BE; flowing/spread
-                    // milk does not (fluid spreading doesn't copy BlockEntities). Milk
-                    // is meant to be poured into pools that slimes spawn from, so the
-                    // whole pool must tint per-variant, not just the source block -
-                    // slimeMilkTint walks flowing milk back to its source.
-                    return slimeMilkTint(getter, pos);
-                }
-            },
-            PFFluidTypes.SLIME_MILK.get()
-        );
-    }
-
-    /** Fallback when no variant resolves (registry not loaded, or no reachable source). */
-    private static final int DEFAULT_MILK_TINT = 0xFFFFFFFF;
-
-    /**
-     * Upper bound on positions inspected while walking a flowing block back to its
-     * source: the start block plus up to 8 hops. Milk reaches ~4 blocks
-     * (slopeFindDistance 4) plus short vertical falls, so this is ample headroom -
-     * the walk stops as soon as it reaches the source.
-     */
-    private static final int MAX_MILK_WALK_STEPS = 9;
-
-    private static final Direction[] HORIZONTALS =
-        {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
-
-    /**
-     * Per-position Slime Milk tint: the variant's primary_color. A source reads its
-     * own BE; flowing / spread milk has no variant BE, so {@link #findMilkVariant}
-     * walks the fluid back to the source (toward higher fluid amount / upward) and
-     * uses that. Opaque white when nothing resolves.
-     */
-    private static int slimeMilkTint(BlockAndTintGetter getter, BlockPos pos) {
-        if (pos == null) {
-            return DEFAULT_MILK_TINT;
-        }
-        ResourceLocation variantId = findMilkVariant(getter, pos);
-        if (variantId != null) {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.level != null) {
-                Registry<SlimeVariant> registry = mc.level.registryAccess()
-                    .registry(PFRegistries.SLIME_VARIANT).orElse(null);
-                if (registry != null) {
-                    SlimeVariant variant = registry.get(variantId);
-                    if (variant != null) {
-                        return opaque(variant.primaryColor());
-                    }
-                }
-            }
-        }
-        return DEFAULT_MILK_TINT;
-    }
-
-    /**
-     * Find the variant feeding the milk at {@code start} by walking the fluid back
-     * to its source: step straight up when a column is falling, else toward the
-     * horizontal neighbour with the most milk (the source is the full-level high
-     * point a puddle slopes down from). Returns the first source BE's variant, or
-     * null if the walk dead-ends before reaching one. Bounded by
-     * {@link #MAX_MILK_WALK_STEPS}; the whole walk stays within milk's 4-block reach,
-     * well inside the chunk render region.
-     *
-     * <p>Where two different-variant pools touch, the shared boundary block tints
-     * with whichever source is upstream by fluid amount - a minor, deterministic
-     * seam artifact, preferable to the white fallback.
-     */
-    private static ResourceLocation findMilkVariant(BlockAndTintGetter getter, BlockPos start) {
-        BlockPos pos = start;
-        for (int step = 0; step < MAX_MILK_WALK_STEPS; step++) {
-            BlockEntity be = getter.getBlockEntity(pos);
-            if (be instanceof SlimeMilkSourceBlockEntity milkBe && milkBe.getVariantId() != null) {
-                return milkBe.getVariantId();
-            }
-            // A falling column is fed from above: follow it up first.
-            BlockPos above = pos.above();
-            if (milkAmount(getter, above) > 0) {
-                pos = above;
+        for (ResourceLocation variantId : PFVariantMilk.registeredVariants()) {
+            final ResourceLocation vid = variantId;
+            FluidType type = PFVariantMilk.fluidType(vid);
+            if (type == null) {
                 continue;
             }
-            // Otherwise climb the puddle's slope toward the full-level source.
-            int current = milkAmount(getter, pos);
-            BlockPos best = null;
-            int bestAmount = current;
-            for (Direction dir : HORIZONTALS) {
-                BlockPos neighbour = pos.relative(dir);
-                int amount = milkAmount(getter, neighbour);
-                if (amount > bestAmount) {
-                    bestAmount = amount;
-                    best = neighbour;
-                }
-            }
-            if (best == null) {
-                return null;
-            }
-            pos = best;
+            event.registerFluidType(
+                new IClientFluidTypeExtensions() {
+                    @Override
+                    public ResourceLocation getStillTexture() { return still; }
+
+                    @Override
+                    public ResourceLocation getFlowingTexture() { return flow; }
+
+                    @Override
+                    public int getTintColor() {
+                        int color = variantTint(vid);
+                        return color != -1 ? color : 0xFFFFFFFF;
+                    }
+
+                    @Override
+                    public int getTintColor(FluidState state, BlockAndTintGetter getter, BlockPos pos) {
+                        return getTintColor();
+                    }
+                },
+                type
+            );
         }
-        return null;
     }
 
-    /** Slime Milk fluid amount (1-8) at pos, or 0 when the position is not slime milk. */
-    private static int milkAmount(BlockAndTintGetter getter, BlockPos pos) {
-        FluidState fs = getter.getFluidState(pos);
-        return fs.getType().getFluidType() == PFFluidTypes.SLIME_MILK.get() ? fs.getAmount() : 0;
+    /**
+     * Opaque {@code primary_color} for a variant from the {@code slime_variant}
+     * registry, or {@code -1} when the registry is not yet available (caller picks
+     * a fallback). Shared by the per-variant milk bucket item tint and per-variant
+     * fluid tint.
+     */
+    private static int variantTint(ResourceLocation variantId) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) {
+            return -1;
+        }
+        Registry<SlimeVariant> registry = mc.level.registryAccess()
+            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+        if (registry == null) {
+            return -1;
+        }
+        SlimeVariant variant = registry.get(variantId);
+        return variant == null ? -1 : opaque(variant.primaryColor());
     }
 }

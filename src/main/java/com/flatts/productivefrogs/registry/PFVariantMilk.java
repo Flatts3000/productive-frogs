@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.registry;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock;
 import com.flatts.productivefrogs.content.fluid.SlimeMilkFluid;
+import com.flatts.productivefrogs.content.item.SlimeMilkBucketItem;
 import com.flatts.productivefrogs.util.PFDebug;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -50,7 +51,7 @@ public final class PFVariantMilk {
     private static final Map<ResourceLocation, DeferredHolder<Fluid, SlimeMilkFluid.Source>> SOURCES = new LinkedHashMap<>();
     private static final Map<ResourceLocation, DeferredHolder<Fluid, SlimeMilkFluid.Flowing>> FLOWINGS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, DeferredBlock<SlimeMilkSourceBlock>> BLOCKS = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, DeferredItem<BucketItem>> BUCKETS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, DeferredItem<SlimeMilkBucketItem>> BUCKETS = new LinkedHashMap<>();
 
     private static boolean bootstrapped = false;
 
@@ -102,7 +103,7 @@ public final class PFVariantMilk {
 
         BUCKETS.put(vid, PFItems.ITEMS.registerItem(
             base + "_bucket",
-            p -> new BucketItem(SOURCES.get(vid).get(), p.stacksTo(1).craftRemainder(Items.BUCKET))));
+            p -> new SlimeMilkBucketItem(SOURCES.get(vid).get(), vid, p.stacksTo(1).craftRemainder(Items.BUCKET))));
     }
 
     /** Mirror of the single source block's properties (see {@link PFBlocks}). */
@@ -133,14 +134,29 @@ public final class PFVariantMilk {
         return h == null ? null : h.get();
     }
 
+    public static FluidType fluidType(ResourceLocation variantId) {
+        DeferredHolder<FluidType, FluidType> h = TYPES.get(variantId);
+        return h == null ? null : h.get();
+    }
+
     public static SlimeMilkSourceBlock block(ResourceLocation variantId) {
         DeferredBlock<SlimeMilkSourceBlock> h = BLOCKS.get(variantId);
         return h == null ? null : h.get();
     }
 
+    /**
+     * All per-variant source blocks, for the shared {@code BlockEntityType.Builder}
+     * valid-blocks set (one BE type backs every per-variant source block). Resolved
+     * lazily at BE-registration time, after {@link #bootstrap} has run.
+     */
+    public static net.minecraft.world.level.block.Block[] allBlocksArray() {
+        return BLOCKS.values().stream().map(DeferredBlock::get)
+            .toArray(net.minecraft.world.level.block.Block[]::new);
+    }
+
     /** The per-variant Slime Milk bucket item, or null if the variant has no milk fluid. */
     public static Item bucket(ResourceLocation variantId) {
-        DeferredItem<BucketItem> h = BUCKETS.get(variantId);
+        DeferredItem<SlimeMilkBucketItem> h = BUCKETS.get(variantId);
         return h == null ? null : h.get();
     }
 }

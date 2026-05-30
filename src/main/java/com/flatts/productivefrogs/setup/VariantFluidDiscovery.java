@@ -65,7 +65,14 @@ public final class VariantFluidDiscovery {
     public static Set<ResourceLocation> discover() {
         Set<ResourceLocation> ids = new LinkedHashSet<>();
         collectBuiltins(ids);
-        collectPackAdditions(ids);
+        // NOTE: the config/productivefrogs/variants folder (collectPackAdditions) is
+        // NOT scanned yet. Minting a fluid for a pack-added variant only helps if the
+        // same file ALSO feeds the slime_variant content registry, which needs a
+        // custom PackResources to expose the flat config files under the datapack
+        // path. Until that lands, scanning the folder would create fluids with no
+        // content (a broken half-variant), so it stays disabled. Shipped (bundled)
+        // variants are unaffected - they get content from PF's bundled datapack.
+        // See docs/automated_milk_variants.md ("Adding your own automatable variant").
         PFDebug.log(PFDebug.Area.REGISTRY, () -> "milk variant discovery: " + ids.size() + " ids " + ids);
         return ids;
     }
