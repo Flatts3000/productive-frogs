@@ -268,6 +268,9 @@ tasks.register('publishCurseForge', net.darkhax.curseforgegradle.TaskPublishCurs
     primary.addGameVersion('1.21.1')
     primary.addModLoader('NeoForge')
     primary.addJavaVersion('Java 21')
+    // Tag both environments so the file lists as Client + Server (the mod runs on
+    // both - server spawns/economy, client render/JEI). Saves re-tagging each upload.
+    primary.addEnvironment('Client', 'Server')
     primary.changelog = extractChangelogSection(file("${rootDir}/CHANGELOG.md"), mod_version)
     primary.changelogType = 'markdown'
     primary.displayName = "${mod_name} ${mod_version}"
