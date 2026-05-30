@@ -141,7 +141,28 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
         if (!(level instanceof ServerLevel serverLevel) || !level.getFluidState(pos).isSource()) {
             return;
         }
+        // Per-variant block: seed the BE from the block's baked-in variant so a
+        // vanilla-bucket placement (no checkExtraContent) or a tank-mod setBlock
+        // still spawns + tints correctly. setVariantId is idempotent (seedIfUnset),
+        // so a re-bucketed source that already restored its budget is untouched.
+        if (blockVariant != null && getSourceBE(level, pos) instanceof SlimeMilkSourceBlockEntity be
+                && be.getVariantId() == null) {
+            be.setVariantId(blockVariant);
+        }
         scheduleNextSpawnTick(serverLevel, pos, level.getRandom(), 0);
+    }
+
+    /**
+     * The variant this source produces: the block's baked-in variant (per-variant
+     * fluids) wins, falling back to the BE mirror (legacy single block + the
+     * re-bucket round-trip). Null = inert spread milk.
+     */
+    @Nullable
+    private ResourceLocation effectiveVariant(@Nullable SlimeMilkSourceBlockEntity be) {
+        if (blockVariant != null) {
+            return blockVariant;
+        }
+        return be != null ? be.getVariantId() : null;
     }
 
     @Override
@@ -154,8 +175,8 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
         // bucket-placed source has no BE variant and just sits as decoration:
         // no spawn, no depletion, no reschedule.
         SlimeMilkSourceBlockEntity be = getSourceBE(level, pos);
-        ResourceLocation variantId = be != null ? be.getVariantId() : null;
-        if (variantId == null) {
+        ResourceLocation variantId = effectiveVariant(be);
+        if (variantId == null || be == null) {
             return;
         }
 
@@ -261,7 +282,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
             return;
         }
         SlimeMilkSourceBlockEntity be = getSourceBE(level, pos);
-        if (be == null || be.getVariantId() == null) {
+        if (be == null || effectiveVariant(be) == null) {
             return;
         }
         // Count / Infinite are meaningless when depletion is globally off; leave
