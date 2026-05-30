@@ -73,6 +73,19 @@ the pool feeds catalysts automatically. Enabled by default; a pack can disable o
 retune them. Still a single-block, hand-applied V1 buff - no power or pipes. Spec:
 [docs/slime_milk_catalysts.md](./docs/slime_milk_catalysts.md).
 
+### v1.8.0 (shipped 2026-05-29): Automatable Slime Milk
+
+Each variant's Slime Milk is now its own fluid, so a chosen variant can be farmed
+fully hands-off. A fluid-automation mod (Just Dire Things Fluid Collector/Placer,
+Mekanism, Pipez, or any fluid handler) can collect a variant's milk from a source,
+move it through pipes and tanks, and place it back as the same variant - no player
+in the loop. The Slime Milker and the empty-bucket round-trip work exactly as
+before. One caveat: catalyst buffs survive a normal bucket re-pickup but are
+**not** preserved when milk passes through a tank, so an automated line spawns at
+base rates. **Breaking for existing worlds:** old placed Slime Milk and old milk
+buckets do not carry over - re-mill from Slime Buckets. Design:
+[docs/automated_milk_variants.md](./docs/automated_milk_variants.md).
+
 ---
 
 ## v2: automation

@@ -153,10 +153,9 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         };
         registration.registerSubtypeInterpreter(PFItems.CONFIGURABLE_FROGLIGHT.get(), slimeVariantInterp);
         registration.registerSubtypeInterpreter(PFItems.RESOURCE_SLIME_SPAWN_EGG.get(), slimeVariantInterp);
-        // Slime Milk bucket also carries its variant in SLIME_VARIANT - without
-        // this, JEI dedups every variant-stamped milk bucket into one entry while
-        // the creative tab shows them all (known_issues.md).
-        registration.registerSubtypeInterpreter(PFItems.SLIME_MILK_BUCKET.get(), slimeVariantInterp);
+        // Slime Milk buckets are per-variant distinct items (v1.8) - no subtype
+        // interpreter needed; each <variant>_slime_milk_bucket is already its own
+        // JEI entry.
 
         // Frog Egg bottle — subtype by CONTAINED_CATEGORY.
         registration.registerSubtypeInterpreter(PFItems.FROG_EGG.get(), new ISubtypeInterpreter<>() {
@@ -233,8 +232,13 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         List<SlimeMilkerRecipeCategory.Recipe> recipes = new ArrayList<>();
         for (java.util.Map.Entry<ResourceKey<SlimeVariant>, SlimeVariant> entry : variants.entrySet()) {
             ResourceLocation variantId = entry.getKey().location();
-            ItemStack input = PFItems.variantSlimeBucket(variantId, entry.getValue().category());
             ItemStack output = PFItems.slimeMilkBucket(variantId);
+            // A content-only variant (no per-variant milk fluid minted at mod-init)
+            // has no milk bucket - skip it rather than show a broken empty-output recipe.
+            if (output.isEmpty()) {
+                continue;
+            }
+            ItemStack input = PFItems.variantSlimeBucket(variantId, entry.getValue().category());
             recipes.add(new SlimeMilkerRecipeCategory.Recipe(input, output));
         }
         reg.addRecipes(SlimeMilkerRecipeCategory.TYPE, recipes);
@@ -314,12 +318,15 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
                 "productivefrogs.jei.variant_froglight.info", frogName, variantSlimeName);
             reg.addIngredientInfo(froglight, VanillaTypes.ITEM_STACK, froglightInfo);
 
-            // 4. Variant Slime Milk bucket — the single slime_milk_bucket item
-            // stamped with this variant (collapsed from the per-variant items).
+            // 4. The variant's own Slime Milk bucket (per-variant, v1.8). A
+            // content-only variant with no milk fluid yields EMPTY - JEI rejects an
+            // empty ingredient, so only add the info page when a bucket exists.
             ItemStack milkBucket = PFItems.slimeMilkBucket(entry.getKey().location());
-            Component milkInfo = Component.translatable(
-                "productivefrogs.jei.slime_milk.info", variantSlimeName);
-            reg.addIngredientInfo(milkBucket, VanillaTypes.ITEM_STACK, milkInfo);
+            if (!milkBucket.isEmpty()) {
+                Component milkInfo = Component.translatable(
+                    "productivefrogs.jei.slime_milk.info", variantSlimeName);
+                reg.addIngredientInfo(milkBucket, VanillaTypes.ITEM_STACK, milkInfo);
+            }
         }
     }
 

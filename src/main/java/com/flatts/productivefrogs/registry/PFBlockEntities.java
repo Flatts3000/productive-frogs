@@ -47,14 +47,16 @@ public final class PFBlockEntities {
         );
 
     /**
-     * BE type for the single Slime Milk source block. Stores the variant
-     * identifier so one generic fluid/block spawns + tints per-variant (see
+     * One BE type backing every per-variant Slime Milk source block (v1.8). The
+     * valid-blocks set is all per-variant blocks minted by {@link PFVariantMilk};
+     * resolved lazily here (after bootstrap), so the BE stores the spawn economy +
+     * catalyst upgrades while the block carries the variant (see
      * {@link SlimeMilkSourceBlockEntity}).
      */
     public static final Supplier<BlockEntityType<SlimeMilkSourceBlockEntity>> SLIME_MILK_SOURCE =
         BLOCK_ENTITIES.register(
             "slime_milk_source",
-            () -> BlockEntityType.Builder.of(SlimeMilkSourceBlockEntity::new, PFBlocks.SLIME_MILK_SOURCE.get()).build(null)
+            () -> BlockEntityType.Builder.of(SlimeMilkSourceBlockEntity::new, PFVariantMilk.allBlocksArray()).build(null)
         );
 
     /** BE type for the {@code spawnery} block - holds the 4-slot inventory + cook/burn timers. */

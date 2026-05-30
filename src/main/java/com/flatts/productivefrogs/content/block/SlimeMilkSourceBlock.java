@@ -5,10 +5,10 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.item.MilkCatalyst;
+import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
-import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFRegistries;
 import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
@@ -39,19 +39,21 @@ import net.minecraft.world.level.material.FlowingFluid;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Slime Milk's placeable form: the single source block for the one generic
- * {@code slime_milk} fluid. Subclasses {@link LiquidBlock} for vanilla flow and
- * is an {@link EntityBlock} so its {@link SlimeMilkSourceBlockEntity} can store
- * the variant + catalyst upgrades: collapsed from the former one-block-per-variant
- * model so a datapack-added variant gets milk with no Java edit (see
- * {@code docs/refactor_data_driven_variants.md}).
+ * Slime Milk's placeable form. As of v1.8 each variant has its own source block
+ * ({@code <variant>_slime_milk}, minted by
+ * {@link com.flatts.productivefrogs.registry.PFVariantMilk}), so the block carries
+ * its variant baked in at registration ({@link #blockVariant()}). Subclasses
+ * {@link LiquidBlock} for vanilla flow and is an {@link EntityBlock} so its
+ * {@link SlimeMilkSourceBlockEntity} can store the spawn economy + catalyst upgrades.
  *
- * <p>The variant + upgrades are written to the BE on placement (by
+ * <p>The variant is authoritative on the block ({@link #effectiveVariant}); the BE
+ * keeps a mirror, seeded in {@link #onPlace} so a tank-mod raw {@code setBlock}
+ * placement still spawns the right variant. Catalyst/budget upgrades are written to
+ * the BE on placement (by
  * {@link com.flatts.productivefrogs.content.item.SlimeMilkBucketItem#checkExtraContent})
- * and read back when re-bucketing ({@link #pickupBlock}). Only a source block
- * with a non-null variant spawns slimes + tints per-variant; milk that spread
- * from a source (fluid spreading does not copy BlockEntities) carries no variant
- * and is inert decoration.
+ * and read back when re-bucketing ({@link #pickupBlock}). Only a source block with a
+ * variant spawns slimes + tints; milk that spread from a source (fluid spreading does
+ * not copy BlockEntities) carries no variant and is inert decoration.
  *
  * <p><b>Spawn economy (v1.7):</b> remaining-spawn count, speed level, quantity
  * level, and the infinite flag all live on the {@link SlimeMilkSourceBlockEntity}
@@ -102,8 +104,36 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
     @Nullable
     public static volatile Boolean depletionEnabledOverride = null;
 
+    /**
+     * Test-only override for {@link PFConfig#maxNearbySlimes()} so a GameTest can
+     * exercise the density cap with a small count instead of spawning 30 entities.
+     * Volatile for cross-thread visibility, like {@link #depletionEnabledOverride}.
+     */
+    @Nullable
+    public static volatile Integer spawnCapOverride = null;
+
+    /**
+     * The variant this block produces, baked in at registration (per-variant
+     * fluids, v1.8). Authoritative over the BE's mirror, so a source placed by a
+     * tank/pipe mod that never wrote the BE (e.g. JDT's raw {@code setBlock})
+     * still spawns the right variant. Null for the legacy single source block.
+     */
+    @Nullable
+    private final ResourceLocation blockVariant;
+
     public SlimeMilkSourceBlock(FlowingFluid fluid, Properties properties) {
+        this(fluid, null, properties);
+    }
+
+    public SlimeMilkSourceBlock(FlowingFluid fluid, @Nullable ResourceLocation variant, Properties properties) {
         super(fluid, properties);
+        this.blockVariant = variant;
+    }
+
+    /** The variant baked into this block at registration, or null for the legacy block. */
+    @Nullable
+    public ResourceLocation blockVariant() {
+        return blockVariant;
     }
 
     @Override
@@ -121,7 +151,28 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
         if (!(level instanceof ServerLevel serverLevel) || !level.getFluidState(pos).isSource()) {
             return;
         }
+        // Per-variant block: seed the BE from the block's baked-in variant so a
+        // vanilla-bucket placement (no checkExtraContent) or a tank-mod setBlock
+        // still spawns + tints correctly. setVariantId is idempotent (seedIfUnset),
+        // so a re-bucketed source that already restored its budget is untouched.
+        if (blockVariant != null && getSourceBE(level, pos) instanceof SlimeMilkSourceBlockEntity be
+                && be.getVariantId() == null) {
+            be.setVariantId(blockVariant);
+        }
         scheduleNextSpawnTick(serverLevel, pos, level.getRandom(), 0);
+    }
+
+    /**
+     * The variant this source produces: the block's baked-in variant (per-variant
+     * fluids) wins, falling back to the BE mirror (legacy single block + the
+     * re-bucket round-trip). Null = inert spread milk.
+     */
+    @Nullable
+    private ResourceLocation effectiveVariant(@Nullable SlimeMilkSourceBlockEntity be) {
+        if (blockVariant != null) {
+            return blockVariant;
+        }
+        return be != null ? be.getVariantId() : null;
     }
 
     @Override
@@ -134,26 +185,64 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
         // bucket-placed source has no BE variant and just sits as decoration:
         // no spawn, no depletion, no reschedule.
         SlimeMilkSourceBlockEntity be = getSourceBE(level, pos);
-        ResourceLocation variantId = be != null ? be.getVariantId() : null;
-        if (variantId == null) {
+        ResourceLocation variantId = effectiveVariant(be);
+        if (variantId == null || be == null) {
             return;
         }
 
-        if (depletionEnabled() && !be.isInfinite()) {
-            if (be.getSpawnsRemaining() <= 0) {
-                // True air swap to drain: removeBlock on a fluid block would
-                // reset the source to its default state.
-                level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
-                PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
-                    "source @%s: depleted, drained to air (variant=%s)", pos, variantId));
-                return;
-            }
-            spawnBatch(level, pos, random, variantId, be);
+        boolean depleting = depletionEnabled() && !be.isInfinite();
+        if (depleting && be.getSpawnsRemaining() <= 0) {
+            // True air swap to drain: removeBlock on a fluid block would
+            // reset the source to its default state.
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+            PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
+                "source @%s: depleted, drained to air (variant=%s)", pos, variantId));
+            return;
+        }
+        // Density cap: pause (WITHOUT spending the budget) when this source's own
+        // species already crowds the area, so an automated / Endless / Rapid source
+        // can't flood the server with slimes faster than frogs eat them. Reschedule
+        // so it resumes once the count drops back below the cap. (chooseSpawnPos also
+        // skips when no adjacent block is free, a second emergent limit.)
+        if (PFConfig.spawnCapEnabled() && isAreaCrowded(level, pos, variantId)) {
+            PFDebug.logOnce(PFDebug.Area.MILK_SOURCE, "capped#" + pos, () -> String.format(
+                "source @%s: paused, >= %d nearby %s slimes (cap)", pos, PFConfig.maxNearbySlimes(), variantId));
+            scheduleNextSpawnTick(level, pos, random, be.getSpeedLevel());
+            return;
+        }
+        spawnBatch(level, pos, random, variantId, be);
+        if (depleting) {
             be.decrementSpawns();
-        } else {
-            spawnBatch(level, pos, random, variantId, be);
         }
         scheduleNextSpawnTick(level, pos, random, be.getSpeedLevel());
+    }
+
+    /**
+     * True when at least {@link PFConfig#maxNearbySlimes()} Resource Slimes of this
+     * source's own species are already within {@link PFConfig#spawnCapRadius()} of
+     * it. Counts only PF {@link ResourceSlime}s of the matching {@link Category}
+     * (vanilla slimes don't count); if the variant's category can't be resolved
+     * (e.g. a sentinel source), counts any ResourceSlime so the cap still bounds it.
+     */
+    private static boolean isAreaCrowded(ServerLevel level, BlockPos pos, ResourceLocation variantId) {
+        Category category = categoryForVariant(level, variantId);
+        net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(pos).inflate(PFConfig.spawnCapRadius());
+        java.util.List<ResourceSlime> nearby = level.getEntitiesOfClass(
+            ResourceSlime.class, box,
+            category == null ? slime -> true : slime -> slime.getCategory() == category);
+        Integer capOverride = spawnCapOverride;
+        int cap = capOverride != null ? capOverride : PFConfig.maxNearbySlimes();
+        return nearby.size() >= cap;
+    }
+
+    @Nullable
+    private static Category categoryForVariant(ServerLevel level, ResourceLocation variantId) {
+        var registry = level.registryAccess().registry(PFRegistries.SLIME_VARIANT).orElse(null);
+        if (registry == null) {
+            return null;
+        }
+        SlimeVariant variant = registry.get(variantId);
+        return variant == null ? null : variant.category();
     }
 
     private static boolean depletionEnabled() {
@@ -241,7 +330,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
             return;
         }
         SlimeMilkSourceBlockEntity be = getSourceBE(level, pos);
-        if (be == null || be.getVariantId() == null) {
+        if (be == null || effectiveVariant(be) == null) {
             return;
         }
         // Count / Infinite are meaningless when depletion is globally off; leave
@@ -367,18 +456,19 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
     @Override
     public ItemStack pickupBlock(@Nullable Player player, LevelAccessor level, BlockPos pos, BlockState state) {
         SlimeMilkSourceBlockEntity be = getSourceBE(level, pos);
-        ResourceLocation variantId = be != null ? be.getVariantId() : null;
+        ResourceLocation variantId = effectiveVariant(be);
         int remaining = be != null ? be.getSpawnsRemaining() : 0;
         int capacity = be != null ? be.getSpawnsCapacity() : 0;
         int speed = be != null ? be.getSpeedLevel() : 0;
         int quantity = be != null ? be.getQuantityLevel() : 0;
         boolean infinite = be != null && be.isInfinite();
+        // super returns the per-variant bucket (this block's fluid.getBucket()),
+        // which already carries the variant via its item identity (v1.8) - no
+        // SLIME_VARIANT component needed. Stamp the catalyst/budget upgrades so a
+        // buffed source survives the world -> bucket round-trip. An inert
+        // spread-milk grab has no variant and must not stamp misleading values.
         ItemStack bucket = super.pickupBlock(player, level, pos, state);
-        // Only a variant-carrying source actually spawns + depletes, so stamp the
-        // variant + upgrades only for one. An inert spread-milk grab has no variant
-        // and must not stamp misleading values.
-        if (variantId != null && bucket.is(PFItems.SLIME_MILK_BUCKET.get())) {
-            bucket.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
+        if (variantId != null && !bucket.isEmpty()) {
             bucket.set(PFDataComponents.SPAWNS_REMAINING.get(), remaining);
             bucket.set(PFDataComponents.MILK_CAPACITY.get(), capacity);
             if (speed > 0) {

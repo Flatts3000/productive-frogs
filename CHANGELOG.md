@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.8.0 - 2026-05-29 - Automatable Slime Milk
+
+Slime Milk can now be piped. Each variant has its own milk fluid, so tank-and-pipe automation (Just Dire Things Fluid Collector / Placer, Mekanism, Pipez, any fluid handler) can collect a variant's milk, move it through pipes and tanks, and place it back as the same variant. Hands-off variant farming, end to end.
+
+### Added
+
+- **Per-variant Slime Milk fluids.** Every variant now has its own Slime Milk fluid, source block, and bucket. Because the variant is the fluid itself, fluid mods that move it through pipes and tanks keep the variant intact, so a Fluid Collector + Fluid Placer setup farms a specific variant unattended. The Slime Milker loop and the bucket round-trip work exactly as before.
+- **Slime spawn cap.** A Slime Milk source now pauses spawning when its own species already crowds the area (default: 30 slimes within 8 blocks), and resumes once frogs thin them out. It does not spend its remaining-spawn budget while paused. This keeps an automated or Endless source from flooding the server when frogs can't keep up. Tunable or disable-able under the `slime_milk_spawning` config (`spawnCapEnabled`, `maxNearbySlimes`, `spawnCapRadius`).
+
+### Changed
+
+- **BREAKING - placed Slime Milk and milk buckets from older worlds will not carry over.** The old single `slime_milk` fluid / block and `slime_milk_bucket` item are replaced by per-variant ones (`<variant>_slime_milk`, `<variant>_slime_milk_bucket`). Any Slime Milk placed in the world or sitting in inventories in a pre-1.8 save becomes an empty/air reference. Re-mill from Slime Buckets after updating. No world migration is provided, consistent with prior breaking releases.
+- **Flowing milk tints from its own fluid** instead of tracing back to the nearest source block, so a poured pool always shows its variant colour.
+
+### Notes
+
+- Catalyst buffs, the Jade readout, the bucket tooltip, and the Slime Milker all behave as in v1.7. Buffs still ride the bucket through re-bucketing; routing milk through a tank is the one path where buffs are not preserved.
+- Adding your own pipe-automatable variant from a pack (beyond the ones the mod ships) is a planned follow-up. See [docs/automated_milk_variants.md](docs/automated_milk_variants.md).
+
 ## v1.7.0 - 2026-05-29 - Slime Milk catalysts
 
 Hands-off production gets its first real boost. Four craftable **catalysts** let you buff a placed Slime Milk source: just toss one into the pool. The buffs save to the source and ride along when you bucket it back up.

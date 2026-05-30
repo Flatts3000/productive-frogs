@@ -99,6 +99,8 @@ The mod is fully playable today. Everything below is live on CurseForge. Targets
 
 **v1.7.0 (shipped): Slime Milk catalysts.** The first real boost to hands-off production. Craft four catalysts and just toss them into a placed Slime Milk source to buff it: more spawns before it runs dry (uncapped), faster spawning, more slimes per spawn, or an Endless catalyst that makes the source never run dry. The buffs save to the source and ride along when you bucket it back up, the in-world tooltip and the bucket itself tell you what a source carries, and a dropper aimed into the pool feeds catalysts automatically. Enabled by default; a pack can disable or retune them.
 
+**v1.8.0 (shipped): automatable Slime Milk.** A chosen slime can now be farmed completely hands-off. Each variant's Slime Milk is its own liquid, so fluid-automation mods (Just Dire Things, Mekanism, Pipez, and other fluid handlers) can pump milk out of a source, carry it through pipes and tanks, and place it back as the same variant - no need to stand there with a bucket. The Slime Milker and the hand-bucket loop work just like before. One catch: a source's catalyst boosts ride along when you bucket it up by hand, but they reset when milk runs through a tank, so an automated line spawns at the base rate. Heads-up for existing worlds: old placed Slime Milk and old milk buckets do not carry over - re-mill them from Slime Buckets. More detail: [the automated milk doc](https://github.com/Flatts3000/productive-frogs/blob/main/docs/automated_milk_variants.md).
+
 ### v2: automation
 
 The scale-up release. v1 lives unchanged; v2 layers automation on top. A player who never crafts a v2 block still has every v1 capability.

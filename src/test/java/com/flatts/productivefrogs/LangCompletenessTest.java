@@ -43,8 +43,19 @@ class LangCompletenessTest {
         "entity.productivefrogs.resource_slime.",          // ResourceSlime entity name + JEI info
         "item.productivefrogs.slime_bucket.",              // SlimeBucketItem
         "item.productivefrogs.resource_slime_spawn_egg.",  // ResourceSlimeSpawnEggItem
-        "block.productivefrogs.configurable_froglight.",   // ConfigurableFroglightItem
-        "item.productivefrogs.slime_milk_bucket."          // SlimeMilkBucketItem
+        "block.productivefrogs.configurable_froglight."    // ConfigurableFroglightItem
+    );
+
+    /**
+     * Per-variant Slime Milk keys (v1.8 per-variant fluids). Unlike the families
+     * above, the variant id is a PREFIX, not a suffix (the milk fluid/block/bucket
+     * are distinct registry objects named {@code <variant>_slime_milk...}), so they
+     * are checked via {@code String.format(template, variantId)}.
+     */
+    private static final List<String> MILK_PER_VARIANT_TEMPLATES = List.of(
+        "item.productivefrogs.%s_slime_milk_bucket",  // per-variant bucket
+        "block.productivefrogs.%s_slime_milk",        // per-variant source block (Jade look-at name)
+        "fluid_type.productivefrogs.%s_slime_milk"    // per-variant FluidType (JEI fluid name)
     );
 
     private static final Path RESOURCES_ROOT = resourcesRoot();
@@ -95,8 +106,9 @@ class LangCompletenessTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("shippedVariantIds")
     void everyShippedVariantHasAllPerVariantLangKeys(String variantId) {
-        List<String> missing = PER_VARIANT_FAMILIES.stream()
-            .map(family -> family + variantId)
+        List<String> missing = Stream.concat(
+                PER_VARIANT_FAMILIES.stream().map(family -> family + variantId),
+                MILK_PER_VARIANT_TEMPLATES.stream().map(t -> String.format(t, variantId)))
             .filter(key -> !LANG_KEYS.contains(key))
             .toList();
         assertTrue(missing.isEmpty(),

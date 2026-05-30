@@ -16,8 +16,8 @@ import com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFFluidTypes;
-import com.flatts.productivefrogs.registry.PFFluids;
 import com.flatts.productivefrogs.registry.PFItems;
+import com.flatts.productivefrogs.registry.PFVariantMilk;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -1344,19 +1344,16 @@ public final class PFGameTests {
     // Helpers for the collapsed single-fluid Slime Milk model
     // ---------------------------------------------------------------------
 
-    /** A Slime Milk bucket (the single item) stamped with productivefrogs:&lt;variantPath&gt;. */
+    /** The per-variant Slime Milk bucket for productivefrogs:&lt;variantPath&gt;. */
     private static ItemStack milkBucket(String variantPath) {
-        ItemStack stack = new ItemStack(PFItems.SLIME_MILK_BUCKET.get());
-        stack.set(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get(),
+        return PFItems.slimeMilkBucket(
             ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantPath));
-        return stack;
     }
 
-    /** True if {@code stack} is the Slime Milk bucket stamped with productivefrogs:&lt;variantPath&gt;. */
+    /** True if {@code stack} is the per-variant Slime Milk bucket for productivefrogs:&lt;variantPath&gt;. */
     private static boolean isMilkBucket(ItemStack stack, String variantPath) {
-        return stack.is(PFItems.SLIME_MILK_BUCKET.get())
-            && ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantPath)
-                .equals(stack.get(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get()));
+        return stack.is(PFVariantMilk.bucket(
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantPath)));
     }
 
     /**
@@ -1366,8 +1363,12 @@ public final class PFGameTests {
      */
     private static com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock placeMilkSource(
             GameTestHelper helper, BlockPos pos, String variantPath) {
-        var block = (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
-        helper.setBlock(pos, block);
+        var block = PFVariantMilk.block(
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantPath));
+        // The per-variant block carries its variant baked in; onPlace seeds the BE
+        // variant + spawn budget. We still stamp the BE defensively because some
+        // callers read the BE variant synchronously right after setBlock.
+        helper.setBlock(pos, block.defaultBlockState());
         stampMilkVariant(helper, pos, variantPath);
         return block;
     }
@@ -1418,20 +1419,22 @@ public final class PFGameTests {
         BlockPos abs = helper.absolutePos(pos);
         ResourceLocation iron = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
 
-        // Placement: checkExtraContent stamps the freshly-placed source BE.
-        helper.setBlock(pos, PFBlocks.SLIME_MILK_SOURCE.get());
+        // The per-variant source block is authoritative for the variant: placing
+        // the iron block (its onPlace) seeds the BE with iron. checkExtraContent
+        // no longer writes the variant, only catalyst/budget upgrades.
+        helper.setBlock(pos, PFVariantMilk.block(iron).defaultBlockState());
         ItemStack bucket = milkBucket("iron");
-        ((com.flatts.productivefrogs.content.item.SlimeMilkBucketItem) PFItems.SLIME_MILK_BUCKET.get())
+        ((com.flatts.productivefrogs.content.item.SlimeMilkBucketItem) PFVariantMilk.bucket(iron))
             .checkExtraContent(null, level, bucket, abs);
         if (!(level.getBlockEntity(abs)
                 instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity be)
             || !iron.equals(be.getVariantId())) {
-            helper.fail("checkExtraContent should have stamped the source BlockEntity with iron");
+            helper.fail("the iron source block should make the BE report variant iron");
             return;
         }
 
-        // Re-bucket: pickupBlock reads the BE variant back onto the filled bucket.
-        ItemStack picked = PFBlocks.SLIME_MILK_SOURCE.get()
+        // Re-bucket: pickupBlock returns the iron-variant filled bucket.
+        ItemStack picked = PFVariantMilk.block(iron)
             .pickupBlock(null, level, abs, level.getBlockState(abs));
         if (!isMilkBucket(picked, "iron")) {
             helper.fail("pickupBlock should return an iron-stamped slime_milk_bucket, got " + picked);
@@ -1453,10 +1456,11 @@ public final class PFGameTests {
         BlockPos pos = new BlockPos(2, 2, 2);
         ServerLevel level = helper.getLevel();
         BlockPos abs = helper.absolutePos(pos);
-        var block = (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
+        ResourceLocation iron = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        var block = PFVariantMilk.block(iron);
 
         // Partially-depleted iron source: 5 spawns left (counter lives on the BE).
-        helper.setBlock(pos, block);
+        helper.setBlock(pos, block.defaultBlockState());
         stampMilkVariant(helper, pos, "iron");
         setMilkSpawns(helper, pos, 5);
 
@@ -1471,8 +1475,8 @@ public final class PFGameTests {
 
         // Re-place a fresh (default) source, then run the placement hook with
         // the carried bucket: it must restore the count to 5, not leave it full.
-        helper.setBlock(pos, block);
-        ((com.flatts.productivefrogs.content.item.SlimeMilkBucketItem) PFItems.SLIME_MILK_BUCKET.get())
+        helper.setBlock(pos, block.defaultBlockState());
+        ((com.flatts.productivefrogs.content.item.SlimeMilkBucketItem) PFVariantMilk.bucket(iron))
             .checkExtraContent(null, level, picked, abs);
         int restored = getMilkSpawns(helper, pos);
         if (restored != 5) {
@@ -1651,61 +1655,7 @@ public final class PFGameTests {
         });
     }
 
-    /**
-     * vanilla_slime_milk maps to a vanilla {@code Slime} (no ResourceSlime
-     * wrapper, no SlimeVariant). The variant-name switch in
-     * {@code createSlimeForVariant} is what diverges here — if a refactor
-     * accidentally routes "vanilla" through the ResourceSlime path, this
-     * test catches it.
-     */
-    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
-    public static void vanillaSlimeMilkSourceSpawnsVanillaSlime(GameTestHelper helper) {
-        BlockPos sourcePos = new BlockPos(2, 2, 2);
-        helper.setBlock(sourcePos.east(), Blocks.STONE);
-
-        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            placeMilkSource(helper, sourcePos, "vanilla");
-        ServerLevel level = helper.getLevel();
-        BlockPos absSourcePos = helper.absolutePos(sourcePos);
-        block.tick(level.getBlockState(absSourcePos), level, absSourcePos, level.getRandom());
-
-        helper.succeedWhen(() -> {
-            if (!helper.getEntities(PFEntities.RESOURCE_SLIME.get()).isEmpty()) {
-                helper.fail("vanilla milk must NOT produce a ResourceSlime — the spawner should route through EntityType.SLIME");
-                return;
-            }
-            // getEntities for vanilla Slime catches our ResourceSlime too
-            // because ResourceSlime extends Slime — filter strictly by class
-            // so we're asserting a vanilla green slime specifically.
-            long vanillaCount = helper.getEntities(net.minecraft.world.entity.EntityType.SLIME).stream()
-                .filter(s -> s.getClass() == net.minecraft.world.entity.monster.Slime.class)
-                .count();
-            if (vanillaCount != 1) {
-                helper.fail("expected exactly 1 vanilla Slime, got " + vanillaCount);
-            }
-        });
-    }
-
-    /** magma_slime_milk → vanilla MagmaCube. Mirror of the vanilla-milk test. */
-    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
-    public static void magmaSlimeMilkSourceSpawnsMagmaCube(GameTestHelper helper) {
-        BlockPos sourcePos = new BlockPos(2, 2, 2);
-        helper.setBlock(sourcePos.east(), Blocks.STONE);
-
-        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            placeMilkSource(helper, sourcePos, "magma");
-        ServerLevel level = helper.getLevel();
-        BlockPos absSourcePos = helper.absolutePos(sourcePos);
-        block.tick(level.getBlockState(absSourcePos), level, absSourcePos, level.getRandom());
-
-        helper.succeedWhen(() -> {
-            List<net.minecraft.world.entity.monster.MagmaCube> cubes =
-                helper.getEntities(net.minecraft.world.entity.EntityType.MAGMA_CUBE);
-            if (cubes.size() != 1) {
-                helper.fail("expected exactly 1 MagmaCube, got " + cubes.size());
-            }
-        });
-    }
+    // (removed in v1.8: vanilla/magma sentinel milk sources have no per-variant fluid; see docs/automated_milk_variants.md)
 
     /**
      * Block every horizontal neighbour at y=0 with non-sturdy blocks (no
@@ -1767,13 +1717,68 @@ public final class PFGameTests {
      * {@code depletionEnabled} off in their local
      * {@code productivefrogs-common.toml}.
      */
+    /**
+     * Density cap (v1.8): a source pauses spawning when its own species already
+     * crowds the area, and crucially does NOT spend its remaining-spawn budget
+     * while paused. Uses {@code spawnCapOverride=2} so the test needs only 2 slimes
+     * instead of the default 30.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkSourcePausesWhenAreaIsCrowded(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+        helper.setBlock(sourcePos.east(), Blocks.STONE);
+        var block = PFVariantMilk.block(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        helper.setBlock(sourcePos, block);
+        stampMilkVariant(helper, sourcePos, "iron");
+        setMilkSpawns(helper, sourcePos, 5);
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(sourcePos);
+
+        Boolean depOrig = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride;
+        Integer capOrig = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.spawnCapOverride;
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = true;
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.spawnCapOverride = 2;
+        try {
+            // Seed the area with 2 iron slimes (the overridden cap) so the next tick is over-cap.
+            for (int i = 0; i < 2; i++) {
+                var slime = PFEntities.RESOURCE_SLIME.get().create(level);
+                if (slime == null) {
+                    helper.fail("could not create ResourceSlime for the cap test");
+                    return;
+                }
+                slime.setVariant(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+                slime.setSize(1, true);
+                slime.moveTo(abs.getX() + 0.5, abs.getY(), abs.getZ() + 0.5, 0F, 0F);
+                level.addFreshEntity(slime);
+            }
+            int before = getMilkSpawns(helper, sourcePos);
+            block.tick(level.getBlockState(abs), level, abs, level.getRandom());
+
+            int after = getMilkSpawns(helper, sourcePos);
+            if (after != before) {
+                helper.fail("capped source must NOT spend its budget while paused; before="
+                    + before + " after=" + after);
+                return;
+            }
+            int count = helper.getEntities(PFEntities.RESOURCE_SLIME.get()).size();
+            if (count != 2) {
+                helper.fail("capped source must not spawn beyond the cap; expected 2 slimes, got " + count);
+                return;
+            }
+            helper.succeed();
+        } finally {
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = depOrig;
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.spawnCapOverride = capOrig;
+        }
+    }
+
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void slimeMilkSourceDecrementsSpawnsRemainingEachSpawn(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
         helper.setBlock(sourcePos.east(), Blocks.STONE);
 
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
+            PFVariantMilk.block(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
         helper.setBlock(sourcePos, block);
         stampMilkVariant(helper, sourcePos, "iron");
         setMilkSpawns(helper, sourcePos, 5);
@@ -1818,7 +1823,7 @@ public final class PFGameTests {
         helper.setBlock(sourcePos.east(), Blocks.STONE);
 
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
+            PFVariantMilk.block(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
         helper.setBlock(sourcePos, block);
         stampMilkVariant(helper, sourcePos, "iron");
         setMilkSpawns(helper, sourcePos, 0);
@@ -1862,7 +1867,7 @@ public final class PFGameTests {
     public static void slimeMilkSourceSeedsDefaultSpawnCountOnPlacement(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 2, 2);
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
+            PFVariantMilk.block(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
         helper.setBlock(pos, block);
         stampMilkVariant(helper, pos, "iron");
         int expected = com.flatts.productivefrogs.PFConfig.SPEC.isLoaded()
@@ -1890,7 +1895,7 @@ public final class PFGameTests {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
         helper.setBlock(sourcePos.east(), Blocks.STONE);
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
+            PFVariantMilk.block(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
         helper.setBlock(sourcePos, block);
         stampMilkVariant(helper, sourcePos, "iron");
         setMilkSpawns(helper, sourcePos, 2);
@@ -1945,7 +1950,7 @@ public final class PFGameTests {
     public static void catalystDroppedInPoolIsConsumed(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
+            PFVariantMilk.block(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
         helper.setBlock(sourcePos, block);
         stampMilkVariant(helper, sourcePos, "iron");
         setMilkSpawns(helper, sourcePos, 4);
@@ -1974,7 +1979,7 @@ public final class PFGameTests {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
         helper.setBlock(sourcePos.east(), Blocks.STONE);
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
+            PFVariantMilk.block(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
         helper.setBlock(sourcePos, block);
         stampMilkVariant(helper, sourcePos, "iron");
         var be = milkBE(helper, sourcePos);
@@ -2020,7 +2025,7 @@ public final class PFGameTests {
     public static void catalystAtCapIsNotConsumed(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
+            PFVariantMilk.block(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
         helper.setBlock(sourcePos, block);
         stampMilkVariant(helper, sourcePos, "iron");
         var be = milkBE(helper, sourcePos);
@@ -2068,7 +2073,7 @@ public final class PFGameTests {
         ServerLevel level = helper.getLevel();
         BlockPos abs = helper.absolutePos(pos);
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock) PFBlocks.SLIME_MILK_SOURCE.get();
+            PFVariantMilk.block(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
         helper.setBlock(pos, block);
         stampMilkVariant(helper, pos, "iron");
         var be = milkBE(helper, pos);
@@ -2096,7 +2101,8 @@ public final class PFGameTests {
 
         // Re-place a fresh source, run the placement hook, and confirm restore.
         helper.setBlock(pos, block);
-        ((com.flatts.productivefrogs.content.item.SlimeMilkBucketItem) PFItems.SLIME_MILK_BUCKET.get())
+        ((com.flatts.productivefrogs.content.item.SlimeMilkBucketItem)
+                PFVariantMilk.bucket(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron")))
             .checkExtraContent(null, level, picked, abs);
         var be2 = milkBE(helper, pos);
         if (be2 == null || be2.getSpeedLevel() != speed || be2.getQuantityLevel() != quantity || !be2.isInfinite()) {
@@ -2542,8 +2548,8 @@ public final class PFGameTests {
      * buckets are vanilla BucketItems with our source fluid attached, so
      * tank-mod compatibility for the bucket form should work out of the box.
      *
-     * <p>This test verifies it: spot-check three representative variants
-     * (iron, blaze, vanilla) and assert each exposes a non-null
+     * <p>This test verifies it: spot-check two representative variants
+     * (iron, blaze) and assert each exposes a non-null
      * {@code ResourceHandler<FluidResource>} whose contents match the
      * variant's source fluid. If NeoForge ever drops the auto-registration
      * or our buckets stop being recognized as BucketItem subclasses, this
@@ -2561,7 +2567,6 @@ public final class PFGameTests {
     public static void milkBucketExposesFluidCapabilityForTankMods(GameTestHelper helper) {
         assertBucketExposesFluid(helper, "iron");
         assertBucketExposesFluid(helper, "blaze");
-        assertBucketExposesFluid(helper, "vanilla");
         helper.succeed();
     }
 
@@ -2582,7 +2587,7 @@ public final class PFGameTests {
         }
         net.neoforged.neoforge.fluids.FluidStack contents = handler.getFluidInTank(0);
         net.minecraft.world.level.material.Fluid expectedFluid =
-            PFFluids.SLIME_MILK_SOURCE.get();
+            PFVariantMilk.sourceFluid(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant));
         if (contents.getFluid() != expectedFluid) {
             helper.fail(variant + " bucket handler reports fluid "
                 + BuiltInRegistries.FLUID.getKey(contents.getFluid())

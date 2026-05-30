@@ -4,8 +4,9 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFEntities;
-import com.flatts.productivefrogs.registry.PFItems;
+import com.flatts.productivefrogs.registry.PFVariantMilk;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
@@ -182,16 +183,22 @@ public final class PFModBusEvents {
                 : be.getInventory().inputView()
         );
 
-        // The single Slime Milk bucket extends BucketItem; NeoForge only
-        // auto-registers the FluidHandler.ITEM capability for the exact
-        // BucketItem class, not subclasses, so wire it up explicitly. Lets tank
-        // mods pump the milk fluid out of the bucket (the per-variant buckets
-        // got this for free as plain BucketItem instances).
-        event.registerItem(
-            Capabilities.FluidHandler.ITEM,
-            (stack, ctx) -> new net.neoforged.neoforge.fluids.capability.wrappers.FluidBucketWrapper(stack),
-            PFItems.SLIME_MILK_BUCKET.get()
-        );
+        // Per-variant Slime Milk buckets (v1.8) are SlimeMilkBucketItem extends
+        // BucketItem. NeoForge only auto-registers FluidHandler.ITEM for the exact
+        // BucketItem class, not subclasses, so wire each up explicitly - this is
+        // what lets tank/pipe mods pump a variant's milk and round-trip it (the
+        // bucket's content is its own variant fluid, so the vanilla
+        // FluidBucketWrapper preserves the variant for free).
+        for (ResourceLocation variantId : PFVariantMilk.registeredVariants()) {
+            net.minecraft.world.item.Item bucket = PFVariantMilk.bucket(variantId);
+            if (bucket != null) {
+                event.registerItem(
+                    Capabilities.FluidHandler.ITEM,
+                    (stack, ctx) -> new net.neoforged.neoforge.fluids.capability.wrappers.FluidBucketWrapper(stack),
+                    bucket
+                );
+            }
+        }
     }
 
     /**

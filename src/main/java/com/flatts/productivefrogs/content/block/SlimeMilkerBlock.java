@@ -41,9 +41,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Variant resolution: the cook loop in {@link SlimeMilkerBlockEntity#serverTick}
  * reads the input Slime Bucket's full variant id via {@link #readBucketVariantId}
- * and stamps it onto the single {@code slime_milk_bucket} output's
- * {@code SLIME_VARIANT} component (the per-variant milk items were collapsed).
- * It fail-closes when the input bucket carries no variant.
+ * and outputs that variant's own Slime Milk bucket (per-variant items, v1.8 - the
+ * item identity carries the variant). It fail-closes when the input bucket carries
+ * no variant, or when the variant has no per-variant milk fluid.
  *
  * <p>Future polish tracked in {@code docs/backlog.md}: press animation,
  * facing-based block model (top input port + side output spout), tighter

@@ -6,7 +6,6 @@ import com.flatts.productivefrogs.data.Category;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
@@ -84,17 +83,19 @@ public final class PFCreativeTabs {
                         output.accept(PFItems.QUANTITY_CATALYST.get());
                         output.accept(PFItems.INFINITE_CATALYST.get());
                     }
-                    // One Slime Milk bucket per registry variant (stamped via the
-                    // SLIME_VARIANT component), plus the vanilla / magma specials
-                    // (sentinel ids the source block maps to vanilla Slime /
-                    // MagmaCube). Collapsed from the per-variant milk items;
-                    // empty at the title screen until a world's datapacks load.
-                    variantLookup.ifPresent(reg -> reg.listElements().forEach(h ->
-                        output.accept(PFItems.slimeMilkBucket(h.key().location()))));
-                    output.accept(PFItems.slimeMilkBucket(
-                        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "vanilla")));
-                    output.accept(PFItems.slimeMilkBucket(
-                        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "magma")));
+                    // One Slime Milk bucket per registry variant that has a
+                    // per-variant fluid (v1.8). A content-only variant (in the
+                    // slime_variant registry but not minted at mod-init - e.g. a
+                    // pack/world-datapack variant) has no bucket: slimeMilkBucket
+                    // returns EMPTY, so skip it rather than add an invisible entry.
+                    // (The vanilla/magma sentinels likewise have no bucket now.)
+                    // Empty at the title screen until a world's datapacks load.
+                    variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
+                        ItemStack milk = PFItems.slimeMilkBucket(h.key().location());
+                        if (!milk.isEmpty()) {
+                            output.accept(milk);
+                        }
+                    }));
                     for (var entry : PFItems.PRIMED_FROG_EGG_ITEMS.values()) {
                         output.accept(entry.get());
                     }

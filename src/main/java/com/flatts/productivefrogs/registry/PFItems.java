@@ -8,7 +8,6 @@ import com.flatts.productivefrogs.content.item.MilkCatalystItem;
 import com.flatts.productivefrogs.content.item.ResourceSlimeSpawnEggItem;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.content.item.SlimeBucketItem;
-import com.flatts.productivefrogs.content.item.SlimeMilkBucketItem;
 import com.flatts.productivefrogs.data.Category;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -259,21 +258,14 @@ public final class PFItems {
     }
 
     /**
-     * The single Slime Milk bucket. Variant rides in the {@code SLIME_VARIANT}
-     * data component (see {@link SlimeMilkBucketItem}); collapsed from the former
-     * per-variant {@code <variant>_slime_milk_bucket} items so a datapack-added
-     * variant gets milk with no Java edit. Wraps the one {@code slime_milk}
-     * source fluid; stack size 1; leaves an empty bucket as a recipe remainder.
-     * The {@link com.flatts.productivefrogs.content.block.SlimeMilkerBlock}
-     * consumes a Slime Bucket and outputs this bucket stamped with the input's
-     * variant.
+     * Slime Milk buckets are <b>per-variant</b> ({@code <variant>_slime_milk_bucket}),
+     * minted dynamically at mod-init by {@link PFVariantMilk} - there is no single
+     * milk bucket item. Each is a vanilla {@code BucketItem} whose content is its
+     * own variant fluid, so tank mods round-trip it with vanilla handling. The
+     * {@link com.flatts.productivefrogs.content.block.SlimeMilkerBlock} outputs the
+     * input variant's bucket via {@code PFVariantMilk.bucket(variantId)}. See
+     * {@code docs/automated_milk_variants.md}.
      */
-    public static final DeferredItem<SlimeMilkBucketItem> SLIME_MILK_BUCKET = ITEMS.registerItem(
-        "slime_milk_bucket",
-        props -> new SlimeMilkBucketItem(
-            PFFluids.SLIME_MILK_SOURCE.get(),
-            props.stacksTo(1).craftRemainder(Items.BUCKET))
-    );
 
     /**
      * Slime Milker BlockItem — places {@link PFBlocks#SLIME_MILKER}. The block
@@ -389,14 +381,14 @@ public final class PFItems {
     }
 
     /**
-     * Build a Slime Milk bucket stamped with the given variant id in the
-     * {@code SLIME_VARIANT} component (the single {@code slime_milk_bucket}
-     * carries its variant on the component, like the Configurable Froglight).
+     * The variant's own Slime Milk bucket stack (per-variant fluids, v1.8). The
+     * item identity carries the variant, so no component stamp is needed. Returns
+     * {@link ItemStack#EMPTY} for a variant with no per-variant fluid (one not
+     * declared at mod-init) - such variants get no milk.
      */
     public static ItemStack slimeMilkBucket(ResourceLocation variantId) {
-        ItemStack stack = new ItemStack(SLIME_MILK_BUCKET.get());
-        stack.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
-        return stack;
+        net.minecraft.world.item.Item bucket = PFVariantMilk.bucket(variantId);
+        return bucket == null ? ItemStack.EMPTY : new ItemStack(bucket);
     }
 
     private PFItems() {

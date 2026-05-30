@@ -30,6 +30,18 @@ Collapse the ~35 per-variant Slime Milk registrations into one of each:
 
 The original (superseded) Approach A/B analysis is retained below for the design history.
 
+## Update (2026-05-29, v1.8): per-variant milk fluids returned (scoped)
+
+The single `slime_milk` fluid (Approach B above) made Slime Milk **datapack-addable**, which was the goal. But it also made the milk **automation-blind**: tank and pipe mods (Just Dire Things Fluid Collector/Placer, Mekanism, Pipez, any fluid handler) key on the `Fluid` registry object, not on an item/BE data component. With one shared fluid, a fluid collector saw "slime milk" with no variant, a pipe carried it variant-stripped, and a placer could only put back the generic fluid - so a variant could never be farmed hands-off through fluid automation.
+
+v1.8 reintroduces **per-variant** Slime Milk fluids so each variant is a distinct `Fluid` registry object that automation mods can route end to end. This does **not** revert the Approach B decision wholesale; it is deliberately scoped:
+
+- Per-variant fluids register at **mod init** from a **bundled index of shipped variants** (the variants PF ships in-jar), not by scanning world datapacks. This is essentially the old Approach A registration shape, but limited to the known-at-init set.
+- World-datapack-added variants (the constraint that drove Approach B) **still cannot** get a per-variant pipe fluid - fluids register before any world datapack loads. A pack-added variant gets full slime/milk/bucket **content** (Approach B's component-driven path still backs that), but **not** a pipe-routable fluid yet.
+- So the original Approach B constraint still holds for pack-added variants: they are addable by JSON, they just don't get an automatable fluid. Authoring new automatable variants beyond the shipped set is a planned follow-up.
+
+Net: shipped variants are now fully pipe-automatable; datapack-addability for pack variants is unchanged from the Approach B state. Catalyst buffs are not preserved when milk passes through a tank (they still survive a normal bucket re-pickup). Full design: [automated_milk_variants.md](./automated_milk_variants.md).
+
 ## Goal
 
 A modpack adds a new Resource Slime variant by **JSON only**:
