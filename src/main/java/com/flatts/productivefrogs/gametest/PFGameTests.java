@@ -1718,6 +1718,49 @@ public final class PFGameTests {
      * {@code productivefrogs-common.toml}.
      */
     /**
+     * Slime Bucket release: emptying a Slime Bucket must NOT place a water source
+     * (a captured slime is a land mob, not a fish), and the released slime is always
+     * size 1 (capture is gated to size 1; MobBucketItem#spawn would otherwise let
+     * Slime#finalizeSpawn randomize the size to 1/2/4).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 40)
+    public static void slimeBucketReleaseHasNoWaterAndIsSizeOne(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos pos = new BlockPos(2, 2, 2);
+        BlockPos abs = helper.absolutePos(pos);
+        helper.setBlock(pos, Blocks.AIR);
+
+        // 1) Emptying the bucket places no fluid.
+        var bucketItem = (com.flatts.productivefrogs.content.item.SlimeBucketItem) PFItems.SLIME_BUCKET.get();
+        bucketItem.emptyContents(null, level, abs, null);
+        if (!level.getFluidState(abs).isEmpty()) {
+            helper.fail("Slime Bucket release placed a fluid at " + pos + " (expected none)");
+            return;
+        }
+        if (!level.getBlockState(abs).isAir()) {
+            helper.fail("Slime Bucket release changed the block to "
+                + level.getBlockState(abs) + " (expected air)");
+            return;
+        }
+
+        // 2) loadFromBucketTag forces size 1 even after a larger finalizeSpawn size.
+        var slime = PFEntities.RESOURCE_SLIME.get().create(level);
+        if (slime == null) {
+            helper.fail("could not create ResourceSlime");
+            return;
+        }
+        slime.setSize(4, true);
+        slime.loadFromBucketTag(new net.minecraft.nbt.CompoundTag());
+        int size = slime.getSize();
+        slime.discard();
+        if (size != 1) {
+            helper.fail("released slime size expected 1, got " + size);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
      * Density cap (v1.8): a source pauses spawning when its own species already
      * crowds the area, and crucially does NOT spend its remaining-spawn budget
      * while paused. Uses {@code spawnCapOverride=2} so the test needs only 2 slimes
