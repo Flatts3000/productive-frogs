@@ -1761,6 +1761,47 @@ public final class PFGameTests {
     }
 
     /**
+     * A dispenser loaded with a Slime Bucket releases the slime (size 1, no water)
+     * into the block it faces, rather than just ejecting the bucket. Powers a
+     * dispenser facing up with a redstone block and checks the air block above.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 60)
+    public static void slimeBucketDispenserReleasesSlimeNoWater(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos disp = new BlockPos(2, 2, 2);
+        BlockPos front = disp.above();
+        helper.setBlock(disp, net.minecraft.world.level.block.Blocks.DISPENSER.defaultBlockState()
+            .setValue(net.minecraft.world.level.block.DispenserBlock.FACING, net.minecraft.core.Direction.UP));
+        if (!(helper.getBlockEntity(disp)
+                instanceof net.minecraft.world.level.block.entity.DispenserBlockEntity dbe)) {
+            helper.fail("dispenser BE missing");
+            return;
+        }
+        dbe.setItem(0, PFItems.variantSlimeBucket(
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"),
+            com.flatts.productivefrogs.data.Category.CAVE));
+        // Rising redstone edge triggers the dispense (fires ~4 ticks later).
+        helper.setBlock(disp.east(), net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK);
+
+        helper.runAfterDelay(15, () -> {
+            if (!level.getFluidState(helper.absolutePos(front)).isEmpty()) {
+                helper.fail("dispenser release placed water in front of the dispenser");
+                return;
+            }
+            var slimes = helper.getEntities(PFEntities.RESOURCE_SLIME.get());
+            if (slimes.size() != 1) {
+                helper.fail("expected 1 slime dispensed, got " + slimes.size());
+                return;
+            }
+            if (slimes.get(0).getSize() != 1) {
+                helper.fail("dispensed slime not size 1, got " + slimes.get(0).getSize());
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /**
      * Density cap (v1.8): a source pauses spawning when its own species already
      * crowds the area, and crucially does NOT spend its remaining-spawn budget
      * while paused. Uses {@code spawnCapOverride=2} so the test needs only 2 slimes

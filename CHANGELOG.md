@@ -2,6 +2,10 @@
 
 ## v1.8.1 - 2026-05-30 - Slime Bucket fixes
 
+### Added
+
+- **Dispensers can release a captured slime.** A dispenser loaded with a Slime Bucket now places the slime (size 1, no water) into the block it faces, instead of just ejecting the bucket - a small automation touch. It falls back to ejecting the bucket when there is no room in front.
+
 ### Fixed
 
 - **Releasing a slime from a Slime Bucket no longer dumps water.** A captured Resource Slime is a land mob, but the bucket was inheriting the fish-bucket behaviour of placing a water source on empty. It now releases just the slime.

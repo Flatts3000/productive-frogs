@@ -85,6 +85,9 @@ public final class ProductiveFrogs {
     }
 
     private void onCommonSetup(FMLCommonSetupEvent event) {
+        // Dispenser releasing a Slime Bucket spawns the slime (no water). The
+        // dispenser registry isn't thread-safe, so register on the main thread.
+        event.enqueueWork(com.flatts.productivefrogs.content.item.SlimeBucketItem::registerDispenseBehavior);
         // ModConfigSpec has no cross-field validator, so warn here (config is
         // loaded by common-setup time) if the spawn interval is inverted.
         // SlimeMilkSourceBlock.scheduleNextSpawnTick falls back to a fixed
