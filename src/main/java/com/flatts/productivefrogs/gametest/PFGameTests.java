@@ -1717,6 +1717,61 @@ public final class PFGameTests {
      * {@code depletionEnabled} off in their local
      * {@code productivefrogs-common.toml}.
      */
+    /**
+     * Density cap (v1.8): a source pauses spawning when its own species already
+     * crowds the area, and crucially does NOT spend its remaining-spawn budget
+     * while paused. Uses {@code spawnCapOverride=2} so the test needs only 2 slimes
+     * instead of the default 30.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkSourcePausesWhenAreaIsCrowded(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+        helper.setBlock(sourcePos.east(), Blocks.STONE);
+        var block = PFVariantMilk.block(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        helper.setBlock(sourcePos, block);
+        stampMilkVariant(helper, sourcePos, "iron");
+        setMilkSpawns(helper, sourcePos, 5);
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(sourcePos);
+
+        Boolean depOrig = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride;
+        Integer capOrig = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.spawnCapOverride;
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = true;
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.spawnCapOverride = 2;
+        try {
+            // Seed the area with 2 iron slimes (the overridden cap) so the next tick is over-cap.
+            for (int i = 0; i < 2; i++) {
+                var slime = PFEntities.RESOURCE_SLIME.get().create(level);
+                if (slime == null) {
+                    helper.fail("could not create ResourceSlime for the cap test");
+                    return;
+                }
+                slime.setVariant(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+                slime.setSize(1, true);
+                slime.moveTo(abs.getX() + 0.5, abs.getY(), abs.getZ() + 0.5, 0F, 0F);
+                level.addFreshEntity(slime);
+            }
+            int before = getMilkSpawns(helper, sourcePos);
+            block.tick(level.getBlockState(abs), level, abs, level.getRandom());
+
+            int after = getMilkSpawns(helper, sourcePos);
+            if (after != before) {
+                helper.fail("capped source must NOT spend its budget while paused; before="
+                    + before + " after=" + after);
+                return;
+            }
+            int count = helper.getEntities(PFEntities.RESOURCE_SLIME.get()).size();
+            if (count != 2) {
+                helper.fail("capped source must not spawn beyond the cap; expected 2 slimes, got " + count);
+                return;
+            }
+            helper.succeed();
+        } finally {
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = depOrig;
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.spawnCapOverride = capOrig;
+        }
+    }
+
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void slimeMilkSourceDecrementsSpawnsRemainingEachSpawn(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);

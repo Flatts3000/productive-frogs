@@ -7,6 +7,7 @@ Slime Milk can now be piped. Each variant has its own milk fluid, so tank-and-pi
 ### Added
 
 - **Per-variant Slime Milk fluids.** Every variant now has its own Slime Milk fluid, source block, and bucket. Because the variant is the fluid itself, fluid mods that move it through pipes and tanks keep the variant intact, so a Fluid Collector + Fluid Placer setup farms a specific variant unattended. The Slime Milker loop and the bucket round-trip work exactly as before.
+- **Slime spawn cap.** A Slime Milk source now pauses spawning when its own species already crowds the area (default: 30 slimes within 8 blocks), and resumes once frogs thin them out. It does not spend its remaining-spawn budget while paused. This keeps an automated or Endless source from flooding the server when frogs can't keep up. Tunable or disable-able under the `slime_milk_spawning` config (`spawnCapEnabled`, `maxNearbySlimes`, `spawnCapRadius`).
 
 ### Changed
 

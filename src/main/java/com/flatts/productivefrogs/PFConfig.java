@@ -23,6 +23,9 @@ public final class PFConfig {
     public static final ModConfigSpec.IntValue DEPLETION_COUNT;
     public static final ModConfigSpec.IntValue MIN_SPAWN_INTERVAL_TICKS;
     public static final ModConfigSpec.IntValue MAX_SPAWN_INTERVAL_TICKS;
+    public static final ModConfigSpec.BooleanValue SPAWN_CAP_ENABLED;
+    public static final ModConfigSpec.IntValue MAX_NEARBY_SLIMES;
+    public static final ModConfigSpec.IntValue SPAWN_CAP_RADIUS;
 
     // Slime Milk catalysts: hand-dropped upgrade items that buff a placed source
     // block (docs/slime_milk_catalysts.md). The early-game stopgap toward
@@ -80,6 +83,10 @@ public final class PFConfig {
     public static final int DEFAULT_CATALYST_MAX_QUANTITY_LEVEL = 3;
     public static final double DEFAULT_CATALYST_SPEED_REDUCTION_PER_LEVEL = 0.20;
     public static final int DEFAULT_CATALYST_MIN_INTERVAL_FLOOR_TICKS = 20;
+    // Slime-spawn density cap defaults (single source of truth for spec + fallbacks).
+    public static final boolean DEFAULT_SPAWN_CAP_ENABLED = true;
+    public static final int DEFAULT_MAX_NEARBY_SLIMES = 30;
+    public static final int DEFAULT_SPAWN_CAP_RADIUS = 8;
 
     public static final ModConfigSpec SPEC;
 
@@ -126,6 +133,35 @@ public final class PFConfig {
                 "Default 600 (30 seconds)."
             )
             .defineInRange("maxSpawnIntervalTicks", 600, 1, 24000);
+
+        SPAWN_CAP_ENABLED = builder
+            .comment(
+                "Whether a Slime Milk source pauses spawning when its area is already full of",
+                "its own species' slimes. Default true. The safety valve that keeps an",
+                "automated farm (especially an Endless/Rapid source with no frog eating fast",
+                "enough) from flooding the server with entities. When false, sources spawn on",
+                "their cadence regardless of how many slimes are nearby - use with care."
+            )
+            .define("spawnCapEnabled", DEFAULT_SPAWN_CAP_ENABLED);
+
+        MAX_NEARBY_SLIMES = builder
+            .comment(
+                "Max Resource Slimes of the source's own species allowed within spawnCapRadius",
+                "before the source pauses spawning. Default 30. The source resumes once frogs",
+                "(or anything) bring the count back below this. A paused source does NOT spend",
+                "its remaining-spawn budget, so a finite source isn't wasted waiting for room.",
+                "Counts only Productive Frogs slimes of the matching species, not vanilla slimes.",
+                "Note: the cap is per-species-per-area, so a single-species farm (the usual case)",
+                "is held at this many; a pen mixing several species can hold this many of each."
+            )
+            .defineInRange("maxNearbySlimes", DEFAULT_MAX_NEARBY_SLIMES, 1, 4096);
+
+        SPAWN_CAP_RADIUS = builder
+            .comment(
+                "Block radius of the cube the spawn cap counts slimes in, centered on the source.",
+                "Default 8. Larger covers a bigger pen but scans more entities per spawn attempt."
+            )
+            .defineInRange("spawnCapRadius", DEFAULT_SPAWN_CAP_RADIUS, 1, 64);
 
         builder.pop();
 
@@ -375,6 +411,21 @@ public final class PFConfig {
     /** Whether Resource Frogs are persistent ({@code frogs.persistent}); fallback true. */
     public static boolean frogsPersistent() {
         return !SPEC.isLoaded() || FROGS_PERSISTENT.get();
+    }
+
+    /** Whether the slime-density spawn cap is active ({@code spawnCapEnabled}); fallback true. */
+    public static boolean spawnCapEnabled() {
+        return !SPEC.isLoaded() || SPAWN_CAP_ENABLED.get();
+    }
+
+    /** Max same-species slimes near a source before it pauses ({@code maxNearbySlimes}); fallback {@value #DEFAULT_MAX_NEARBY_SLIMES}. */
+    public static int maxNearbySlimes() {
+        return SPEC.isLoaded() ? MAX_NEARBY_SLIMES.get() : DEFAULT_MAX_NEARBY_SLIMES;
+    }
+
+    /** Block radius the spawn cap counts slimes in ({@code spawnCapRadius}); fallback {@value #DEFAULT_SPAWN_CAP_RADIUS}. */
+    public static int spawnCapRadius() {
+        return SPEC.isLoaded() ? SPAWN_CAP_RADIUS.get() : DEFAULT_SPAWN_CAP_RADIUS;
     }
 
     /** Fixed hatch delay in ticks for primed frogspawn ({@code lifecycle.primedFrogspawnHatchTicks}); fallback {@value #DEFAULT_HATCH_TICKS}. */

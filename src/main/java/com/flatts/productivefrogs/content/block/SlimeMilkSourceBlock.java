@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.item.MilkCatalyst;
+import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
@@ -104,6 +105,14 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
     public static volatile Boolean depletionEnabledOverride = null;
 
     /**
+     * Test-only override for {@link PFConfig#maxNearbySlimes()} so a GameTest can
+     * exercise the density cap with a small count instead of spawning 30 entities.
+     * Volatile for cross-thread visibility, like {@link #depletionEnabledOverride}.
+     */
+    @Nullable
+    public static volatile Integer spawnCapOverride = null;
+
+    /**
      * The variant this block produces, baked in at registration (per-variant
      * fluids, v1.8). Authoritative over the BE's mirror, so a source placed by a
      * tank/pipe mod that never wrote the BE (e.g. JDT's raw {@code setBlock})
@@ -181,21 +190,59 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
             return;
         }
 
-        if (depletionEnabled() && !be.isInfinite()) {
-            if (be.getSpawnsRemaining() <= 0) {
-                // True air swap to drain: removeBlock on a fluid block would
-                // reset the source to its default state.
-                level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
-                PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
-                    "source @%s: depleted, drained to air (variant=%s)", pos, variantId));
-                return;
-            }
-            spawnBatch(level, pos, random, variantId, be);
+        boolean depleting = depletionEnabled() && !be.isInfinite();
+        if (depleting && be.getSpawnsRemaining() <= 0) {
+            // True air swap to drain: removeBlock on a fluid block would
+            // reset the source to its default state.
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+            PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
+                "source @%s: depleted, drained to air (variant=%s)", pos, variantId));
+            return;
+        }
+        // Density cap: pause (WITHOUT spending the budget) when this source's own
+        // species already crowds the area, so an automated / Endless / Rapid source
+        // can't flood the server with slimes faster than frogs eat them. Reschedule
+        // so it resumes once the count drops back below the cap. (chooseSpawnPos also
+        // skips when no adjacent block is free, a second emergent limit.)
+        if (PFConfig.spawnCapEnabled() && isAreaCrowded(level, pos, variantId)) {
+            PFDebug.logOnce(PFDebug.Area.MILK_SOURCE, "capped#" + pos, () -> String.format(
+                "source @%s: paused, >= %d nearby %s slimes (cap)", pos, PFConfig.maxNearbySlimes(), variantId));
+            scheduleNextSpawnTick(level, pos, random, be.getSpeedLevel());
+            return;
+        }
+        spawnBatch(level, pos, random, variantId, be);
+        if (depleting) {
             be.decrementSpawns();
-        } else {
-            spawnBatch(level, pos, random, variantId, be);
         }
         scheduleNextSpawnTick(level, pos, random, be.getSpeedLevel());
+    }
+
+    /**
+     * True when at least {@link PFConfig#maxNearbySlimes()} Resource Slimes of this
+     * source's own species are already within {@link PFConfig#spawnCapRadius()} of
+     * it. Counts only PF {@link ResourceSlime}s of the matching {@link Category}
+     * (vanilla slimes don't count); if the variant's category can't be resolved
+     * (e.g. a sentinel source), counts any ResourceSlime so the cap still bounds it.
+     */
+    private static boolean isAreaCrowded(ServerLevel level, BlockPos pos, ResourceLocation variantId) {
+        Category category = categoryForVariant(level, variantId);
+        net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(pos).inflate(PFConfig.spawnCapRadius());
+        java.util.List<ResourceSlime> nearby = level.getEntitiesOfClass(
+            ResourceSlime.class, box,
+            category == null ? slime -> true : slime -> slime.getCategory() == category);
+        Integer capOverride = spawnCapOverride;
+        int cap = capOverride != null ? capOverride : PFConfig.maxNearbySlimes();
+        return nearby.size() >= cap;
+    }
+
+    @Nullable
+    private static Category categoryForVariant(ServerLevel level, ResourceLocation variantId) {
+        var registry = level.registryAccess().registry(PFRegistries.SLIME_VARIANT).orElse(null);
+        if (registry == null) {
+            return null;
+        }
+        SlimeVariant variant = registry.get(variantId);
+        return variant == null ? null : variant.category();
     }
 
     private static boolean depletionEnabled() {
