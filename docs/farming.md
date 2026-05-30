@@ -38,6 +38,20 @@ The end-to-end production loop a player runs in V1, centered on the **Slime Milk
 - **Walking on it**: passive - no damage, no slowdown beyond normal liquid penalties. Visible color tint per variant.
 - **Spawning**: only **source blocks** spawn slimes. Flowing blocks are decorative.
 
+> **v1.8 update:** the single-fluid model above was reworked. Each variant's Slime Milk is now its own fluid (Iron Slime Milk, Diamond Slime Milk, and so on are distinct fluids, not one fluid with a component). This is what makes the milk pipe-automatable - see Fluid automation below.
+
+## Fluid automation (v1.8)
+
+Because each variant's Slime Milk is its own fluid as of v1.8, a fluid-automation mod can farm a variant completely unattended:
+
+- A fluid collector (Just Dire Things Fluid Collector, Mekanism Fluidic Plenisher, or any fluid handler) pulls milk out of a source block.
+- Pipes / a tank (Pipez, Mekanism, Thermal, Create, Fluid Tanks) move and buffer it.
+- A fluid placer (Just Dire Things Fluid Placer, Mekanism Fluidic Plenisher) places it back as a source block of the **same variant**, which spawns that variant's slime for the matching frog.
+
+The Slime Milker loop and the empty-bucket round-trip are unchanged - this is purely additive.
+
+**Catalysts are not preserved across a tank.** A source's Count / Speed / Quantity / Endless buffs survive a normal empty-bucket re-pickup, but they are lost when milk passes through a tank or pipe, so an automated line spawns at base rates. Buff an automated source by feeding catalysts directly into the placed pool (e.g. a dropper). See [automated_milk_variants.md](./automated_milk_variants.md) and [slime_milk_catalysts.md](./slime_milk_catalysts.md).
+
 ## Slime spawning from milk
 
 Each milk source block independently rolls a spawn tick:

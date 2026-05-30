@@ -109,6 +109,8 @@ With Mekanism, Immersive Engineering, or EnderIO installed, a metal Froglight cr
 - **Slime Milk in tanks:** the Slime Milk bucket exposes `Capabilities.Fluid.ITEM` (vanilla `BucketItem` auto-registration), and the source block uses vanilla `LiquidBlock` pickup, so any tank-mod ecosystem (Mekanism, Thermal, Create, Fluid Tanks) can pull it.
 - **Hopper automation:** the Slime Milker and Spawnery expose a side-aware `Capabilities.ItemHandler.BLOCK` - insert from the top/sides (routed to the right slot), extract finished output from the bottom.
 
+**v1.8 - variant Slime Milk is pipe-automatable.** Each shipped variant's Slime Milk is now its own fluid (rather than one fluid keyed by component), so a fluid-automation mod can collect a variant's milk from a source, move it through pipes/tanks, and place it back as the same variant - a chosen variant then farms fully hands-off. Caveat: catalyst buffs survive a hand bucket re-pickup but are not preserved when milk goes through a tank. **Authoring NEW automatable variants beyond the shipped set is a planned follow-up:** today a pack-added (world-datapack) variant gets full slime/milk/bucket content but not yet its own pipe-routable fluid, because those fluids register at mod init from a bundled index of shipped variants. Design and the scoping rationale: [automated_milk_variants.md](./automated_milk_variants.md).
+
 ## 7. The drop-in guarantee
 
 Every cross-mod hook is gated by `neoforge:conditions -> mod_loaded` and keys off `c:` common tags. There is no hard mod dependency and no `compat/` Java package: a variant or recipe for an absent mod silently does not load. The same jar is safe to drop into any pack; nothing crashes when a referenced mod is missing.
