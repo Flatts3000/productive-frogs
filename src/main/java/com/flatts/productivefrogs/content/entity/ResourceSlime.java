@@ -385,6 +385,11 @@ public class ResourceSlime extends Slime implements Bucketable {
         // the variant resolves in the registry, but the category fallback
         // remains correct if the variant id is unknown.
         if (tag.contains("Variant", net.minecraft.nbt.Tag.TAG_STRING)) { ResourceLocation id = ResourceLocation.tryParse(tag.getString("Variant")); if (id != null) setVariant(id); }
+        // Force size 1. Capture is gated to size-1 slimes (mobInteract), but
+        // MobBucketItem#spawn routes release through Slime#finalizeSpawn, which
+        // assigns a RANDOM size (1/2/4). loadFromBucketTag runs after that, so
+        // reset it here - a released Resource Slime is always size 1.
+        setSize(1, true);
         // Flag the slime as bucket-originated so it survives chunk reloads
         // without despawning — bucket-released mobs are conceptually
         // player-placed and need persistence parity with named mobs.

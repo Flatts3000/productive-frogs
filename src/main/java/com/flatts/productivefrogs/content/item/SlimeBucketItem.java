@@ -1,14 +1,26 @@
 package com.flatts.productivefrogs.content.item;
 
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.registry.PFItems;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.dispenser.BlockSource;
+import net.minecraft.core.dispenser.DefaultDispenseItemBehavior;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.DispensibleContainerItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MobBucketItem;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.phys.BlockHitResult;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Bucket variant for {@link com.flatts.productivefrogs.content.entity.ResourceSlime}.
@@ -53,6 +65,49 @@ public final class SlimeBucketItem extends MobBucketItem {
     public SlimeBucketItem(EntityType<? extends Mob> type, Fluid fluid,
                            SoundEvent emptySound, Properties properties) {
         super(type, fluid, emptySound, properties);
+    }
+
+    /**
+     * Release the slime <b>without</b> placing a fluid. A captured Resource Slime is a
+     * land mob, but {@link MobBucketItem} inherits the fish-bucket behaviour of dumping
+     * its {@code content} fluid (water) when emptied. We keep {@code content = WATER}
+     * only so {@code BucketItem#use} routes into the place branch; this override then
+     * skips the fluid placement and just plays the empty sound, so {@code use} still
+     * proceeds to {@link #checkExtraContent} (which spawns the slime via
+     * {@code MobBucketItem#spawn}). Net effect: slime out, no water.
+     */
+    @Override
+    public boolean emptyContents(@Nullable Player player, Level level, BlockPos pos,
+                                 @Nullable BlockHitResult result) {
+        this.playEmptySound(player, level, pos);
+        return true;
+    }
+
+    /**
+     * Make a dispenser release the captured slime (no water), mirroring vanilla's
+     * fish-bucket dispense behaviour minus the fluid. Registered on common setup
+     * via {@code enqueueWork} (the dispenser registry isn't thread-safe). When the
+     * block in front can't hold a slime, falls back to ejecting the bucket so we
+     * don't shove a slime into a wall - matching how vanilla fish buckets behave
+     * when their target isn't placeable.
+     */
+    public static void registerDispenseBehavior() {
+        DispenserBlock.registerBehavior(PFItems.SLIME_BUCKET.get(), new DefaultDispenseItemBehavior() {
+            @Override
+            protected ItemStack execute(BlockSource source, ItemStack stack) {
+                ServerLevel level = source.level();
+                BlockPos target = source.pos().relative(source.state().getValue(DispenserBlock.FACING));
+                if (!level.getBlockState(target).canBeReplaced()) {
+                    return super.execute(source, stack);
+                }
+                DispensibleContainerItem bucket = (DispensibleContainerItem) stack.getItem();
+                if (bucket.emptyContents(null, level, target, null)) {
+                    bucket.checkExtraContent(null, level, stack, target);
+                    return new ItemStack(Items.BUCKET);
+                }
+                return super.execute(source, stack);
+            }
+        });
     }
 
     @Override

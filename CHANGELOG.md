@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.8.1 - 2026-05-30 - Slime Bucket fixes
+
+### Added
+
+- **Dispensers can release a captured slime.** A dispenser loaded with a Slime Bucket now places the slime (size 1, no water) into the block it faces, instead of just ejecting the bucket - a small automation touch. It falls back to ejecting the bucket when there is no room in front.
+
+### Fixed
+
+- **Releasing a slime from a Slime Bucket no longer dumps water.** A captured Resource Slime is a land mob, but the bucket was inheriting the fish-bucket behaviour of placing a water source on empty. It now releases just the slime.
+- **A released slime is always size 1.** Bucketing is only allowed on size-1 slimes, but release was passing through vanilla slime spawn logic and could come out a random larger size (2 or 4). It now always matches the size-1 slime that was captured.
+
 ## v1.8.0 - 2026-05-29 - Automatable Slime Milk
 
 Slime Milk can now be piped. Each variant has its own milk fluid, so tank-and-pipe automation (Just Dire Things Fluid Collector / Placer, Mekanism, Pipez, any fluid handler) can collect a variant's milk, move it through pipes and tanks, and place it back as the same variant. Hands-off variant farming, end to end.
