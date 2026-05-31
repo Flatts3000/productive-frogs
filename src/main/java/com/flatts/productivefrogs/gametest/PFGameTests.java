@@ -1802,6 +1802,34 @@ public final class PFGameTests {
     }
 
     /**
+     * A Coal Froglight burns as furnace fuel like vanilla coal: place a furnace,
+     * load a coal-variant Froglight into the fuel slot and cobblestone into the
+     * input, and the furnace lights and smelts the cobblestone to stone. Proves
+     * the per-stack {@code getBurnTime} override is wired into vanilla smelting
+     * end-to-end (only the Froglight could have fueled the burn - the fuel slot
+     * held nothing else). Smelting one item takes 200 ticks; allow headroom.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 300)
+    public static void coalFroglightFuelsFurnace(GameTestHelper helper) {
+        BlockPos furnacePos = new BlockPos(2, 2, 2);
+        helper.setBlock(furnacePos, Blocks.FURNACE);
+        if (!(helper.getBlockEntity(furnacePos)
+                instanceof net.minecraft.world.level.block.entity.FurnaceBlockEntity furnace)) {
+            helper.fail("furnace BE missing");
+            return;
+        }
+        ItemStack coalFroglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
+        coalFroglight.set(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get(),
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "coal"));
+        furnace.setItem(0, new ItemStack(Items.COBBLESTONE)); // input
+        furnace.setItem(1, coalFroglight);                   // fuel
+
+        helper.succeedWhen(() -> helper.assertTrue(furnace.getItem(2).is(Items.STONE),
+            "furnace should smelt cobblestone to stone using the Coal Froglight as fuel, got "
+                + furnace.getItem(2)));
+    }
+
+    /**
      * Density cap (v1.8): a source pauses spawning when its own species already
      * crowds the area, and crucially does NOT spend its remaining-spawn budget
      * while paused. Uses {@code spawnCapOverride=2} so the test needs only 2 slimes

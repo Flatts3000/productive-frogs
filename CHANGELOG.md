@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.8.3 - 2026-05-31 - Froglight fuel
+
+### Added
+
+- **Coal and Blaze Froglights burn as furnace fuel.** A Coal Froglight burns like a coal item (smelts 8) and a Blaze Froglight burns like a blaze rod (smelts 12), so the Froglights you farm from those resources double as fuel. Every other Froglight stays purely decorative.
+
 ## v1.8.2 - 2026-05-31 - Slime Milk drain timing
 
 ### Fixed
