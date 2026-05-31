@@ -1,13 +1,16 @@
 package com.flatts.productivefrogs.content.item;
 
+import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
 import com.flatts.productivefrogs.registry.PFDataComponents;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -44,8 +47,39 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class ConfigurableFroglightItem extends BlockItem {
 
+    /**
+     * Froglight variants that double as furnace fuel, mapped to their burn time
+     * in ticks. Each value matches the vanilla item that species is themed on:
+     * {@code coal} -> a coal item (1600t, eight smelts); {@code blaze} -> a blaze
+     * rod (2400t, twelve smelts). A Froglight is the resource block of its slime
+     * species, so the fuel-resource species burning is the natural read. Every
+     * variant absent from this map stays inert decoration. Add an entry to make a
+     * new variant fuel.
+     */
+    private static final Map<ResourceLocation, Integer> FUEL_BURN_TICKS = Map.of(
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "coal"), 1600,
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "blaze"), 2400
+    );
+
     public ConfigurableFroglightItem(Block block, Properties properties) {
         super(block, properties);
+    }
+
+    /**
+     * Make the fuel-resource Froglights (coal, blaze) burn in a furnace like the
+     * vanilla item they are made of. The variant rides a per-stack
+     * {@code SLIME_VARIANT} component, and every Froglight shares one registered
+     * item, so fuel value has to be decided per-stack here - the
+     * {@code furnace_fuels} data map keys on the item and would (wrongly) make
+     * every variant fuel. Variants absent from {@link #FUEL_BURN_TICKS} defer to
+     * {@code super} (0 = not fuel). Never returns a negative value: NeoForge's
+     * {@code ItemStack#getBurnTime} throws on a negative burn time.
+     */
+    @Override
+    public int getBurnTime(ItemStack stack, @Nullable RecipeType<?> recipeType) {
+        ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+        Integer ticks = variantId == null ? null : FUEL_BURN_TICKS.get(variantId);
+        return ticks != null ? ticks : super.getBurnTime(stack, recipeType);
     }
 
     /**
