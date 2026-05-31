@@ -48,7 +48,20 @@ $variants = @(
     @{ name = "certus_quartz"; category = "geode"; tag = "c:gems/certus_quartz";     mod = "ae2";        result = "ae2:certus_quartz_crystal"; primary = 0xC0CDDA; secondary = 0x90A4B8 }
     @{ name = "fluix";     category = "geode";    tag = "c:gems/fluix";              mod = "ae2";        result = "ae2:fluix_crystal";        primary = 0x7A5AC0; secondary = 0x57408F }
     @{ name = "fluorite";  category = "geode";    tag = "c:gems/fluorite";           mod = "mekanism";   result = "mekanism:fluorite_gem";    primary = 0xCFE0C0; secondary = 0xA8C090 }
-    @{ name = "silicon";   category = "geode";    tag = "c:silicon";                 mod = "ae2";        result = "ae2:silicon";              primary = 0x4A4A52; secondary = 0x32323A }
+    # silicon is shared by AE2 and Refined Storage (both populate c:silicon), so the
+    # variant gates on EITHER mod (neoforge:or) and smelts back to whichever provider
+    # is present. The RS recipe is also gated NOT(ae2) so the two never both fire when
+    # both mods are installed - AE2 wins, you get ae2:silicon.
+    @{ name = "silicon"; category = "geode"; tag = "c:silicon"; gateMods = @("ae2", "refinedstorage"); recipes = @(
+            @{ mod = "ae2"; result = "ae2:silicon"; suffix = "" }
+            @{ mod = "refinedstorage"; notMods = @("ae2"); result = "refinedstorage:silicon"; suffix = "refinedstorage" }
+        ); primary = 0x4A4A52; secondary = 0x32323A }
+    # GEODE - Refined Storage processors (crystal-tech; primed by the exact processor item)
+    @{ name = "basic_processor";    category = "geode"; tag = $null; primerItem = "refinedstorage:basic_processor";    mod = "refinedstorage"; result = "refinedstorage:basic_processor";    primary = 0x7FB7D9; secondary = 0x4F8FB0 }
+    @{ name = "improved_processor"; category = "geode"; tag = $null; primerItem = "refinedstorage:improved_processor"; mod = "refinedstorage"; result = "refinedstorage:improved_processor"; primary = 0xD9B24F; secondary = 0xB08A2F }
+    @{ name = "advanced_processor"; category = "geode"; tag = $null; primerItem = "refinedstorage:advanced_processor"; mod = "refinedstorage"; result = "refinedstorage:advanced_processor"; primary = 0x4FD9C8; secondary = 0x2FB0A0 }
+    # INFERNAL - Refined Storage Quartz Enriched Iron (quartz lineage; quartz is an Infernal resource here)
+    @{ name = "quartz_enriched_iron"; category = "infernal"; tag = $null; primerItem = "refinedstorage:quartz_enriched_iron"; mod = "refinedstorage"; result = "refinedstorage:quartz_enriched_iron"; primary = 0xD8D2C4; secondary = 0xA9A294 }
     # VOID - mythic metals (tag-driven) + Powah crystals (bespoke) + Mystical Agriculture essences (magic/arcane)
     @{ name = "inferium";  category = "void";     tag = $null; primerItem = "mysticalagriculture:inferium_essence";  mod = "mysticalagriculture"; result = "mysticalagriculture:inferium_essence";  primary = 0x8FD060; secondary = 0x6FA840 }
     @{ name = "supremium"; category = "void";     tag = $null; primerItem = "mysticalagriculture:supremium_essence"; mod = "mysticalagriculture"; result = "mysticalagriculture:supremium_essence"; primary = 0xE05A7A; secondary = 0xB83F5A }
@@ -67,7 +80,12 @@ $variants = @(
 )
 
 $utf8 = [System.Text.UTF8Encoding]::new($false)
+
+# A single mod_loaded condition object.
+function ModLoaded($modid) { return "{ `"type`": `"neoforge:mod_loaded`", `"modid`": `"$modid`" }" }
+
 $count = 0
+$recipeCount = 0
 foreach ($v in $variants) {
     # Guard: every row must have a tag (tag-driven primer) or a primerItem
     # (bespoke). Without one, the JSON would emit an empty "primer_item" that
@@ -76,24 +94,47 @@ foreach ($v in $variants) {
         Write-Error "variant '$($v.name)' has neither tag nor primerItem - check the data table"
         exit 1
     }
-    # Every variant gates on mod_loaded(provider): datapack-registry entries
-    # cannot use tag-based conditions (tags load after registries). primer_tag
-    # still drives infusion at runtime where a common tag exists; bespoke
-    # variants use primer_item.
-    $condition = "    { `"type`": `"neoforge:mod_loaded`", `"modid`": `"$($v.mod)`" }"
+    # Variant gate: datapack-registry entries cannot use tag-based conditions
+    # (tags load after registries), so we gate on the provider mod. A variant
+    # shared by two providers (e.g. silicon: AE2 + Refined Storage) gates on
+    # EITHER via neoforge:or. primer_tag still drives infusion at runtime where a
+    # common tag exists; bespoke variants use primer_item.
+    if ($v.gateMods) {
+        $orValues = ($v.gateMods | ForEach-Object { "      " + (ModLoaded $_) }) -join ",`n"
+        $conditionsInner = "    { `"type`": `"neoforge:or`", `"values`": [`n$orValues`n    ] }"
+    }
+    else {
+        $conditionsInner = "    " + (ModLoaded $v.mod)
+    }
     if ($v.tag) {
         $primerLine = "  `"primer_tag`": `"$($v.tag)`","
     }
     else {
         $primerLine = "  `"primer_item`": `"$($v.primerItem)`","
     }
-    $variantJson = "{`n  `"neoforge:conditions`": [`n$condition`n  ],`n$primerLine`n  `"category`": `"$($v.category)`",`n  `"primary_color`": $([int]$v.primary),`n  `"secondary_color`": $([int]$v.secondary)`n}`n"
+    $variantJson = "{`n  `"neoforge:conditions`": [`n$conditionsInner`n  ],`n$primerLine`n  `"category`": `"$($v.category)`",`n  `"primary_color`": $([int]$v.primary),`n  `"secondary_color`": $([int]$v.secondary)`n}`n"
     [System.IO.File]::WriteAllText((Join-Path $variantDir "$($v.name).json"), $variantJson, $utf8)
 
-    # Smelt recipe: Froglight stamped with this variant -> the provider's item, gated mod_loaded.
-    $recipeJson = "{`n  `"neoforge:conditions`": [`n    { `"type`": `"neoforge:mod_loaded`", `"modid`": `"$($v.mod)`" }`n  ],`n  `"type`": `"minecraft:smelting`",`n  `"ingredient`": {`n    `"type`": `"neoforge:components`",`n    `"items`": [ `"productivefrogs:configurable_froglight`" ],`n    `"components`": { `"productivefrogs:slime_variant`": `"productivefrogs:$($v.name)`" }`n  },`n  `"result`": { `"id`": `"$($v.result)`" },`n  `"experience`": 0.7,`n  `"cookingtime`": 200,`n  `"category`": `"misc`",`n  `"group`": `"productivefrogs_froglight`"`n}`n"
-    [System.IO.File]::WriteAllText((Join-Path $recipeDir "configurable_froglight_$($v.name).json"), $recipeJson, $utf8)
+    # Smelt recipe(s): Froglight stamped with this variant -> the provider's item,
+    # gated mod_loaded. A row may declare multiple `recipes` (one per provider,
+    # each optionally with `notMods` so two providers don't both fire); else a
+    # single recipe from `mod`/`result`. The conditions array is implicitly AND-ed,
+    # so notMods become neoforge:not entries alongside the mod_loaded.
+    $recipeList = if ($v.recipes) { $v.recipes } else { @(@{ mod = $v.mod; result = $v.result; suffix = "" }) }
+    foreach ($r in $recipeList) {
+        $condLines = @("    " + (ModLoaded $r.mod))
+        if ($r.notMods) {
+            foreach ($nm in $r.notMods) {
+                $condLines += "    { `"type`": `"neoforge:not`", `"value`": " + (ModLoaded $nm) + " }"
+            }
+        }
+        $conds = $condLines -join ",`n"
+        $fname = if ($r.suffix) { "configurable_froglight_$($v.name)_$($r.suffix).json" } else { "configurable_froglight_$($v.name).json" }
+        $recipeJson = "{`n  `"neoforge:conditions`": [`n$conds`n  ],`n  `"type`": `"minecraft:smelting`",`n  `"ingredient`": {`n    `"type`": `"neoforge:components`",`n    `"items`": [ `"productivefrogs:configurable_froglight`" ],`n    `"components`": { `"productivefrogs:slime_variant`": `"productivefrogs:$($v.name)`" }`n  },`n  `"result`": { `"id`": `"$($r.result)`" },`n  `"experience`": 0.7,`n  `"cookingtime`": 200,`n  `"category`": `"misc`",`n  `"group`": `"productivefrogs_froglight`"`n}`n"
+        [System.IO.File]::WriteAllText((Join-Path $recipeDir $fname), $recipeJson, $utf8)
+        $recipeCount++
+    }
     $count++
 }
 
-Write-Output "wrote $count cross-mod variants + $count smelt recipes"
+Write-Output "wrote $count cross-mod variants + $recipeCount smelt recipes"

@@ -147,11 +147,33 @@ is bespoke signature materials that "sell" the feature but need explicit handlin
 | fluix | `c:gems/fluix` | AE2 (judgment call: GEODE vs VOID by lore) |
 | fluorite | `c:gems/fluorite` | Mekanism |
 | silicon | `c:silicon` | AE2 + Refined Storage (one tag covers both) |
+| basic / improved / advanced processor | `refinedstorage:*_processor` (exact item) | Refined Storage |
 
 (apatite, `c:gems/apatite`, is Thermal-only - deferred until Thermal ports to 1.21.1.)
 
+The three Refined Storage **processors** (Basic / Improved / Advanced) are crafted
+components with no `c:` tag, so each is primed by its exact processor item and
+smelts back to it - the same self-seeding loop as any other variant (sacrifice one
+processor to start the line, then the frog/milk loop multiplies it). Gated
+`mod_loaded refinedstorage`. GEODE keeps them with the silicon/certus/fluix
+crystal-tech family.
+
+**silicon is shared by AE2 and Refined Storage** (both populate `c:silicon`). The
+variant therefore gates on `neoforge:or(mod_loaded ae2, mod_loaded refinedstorage)`
+so a Refined-Storage-only pack gets it too (it used to be AE2-only). Because a
+smelt recipe outputs a concrete item, not a tag, silicon ships **two** smelt
+recipes: one to `ae2:silicon` gated `ae2`, and one to `refinedstorage:silicon`
+gated `refinedstorage` AND `not(ae2)` so they never both fire (AE2 wins when both
+are installed). The mod-init milk-fluid discovery (`VariantFluidDiscovery`)
+evaluates the same `or`/`and`/`not`/`mod_loaded` conditions, so the silicon milk
+fluid mints iff the variant loads - no orphan fluid on a vanilla-only pack.
+
 ### INFERNAL (nether/fire)
 - blazing crystal (`powah:crystal_blazing`) - bespoke, shipped.
+- **quartz enriched iron** (`refinedstorage:quartz_enriched_iron`) - Refined Storage's
+  flagship metal, bespoke (primed by the exact item; it sits in the broad `c:ingots`
+  tag, which is too wide to use as a primer). Placed in INFERNAL on its quartz
+  lineage - quartz is already an Infernal resource here.
 - Deferred (Thermal has no 1.21.1 release): sulfur (`c:dusts/sulfur`), signalum, lumium.
 
 ### VOID (end/arcane)
@@ -348,6 +370,36 @@ generator** (`scripts/`), not a tag and not a `SlimeVariant` field. The script i
 Recipes are written under `data/productivefrogs/recipe/<modid>/<variant>.json`. (A `crushable`
 flag on `SlimeVariant` is a possible future add if JEI needs to surface "crushable" in-game;
 not needed for generation.)
+
+## Storage automation (AE2 / Refined Storage)
+
+Item and fluid automation from storage mods is **capability-based and needs no
+bespoke code** - PF exposes the standard NeoForge capabilities and AE2 / Refined
+Storage interact through them:
+
+- **Appliance item I/O.** The Slime Milker and Spawnery register
+  `Capabilities.ItemHandler.BLOCK` (side-aware: the down face is the output view,
+  other faces are input). So an RS/AE2 Importer, Exporter, or External Storage
+  bus on a Milker face pulls finished milk buckets from the bottom and pushes
+  slime buckets into the inputs, exactly like a vanilla hopper does.
+- **Milk-bucket fluid I/O.** Each per-variant `<variant>_slime_milk_bucket`
+  registers `Capabilities.FluidHandler.ITEM` (vanilla `FluidBucketWrapper`), so
+  RS/AE2 (and any tank mod) can fill and drain it.
+- **Per-variant fluids preserve the variant through fluid storage.** Because each
+  variant's milk is its own `Fluid` (v1.8), AE2/RS fluid storage, fluid importers,
+  and fluid exporters round-trip a variant's milk with the variant intact - the
+  whole point of the v1.8 per-variant-fluid refactor. (A single shared fluid would
+  have come back variant-less; see `docs/automated_milk_variants.md`.)
+
+So a fully hands-off RS/AE2 line is: External Storage / Importer on the Milker
+output -> network -> Exporter places a chosen variant's milk source -> it spawns
+that variant's slime for the matching frog -> the frog's Froglight drops are
+imported back. No PF-side integration code; nothing to gate on `mod_loaded`.
+
+These caps are exercised generically by existing GameTests (the Milker hopper
+push/pull on `ItemHandler.BLOCK`, and `slimeMilkBucketExposesFluidHandler`); AE2
+and Refined Storage are not dev dependencies, so the RS/AE2-specific round-trip is
+a manual `runClient` check (drop the mod into `run/mods`).
 
 ## Prior art (why this approach)
 

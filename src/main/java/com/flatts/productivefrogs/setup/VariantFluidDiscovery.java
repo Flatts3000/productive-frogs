@@ -120,27 +120,78 @@ public final class VariantFluidDiscovery {
     }
 
     /**
-     * Evaluate a variant JSON's {@code neoforge:conditions} for {@code mod_loaded}
-     * gates. Returns false only when a required mod is provably absent; any parse
-     * trouble or unknown condition type fails open (registers), since a stray dead
-     * fluid is cheaper than wrongly dropping a present variant.
+     * Evaluate a variant JSON's {@code neoforge:conditions}. The array is AND-ed
+     * (every entry must hold), matching NeoForge's datapack-registry condition
+     * evaluation - so this mod-init gate stays in lockstep with whether the
+     * variant actually loads into the {@code slime_variant} registry. Handles
+     * {@code neoforge:mod_loaded}, {@code neoforge:or}, {@code neoforge:and}, and
+     * {@code neoforge:not}; any parse trouble or unknown condition type fails open
+     * (registers), since a stray dead fluid is cheaper than wrongly dropping a
+     * present variant.
+     *
+     * <p>Why the OR/AND/NOT handling matters: a variant shared by two providers
+     * (e.g. silicon, gated {@code or(mod_loaded ae2, mod_loaded refinedstorage)})
+     * would otherwise fail open here and mint a {@code silicon_slime_milk} fluid on
+     * a vanilla-only pack that has no backing variant. Package-private for tests.
      */
-    private static boolean conditionsMet(JsonObject json) {
+    static boolean conditionsMet(JsonObject json) {
         if (!json.has("neoforge:conditions") || !json.get("neoforge:conditions").isJsonArray()) {
             return true;
         }
-        JsonArray conditions = json.getAsJsonArray("neoforge:conditions");
-        for (JsonElement el : conditions) {
-            if (!el.isJsonObject()) {
-                continue;
+        for (JsonElement el : json.getAsJsonArray("neoforge:conditions")) {
+            if (el.isJsonObject() && !evalCondition(el.getAsJsonObject())) {
+                return false;
             }
-            JsonObject cond = el.getAsJsonObject();
-            String type = cond.has("type") ? cond.get("type").getAsString() : "";
-            if ("neoforge:mod_loaded".equals(type) && cond.has("modid")) {
-                String modid = cond.get("modid").getAsString();
-                if (!isModLoaded(modid)) {
-                    return false;
-                }
+        }
+        return true;
+    }
+
+    /**
+     * Evaluate one condition object. Unknown types fail open (true) for the same
+     * reason {@link #conditionsMet} does.
+     */
+    private static boolean evalCondition(JsonObject cond) {
+        String type = cond.has("type") ? cond.get("type").getAsString() : "";
+        switch (type) {
+            case "neoforge:mod_loaded":
+                return !cond.has("modid") || isModLoaded(cond.get("modid").getAsString());
+            case "neoforge:not":
+                return !(cond.has("value") && cond.get("value").isJsonObject())
+                    || !evalCondition(cond.getAsJsonObject("value"));
+            case "neoforge:or":
+                return anyOrEmpty(cond, true);
+            case "neoforge:and":
+                return allConditions(cond);
+            default:
+                return true;
+        }
+    }
+
+    /** True if any nested value holds; {@code emptyDefault} when there are none. */
+    private static boolean anyOrEmpty(JsonObject cond, boolean emptyDefault) {
+        if (!cond.has("values") || !cond.get("values").isJsonArray()) {
+            return true;
+        }
+        JsonArray values = cond.getAsJsonArray("values");
+        if (values.isEmpty()) {
+            return emptyDefault;
+        }
+        for (JsonElement el : values) {
+            if (el.isJsonObject() && evalCondition(el.getAsJsonObject())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** True if every nested value holds (vacuously true when there are none). */
+    private static boolean allConditions(JsonObject cond) {
+        if (!cond.has("values") || !cond.get("values").isJsonArray()) {
+            return true;
+        }
+        for (JsonElement el : cond.getAsJsonArray("values")) {
+            if (el.isJsonObject() && !evalCondition(el.getAsJsonObject())) {
+                return false;
             }
         }
         return true;
