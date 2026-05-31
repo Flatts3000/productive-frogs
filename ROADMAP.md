@@ -86,6 +86,10 @@ base rates. **Breaking for existing worlds:** old placed Slime Milk and old milk
 buckets do not carry over - re-mill from Slime Buckets. Design:
 [docs/automated_milk_variants.md](./docs/automated_milk_variants.md).
 
+### v1.8.1 - v1.8.3 (shipped 2026-05-30 to 2026-05-31): bucket fixes, drain timing, Froglight fuel
+
+A run of small fixes and one new convenience. **v1.8.1:** releasing a slime from a Slime Bucket no longer dumps water, a released slime is always size 1, and a dispenser loaded with a Slime Bucket places the slime instead of just ejecting the bucket. **v1.8.2:** a Slime Milk source no longer lingers for one extra spawn after its counter hits zero - the final spawn and the source draining away now happen on the same tick. **v1.8.3:** Coal and Blaze Froglights burn as furnace fuel - a Coal Froglight burns like a coal item and a Blaze Froglight like a blaze rod, so the Froglights you farm from those resources double as fuel. Every other Froglight stays purely decorative.
+
 ---
 
 ## v2: automation

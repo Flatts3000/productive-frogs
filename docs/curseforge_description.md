@@ -101,6 +101,8 @@ The mod is fully playable today. Everything below is live on CurseForge. Targets
 
 **v1.8.0 (shipped): automatable Slime Milk.** A chosen slime can now be farmed completely hands-off. Each variant's Slime Milk is its own liquid, so fluid-automation mods (Just Dire Things, Mekanism, Pipez, and other fluid handlers) can pump milk out of a source, carry it through pipes and tanks, and place it back as the same variant - no need to stand there with a bucket. The Slime Milker and the hand-bucket loop work just like before. One catch: a source's catalyst boosts ride along when you bucket it up by hand, but they reset when milk runs through a tank, so an automated line spawns at the base rate. Heads-up for existing worlds: old placed Slime Milk and old milk buckets do not carry over - re-mill them from Slime Buckets. More detail: [the automated milk doc](https://github.com/Flatts3000/productive-frogs/blob/main/docs/automated_milk_variants.md).
 
+**v1.8.1 - v1.8.3 (shipped): polish and Froglight fuel.** A handful of small fixes - releasing a slime from a bucket no longer spills water, a released slime is always the small size you captured, and a dispenser can place a slime for you. And a new convenience: Coal and Blaze Froglights now burn as furnace fuel, each like the resource it's made of - a Coal Froglight burns like coal, a Blaze Froglight like a blaze rod. Every other Froglight stays purely decorative.
+
 ### v2: automation
 
 The scale-up release. v1 lives unchanged; v2 layers automation on top. A player who never crafts a v2 block still has every v1 capability.

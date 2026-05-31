@@ -1,6 +1,6 @@
 # Productive Frogs
 
-A content mod for **Minecraft 1.21.1 / NeoForge 21.1.230**. Latest release: v1.8.0.
+A content mod for **Minecraft 1.21.1 / NeoForge 21.1.230**. Latest release: v1.8.3.
 
 **Download:** [CurseForge](https://www.curseforge.com/minecraft/mc-mods/productive-frogs) (preferred) | [GitHub Releases](https://github.com/Flatts3000/productive-frogs/releases) (mirror)
 
@@ -69,7 +69,7 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 
 ## Status
 
-**Latest release: v1.8.0.** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, the Spawnery, frog stat breeding, and Slime Milk catalysts that buff a placed source. As of v1.8, a variant's Slime Milk can be collected, piped, and placed back by fluid-automation mods, so a chosen variant can be farmed fully hands-off.
+**Latest release: v1.8.3.** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, the Spawnery, frog stat breeding, and Slime Milk catalysts that buff a placed source. As of v1.8, a variant's Slime Milk can be collected, piped, and placed back by fluid-automation mods, so a chosen variant can be farmed fully hands-off. Coal and Blaze Froglights also double as furnace fuel (v1.8.3), burning like the resource they are made of.
 
 | Version line | Scope | Status |
 |---|---|---|
@@ -81,7 +81,7 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 | v1.5 | Frog stat breeding | ✅ shipped |
 | v1.6 | Bog recategorization + Slime Milk reliability | ✅ shipped |
 | v1.7 | Slime Milk catalysts | ✅ shipped |
-| v1.8 | Slime Milk automation (per-variant fluids) | ✅ shipped |
+| v1.8 | Slime Milk automation (per-variant fluids) + Coal/Blaze Froglight fuel | ✅ shipped |
 | v2 | Automation: power/multiblocks/terrariums | 🔭 future |
 
 Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope rationale: [`docs/versioning.md`](./docs/versioning.md).

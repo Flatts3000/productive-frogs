@@ -32,7 +32,7 @@ The end-to-end production loop a player runs in V1, centered on the **Slime Milk
 
 ## Slime Milk (fluid)
 
-- One fluid, `productivefrogs:slime_milk`, with the variant carried on the bucket's data component and the source BlockEntity (not one fluid per variant). The variant drives the per-variant render tint.
+- As of v1.8, one fluid **per variant** (`productivefrogs:<variant>_slime_milk`, e.g. `iron_slime_milk`), each with its own source block and bucket. The variant is baked into the source block and drives the per-variant render tint. (See the v1.8 note and Fluid automation below for why this replaced the old single-fluid model.)
 - **Flow**: lava-style. Slower than water; 4-block flow distance in overworld. Limits sprawling milk floods.
 - **Pickup**: empty bucket scoops a source block, converting it to a typed milk bucket. Other buckets (water, etc.) do not interact.
 - **Walking on it**: passive - no damage, no slowdown beyond normal liquid penalties. Visible color tint per variant.
@@ -84,8 +84,11 @@ Each milk source block independently rolls a spawn tick:
 | Smelt the Froglight | Get 1 unit of the base resource | Works for every variant: Iron Froglight → Iron Ingot, Sponge Froglight → Sponge Block, Ender Froglight → Ender Pearl, etc. |
 | Crush the Froglight (metal variants, v1.3) | Get 2x dust | Requires an installed crusher (Mekanism / Immersive Engineering / EnderIO); see Cross-Mod section below |
 | Smelt the dust | Get 1 ingot per dust (2 total from one crushed Froglight) | Net: crush+smelt yields 2x material vs direct smelt. The crusher mod (or AllTheOres) ships the dust-to-ingot smelt. |
+| Burn the Froglight as fuel (Coal / Blaze only, v1.8.3) | Powers a furnace | Coal Froglight burns like a coal item (1600 ticks, 8 smelts); Blaze Froglight like a blaze rod (2400 ticks, 12 smelts). Every other Froglight is inert (not fuel). |
 
 **Smelting**: works on every variant Froglight. Each variant has its own smelt recipe → its base resource.
+
+**Fuel (v1.8.3)**: the Coal and Blaze Froglights double as furnace fuel, burning for the same time as the vanilla item each is made of - a coal item (1600 ticks) and a blaze rod (2400 ticks) respectively. This is per-stack behaviour keyed off the Froglight's variant component (every Froglight is the same `configurable_froglight` item), so only those two variants ignite; all others remain decorative. Implemented as a `getBurnTime` override on `ConfigurableFroglightItem` rather than the `furnace_fuels` data map, which keys on the item and would otherwise make every variant fuel.
 
 **Crushing**: applies **only** to metal variants (vanilla iron, copper, gold plus cross-mod metals like tin, lead, osmium). Non-metal Froglights have no crush recipe and pass through a crusher unchanged. Because every variant is the same `configurable_froglight` item distinguished only by its `slime_variant` component, there is **no `crushable` item tag** (a tag can't select by component); each crush recipe matches per-variant via the `neoforge:components` ingredient. Shipped as v1.3, `mod_loaded`-gated. See Cross-Mod: Crushing below.
 
