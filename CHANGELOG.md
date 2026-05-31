@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.8.2 - 2026-05-31 - Slime Milk drain timing
+
+### Fixed
+
+- **A Slime Milk source no longer lingers for one extra spawn after its counter reaches zero.** The final spawn and the source draining away now happen on the same tick, so Jade no longer briefly reads "0 left" on a source that is still standing and about to spawn one more slime. The total number of slimes a source produces over its life is unchanged.
+
 ## v1.8.1 - 2026-05-30 - Slime Bucket fixes
 
 ### Added
