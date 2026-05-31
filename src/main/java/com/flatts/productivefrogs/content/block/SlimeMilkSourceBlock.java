@@ -192,11 +192,9 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
 
         boolean depleting = depletionEnabled() && !be.isInfinite();
         if (depleting && be.getSpawnsRemaining() <= 0) {
-            // True air swap to drain: removeBlock on a fluid block would
-            // reset the source to its default state.
-            level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
-            PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
-                "source @%s: depleted, drained to air (variant=%s)", pos, variantId));
+            // Already exhausted before this tick (e.g. placed from a re-bucketed
+            // empty source, or loaded at 0): drain without spawning.
+            drainToAir(level, pos, variantId);
             return;
         }
         // Density cap: pause (WITHOUT spending the budget) when this source's own
@@ -213,8 +211,28 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
         spawnBatch(level, pos, random, variantId, be);
         if (depleting) {
             be.decrementSpawns();
+            // If that spawn was this source's last, drain in the SAME tick rather
+            // than rescheduling and draining one full interval later. Otherwise the
+            // counter visibly hits 0 (Jade reads "0 / cap") while the block lingers
+            // and fires one more scheduled tick before disappearing - an off-by-one
+            // where the source looks empty yet is still standing.
+            if (be.getSpawnsRemaining() <= 0) {
+                drainToAir(level, pos, variantId);
+                return;
+            }
         }
         scheduleNextSpawnTick(level, pos, random, be.getSpeedLevel());
+    }
+
+    /**
+     * Drain a source by swapping it to air. A plain {@code removeBlock} on a fluid
+     * block round-trips the fluid back to a default-state source, so the drain must
+     * set {@link Blocks#AIR} explicitly.
+     */
+    private static void drainToAir(ServerLevel level, BlockPos pos, ResourceLocation variantId) {
+        level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
+            "source @%s: depleted, drained to air (variant=%s)", pos, variantId));
     }
 
     /**

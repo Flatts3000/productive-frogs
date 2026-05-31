@@ -1940,6 +1940,51 @@ public final class PFGameTests {
     }
 
     /**
+     * Regression: the final spawn and the drain happen in the SAME tick, so the
+     * source never lingers at {@code SPAWNS_REMAINING=0}. Set the counter to 1 and
+     * tick once: the source must spawn its one slime AND drain to air in that tick
+     * (not reschedule and drain a full interval later). Before the fix the counter
+     * hit 0 while the block stayed standing for one more spawn interval, which read
+     * as an off-by-one (Jade said 0 yet the source was still there about to drain).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkSourceDrainsSameTickAsFinalSpawn(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+        helper.setBlock(sourcePos.east(), Blocks.STONE);
+
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
+            PFVariantMilk.block(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        helper.setBlock(sourcePos, block);
+        stampMilkVariant(helper, sourcePos, "iron");
+        setMilkSpawns(helper, sourcePos, 1);
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(sourcePos);
+
+        Boolean originalOverride =
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride;
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = true;
+        try {
+            block.tick(level.getBlockState(abs), level, abs, level.getRandom());
+
+            // One slime spawned this tick.
+            if (helper.getEntities(PFEntities.RESOURCE_SLIME.get()).size() != 1) {
+                helper.fail("expected exactly 1 ResourceSlime from the final spawn");
+                return;
+            }
+            // ...and the source drained in the SAME tick, not a later one.
+            BlockState after = level.getBlockState(abs);
+            if (!after.isAir()) {
+                helper.fail("source with 1 spawn left must drain in the same tick as its "
+                    + "final spawn, but the block still stands: " + after);
+                return;
+            }
+            helper.succeed();
+        } finally {
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = originalOverride;
+        }
+    }
+
+    /**
      * Sanity check: a freshly-placed source, once its variant is set, seeds the
      * BlockEntity's remaining-spawn counter to the configured default
      * ({@code DEPLETION_COUNT}, default 16). The counter moved from a blockstate
@@ -1992,7 +2037,9 @@ public final class PFGameTests {
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = true;
         try {
             // Ticks are invoked manually (scheduled reschedules do not auto-fire
-            // here), so this is exactly 2 spawns (counter 2 -> 1 -> 0) + 1 drain.
+            // here): counter 2 -> 1 (tick 1 spawns), then 1 -> 0 (tick 2 spawns
+            // AND drains in the same tick), so the block is air by tick 3. Exactly
+            // 2 spawns either way; the 3rd tick is a no-op on the drained air block.
             block.tick(level.getBlockState(abs), level, abs, level.getRandom());
             block.tick(level.getBlockState(abs), level, abs, level.getRandom());
             block.tick(level.getBlockState(abs), level, abs, level.getRandom());
