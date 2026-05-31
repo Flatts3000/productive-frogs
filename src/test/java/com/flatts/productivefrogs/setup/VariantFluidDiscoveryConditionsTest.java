@@ -99,6 +99,14 @@ class VariantFluidDiscoveryConditionsTest {
     }
 
     @Test
+    void emptyOrIsFalseEmptyAndIsTrue() {
+        // Matches NeoForge OrCondition/AndCondition test semantics: an empty OR has
+        // no satisfied alternative (false); an empty AND is vacuously true.
+        assertFalse(met(or()));
+        assertTrue(met(and()));
+    }
+
+    @Test
     void unknownConditionFailsOpen() {
         assertTrue(met("{\"type\":\"neoforge:some_future_condition\"}"));
     }

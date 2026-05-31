@@ -2,7 +2,6 @@ package com.flatts.productivefrogs.setup;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.util.PFDebug;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -159,42 +158,48 @@ public final class VariantFluidDiscovery {
                 return !(cond.has("value") && cond.get("value").isJsonObject())
                     || !evalCondition(cond.getAsJsonObject("value"));
             case "neoforge:or":
-                return anyOrEmpty(cond, true);
+                return evalList(cond, false);
             case "neoforge:and":
-                return allConditions(cond);
+                return evalList(cond, true);
             default:
+                // A condition type the datapack registry understands but we don't
+                // (e.g. item_exists, tag_empty). Fail open so a present variant is
+                // never wrongly dropped - but that risks minting a milk fluid for a
+                // variant the registry then rejects, the exact orphan-fluid case
+                // this gate exists to avoid. Log it loudly rather than drift
+                // silently; add the type here if it should gate fluids.
+                ProductiveFrogs.LOGGER.warn(
+                    "Slime Milk variant gate: unhandled condition type '{}' - failing open "
+                    + "(a per-variant milk fluid may register without a backing variant). "
+                    + "Handle it in VariantFluidDiscovery.evalCondition if it should gate.", type);
                 return true;
         }
     }
 
-    /** True if any nested value holds; {@code emptyDefault} when there are none. */
-    private static boolean anyOrEmpty(JsonObject cond, boolean emptyDefault) {
-        if (!cond.has("values") || !cond.get("values").isJsonArray()) {
-            return true;
-        }
-        JsonArray values = cond.getAsJsonArray("values");
-        if (values.isEmpty()) {
-            return emptyDefault;
-        }
-        for (JsonElement el : values) {
-            if (el.isJsonObject() && evalCondition(el.getAsJsonObject())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** True if every nested value holds (vacuously true when there are none). */
-    private static boolean allConditions(JsonObject cond) {
+    /**
+     * Evaluate an {@code or}/{@code and} condition's {@code values} list.
+     * {@code requireAll} selects AND (every child must hold; an empty list is
+     * vacuously true) vs OR (any child holds; an empty list is false) - matching
+     * NeoForge's {@code AndCondition}/{@code OrCondition} test semantics. A missing
+     * or non-array {@code values} is parse trouble and fails open (true).
+     */
+    private static boolean evalList(JsonObject cond, boolean requireAll) {
         if (!cond.has("values") || !cond.get("values").isJsonArray()) {
             return true;
         }
         for (JsonElement el : cond.getAsJsonArray("values")) {
-            if (el.isJsonObject() && !evalCondition(el.getAsJsonObject())) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            boolean result = evalCondition(el.getAsJsonObject());
+            if (requireAll && !result) {
                 return false;
             }
+            if (!requireAll && result) {
+                return true;
+            }
         }
-        return true;
+        return requireAll;
     }
 
     private static boolean isModLoaded(String modid) {

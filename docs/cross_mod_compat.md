@@ -158,6 +158,11 @@ processor to start the line, then the frog/milk loop multiplies it). Gated
 `mod_loaded refinedstorage`. GEODE keeps them with the silicon/certus/fluix
 crystal-tech family.
 
+All Refined Storage ids are source-verified against `refinedmods/refinedstorage2`
+(`refinedstorage-common` generated data): `refinedstorage:{basic,improved,advanced}_processor`,
+`refinedstorage:quartz_enriched_iron` (also in `c:ingots`), and `refinedstorage:silicon`
+(RS ships the `c:silicon` tag, so the shared silicon primer matches RS silicon too).
+
 **silicon is shared by AE2 and Refined Storage** (both populate `c:silicon`). The
 variant therefore gates on `neoforge:or(mod_loaded ae2, mod_loaded refinedstorage)`
 so a Refined-Storage-only pack gets it too (it used to be AE2-only). Because a

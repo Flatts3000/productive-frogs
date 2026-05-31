@@ -51,7 +51,10 @@ $variants = @(
     # silicon is shared by AE2 and Refined Storage (both populate c:silicon), so the
     # variant gates on EITHER mod (neoforge:or) and smelts back to whichever provider
     # is present. The RS recipe is also gated NOT(ae2) so the two never both fire when
-    # both mods are installed - AE2 wins, you get ae2:silicon.
+    # both mods are installed - AE2 wins, you get ae2:silicon. (Two-provider scope: a
+    # third c:silicon provider would need adding to gateMods AND a NOT entry in every
+    # earlier recipe to keep them mutually exclusive.) RS ids source-verified against
+    # refinedmods/refinedstorage2 (refinedstorage-common generated data).
     @{ name = "silicon"; category = "geode"; tag = "c:silicon"; gateMods = @("ae2", "refinedstorage"); recipes = @(
             @{ mod = "ae2"; result = "ae2:silicon"; suffix = "" }
             @{ mod = "refinedstorage"; notMods = @("ae2"); result = "refinedstorage:silicon"; suffix = "refinedstorage" }
@@ -92,6 +95,13 @@ foreach ($v in $variants) {
     # fails codec decode at server boot. Catch a careless table edit here.
     if (-not $v.tag -and -not $v.primerItem) {
         Write-Error "variant '$($v.name)' has neither tag nor primerItem - check the data table"
+        exit 1
+    }
+    # A multi-provider (gateMods) row must list explicit recipes: the default
+    # recipe path below reads $v.mod / $v.result, which such a row does not set,
+    # so it would silently emit a recipe with a null result id.
+    if ($v.gateMods -and -not $v.recipes) {
+        Write-Error "variant '$($v.name)' sets gateMods but no recipes - list a recipe per provider"
         exit 1
     }
     # Variant gate: datapack-registry entries cannot use tag-based conditions
