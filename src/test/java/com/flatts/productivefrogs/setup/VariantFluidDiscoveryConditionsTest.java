@@ -16,15 +16,17 @@ import org.junit.jupiter.api.Test;
  * this exists: the shared silicon variant gates on {@code or(ae2, refinedstorage)},
  * and a flat parser would fail open and mint a dead fluid on a vanilla-only pack.
  *
- * <p>{@code productivefrogs} is loaded in the JUnit mod context; {@code ae2} and
- * {@code refinedstorage} are not - the same {@code ModList} reality the per-variant
- * milk tests already depend on.
+ * <p>{@code productivefrogs} is loaded in the JUnit mod context; the ABSENT ids are
+ * synthetic ids no mod will ever register, so the test stays correct regardless of
+ * which dev/test mods are on the classpath (e.g. Refined Storage, now a dev-runtime
+ * dependency, is loaded - so a real mod id like {@code refinedstorage} can NOT be
+ * used as an "absent" sentinel).
  */
 class VariantFluidDiscoveryConditionsTest {
 
     private static final String PRESENT = "productivefrogs";
-    private static final String ABSENT_A = "ae2";
-    private static final String ABSENT_B = "refinedstorage";
+    private static final String ABSENT_A = "pf_absent_mod_alpha";
+    private static final String ABSENT_B = "pf_absent_mod_beta";
 
     /** Wrap one or more condition objects in a variant JSON's conditions array. */
     private static boolean met(String... conditionJson) {
