@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.9.0 - 2026-05-31 - Refined Storage support
+
+### Added
+
+- **Refined Storage support.** With Refined Storage installed, its three processors (Basic / Improved / Advanced) and Quartz Enriched Iron are now farmable through the frog loop: prime a slime with one, feed it to the matching frog, and smelt the Froglight it drops back into the resource. Each gets its own pipe-automatable Slime Milk, like every other variant.
+
+### Changed
+
+- **Silicon now works with Refined Storage as well as Applied Energistics 2.** The shared Silicon resource was previously farmable only when AE2 was installed; it now works on a pack with either mod (or both).
+
 ## v1.8.3 - 2026-05-31 - Froglight fuel
 
 ### Added

@@ -2,7 +2,6 @@ package com.flatts.productivefrogs.setup;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.util.PFDebug;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -120,30 +119,87 @@ public final class VariantFluidDiscovery {
     }
 
     /**
-     * Evaluate a variant JSON's {@code neoforge:conditions} for {@code mod_loaded}
-     * gates. Returns false only when a required mod is provably absent; any parse
-     * trouble or unknown condition type fails open (registers), since a stray dead
-     * fluid is cheaper than wrongly dropping a present variant.
+     * Evaluate a variant JSON's {@code neoforge:conditions}. The array is AND-ed
+     * (every entry must hold), matching NeoForge's datapack-registry condition
+     * evaluation - so this mod-init gate stays in lockstep with whether the
+     * variant actually loads into the {@code slime_variant} registry. Handles
+     * {@code neoforge:mod_loaded}, {@code neoforge:or}, {@code neoforge:and}, and
+     * {@code neoforge:not}; any parse trouble or unknown condition type fails open
+     * (registers), since a stray dead fluid is cheaper than wrongly dropping a
+     * present variant.
+     *
+     * <p>Why the OR/AND/NOT handling matters: a variant shared by two providers
+     * (e.g. silicon, gated {@code or(mod_loaded ae2, mod_loaded refinedstorage)})
+     * would otherwise fail open here and mint a {@code silicon_slime_milk} fluid on
+     * a vanilla-only pack that has no backing variant. Package-private for tests.
      */
-    private static boolean conditionsMet(JsonObject json) {
+    static boolean conditionsMet(JsonObject json) {
         if (!json.has("neoforge:conditions") || !json.get("neoforge:conditions").isJsonArray()) {
             return true;
         }
-        JsonArray conditions = json.getAsJsonArray("neoforge:conditions");
-        for (JsonElement el : conditions) {
-            if (!el.isJsonObject()) {
-                continue;
-            }
-            JsonObject cond = el.getAsJsonObject();
-            String type = cond.has("type") ? cond.get("type").getAsString() : "";
-            if ("neoforge:mod_loaded".equals(type) && cond.has("modid")) {
-                String modid = cond.get("modid").getAsString();
-                if (!isModLoaded(modid)) {
-                    return false;
-                }
+        for (JsonElement el : json.getAsJsonArray("neoforge:conditions")) {
+            if (el.isJsonObject() && !evalCondition(el.getAsJsonObject())) {
+                return false;
             }
         }
         return true;
+    }
+
+    /**
+     * Evaluate one condition object. Unknown types fail open (true) for the same
+     * reason {@link #conditionsMet} does.
+     */
+    private static boolean evalCondition(JsonObject cond) {
+        String type = cond.has("type") ? cond.get("type").getAsString() : "";
+        switch (type) {
+            case "neoforge:mod_loaded":
+                return !cond.has("modid") || isModLoaded(cond.get("modid").getAsString());
+            case "neoforge:not":
+                return !(cond.has("value") && cond.get("value").isJsonObject())
+                    || !evalCondition(cond.getAsJsonObject("value"));
+            case "neoforge:or":
+                return evalList(cond, false);
+            case "neoforge:and":
+                return evalList(cond, true);
+            default:
+                // A condition type the datapack registry understands but we don't
+                // (e.g. item_exists, tag_empty). Fail open so a present variant is
+                // never wrongly dropped - but that risks minting a milk fluid for a
+                // variant the registry then rejects, the exact orphan-fluid case
+                // this gate exists to avoid. Log it loudly rather than drift
+                // silently; add the type here if it should gate fluids.
+                ProductiveFrogs.LOGGER.warn(
+                    "Slime Milk variant gate: unhandled condition type '{}' - failing open "
+                    + "(a per-variant milk fluid may register without a backing variant). "
+                    + "Handle it in VariantFluidDiscovery.evalCondition if it should gate.", type);
+                return true;
+        }
+    }
+
+    /**
+     * Evaluate an {@code or}/{@code and} condition's {@code values} list.
+     * {@code requireAll} selects AND (every child must hold; an empty list is
+     * vacuously true) vs OR (any child holds; an empty list is false) - matching
+     * NeoForge's {@code AndCondition}/{@code OrCondition} test semantics. A missing
+     * or non-array {@code values} is parse trouble and fails open (true).
+     */
+    private static boolean evalList(JsonObject cond, boolean requireAll) {
+        if (!cond.has("values") || !cond.get("values").isJsonArray()) {
+            return true;
+        }
+        for (JsonElement el : cond.getAsJsonArray("values")) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            boolean result = evalCondition(el.getAsJsonObject());
+            if (requireAll && !result) {
+                return false;
+            }
+            if (!requireAll && result) {
+                return true;
+            }
+        }
+        return requireAll;
     }
 
     private static boolean isModLoaded(String modid) {
