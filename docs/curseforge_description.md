@@ -103,6 +103,8 @@ The mod is fully playable today. Everything below is live on CurseForge. Targets
 
 **v1.8.1 - v1.8.3 (shipped): polish and Froglight fuel.** A handful of small fixes - releasing a slime from a bucket no longer spills water, a released slime is always the small size you captured, and a dispenser can place a slime for you. And a new convenience: Coal and Blaze Froglights now burn as furnace fuel, each like the resource it's made of - a Coal Froglight burns like coal, a Blaze Froglight like a blaze rod. Every other Froglight stays purely decorative.
 
+**v1.9.0 (shipped): Refined Storage support.** Running Refined Storage? Its processors and Quartz Enriched Iron are now farmable through the frog loop - prime a slime with one, let the matching frog eat it, and smelt the Froglight back into the resource, with the same hands-off Slime Milk farming as everything else. And Silicon, the resource it shares with Applied Energistics 2, now works whether you have Refined Storage, AE2, or both installed.
+
 ### v2: automation
 
 The scale-up release. v1 lives unchanged; v2 layers automation on top. A player who never crafts a v2 block still has every v1 capability.
