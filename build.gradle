@@ -121,6 +121,18 @@ dependencies {
     // class is simply never loaded. Modrinth yd8FKCmx = Jade 15.10.5+neoforge (1.21.1).
     compileOnly "maven.modrinth:jade:yd8FKCmx"
 
+    // Refined Storage 2 (modid `refinedstorage`) - DEV RUNTIME ONLY, not a real
+    // dependency and NOT bundled in the published jar. Our RS support is pure data
+    // (slime_variant JSON + smelt recipes gated `mod_loaded: refinedstorage`), so
+    // there is no compile-time reference - we pull RS into the dev runtime purely so
+    // runClient / runServer / runGameTestServer actually load the RS-gated variants
+    // (the silicon OR-gate, quartz enriched iron, and the three processor Froglights),
+    // which were otherwise only verifiable by hand. RS 2.0.8 is the 1.21.1 NeoForge
+    // build and declares NO mod dependencies of its own, so nothing transitive to add.
+    // Modrinth version id kxRNbIBe. Unlike Jade this is safe as runtimeOnly: there is
+    // no run/mods drop-in to double-load against.
+    runtimeOnly "maven.modrinth:refined-storage:2.0.8"
+
     testImplementation platform('org.junit:junit-bom:5.11.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
