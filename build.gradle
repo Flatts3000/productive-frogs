@@ -4,7 +4,7 @@ plugins {
     // CurseForgeGradle: wraps the CurseForge Upload API so `./gradlew publishCurseForge`
     // pushes a new file to the project page. Read the API token from .env (gitignored),
     // env var, or gradle.properties. Task registered at the bottom of this file.
-    id 'net.darkhax.curseforgegradle' version '1.1.26'
+    id 'net.darkhax.curseforgegradle' version '1.3.32'
 }
 
 base {
