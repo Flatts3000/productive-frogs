@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.9.1 - 2026-06-02 - Beta
+
+### Changed
+
+- **Promoted from alpha to beta on CurseForge.** The V1 feature set is complete across sixteen releases and cross-mod compatibility (Mekanism, Create, Applied Energistics 2, Refined Storage, and the rest) has now been smoke-tested in a real pack, not just structurally. No functional or content changes since v1.9.0; this release only updates the CurseForge release type.
+
 ## v1.9.0 - 2026-05-31 - Refined Storage support
 
 ### Added

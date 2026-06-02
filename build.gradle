@@ -275,8 +275,10 @@ tasks.register('publishCurseForge', net.darkhax.curseforgegradle.TaskPublishCurs
     apiToken = resolveCfApiToken()
 
     def primary = upload(1552728, tasks.jar.archiveFile)
-    // Alpha until the mod is feature-stable / battle-tested - honest about maturity.
-    primary.releaseType = 'alpha'
+    // Beta as of v1.9.0: V1 scope is feature-complete and cross-mod compat
+    // (Mekanism, Create, AE2, Refined Storage, ...) has been runtime-smoke-tested
+    // in-pack, not just structurally. Bump to 'release' once it has soaked.
+    primary.releaseType = 'beta'
     primary.addGameVersion('1.21.1')
     primary.addModLoader('NeoForge')
     primary.addJavaVersion('Java 21')
