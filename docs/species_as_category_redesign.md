@@ -218,7 +218,7 @@ V1 carryover (already shipped, Infernal species): magma_cream.
 
 | Variant | Primer item | Smelt result | Source in vanilla |
 |---|---|---|---|
-| `chorus_fruit` | `minecraft:chorus_fruit` | `minecraft:popped_chorus_fruit` (vanilla smelt chain) | end outer islands |
+| `chorus_fruit` | `minecraft:chorus_fruit` | `minecraft:chorus_fruit` (1:1 since 2026-06-05; originally popped via the vanilla smelt chain) | end outer islands |
 | `shulker_shell` | `minecraft:shulker_shell` | `minecraft:shulker_shell` | shulkers in end cities |
 
 V1 carryover (already shipped, Void species): ender_pearl.
