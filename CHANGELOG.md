@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.9.2 - 2026-06-05 - Chorus Froglight smelting fix
+
+### Fixed
+
+- **The Chorus Fruit Froglight now smelts back into chorus fruit.** It previously followed vanilla's furnace chain and produced popped chorus fruit - the only Froglight that didn't smelt back into the resource it was farmed from, which also meant the frog loop couldn't produce the chorus fruit needed to prime more slimes. If you want popped chorus fruit, smelt the fruit a second time, same as vanilla.
+
 ## v1.9.1 - 2026-06-02 - Beta
 
 ### Changed
