@@ -26,7 +26,7 @@ The eight Sky-Frogs-reported issues logged on 2026-05-28 (flowing-milk displacem
 
 The Spawnery dev-testing findings (Slime Milker recipe, Slime Milk JEI subtypes, container-GUI tooltips, and the Spawnery primer-required decision) shipped in v1.4.0 and are in the [archive](./known_issues_archive.md). By-design V1 limitations are listed below.
 
-Recently resolved (see the [archive](./known_issues_archive.md)): the JEI info text calling the block "Configurable Froglight" instead of its "Froglight" display name (now guarded by a copy-lint test); cross-mod variant slimes showing a raw lang key in the Froglight tooltip (fixed via the JEI title-case fallback plus explicit `en_us.json` keys for all 57 shipped variants, now guarded by a lang-completeness unit test); empty-bucket slime capture; and canonical species ordering across tabs / JEI / recipe book.
+Recently resolved (see the [archive](./known_issues_archive.md)): the Chorus Fruit Froglight smelting to popped chorus fruit instead of the chorus fruit it was primed with (the last non-1:1 smelt, fixed 2026-06-05); the JEI info text calling the block "Configurable Froglight" instead of its "Froglight" display name (now guarded by a copy-lint test); cross-mod variant slimes showing a raw lang key in the Froglight tooltip (fixed via the JEI title-case fallback plus explicit `en_us.json` keys for all 57 shipped variants, now guarded by a lang-completeness unit test); empty-bucket slime capture; and canonical species ordering across tabs / JEI / recipe book.
 
 ---
 
@@ -75,4 +75,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-05-28 (eight Sky-Frogs-reported issues fixed and archived; no open issues remain. The four client-render / fluid-flow / time-and-AI fixes were runClient-verified in-world).*
+*Last updated: 2026-06-05 (Chorus Fruit Froglight now smelts 1:1 back to chorus fruit, archived; no open issues remain).*

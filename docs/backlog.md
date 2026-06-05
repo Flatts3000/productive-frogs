@@ -112,7 +112,7 @@ Per-variant work for each = a `slime_variant` JSON (with `primer_item` exact-mat
 - ☑ `quartz`
 
 **Void (+2)**
-- ☑ `chorus_fruit` *(non-1:1 smelt - Froglight smelts to `popped_chorus_fruit`)*
+- ☑ `chorus_fruit` *(originally a non-1:1 smelt to `popped_chorus_fruit`; made 1:1 to `chorus_fruit` on 2026-06-05 - see known_issues_archive.md)*
 - ☑ `shulker_shell`
 
 ### Tier B - remaining

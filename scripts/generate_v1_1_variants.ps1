@@ -71,7 +71,7 @@ $variants = @(
     @{ Name = "netherrack";          Primer = "minecraft:netherrack";        Category = "infernal"; Smelt = "minecraft:netherrack";           Inner = "minecraft:netherrack";        Primary = 0x703434; Exp = 0.7; Label = "Netherrack" }
     @{ Name = "blaze";               Primer = "minecraft:blaze_powder";      Category = "infernal"; Smelt = "minecraft:blaze_powder";         Inner = "minecraft:shroomlight";       Primary = 0xE8A41C; Exp = 0.7; Label = "Blaze" }
     @{ Name = "quartz";              Primer = "minecraft:quartz";            Category = "infernal"; Smelt = "minecraft:quartz";               Inner = "minecraft:quartz_block";      Primary = 0xEAE4DA; Exp = 0.7; Label = "Quartz" }
-    @{ Name = "chorus_fruit";        Primer = "minecraft:chorus_fruit";      Category = "void";     Smelt = "minecraft:popped_chorus_fruit";  Inner = "minecraft:purpur_block";      Primary = 0x97709C; Exp = 0.7; Label = "Chorus Fruit" }
+    @{ Name = "chorus_fruit";        Primer = "minecraft:chorus_fruit";      Category = "void";     Smelt = "minecraft:chorus_fruit";         Inner = "minecraft:purpur_block";      Primary = 0x97709C; Exp = 0.7; Label = "Chorus Fruit" }
     @{ Name = "shulker_shell";       Primer = "minecraft:shulker_shell";     Category = "void";     Smelt = "minecraft:shulker_shell";        Inner = "minecraft:purpur_pillar";     Primary = 0x8E6090; Exp = 0.7; Label = "Shulker Shell" }
 )
 
