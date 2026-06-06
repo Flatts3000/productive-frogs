@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.10.0 - 2026-06-06 - Obsidian joins the Infernal species
+
+### Changed
+
+- **Obsidian and Refined Obsidian slimes are now Infernal, not Cave.** Mining obsidian requires a diamond pickaxe, so it can't sit in the first-tier Cave roster - obsidian is the gate to the Nether itself, and Mekanism's Refined Obsidian follows its obsidian lineage. The Infernal Frog now eats both (previously the Cave Frog), and split-discovery rolls them in the Infernal pool. Existing slimes update themselves on world load; Froglights, Slime Buckets, and Slime Milk are all variant-keyed and unaffected. (#142)
+
 ## v1.9.2 - 2026-06-05 - Chorus Froglight smelting fix
 
 ### Fixed
