@@ -17,10 +17,12 @@
     "copper",
     "diamond",
     "dirt",
+    "dry_ice",
     "echo_shard",
     "emerald",
     "end_stone",
     "ender_pearl",
+    "energized_steel",
     "feather",
     "fluix",
     "fluorite",
@@ -70,6 +72,7 @@
     "supremium",
     "tin",
     "tuff",
+    "uraninite",
     "uranium",
     "zinc"
   ]
