@@ -105,6 +105,8 @@ The mod is fully playable today. Everything below is live on CurseForge. Targets
 
 **v1.9.0 (shipped): Refined Storage support.** Running Refined Storage? Its processors and Quartz Enriched Iron are now farmable through the frog loop - prime a slime with one, let the matching frog eat it, and smelt the Froglight back into the resource, with the same hands-off Slime Milk farming as everything else. And Silicon, the resource it shares with Applied Energistics 2, now works whether you have Refined Storage, AE2, or both installed.
 
+**v1.10.0 (shipped): obsidian moves to the Infernal frog.** Obsidian takes a diamond pickaxe to mine, so it belongs after diamond in the journey - the Infernal Frog now farms Obsidian (and Mekanism's Refined Obsidian), taking over from the Cave Frog. Existing slimes adjust themselves on world load; Froglights, buckets, and Slime Milk are untouched.
+
 ### v2: automation
 
 The scale-up release. v1 lives unchanged; v2 layers automation on top. A player who never crafts a v2 block still has every v1 capability.
