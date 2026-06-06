@@ -1,6 +1,6 @@
 # Froglight Crucible + Casting Basin (build spec)
 
-> **Status: PROMOTED to build spec - target v1.11.0.** Originally captured
+> **Status: PROMOTED to build spec - target v1.12.0.** Originally captured
 > 2026-05-26 as parked-for-v2 design notes ("Froglight Juicer"); promoted
 > 2026-06-06 after a design session resolved every open question. The decision
 > log below records how the shape evolved; everything else in this doc is
@@ -23,7 +23,7 @@
 > 6. **v1.x, not v2.** With the energy mechanic gone, the only never-shipped
 >    piece is the fluid tank, and exposing `FluidHandler.BLOCK` is the fluid
 >    analog of the `ItemHandler` hopper courtesy the v1 appliances already
->    ship. Ships as v1.11.0.
+>    ship. Ships as v1.12.0.
 > 7. **The "no native crusher" ROADMAP entry is retired** - it was a guideline,
 >    not a rule. The crush lane stays delegated to crusher mods; the
 >    first-party 2x now comes from melt-and-cast, uncapped and not
@@ -54,7 +54,7 @@ Configurable Froglight's `SLIME_VARIANT` component; category Froglights map to
 their resource), exactly like the v1.3 crush recipes match a Froglight via
 `neoforge:components`.
 
-## What ships in v1.11.0
+## What ships in v1.12.0
 
 **Wave 1 - water and lava (vanilla fluids, no new fluids minted):**
 
@@ -69,7 +69,7 @@ evaporate). Pairs with the Spawnery's skyblock framing.
 
 Every metal Froglight melts into its **molten fluid** at ore-doubling yield, and
 the **Casting Basin** solidifies molten fluid back into ingots. Both waves ship
-in v1.11.0; build wave 1 first and split the release only if wave 2 balloons.
+in v1.12.0; build wave 1 first and split the release only if wave 2 balloons.
 
 ## The Froglight Crucible
 
@@ -145,7 +145,7 @@ surfaces, key outputs on its `c:` fluid tags behind `mod_loaded` instead of
 minting duplicates. Cross-mod interop (tagging PF molten fluids `c:molten_iron`
 etc. so other mods' machinery accepts them) ships as pure data.
 
-Molten fluids are **not placeable** as world blocks in v1.11 (no source-block
+Molten fluids are **not placeable** as world blocks in v1.12 (no source-block
 behavior to design or test); they exist for the tank -> pipe -> Basin loop. They
 mint only for variants with a melt recipe.
 
@@ -228,7 +228,7 @@ variant smelts back to its primer resource; note it in the JEI info page).
 
 ## Related
 
-- Scope: ships as **v1.11.0** (see decision log) - [versioning.md](./versioning.md)
+- Scope: ships as **v1.12.0** (see decision log) - [versioning.md](./versioning.md)
 - Runway: [../ROADMAP.md](../ROADMAP.md)
 - Appliance pattern + capability registration: `CLAUDE.md`
 - Per-variant dynamic fluid registration (the pipeline molten fluids reuse):

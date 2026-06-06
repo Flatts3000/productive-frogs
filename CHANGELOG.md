@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.11.0 - 2026-06-06 - Flux Networks + Powah compat, Blaze rod
+
+### Added
+
+- **Flux Networks support.** With Flux Networks installed, Flux Dust is farmable through the frog loop: prime a slime with flux dust, feed it to the Infernal Frog (flux dust is born from redstone dropped on obsidian, so it shares obsidian's tier), and smelt the Froglight back into flux dust. One dust variant covers the whole Flux chain, since ingots, blocks, and cores all craft from dust. Pipe-automatable Slime Milk included, like every variant. (#145)
+- **The full Powah material ladder.** Energized Steel and Uraninite join the Cave Frog and Dry Ice joins the Tide Frog - with the four crystals farmable since v1.2, every Powah material now runs on frogs. Uraninite matters most in skyblock: there's no ore gen, so without it Powah can't bootstrap. (#146)
+
+### Changed
+
+- **The Blaze resource is now the blaze rod.** Prime a slime with a blaze rod and the Blaze Froglight smelts back into a blaze rod (both were blaze powder before). Rods are what blazes actually drop, each rod crafts into two powder, and the Froglight already burned as rod-equivalent furnace fuel - now every lane agrees. The Spawnery's Infernal primer is unchanged (still blaze powder). Existing Blaze slimes, Froglights, buckets, and milk all carry over; only the priming item and smelt output change. (#148)
+
+### Fixed
+
+- **Niotic and Nitro crystal colors were swapped.** Niotic slimes, Froglights, buckets, and milk now render cyan and Nitro red, matching Powah's actual crystals. Colors are sampled from the crystal textures themselves.
+
 ## v1.10.0 - 2026-06-06 - Obsidian joins the Infernal species
 
 ### Changed
