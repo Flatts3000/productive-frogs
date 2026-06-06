@@ -179,6 +179,10 @@ fluid mints iff the variant loads - no orphan fluid on a vanilla-only pack.
   flagship metal, bespoke (primed by the exact item; it sits in the broad `c:ingots`
   tag, which is too wide to use as a primer). Placed in INFERNAL on its quartz
   lineage - quartz is already an Infernal resource here.
+- **refined obsidian** (`c:ingots/refined_obsidian` -> `mekanism:ingot_refined_obsidian`) -
+  shipped as a CAVE alloy, moved here in the 2026-06-06 obsidian recategorization
+  (#142): obsidian is an Infernal resource (it gates behind a diamond pickaxe), and
+  refined obsidian follows its obsidian lineage.
 - Deferred (Thermal has no 1.21.1 release): sulfur (`c:dusts/sulfur`), signalum, lumium.
 
 ### VOID (end/arcane)
@@ -206,7 +210,9 @@ leans on vanilla aquatic content. Flagged as a design gap, not a blocker.
   a verified 1.21.1 provider - brass (`c:ingots/brass` -> `create:brass_ingot`),
   refined obsidian (`c:ingots/refined_obsidian` -> `mekanism:ingot_refined_obsidian`),
   and steel (`c:ingots/steel` -> `mekanism:ingot_steel`; Mekanism is the verified
-  present provider, same as refined obsidian). The rest (electrum, invar, constantan,
+  present provider, same as refined obsidian). Brass and steel are CAVE; refined
+  obsidian moved CAVE -> INFERNAL on 2026-06-06 (#142, obsidian lineage). The rest
+  (electrum, invar, constantan,
   signalum, lumium, enderium) stay deferred: no verified 1.21.1 provider id, and
   shipping an unverified id silently fails. (`required: false` was for tag-file
   entries; we don't ship tag files, we reference the mods' own.)
