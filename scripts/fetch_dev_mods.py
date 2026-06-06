@@ -11,10 +11,11 @@ as the Jade drop-in in docs/dev_setup.md). The environment-driven GameTest
 (crossModVariantPresenceMatchesModLoadedConditions) asserts that exactly the
 variants whose providers are present actually load.
 
-Modrinth targets are queried live for the latest 1.21.1 / NeoForge build (no
-fragile hardcoded file ids) with SHA-1 verification; CurseForge-only targets go
-through the anonymous website API (no hash on that endpoint). Skips files
-already present. Re-runnable.
+CurseForge is the default source (the canonical channel, and what Sky Frogs
+pins), queried live for the newest 1.21.1 / NeoForge file via the anonymous
+website API (no hash on that endpoint). Modrinth is the exception for official
+distributions whose required deps need its transitive resolution (SHA-1
+verified). Skips files already present. Re-runnable.
 
     python scripts/fetch_dev_mods.py            # fetch into <repo>/run/mods
     python scripts/fetch_dev_mods.py --dir PATH  # fetch into a different mods folder
@@ -43,31 +44,40 @@ LOADER = "neoforge"
 # Storage come from build.gradle instead - do NOT add them here, that would
 # double-load and trip NeoForge's duplicate-modid check).
 #
-# GOTCHA - verify the modid before adding a Modrinth slug: Modrinth hosts
-# third-party repacks of some CurseForge-only mods whose modid is rebranded
-# with an `mr_` prefix. The "all-the-ores" Modrinth jar ships modid
-# `mr_all_theores`, NOT `alltheores` - it loaded fine but never satisfied a
-# single `mod_loaded: alltheores` condition, so the ATO-gated variants and
-# crush recipes were silently untested in dev (caught 2026-06-06). Mods like
-# that go in CURSEFORGE_TARGETS instead.
-TARGETS = {
-    "mekanism": "Mekanism (Enrichment Chamber)",
-    "immersiveengineering": "Immersive Engineering (Crusher)",
-    "enderio": "EnderIO (SAG Mill)",
-    "powah": "Powah (crystal variants; uraninite #146)",
-}
-
-# CurseForge-only providers (no genuine Modrinth distribution). Fetched via the
-# anonymous website API (www.curseforge.com/api/v1) - the official Core API
-# needs an API key, but the website file list + download redirect do not.
-# Values: (project id, label). Newest 1.21.1 NeoForge file wins.
+# CURSEFORGE IS THE DEFAULT SOURCE (decided 2026-06-06). CF is the canonical
+# distribution channel for these mods and the channel Sky Frogs pins, so the
+# dev env gets the exact artifacts a real pack runs. Modrinth burned us once:
+# it hosts third-party repacks of CurseForge mods whose modid is rebranded
+# with an `mr_` prefix - the "all-the-ores" Modrinth jar shipped modid
+# `mr_all_theores`, NOT `alltheores`, so it loaded fine but never satisfied a
+# single `mod_loaded: alltheores` condition and the ATO-gated variants and
+# crush recipes were silently untested in dev (caught 2026-06-06).
+#
+# Fetched via the anonymous website API (www.curseforge.com/api/v1) - the
+# official Core API needs an API key, but the website file list + download
+# redirect do not. Values: project id -> label. Newest 1.21.1 NeoForge file
+# wins. Project ids are verified against the sky-frogs packwiz pins or by
+# probing the files endpoint.
 CURSEFORGE_TARGETS = {
+    268560: "Mekanism (Enrichment Chamber)",
+    231951: "Immersive Engineering (Crusher)",
+    64578: "EnderIO (SAG Mill)",
     405593: "AllTheOres (dust + smelt-back fallback; real modid `alltheores`)",
     248020: "Flux Networks (flux_dust variant, #145)",
 }
 CF_API = "https://www.curseforge.com/api/v1"
 # The CF website API rejects non-browser User-Agents at the load balancer.
 CF_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+
+# Modrinth is the EXCEPTION, not the default: only for mods whose publisher
+# officially distributes there AND whose required dependencies need the
+# transitive resolution Modrinth's API gives us for free (the anonymous CF
+# endpoint exposes no dependency metadata). Powah qualifies: official ftbteam
+# distribution, correct `powah` modid, and its required cloth-config + guideme
+# deps auto-resolve. Verify the modid inside any jar before adding a slug here.
+TARGETS = {
+    "powah": "Powah (crystal variants; uraninite #146)",
+}
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -153,7 +163,8 @@ def fetch_curseforge(project_id: int, label: str, dest_dir: Path) -> None:
     if not candidates:
         print(f"  {label}: NO {GAME_VERSION}/NeoForge file on CurseForge - download manually.")
         return
-    fmeta = max(candidates, key=lambda f: f["id"])
+    # Newest by upload date, independent of the requested sort surviving the API.
+    fmeta = max(candidates, key=lambda f: f.get("dateCreated", ""))
     dest = dest_dir / fmeta["fileName"]
     if dest.exists():
         print(f"  {label}: {fmeta['fileName']}  [skip (already present)]")
@@ -178,15 +189,15 @@ def main() -> int:
 
     seen: set[str] = set()
     failures = 0
-    for slug, label in TARGETS.items():
-        try:
-            fetch(slug, label, dest_dir, seen)
-        except Exception as exc:  # noqa: BLE001 - report and continue to the next mod
-            failures += 1
-            print(f"  {label}: FAILED - {exc}")
     for project_id, label in CURSEFORGE_TARGETS.items():
         try:
             fetch_curseforge(project_id, label, dest_dir)
+        except Exception as exc:  # noqa: BLE001 - report and continue to the next mod
+            failures += 1
+            print(f"  {label}: FAILED - {exc}")
+    for slug, label in TARGETS.items():
+        try:
+            fetch(slug, label, dest_dir, seen)
         except Exception as exc:  # noqa: BLE001 - report and continue to the next mod
             failures += 1
             print(f"  {label}: FAILED - {exc}")
