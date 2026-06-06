@@ -183,6 +183,14 @@ fluid mints iff the variant loads - no orphan fluid on a vanilla-only pack.
   shipped as a CAVE alloy, moved here in the 2026-06-06 obsidian recategorization
   (#142): obsidian is an Infernal resource (it gates behind a diamond pickaxe), and
   refined obsidian follows its obsidian lineage.
+- **flux dust** (`fluxnetworks:flux_dust`) - Flux Networks' base resource, bespoke
+  (no common tag). Source-verified 2026-06-06 against the mod's `1.21` branch
+  (v8.0.0, `mod.minecraft=1.21.1`). Obsidian lineage: flux dust is born from
+  redstone dropped on obsidian, so it shares obsidian's Infernal tier (#145).
+  One dust variant covers the whole Flux chain (ingots/blocks/cores all craft
+  from dust). Colors are texture-faithful near-black with a magenta cast (the
+  item texture averages 0x0A0A0A; the mod's magenta is GUI/glow identity, not
+  pixel data).
 - Deferred (Thermal has no 1.21.1 release): sulfur (`c:dusts/sulfur`), signalum, lumium.
 
 ### VOID (end/arcane)

@@ -66,6 +66,9 @@ $variants = @(
     @{ name = "quartz_enriched_iron"; category = "infernal"; tag = $null; primerItem = "refinedstorage:quartz_enriched_iron"; mod = "refinedstorage"; result = "refinedstorage:quartz_enriched_iron"; primary = 0xD8D2C4; secondary = 0xA9A294 }
     # INFERNAL - Mekanism refined obsidian (obsidian lineage; obsidian is an Infernal resource - it gates behind a diamond pickaxe, so it must sit after diamond in the chain)
     @{ name = "refined_obsidian"; category = "infernal"; tag = "c:ingots/refined_obsidian"; mod = "mekanism"; result = "mekanism:ingot_refined_obsidian"; primary = 0x5A3FA0; secondary = 0x3F2A78 }
+    # INFERNAL - Flux Networks flux dust (obsidian lineage: born from redstone dropped on obsidian, so it shares obsidian's tier; issue #145).
+    # Colors are texture-faithful: the flux_dust item texture is near-black (avg 0x0A0A0A), lifted to 0x2E1A2E with a magenta cast for shell visibility.
+    @{ name = "flux_dust"; category = "infernal"; tag = $null; primerItem = "fluxnetworks:flux_dust"; mod = "fluxnetworks"; result = "fluxnetworks:flux_dust"; primary = 0x2E1A2E; secondary = 0x201220 }
     # VOID - mythic metals (tag-driven) + Powah crystals (bespoke) + Mystical Agriculture essences (magic/arcane)
     @{ name = "inferium";  category = "void";     tag = $null; primerItem = "mysticalagriculture:inferium_essence";  mod = "mysticalagriculture"; result = "mysticalagriculture:inferium_essence";  primary = 0x8FD060; secondary = 0x6FA840 }
     @{ name = "supremium"; category = "void";     tag = $null; primerItem = "mysticalagriculture:supremium_essence"; mod = "mysticalagriculture"; result = "mysticalagriculture:supremium_essence"; primary = 0xE05A7A; secondary = 0xB83F5A }

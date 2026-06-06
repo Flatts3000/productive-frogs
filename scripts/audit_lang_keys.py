@@ -2,10 +2,17 @@
 """Audit per-variant lang-key coverage for Productive Frogs.
 
 For every shipped SlimeVariant JSON, the mod's item/entity getName paths build
-five per-variant translation keys (each backed by a title-case fallback in
+four per-variant translation keys (each backed by a title-case fallback in
 Java). The fallback keeps datapack-only variants we don't ship readable, but
 variants we DO ship should carry an explicit en_us.json entry so the display
 name is ours to control (e.g. "Clay Slime", not the raw-id "Clay Ball Slime").
+
+The per-variant Slime Milk keys (item.productivefrogs.<v>_slime_milk_bucket and
+friends) are NOT audited here - they are owned and filled by
+generate_milk_variant_lang.py, which never overwrites curated values. (This
+script previously audited the pre-v1.8 suffix-style milk family, which no
+longer exists; that always reported 0 present and emitted wrong-format paste
+keys - removed 2026-06-06.)
 
 This script reports which of those explicit keys are present vs missing, grouped
 by source mod, then emits paste-ready JSON blocks (one per family) to fill every
@@ -29,8 +36,7 @@ BUCKET = "item.productivefrogs.slime_bucket."
 ENTITY = "entity.productivefrogs.resource_slime."
 EGG = "item.productivefrogs.resource_slime_spawn_egg."
 FROG = "block.productivefrogs.configurable_froglight."
-MILK = "item.productivefrogs.slime_milk_bucket."
-FAMILY_ORDER = [ENTITY, BUCKET, EGG, FROG, MILK]
+FAMILY_ORDER = [ENTITY, BUCKET, EGG, FROG]
 
 # Resource display name for variant ids where the existing bucket key can't
 # supply it (cross-mod) AND plain title-case reads wrong. Title-case is correct
@@ -69,7 +75,7 @@ def resource_name(variant_id: str, lang: dict[str, str]) -> str:
 
 
 def values_for(name: str) -> dict[str, str]:
-    """Build the five family values from a resource name, collapsing the
+    """Build the four family values from a resource name, collapsing the
     redundant ' Slime Slime' when the resource name already ends in 'Slime'."""
     slime = name if name.endswith("Slime") else f"{name} Slime"
     return {
@@ -77,7 +83,6 @@ def values_for(name: str) -> dict[str, str]:
         BUCKET: f"Bucket of {slime}",
         EGG: f"{name} Spawn Egg" if name.endswith("Slime") else f"{name} Slime Spawn Egg",
         FROG: f"{name} Froglight",
-        MILK: f"Bucket of {name} Milk" if name.endswith("Slime") else f"Bucket of {name} Slime Milk",
     }
 
 
@@ -155,13 +160,6 @@ def main() -> int:
     return 0
 
 
-# Insertion point for a family that has no per-variant keys yet (only MILK,
-# before its first --write): drop the new keys right after the base milk key.
-FALLBACK_ANCHOR = {
-    MILK: "item.productivefrogs.slime_milk_bucket",
-}
-
-
 def last_key_with_prefix(lang: dict[str, str], prefix: str) -> str | None:
     """The last key (in file order) under a family prefix, else None. New keys
     insert after it so the diff stays a pure insertion and the keys group with
@@ -178,7 +176,7 @@ def last_key_with_prefix(lang: dict[str, str], prefix: str) -> str | None:
 def write_merged(lang: dict[str, str], blocks: dict[str, list[tuple[str, str]]]) -> None:
     anchor_families: dict[str, list[str]] = {}
     for prefix in FAMILY_ORDER:
-        anchor = last_key_with_prefix(lang, prefix) or FALLBACK_ANCHOR.get(prefix)
+        anchor = last_key_with_prefix(lang, prefix)
         if anchor is None:
             raise ValueError(f"no insertion anchor for family {prefix!r}")
         anchor_families.setdefault(anchor, []).append(prefix)
