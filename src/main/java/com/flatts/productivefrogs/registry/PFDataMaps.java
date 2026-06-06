@@ -31,7 +31,33 @@ public final class PFDataMaps {
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "crucible_heat"),
         Registries.BLOCK,
         Codec.intRange(0, 1024)
-    ).build();
+    )
+        // Synced so client-side UIs can enumerate it - the JEI "Crucible Heat"
+        // category lists the sources straight off the live map, so pack
+        // overrides display automatically. (Server logic alone wouldn't need
+        // the sync.)
+        .synced(Codec.intRange(0, 1024), false)
+        .build();
+
+    /**
+     * Froglight heat: slime_variant id -> heat value for a PLACED Configurable
+     * Froglight of that variant under a Crucible. A second map because the
+     * variant lives on the Froglight's BlockEntity, invisible to the
+     * block-keyed {@link #CRUCIBLE_HEAT} map. Defaults (decided 2026-06-06):
+     * lava 3 (parity with the lava block), blaze 6 (above fire - it's a block
+     * of fire elemental), blazing crystal 10 (the Powah-gated top of the
+     * ladder). Same pack-override posture; per-entry
+     * {@code neoforge:conditions} gate cross-mod variants. Synced for the JEI
+     * heat category.
+     */
+    public static final DataMapType<com.flatts.productivefrogs.data.SlimeVariant, Integer> FROGLIGHT_HEAT =
+        DataMapType.builder(
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "froglight_heat"),
+            PFRegistries.SLIME_VARIANT,
+            Codec.intRange(0, 1024)
+        )
+            .synced(Codec.intRange(0, 1024), false)
+            .build();
 
     private PFDataMaps() {
         // utility class
