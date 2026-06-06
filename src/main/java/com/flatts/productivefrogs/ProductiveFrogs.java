@@ -11,6 +11,7 @@ import com.flatts.productivefrogs.registry.PFFluidTypes;
 import com.flatts.productivefrogs.registry.PFFluids;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
+import com.flatts.productivefrogs.registry.PFRecipeTypes;
 import com.flatts.productivefrogs.registry.PFSensors;
 import com.flatts.productivefrogs.registry.PFVariantMilk;
 import com.flatts.productivefrogs.setup.VariantFluidDiscovery;
@@ -73,6 +74,8 @@ public final class ProductiveFrogs {
         // Custom datapack condition codecs (e.g. config_enabled, gating the
         // Spawnery recipe). No ordering dependency on the registers above.
         PFConditions.register(modEventBus);
+        // Custom recipe types (crucible_melting, v1.12). No ordering dependency.
+        PFRecipeTypes.register(modEventBus);
 
         // COMMON config — depletion + spawn cadence + discovery chance.
         // Registered here so the config file is generated on first boot and

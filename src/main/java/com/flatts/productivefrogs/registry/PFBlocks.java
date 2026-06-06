@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock;
+import com.flatts.productivefrogs.content.block.CrucibleBlock;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
 import com.flatts.productivefrogs.content.block.SpawneryBlock;
@@ -96,6 +97,22 @@ public final class PFBlocks {
             .strength(1.5F)
             .sound(SoundType.STONE)
             .lightLevel(state -> state.getValue(SpawneryBlock.LIT) ? 8 : 0)
+    );
+
+    /**
+     * The Froglight Crucible (v1.12 wave 1) - GUI-less heated basin that melts
+     * a Froglight into a fluid. Heat comes from the block below (data-map
+     * driven); {@link CrucibleBlock#LIT} glows while actively melting. Stone
+     * feel like a cauldron; light level 11 while lit (molten glow).
+     */
+    public static final DeferredBlock<CrucibleBlock> CRUCIBLE = BLOCKS.registerBlock(
+        "crucible",
+        CrucibleBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.STONE)
+            .strength(2.0F)
+            .sound(SoundType.STONE)
+            .lightLevel(state -> state.getValue(CrucibleBlock.LIT) ? 11 : 0)
     );
 
     private static Map<Category, DeferredBlock<PrimedFrogEggBlock>> buildPrimedEggs() {

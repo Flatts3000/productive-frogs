@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "productivefrogs",
+  "pattern": [
+    "S S",
+    "S S",
+    "SSS"
+  ],
+  "key": {
+    "S": { "item": "minecraft:stone_bricks" }
+  },
+  "result": { "id": "productivefrogs:crucible", "count": 1 }
+}

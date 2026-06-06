@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "productivefrogs:block/crucible"
+    },
+    "lit=true": {
+      "model": "productivefrogs:block/crucible"
+    }
+  }
+}
