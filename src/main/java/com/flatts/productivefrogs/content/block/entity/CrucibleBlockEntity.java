@@ -264,10 +264,15 @@ public class CrucibleBlockEntity extends BlockEntity {
         FluidStack result = recipe.result();
         // Single-fluid rule across BOTH buffers: the result must match the
         // tank's contents (when any) and the pending solids' fluid (when any).
+        // Both checks are component-aware for symmetry; pendingFluid is stored
+        // as a bare Fluid (every melt recipe today produces a componentless
+        // fluid - if a component-bearing result ever ships, pendingFluid must
+        // become a FluidStack template).
         if (!tank.isEmpty() && !FluidStack.isSameFluidSameComponents(tank.getFluid(), result)) {
             return InsertCheck.REJECT;
         }
-        if (pendingFluid != null && solids > 0 && result.getFluid() != pendingFluid) {
+        if (pendingFluid != null && solids > 0
+                && !FluidStack.isSameFluidSameComponents(new FluidStack(pendingFluid, 1), result)) {
             return InsertCheck.REJECT;
         }
         if (solids + result.getAmount() > MAX_SOLIDS) {

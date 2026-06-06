@@ -81,7 +81,9 @@ public final class CrucibleHeatCategory implements IRecipeCategory<CrucibleHeatC
 
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, Entry entry, IFocusGroup focuses) {
-        builder.addSlot(RecipeIngredientRole.CATALYST, SLOT_X, SLOT_Y)
+        // INPUT (not CATALYST) so item lookups surface the category too -
+        // pressing R/U on a torch shows it heats the Crucible.
+        builder.addSlot(RecipeIngredientRole.INPUT, SLOT_X, SLOT_Y)
             .setStandardSlotBackground()
             .addItemStack(entry.display());
     }
