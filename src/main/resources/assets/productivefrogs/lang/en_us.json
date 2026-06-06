@@ -394,6 +394,7 @@
   "productivefrogs.jei.category.slime_milker": "Slime Milker",
   "productivefrogs.jei.category.spawnery": "Spawnery",
   "productivefrogs.jei.category.crucible_heat": "Crucible Heat Sources",
+  "productivefrogs.jei.category.crucible_melting": "Froglight Crucible",
   "productivefrogs.jei.crucible_heat_value": "Heat: %1$s",
   "productivefrogs.jei.variant_slime.info": "A %1$s. Killed by a %2$s, drops a Froglight stamped with this variant. Use the Slime Milker to convert into a Slime Milk bucket for infinite renewable production.",
   "productivefrogs.jei.variant_froglight.info": "Dropped when a %1$s eats a %2$s. Smelts in a furnace to the resource it represents.",

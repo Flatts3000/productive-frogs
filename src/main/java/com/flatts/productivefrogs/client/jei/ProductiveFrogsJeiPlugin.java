@@ -109,7 +109,8 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         registration.addRecipeCategories(
             new SlimeMilkerRecipeCategory(guiHelper),
             new SpawneryRecipeCategory(guiHelper),
-            new CrucibleHeatCategory(guiHelper));
+            new CrucibleHeatCategory(guiHelper),
+            new CrucibleMeltCategory(guiHelper));
     }
 
     @Override
@@ -209,6 +210,10 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         addMilkerRecipes(reg, variants);
         addSpawneryRecipes(reg);
         addCrucibleHeatEntries(reg);
+        // Melt recipes ride the real recipe type, so datapack additions
+        // (wave 2's molten metals included) surface with no code change.
+        reg.addRecipes(CrucibleMeltCategory.TYPE, level.getRecipeManager()
+            .getAllRecipesFor(com.flatts.productivefrogs.registry.PFRecipeTypes.CRUCIBLE_MELTING.get()));
     }
 
     /**
@@ -269,6 +274,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
         registration.addRecipeCatalyst(PFBlocks.SLIME_MILKER.get(), SlimeMilkerRecipeCategory.TYPE);
         registration.addRecipeCatalyst(PFBlocks.CRUCIBLE.get(), CrucibleHeatCategory.TYPE);
+        registration.addRecipeCatalyst(PFBlocks.CRUCIBLE.get(), CrucibleMeltCategory.TYPE);
         // Spawnery catalyst only when enabled - the block is removed from JEI in
         // onRuntimeAvailable when off, and addSpawneryRecipes adds no recipes then,
         // so registering the catalyst would surface an empty category for a hidden
