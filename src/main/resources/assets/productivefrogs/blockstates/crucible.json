@@ -4,7 +4,7 @@
       "model": "productivefrogs:block/crucible"
     },
     "lit=true": {
-      "model": "productivefrogs:block/crucible"
+      "model": "productivefrogs:block/crucible_lit"
     }
   }
 }
