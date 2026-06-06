@@ -2620,6 +2620,41 @@ public final class PFGameTests {
     }
 
     /**
+     * Placed Froglights as heat sources via the variant-keyed
+     * {@code froglight_heat} data map: a Blaze Froglight under a Crucible
+     * reads heat 6 (the above-fire rung), while an unmapped variant (iron)
+     * contributes nothing. Pins the BE-variant lookup path that the
+     * block-keyed {@code crucible_heat} map can't express.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void crucibleReadsFroglightHeatFromVariantDataMap(GameTestHelper helper) {
+        BlockPos base = new BlockPos(2, 1, 2);
+        helper.setBlock(base, PFBlocks.CONFIGURABLE_FROGLIGHT.get());
+        helper.setBlock(base.above(), PFBlocks.CRUCIBLE.get());
+        if (!(helper.getBlockEntity(base)
+                instanceof com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity froglight)) {
+            helper.fail("configurable froglight did not create its BlockEntity");
+            return;
+        }
+        if (!(helper.getBlockEntity(base.above())
+                instanceof com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity crucible)) {
+            helper.fail("crucible block did not create a CrucibleBlockEntity");
+            return;
+        }
+        froglight.setVariantId(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "blaze"));
+        if (crucible.heatBelow() != 6) {
+            helper.fail("Blaze Froglight below should read heat 6 from froglight_heat, got " + crucible.heatBelow());
+            return;
+        }
+        froglight.setVariantId(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        if (crucible.heatBelow() != 0) {
+            helper.fail("an unmapped Froglight variant must contribute no heat, got " + crucible.heatBelow());
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
      * Insert gating on the solids model: (1) a Froglight with no
      * {@code crucible_melting} recipe (iron) classifies REJECT and
      * {@code acceptFroglight} refuses it; (2) the hopper-facing item

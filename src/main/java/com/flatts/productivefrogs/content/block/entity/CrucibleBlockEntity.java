@@ -338,18 +338,15 @@ public class CrucibleBlockEntity extends BlockEntity {
         setLit(level, pos, state, activelyMelting);
     }
 
-    /** The variant whose placed Froglight doubles as a heat source. */
-    private static final ResourceLocation LAVA_VARIANT =
-        ResourceLocation.fromNamespaceAndPath("productivefrogs", "lava");
-
     /**
-     * Heat value of the block below: data-map lookup plus two rules the map
-     * can't express - an unlit campfire contributes nothing (blockstate), and
-     * a placed LAVA Froglight heats like lava itself (the variant lives on the
-     * BlockEntity, invisible to a block-keyed map; the value is read from
-     * lava's own map entry so pack overrides track automatically). The latter
-     * closes a tidy loop: the Crucible's lava output begets the heat plate for
-     * the next Crucible.
+     * Heat value of the block below. Two data maps feed it: the block-keyed
+     * {@code crucible_heat} (torch/lava/fire ladder) and the variant-keyed
+     * {@code froglight_heat} for PLACED Froglights (the variant lives on the
+     * Froglight's BlockEntity, invisible to a block-keyed map - lava 3,
+     * blaze 6, blazing 10 by default, pack-overridable). One state-sensitive
+     * rule stays in code: an unlit campfire contributes nothing. The Froglight
+     * tier closes a tidy loop - the frog loop's own outputs become the heat
+     * plates for the next Crucible.
      */
     public int heatBelow() {
         if (level == null) {
@@ -360,8 +357,16 @@ public class CrucibleBlockEntity extends BlockEntity {
             return 0;
         }
         if (level.getBlockEntity(worldPosition.below()) instanceof ConfigurableFroglightBlockEntity froglight
-                && LAVA_VARIANT.equals(froglight.getVariantId())) {
-            return PFDataMaps.heatOf(net.minecraft.world.level.block.Blocks.LAVA);
+                && froglight.getVariantId() != null) {
+            Integer heat = level.registryAccess()
+                .registry(com.flatts.productivefrogs.registry.PFRegistries.SLIME_VARIANT)
+                .flatMap(reg -> reg.getHolder(net.minecraft.resources.ResourceKey.create(
+                    com.flatts.productivefrogs.registry.PFRegistries.SLIME_VARIANT, froglight.getVariantId())))
+                .map(holder -> holder.getData(PFDataMaps.FROGLIGHT_HEAT))
+                .orElse(null);
+            if (heat != null) {
+                return heat;
+            }
         }
         return PFDataMaps.heatOf(below.getBlock());
     }

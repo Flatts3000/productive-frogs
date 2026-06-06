@@ -209,7 +209,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
 
         addMilkerRecipes(reg, variants);
         addSpawneryRecipes(reg);
-        addCrucibleHeatEntries(reg);
+        addCrucibleHeatEntries(reg, variants);
         // Melt recipes ride the real recipe type, so datapack additions
         // (wave 2's molten metals included) surface with no code change.
         reg.addRecipes(CrucibleMeltCategory.TYPE, level.getRecipeManager()
@@ -225,7 +225,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
      * code-side heat rule in {@code CrucibleBlockEntity#heatBelow} - is
      * appended with lava's own value.
      */
-    private static void addCrucibleHeatEntries(IRecipeRegistration reg) {
+    private static void addCrucibleHeatEntries(IRecipeRegistration reg, Registry<SlimeVariant> variants) {
         var blockRegistry = net.minecraft.core.registries.BuiltInRegistries.BLOCK;
         java.util.List<CrucibleHeatCategory.Entry> entries = new ArrayList<>();
         java.util.Set<net.minecraft.world.item.Item> seen = new java.util.HashSet<>();
@@ -241,16 +241,16 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             }
             entries.add(new CrucibleHeatCategory.Entry(display, e.getValue(), e.getKey().location()));
         }
-        // The Lava Froglight heat rule lives in code (the variant is BE-side,
-        // invisible to the block-keyed map); show it at lava's mapped value.
-        Integer lavaHeat = blockRegistry.wrapAsHolder(net.minecraft.world.level.block.Blocks.LAVA)
-            .getData(com.flatts.productivefrogs.registry.PFDataMaps.CRUCIBLE_HEAT);
-        if (lavaHeat != null) {
+        // Placed Froglight heat sources ride the variant-keyed froglight_heat
+        // data map (lava/blaze/blazing by default) - enumerate it the same way
+        // so pack overrides display automatically. Froglight stacks dedupe by
+        // variant, not item, so they bypass the `seen` set.
+        for (var e : variants.getDataMap(
+                com.flatts.productivefrogs.registry.PFDataMaps.FROGLIGHT_HEAT).entrySet()) {
             ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
-            ResourceLocation lavaVariant = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "lava");
-            froglight.set(PFDataComponents.SLIME_VARIANT.get(), lavaVariant);
-            entries.add(new CrucibleHeatCategory.Entry(froglight, lavaHeat,
-                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "lava_froglight_heat")));
+            froglight.set(PFDataComponents.SLIME_VARIANT.get(), e.getKey().location());
+            entries.add(new CrucibleHeatCategory.Entry(froglight, e.getValue(),
+                e.getKey().location().withSuffix("_froglight_heat")));
         }
         entries.sort(java.util.Comparator
             .comparingInt(CrucibleHeatCategory.Entry::heat)

@@ -225,6 +225,7 @@ public final class PFModBusEvents {
     @SubscribeEvent
     public static void onRegisterDataMaps(net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent event) {
         event.register(com.flatts.productivefrogs.registry.PFDataMaps.CRUCIBLE_HEAT);
+        event.register(com.flatts.productivefrogs.registry.PFDataMaps.FROGLIGHT_HEAT);
     }
 
     /**
