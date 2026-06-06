@@ -1,0 +1,6 @@
+{
+  "values": [
+    { "id": "productivefrogs:molten_orichalcum", "required": false },
+    { "id": "productivefrogs:molten_orichalcum_flowing", "required": false }
+  ]
+}

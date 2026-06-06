@@ -400,6 +400,42 @@ public final class PFClientEvents {
                 type
             );
         }
+
+        // Molten metals (v1.12): same per-variant tint model over a shared
+        // greyscale molten texture set (desaturated lava still/flow). The
+        // metal id IS the variant id, so the colour lookup is identical.
+        ResourceLocation moltenStill = ResourceLocation.fromNamespaceAndPath(
+            ProductiveFrogs.MOD_ID, "block/molten_still");
+        ResourceLocation moltenFlow = ResourceLocation.fromNamespaceAndPath(
+            ProductiveFrogs.MOD_ID, "block/molten_flow");
+        for (ResourceLocation metalId : com.flatts.productivefrogs.registry.PFMoltenFluids.registeredMetals()) {
+            final ResourceLocation vid = metalId;
+            FluidType type = com.flatts.productivefrogs.registry.PFMoltenFluids.fluidType(vid);
+            if (type == null) {
+                continue;
+            }
+            event.registerFluidType(
+                new IClientFluidTypeExtensions() {
+                    @Override
+                    public ResourceLocation getStillTexture() { return moltenStill; }
+
+                    @Override
+                    public ResourceLocation getFlowingTexture() { return moltenFlow; }
+
+                    @Override
+                    public int getTintColor() {
+                        int color = variantTint(vid);
+                        return color != -1 ? color : 0xFFFFFFFF;
+                    }
+
+                    @Override
+                    public int getTintColor(FluidState state, BlockAndTintGetter getter, BlockPos pos) {
+                        return getTintColor();
+                    }
+                },
+                type
+            );
+        }
     }
 
     /**

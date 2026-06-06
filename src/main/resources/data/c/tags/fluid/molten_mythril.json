@@ -1,0 +1,6 @@
+{
+  "values": [
+    { "id": "productivefrogs:molten_mythril", "required": false },
+    { "id": "productivefrogs:molten_mythril_flowing", "required": false }
+  ]
+}

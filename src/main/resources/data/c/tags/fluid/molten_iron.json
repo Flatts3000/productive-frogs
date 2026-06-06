@@ -1,0 +1,6 @@
+{
+  "values": [
+    { "id": "productivefrogs:molten_iron", "required": false },
+    { "id": "productivefrogs:molten_iron_flowing", "required": false }
+  ]
+}

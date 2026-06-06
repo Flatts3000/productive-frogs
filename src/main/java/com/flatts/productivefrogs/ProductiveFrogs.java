@@ -52,6 +52,11 @@ public final class ProductiveFrogs {
         // DeferredRegisters fire - BuiltInRegistries.FLUID freezes right after mod
         // construction, so a fluid can only exist for a variant known now.
         PFVariantMilk.bootstrap(VariantFluidDiscovery.discover());
+        // Molten metals (v1.12 Crucible melt lane): mint PF-side fluids only
+        // where AllTheOres doesn't already provide them - see PFMoltenFluids
+        // for the ATM-interop rules. Same must-run-before-registers constraint
+        // as the milk bootstrap above.
+        com.flatts.productivefrogs.registry.PFMoltenFluids.bootstrap();
         // FluidTypes before Fluids: BaseFlowingFluid.Properties references the
         // FluidType holder at fluid-build time, so the FluidType register pass
         // must complete first. Blocks come after Fluids in turn: the single
