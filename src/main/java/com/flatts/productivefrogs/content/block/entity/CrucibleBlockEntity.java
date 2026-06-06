@@ -200,6 +200,11 @@ public class CrucibleBlockEntity extends BlockEntity {
             PFDebug.log(PFDebug.Area.REGISTRY, () -> String.format(
                 "crucible @%s melted froglight -> %s", pos, recipe.result().getFluid()));
             be.syncToClients();
+            be.setChanged();
+            // Melt finished this tick - drop the glow immediately rather than
+            // letting it linger one extra tick until the next idle pass.
+            setLit(level, pos, state, false);
+            return;
         }
         be.setChanged();
         setLit(level, pos, state, true);
