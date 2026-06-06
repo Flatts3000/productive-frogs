@@ -11,7 +11,9 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 import net.minecraft.resources.ResourceLocation;
@@ -77,19 +79,35 @@ public final class VariantFluidDiscovery {
     }
 
     private static void collectBuiltins(Set<ResourceLocation> ids) {
-        JsonObject index = readJsonResource(INDEX_RESOURCE);
-        if (index == null || !index.has("variants") || !index.get("variants").isJsonArray()) {
-            ProductiveFrogs.LOGGER.warn("variants_index.json missing or malformed; no built-in milk fluids will register");
-            return;
-        }
-        for (JsonElement el : index.getAsJsonArray("variants")) {
-            String name = el.getAsString();
+        for (String name : bundledVariantNames()) {
             JsonObject variantJson = readJsonResource(BUILTIN_VARIANT_DIR + name + ".json");
             if (variantJson != null && !conditionsMet(variantJson)) {
                 continue;
             }
             ids.add(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, name));
         }
+    }
+
+    /**
+     * Every bundled variant name from {@code variants_index.json}, conditions NOT
+     * evaluated - the full roster, present-or-not. {@link #discover()} is the
+     * condition-filtered subset; the difference between the two is exactly the
+     * cross-mod variants whose provider mod is absent this launch. Public so the
+     * GameTest layer can assert the {@code slime_variant} registry agrees with
+     * the condition evaluation in any mod environment (lean CI vs the dev
+     * {@code run/mods} set).
+     */
+    public static List<String> bundledVariantNames() {
+        JsonObject index = readJsonResource(INDEX_RESOURCE);
+        if (index == null || !index.has("variants") || !index.get("variants").isJsonArray()) {
+            ProductiveFrogs.LOGGER.warn("variants_index.json missing or malformed; no built-in milk fluids will register");
+            return List.of();
+        }
+        List<String> names = new ArrayList<>();
+        for (JsonElement el : index.getAsJsonArray("variants")) {
+            names.add(el.getAsString());
+        }
+        return names;
     }
 
     private static void collectPackAdditions(Set<ResourceLocation> ids) {
