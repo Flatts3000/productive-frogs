@@ -581,28 +581,49 @@ public final class PFGameTests {
     }
 
     /**
-     * The V1.2 cross-mod variants are each gated {@code mod_loaded(provider)}.
-     * None of those provider mods are present in the GameTest env, so every
-     * cross-mod variant must be condition-skipped at registry load. Pins that the
-     * mod_loaded gating actually works (a regression that dropped the conditions
-     * would load 24 broken variants into every pack) - and that datapack-registry
-     * conditions are honored at all.
+     * Every bundled cross-mod variant is gated {@code mod_loaded(provider)}, so
+     * whether it should be present depends on the runtime mod set: CI runs a lean
+     * env (every provider absent), while the local dev env pulls provider mods
+     * into {@code run/mods} via {@code scripts/fetch_dev_mods.py}. The expectation
+     * is therefore derived per-launch instead of hardcoded:
+     * {@code VariantFluidDiscovery.discover()} evaluates each bundled variant's
+     * conditions against the live {@code ModList}, and the {@code slime_variant}
+     * registry must agree exactly - present iff the conditions hold. That pins
+     * three things at once: conditions gate variants out when the provider is
+     * absent (the original regression guard), a variant DOES load when its
+     * provider is present (newly exercised by the dev run/mods set), and the
+     * mod-init milk discovery stays in lockstep with datapack-registry condition
+     * evaluation (drift either way is the v1.8 orphan-fluid bug).
+     *
+     * <p>(Replaced the hardcoded absent-variant list 2026-06-06: it assumed no
+     * provider mod is ever present, which broke the moment Powah landed in
+     * run/mods for the #146 smoke-test environment.)
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
-    public static void crossModVariantsAreConditionGatedWhenModAbsent(GameTestHelper helper) {
+    public static void crossModVariantPresenceMatchesModLoadedConditions(GameTestHelper helper) {
         net.minecraft.core.Registry<SlimeVariant> registry =
             helper.getLevel().registryAccess().registryOrThrow(PFRegistries.SLIME_VARIANT);
-        String[] crossMod = { "tin", "osmium", "certus_quartz", "pink_slime", "orichalcum", "blazing", "aquarium" };
-        for (String name : crossMod) {
+        java.util.Set<ResourceLocation> expectedPresent =
+            com.flatts.productivefrogs.setup.VariantFluidDiscovery.discover();
+        java.util.List<String> allBundled =
+            com.flatts.productivefrogs.setup.VariantFluidDiscovery.bundledVariantNames();
+        if (allBundled.isEmpty()) {
+            helper.fail("bundled variants_index.json read back empty - index resource missing?");
+            return;
+        }
+        for (String name : allBundled) {
             ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, name);
-            if (registry.get(id) != null) {
-                helper.fail("cross-mod variant " + id
-                    + " should be condition-gated out when its provider mod is absent, but it loaded");
+            boolean inRegistry = registry.get(id) != null;
+            boolean expected = expectedPresent.contains(id);
+            if (inRegistry != expected) {
+                helper.fail("variant " + id + (expected
+                    ? " has its mod_loaded conditions satisfied but did not load into the registry"
+                    : " should be condition-gated out (provider mod absent), but it loaded"));
                 return;
             }
         }
-        // Sanity: a built-in variant IS present, so we're not just reading an
-        // empty registry.
+        // Sanity: the unconditional iron variant is always expected AND present,
+        // so the loop above wasn't comparing two empty sets.
         if (registry.get(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron")) == null) {
             helper.fail("built-in iron variant should be present");
             return;
