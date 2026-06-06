@@ -108,7 +108,8 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         var guiHelper = registration.getJeiHelpers().getGuiHelper();
         registration.addRecipeCategories(
             new SlimeMilkerRecipeCategory(guiHelper),
-            new SpawneryRecipeCategory(guiHelper));
+            new SpawneryRecipeCategory(guiHelper),
+            new CrucibleHeatCategory(guiHelper));
     }
 
     @Override
@@ -207,11 +208,67 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
 
         addMilkerRecipes(reg, variants);
         addSpawneryRecipes(reg);
+        addCrucibleHeatEntries(reg);
+    }
+
+    /**
+     * One JEI entry per Crucible heat source, enumerated from the live
+     * (synced) {@code crucible_heat} data map so pack overrides display
+     * automatically. Wall variants dedupe through their shared floor item
+     * (wall torch -> torch); item-less blocks (lava, fire, soul fire) display
+     * via a representative item. The placed Lava Froglight - the one
+     * code-side heat rule in {@code CrucibleBlockEntity#heatBelow} - is
+     * appended with lava's own value.
+     */
+    private static void addCrucibleHeatEntries(IRecipeRegistration reg) {
+        var blockRegistry = net.minecraft.core.registries.BuiltInRegistries.BLOCK;
+        java.util.List<CrucibleHeatCategory.Entry> entries = new ArrayList<>();
+        java.util.Set<net.minecraft.world.item.Item> seen = new java.util.HashSet<>();
+        for (var e : blockRegistry.getDataMap(
+                com.flatts.productivefrogs.registry.PFDataMaps.CRUCIBLE_HEAT).entrySet()) {
+            net.minecraft.world.level.block.Block block = blockRegistry.get(e.getKey());
+            if (block == null) {
+                continue;
+            }
+            ItemStack display = heatSourceDisplay(block);
+            if (display.isEmpty() || !seen.add(display.getItem())) {
+                continue;
+            }
+            entries.add(new CrucibleHeatCategory.Entry(display, e.getValue(), e.getKey().location()));
+        }
+        // The Lava Froglight heat rule lives in code (the variant is BE-side,
+        // invisible to the block-keyed map); show it at lava's mapped value.
+        Integer lavaHeat = blockRegistry.wrapAsHolder(net.minecraft.world.level.block.Blocks.LAVA)
+            .getData(com.flatts.productivefrogs.registry.PFDataMaps.CRUCIBLE_HEAT);
+        if (lavaHeat != null) {
+            ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
+            ResourceLocation lavaVariant = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "lava");
+            froglight.set(PFDataComponents.SLIME_VARIANT.get(), lavaVariant);
+            entries.add(new CrucibleHeatCategory.Entry(froglight, lavaHeat,
+                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "lava_froglight_heat")));
+        }
+        entries.sort(java.util.Comparator
+            .comparingInt(CrucibleHeatCategory.Entry::heat)
+            .thenComparing(e -> e.id().toString()));
+        reg.addRecipes(CrucibleHeatCategory.TYPE, entries);
+    }
+
+    /** Display stack for a heat-source block; item-less blocks get a stand-in. */
+    private static ItemStack heatSourceDisplay(net.minecraft.world.level.block.Block block) {
+        if (block == net.minecraft.world.level.block.Blocks.LAVA) {
+            return new ItemStack(net.minecraft.world.item.Items.LAVA_BUCKET);
+        }
+        if (block == net.minecraft.world.level.block.Blocks.FIRE
+                || block == net.minecraft.world.level.block.Blocks.SOUL_FIRE) {
+            return new ItemStack(net.minecraft.world.item.Items.FLINT_AND_STEEL);
+        }
+        return new ItemStack(block.asItem());
     }
 
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
         registration.addRecipeCatalyst(PFBlocks.SLIME_MILKER.get(), SlimeMilkerRecipeCategory.TYPE);
+        registration.addRecipeCatalyst(PFBlocks.CRUCIBLE.get(), CrucibleHeatCategory.TYPE);
         // Spawnery catalyst only when enabled - the block is removed from JEI in
         // onRuntimeAvailable when off, and addSpawneryRecipes adds no recipes then,
         // so registering the catalyst would surface an empty category for a hidden

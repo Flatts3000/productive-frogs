@@ -31,7 +31,13 @@ public final class PFDataMaps {
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "crucible_heat"),
         Registries.BLOCK,
         Codec.intRange(0, 1024)
-    ).build();
+    )
+        // Synced so client-side UIs can enumerate it - the JEI "Crucible Heat"
+        // category lists the sources straight off the live map, so pack
+        // overrides display automatically. (Server logic alone wouldn't need
+        // the sync.)
+        .synced(Codec.intRange(0, 1024), false)
+        .build();
 
     private PFDataMaps() {
         // utility class
