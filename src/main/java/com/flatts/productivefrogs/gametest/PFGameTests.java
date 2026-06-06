@@ -2552,8 +2552,12 @@ public final class PFGameTests {
             helper.fail("torch below should read heat 1 from the crucible_heat data map, got " + crucible.heatBelow());
             return;
         }
-        if (!crucible.tryInsertFroglight(stampedFroglight("lava"), null)) {
-            helper.fail("lava Froglight should load into an idle, empty crucible");
+        if (!crucible.acceptFroglight(stampedFroglight("lava"))) {
+            helper.fail("lava Froglight should queue into an idle, empty crucible");
+            return;
+        }
+        if (crucible.solids() != 1000) {
+            helper.fail("queued solids should be 1000 mB after one lava Froglight, got " + crucible.solids());
             return;
         }
         helper.succeedWhen(() -> {
@@ -2562,7 +2566,8 @@ public final class PFGameTests {
                     && fluid.getAmount() == 1000,
                 "tank should hold 1000 mB lava after the melt, holds "
                     + fluid.getAmount() + " of " + fluid.getFluid());
-            helper.assertFalse(crucible.tryInsertFroglight(stampedFroglight("water"), null),
+            helper.assertTrue(crucible.insertCheck(stampedFroglight("water"))
+                    == com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity.InsertCheck.REJECT,
                 "water Froglight must be rejected while the tank holds lava (single-fluid rule)");
             net.neoforged.neoforge.fluids.capability.IFluidHandler cap = helper.getLevel().getCapability(
                 net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
@@ -2597,8 +2602,8 @@ public final class PFGameTests {
             helper.fail("crucible block did not create a CrucibleBlockEntity");
             return;
         }
-        if (!crucible.tryInsertFroglight(stampedFroglight("lava"), null)) {
-            helper.fail("loading a Froglight must not require heat (stage first, light after)");
+        if (!crucible.acceptFroglight(stampedFroglight("lava"))) {
+            helper.fail("queueing a Froglight must not require heat (stage first, light after)");
             return;
         }
         helper.runAfterDelay(80L, () -> {
@@ -2606,9 +2611,8 @@ public final class PFGameTests {
                 helper.fail("tank filled despite no heat source below");
                 return;
             }
-            if (!crucible.isMelting() || crucible.meltProgress() != 0) {
-                helper.fail("froglight should stay loaded at progress 0 without heat; melting="
-                    + crucible.isMelting() + " progress=" + crucible.meltProgress());
+            if (crucible.solids() != 1000) {
+                helper.fail("solids should stay fully queued without heat, got " + crucible.solids());
                 return;
             }
             helper.succeed();
@@ -2616,12 +2620,15 @@ public final class PFGameTests {
     }
 
     /**
-     * A Froglight with no {@code crucible_melting} recipe (iron, in wave 1)
-     * must be rejected at insert time - fail closed, nothing consumed. Pins
-     * that the melt set is the curated recipe list, not "any Froglight".
+     * Insert gating on the solids model: (1) a Froglight with no
+     * {@code crucible_melting} recipe (iron) classifies REJECT and
+     * {@code acceptFroglight} refuses it; (2) the hopper-facing item
+     * capability accepts lava Froglights one at a time until the solids
+     * queue is full (4 x 1,000 mB), then bounces the fifth - pinning both
+     * the automation path and the MAX_SOLIDS cap.
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
-    public static void crucibleRejectsFroglightWithoutMeltRecipe(GameTestHelper helper) {
+    public static void crucibleInsertGatingAndHopperQueueCap(GameTestHelper helper) {
         BlockPos base = new BlockPos(2, 1, 2);
         helper.setBlock(base, net.minecraft.world.level.block.Blocks.STONE);
         helper.setBlock(base.above(), PFBlocks.CRUCIBLE.get());
@@ -2631,12 +2638,42 @@ public final class PFGameTests {
             return;
         }
         ItemStack iron = stampedFroglight("iron");
-        if (crucible.tryInsertFroglight(iron, null)) {
-            helper.fail("iron Froglight has no melt recipe and must be rejected");
+        if (crucible.insertCheck(iron)
+                != com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity.InsertCheck.REJECT) {
+            helper.fail("iron Froglight has no melt recipe and must classify REJECT");
             return;
         }
-        if (iron.getCount() != 1) {
-            helper.fail("rejected insert must not consume the Froglight");
+        if (crucible.acceptFroglight(iron)) {
+            helper.fail("acceptFroglight must refuse a REJECT-classified stack");
+            return;
+        }
+        net.neoforged.neoforge.items.IItemHandler items = helper.getLevel().getCapability(
+            net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+            helper.absolutePos(base.above()), null);
+        if (items == null) {
+            helper.fail("crucible exposes no ItemHandler.BLOCK capability");
+            return;
+        }
+        // Hopper path: one Froglight consumed per insert call (one recipe
+        // evaluation each), four fit, the fifth bounces off the full queue.
+        ItemStack rest = stampedFroglight("lava");
+        rest.setCount(4);
+        for (int i = 0; i < 4 && !rest.isEmpty(); i++) {
+            rest = items.insertItem(0, rest, false);
+        }
+        if (!rest.isEmpty()) {
+            helper.fail("four lava Froglights should hopper-insert while the queue has room, "
+                + rest.getCount() + " left over");
+            return;
+        }
+        if (crucible.solids() != 4000) {
+            helper.fail("solids queue should hold 4000 mB after four Froglights, got " + crucible.solids());
+            return;
+        }
+        ItemStack fifth = stampedFroglight("lava");
+        ItemStack bounced = items.insertItem(0, fifth, false);
+        if (bounced.isEmpty() || bounced.getCount() != 1) {
+            helper.fail("fifth Froglight must bounce off the full solids queue");
             return;
         }
         helper.succeed();

@@ -48,6 +48,25 @@ public class CrucibleBlock extends Block implements EntityBlock {
     /** True while a Froglight is actively melting over a live heat source. */
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
+    /**
+     * Vanilla {@code AbstractCauldronBlock}'s shape, copied verbatim: a full
+     * cube minus the interior bowl and the gaps between the legs. Gives the
+     * basin a real outline for targeting/collision instead of the default
+     * full-cube shape (which both felt wrong to walk on and paired badly with
+     * the gappy cauldron geometry).
+     */
+    private static final net.minecraft.world.phys.shapes.VoxelShape INSIDE =
+        box(2.0, 4.0, 2.0, 14.0, 16.0, 14.0);
+    private static final net.minecraft.world.phys.shapes.VoxelShape SHAPE =
+        net.minecraft.world.phys.shapes.Shapes.join(
+            net.minecraft.world.phys.shapes.Shapes.block(),
+            net.minecraft.world.phys.shapes.Shapes.or(
+                box(0.0, 0.0, 3.0, 16.0, 3.0, 13.0),
+                box(3.0, 0.0, 0.0, 13.0, 3.0, 16.0),
+                box(2.0, 0.0, 2.0, 14.0, 3.0, 14.0),
+                INSIDE),
+            net.minecraft.world.phys.shapes.BooleanOp.ONLY_FIRST);
+
     public CrucibleBlock(Properties properties) {
         super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(LIT, Boolean.FALSE));
@@ -56,6 +75,19 @@ public class CrucibleBlock extends Block implements EntityBlock {
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(LIT);
+    }
+
+    @Override
+    protected net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state,
+            net.minecraft.world.level.BlockGetter level, BlockPos pos,
+            net.minecraft.world.phys.shapes.CollisionContext context) {
+        return SHAPE;
+    }
+
+    @Override
+    protected net.minecraft.world.phys.shapes.VoxelShape getInteractionShape(BlockState state,
+            net.minecraft.world.level.BlockGetter level, BlockPos pos) {
+        return SHAPE;
     }
 
     @Override
@@ -78,21 +110,52 @@ public class CrucibleBlock extends Block implements EntityBlock {
         if (!(level.getBlockEntity(pos) instanceof CrucibleBlockEntity crucible)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
-        // Froglight in hand -> try to insert it as the melt input.
-        if (stack.is(PFItems.CONFIGURABLE_FROGLIGHT.get())) {
-            if (level.isClientSide()) {
-                return ItemInteractionResult.SUCCESS;
-            }
-            if (crucible.tryInsertFroglight(stack, player)) {
-                return ItemInteractionResult.CONSUME;
-            }
-            return ItemInteractionResult.FAIL;
+        // Anything fluid-capable (buckets) -> direct tank interaction. The
+        // handler is extract-only, so this fills empty buckets and no-ops on
+        // full ones.
+        if (stack.getCapability(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.ITEM) != null) {
+            return FluidUtil.interactWithFluidHandler(player, hand, crucible.fluidHandler())
+                ? ItemInteractionResult.sidedSuccess(level.isClientSide())
+                : ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
-        // Anything bucket-shaped -> standard fluid-handler interaction (drains
-        // the tank into an empty bucket; the tank capability is extract-only,
-        // so pouring INTO the crucible no-ops).
-        if (FluidUtil.interactWithFluidHandler(player, hand, level, pos, hit.getDirection())) {
+        // Glass bottle pulls a water bottle when the tank holds water
+        // (Ex Deorum parity).
+        if (stack.is(net.minecraft.world.item.Items.GLASS_BOTTLE) && crucible.canFillBottle()) {
+            if (!level.isClientSide()) {
+                crucible.drainBottle();
+                stack.consume(1, player);
+                ItemStack bottle = net.minecraft.world.item.alchemy.PotionContents.createItemStack(
+                    net.minecraft.world.item.Items.POTION, net.minecraft.world.item.alchemy.Potions.WATER);
+                if (!player.getInventory().add(bottle)) {
+                    player.drop(bottle, false);
+                }
+                level.playSound(null, pos, net.minecraft.sounds.SoundEvents.BOTTLE_FILL,
+                    net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 1.0F);
+            }
             return ItemInteractionResult.sidedSuccess(level.isClientSide());
+        }
+        // Froglight (or anything else with a melt recipe) -> queue as solids.
+        // Click semantics mirror Ex Deorum: OK consumes one (free in
+        // creative), FULL still consumes the CLICK (no awkward pass-through
+        // while holding a valid input), REJECT passes through.
+        if (stack.is(PFItems.CONFIGURABLE_FROGLIGHT.get())) {
+            switch (crucible.insertCheck(stack)) {
+                case OK -> {
+                    if (!level.isClientSide()) {
+                        ItemStack one = stack.copyWithCount(1);
+                        if (crucible.acceptFroglight(one) && !player.getAbilities().instabuild) {
+                            stack.shrink(1);
+                        }
+                    }
+                    return ItemInteractionResult.sidedSuccess(level.isClientSide());
+                }
+                case FULL -> {
+                    return ItemInteractionResult.sidedSuccess(level.isClientSide());
+                }
+                case REJECT -> {
+                    return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+                }
+            }
         }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }

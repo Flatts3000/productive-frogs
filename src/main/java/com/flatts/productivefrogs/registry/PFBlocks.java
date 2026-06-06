@@ -113,6 +113,11 @@ public final class PFBlocks {
             .strength(2.0F)
             .sound(SoundType.STONE)
             .lightLevel(state -> state.getValue(CrucibleBlock.LIT) ? 11 : 0)
+            // Cauldron geometry has gaps (legs, open top). Without noOcclusion
+            // the renderer treats the block as a full opaque cube and culls the
+            // neighbor faces behind it - which read as see-through-to-the-sky
+            // holes in-world.
+            .noOcclusion()
     );
 
     private static Map<Category, DeferredBlock<PrimedFrogEggBlock>> buildPrimedEggs() {

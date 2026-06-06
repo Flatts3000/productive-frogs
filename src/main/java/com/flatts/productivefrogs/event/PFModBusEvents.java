@@ -183,14 +183,20 @@ public final class PFModBusEvents {
                 : be.getInventory().inputView()
         );
 
-        // Crucible (v1.12 wave 1): extract-only fluid tank for pipes and the
-        // bucket right-click (FluidUtil walks this same capability). Input is
-        // items (Froglights), so fill() is a no-op by design - see
-        // CrucibleBlockEntity.fluidHandler().
+        // Crucible (v1.12): extract-only fluid tank for pipes and the bucket
+        // right-click (FluidUtil walks this same capability) - fill() is a
+        // no-op by design - plus an insert-only, recipe-validated item view so
+        // hoppers can feed Froglights into the solids queue (Ex Deorum
+        // parity). See CrucibleBlockEntity.
         event.registerBlockEntity(
             Capabilities.FluidHandler.BLOCK,
             PFBlockEntities.CRUCIBLE.get(),
             (be, side) -> be.fluidHandler()
+        );
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            PFBlockEntities.CRUCIBLE.get(),
+            (be, side) -> be.itemHandler()
         );
 
         // Per-variant Slime Milk buckets (v1.8) are SlimeMilkBucketItem extends

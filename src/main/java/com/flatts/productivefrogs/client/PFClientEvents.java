@@ -89,6 +89,11 @@ public final class PFClientEvents {
             ctx -> new ParentSlimeRenderer(ctx, parentTexture("infernal_slime"), 0xFFC73E1D));
         event.registerEntityRenderer(PFEntities.VOID_SLIME.get(),
             ctx -> new ParentSlimeRenderer(ctx, parentTexture("void_slime"), 0xFF5E3782));
+        // Crucible interior surfaces (rising fluid + variant-tinted solids) -
+        // Ex Deorum-parity look, see client/renderer/CrucibleRenderer.
+        event.registerBlockEntityRenderer(
+            com.flatts.productivefrogs.registry.PFBlockEntities.CRUCIBLE.get(),
+            com.flatts.productivefrogs.client.renderer.CrucibleRenderer::new);
     }
 
     private static ResourceLocation parentTexture(String name) {
