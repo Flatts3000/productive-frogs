@@ -34,6 +34,9 @@
 > 9. **The Crucible is GUI-less; the Casting Basin has a GUI** (fluid gauge,
 >    progress, output slots). The Basin is the mod's third GUI - extract the
 >    shared `PFContainerScreen` base while building it.
+> 10. **Heat sources copied verbatim from Ex Deorum** (torch 1 / soul + campfire
+>     2 / lava 3 / fire 5) - Ex Deorum's crucibles are in Sky Frogs' Tier 0, so
+>     heat intuitions transfer 1:1. Delivered as a NeoForge block data map.
 
 ## Concept
 
@@ -76,22 +79,40 @@ in v1.11.0; build wave 1 first and split the release only if wave 2 balloons.
   pair - this follows the cauldron/composter interaction model, not the
   Milker/Spawnery appliance shape (and sidesteps the 1.21.1 renderTooltip gotcha
   entirely).
-- **Heat from the block below.** No heat source = no melting. Membership and
-  tier are **block tags**, pack-overridable like the Spawnery primer tags:
-  - `productivefrogs:crucible_heat/low` - **1.0x** speed. Default: magma block.
-  - `productivefrogs:crucible_heat/medium` - **1.5x**. Default: fire, soul fire
-    (a campfire-style "free" tier once you have netherrack or soul soil).
-  - `productivefrogs:crucible_heat/high` - **2.0x**. Default: lava source.
-  - **Skyblock bootstrap check (passes):** magma block arrives via the Infernal
-    chain, and fire-on-netherrack is renewable before any lava exists. Sky
-    Frogs reaches a heat source before it needs one.
+- **Heat from the block below.** No heat source = no melting. The source list
+  and values are **copied verbatim from Ex Deorum** (decided 2026-06-06) -
+  Ex Deorum ships in Sky Frogs (its crucibles are part of the Tier 0 substrate),
+  so the same block that heats an Ex Deorum crucible heats the PF Crucible at
+  the same relative strength. Players' heat intuitions transfer 1:1.
+
+  | Block below | Heat value |
+  |---|---|
+  | torch, wall torch, lantern | 1 |
+  | soul torch, soul wall torch, soul lantern, lit campfire, lit soul campfire | 2 |
+  | lava | 3 |
+  | fire, soul fire | 5 |
+
+  **Melt speed = heat value:** melt time is `400 / heat` ticks per Froglight
+  (torch 400, soul/campfire 200, lava ~133, fire 80). Yes, fire out-heats lava -
+  that is Ex Deorum's balance, copied deliberately; fire-on-netherrack is the
+  endgame heat plate, lava is the set-and-forget mid-tier.
+  - **Mechanism:** a NeoForge **data map** (`data/productivefrogs/data_maps/
+    block/crucible_heat.json`, block id -> heat int) rather than tier tags - a
+    data map carries the per-block value, ships as plain JSON, and a pack
+    overrides or extends it the same way it overrides the Spawnery primer tags.
+    (Ex Deorum models this as `crucible_heat_source` recipes with block-state
+    predicates; the data map is the lighter equivalent since PF needs no state
+    matching - campfires' `lit` check is handled in code.)
+  - **Skyblock bootstrap check (passes trivially):** a torch is a day-one heat
+    source; the ladder up through campfire -> lava -> fire mirrors the pack's
+    existing Ex Deorum crucible progression exactly.
 - **Internal tank: 4,000 mB**, single fluid. The tank only accepts a Froglight
   whose output fluid matches the current contents; drain to switch. Exposed via
   `Capabilities.FluidHandler.BLOCK` (all faces; extract-only from pipes - input
   is items, not fluid).
-- **Melt time: 400 ticks** (20s) at 1.0x heat, scaled by the heat tier (267 at
-  1.5x, 200 at 2.0x). One Froglight in the hopper... no - one Froglight melts at
-  a time; a second right-click while melting is rejected (composter model).
+- **One Froglight melts at a time**; a second right-click while melting is
+  rejected (composter model). Melt time per the heat table above
+  (`400 / heat` ticks).
 - **Recipe-driven Froglight -> fluid mapping** (datapack), not hardcoded:
   "this variant Froglight produces this fluid (this many mB)." Later fluids and
   cross-mod outputs are pure JSON gated by `neoforge:conditions`, no new Java -
