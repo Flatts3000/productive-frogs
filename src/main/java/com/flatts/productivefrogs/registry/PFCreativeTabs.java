@@ -64,6 +64,9 @@ public final class PFCreativeTabs {
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h ->
                         output.accept(PFItems.variantSlimeBucket(h.key().location(), h.value().category()))));
                     output.accept(PFItems.SLIME_MILKER.get());
+                    // The Froglight Crucible (v1.12 wave 1) sits with the other
+                    // appliances.
+                    output.accept(PFItems.CRUCIBLE.get());
                     // Spawnery only appears in the tab when enabled (skyblock
                     // bootstrap; off by default). isLoaded guards the title-screen
                     // build before COMMON config is available.

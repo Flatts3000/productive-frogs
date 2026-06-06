@@ -183,6 +183,16 @@ public final class PFModBusEvents {
                 : be.getInventory().inputView()
         );
 
+        // Crucible (v1.12 wave 1): extract-only fluid tank for pipes and the
+        // bucket right-click (FluidUtil walks this same capability). Input is
+        // items (Froglights), so fill() is a no-op by design - see
+        // CrucibleBlockEntity.fluidHandler().
+        event.registerBlockEntity(
+            Capabilities.FluidHandler.BLOCK,
+            PFBlockEntities.CRUCIBLE.get(),
+            (be, side) -> be.fluidHandler()
+        );
+
         // Per-variant Slime Milk buckets (v1.8) are SlimeMilkBucketItem extends
         // BucketItem. NeoForge only auto-registers FluidHandler.ITEM for the exact
         // BucketItem class, not subclasses, so wire each up explicitly - this is
@@ -199,6 +209,16 @@ public final class PFModBusEvents {
                 );
             }
         }
+    }
+
+    /**
+     * Register NeoForge data maps - currently just the Crucible's
+     * {@code crucible_heat} block -> heat-value map (see
+     * {@link com.flatts.productivefrogs.registry.PFDataMaps}).
+     */
+    @SubscribeEvent
+    public static void onRegisterDataMaps(net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent event) {
+        event.register(com.flatts.productivefrogs.registry.PFDataMaps.CRUCIBLE_HEAT);
     }
 
     /**

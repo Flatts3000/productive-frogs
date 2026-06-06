@@ -289,6 +289,16 @@ public final class PFItems {
         new Item.Properties()
     );
 
+    /**
+     * Froglight Crucible BlockItem (v1.12 wave 1) - places {@link PFBlocks#CRUCIBLE},
+     * the GUI-less heated basin that melts Froglights into fluids.
+     */
+    public static final DeferredItem<BlockItem> CRUCIBLE = ITEMS.registerSimpleBlockItem(
+        "crucible",
+        PFBlocks.CRUCIBLE,
+        new Item.Properties()
+    );
+
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {

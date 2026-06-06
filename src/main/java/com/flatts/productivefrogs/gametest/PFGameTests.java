@@ -2517,6 +2517,131 @@ public final class PFGameTests {
         }
     }
 
+    // ===================================================================
+    // Froglight Crucible (v1.12 wave 1) — heat-driven Froglight -> fluid
+    // ===================================================================
+
+    private static ItemStack stampedFroglight(String variant) {
+        ItemStack stack = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
+        stack.set(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get(),
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant));
+        return stack;
+    }
+
+    /**
+     * End-to-end melt loop: torch (heat 1) under a Crucible, a lava Froglight
+     * loaded, and the melt must complete in MELT_TOTAL (400) ticks producing
+     * 1,000 mB of lava in the tank. Once full, three invariants are checked in
+     * the same world state: (1) a water Froglight is rejected (single-fluid
+     * tank: lava != water), (2) the FluidHandler.BLOCK capability refuses
+     * fill() (input is items, not fluid), and (3) the capability drains the
+     * full 1,000 mB of lava back out (the pipe/bucket path).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 500)
+    public static void crucibleMeltsLavaFroglightOverTorchHeat(GameTestHelper helper) {
+        BlockPos base = new BlockPos(2, 1, 2);
+        helper.setBlock(base, net.minecraft.world.level.block.Blocks.STONE);
+        helper.setBlock(base.above(), net.minecraft.world.level.block.Blocks.TORCH);
+        helper.setBlock(base.above(2), PFBlocks.CRUCIBLE.get());
+        if (!(helper.getBlockEntity(base.above(2))
+                instanceof com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity crucible)) {
+            helper.fail("crucible block did not create a CrucibleBlockEntity");
+            return;
+        }
+        if (crucible.heatBelow() != 1) {
+            helper.fail("torch below should read heat 1 from the crucible_heat data map, got " + crucible.heatBelow());
+            return;
+        }
+        if (!crucible.tryInsertFroglight(stampedFroglight("lava"), null)) {
+            helper.fail("lava Froglight should load into an idle, empty crucible");
+            return;
+        }
+        helper.succeedWhen(() -> {
+            net.neoforged.neoforge.fluids.FluidStack fluid = crucible.fluid();
+            helper.assertTrue(fluid.getFluid() == net.minecraft.world.level.material.Fluids.LAVA
+                    && fluid.getAmount() == 1000,
+                "tank should hold 1000 mB lava after the melt, holds "
+                    + fluid.getAmount() + " of " + fluid.getFluid());
+            helper.assertFalse(crucible.tryInsertFroglight(stampedFroglight("water"), null),
+                "water Froglight must be rejected while the tank holds lava (single-fluid rule)");
+            net.neoforged.neoforge.fluids.capability.IFluidHandler cap = helper.getLevel().getCapability(
+                net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+                helper.absolutePos(base.above(2)), null);
+            helper.assertTrue(cap != null, "crucible exposes no FluidHandler.BLOCK capability");
+            helper.assertTrue(cap.fill(new net.neoforged.neoforge.fluids.FluidStack(
+                    net.minecraft.world.level.material.Fluids.WATER, 1000),
+                    net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE) == 0,
+                "capability must be extract-only (fill must return 0)");
+            net.neoforged.neoforge.fluids.FluidStack drained = cap.drain(1000,
+                net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+            helper.assertTrue(drained.getFluid() == net.minecraft.world.level.material.Fluids.LAVA
+                    && drained.getAmount() == 1000,
+                "capability drain should yield the full 1000 mB lava, got "
+                    + drained.getAmount() + " of " + drained.getFluid());
+        });
+    }
+
+    /**
+     * No heat below = no melt progress. Loading is deliberately allowed
+     * (stage the Froglight, light the fire after), but with stone below the
+     * loop must not advance: after a generous delay the tank stays empty,
+     * the Froglight stays loaded, and progress stays 0.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void crucibleDoesNotMeltWithoutHeat(GameTestHelper helper) {
+        BlockPos base = new BlockPos(2, 1, 2);
+        helper.setBlock(base, net.minecraft.world.level.block.Blocks.STONE);
+        helper.setBlock(base.above(), PFBlocks.CRUCIBLE.get());
+        if (!(helper.getBlockEntity(base.above())
+                instanceof com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity crucible)) {
+            helper.fail("crucible block did not create a CrucibleBlockEntity");
+            return;
+        }
+        if (!crucible.tryInsertFroglight(stampedFroglight("lava"), null)) {
+            helper.fail("loading a Froglight must not require heat (stage first, light after)");
+            return;
+        }
+        helper.runAfterDelay(80L, () -> {
+            if (!crucible.fluid().isEmpty()) {
+                helper.fail("tank filled despite no heat source below");
+                return;
+            }
+            if (!crucible.isMelting() || crucible.meltProgress() != 0) {
+                helper.fail("froglight should stay loaded at progress 0 without heat; melting="
+                    + crucible.isMelting() + " progress=" + crucible.meltProgress());
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A Froglight with no {@code crucible_melting} recipe (iron, in wave 1)
+     * must be rejected at insert time - fail closed, nothing consumed. Pins
+     * that the melt set is the curated recipe list, not "any Froglight".
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void crucibleRejectsFroglightWithoutMeltRecipe(GameTestHelper helper) {
+        BlockPos base = new BlockPos(2, 1, 2);
+        helper.setBlock(base, net.minecraft.world.level.block.Blocks.STONE);
+        helper.setBlock(base.above(), PFBlocks.CRUCIBLE.get());
+        if (!(helper.getBlockEntity(base.above())
+                instanceof com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity crucible)) {
+            helper.fail("crucible block did not create a CrucibleBlockEntity");
+            return;
+        }
+        ItemStack iron = stampedFroglight("iron");
+        if (crucible.tryInsertFroglight(iron, null)) {
+            helper.fail("iron Froglight has no melt recipe and must be rejected");
+            return;
+        }
+        if (iron.getCount() != 1) {
+            helper.fail("rejected insert must not consume the Froglight");
+            return;
+        }
+        helper.succeed();
+    }
+
     private static void assertVariantSmelts(
             GameTestHelper helper,
             net.minecraft.world.item.crafting.RecipeManager rm,

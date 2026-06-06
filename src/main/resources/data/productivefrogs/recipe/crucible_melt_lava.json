@@ -1,0 +1,9 @@
+{
+  "type": "productivefrogs:crucible_melting",
+  "ingredient": {
+    "type": "neoforge:components",
+    "items": [ "productivefrogs:configurable_froglight" ],
+    "components": { "productivefrogs:slime_variant": "productivefrogs:lava" }
+  },
+  "result": { "id": "minecraft:lava", "amount": 1000 }
+}

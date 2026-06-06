@@ -35,6 +35,7 @@
     "ink_sac",
     "iron",
     "lapis",
+    "lava",
     "lead",
     "leather",
     "lily_pad",
@@ -74,6 +75,7 @@
     "tuff",
     "uraninite",
     "uranium",
+    "water",
     "zinc"
   ]
 }

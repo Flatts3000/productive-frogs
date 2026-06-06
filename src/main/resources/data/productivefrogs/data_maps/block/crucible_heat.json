@@ -1,0 +1,15 @@
+{
+  "values": {
+    "minecraft:torch": 1,
+    "minecraft:wall_torch": 1,
+    "minecraft:lantern": 1,
+    "minecraft:soul_torch": 2,
+    "minecraft:soul_wall_torch": 2,
+    "minecraft:soul_lantern": 2,
+    "minecraft:campfire": 2,
+    "minecraft:soul_campfire": 2,
+    "minecraft:lava": 3,
+    "minecraft:fire": 5,
+    "minecraft:soul_fire": 5
+  }
+}

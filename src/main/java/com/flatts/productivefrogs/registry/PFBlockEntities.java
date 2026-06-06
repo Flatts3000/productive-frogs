@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
@@ -57,6 +58,17 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "slime_milk_source",
             () -> BlockEntityType.Builder.of(SlimeMilkSourceBlockEntity::new, PFVariantMilk.allBlocksArray()).build(null)
+        );
+
+    /**
+     * BE type for the {@code crucible} block (v1.12 wave 1) - owns the 4,000 mB
+     * single-fluid tank, the one-at-a-time melt slot, and the heat-scaled melt
+     * loop. See {@link CrucibleBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<CrucibleBlockEntity>> CRUCIBLE =
+        BLOCK_ENTITIES.register(
+            "crucible",
+            () -> BlockEntityType.Builder.of(CrucibleBlockEntity::new, PFBlocks.CRUCIBLE.get()).build(null)
         );
 
     /** BE type for the {@code spawnery} block - holds the 4-slot inventory + cook/burn timers. */
