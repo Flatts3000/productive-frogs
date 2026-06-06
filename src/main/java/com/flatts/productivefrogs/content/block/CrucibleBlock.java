@@ -49,23 +49,34 @@ public class CrucibleBlock extends Block implements EntityBlock {
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
     /**
-     * Vanilla {@code AbstractCauldronBlock}'s shape, copied verbatim: a full
-     * cube minus the interior bowl and the gaps between the legs. Gives the
-     * basin a real outline for targeting/collision instead of the default
-     * full-cube shape (which both felt wrong to walk on and paired badly with
-     * the gappy cauldron geometry).
+     * Shape built from the cauldron MODEL's actual geometry rather than
+     * vanilla {@code AbstractCauldronBlock}'s approximation: the basin body
+     * (y 3-16, hollowed by the interior bowl) plus the four L-shaped legs
+     * exactly as the model draws them (each corner: a 4x2 box and a 2x2 box,
+     * y 0-3). The vanilla shape trims the legs to 3x3 corner stubs, which
+     * left the legs' outer pixels outside the hitbox (un-targetable).
      */
     private static final net.minecraft.world.phys.shapes.VoxelShape INSIDE =
         box(2.0, 4.0, 2.0, 14.0, 16.0, 14.0);
     private static final net.minecraft.world.phys.shapes.VoxelShape SHAPE =
-        net.minecraft.world.phys.shapes.Shapes.join(
-            net.minecraft.world.phys.shapes.Shapes.block(),
-            net.minecraft.world.phys.shapes.Shapes.or(
-                box(0.0, 0.0, 3.0, 16.0, 3.0, 13.0),
-                box(3.0, 0.0, 0.0, 13.0, 3.0, 16.0),
-                box(2.0, 0.0, 2.0, 14.0, 3.0, 14.0),
-                INSIDE),
-            net.minecraft.world.phys.shapes.BooleanOp.ONLY_FIRST);
+        net.minecraft.world.phys.shapes.Shapes.or(
+            // Basin body with the bowl hollowed out.
+            net.minecraft.world.phys.shapes.Shapes.join(
+                box(0.0, 3.0, 0.0, 16.0, 16.0, 16.0),
+                INSIDE,
+                net.minecraft.world.phys.shapes.BooleanOp.ONLY_FIRST),
+            // North-west leg (4x2 along north face + 2x2 down the west face).
+            box(0.0, 0.0, 0.0, 4.0, 3.0, 2.0),
+            box(0.0, 0.0, 2.0, 2.0, 3.0, 4.0),
+            // North-east leg.
+            box(12.0, 0.0, 0.0, 16.0, 3.0, 2.0),
+            box(14.0, 0.0, 2.0, 16.0, 3.0, 4.0),
+            // South-west leg.
+            box(0.0, 0.0, 14.0, 4.0, 3.0, 16.0),
+            box(0.0, 0.0, 12.0, 2.0, 3.0, 14.0),
+            // South-east leg.
+            box(12.0, 0.0, 14.0, 16.0, 3.0, 16.0),
+            box(14.0, 0.0, 12.0, 16.0, 3.0, 14.0));
 
     public CrucibleBlock(Properties properties) {
         super(properties);

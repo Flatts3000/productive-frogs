@@ -87,6 +87,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         ApplianceProvider provider = new ApplianceProvider();
         registration.registerBlockComponent(provider, SlimeMilkerBlock.class);
         registration.registerBlockComponent(provider, SpawneryBlock.class);
+        registration.registerBlockComponent(provider,
+            com.flatts.productivefrogs.content.block.CrucibleBlock.class);
         registration.registerBlockComponent(MILK_SOURCE, SlimeMilkSourceBlock.class);
         registration.registerEntityComponent(new FrogStatsProvider(), ResourceFrog.class);
         registration.registerBlockComponent(PRIMED_EGG_STATS, PrimedFrogEggBlock.class);
@@ -118,6 +120,23 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                         : 200;
                     tooltip.add(Component.translatable("productivefrogs.jade.progress",
                         percent(progress, total)));
+                }
+            } else if (be instanceof com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity crucible) {
+                // Tank + solids both ride the BE's update tag, so this is a
+                // pure client read like the other appliance lines.
+                var fluid = crucible.fluid();
+                if (!fluid.isEmpty()) {
+                    tooltip.add(Component.translatable("productivefrogs.jade.crucible_fluid",
+                        fluid.getFluid().getFluidType().getDescription(),
+                        fluid.getAmount(),
+                        com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity.TANK_CAPACITY));
+                }
+                int solids = crucible.solids();
+                if (solids > 0) {
+                    // 1 Froglight = 1,000 mB, so the queue is also shown in
+                    // Froglight units (the number the player actually thinks in).
+                    tooltip.add(Component.translatable("productivefrogs.jade.crucible_solids",
+                        solids, String.format("%.1f", solids / 1000.0F)));
                 }
             }
         }

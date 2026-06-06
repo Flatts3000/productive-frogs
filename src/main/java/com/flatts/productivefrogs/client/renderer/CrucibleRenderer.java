@@ -60,6 +60,21 @@ public class CrucibleRenderer implements BlockEntityRenderer<CrucibleBlockEntity
         }
         BlockPos pos = crucible.getBlockPos();
 
+        // Draw order matters: the OPAQUE solids surface must be submitted
+        // BEFORE the translucent fluid. The fluid quad writes depth, so a
+        // solids quad drawn after it (at a lower height, seen through the
+        // water) would fail the depth test and vanish instead of showing
+        // through the translucent surface.
+        if (solidsFrac > 0.0F) {
+            TextureAtlasSprite sprite = Minecraft.getInstance()
+                .getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
+                .apply(FROGLIGHT_TOP);
+            int tint = variantTint(crucible, level);
+            float y = Mth.lerp(solidsFrac, FLOOR_Y, RIM_Y);
+            drawSurface(pose, buffers.getBuffer(RenderType.cutout()), sprite, y,
+                (tint >> 16) & 0xFF, (tint >> 8) & 0xFF, tint & 0xFF, 0xFF, packedLight);
+        }
+
         if (fluidFrac > 0.0F) {
             Fluid fluid = fluidStack.getFluid();
             IClientFluidTypeExtensions ext = IClientFluidTypeExtensions.of(fluid);
@@ -69,16 +84,6 @@ public class CrucibleRenderer implements BlockEntityRenderer<CrucibleBlockEntity
             int tint = ext.getTintColor(fluid.defaultFluidState(), level, pos);
             float y = Mth.lerp(fluidFrac, FLOOR_Y, RIM_Y);
             drawSurface(pose, buffers.getBuffer(RenderType.translucent()), sprite, y,
-                (tint >> 16) & 0xFF, (tint >> 8) & 0xFF, tint & 0xFF, 0xFF, packedLight);
-        }
-
-        if (solidsFrac > 0.0F) {
-            TextureAtlasSprite sprite = Minecraft.getInstance()
-                .getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
-                .apply(FROGLIGHT_TOP);
-            int tint = variantTint(crucible, level);
-            float y = Mth.lerp(solidsFrac, FLOOR_Y, RIM_Y);
-            drawSurface(pose, buffers.getBuffer(RenderType.cutout()), sprite, y,
                 (tint >> 16) & 0xFF, (tint >> 8) & 0xFF, tint & 0xFF, 0xFF, packedLight);
         }
     }

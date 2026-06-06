@@ -333,9 +333,18 @@ public class CrucibleBlockEntity extends BlockEntity {
         setLit(level, pos, state, activelyMelting);
     }
 
+    /** The variant whose placed Froglight doubles as a heat source. */
+    private static final ResourceLocation LAVA_VARIANT =
+        ResourceLocation.fromNamespaceAndPath("productivefrogs", "lava");
+
     /**
-     * Heat value of the block below: data-map lookup plus the one
-     * state-sensitive rule - an unlit campfire contributes nothing.
+     * Heat value of the block below: data-map lookup plus two rules the map
+     * can't express - an unlit campfire contributes nothing (blockstate), and
+     * a placed LAVA Froglight heats like lava itself (the variant lives on the
+     * BlockEntity, invisible to a block-keyed map; the value is read from
+     * lava's own map entry so pack overrides track automatically). The latter
+     * closes a tidy loop: the Crucible's lava output begets the heat plate for
+     * the next Crucible.
      */
     public int heatBelow() {
         if (level == null) {
@@ -344,6 +353,10 @@ public class CrucibleBlockEntity extends BlockEntity {
         BlockState below = level.getBlockState(worldPosition.below());
         if (below.getBlock() instanceof CampfireBlock && !below.getValue(CampfireBlock.LIT)) {
             return 0;
+        }
+        if (level.getBlockEntity(worldPosition.below()) instanceof ConfigurableFroglightBlockEntity froglight
+                && LAVA_VARIANT.equals(froglight.getVariantId())) {
+            return PFDataMaps.heatOf(net.minecraft.world.level.block.Blocks.LAVA);
         }
         return PFDataMaps.heatOf(below.getBlock());
     }

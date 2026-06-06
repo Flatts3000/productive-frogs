@@ -418,6 +418,8 @@
   "productivefrogs.jade.catalyst_speed": "Speed catalyst: %1$s/%2$s",
   "productivefrogs.jade.catalyst_quantity": "Quantity catalyst: %1$s/%2$s",
   "productivefrogs.jade.progress": "Working: %1$s%%",
+  "productivefrogs.jade.crucible_fluid": "%1$s: %2$s / %3$s mB",
+  "productivefrogs.jade.crucible_solids": "Melting: %1$s mB queued (%2$s Froglights)",
   "productivefrogs.jade.appetite": "Appetite: %1$s/%2$s",
   "productivefrogs.jade.bounty": "Bounty: %1$s/%2$s",
   "productivefrogs.jade.reach": "Reach: %1$s/%2$s",
