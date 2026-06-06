@@ -3,11 +3,16 @@
 > **Status: RESEARCH, not a build spec.** This is a deep-dive into what it would
 > take to make Productive Frogs machines accept power from the NeoForge tech-mod
 > ecosystem (Mekanism, Industrial Foregoing, Powah, etc.). Power is **V2 scope**
-> (`docs/versioning.md`: "power/pipes/multiblocks" is the V1/V2 line), and the
-> **Froglight Juicer** (`docs/froglight_juicer.md`) is the designated lightest-possible
-> v2 block that opens the energy-capability pattern. Nothing here is committed;
-> treat it as the reference brief to promote into a real spec when a power-consuming
-> block is greenlit. Captured 2026-05-29.
+> (`docs/versioning.md`: "power/pipes/multiblocks" is the V1/V2 line). Nothing here
+> is committed; treat it as the reference brief to promote into a real spec when a
+> power-consuming block is greenlit. Captured 2026-05-29.
+>
+> **2026-06-06:** the **Froglight Crucible** (`docs/froglight_crucible.md`) was the
+> designated first powered block, but it switched to **heat instead of FE** - so it
+> no longer opens the energy pattern. The FE research below stands unchanged for
+> whichever later v2 block (Frog Terrarium, buffered Slime Milker, auto-feeders)
+> becomes the first true power consumer; code examples that name the Crucible BE
+> are illustrative only.
 
 ## Bottom line up front
 
@@ -97,7 +102,7 @@ boolean canReceive();   // false => receiveEnergy always returns 0
 ```java
 event.registerBlockEntity(
     Capabilities.EnergyStorage.BLOCK,
-    PFBlockEntities.FROGLIGHT_JUICER.get(),
+    PFBlockEntities.FROGLIGHT_CRUCIBLE.get(),
     (be, side) -> be.getEnergyStorage());     // ignore side => all faces accept
 ```
 
@@ -153,7 +158,7 @@ private final EnergyStorage energy = new EnergyStorage(CAPACITY, MAX_RECEIVE, 0)
     void consume(int n) { this.energy -= n; }    // internal drain, bypasses maxExtract=0
 };
 
-public static void serverTick(Level level, BlockPos pos, BlockState state, FroglightJuicerBlockEntity be) {
+public static void serverTick(Level level, BlockPos pos, BlockState state, FroglightCrucibleBlockEntity be) {
     if (!be.hasWork()) { setWorking(level, pos, state, false); return; }
     if (be.energy.getEnergyStored() < FE_PER_TICK) { setWorking(level, pos, state, false); return; } // buffer empty -> pause
     be.energy.consume(FE_PER_TICK);
@@ -249,15 +254,15 @@ existing patterns:
    `ContainerData` + static `serverTick` + Menu + Screen, plus one extra capability
    registration line in `PFModBusEvents`. The energy buffer is just another field
    alongside the inventory, serialized in `saveAdditional`/`loadAdditional`.
-3. **The Froglight Juicer is the intended opener** (`docs/froglight_juicer.md`):
+3. **The Froglight Crucible is the intended opener** (`docs/froglight_crucible.md`):
    the lightest possible v2 block (single block, no multiblock) whose entire reason
    for being v2 is that it introduces the energy-capability + fluid-tank patterns
    every later v2 block (Frog Terrarium, buffered Slime Milker) reuses. Building
-   power *as* the Juicer establishes the pattern once.
+   power *as* the Crucible establishes the pattern once.
 
 ### The one real design decision: "no power mod present"
 
-This is open question #2 in `froglight_juicer.md`, and it is the crux of bringing
+This is open question #2 in `froglight_crucible.md`, and it is the crux of bringing
 power into the mod at all. A power-required block is dead weight in a pack with no
 power mod (and Sky Frogs, the anchor pack, may not ship one). Options:
 
@@ -295,7 +300,7 @@ than a new gated capability.
 4. **Energy-bar UI:** confirm the two-index `ContainerData` split (section 2) in a
    dev run against a real value > 32767.
 5. **Does the buffered Slime Milker (a named v2 item) also take power, or stay
-   fuelless?** If the Juicer is the only powered block, the pattern is contained;
+   fuelless?** If the Crucible is the only powered block, the pattern is contained;
    if the Milker upgrade also draws FE, settle that it shares the same buffer
    helper.
 6. **Pack-author doc:** ship a short per-mod "how to power it" table (section 4),
@@ -305,7 +310,7 @@ than a new gated capability.
 
 ## Related
 
-- Designated first powered block: [froglight_juicer.md](./froglight_juicer.md)
+- Designated first powered block: [froglight_crucible.md](./froglight_crucible.md)
 - Scope split / why power is V2: [versioning.md](./versioning.md)
 - No-hard-dep / conditional-compat philosophy: [cross_mod_compat.md](./cross_mod_compat.md), [architecture.md](./architecture.md)
 - Appliance pattern + capability registration: `CLAUDE.md`, `PFModBusEvents.onRegisterCapabilities`

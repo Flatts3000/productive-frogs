@@ -122,13 +122,13 @@ The scale-up release. v1 lives unchanged; v2 layers automation on top. A player 
 
 ---
 
-## Parked for v2: the Froglight Juicer
+## Parked for v2: the Froglight Crucible
 
-A processing block that converts a **Froglight into a fluid** - a third Froglight cash-out lane alongside smelting (1x solid) and crushing (2x dust). Its first iteration targets renewable **water and lava**: a lava slime drops a lava Froglight, which the Juicer turns into lava (water likewise), so a skyblock or nether-locked pack can farm the two fluids it most lacks.
+A **heat-driven** processing block that melts a **Froglight into a fluid** - a third Froglight cash-out lane alongside smelting (1x solid) and crushing (2x dust). Its first iteration targets renewable **water and lava**: a lava slime drops a lava Froglight, which the Crucible melts into lava (water likewise), so a skyblock or nether-locked pack can farm the two fluids it most lacks. The second wave melts **metal Froglights into their molten fluids at Tinkers-style ore-doubling yield** (2 ingots' worth per Froglight), with a companion **Casting Basin** that solidifies molten metal back into ingots - a fully first-party melt-and-cast lane. (Note: the spec flags the balance tension between that in-house 2x lane and the "no native crusher" entry below; re-litigate when promoting the spec.)
 
-It is **v2, not a v1.x appliance**, because it introduces two mechanics the mod has never shipped: an internal fluid tank (drained by a right-click bucket or by pipes via `Capabilities.FluidHandler.BLOCK`) and an energy requirement (NeoForge `Capabilities.EnergyStorage.BLOCK`, the FE-equivalent every power mod bridges to, no hard dep). As the lightest possible v2 block (single block, no multiblock), it is a good candidate to open v2 with and establish the energy + fluid-tank capability patterns the rest of v2 (Frog Terrarium, buffered Slime Milker) will reuse.
+(Renamed from "Froglight Juicer" and switched from FE power to heat, 2026-06-06 - "Juicer" sat too close to the Slime Milker's identity, and heat keeps the block alive in vanilla-only and skyblock packs.) With no energy mechanic the only never-shipped piece is the internal fluid tank (right-click bucket or pipes via `Capabilities.FluidHandler.BLOCK`), so whether it is a v1.x appliance or the v2 opener is an open question in the spec. Either way it is the lightest candidate (single block, no multiblock) and establishes the fluid-tank pattern the rest of v2 (Frog Terrarium, buffered Slime Milker) will reuse.
 
-Decided shape, the new water/lava slime variants it needs, and the open questions to resolve before building: [docs/froglight_juicer.md](./docs/froglight_juicer.md).
+Decided shape, the new water/lava slime variants it needs, and the open questions to resolve before building: [docs/froglight_crucible.md](./docs/froglight_crucible.md).
 
 ---
 

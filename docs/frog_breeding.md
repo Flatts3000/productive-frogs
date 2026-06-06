@@ -265,6 +265,6 @@ Pure additive feature; no existing data shapes change. Likely touch points:
 
 - Runway: [../ROADMAP.md](../ROADMAP.md)
 - Scope split: [versioning.md](./versioning.md)
-- Sibling appliance/feature specs: [spawnery.md](./spawnery.md), [froglight_juicer.md](./froglight_juicer.md)
+- Sibling appliance/feature specs: [spawnery.md](./spawnery.md), [froglight_crucible.md](./froglight_crucible.md)
 - Entity / category architecture: `CLAUDE.md`
 - Productive Bees comparison: [productive_bees_analysis.md](./productive_bees_analysis.md)
