@@ -1,4 +1,4 @@
-# Froglight Crucible + Casting Basin (build spec)
+# Froglight Crucible + Casting Mold (build spec)
 
 > **Status: PROMOTED to build spec - target v1.12.0.** Originally captured
 > 2026-05-26 as parked-for-v2 design notes ("Froglight Juicer"); promoted
@@ -18,7 +18,7 @@
 >    (no fuel slot, no power cable).
 > 4. **Metal Froglights melt to molten fluids at Tinkers-style ore-doubling
 >    yield** (2 ingots' worth per Froglight).
-> 5. **PF ships the Casting Basin** - first-party molten-to-ingot
+> 5. **PF ships the Casting Mold** - first-party molten-to-ingot
 >    solidification, so the melt-and-cast lane works in any pack.
 > 6. **v1.x, not v2.** With the energy mechanic gone, the only never-shipped
 >    piece is the fluid tank, and exposing `FluidHandler.BLOCK` is the fluid
@@ -28,11 +28,11 @@
 >    not a rule. The crush lane stays delegated to crusher mods; the
 >    first-party 2x now comes from melt-and-cast, uncapped and not
 >    config-gated.
-> 8. **The tower**: heat source / Crucible / Casting Basin stack vertically; a
->    Basin directly on top of a Crucible pulls molten without pipes. Loose
+> 8. **The tower**: heat source / Crucible / Casting Mold stack vertically; a
+>    Mold directly on top of a Crucible pulls molten without pipes. Loose
 >    composition (hopper-under-furnace model), NOT a formed multiblock.
-> 9. **The Crucible is GUI-less; the Casting Basin has a GUI** (fluid gauge,
->    progress, output slots). The Basin is the mod's third GUI - extract the
+> 9. **The Crucible is GUI-less; the Casting Mold has a GUI** (fluid gauge,
+>    progress, output slots). The Mold is the mod's third GUI - extract the
 >    shared `PFContainerScreen` base while building it.
 > 10. **Heat sources copied verbatim from Ex Deorum** (torch 1 / soul + campfire
 >     2 / lava 3 / fire 5) - Ex Deorum's crucibles are in Sky Frogs' Tier 0, so
@@ -46,7 +46,7 @@ lane for a Froglight:
 - smelt -> 1x solid resource
 - crush (with a crusher mod) -> 2x dust -> smelt -> 2x
 - **melt (Crucible) -> fluid at 2x** - for metals, 2 ingots' worth of molten
-  metal, cast back to ingots in the Casting Basin
+  metal, cast back to ingots in the Casting Mold
 
 The Froglight is already the "ore-equivalent" the frog drops; this adds a fluid
 output route. The Froglight carries everything needed to pick the output (the
@@ -65,10 +65,10 @@ Renewable water and lava through the frog loop - exactly what skyblock and
 nether-locked packs lack (lava for fuel / obsidian gen; water that does not
 evaporate). Pairs with the Spawnery's skyblock framing.
 
-**Wave 2 - molten metals + the Casting Basin:**
+**Wave 2 - molten metals + the Casting Mold:**
 
 Every metal Froglight melts into its **molten fluid** at ore-doubling yield, and
-the **Casting Basin** solidifies molten fluid back into ingots. Both waves ship
+the **Casting Mold** solidifies molten fluid back into ingots. Both waves ship
 in v1.12.0; build wave 1 first and split the release only if wave 2 balloons.
 
 ## The Froglight Crucible
@@ -146,10 +146,10 @@ minting duplicates. Cross-mod interop (tagging PF molten fluids `c:molten_iron`
 etc. so other mods' machinery accepts them) ships as pure data.
 
 Molten fluids are **not placeable** as world blocks in v1.12 (no source-block
-behavior to design or test); they exist for the tank -> pipe -> Basin loop. They
+behavior to design or test); they exist for the tank -> pipe -> Mold loop. They
 mint only for variants with a melt recipe.
 
-## The Casting Basin
+## The Casting Mold
 
 - **Input:** molten fluid only. Three routes: **stacked on a Crucible** (pulls
   directly from the Crucible's tank below it - see "The tower"), piped in via
@@ -160,7 +160,7 @@ mint only for variants with a melt recipe.
   is a v2-flavored idea, parked).
 - **Has a GUI** (decided 2026-06-06) - unlike the Crucible. A furnace-shaped
   screen with a fluid gauge, solidify-progress arrow, and an output slot stack:
-  the Basin accumulates ingots and the player manages them like furnace output.
+  the Mold accumulates ingots and the player manages them like furnace output.
   `Menu` + `Screen` per the appliance pattern, **including the 1.21.1
   renderTooltip override**. This is the mod's **third** GUI - per the backlog's
   standing note, extract the shared `PFContainerScreen<T>` base (the duplicated
@@ -179,27 +179,27 @@ mint only for variants with a melt recipe.
 The intended in-world layout is a vertical stack (decided 2026-06-06):
 
 ```
-[ Casting Basin ]   <- GUI, ingots out (hopper below... see note)
+[ Casting Mold ]   <- GUI, ingots out (hopper below... see note)
 [ Crucible      ]   <- GUI-less, Froglights in by right-click
 [ heat source   ]   <- vanilla block: magma block / fire / lava
 ```
 
-When a Casting Basin sits **directly on top of a Crucible**, it pulls molten
+When a Casting Mold sits **directly on top of a Crucible**, it pulls molten
 fluid straight from the Crucible's tank - no pipes, no buckets. That makes the
 full metal-doubling loop work in a vanilla-only pack: build the three-block
 tower, right-click Froglights into the middle, take ingots out of the top.
 
 This is **composition, not a formed multiblock**: each block is a standalone BE
-that works alone (a free-standing Basin still accepts pipes and buckets; a
-Crucible without a Basin is still the water/lava farm), and stacking them just
+that works alone (a free-standing Mold still accepts pipes and buckets; a
+Crucible without a Mold is still the water/lava farm), and stacking them just
 wires the pull - the same model as vanilla's hopper-under-furnace. No
 controller, no formed-structure validation, so the "multiblocks are V2" line
 stays uncrossed.
 
-Note on hopper output: the Basin's down-face is the Crucible when stacked, so
-automated ingot extraction from a tower uses a hopper feeding from the Basin's
+Note on hopper output: the Mold's down-face is the Crucible when stacked, so
+automated ingot extraction from a tower uses a hopper feeding from the Mold's
 **side** faces (side = output too) or a hopper minecart track above; the
-down-face hopper courtesy applies to free-standing Basins.
+down-face hopper courtesy applies to free-standing Molds.
 
 ## New content this needs
 
@@ -221,8 +221,12 @@ variant smelts back to its primer resource; note it in the JEI info page).
 ## Pre-build checks (small, do during implementation)
 
 1. The molten-fluid provider scan (above) - confirm PF-minted is right.
-2. Final name for the Casting Basin ("Casting Basin" vs a frog-flavored coinage;
-   Spawnery precedent says a coinage is on-brand - decide at lang-key time).
+2. ~~Final name for the casting block~~ - RESOLVED 2026-06-06: **Casting Mold**
+   (user call). "Casting Basin" read too close to the Crucible's basin shape;
+   "Ingot Mold" was rejected as shape-locked since nugget/block/gem casts may
+   land later as data; "Casting Table" (Tinkers borrow) and "Castery" (Spawnery
+   coinage) lost to the plainer name. Shape-neutral: the mold casts whatever the
+   solidify recipe says.
 3. Confirm the texture generator can bake a water-themed inner cube (water_still
    is animated; may need a single-frame crop like the milk textures).
 

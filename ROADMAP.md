@@ -108,11 +108,11 @@ Obsidian and Mekanism's Refined Obsidian moved from the Cave species to Infernal
 
 ---
 
-## Next up: v1.12.0 - the Froglight Crucible + Casting Basin
+## Next up: v1.12.0 - the Froglight Crucible + Casting Mold
 
 A **heat-driven** melt-and-cast lane, fully specced in [docs/froglight_crucible.md](./docs/froglight_crucible.md) (promoted to a build spec 2026-06-06; every open question resolved).
 
-The **Froglight Crucible** is a GUI-less heated basin: park it over a vanilla heat source (torch up through lava and fire - heat values copied verbatim from Ex Deorum for in-pack consistency, data-map-driven and pack-overridable) and right-click Froglights in. Wave 1 melts **water and lava Froglights into water and lava** (1 bucket per Froglight, via two new slime variants primed by kelp and magma block) - renewable fluids for skyblock and nether-locked packs. Wave 2 melts **metal Froglights into PF-minted molten fluids at Tinkers-style ore-doubling yield** (2 ingots' worth, 180 mB), and the **Casting Basin** - the mod's third GUI block - solidifies molten back into ingots. Stack heat / Crucible / Basin into a three-block tower and the Basin pulls molten directly, no pipes: loose composition like hopper-under-furnace, **not** a formed multiblock, which is why this is v1.x.
+The **Froglight Crucible** is a GUI-less heated basin: park it over a vanilla heat source (torch up through lava and fire - heat values copied verbatim from Ex Deorum for in-pack consistency, data-map-driven and pack-overridable) and right-click Froglights in. Wave 1 melts **water and lava Froglights into water and lava** (1 bucket per Froglight, via two new slime variants primed by kelp and magma block) - renewable fluids for skyblock and nether-locked packs. Wave 2 melts **metal Froglights into PF-minted molten fluids at Tinkers-style ore-doubling yield** (2 ingots' worth, 180 mB), and the **Casting Mold** - the mod's third GUI block - solidifies molten back into ingots. Stack heat / Crucible / Mold into a three-block tower and the Mold pulls molten directly, no pipes: loose composition like hopper-under-furnace, **not** a formed multiblock, which is why this is v1.x.
 
 This retires the old "no native crusher" guideline (below): the crush lane stays delegated to crusher mods, but the first-party 2x now comes from melt-and-cast.
 
@@ -159,7 +159,7 @@ Captured during v1 design. Not on the schedule; revisited when v2 ships and we k
 
 **Fabric port.** Productive Frogs is NeoForge-only by design and will remain so. See [docs/architecture.md](./docs/architecture.md) for the technical reasoning.
 
-**Native crusher block.** The mod will not ship its own crusher; the 2x *crush* yield stays delegated to external crusher mods (Mekanism / Immersive Engineering / EnderIO, via the optional `mod_loaded` recipes shipped in v1.3.0). *(Softened 2026-06-06: the broader "no first-party 2x lane" guideline behind this entry was retired when the v1.11 Crucible + Casting Basin melt-and-cast lane was greenlit - it was a guideline, not a rule. A literal crusher block remains not planned.)*
+**Native crusher block.** The mod will not ship its own crusher; the 2x *crush* yield stays delegated to external crusher mods (Mekanism / Immersive Engineering / EnderIO, via the optional `mod_loaded` recipes shipped in v1.3.0). *(Softened 2026-06-06: the broader "no first-party 2x lane" guideline behind this entry was retired when the v1.11 Crucible + Casting Mold melt-and-cast lane was greenlit - it was a guideline, not a rule. A literal crusher block remains not planned.)*
 
 **Drop-collection block.** Vanilla hoppers under the frog pen already collect dropped Froglights. The mod will not ship a custom collector.
 
