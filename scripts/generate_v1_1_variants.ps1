@@ -1,13 +1,21 @@
 # Generate the data + model JSON files for the v1.1 Resource Slime variants.
 #
-# WARNING (2026-05-28): items #3/#4 below (per-variant milk blockstate + bucket
-# model) are SUPERSEDED. Slime Milk was collapsed to ONE component-driven fluid,
-# so those per-variant files no longer exist in the tree - re-running this script
-# as-is would recreate that deleted cruft. The $variants table is kept current as
-# the roster of record (the single source of truth for the v1.1 vanilla pool),
-# but new/changed variant JSONs + recipes are now hand-authored to match the
-# committed shape, and slime textures come from generate_resource_slime_textures.py.
-# Do not run this script wholesale until the #3/#4 emit is removed.
+# WARNING - DO NOT RUN THIS SCRIPT WHOLESALE. It is one-shot v1.1 scaffolding,
+# not an idempotent regenerator (unlike generate_cross_mod_variants.ps1):
+#   - items #3/#4 below (milk blockstate + bucket model) are OWNED by
+#     generate_milk_variant_assets.py since the v1.8 per-variant milk return;
+#     this script's emit shape differs, so a run churns 44 files with pure
+#     formatting noise.
+#   - the $variants table lags later hand-edits unless someone syncs it; a
+#     2026-06-06 wholesale run regenerated echo_shard back to its pre-v1.4.3
+#     category and had to be reverted. When recategorizing or changing a smelt
+#     result, update the table row (the roster of record) AND hand-edit the
+#     committed JSON; do not re-run.
+#   - the "PFFluidTypes.VARIANTS one-line Java edit" printout below is also
+#     stale: since v1.8 the milk fluids mint from variants_index.json
+#     (scripts/generate_variants_index.py), no Java edit.
+# Single-row workflow that IS safe: edit the row, run, `git checkout --` every
+# file you did not intend to change, keep the one you did. Or just hand-edit.
 #
 # This emits the four templated JSON files per new variant:
 #   1. data/productivefrogs/productivefrogs/slime_variant/<name>.json
@@ -60,7 +68,9 @@ $variants = @(
     # docs/species_as_category_redesign.md.
     @{ Name = "glow_ink_sac";        Primer = "minecraft:glow_ink_sac";      Category = "cave";     Smelt = "minecraft:glow_ink_sac";         Inner = "minecraft:verdant_froglight"; Primary = 0x3DBEB6; Exp = 0.2; Label = "Glow Ink Sac" }
     @{ Name = "obsidian";            Primer = "minecraft:obsidian";          Category = "infernal"; Smelt = "minecraft:obsidian";             Inner = "minecraft:obsidian";          Primary = 0x2A2440; Exp = 0.7; Label = "Obsidian" }
-    @{ Name = "echo_shard";          Primer = "minecraft:echo_shard";        Category = "cave";     Smelt = "minecraft:echo_shard";           Inner = "minecraft:sculk";             Primary = 0x1E6B72; Exp = 1.0; Label = "Echo Shard" }
+    # echo_shard moved Cave -> Void in v1.4.3 (#118); row synced 2026-06-06 after a stale
+    # wholesale run briefly regenerated the old category.
+    @{ Name = "echo_shard";          Primer = "minecraft:echo_shard";        Category = "void";     Smelt = "minecraft:echo_shard";           Inner = "minecraft:sculk";             Primary = 0x1E6B72; Exp = 1.0; Label = "Echo Shard" }
     @{ Name = "amethyst";            Primer = "minecraft:amethyst_shard";    Category = "geode";    Smelt = "minecraft:amethyst_shard";       Inner = "minecraft:amethyst_block";    Primary = 0x9D70D0; Exp = 1.0; Label = "Amethyst" }
     @{ Name = "ink_sac";             Primer = "minecraft:ink_sac";           Category = "tide";     Smelt = "minecraft:ink_sac";              Inner = "minecraft:black_concrete";    Primary = 0x26262B; Exp = 0.2; Label = "Ink Sac" }
     @{ Name = "prismarine_crystals"; Primer = "minecraft:prismarine_crystals"; Category = "tide";   Smelt = "minecraft:prismarine_crystals";  Inner = "minecraft:sea_lantern";       Primary = 0xA9DCC9; Exp = 1.0; Label = "Prismarine Crystals" }
@@ -69,7 +79,12 @@ $variants = @(
     @{ Name = "soul_sand";           Primer = "minecraft:soul_sand";         Category = "infernal"; Smelt = "minecraft:soul_sand";            Inner = "minecraft:soul_sand";         Primary = 0x4A3A2E; Exp = 0.7; Label = "Soul Sand" }
     @{ Name = "soul_soil";           Primer = "minecraft:soul_soil";         Category = "infernal"; Smelt = "minecraft:soul_soil";            Inner = "minecraft:soul_soil";         Primary = 0x52423A; Exp = 0.7; Label = "Soul Soil" }
     @{ Name = "netherrack";          Primer = "minecraft:netherrack";        Category = "infernal"; Smelt = "minecraft:netherrack";           Inner = "minecraft:netherrack";        Primary = 0x703434; Exp = 0.7; Label = "Netherrack" }
-    @{ Name = "blaze";               Primer = "minecraft:blaze_powder";      Category = "infernal"; Smelt = "minecraft:blaze_powder";         Inner = "minecraft:shroomlight";       Primary = 0xE8A41C; Exp = 0.7; Label = "Blaze" }
+    # blaze's resource is the ROD, not the powder (changed in #148, shipped v1.10.x):
+    # the Froglight is the farmed stand-in for killing blazes, and blazes drop rods -
+    # powder is a craft product (1 rod -> 2 powder). primer == smelt-output holds, both
+    # moved to blaze_rod together; the v1.8.3 fuel lane already burned this Froglight
+    # as a rod. (Originally primed AND smelted as blaze_powder, v1.1-v1.10.)
+    @{ Name = "blaze";               Primer = "minecraft:blaze_rod";         Category = "infernal"; Smelt = "minecraft:blaze_rod";            Inner = "minecraft:shroomlight";       Primary = 0xE8A41C; Exp = 0.7; Label = "Blaze" }
     @{ Name = "quartz";              Primer = "minecraft:quartz";            Category = "infernal"; Smelt = "minecraft:quartz";               Inner = "minecraft:quartz_block";      Primary = 0xEAE4DA; Exp = 0.7; Label = "Quartz" }
     @{ Name = "chorus_fruit";        Primer = "minecraft:chorus_fruit";      Category = "void";     Smelt = "minecraft:chorus_fruit";         Inner = "minecraft:purpur_block";      Primary = 0x97709C; Exp = 0.7; Label = "Chorus Fruit" }
     @{ Name = "shulker_shell";       Primer = "minecraft:shulker_shell";     Category = "void";     Smelt = "minecraft:shulker_shell";        Inner = "minecraft:purpur_pillar";     Primary = 0x8E6090; Exp = 0.7; Label = "Shulker Shell" }

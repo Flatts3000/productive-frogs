@@ -2383,7 +2383,9 @@ public final class PFGameTests {
         assertVariantSmelts(helper, rm, level, "prismarine", net.minecraft.world.item.Items.PRISMARINE_SHARD);
         assertVariantSmelts(helper, rm, level, "sponge", net.minecraft.world.item.Items.SPONGE);
         assertVariantSmelts(helper, rm, level, "ender_pearl", net.minecraft.world.item.Items.ENDER_PEARL);
-        assertVariantSmelts(helper, rm, level, "blaze", net.minecraft.world.item.Items.BLAZE_POWDER);
+        // blaze's resource moved powder -> rod in #148 (primer == smelt-output
+        // holds; the rod is the actual mob drop and the v1.8.3 fuel equivalent).
+        assertVariantSmelts(helper, rm, level, "blaze", net.minecraft.world.item.Items.BLAZE_ROD);
 
         helper.succeed();
     }
