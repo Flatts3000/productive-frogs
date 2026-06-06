@@ -33,7 +33,7 @@ Full v1.0 design spec: [species_as_category_redesign.md](./species_as_category_r
 
 ## V1.1 - Vanilla Resource Coverage (SHIPPED v1.1.0, 2026-05-25)
 
-Mostly-data release adding every vanilla item fitting cleanly into one of the six species. Each variant is a `slime_variant` JSON + recipe + lang, plus one one-line Java edit (the Slime Milk `VARIANTS` entry; fluids register at mod-init). The spawn egg is data-driven (CR-9) - one component item enumerated from the registry, no per-variant Java. The four templated JSON files per variant are emitted by `scripts/generate_v1_1_variants.ps1`.
+Mostly-data release adding every vanilla item fitting cleanly into one of the six species. Each variant is a `slime_variant` JSON + recipe + lang, plus one one-line Java edit (the Slime Milk `VARIANTS` entry; fluids register at mod-init - superseded in v1.8: the per-variant milk fluids now mint from the bundled `productivefrogs/variants_index.json`, kept in sync by `scripts/generate_variants_index.py`, no Java edit). The spawn egg is data-driven (CR-9) - one component item enumerated from the registry, no per-variant Java. The four templated JSON files per variant are emitted by `scripts/generate_v1_1_variants.ps1`.
 
 **22 new variants** (33 total after v1.1):
 

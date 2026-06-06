@@ -90,6 +90,18 @@ buckets do not carry over - re-mill from Slime Buckets. Design:
 
 A run of small fixes and one new convenience. **v1.8.1:** releasing a slime from a Slime Bucket no longer dumps water, a released slime is always size 1, and a dispenser loaded with a Slime Bucket places the slime instead of just ejecting the bucket. **v1.8.2:** a Slime Milk source no longer lingers for one extra spawn after its counter hits zero - the final spawn and the source draining away now happen on the same tick. **v1.8.3:** Coal and Blaze Froglights burn as furnace fuel - a Coal Froglight burns like a coal item and a Blaze Froglight like a blaze rod, so the Froglights you farm from those resources double as fuel. Every other Froglight stays purely decorative.
 
+### v1.9.0 (shipped 2026-05-31): Refined Storage support
+
+Refined Storage's three processors and Quartz Enriched Iron became farmable through the frog loop, each with its own pipe-automatable Slime Milk. Silicon, the resource RS shares with Applied Energistics 2, now works with either mod installed (it was AE2-only before).
+
+### v1.9.1 - v1.9.2 (shipped 2026-06-02 to 2026-06-05): beta promotion + Chorus fix
+
+**v1.9.1:** promoted from alpha to beta on CurseForge - V1 is feature-complete and cross-mod compat has been smoke-tested in a real pack. **v1.9.2:** the Chorus Fruit Froglight smelts back into chorus fruit (its primer) instead of popped chorus fruit, restoring loop self-sufficiency for the variant.
+
+### v1.10.0 (shipped 2026-06-06): obsidian joins the Infernal species
+
+Obsidian and Mekanism's Refined Obsidian moved from the Cave species to Infernal (#142): obsidian requires a diamond pickaxe, so it must come after diamond (Geode) in the resource chain - and obsidian is the Nether gate itself. The Infernal Frog now farms both. Existing slimes update themselves on world load; Froglights, buckets, and milk are variant-keyed and unaffected.
+
 ---
 
 ## v2: automation

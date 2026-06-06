@@ -463,7 +463,7 @@ changes.** One small player-facing tweak; the rest is invisible in play.
 - Six near-identical parent-species renderers collapsed into one; dead code and
   stale post-V1.5 docs swept. Net ~350 fewer lines. Build + all 50 GameTests green.
 
-## v1.0.1 — 2026-05-24
+## v1.0.1 - 2026-05-24
 
 Visual-polish patch. **No behavior changes.** No world migration, no API surface change. Production loop, drops, AI, tints, infusion semantics, JEI subtypes: unchanged.
 
@@ -499,7 +499,7 @@ No migration. No third-party variants are known to ship between v1.0 and v1.0.1;
 
 ---
 
-## v1.0.0 — 2026-05-24
+## v1.0.0 - 2026-05-24
 
 First public release. **Minecraft 1.21.1 / NeoForge 21.1.230.**
 

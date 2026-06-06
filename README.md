@@ -1,10 +1,8 @@
 # Productive Frogs
 
-A content mod for **Minecraft 1.21.1 / NeoForge 21.1.230**. Latest release: v1.8.3.
+A content mod for **Minecraft 1.21.1 / NeoForge 21.1.230**. The latest release is whatever sits at the top of the [CHANGELOG](CHANGELOG.md).
 
 **Download:** [CurseForge](https://www.curseforge.com/minecraft/mc-mods/productive-frogs) (preferred) | [GitHub Releases](https://github.com/Flatts3000/productive-frogs/releases) (mirror)
-
-> The CurseForge link goes live once the project clears initial moderation. Until then, the GitHub Releases mirror is the working download.
 
 ## Concept
 
@@ -35,8 +33,8 @@ Variant Slime Bucket → Slime Milker → Slime Milk bucket
 | Species | Biome | Matching frog | Example variants |
 |---|---|---|---|
 | **Bog Slime** | swamps, mangrove swamps | Bog Frog | clay, dirt, mud, moss, mycelium, lily pad, leather |
-| **Cave Slime** | dripstone caves, lush caves | Cave Frog | iron, copper, gold, redstone, lapis, coal |
-| **Geode Slime** | mountain peaks (stony / jagged / frozen) | Geode Frog | emerald, diamond, amethyst, tuff, calcite |
+| **Cave Slime** | dripstone caves, lush caves | Cave Frog | iron, copper, gold, redstone, coal |
+| **Geode Slime** | mountain peaks (stony / jagged / frozen) | Geode Frog | emerald, diamond, amethyst, lapis, tuff, calcite |
 | **Tide Slime** | deep oceans, warm + lukewarm oceans | Tide Frog | prismarine, sponge, sea pickle, nautilus shell |
 | **Infernal Slime** | nether wastes, basalt deltas, soul sand valley | Infernal Frog | blaze, quartz, glowstone, soul sand, obsidian, netherite scrap |
 | **Void Slime** | end islands | Void Frog | ender pearl, echo shard, sculk, end stone |
