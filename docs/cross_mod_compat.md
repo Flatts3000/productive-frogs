@@ -140,6 +140,15 @@ is bespoke signature materials that "sell" the feature but need explicit handlin
 | aluminum | `c:ingots/aluminum` | AllTheOres, Thermal-adjacent |
 | uranium | `c:ingots/uranium` | Mekanism, AllTheOres |
 
+Bespoke CAVE additions (exact-item primers, no common tag; added 2026-06-06,
+ids + texture-faithful colors verified against Powah-6.2.10):
+- **energized steel** (`powah:steel_energized`) - Powah's entry-tier material,
+  placed CAVE on the steel lineage (iron + gold, energized), same call as
+  Mekanism steel.
+- **uraninite** (`powah:uraninite`, the post-smelt crystal item) - Powah's mined
+  base ore and the skyblock-critical resource (#146): no ore gen in a skyblock
+  pack means Powah cannot bootstrap without it.
+
 ### GEODE (gems/crystals)
 | Resource | Tag | Providing mods |
 |---|---|---|
@@ -195,6 +204,9 @@ fluid mints iff the variant loads - no orphan fluid on a vanilla-only pack.
 
 ### VOID (end/arcane)
 - Powah crystals niotic / spirited / nitro (`powah:crystal_*`) - bespoke, shipped.
+  (2026-06-06: niotic and nitro colors were swapped at authoring - niotic is the
+  CYAN crystal, nitro the RED one; both now carry texture-faithful averages from
+  Powah-6.2.10, niotic 0x119EB6 / nitro 0xA12928.)
 - Mythic Metals orichalcum, mythril (`c:ingots/*`) - shipped.
 - Mystical Agriculture essences (inferium, supremium) - bespoke, iconic. (Moved
   here from BOG in the 2026-05-28 Bog recategorization: essences are a magic line,
@@ -211,6 +223,9 @@ fluid mints iff the variant loads - no orphan fluid on a vanilla-only pack.
 Modded tech has almost no aquatic resources. The one strong pick is Mythic
 Metals' Aquarium (`mythicmetals:aquarium_ingot`, ocean-only ore). TIDE otherwise
 leans on vanilla aquatic content. Flagged as a design gap, not a blocker.
+- **dry ice** (`powah:dry_ice`) - added 2026-06-06 on the frozen-water theme,
+  deliberately placed TIDE to fatten this thin roster. Bespoke (no common tag);
+  texture-faithful pale-ice colors from Powah-6.2.10.
 
 ## Decisions (confirmed 2026-05-25) and how they shipped
 
