@@ -59,7 +59,7 @@ $variants = @(
     # slime_variant/lily_pad.json + the Bog recategorization note in
     # docs/species_as_category_redesign.md.
     @{ Name = "glow_ink_sac";        Primer = "minecraft:glow_ink_sac";      Category = "cave";     Smelt = "minecraft:glow_ink_sac";         Inner = "minecraft:verdant_froglight"; Primary = 0x3DBEB6; Exp = 0.2; Label = "Glow Ink Sac" }
-    @{ Name = "obsidian";            Primer = "minecraft:obsidian";          Category = "cave";     Smelt = "minecraft:obsidian";             Inner = "minecraft:obsidian";          Primary = 0x2A2440; Exp = 0.7; Label = "Obsidian" }
+    @{ Name = "obsidian";            Primer = "minecraft:obsidian";          Category = "infernal"; Smelt = "minecraft:obsidian";             Inner = "minecraft:obsidian";          Primary = 0x2A2440; Exp = 0.7; Label = "Obsidian" }
     @{ Name = "echo_shard";          Primer = "minecraft:echo_shard";        Category = "cave";     Smelt = "minecraft:echo_shard";           Inner = "minecraft:sculk";             Primary = 0x1E6B72; Exp = 1.0; Label = "Echo Shard" }
     @{ Name = "amethyst";            Primer = "minecraft:amethyst_shard";    Category = "geode";    Smelt = "minecraft:amethyst_shard";       Inner = "minecraft:amethyst_block";    Primary = 0x9D70D0; Exp = 1.0; Label = "Amethyst" }
     @{ Name = "ink_sac";             Primer = "minecraft:ink_sac";           Category = "tide";     Smelt = "minecraft:ink_sac";              Inner = "minecraft:black_concrete";    Primary = 0x26262B; Exp = 0.2; Label = "Ink Sac" }

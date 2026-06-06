@@ -38,7 +38,7 @@ Variant Slime Bucket → Slime Milker → Slime Milk bucket
 | **Cave Slime** | dripstone caves, lush caves | Cave Frog | iron, copper, gold, redstone, lapis, coal |
 | **Geode Slime** | mountain peaks (stony / jagged / frozen) | Geode Frog | emerald, diamond, amethyst, tuff, calcite |
 | **Tide Slime** | deep oceans, warm + lukewarm oceans | Tide Frog | prismarine, sponge, sea pickle, nautilus shell |
-| **Infernal Slime** | nether wastes, basalt deltas, soul sand valley | Infernal Frog | blaze, quartz, glowstone, soul sand, netherite scrap |
+| **Infernal Slime** | nether wastes, basalt deltas, soul sand valley | Infernal Frog | blaze, quartz, glowstone, soul sand, obsidian, netherite scrap |
 | **Void Slime** | end islands | Void Frog | ender pearl, echo shard, sculk, end stone |
 
 Six parent species spawn naturally in their biomes. Vanilla `minecraft:slime` and `minecraft:magma_cube` are NOT part of the production system - only the PF parent species can be infused into Resource Slimes.
