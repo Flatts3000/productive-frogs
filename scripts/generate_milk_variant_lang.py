@@ -45,7 +45,15 @@ def main() -> None:
 
     added = 0
     for v in variants:
-        bucket_name = old_bucket[v] or f"Bucket of {title_case(v)} Slime Milk"
+        # Curated-name priority: the existing per-variant prefix key (post-v1.8
+        # curation lives there), then the pre-v1.8 suffix key (one-time
+        # migration source), then a title-cased fallback for brand-new variants.
+        # Without the first check, re-running this script after v1.8 clobbered
+        # hand-curated names ("Blazing Crystal" -> "Blazing", "Pink Slime" ->
+        # "Pink Slime Slime") because the old suffix keys no longer exist.
+        bucket_name = (lang.get(f"item.productivefrogs.{v}_slime_milk_bucket")
+                       or old_bucket[v]
+                       or f"Bucket of {title_case(v)} Slime Milk")
         # "<Name> Slime Milk" = bucket name minus the "Bucket of " prefix.
         milk_name = bucket_name[len("Bucket of "):] if bucket_name.startswith("Bucket of ") \
             else f"{title_case(v)} Slime Milk"

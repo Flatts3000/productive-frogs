@@ -73,6 +73,7 @@
   "item.productivefrogs.slime_bucket.certus_quartz": "Bucket of Certus Quartz Slime",
   "item.productivefrogs.slime_bucket.fluix": "Bucket of Fluix Slime",
   "item.productivefrogs.slime_bucket.fluorite": "Bucket of Fluorite Slime",
+  "item.productivefrogs.slime_bucket.flux_dust": "Bucket of Flux Dust Slime",
   "item.productivefrogs.slime_bucket.inferium": "Bucket of Inferium Slime",
   "item.productivefrogs.slime_bucket.lead": "Bucket of Lead Slime",
   "item.productivefrogs.slime_bucket.mythril": "Bucket of Mythril Slime",
@@ -146,6 +147,7 @@
   "block.productivefrogs.configurable_froglight.certus_quartz": "Certus Quartz Froglight",
   "block.productivefrogs.configurable_froglight.fluix": "Fluix Froglight",
   "block.productivefrogs.configurable_froglight.fluorite": "Fluorite Froglight",
+  "block.productivefrogs.configurable_froglight.flux_dust": "Flux Dust Froglight",
   "block.productivefrogs.configurable_froglight.inferium": "Inferium Froglight",
   "block.productivefrogs.configurable_froglight.lead": "Lead Froglight",
   "block.productivefrogs.configurable_froglight.mythril": "Mythril Froglight",
@@ -229,6 +231,7 @@
   "item.productivefrogs.resource_slime_spawn_egg.certus_quartz": "Certus Quartz Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.fluix": "Fluix Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.fluorite": "Fluorite Slime Spawn Egg",
+  "item.productivefrogs.resource_slime_spawn_egg.flux_dust": "Flux Dust Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.inferium": "Inferium Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.lead": "Lead Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.mythril": "Mythril Slime Spawn Egg",
@@ -338,6 +341,7 @@
   "entity.productivefrogs.resource_slime.certus_quartz": "Certus Quartz Slime",
   "entity.productivefrogs.resource_slime.fluix": "Fluix Slime",
   "entity.productivefrogs.resource_slime.fluorite": "Fluorite Slime",
+  "entity.productivefrogs.resource_slime.flux_dust": "Flux Dust Slime",
   "entity.productivefrogs.resource_slime.inferium": "Inferium Slime",
   "entity.productivefrogs.resource_slime.lead": "Lead Slime",
   "entity.productivefrogs.resource_slime.mythril": "Mythril Slime",
@@ -613,5 +617,8 @@
   "fluid_type.productivefrogs.advanced_processor_slime_milk": "Advanced Processor Slime Milk",
   "item.productivefrogs.quartz_enriched_iron_slime_milk_bucket": "Bucket of Quartz Enriched Iron Slime Milk",
   "block.productivefrogs.quartz_enriched_iron_slime_milk": "Quartz Enriched Iron Slime Milk",
-  "fluid_type.productivefrogs.quartz_enriched_iron_slime_milk": "Quartz Enriched Iron Slime Milk"
+  "fluid_type.productivefrogs.quartz_enriched_iron_slime_milk": "Quartz Enriched Iron Slime Milk",
+  "item.productivefrogs.flux_dust_slime_milk_bucket": "Bucket of Flux Dust Slime Milk",
+  "block.productivefrogs.flux_dust_slime_milk": "Flux Dust Slime Milk",
+  "fluid_type.productivefrogs.flux_dust_slime_milk": "Flux Dust Slime Milk"
 }
