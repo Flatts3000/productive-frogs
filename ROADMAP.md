@@ -104,6 +104,16 @@ Obsidian and Mekanism's Refined Obsidian moved from the Cave species to Infernal
 
 ---
 
+## Next up: v1.11.0 - the Froglight Crucible + Casting Basin
+
+A **heat-driven** melt-and-cast lane, fully specced in [docs/froglight_crucible.md](./docs/froglight_crucible.md) (promoted to a build spec 2026-06-06; every open question resolved).
+
+The **Froglight Crucible** is a GUI-less heated basin: park it over a vanilla heat source (magma block / fire / lava - hotter melts faster, tag-driven and pack-overridable) and right-click Froglights in. Wave 1 melts **water and lava Froglights into water and lava** (1 bucket per Froglight, via two new slime variants primed by kelp and magma block) - renewable fluids for skyblock and nether-locked packs. Wave 2 melts **metal Froglights into PF-minted molten fluids at Tinkers-style ore-doubling yield** (2 ingots' worth, 180 mB), and the **Casting Basin** - the mod's third GUI block - solidifies molten back into ingots. Stack heat / Crucible / Basin into a three-block tower and the Basin pulls molten directly, no pipes: loose composition like hopper-under-furnace, **not** a formed multiblock, which is why this is v1.x.
+
+This retires the old "no native crusher" guideline (below): the crush lane stays delegated to crusher mods, but the first-party 2x now comes from melt-and-cast.
+
+---
+
 ## v2: automation
 
 The scale-up release. v1 lives unchanged; v2 layers automation on top. A player who never crafts a v2 block still has every v1 capability.
@@ -119,16 +129,6 @@ The scale-up release. v1 lives unchanged; v2 layers automation on top. A player 
 **Pipe / hopper-aware fluid handling** for Slime Milk.
 
 **Potential:** FE / NeoForge Energy power compat.
-
----
-
-## Parked for v2: the Froglight Crucible
-
-A **heat-driven** processing block that melts a **Froglight into a fluid** - a third Froglight cash-out lane alongside smelting (1x solid) and crushing (2x dust). Its first iteration targets renewable **water and lava**: a lava slime drops a lava Froglight, which the Crucible melts into lava (water likewise), so a skyblock or nether-locked pack can farm the two fluids it most lacks. The second wave melts **metal Froglights into their molten fluids at Tinkers-style ore-doubling yield** (2 ingots' worth per Froglight), with a companion **Casting Basin** that solidifies molten metal back into ingots - a fully first-party melt-and-cast lane. (Note: the spec flags the balance tension between that in-house 2x lane and the "no native crusher" entry below; re-litigate when promoting the spec.)
-
-(Renamed from "Froglight Juicer" and switched from FE power to heat, 2026-06-06 - "Juicer" sat too close to the Slime Milker's identity, and heat keeps the block alive in vanilla-only and skyblock packs.) With no energy mechanic the only never-shipped piece is the internal fluid tank (right-click bucket or pipes via `Capabilities.FluidHandler.BLOCK`), so whether it is a v1.x appliance or the v2 opener is an open question in the spec. Either way it is the lightest candidate (single block, no multiblock) and establishes the fluid-tank pattern the rest of v2 (Frog Terrarium, buffered Slime Milker) will reuse.
-
-Decided shape, the new water/lava slime variants it needs, and the open questions to resolve before building: [docs/froglight_crucible.md](./docs/froglight_crucible.md).
 
 ---
 
@@ -155,7 +155,7 @@ Captured during v1 design. Not on the schedule; revisited when v2 ships and we k
 
 **Fabric port.** Productive Frogs is NeoForge-only by design and will remain so. See [docs/architecture.md](./docs/architecture.md) for the technical reasoning.
 
-**Native crusher block.** The 2x metal-Froglight crush yield is delegated to external crusher mods (Mekanism / Immersive Engineering / EnderIO, via the optional `mod_loaded` recipes shipped in v1.3.0). The mod will not ship its own crusher; packs that want the 2x payoff install one of those mods.
+**Native crusher block.** The mod will not ship its own crusher; the 2x *crush* yield stays delegated to external crusher mods (Mekanism / Immersive Engineering / EnderIO, via the optional `mod_loaded` recipes shipped in v1.3.0). *(Softened 2026-06-06: the broader "no first-party 2x lane" guideline behind this entry was retired when the v1.11 Crucible + Casting Basin melt-and-cast lane was greenlit - it was a guideline, not a rule. A literal crusher block remains not planned.)*
 
 **Drop-collection block.** Vanilla hoppers under the frog pen already collect dropped Froglights. The mod will not ship a custom collector.
 

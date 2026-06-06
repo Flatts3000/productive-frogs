@@ -139,7 +139,7 @@ Out of scope until V1 ships. [docs/versioning.md#v2--automation](./versioning.md
 - Pipe/hopper-aware fluid handling for Slime Milk
 - FE / NeoForge Energy compat (optional)
 
-> **Not planned:** a native crusher block (an in-house double-yield crush path). The 2x crush yield is delegated to external crusher mods (Mekanism / Immersive Engineering / EnderIO) via the optional `mod_loaded` recipes shipped in v1.3.0; the mod will not ship its own crusher. Matches the "Explicitly NOT planned" lists in [ROADMAP.md](../ROADMAP.md) and [versioning.md](./versioning.md). Cross-mod crush rationale: [cross_mod_compat.md](./cross_mod_compat.md).
+> **Not planned:** a native crusher block (the 2x crush stays delegated to Mekanism / Immersive Engineering / EnderIO via the optional `mod_loaded` recipes shipped in v1.3.0). The broader "no first-party 2x lane" guideline behind that entry was retired 2026-06-06: the v1.11 **Froglight Crucible + Casting Basin** ([froglight_crucible.md](./froglight_crucible.md)) ships a first-party melt-and-cast 2x lane. A literal crusher block remains not planned. Matches the "Explicitly NOT planned" lists in [ROADMAP.md](../ROADMAP.md) and [versioning.md](./versioning.md). Cross-mod crush rationale: [cross_mod_compat.md](./cross_mod_compat.md).
 
 ## Polish / debt - non-blocking, do when convenient
 

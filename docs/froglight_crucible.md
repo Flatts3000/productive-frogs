@@ -1,182 +1,215 @@
-# Froglight Crucible (design notes)
+# Froglight Crucible + Casting Basin (build spec)
 
-> **Status: PARKED for v2.** These are design notes from a scoping conversation,
-> not a build spec. The shape below is decided; the Open Questions are not. Do not
-> implement from this doc until those are resolved and it is promoted to a real
-> spec (cf. `docs/spawnery.md`). Captured 2026-05-26.
+> **Status: PROMOTED to build spec - target v1.11.0.** Originally captured
+> 2026-05-26 as parked-for-v2 design notes ("Froglight Juicer"); promoted
+> 2026-06-06 after a design session resolved every open question. The decision
+> log below records how the shape evolved; everything else in this doc is
+> buildable as written.
 >
-> **2026-06-06 decisions:** (1) Renamed from "Froglight Juicer" - "Juicer" sat too
-> close to the Slime Milker's squeeze-out-a-fluid identity, and two near-synonym
-> extractors confuse the "which block takes my item" choice. "Crucible" is the
-> established skyblock term for block-in-fluid-out (Ex Nihilo), so it teaches
-> itself to the target audience. (2) **Heat, not FE power** - the Crucible runs on
-> heat rather than NeoForge energy. This removes the energy capability from the
-> block entirely and reopens the v1.x-vs-v2 placement question (see "Why this is
-> v2" below).
+> **Decision log (2026-06-06):**
+> 1. **Renamed** Froglight Juicer -> **Froglight Crucible**. "Juicer" sat too
+>    close to the Slime Milker's squeeze-out-a-fluid identity; "Crucible" is the
+>    established skyblock term for block-in-fluid-out (Ex Nihilo) and
+>    self-teaches to the target audience.
+> 2. **Heat, not FE power** - no `EnergyStorage` capability, no power-mod
+>    expectation. Works in vanilla-only and skyblock packs from day one.
+> 3. **Heat comes from the block below** (Ex Nihilo-style passive heat) -
+>    chosen deliberately because it is *different from most metal melters*
+>    (no fuel slot, no power cable).
+> 4. **Metal Froglights melt to molten fluids at Tinkers-style ore-doubling
+>    yield** (2 ingots' worth per Froglight).
+> 5. **PF ships the Casting Basin** - first-party molten-to-ingot
+>    solidification, so the melt-and-cast lane works in any pack.
+> 6. **v1.x, not v2.** With the energy mechanic gone, the only never-shipped
+>    piece is the fluid tank, and exposing `FluidHandler.BLOCK` is the fluid
+>    analog of the `ItemHandler` hopper courtesy the v1 appliances already
+>    ship. Ships as v1.11.0.
+> 7. **The "no native crusher" ROADMAP entry is retired** - it was a guideline,
+>    not a rule. The crush lane stays delegated to crusher mods; the
+>    first-party 2x now comes from melt-and-cast, uncapped and not
+>    config-gated.
+> 8. **The tower**: heat source / Crucible / Casting Basin stack vertically; a
+>    Basin directly on top of a Crucible pulls molten without pipes. Loose
+>    composition (hopper-under-furnace model), NOT a formed multiblock.
+> 9. **The Crucible is GUI-less; the Casting Basin has a GUI** (fluid gauge,
+>    progress, output slots). The Basin is the mod's third GUI - extract the
+>    shared `PFContainerScreen` base while building it.
 
 ## Concept
 
-A processing block that converts a **Froglight into a fluid** - a third cash-out
-lane for a Froglight, alongside the two that ship today:
+A heated stone basin that melts a **Froglight into a fluid** - the third cash-out
+lane for a Froglight:
 
 - smelt -> 1x solid resource
 - crush (with a crusher mod) -> 2x dust -> smelt -> 2x
-- **Froglight Crucible -> a fluid, at Tinkers-style ore-doubling yield** (decided
-  2026-06-06): the Froglight is the ore-equivalent, so melting a metal Froglight
-  yields **2 ingots' worth** of molten metal - parity with the crush lane, paid in
-  fluid + casting infrastructure instead of a crusher mod.
+- **melt (Crucible) -> fluid at 2x** - for metals, 2 ingots' worth of molten
+  metal, cast back to ingots in the Casting Basin
 
-The Froglight is already the "ore-equivalent" the frog drops; this just adds a
-fluid output route. The Froglight carries everything needed to pick the output
-(the Configurable Froglight's `SLIME_VARIANT` component; category Froglights map
-to their resource), exactly like the v1.3 crush recipes match a Froglight via
+The Froglight is already the "ore-equivalent" the frog drops; this adds a fluid
+output route. The Froglight carries everything needed to pick the output (the
+Configurable Froglight's `SLIME_VARIANT` component; category Froglights map to
+their resource), exactly like the v1.3 crush recipes match a Froglight via
 `neoforge:components`.
 
-## First iteration: water and lava
+## What ships in v1.11.0
 
-The v1 of this feature ships exactly two fluids, both vanilla, so the mod mints no
-new fluids:
+**Wave 1 - water and lava (vanilla fluids, no new fluids minted):**
 
 - a **lava slime** -> (eaten by its frog) -> **lava Froglight** -> (Crucible) -> **lava**
 - a **water slime** -> **water Froglight** -> (Crucible) -> **water**
 
-This makes water and lava themselves the farmable resource. The payoff is renewable
-water and lava through the frog loop - exactly what skyblock and nether-locked packs
-lack (lava for fuel / obsidian gen; water that does not evaporate). It pairs with the
-Spawnery's skyblock framing.
+Renewable water and lava through the frog loop - exactly what skyblock and
+nether-locked packs lack (lava for fuel / obsidian gen; water that does not
+evaporate). Pairs with the Spawnery's skyblock framing.
 
-**Second wave: molten metals (intent locked 2026-06-06).** Metal Froglights should
-melt into their molten-fluid versions - an Iron Froglight melts to molten iron, and
-so on through the variant roster - at **ore-doubling yield, the way the same ore
-would melt in Tinkers' Construct** (2 ingots' worth of mB per Froglight). The
-recipe-driven mapping below is designed for exactly this; what's unresolved is
-where the molten fluids come from and what consumes them (Open Question 6).
+**Wave 2 - molten metals + the Casting Basin:**
 
-## Decided shape
+Every metal Froglight melts into its **molten fluid** at ore-doubling yield, and
+the **Casting Basin** solidifies molten fluid back into ingots. Both waves ship
+in v1.11.0; build wave 1 first and split the release only if wave 2 balloons.
 
-- **Name:** Froglight Crucible.
-- **Input:** a (variant) Froglight. Recipe-driven mapping, see below.
-- **Output:** an **internal fluid tank**. Drain it by right-clicking with an empty
-  bucket, or by pipe via `Capabilities.FluidHandler.BLOCK`. (NOT a bucket-output
-  slot like the Milker.)
-- **Heat, not power** (decided 2026-06-06): the block requires **heat**, not FE
-  energy. No `EnergyStorage` capability, no power-mod expectation - a vanilla-only
-  or skyblock pack can run it from day one, and it matches the crucible identity
-  (a heated vessel, not a machine).
-- **Heat comes from the block below** (decided 2026-06-06): Ex Nihilo-style
-  passive heat - place fire / lava / magma block (exact source list + tier
-  multipliers in the numbers question) under the Crucible and it melts; hotter
-  source = faster melt. Chosen deliberately because it is *different from most
-  metal melters* (no fuel slot, no power cable) and it is the heat model the
-  skyblock audience already knows. Consequence: the Crucible is likely
-  **GUI-less** - right-click to insert a Froglight, look-at (Jade/JEI) to read
-  progress and tank contents, bucket or pipe to drain. No Menu/Screen pair; it
-  departs from the Milker/Spawnery appliance shape and instead follows the
-  composter/cauldron interaction model, which also sidesteps the 1.21.1
-  renderTooltip gotcha entirely.
-- **Recipe-driven Froglight -> fluid mapping** (datapack), not hardcoded. The block
-  reads "this variant Froglight produces this fluid (this many mB)." v1 ships two
-  recipes (lava Froglight -> lava, water Froglight -> water); later fluids and
-  cross-mod molten metals are pure JSON gated by `neoforge:conditions` ->
-  `mod_loaded`, no new Java. Same ethos as the variant system and the crush recipes.
-- Reuses the appliance pattern (Block + BlockEntity + Menu + Screen + ContainerData
-  + static serverTick) documented in `CLAUDE.md`, extended with the energy and
-  fluid-tank capabilities.
+## The Froglight Crucible
 
-## Why this is v2, not a v1.x appliance (REOPENED 2026-06-06)
+- **Interaction: GUI-less.** Right-click with a Froglight to insert (one at a
+  time, like the composter); look-at (Jade) shows melt progress, tank contents,
+  and current heat tier; drain with an empty bucket or by pipe. No Menu/Screen
+  pair - this follows the cauldron/composter interaction model, not the
+  Milker/Spawnery appliance shape (and sidesteps the 1.21.1 renderTooltip gotcha
+  entirely).
+- **Heat from the block below.** No heat source = no melting. Membership and
+  tier are **block tags**, pack-overridable like the Spawnery primer tags:
+  - `productivefrogs:crucible_heat/low` - **1.0x** speed. Default: magma block.
+  - `productivefrogs:crucible_heat/medium` - **1.5x**. Default: fire, soul fire
+    (a campfire-style "free" tier once you have netherrack or soul soil).
+  - `productivefrogs:crucible_heat/high` - **2.0x**. Default: lava source.
+  - **Skyblock bootstrap check (passes):** magma block arrives via the Infernal
+    chain, and fire-on-netherrack is renewable before any lava exists. Sky
+    Frogs reaches a heat source before it needs one.
+- **Internal tank: 4,000 mB**, single fluid. The tank only accepts a Froglight
+  whose output fluid matches the current contents; drain to switch. Exposed via
+  `Capabilities.FluidHandler.BLOCK` (all faces; extract-only from pipes - input
+  is items, not fluid).
+- **Melt time: 400 ticks** (20s) at 1.0x heat, scaled by the heat tier (267 at
+  1.5x, 200 at 2.0x). One Froglight in the hopper... no - one Froglight melts at
+  a time; a second right-click while melting is rejected (composter model).
+- **Recipe-driven Froglight -> fluid mapping** (datapack), not hardcoded:
+  "this variant Froglight produces this fluid (this many mB)." Later fluids and
+  cross-mod outputs are pure JSON gated by `neoforge:conditions`, no new Java -
+  same ethos as the variant system and the crush recipes.
+- **Block + BlockEntity + static serverTick** per the appliance pattern, minus
+  Menu/Screen (GUI-less). `LIT`-style blockstate when actively melting over
+  heat (glow + particles sell the "it's working" read without a GUI).
 
-The original v2 rationale was that the block introduced two automation mechanics:
-an energy requirement and a pipe-able internal fluid tank. The heat decision
-removes the energy mechanic entirely, which guts half that argument:
+## Yields (decided)
 
-- **Case for v1.x now:** vanilla has single-block heated/fluid appliances (furnace,
-  cauldron), and the V1 rule of thumb is "if vanilla has a single-block appliance
-  equivalent, it's V1." The fuel-burn loop is the shipped Slime Milker pattern, and
-  exposing `Capabilities.FluidHandler.BLOCK` on the tank is the fluid analog of the
-  `ItemHandler` hopper courtesy the v1 appliances already ship.
-- **Case for staying v2:** the internal fluid tank is still a mechanic the mod has
-  never shipped, and "pipes" sits on the v2 side of the versioning line.
+| Input Froglight | Output | Amount |
+|---|---|---|
+| Water Froglight | `minecraft:water` | **1,000 mB** (one full bucket per Froglight) |
+| Lava Froglight | `minecraft:lava` | **1,000 mB** |
+| Metal/resource Froglight (wave 2) | `productivefrogs:molten_<variant>` | **180 mB** (90 mB/ingot x 2 - Tinkers convention, ore-doubling) |
 
-Either way it remains the **lightest possible opener** for whichever bucket it
-lands in: single block, no multiblock, and it establishes the fluid-tank pattern
-later blocks (Frog Terrarium, buffered Slime Milker) will reuse. Placement is
-folded into Open Question 5.
+Non-metal, non-fluid variants (e.g. bone, string) simply ship no melt recipe -
+the Crucible rejects a Froglight with no mapping, same as the crush generator's
+curated metal list.
 
-## Companion block: casting molten metal back to ingots (decided 2026-06-06)
+## Molten fluids (wave 2)
 
-The molten lane needs a first-party sink: **PF ships a casting block** (working
-name: **Casting Basin**) that accepts molten fluid - piped in via
-`Capabilities.FluidHandler.BLOCK` or poured from a bucket - and solidifies it
-into ingots. With both ends first-party, the doubled melt lane works in any pack,
-including vanilla-only, and the strong lean on Open Question 6's *source* side
-becomes PF-minted `molten_<variant>` fluids (the v1.8 `PFVariantMilk`-style
-dynamic registration; one greyscale molten texture set + per-variant tint).
-Cross-mod interop (accepting/emitting `c:` molten fluid tags so other mods'
-casters and crucibles play along) layers on later as pure data.
+**PF mints its own `molten_<variant>` fluids** through the same dynamic
+per-variant registration the v1.8 Slime Milk pipeline uses (`PFVariantMilk`-style
+bootstrap off `variants_index.json`): one greyscale molten still/flow texture
+set, tinted per variant `primary_color`. Pre-build check: a quick v1.3-style
+provider scan to confirm no 1.21.1 NeoForge mod ships molten metals worth
+deferring to (none known - Tinkers does not exist on NeoForge 1.21.1); if one
+surfaces, key outputs on its `c:` fluid tags behind `mod_loaded` instead of
+minting duplicates. Cross-mod interop (tagging PF molten fluids `c:molten_iron`
+etc. so other mods' machinery accepts them) ships as pure data.
 
-**Design tension to resolve explicitly:** the ROADMAP's "Explicitly NOT planned"
-list rejects a native crusher because the 2x crush payoff is *deliberately
-delegated* to external crusher mods. A first-party Crucible + Casting Basin pair
-gives every pack an in-house 2x metal lane, which reverses that stance in
-economic effect (if not in mechanism - melting/casting is a new fluid mechanic,
-not a re-implemented crusher). Acknowledge and re-litigate that entry in the
-ROADMAP when this doc is promoted to a spec; options if 2x-everywhere is too
-generous: melt yield config-gated (Spawnery precedent), doubled yield only for
-some variants, or 1.5x melt vs 2x crush so crushers stay the ceiling.
+Molten fluids are **not placeable** as world blocks in v1.11 (no source-block
+behavior to design or test); they exist for the tank -> pipe -> Basin loop. They
+mint only for variants with a melt recipe.
+
+## The Casting Basin
+
+- **Input:** molten fluid only. Three routes: **stacked on a Crucible** (pulls
+  directly from the Crucible's tank below it - see "The tower"), piped in via
+  `Capabilities.FluidHandler.BLOCK`, or poured from a bucket. Internal buffer:
+  1,000 mB, single fluid.
+- **Solidify: 90 mB -> 1 ingot, 60 ticks** per ingot, automatic while fluid is
+  buffered. No coolant requirement (kept v1-light; a water-adjacency speed bonus
+  is a v2-flavored idea, parked).
+- **Has a GUI** (decided 2026-06-06) - unlike the Crucible. A furnace-shaped
+  screen with a fluid gauge, solidify-progress arrow, and an output slot stack:
+  the Basin accumulates ingots and the player manages them like furnace output.
+  `Menu` + `Screen` per the appliance pattern, **including the 1.21.1
+  renderTooltip override**. This is the mod's **third** GUI - per the backlog's
+  standing note, extract the shared `PFContainerScreen<T>` base (the duplicated
+  `render` -> `renderTooltip` override in `SlimeMilkerScreen`/`SpawneryScreen`)
+  as part of this build rather than copy-pasting it a third time.
+- **Output:** GUI slot + hoppers extract from below (`ItemHandler.BLOCK`,
+  output-only) - the standard v1 appliance courtesy.
+- **Ingot-only this update.** Nugget/block casts (Tinkers precedent) are
+  deferred; the recipe-driven solidify mapping leaves room for them as data.
+- The ingot produced is the variant's existing smelt-result item (the same item
+  the Froglight smelts to), so cross-mod variants cast to their verified
+  provider ingots with no new resolution logic.
+
+## The tower (stack composition, not a formed multiblock)
+
+The intended in-world layout is a vertical stack (decided 2026-06-06):
+
+```
+[ Casting Basin ]   <- GUI, ingots out (hopper below... see note)
+[ Crucible      ]   <- GUI-less, Froglights in by right-click
+[ heat source   ]   <- vanilla block: magma block / fire / lava
+```
+
+When a Casting Basin sits **directly on top of a Crucible**, it pulls molten
+fluid straight from the Crucible's tank - no pipes, no buckets. That makes the
+full metal-doubling loop work in a vanilla-only pack: build the three-block
+tower, right-click Froglights into the middle, take ingots out of the top.
+
+This is **composition, not a formed multiblock**: each block is a standalone BE
+that works alone (a free-standing Basin still accepts pipes and buckets; a
+Crucible without a Basin is still the water/lava farm), and stacking them just
+wires the pull - the same model as vanilla's hopper-under-furnace. No
+controller, no formed-structure validation, so the "multiblocks are V2" line
+stays uncrossed.
+
+Note on hopper output: the Basin's down-face is the Crucible when stacked, so
+automated ingot extraction from a tower uses a hopper feeding from the Basin's
+**side** faces (side = output too) or a hopper minecart track above; the
+down-face hopper courtesy applies to free-standing Basins.
 
 ## New content this needs
 
 New `SlimeVariant` entries (datapack JSON, no Java):
 
-- **lava slime** - thematic home: Infernal species. Primer: TBD (see Open Questions).
-  `inner_block` / colors per the lava theme.
-- **water slime** - thematic home: Tide species. Primer: TBD.
+- **lava slime** - Infernal species. **Primer: `minecraft:magma_block`**
+  (cheap, thematic, reachable pre-lava via the Infernal chain).
+  `inner_block: minecraft:magma_block`; colors per the lava theme.
+- **water slime** - Tide species. **Primer: `minecraft:kelp`** (renewable,
+  water-themed, dirt-cheap - correct for a fluid the player will want early).
+  `inner_block: minecraft:blue_ice` or water-still texture per the texture
+  generator's constraints; colors per the water theme.
 
-Their Froglights flow through the existing Configurable Froglight pipeline unchanged.
+Both ship the usual five lang keys (LangCompletenessTest) and baked inner-block
+textures. **Neither ships a furnace smelt recipe** - their resource IS the
+fluid, so the Crucible is their only cash-out lane (a first: every prior
+variant smelts back to its primer resource; note it in the JEI info page).
 
-## Open questions (resolve before building)
+## Pre-build checks (small, do during implementation)
 
-1. **Primers for the water and lava slimes.** A lava/water bucket as the primer is
-   net-neutral (spend a bucket to eventually get a bucket back), so we likely want a
-   cheaper thematic primer. Candidates: magma block (lava), kelp or wet sponge
-   (water). Undecided.
-2. **Heat source list + bootstrap check.** Below-block heat is decided (see
-   Decided shape); still open: the exact source-block list and tier ladder
-   (e.g. torch < fire/soul fire < magma block < lava source?), whether the list
-   is a block tag packs can extend (`productivefrogs:crucible_heat_sources`,
-   pack-overridable like the Spawnery primer tags), and the bootstrap check -
-   a skyblock pack must be able to reach its *first* heat source before having
-   lava (magma block via the Infernal chain? fire on netherrack?). Also confirm
-   GUI-less interaction (right-click insert, Jade readout) vs a minimal screen.
-3. **Single tank, fluid switching.** If you melt a lava Froglight then a water
-   Froglight into one tank, that mixes fluids. Lean: one tank that only accepts a
-   Froglight whose fluid matches the current contents (must drain to switch). Confirm.
-4. **Numbers:** melt time (ticks), tank capacity (mB), per-ingot mB convention for
-   molten metals (Tinkers uses 90 mB/ingot; 2 ingots = 180 mB per metal Froglight
-   at the decided doubling yield), water/lava yield per Froglight, and heat-tier
-   speed multipliers if heat is passive (Q2b).
-5. **Sequencing AND scope bucket.** Reopened by the heat decision: with no energy
-   mechanic, is this a v1.x appliance (furnace+cauldron analogy, Milker capability
-   precedent) or still the v2 opener (first internal fluid tank)? And does it
-   precede or follow the Frog Terrarium?
-6. **Molten metal fluids - remaining unknowns.** The sink is decided (PF ships
-   the Casting Basin, above) and the source leans PF-minted `molten_<variant>`
-   fluids. Still open:
-   - Confirm PF-minted over mod-provided (is there any 1.21.1 NeoForge mod that
-     registers molten metals worth deferring to? Needs the v1.3-style
-     verified-provider check before committing either way).
-   - Casting shapes: ingot-only, or nugget/block casts too (Tinkers precedent)?
-   - Does casting need a coolant/time mechanic (water adjacency, ticks) or is it
-     instant on fill?
-   - The 2x-everywhere balance question and the "no native crusher" tension
-     (see the Casting Basin section) - config-gate, partial roster, or reduced
-     melt yield.
-   - Naming: "Casting Basin" vs "Casting Table" vs a frog-flavored coinage
-     (the Spawnery precedent).
+1. The molten-fluid provider scan (above) - confirm PF-minted is right.
+2. Final name for the Casting Basin ("Casting Basin" vs a frog-flavored coinage;
+   Spawnery precedent says a coinage is on-brand - decide at lang-key time).
+3. Confirm the texture generator can bake a water-themed inner cube (water_still
+   is animated; may need a single-frame crop like the milk textures).
 
 ## Related
 
-- Scope split / why v2: [versioning.md](./versioning.md)
+- Scope: ships as **v1.11.0** (see decision log) - [versioning.md](./versioning.md)
 - Runway: [../ROADMAP.md](../ROADMAP.md)
 - Appliance pattern + capability registration: `CLAUDE.md`
+- Per-variant dynamic fluid registration (the pipeline molten fluids reuse):
+  [automated_milk_variants.md](./automated_milk_variants.md)
 - Sibling appliance specs: [spawnery.md](./spawnery.md), [farming.md](./farming.md)
