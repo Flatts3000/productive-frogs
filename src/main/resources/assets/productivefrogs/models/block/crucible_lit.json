@@ -5,6 +5,6 @@
     "top": "productivefrogs:block/crucible_top",
     "bottom": "productivefrogs:block/crucible_side",
     "side": "productivefrogs:block/crucible_side",
-    "inside": "productivefrogs:block/crucible_inside"
+    "inside": "productivefrogs:block/crucible_inside_lit"
   }
 }
