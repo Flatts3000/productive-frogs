@@ -62,8 +62,18 @@ where the molten fluids come from and what consumes them (Open Question 6).
 - **Heat, not power** (decided 2026-06-06): the block requires **heat**, not FE
   energy. No `EnergyStorage` capability, no power-mod expectation - a vanilla-only
   or skyblock pack can run it from day one, and it matches the crucible identity
-  (a heated vessel, not a machine). The heat *delivery* mechanism is an Open
-  Question below (fuel slot vs passive below-block heat).
+  (a heated vessel, not a machine).
+- **Heat comes from the block below** (decided 2026-06-06): Ex Nihilo-style
+  passive heat - place fire / lava / magma block (exact source list + tier
+  multipliers in the numbers question) under the Crucible and it melts; hotter
+  source = faster melt. Chosen deliberately because it is *different from most
+  metal melters* (no fuel slot, no power cable) and it is the heat model the
+  skyblock audience already knows. Consequence: the Crucible is likely
+  **GUI-less** - right-click to insert a Froglight, look-at (Jade/JEI) to read
+  progress and tank contents, bucket or pipe to drain. No Menu/Screen pair; it
+  departs from the Milker/Spawnery appliance shape and instead follows the
+  composter/cauldron interaction model, which also sidesteps the 1.21.1
+  renderTooltip gotcha entirely.
 - **Recipe-driven Froglight -> fluid mapping** (datapack), not hardcoded. The block
   reads "this variant Froglight produces this fluid (this many mB)." v1 ships two
   recipes (lava Froglight -> lava, water Froglight -> water); later fluids and
@@ -130,12 +140,14 @@ Their Froglights flow through the existing Configurable Froglight pipeline uncha
    net-neutral (spend a bucket to eventually get a bucket back), so we likely want a
    cheaper thematic primer. Candidates: magma block (lava), kelp or wet sponge
    (water). Undecided.
-2. **Heat delivery.** "Heat, not power" is decided; the mechanism is not.
-   Options: (a) a furnace-fuel burn slot - the shipped Slime Milker serverTick
-   pattern, GUI and all (note: a lava-bucket fuel on a block that *produces* lava
-   must be net-positive-checked); (b) Ex Nihilo-style passive heat from the block
-   below (fire / lava / magma block - skyblock-native, GUI-less, and hotter source
-   = faster melt gives a free progression knob); (c) a hybrid. Undecided.
+2. **Heat source list + bootstrap check.** Below-block heat is decided (see
+   Decided shape); still open: the exact source-block list and tier ladder
+   (e.g. torch < fire/soul fire < magma block < lava source?), whether the list
+   is a block tag packs can extend (`productivefrogs:crucible_heat_sources`,
+   pack-overridable like the Spawnery primer tags), and the bootstrap check -
+   a skyblock pack must be able to reach its *first* heat source before having
+   lava (magma block via the Infernal chain? fire on netherrack?). Also confirm
+   GUI-less interaction (right-click insert, Jade readout) vs a minimal screen.
 3. **Single tank, fluid switching.** If you melt a lava Froglight then a water
    Froglight into one tank, that mixes fluids. Lean: one tank that only accepts a
    Froglight whose fluid matches the current contents (must drain to switch). Confirm.
