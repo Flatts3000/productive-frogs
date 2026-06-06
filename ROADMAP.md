@@ -102,9 +102,13 @@ Refined Storage's three processors and Quartz Enriched Iron became farmable thro
 
 Obsidian and Mekanism's Refined Obsidian moved from the Cave species to Infernal (#142): obsidian requires a diamond pickaxe, so it must come after diamond (Geode) in the resource chain - and obsidian is the Nether gate itself. The Infernal Frog now farms both. Existing slimes update themselves on world load; Froglights, buckets, and milk are variant-keyed and unaffected.
 
+### v1.11.0 (shipped 2026-06-06): Flux Networks + Powah compat, Blaze rod
+
+**Flux Networks:** flux dust is farmable (Infernal - flux dust is born from redstone dropped on obsidian, so it shares obsidian's tier; #145). **Powah roster completed:** Energized Steel and Uraninite joined Cave and Dry Ice joined Tide (#146), so with the four crystals farmable since v1.2 the whole Powah material ladder now runs on frogs - and the swapped Niotic/Nitro colors were fixed (niotic is cyan, nitro red, texture-faithful). **Blaze resource is the rod** (#148): prime with a blaze rod, smelt the Froglight back into a rod - rods are the actual blaze drop and each crafts into two powder; the Spawnery's Infernal primer keeps using blaze powder. Also: the dev environment now carries every smoke-testable provider mod, and the cross-mod gametest derives its expectations from the live mod list.
+
 ---
 
-## Next up: v1.11.0 - the Froglight Crucible + Casting Basin
+## Next up: v1.12.0 - the Froglight Crucible + Casting Basin
 
 A **heat-driven** melt-and-cast lane, fully specced in [docs/froglight_crucible.md](./docs/froglight_crucible.md) (promoted to a build spec 2026-06-06; every open question resolved).
 

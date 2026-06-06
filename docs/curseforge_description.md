@@ -107,6 +107,8 @@ The mod is fully playable today. Everything below is live on CurseForge. Targets
 
 **v1.10.0 (shipped): obsidian moves to the Infernal frog.** Obsidian takes a diamond pickaxe to mine, so it belongs after diamond in the journey - the Infernal Frog now farms Obsidian (and Mekanism's Refined Obsidian), taking over from the Cave Frog. Existing slimes adjust themselves on world load; Froglights, buckets, and Slime Milk are untouched.
 
+**v1.11.0 (shipped): Flux Networks + the full Powah ladder.** Running Flux Networks? Flux Dust is now farmable through the frog loop - one variant covers the whole chain, since ingots, blocks, and cores all craft from dust. Powah's roster is complete too: Energized Steel, Uraninite, and Dry Ice join the crystals that were already farmable, so every Powah material runs on frogs - especially valuable in skyblock, where Uraninite has no ore to mine. Also: the Blaze resource is now the blaze rod (prime with a rod, smelt the Froglight back into a rod - each rod crafts into two powder), and the Niotic/Nitro crystal colors were un-swapped to match Powah's actual crystals.
+
 ### v2: automation
 
 The scale-up release. v1 lives unchanged; v2 layers automation on top. A player who never crafts a v2 block still has every v1 capability.
