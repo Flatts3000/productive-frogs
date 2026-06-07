@@ -84,6 +84,7 @@
   "item.productivefrogs.slime_bucket.osmium": "Bucket of Osmium Slime",
   "item.productivefrogs.slime_bucket.pink_slime": "Bucket of Pink Slime",
   "item.productivefrogs.slime_bucket.refined_obsidian": "Bucket of Refined Obsidian Slime",
+  "item.productivefrogs.slime_bucket.refined_glowstone": "Bucket of Refined Glowstone Slime",
   "item.productivefrogs.slime_bucket.silicon": "Bucket of Silicon Slime",
   "item.productivefrogs.slime_bucket.silver": "Bucket of Silver Slime",
   "item.productivefrogs.slime_bucket.spirited": "Bucket of Spirited Crystal Slime",
@@ -173,6 +174,7 @@
   "block.productivefrogs.configurable_froglight.osmium": "Osmium Froglight",
   "block.productivefrogs.configurable_froglight.pink_slime": "Pink Slime Froglight",
   "block.productivefrogs.configurable_froglight.refined_obsidian": "Refined Obsidian Froglight",
+  "block.productivefrogs.configurable_froglight.refined_glowstone": "Refined Glowstone Froglight",
   "block.productivefrogs.configurable_froglight.silicon": "Silicon Froglight",
   "block.productivefrogs.configurable_froglight.silver": "Silver Froglight",
   "block.productivefrogs.configurable_froglight.spirited": "Spirited Crystal Froglight",
@@ -270,6 +272,7 @@
   "item.productivefrogs.resource_slime_spawn_egg.osmium": "Osmium Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.pink_slime": "Pink Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.refined_obsidian": "Refined Obsidian Slime Spawn Egg",
+  "item.productivefrogs.resource_slime_spawn_egg.refined_glowstone": "Refined Glowstone Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.silicon": "Silicon Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.silver": "Silver Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.spirited": "Spirited Crystal Slime Spawn Egg",
@@ -393,6 +396,7 @@
   "entity.productivefrogs.resource_slime.osmium": "Osmium Slime",
   "entity.productivefrogs.resource_slime.pink_slime": "Pink Slime",
   "entity.productivefrogs.resource_slime.refined_obsidian": "Refined Obsidian Slime",
+  "entity.productivefrogs.resource_slime.refined_glowstone": "Refined Glowstone Slime",
   "entity.productivefrogs.resource_slime.silicon": "Silicon Slime",
   "entity.productivefrogs.resource_slime.silver": "Silver Slime",
   "entity.productivefrogs.resource_slime.spirited": "Spirited Crystal Slime",
@@ -735,5 +739,8 @@
   "fluid_type.productivefrogs.phantom_membrane_slime_milk": "Phantom Membrane Slime Milk",
   "item.productivefrogs.turtle_scute_slime_milk_bucket": "Bucket of Turtle Scute Slime Milk",
   "block.productivefrogs.turtle_scute_slime_milk": "Turtle Scute Slime Milk",
-  "fluid_type.productivefrogs.turtle_scute_slime_milk": "Turtle Scute Slime Milk"
+  "fluid_type.productivefrogs.turtle_scute_slime_milk": "Turtle Scute Slime Milk",
+  "item.productivefrogs.refined_glowstone_slime_milk_bucket": "Bucket of Refined Glowstone Slime Milk",
+  "block.productivefrogs.refined_glowstone_slime_milk": "Refined Glowstone Slime Milk",
+  "fluid_type.productivefrogs.refined_glowstone_slime_milk": "Refined Glowstone Slime Milk"
 }
