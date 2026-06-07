@@ -2692,7 +2692,7 @@ public final class PFGameTests {
 
     /**
      * Insert gating on the solids model: (1) a Froglight with no
-     * {@code crucible_melting} recipe (iron) classifies REJECT and
+     * {@code crucible_melting} recipe (bone) classifies REJECT and
      * {@code acceptFroglight} refuses it; (2) the hopper-facing item
      * capability accepts lava Froglights one at a time until the solids
      * queue is full (4 x 1,000 mB), then bounces the fifth - pinning both
