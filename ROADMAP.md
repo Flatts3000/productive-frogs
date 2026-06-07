@@ -114,6 +114,10 @@ The heat-driven melt-and-cast lane specced in [docs/froglight_crucible.md](./doc
 
 Six mob-adjacent vanilla resources became farmable (#161): breeze rod (Cave), ghast tear (Infernal), phantom membrane (Void), armadillo scute + honeycomb (Bog), turtle scute (Tide) - the drops the v1.1 sweep left out. **Water and Lava slimes moved from Tide/Infernal to Cave** (#164): they feed the Crucible's renewable-fluid lane and are day-one resources, so they belong in tier 1; the Lava Slime's primer changed magma block -> pointed dripstone to match the cave-native home (existing slimes re-home on world load, only the priming item changed). Plus the Casting Mold JEI category (#160), completing the v1.12 melt-and-cast JEI lane.
 
+### v1.14.0 (shipped 2026-06-07): Brewed Froglights + the boss tier
+
+**Brewed Froglights** (#162/#171): a slime carrying a potion effect when a frog eats it drops an effect-stamped Froglight - a toggleable aura when placed (affects all entities in range; Poison/Wither perimeters, Regen rooms), a self-buff when held in hand, or a worn charm in a dedicated Curios slot. JEI-invisible by construction (no per-effect row explosion); right-click toggle + glint + tooltip. **The boss/endgame tier** (#172/#173/#175/#184): Wither Skeleton Skull, Nether Star, Dragon Egg, and Dragon Breath plus five mob drops (bone/string/gunpowder/rotten flesh/magma cream). The four bosses are doubly gated - prime-only (weight 0, never from split-discovery; you spend the real drop to start) and a **6-face catalyst altar** that must wall the Slime Milk source before it spawns - and their milk is **toxic to players** (Wither), the narrative reason to cage them. Also: Mekanism Refined Glowstone (#180), and a fix baking the inner-block surface onto a batch of recently-added slimes (ice/snow/mob/boss) that had been rendering hollow. Roster: 94 variants.
+
 ---
 
 ## v2: automation
