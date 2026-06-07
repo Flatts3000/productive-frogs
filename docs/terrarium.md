@@ -33,7 +33,7 @@ The cavity is axis-aligned and the shell is exactly one block thick, so the stru
 |---|---|---|---|
 | **Terrarium Controller** | exactly 1 | shell face, in/out axis | The multiblock anchor and the single milk input. Holds a small **charge buffer** (not a blended tank - see storage model) of one variant at a time. Validates the structure. Distributes milk **round-robin to empty Sprinklers** and **auto-tops-up** draining Sprinklers of the matching variant. Exposes a fluid-handler capability + a bucket slot on its outward face. |
 | **Sprinkler** | up to 25 | ceiling cells over the cavity | Spawn source AND storage. Holds **one bucket** of milk (full stats), retains its variant, and **runs the existing placed-Slime-Milk-source mechanics** (catalysts included) spawning slimes down into the cavity. **Drain: right-click with an empty bucket** returns the per-variant milk bucket. **Visual: slow milk-drip particles while filled.** |
-| **Incubator** | 1 or more | shell face, in/out axis | Insert frogspawn / tadpoles from the outward face; they mature inside and the adult frog spawns into the cavity through the inward face, **stats preserved**. At the frog cap, mature frogs **wait inside** and release as space frees. More Incubators = faster population ramp. |
+| **Incubator** | 1 or more | shell face, in/out axis | Insert frogspawn / tadpoles from the outward face; they mature inside and the adult frog spawns into the cavity through the inward face, **stats preserved**. Also the **catch basin for in-cavity breeding**: a frog bred inside a formed Terrarium lays its frogspawn into an Incubator (laying behavior overridden) instead of seeking water. At the frog cap, mature frogs **wait inside** and release as space frees. More Incubators = faster population ramp. |
 | **Hatch** | exactly 1 | shell face, in/out axis | Froglight output. In a formed Terrarium the frog-eats-slime drop is **overridden to deposit the Froglight straight into the Hatch inventory** - no item entity ever spawns. Outward face exposes the inventory for piping. **When the Hatch is full, frogs stop eating (backpressure)** - nothing drops, nothing voids. |
 
 All four follow the V1 appliance pattern (`content/block/<Name>Block` + `content/block/entity/<Name>BlockEntity` + an `Inventory` where applicable + a `Menu` + a `client/screen/<Name>Screen` extending `PFContainerScreen`), with capability routing registered in `PFModBusEvents.onRegisterCapabilities`. The Sprinkler is the exception: it has no GUI (right-click drain only), more like the Crucible's GUI-less posture.
@@ -64,9 +64,9 @@ ArrayDeque<MilkCharge> charges;        // FIFO, bounded (CONTROLLER_BUFFER_DEPTH
 ### Two intake paths, both fidelity-preserving
 
 1. **Bucket slot (outward face):** reads the bucket item's `PFDataComponents` directly off the `ItemStack` and builds a `MilkCharge` with full stats. Always exact. This is the hand-feed and hopper path.
-2. **Fluid handler (outward face, `Capabilities.FluidHandler.BLOCK`, fill-only):** an incoming `FluidStack` is one bucket-equivalent per 1000 mB. **If** the upstream preserved catalyst data on the `FluidStack`'s `DataComponentPatch` (NeoForge 1.21 supports fluid components), read them into the charge; **if not** (a plain vanilla wrapper drain), the charge is base (no catalysts). Pipes that strip components yield base milk - documented and acceptable; the bucket slot is the guaranteed-fidelity path. Variant is always preserved (it rides the fluid identity).
+2. **Fluid handler (outward face, `Capabilities.FluidHandler.BLOCK`, fill-only):** an incoming `FluidStack` is one bucket-equivalent per 1000 mB. The catalyst data rides the `FluidStack`'s `DataComponentPatch` (NeoForge 1.21 supports fluid components) and is read into the charge. Variant is always preserved (it rides the fluid identity).
 
-> **Implementation note for the fluid path:** PF should additionally register a milk-bucket->fluid wrapper that *does* copy the item's catalyst components onto the produced `FluidStack` (a thin `FluidBucketWrapper` subclass), so a PF-aware pipe network preserves catalysts end to end. Without it, only the bucket slot is exact. Decide in the PR whether to ship the component-preserving wrapper (recommended) or document the pipe-path limitation.
+> **Decided (ruling): ship the component-preserving wrapper.** PF will register a milk-bucket->fluid wrapper that copies the item's catalyst components (`SPAWNS_REMAINING / MILK_CAPACITY / MILK_SPEED / MILK_QUANTITY / MILK_INFINITE`) onto the produced `FluidStack` (a thin `FluidBucketWrapper` subclass replacing the plain wrapper PF registers today for every milk bucket), so a fluid pipe network preserves catalysts **end to end** - automated milk keeps its Speed/Quantity/Infinite stats whether hand-fed via the bucket slot or piped. Caveat to document: a *non-PF* pipe that round-trips milk through a plain `FluidStack` may still strip components; the PF wrapper guarantees fidelity on the bucket-item legs, and the bucket slot is always exact.
 
 This charge-buffer model is the single most important design decision in the feature; everything else is mechanical.
 
@@ -81,16 +81,24 @@ Resolved by the charge buffer above: stats survive `bucket/fluid -> Controller c
 The v1.5 lineage already threads stats `conception -> PrimedFrogEggBlockEntity -> ResourceTadpole (pending stats) -> ResourceFrog (setStats after finalizeSpawn)`. The Incubator inserts itself as a relay in that chain:
 
 - The Incubator BE holds the same stat fields as `PrimedFrogEggBlockEntity` (`hasStats, appetite, bounty, reach`).
-- On accepting an input, it reads whatever stats the input carries and records them.
+- On accepting an input (manual seed, or breeding deposit - see below), it reads whatever stats the input carries and records them.
 - On maturing, it spawns a `ResourceFrog` into the cavity and applies the recorded stats via `frog.setStats(...)` **after** `finalizeSpawn` (exactly as `ResourceTadpole.ageUp` does today), so an Incubator-raised frog is byte-identical to a hand-raised one.
 
-> **Prerequisite gap to close in the PR:** the bottled **Frog Egg item** currently carries only `contained_category`, **not** stats - so feeding a bottled egg yields baseline-stat frogs. To make *bred* lineage flow through the Incubator, the input carrier must carry stats. Two options: (a) accept a **captured tadpole** whose NBT already has `Appetite/Bounty/Reach` (zero new components, but needs a tadpole-capture item), or (b) add optional stat components to the Frog Egg item so a bottled egg can carry lineage. The Incubator mechanism is the same either way; pick the carrier in the PR. Baseline-stat frogs from a plain bottled egg remain valid - the fidelity ruling is "preserve what the input carries," and a plain egg carries baseline.
+### In-cavity breeding feeds the Incubator (settled ruling)
+
+In-cavity breeding is **allowed and is the population-growth path**, but with one override: a frog bred inside a formed Terrarium does not seek water to lay - **its laying behavior is redirected to deposit frogspawn into an Incubator.** Specifically:
+
+- **The Sweetslime breeding trigger stays a manual player action.** The player still clicks a Sweetslime treat onto two same-species frogs to start breeding (ruling: "clicking a sweetslime onto a frog is still manual by the player"). Breeding is not automated; the Terrarium only changes where the *result* goes.
+- **`LayCategoryFrogspawn` is overridden inside a formed Terrarium.** Today the bred frog carries pending-offspring stats and lays a `PrimedFrogEggBlock` (whose BE gets stamped with those stats) onto water. Inside a Terrarium, the lay target becomes "the nearest Incubator with room" instead of a water block: the frog's pending-offspring stats are written straight into the Incubator BE's stat fields (the same `setPendingStats(appetite, bounty, reach)` shape `PrimedFrogEggBlockEntity` uses), then `clearPendingOffspring()`. No frogspawn block is placed in the cavity.
+- **This resolves the stat-carrier gap cleanly.** Bred lineage flows `frog (pending stats) -> Incubator BE -> matured frog (setStats)`, identical to the egg-BE path, with **no** new stat-bearing item needed. The earlier "bottled Frog Egg item carries no stats" concern is moot for the breeding loop: bred stats never round-trip through an item. Manual seeding still works for getting the *first* frogs in (a plain bottled Frog Egg or a captured tadpole; a plain egg carries baseline stats, which is valid - the fidelity ruling is "preserve what the input carries").
+
+This makes the Incubator do double duty - manual seed point AND the catch basin for the breeding the player triggers - and keeps the cavity entity-clean (no loose frogspawn blocks accumulating).
 
 ## The loop, end to end
 
 1. Pipe or hand-feed Slime Milk into the **Controller**; it becomes one or more charges of the current variant (rejecting other variants until empty).
 2. The Controller round-robins charges into empty **Sprinklers** and tops up draining matching ones. Each filled Sprinkler runs the V1 placed-milk spawn loop and rains its variant's slimes into the cavity, dribbling milk particles.
-3. Frogs (introduced via **Incubator(s)** from frogspawn/tadpoles, stats preserved) eat same-species slimes via the existing `ResourceFrogAttackablesSensor` path.
+3. Frogs (seeded via **Incubator(s)** from frogspawn/tadpoles, then grown in-cavity by manual Sweetslime breeding whose frogspawn is redirected back into an Incubator, stats preserved throughout) eat same-species slimes via the existing `ResourceFrogAttackablesSensor` path.
 4. The frog-eat drop is intercepted: the Froglight (variant- and effect-stamped exactly as today) is **deposited straight into the Hatch inventory**; pipe it out the Hatch's outward face.
 
 **Multi-variant farming is sequential by design:** a Cave frog eats iron AND copper. Run iron milk through the Controller to fill some Sprinklers, drain the buffer, then run copper to fill others. Sprinklers retain what they hold, so both variants rain side by side even though the Controller funnels one variant at a time.
@@ -130,6 +138,7 @@ if (t != null) {
 
 ## Caps and tick cost
 
+- **Continuous milk feed is the loop (settled ruling).** Sprinklers **deplete like placed sources** - each charge is a finite spawn budget, so the Terrarium keeps consuming milk you pipe in, and milk production stays a relevant ongoing system. **Infinite-catalyst milk is the premium set-and-forget shortcut**: a Sprinkler fed an Infinite charge never depletes (the v1.7 `MILK_INFINITE` flag rides the charge), so the endgame "build the infinite-milk source, then the box runs itself" is reachable but costs building the Infinite catalyst. Do **not** make Sprinklers non-depleting inside a Terrarium by default.
 - **Slime cap: 15** (default, `terrarium.slimeCap` config), counting **ALL** slimes in the cavity AABB however they arrived - it is the box's entity budget. Sprinklers **pause spawning at the cap** (reuse `SlimeMilkSourceBlock`'s density-cap pause branch, but scoped to the cavity AABB and counting all slimes, not just same-category - it is the box budget). Resumes as frogs eat down.
 - **Frog cap: 8** (default, `terrarium.frogCap` config). At the cap, **Incubators hold mature frogs** instead of releasing, releasing as space frees.
 - **Item half is entity-free:** direct-to-Hatch means zero froglight item entities. Frogs and slimes still exist (the habitat is the point); only the item leg is entity-free.
@@ -167,6 +176,14 @@ Players should not count blocks off a wiki. From the issue's research, in order 
 
 **Recommendation: GuideME scene + Controller validation feedback.** Patchouli only if the ghost preview is wanted.
 
+## Progression and recipes (settled ruling: Infernal-gated)
+
+The Terrarium sits at the **Infernal tier**: its blocks are crafted from **Infernal-species resources** (the Infernal pool - blaze, quartz, glowstone, soul sand/soil, netherrack, netherite scrap, magma cream). Not boss-tier-gated and not a cheap early craft - it is the reward for having an Infernal frog loop running, which keeps the boss tier (v1.14) as a separate prestige track and keeps the hand-operated loop as a required learning phase before automation.
+
+- The five blocks (Controller, Sprinkler, Incubator, Hatch) draw on Infernal materials; the **Controller** (the expensive anchor) should be the clearest Infernal-resource sink, the **Sprinkler** the cheapest (you craft up to 25). Tune the exact recipes in the PR.
+- Whether the recipes additionally carry a `config_enabled` gate (like the Spawnery) is a pack-facing question - default to **always craftable** unless a pack reason emerges; the Infernal-material cost is the gate.
+- Froglights themselves are not consumed in the recipes (the Terrarium produces them); the gate is the Infernal *resource* tier, reachable by smelting Infernal froglights back or by vanilla means.
+
 ## Config surface (`terrarium.*`)
 
 - `terrarium.slimeCap` (default 15) - all-slimes-in-cavity budget.
@@ -182,13 +199,14 @@ Players should not count blocks off a wiki. From the issue's research, in order 
 - [ ] `PFBlockEntities`: one BE each (Controller, Sprinkler, Incubator, Hatch). **`PFBlocks` before `PFBlockEntities`** (the `BlockEntityType.Builder.of` ordering constraint already documented in `ProductiveFrogs.java`).
 - [ ] `PFMenuTypes` + `client/screen`: menus/screens for Controller (buffer + status), Incubator (input/held frog), Hatch (output inventory). Sprinkler has no menu (right-click drain only). Screens extend `PFContainerScreen`.
 - [ ] `PFModBusEvents.onRegisterCapabilities`: Controller `Capabilities.FluidHandler.BLOCK` (fill-only, outward face) + `Capabilities.ItemHandler.BLOCK` for the bucket slot; Hatch `Capabilities.ItemHandler.BLOCK` (extract-only, outward face); Incubator `Capabilities.ItemHandler.BLOCK` (insert, outward face).
-- [ ] Optional: a component-preserving milk-bucket->fluid wrapper so PF-aware pipes keep catalysts (see storage-model note).
+- [ ] **Component-preserving milk-bucket->fluid wrapper** (decided) - replace the plain `FluidBucketWrapper` PF registers for milk buckets with a subclass that copies the catalyst components onto the `FluidStack`, so piped milk keeps catalysts.
 - [ ] `FrogTongueDropHandler`: the formed-Terrarium override + backpressure; `TerrariumManager` per-level registry.
 - [ ] `ResourceFrogAttackablesSensor`: refuse prey when the owning Terrarium's Hatch is full (backpressure layer 1).
-- [ ] Sprinkler reuses `SlimeMilkSourceBlockEntity` spawn/budget/catalyst logic - factor the shared spawn loop so both the placed source and the Sprinkler call it (do not fork it).
-- [ ] Incubator stat relay (mirror `PrimedFrogEggBlockEntity` stat fields; apply via `frog.setStats` post-`finalizeSpawn`). Resolve the bottled-egg-stat carrier (captured tadpole vs egg stat components).
+- [ ] **`LayCategoryFrogspawn` override** (decided) - inside a formed Terrarium, redirect the lay target from water to the nearest Incubator with room, writing pending-offspring stats into the Incubator BE (`setPendingStats`) instead of placing a `PrimedFrogEggBlock`. Sweetslime breeding trigger stays the unmodified manual player action.
+- [ ] Sprinkler reuses `SlimeMilkSourceBlockEntity` spawn/budget/catalyst logic - factor the shared spawn loop so both the placed source and the Sprinkler call it (do not fork it). Sprinklers **deplete** (continuous-feed ruling); Infinite charge = non-depleting.
+- [ ] Incubator stat relay (mirror `PrimedFrogEggBlockEntity` stat fields; apply via `frog.setStats` post-`finalizeSpawn`). Manual seed accepts a bottled Frog Egg (baseline stats) or a captured tadpole (carries stats); bred stats arrive via the lay override above.
 - [ ] Blockstates + models + textures (gen/ pipeline) for four machines + Sprinkler; loot tables; `mineable/pickaxe` tags; lang (4-5 block names + tooltips + the validation-feedback messages + any GuideME page).
-- [ ] Crafting recipes for the five blocks.
+- [ ] Crafting recipes for the five blocks, **built from Infernal-species resources** (Controller the heaviest sink, Sprinkler the cheapest).
 - [ ] GuideME guide page (3D scene) if shipping construction guidance.
 
 ## GameTests
@@ -210,14 +228,14 @@ GameTest is blind to client visuals (particles, glow, GUI) - those ride a manual
 
 ## Open implementation decisions (settle in the PR)
 
-These are genuinely open at spec time; everything in the rulings table is settled.
+These are genuinely open at spec time; everything in the rulings tables is settled.
 
-1. **Component-preserving fluid wrapper** - ship it (PF-aware pipes keep catalysts) or document the pipe-path-loses-catalysts limitation and rely on the bucket slot for fidelity. Recommended: ship it.
-2. **Incubator input carrier** - captured tadpole (NBT carries stats, needs a capture item) vs adding stat components to the bottled Frog Egg item. Recommended: support the captured tadpole; optionally extend the egg later.
-3. **Controller buffer depth** - 4 is a starting default; tune for distribution smoothness vs hoarding.
-4. **Auto-top-up merge rule** - the exact stat merge when topping up a partly-drained Sprinkler with a fresh charge (sum spawns, max speed/quantity, OR infinite is the proposal; confirm it cannot produce a "better than any input bucket" Sprinkler in a way that matters).
-5. **GuideME vs Patchouli** - ship GuideME + native feedback; Patchouli only if ghost-preview UX is wanted.
-6. **`ACTIVE` registry persistence** - rebuild lazily on level load via Controller revalidation (proposed) vs a `SavedData`. Lazy rebuild is simpler and self-healing; confirm it has no first-tick window where a frog eats before the Controller re-registers (acceptable: that one drop falls to the world path).
+1. **Controller buffer depth** - 4 is a starting default; tune for distribution smoothness vs hoarding.
+2. **Auto-top-up merge rule** - the exact stat merge when topping up a partly-drained Sprinkler with a fresh charge (sum spawns, max speed/quantity, OR infinite is the proposal; confirm it cannot produce a "better than any input bucket" Sprinkler in a way that matters).
+3. **`ACTIVE` registry persistence** - rebuild lazily on level load via Controller revalidation (proposed) vs a `SavedData`. Lazy rebuild is simpler and self-healing; confirm it has no first-tick window where a frog eats before the Controller re-registers (acceptable: that one drop falls to the world path).
+4. **Exact Infernal recipes** - which Infernal resources and quantities per block (the tier is settled; the recipe shapes are a PR-time balance pass).
+
+Resolved by the 2026-06-07 rulings (no longer open): the fluid-wrapper question (ship it), the Incubator stat-carrier question (bred stats flow via the lay override; no new item needed), the milk-supply question (continuous feed, Sprinklers deplete), the progression question (Infernal-gated), and construction guidance (GuideME + native feedback, Patchouli optional).
 
 ## Decision log (settled rulings, maintainer, 2026-06-07, issue #185)
 
@@ -241,6 +259,15 @@ These are genuinely open at spec time; everything in the rulings table is settle
 | Stat fidelity | **Milk keeps its catalyst stats** through funnel/Sprinkler/spawn; **frogs keep their stats** through the Incubator |
 | Shell broken mid-run | **Pause, entities stay**, resume on repair; no spilling/voiding |
 | Construction guidance | **GuideME scene + native Controller validation feedback**; Patchouli optional |
+
+### Open-question rulings (maintainer, 2026-06-07, second round)
+
+| Question | Ruling |
+|---|---|
+| Frog population growth | **In-cavity breeding allowed**, but the lay behavior is **redirected into an Incubator** (no water-seeking, no loose frogspawn). The **Sweetslime breeding click stays manual** - the Terrarium only changes where the bred frogspawn goes. Also resolves the bred-stat carrier (stats flow frog -> Incubator BE -> frog). |
+| Progression / recipe gate | **Infernal-tier** - blocks crafted from Infernal-species resources. Not boss-gated, not cheap. |
+| Milk steady state | **Continuous feed is the loop** - Sprinklers deplete; Infinite-catalyst milk is the premium set-and-forget shortcut. |
+| Catalysts through pipes | **Ship the component-preserving fluid wrapper** - piped milk keeps Speed/Quantity/Infinite end to end. |
 
 ### Implementation-derived decisions (this spec, 2026-06-07)
 
