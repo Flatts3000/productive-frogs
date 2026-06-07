@@ -2,14 +2,25 @@ package com.flatts.productivefrogs.content.item;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
+import com.flatts.productivefrogs.data.StoredEffect;
 import com.flatts.productivefrogs.registry.PFDataComponents;
+import java.util.List;
 import java.util.Map;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -95,12 +106,18 @@ public final class ConfigurableFroglightItem extends BlockItem {
     @Override
     protected boolean updateCustomBlockEntityTag(BlockPos pos, Level level, @Nullable Player player, ItemStack stack, BlockState state) {
         ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
-        if (variantId == null) {
+        StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
+        if (variantId == null && stored == null) {
             return false;
         }
         BlockEntity be = level.getBlockEntity(pos);
         if (be instanceof ConfigurableFroglightBlockEntity froglightBe) {
-            froglightBe.setVariantId(variantId);
+            if (variantId != null) {
+                froglightBe.setVariantId(variantId);
+            }
+            // A placed brewed Froglight carries its aura (#162) - the effect +
+            // on/off state ride into the BE so the placed block buffs in a radius.
+            froglightBe.setEffect(stored);
             return true;
         }
         return false;
@@ -127,5 +144,90 @@ public final class ConfigurableFroglightItem extends BlockItem {
             );
         }
         return Component.translatable(getDescriptionId());
+    }
+
+    /**
+     * Right-click in hand toggles the charm on/off (#162) - the same gesture and
+     * sounds as the placed block. No-op (pass) on a plain Froglight; placement
+     * still works because that goes through {@code useOn} when aiming at a block.
+     */
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
+        if (stored == null) {
+            return InteractionResultHolder.pass(stack);
+        }
+        if (!level.isClientSide()) {
+            StoredEffect toggled = stored.withEnabled(!stored.enabled());
+            stack.set(PFDataComponents.STORED_EFFECT.get(), toggled);
+            level.playSound(null, player.blockPosition(),
+                toggled.enabled() ? SoundEvents.BEACON_ACTIVATE : SoundEvents.BEACON_DEACTIVATE,
+                SoundSource.PLAYERS, 0.4F, 1.5F);
+        }
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+    }
+
+    /**
+     * Carried charm self-buff (#162): while an enabled brewed Froglight is
+     * <b>held</b> (main hand or offhand), re-apply its effect to the carrier on
+     * the shared aura cadence. Identity-comparing against the hand stacks is the
+     * reliable "is this stack actually held" test - a Froglight merely sitting in
+     * an inventory slot still ticks here but matches neither hand, so it does
+     * nothing (the decided main/offhand-only rule). Self-buff only; no radius.
+     */
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
+        if (level.isClientSide() || !(entity instanceof LivingEntity living)) {
+            return;
+        }
+        StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
+        if (stored == null || !stored.enabled()) {
+            return;
+        }
+        boolean held = living.getMainHandItem() == stack || living.getOffhandItem() == stack;
+        if (held && level.getGameTime() % ConfigurableFroglightBlockEntity.AURA_PULSE_TICKS == 0L) {
+            living.addEffect(stored.toInstance());
+        }
+    }
+
+    /**
+     * Brewed Froglight (#162): a stack carrying an enabled {@code STORED_EFFECT}
+     * glints, so the aura/charm on-state reads at a glance in any slot. A
+     * disabled (toggled-off) or plain Froglight does not. Falls through to the
+     * vanilla foil check (enchanted-book glint etc.) otherwise.
+     */
+    @Override
+    public boolean isFoil(ItemStack stack) {
+        StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
+        return (stored != null && stored.enabled()) || super.isFoil(stack);
+    }
+
+    /**
+     * Brewed Froglight tooltip: names the captured effect (with level) and its
+     * on/off state. Only shown when the stack actually carries an effect, so
+     * plain Froglights are unchanged.
+     */
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltip, flag);
+        StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
+        if (stored == null) {
+            return;
+        }
+        // "Speed II" the way vanilla potion tooltips build it: effect name +
+        // (for amplifier > 0) the potion.potency.N level key, colored by the
+        // effect's beneficial/harmful category.
+        MobEffect effect = stored.effect().value();
+        Component name = stored.amplifier() > 0
+            ? Component.translatable("potion.withAmplifier", effect.getDisplayName(),
+                Component.translatable("potion.potency." + stored.amplifier()))
+            : effect.getDisplayName();
+        tooltip.add(Component.translatable("productivefrogs.tooltip.brewed_aura", name)
+            .withStyle(effect.getCategory().getTooltipFormatting()));
+        tooltip.add(Component.translatable(stored.enabled()
+                ? "productivefrogs.tooltip.aura_enabled"
+                : "productivefrogs.tooltip.aura_disabled")
+            .withStyle(ChatFormatting.GRAY));
     }
 }

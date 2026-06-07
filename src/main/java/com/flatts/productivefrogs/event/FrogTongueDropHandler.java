@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.FrogStats;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
+import com.flatts.productivefrogs.data.StoredEffect;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.util.PFDebug;
@@ -82,7 +83,11 @@ public final class FrogTongueDropHandler {
         // The kill IS the eat - start the Appetite-scaled hunting cooldown that
         // gates how soon the frog can target its next slime (docs/frog_breeding.md).
         frog.startEatCooldown();
-        dropFroglightAtFrog(frog, slime.getVariantId());
+        // Brewed Froglights (#162): if the slime was carrying a potion effect
+        // (splashed/lingered onto it before the frog ate it), capture the one
+        // effect by the decided rule and stamp it on the drop.
+        StoredEffect captured = StoredEffect.pick(slime.getActiveEffects());
+        dropFroglightAtFrog(frog, slime.getVariantId(), captured);
     }
 
     /**
@@ -99,6 +104,18 @@ public final class FrogTongueDropHandler {
      * emits the drop.
      */
     public static void dropFroglightAtFrog(ResourceFrog frog, @Nullable ResourceLocation variantId) {
+        dropFroglightAtFrog(frog, variantId, null);
+    }
+
+    /**
+     * Variant + optional captured potion effect overload (#162). A non-null
+     * {@code captured} stamps every dropped Froglight with the
+     * {@code STORED_EFFECT} component - all drops in a Bounty multi-drop share
+     * the same captured effect. The player direct-feed path passes null (a
+     * bucketed slime carries no live effects).
+     */
+    public static void dropFroglightAtFrog(ResourceFrog frog, @Nullable ResourceLocation variantId,
+            @Nullable StoredEffect captured) {
         Level level = frog.level();
         if (level.isClientSide()) {
             return;
@@ -116,12 +133,17 @@ public final class FrogTongueDropHandler {
         for (int i = 0; i < count; i++) {
             ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
             froglight.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
+            if (captured != null) {
+                froglight.set(PFDataComponents.STORED_EFFECT.get(), captured);
+            }
             ItemEntity drop = new ItemEntity(level, pos.x, pos.y, pos.z, froglight);
             drop.setDefaultPickUpDelay();
             level.addFreshEntity(drop);
         }
         PFDebug.log(PFDebug.Area.TONGUE, () -> String.format(
-            "drop: frog category=%s bounty=%d -> %d x configurable_froglight variant=%s at %s",
-            frog.getCategory(), frog.getBounty(), count, variantId, frog.blockPosition()));
+            "drop: frog category=%s bounty=%d -> %d x configurable_froglight variant=%s effect=%s at %s",
+            frog.getCategory(), frog.getBounty(), count, variantId,
+            captured == null ? "none" : captured.effect().unwrapKey().map(k -> k.location().toString()).orElse("?"),
+            frog.blockPosition()));
     }
 }
