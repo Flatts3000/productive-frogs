@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.12.0 - 2026-06-06 - The Froglight Crucible + Casting Mold
+
+### Added
+
+- **The Froglight Crucible.** A heated basin that melts Froglights into real fluids - no GUI, no power, just heat from the block below. Park it over a torch, campfire, lava, or fire and right-click Froglights in; pull the fluid out with a bucket or pipes. Water and Lava Froglights melt into water and lava (a full bucket each), making both renewable on a skyblock. Hotter sources melt faster, the heat ladder is data-driven so packs can extend it, and hoppers can feed Froglights in for hands-off melting. (#153, #156)
+- **Molten metal at ore-doubling yield.** Metal Froglights (iron, copper, gold, and the cross-mod metal roster) melt into molten fluids worth two ingots each. On a pack with AllTheOres installed the Crucible produces ATO's own molten metals, so they flow straight into existing tanks, pipes, and recipes; without it, Productive Frogs mints its own. (#157)
+- **The Casting Mold.** Solidifies molten metal back into ingots - pour it in with a bucket or pipes, or stack heat / Crucible / Mold into a three-block tower and the Mold drinks from the Crucible directly, no pipes needed. Comes with a proper GUI: a fluid gauge you can hover for the exact contents, a casting progress arrow, and an output slot hoppers can empty. Fluid only goes in - once committed, molten leaves as an ingot. (#158)
+- **Froglights are heat sources too.** A placed Lava Froglight heats a Crucible like lava, a Blaze Froglight burns hotter than fire, and Powah's Blazing Crystal Froglight is the hottest heat plate in the mod - your farmed decor doubles as the smelter's fire.
+- **JEI shows the whole lane.** Two new categories: what melts into what, and the full heat-source ladder with each source's strength.
+- **Industrial Foregoing liquids.** With IF installed, the Pink Slime Froglight melts into Pink Slime fluid and the Plastic Froglight melts down into Latex - two items' worth each, feeding IF's own machines.
+- **Ice and Snow slimes.** Two new Tide variants - prime with an ice block or snow block, smelt the Froglight back into the same. Closes a real skyblock gap: with no cold biome there was previously no path to either material family (and Powah's Dry Ice needs blue ice to craft). The Ice Froglight also melts in the Crucible into a bucket of water. One placement note: Froglights glow at full brightness, and vanilla ice melts under bright light - don't light an ice farm with its own produce. (#155)
+
+### Fixed
+
+- **Pick-block on a placed Froglight keeps its variant.** Middle-clicking a placed variant Froglight previously handed back a generic Froglight with no variant.
+
 ## v1.11.0 - 2026-06-06 - Flux Networks + Powah compat, Blaze rod
 
 ### Added
