@@ -21,6 +21,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -74,6 +76,13 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
     private final FluidTank tank = new FluidTank(TANK_CAPACITY);
     private int progress = 0;
 
+    // One-entry recipe cache (see recipeForType). Transient - rebuilt on the
+    // first lookup after load; invalidated by a RecipeManager swap (reload).
+    @Nullable
+    private MoldCastingRecipe cachedRecipe;
+    @Nullable
+    private RecipeManager cachedRecipeManager;
+
     private final ItemStackHandler output = new ItemStackHandler(1) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -105,7 +114,7 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
 
         @Override
         public int getSlotLimit(int slot) {
-            return output.getSlotLimit(slot);
+            return output.getSlotLimit(OUTPUT_SLOT);
         }
 
         @Override
@@ -210,10 +219,6 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
         return output;
     }
 
-    public ContainerData dataAccess() {
-        return dataAccess;
-    }
-
     /** Buffer contents, for the screen gauge / Jade / GameTests. Do not mutate. */
     public FluidStack fluid() {
         return tank.getFluid();
@@ -236,8 +241,7 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
         if (!tank.isEmpty() && !FluidStack.isSameFluidSameComponents(tank.getFluid(), stack)) {
             return false;
         }
-        return level.getRecipeManager().getAllRecipesFor(PFRecipeTypes.MOLD_CASTING.get()).stream()
-            .anyMatch(holder -> holder.value().fluid().ingredient().test(stack));
+        return recipeForType(stack) != null;
     }
 
     @Nullable
@@ -245,11 +249,33 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
         if (level == null || tank.isEmpty()) {
             return null;
         }
-        return level.getRecipeManager().getAllRecipesFor(PFRecipeTypes.MOLD_CASTING.get()).stream()
-            .map(net.minecraft.world.item.crafting.RecipeHolder::value)
-            .filter(recipe -> recipe.matchesFluid(tank.getFluid()))
+        FluidStack buffered = tank.getFluid();
+        MoldCastingRecipe recipe = recipeForType(buffered);
+        // Type matched via the cache; amount sufficiency checked separately
+        // (the buffer fills 45 mB at a time toward a 90 mB cast).
+        return recipe != null && recipe.fluid().amount() <= buffered.getAmount() ? recipe : null;
+    }
+
+    /**
+     * Type-only recipe lookup with a one-entry cache. serverTick calls this
+     * every tick (and pipes hammer it through {@code isFluidValid}), so the
+     * full-registry scan only reruns when the queried fluid stops matching
+     * the cached recipe or a datapack reload swaps the RecipeManager.
+     */
+    @Nullable
+    private MoldCastingRecipe recipeForType(FluidStack stack) {
+        RecipeManager manager = level.getRecipeManager();
+        if (manager == cachedRecipeManager && cachedRecipe != null
+                && cachedRecipe.fluid().ingredient().test(stack)) {
+            return cachedRecipe;
+        }
+        cachedRecipeManager = manager;
+        cachedRecipe = manager.getAllRecipesFor(PFRecipeTypes.MOLD_CASTING.get()).stream()
+            .map(RecipeHolder::value)
+            .filter(recipe -> recipe.fluid().ingredient().test(stack))
             .findFirst()
             .orElse(null);
+        return cachedRecipe;
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, CastingMoldBlockEntity be) {
@@ -261,12 +287,22 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
                 FluidStack available = crucible.fluid();
                 if (!available.isEmpty() && be.acceptsFluid(available)) {
                     int want = Math.min(space, TOWER_PULL_PER_TICK);
+                    boolean wasEmpty = be.tank.isEmpty();
+                    // copyWithAmount keeps the source's data components on the
+                    // drain request - a bare new FluidStack(fluid, mB) would
+                    // bounce off a component-carrying molten.
                     FluidStack pulled = crucible.fluidHandler().drain(
-                        new FluidStack(available.getFluid(), want), IFluidHandler.FluidAction.EXECUTE);
+                        available.copyWithAmount(want), IFluidHandler.FluidAction.EXECUTE);
                     if (!pulled.isEmpty()) {
                         be.tank.fill(pulled, IFluidHandler.FluidAction.EXECUTE);
                         be.setChanged();
-                        be.syncToClients();
+                        // The pull runs every tick; a client packet per tick is
+                        // waste (the GUI amount rides ContainerData anyway).
+                        // Sync the world/Jade view on the type appearing, on the
+                        // source running dry, and on a 10-tick heartbeat.
+                        if (wasEmpty || pulled.getAmount() < want || level.getGameTime() % 10 == 0) {
+                            be.syncToClients();
+                        }
                     }
                 }
             }
