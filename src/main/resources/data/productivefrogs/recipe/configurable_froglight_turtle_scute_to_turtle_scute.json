@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": {
+    "type": "neoforge:components",
+    "items": [
+      "productivefrogs:configurable_froglight"
+    ],
+    "components": {
+      "productivefrogs:slime_variant": "productivefrogs:turtle_scute"
+    }
+  },
+  "result": {
+    "id": "minecraft:turtle_scute"
+  },
+  "experience": 0.5,
+  "cookingtime": 200,
+  "category": "misc",
+  "group": "productivefrogs_froglight"
+}
