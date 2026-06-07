@@ -71,7 +71,11 @@ public record StoredEffect(Holder<MobEffect> effect, int amplifier, boolean enab
                 .thenComparing(Comparator.comparingInt(MobEffectInstance::getDuration).reversed())
                 .thenComparing(e -> e.getEffect().unwrapKey()
                     .map(k -> k.location().toString()).orElse("")))
-            .map(e -> new StoredEffect(e.getEffect(), e.getAmplifier(), true))
+            // Clamp to the codec's [0, 255] range: an unclamped modded/command
+            // amplifier above 255 would fail to encode and silently drop the
+            // effect on the first save/reload. Vanilla potions are 0-1, so this
+            // is a no-op for any real capture.
+            .map(e -> new StoredEffect(e.getEffect(), Math.max(0, Math.min(255, e.getAmplifier())), true))
             .orElse(null);
     }
 }
