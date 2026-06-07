@@ -139,7 +139,7 @@ Out of scope until V1 ships. [docs/versioning.md#v2--automation](./versioning.md
 - Pipe/hopper-aware fluid handling for Slime Milk
 - FE / NeoForge Energy compat (optional)
 
-> **Not planned:** a native crusher block (the 2x crush stays delegated to Mekanism / Immersive Engineering / EnderIO via the optional `mod_loaded` recipes shipped in v1.3.0). The broader "no first-party 2x lane" guideline behind that entry was retired 2026-06-06: the v1.11 **Froglight Crucible + Casting Basin** ([froglight_crucible.md](./froglight_crucible.md)) ships a first-party melt-and-cast 2x lane. A literal crusher block remains not planned. Matches the "Explicitly NOT planned" lists in [ROADMAP.md](../ROADMAP.md) and [versioning.md](./versioning.md). Cross-mod crush rationale: [cross_mod_compat.md](./cross_mod_compat.md).
+> **Not planned:** a native crusher block (the 2x crush stays delegated to Mekanism / Immersive Engineering / EnderIO via the optional `mod_loaded` recipes shipped in v1.3.0). The broader "no first-party 2x lane" guideline behind that entry was retired 2026-06-06: the v1.12 **Froglight Crucible + Casting Mold** ([froglight_crucible.md](./froglight_crucible.md), shipped) ships a first-party melt-and-cast 2x lane. A literal crusher block remains not planned. Matches the "Explicitly NOT planned" lists in [ROADMAP.md](../ROADMAP.md) and [versioning.md](./versioning.md). Cross-mod crush rationale: [cross_mod_compat.md](./cross_mod_compat.md).
 
 ## Polish / debt - non-blocking, do when convenient
 
@@ -175,7 +175,7 @@ Deferred while building the Spawnery ([docs/spawnery.md](./spawnery.md)); none b
 - **Dynamic JEI primer display.** The Spawnery JEI info lists primers statically. Read the live `spawnery_primer/<species>` tag contents and render them per species, so a pack's overrides surface automatically and players can discover the pack's gating.
 - ~~**`cross_mod_compat.md` cross-ref.**~~ Done - superseded by the consolidated [modpack_integration.md](./modpack_integration.md) (the pack-author entry point covering config, variants, Spawnery primers, crush yields); `cross_mod_compat.md` now points to it.
 - **Durable dev-enable.** `spawnery.enabled` is off by default; testing from IntelliJ needs `run/config/productivefrogs-common.toml` flipped to `true`, which a `clean` resets. A small Gradle task wired into `prepareClientRun` could seed it so it survives (hand-flipped during dev for now).
-- **Shared container-screen base.** `SpawneryScreen` and `SlimeMilkerScreen` both carry the same `render` -> `renderTooltip` override (the 1.21.1 `AbstractContainerScreen` gap). If a third GUI lands, extract a `PFContainerScreen<T>` base rather than duplicating it.
+- ~~**Shared container-screen base.**~~ Done (v1.12, PR #158) - the Casting Mold was the third GUI, and `PFContainerScreen<T>` was extracted exactly as planned; all three screens extend it.
 
 ## Architecture lessons captured
 

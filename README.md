@@ -67,7 +67,7 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 
 ## Status
 
-**Latest release: v1.8.3.** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, the Spawnery, frog stat breeding, and Slime Milk catalysts that buff a placed source. As of v1.8, a variant's Slime Milk can be collected, piped, and placed back by fluid-automation mods, so a chosen variant can be farmed fully hands-off. Coal and Blaze Froglights also double as furnace fuel (v1.8.3), burning like the resource they are made of.
+**Latest release: v1.12.0 (beta on CurseForge since v1.9.1).** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, the Spawnery, frog stat breeding, Slime Milk catalysts, and fully pipeable per-variant Slime Milk. The v1.12 Froglight Crucible melts Froglights into real fluids over a heat source - renewable water and lava, plus molten metal at ore-doubling yield that the Casting Mold solidifies back into ingots.
 
 | Version line | Scope | Status |
 |---|---|---|
@@ -80,6 +80,10 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 | v1.6 | Bog recategorization + Slime Milk reliability | ✅ shipped |
 | v1.7 | Slime Milk catalysts | ✅ shipped |
 | v1.8 | Slime Milk automation (per-variant fluids) + Coal/Blaze Froglight fuel | ✅ shipped |
+| v1.9 | Refined Storage support + beta promotion | ✅ shipped |
+| v1.10 | Obsidian -> Infernal recategorization | ✅ shipped |
+| v1.11 | Flux Networks + the full Powah ladder, Blaze rod | ✅ shipped |
+| v1.12 | The Froglight Crucible + Casting Mold (melt-and-cast lane) | ✅ shipped |
 | v2 | Automation: power/multiblocks/terrariums | 🔭 future |
 
 Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope rationale: [`docs/versioning.md`](./docs/versioning.md).

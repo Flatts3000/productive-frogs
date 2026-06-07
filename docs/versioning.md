@@ -117,7 +117,7 @@ Tools and blocks that let the player scale and automate the V1 loop. Built on to
 - **Pipe/hopper-aware fluid handling** for Slime Milk
 - Potentially: power compatibility (FE / NeoForge Energy)
 
-> **Not planned** (moved out of V2 scope): a **native crusher block** (the 2x crush is delegated to external crusher mods - Mekanism / IE / EnderIO; the broader "no first-party 2x" guideline behind it was retired 2026-06-06 by the v1.11 Crucible melt-and-cast lane, but a literal crusher stays not planned) and a **drop-collection block** (vanilla hoppers suffice). See [ROADMAP.md](../ROADMAP.md) "Explicitly NOT planned".
+> **Not planned** (moved out of V2 scope): a **native crusher block** (the 2x crush is delegated to external crusher mods - Mekanism / IE / EnderIO; the broader "no first-party 2x" guideline behind it was retired 2026-06-06 by the v1.12 Crucible + Casting Mold melt-and-cast lane, but a literal crusher stays not planned) and a **drop-collection block** (vanilla hoppers suffice). See [ROADMAP.md](../ROADMAP.md) "Explicitly NOT planned".
 
 **Why deferred:** these are all "scaling solutions" - they make V1 faster, denser, hands-off. They don't change *what the mod is*. Building V1 first ensures the design holds up without machines propping it up.
 

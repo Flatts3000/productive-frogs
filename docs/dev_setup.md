@@ -54,7 +54,7 @@ These mods are **not** dependencies of Productive Frogs - they are drop-ins for 
 python scripts/fetch_dev_mods.py
 ```
 
-Queries Modrinth for the latest 1.21.1 / NeoForge build of Mekanism, Immersive Engineering, EnderIO, and AllTheOres (the dust + smelt-back layer), verifies each SHA-1, and drops them into `run/mods/`. Re-runnable (skips files already present). Manual alternative: download the 1.21.1 NeoForge jar for each from its CurseForge/Modrinth page into `run/mods/`. If EnderIO logs a missing-library error at launch, grab its companion lib from the same page (Modrinth currently reports no required deps for the 8.x build).
+Fetches the latest 1.21.1 / NeoForge build of every smoke-testable provider mod into `run/mods/`: Mekanism, Immersive Engineering, EnderIO, AllTheOres, Flux Networks, Powah, and Industrial Foregoing (+ required deps). **CurseForge is the default source** (the canonical channel and what Sky Frogs pins - Modrinth burned us once with an `mr_`-prefixed repack modid that silently failed every `mod_loaded` gate); Modrinth is the exception for official distributions whose required deps need its transitive resolution (Powah, Industrial Foregoing), SHA-1 verified. Re-runnable (skips files already present). Manual alternative: download the 1.21.1 NeoForge jar for each from its CurseForge page into `run/mods/` - and verify the `modId` inside any jar you fetch by hand.
 
 ### 2. Launch and verify
 

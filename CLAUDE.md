@@ -8,7 +8,7 @@ Productive Frogs is a Minecraft content mod targeting **NeoForge 21.1.230 on Min
 
 The mod was originally built on 1.21.11 and **backported to 1.21.1** to match the Sky Frogs modpack (history in `docs/port_mc_1_21_1.md`). Several APIs differ from the newer line: the per-item tint pipeline, GameTest registration, and item/block registration shape all use the **older 1.21.1 forms** documented below. When in doubt, copy the pattern from an existing sibling file rather than reaching for a newer-MC API.
 
-V1 has shipped through v1.10 (beta on CurseForge since v1.9.1): foundation + appliances (v1.0), vanilla resource coverage (v1.1), cross-mod variant pools + observability (v1.2), cross-mod crush yields (v1.3), the Spawnery + Jade tooltips (v1.4), frog stat breeding (v1.5), the organic Bog rework (v1.6), Slime Milk catalysts (v1.7), per-variant automatable milk (v1.8), Refined Storage support (v1.9), and the obsidian -> Infernal recategorization (v1.10). The per-release detail lives in `ROADMAP.md`'s Shipped section - don't re-enumerate it here on every release. **Automation is V2** and has not started. The load-bearing design docs are `docs/architecture.md`, `docs/versioning.md`, `docs/species_as_category_redesign.md` (the **current** category model - but its per-variant tables are the v1.5-era record, kept as history; the `slime_variant` JSONs are authoritative for which variant sits in which species, and later recategorizations update README/`docs/canonical_ordering.md` instead), and `ROADMAP.md`. Read those before non-trivial design changes; they encode decisions already litigated.
+V1 has shipped through v1.12 (beta on CurseForge since v1.9.1): foundation + appliances (v1.0), vanilla resource coverage (v1.1), cross-mod variant pools + observability (v1.2), cross-mod crush yields (v1.3), the Spawnery + Jade tooltips (v1.4), frog stat breeding (v1.5), the organic Bog rework (v1.6), Slime Milk catalysts (v1.7), per-variant automatable milk (v1.8), Refined Storage support (v1.9), the obsidian -> Infernal recategorization (v1.10), Flux Networks + the full Powah ladder (v1.11), and the Froglight Crucible + Casting Mold melt-and-cast lane (v1.12). The per-release detail lives in `ROADMAP.md`'s Shipped section - don't re-enumerate it here on every release. **Automation is V2** and has not started. The load-bearing design docs are `docs/architecture.md`, `docs/versioning.md`, `docs/species_as_category_redesign.md` (the **current** category model - but its per-variant tables are the v1.5-era record, kept as history; the `slime_variant` JSONs are authoritative for which variant sits in which species, and later recategorizations update README/`docs/canonical_ordering.md` instead), and `ROADMAP.md`. Read those before non-trivial design changes; they encode decisions already litigated.
 
 ## Common Commands
 
@@ -68,7 +68,7 @@ This is the "stay close to vanilla" principle: where vanilla already has the rig
 
 ### Appliance blocks (furnace-style GUI stations)
 
-The hand-operated processing blocks - the **Slime Milker** and the **Spawnery** - share one shape; copy it for any new appliance rather than inventing a layout:
+The hand-operated processing blocks - the **Slime Milker**, the **Spawnery**, and the **Casting Mold** - share one shape; copy it for any new appliance rather than inventing a layout. (The **Froglight Crucible** is the deliberate GUI-less exception: same Block + BE + `static serverTick` core, but no Menu/Screen - heat-from-below drives it and a BER renders the contents; see `docs/froglight_crucible.md`.)
 
 - `content/block/<Name>Block` - the placed block (carries a `LIT`-style blockstate for the active glow), wires the BE ticker.
 - `content/block/entity/<Name>BlockEntity` - `implements MenuProvider`; owns the inventory, a `ContainerData` (syncs cook/burn progress to the open screen), and a **`static serverTick`** running a vanilla-furnace-style burn+cook loop (consume fuel to ignite a burn, advance `cookProgress`, `complete()` on the tick that fills the output).
@@ -85,7 +85,7 @@ A separate pack-override surface: the Spawnery's six `spawnery_primer/<species>`
 
 ### Registry / lifecycle layout
 
-Wiring is centralized in `ProductiveFrogs.java`'s constructor: `PFDataComponents`, `PFFluidTypes`, `PFFluids`, `PFBlocks`, `PFItems`, `PFBlockEntities`, `PFMenuTypes`, `PFEntities`, `PFSensors`, `PFCreativeTabs`, `PFConditions` each expose a `register(IEventBus)` that hands a `DeferredRegister` to the mod bus. Game-event listeners (`EggPrimerHandler`, `FrogspawnBottlingHandler`, `SlimeInfusionHandler`, `SlimeSplitDiscoveryHandler`, `FrogTongueDropHandler`, `PFModBusEvents`, `PFClientEvents`, `PFDataPackRegistryEvents`) self-register via `@EventBusSubscriber(modid = MOD_ID)`; client-only code adds `value = Dist.CLIENT`.
+Wiring is centralized in `ProductiveFrogs.java`'s constructor: `PFDataComponents`, `PFFluidTypes`, `PFFluids`, `PFBlocks`, `PFItems`, `PFBlockEntities`, `PFMenuTypes`, `PFEntities`, `PFSensors`, `PFCreativeTabs`, `PFConditions`, `PFRecipeTypes` each expose a `register(IEventBus)` that hands a `DeferredRegister` to the mod bus. Game-event listeners (`EggPrimerHandler`, `FrogspawnBottlingHandler`, `SlimeInfusionHandler`, `SlimeSplitDiscoveryHandler`, `FrogTongueDropHandler`, `PFModBusEvents`, `PFClientEvents`, `PFDataPackRegistryEvents`) self-register via `@EventBusSubscriber(modid = MOD_ID)`; client-only code adds `value = Dist.CLIENT`.
 
 **Constructor ordering is load-bearing in two places:** `PFFluidTypes` before `PFFluids` (`BaseFlowingFluid.Properties` resolves its FluidType holder at fluid-build time), and `PFBlocks` before `PFBlockEntities`/`PFMenuTypes` (each appliance `BlockEntityType.Builder.of` references its block at BE-registration time). The comments in `ProductiveFrogs.java` call both out - don't reorder. `PFConditions` has no ordering dependency.
 
@@ -130,7 +130,7 @@ Per-item runtime tinting uses the **legacy `RegisterColorHandlersEvent.Item` eve
 
 ### Container screens on 1.21.1 - the renderTooltip gotcha
 
-`AbstractContainerScreen#render` on **1.21.1 NeoForge does not call `renderTooltip`** - a screen that overrides only `renderBg` shows **no item tooltips** on slot hover. Every appliance screen must override `render(...)` to call `super.render(...)` then `this.renderTooltip(gui, mouseX, mouseY)` (see `SlimeMilkerScreen` / `SpawneryScreen`). `super.render` does not draw the tooltip, so there's no double-draw.
+`AbstractContainerScreen#render` on **1.21.1 NeoForge does not call `renderTooltip`** - a screen that overrides only `renderBg` shows **no item tooltips** on slot hover. The fix lives in `client/screen/PFContainerScreen` (its `render` calls `super.render` then `renderTooltip`; no double-draw): **extend that base for any new container screen** instead of `AbstractContainerScreen` directly (see `SlimeMilkerScreen` / `SpawneryScreen` / `CastingMoldScreen`). Non-slot widgets (the Casting Mold's fluid gauge) still need their own hover hit-test on top.
 
 ### Client integrations - JEI and Jade (both `compileOnly`)
 
@@ -152,4 +152,4 @@ A cross-cutting, opt-in debug logger (`PFDebug`) spans all layers (lifecycle, re
 
 ## Scope Discipline (V1 vs V2)
 
-V1 is "playable foundation + appliance blocks" (hand-operated single-block stations, like a vanilla brewing stand or composter) and has shipped through v1.4.1. **V2 is automation** - power, multiblocks, terrariums. Check `docs/versioning.md` and `ROADMAP.md`: if a feature adds power/pipes/multiblocks it's V2 and shouldn't land in a V1.x branch. Rule of thumb: if vanilla has a single-block appliance equivalent, it's V1.
+V1 is "playable foundation + appliance blocks" (hand-operated single-block stations, like a vanilla brewing stand or composter). **V2 is automation** - power, multiblocks, terrariums. Check `docs/versioning.md` and `ROADMAP.md`: if a feature adds power/pipes/multiblocks it's V2 and shouldn't land in a V1.x branch. Rule of thumb: if vanilla has a single-block appliance equivalent, it's V1.

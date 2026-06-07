@@ -215,9 +215,13 @@ fluid mints iff the variant loads - no orphan fluid on a vanilla-only pack.
 
 ### BOG (swamp / organic)
 - **pink slime** (`industrialforegoing:pink_slime`) - the must-have slime
-  joke; top BOG pick. Bespoke (no common tag).
+  joke; top BOG pick. Bespoke (no common tag). v1.12: its Froglight melts in
+  the Crucible to 2,000 mB of IF's pink slime fluid (melts only by decision -
+  fluid -> item stays IF's machinery).
 - **plastic** (`industrialforegoing:plastic`) - latex-derived synthetic, fits the
-  organic Bog identity. Bespoke (no common tag). Added 2026-05-28.
+  organic Bog identity. Bespoke (no common tag). Added 2026-05-28. v1.12: its
+  Froglight melts DOWN to 1,350 mB of IF latex (675 mB/plastic per IF's
+  75 mB x 9 constant, doubled).
 
 ### TIDE (aquatic) - the weak species
 Modded tech has almost no aquatic resources. The one strong pick is Mythic

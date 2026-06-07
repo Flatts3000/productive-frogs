@@ -1,10 +1,14 @@
 # Froglight Crucible + Casting Mold (build spec)
 
-> **Status: PROMOTED to build spec - target v1.12.0.** Originally captured
-> 2026-05-26 as parked-for-v2 design notes ("Froglight Juicer"); promoted
+> **Status: SHIPPED in v1.12.0 (2026-06-06)** - Crucible in PRs #153/#156,
+> molten lane #157, Casting Mold #158. Originally captured 2026-05-26 as
+> parked-for-v2 design notes ("Froglight Juicer"); promoted to a build spec
 > 2026-06-06 after a design session resolved every open question. The decision
-> log below records how the shape evolved; everything else in this doc is
-> buildable as written.
+> log below records how the shape evolved. Post-spec playtest deltas folded in
+> below: the melt rate re-anchored on the metal lane (0.15 mB/tick/heat), the
+> Mold's tank made fill-only, and placed Lava / Blaze / Blazing Crystal
+> Froglights joining the heat ladder via the variant-keyed `froglight_heat`
+> data map.
 >
 > **Decision log (2026-06-06):**
 > 1. **Renamed** Froglight Juicer -> **Froglight Crucible**. "Juicer" sat too

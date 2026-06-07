@@ -45,6 +45,16 @@ Stop running around hand-priming wild slimes. Build a **Slime Milker**:
 
 Hopper-compatible. No power, no pipes, no multiblocks. The whole loop runs unattended once you've built it.
 
+## Melt and cast
+
+Froglights are not just decor anymore. Build a **Froglight Crucible** and park it over a heat source - a torch works on day one, lava and fire melt faster:
+
+* Water and Lava Froglights melt into real, bucketable water and lava. Renewable lava on a skyblock, no nether trips.
+* Metal Froglights melt into molten metal worth two ingots each. Stack a **Casting Mold** on top and it casts the molten straight back into ingots - a three-block smelting tower with no power and no pipes.
+* Some of your Froglights are heat sources themselves: a Lava Froglight burns like lava, a Blaze Froglight hotter than fire.
+
+Pipes and hoppers hook into both blocks if you want to automate; buckets and right-clicks do the job if you don't.
+
 ## Modpack-friendly
 
 Data-driven and extensible: adding a new resource variant is a single JSON file, no code or recompile needed. JEI Information pages auto-extend to teach the new entry. Cross-mod variants for Mekanism, Create, and more are included; each gates behind a soft mod-loaded check and silently skips when the source mod is absent.
@@ -108,6 +118,8 @@ The mod is fully playable today. Everything below is live on CurseForge. Targets
 **v1.10.0 (shipped): obsidian moves to the Infernal frog.** Obsidian takes a diamond pickaxe to mine, so it belongs after diamond in the journey - the Infernal Frog now farms Obsidian (and Mekanism's Refined Obsidian), taking over from the Cave Frog. Existing slimes adjust themselves on world load; Froglights, buckets, and Slime Milk are untouched.
 
 **v1.11.0 (shipped): Flux Networks + the full Powah ladder.** Running Flux Networks? Flux Dust is now farmable through the frog loop - one variant covers the whole chain, since ingots, blocks, and cores all craft from dust. Powah's roster is complete too: Energized Steel, Uraninite, and Dry Ice join the crystals that were already farmable, so every Powah material runs on frogs - especially valuable in skyblock, where Uraninite has no ore to mine. Also: the Blaze resource is now the blaze rod (prime with a rod, smelt the Froglight back into a rod - each rod crafts into two powder), and the Niotic/Nitro crystal colors were un-swapped to match Powah's actual crystals.
+
+**v1.12.0 (shipped): the Froglight Crucible + Casting Mold.** A heated basin that melts Froglights into real fluids - park it over a torch, campfire, lava, or fire and right-click Froglights in. Water and Lava Froglights melt into bucketable water and lava (renewable on a skyblock), and metal Froglights melt into molten metal worth two ingots each, which the new Casting Mold solidifies back into ingots - stack heat, Crucible, and Mold into a three-block tower and it runs end to end with no power and no pipes. Some Froglights are heat sources themselves (Lava, Blaze, and Powah's Blazing Crystal). With AllTheOres installed the molten flows into its tanks and recipes directly; with Industrial Foregoing, Pink Slime and Plastic Froglights melt into Pink Slime fluid and Latex. Plus two new farmable resources: ice and snow - previously impossible to obtain on a skyblock with no cold biome (the Ice Froglight also melts into water, and a placement tip: Froglights glow bright, and bright light melts vanilla ice, so don't light an ice farm with its own produce). JEI shows the whole lane, including the heat ladder.
 
 ### v2: automation
 
