@@ -214,7 +214,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
         // is on all six faces of the source. Pause WITHOUT spending the budget
         // (like the density cap above) and reschedule, so the altar can be
         // completed later without the source draining in the meantime.
-        if (requiresCatalyst(level, variantId) && !altarComplete(level, pos, variantId)) {
+        if (variantRequiresCatalyst(level, variantId) && catalystFaceCount(level, pos, variantId) < 6) {
             PFDebug.logOnce(PFDebug.Area.MILK_SOURCE, "altar#" + pos, () -> String.format(
                 "source @%s: paused, %s altar incomplete (needs 6 catalyst faces)", pos, variantId));
             scheduleNextSpawnTick(level, pos, random, be.getSpeedLevel());
@@ -265,50 +265,35 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
         return nearby.size() >= cap;
     }
 
+    /** Resolve a variant from the registry, or null (registry absent / unknown id). */
+    @Nullable
+    private static SlimeVariant variantFor(net.minecraft.world.level.Level level, ResourceLocation variantId) {
+        var registry = level.registryAccess().registry(PFRegistries.SLIME_VARIANT).orElse(null);
+        return registry == null ? null : registry.get(variantId);
+    }
+
     @Nullable
     private static Category categoryForVariant(ServerLevel level, ResourceLocation variantId) {
-        var registry = level.registryAccess().registry(PFRegistries.SLIME_VARIANT).orElse(null);
-        if (registry == null) {
-            return null;
-        }
-        SlimeVariant variant = registry.get(variantId);
+        SlimeVariant variant = variantFor(level, variantId);
         return variant == null ? null : variant.category();
     }
 
     /**
-     * True when this source's variant declares {@code spawn_catalyst} - the
-     * boss-tier altar gate (#184). Resolved from the registry; unknown/sentinel
-     * variants are not gated.
+     * Whether this variant is altar-gated ({@code spawn_catalyst}, #184). The
+     * server gate (tick) and the Jade readout share this one lookup.
      */
-    private static boolean requiresCatalyst(ServerLevel level, ResourceLocation variantId) {
-        var registry = level.registryAccess().registry(PFRegistries.SLIME_VARIANT).orElse(null);
-        if (registry == null) {
-            return false;
-        }
-        SlimeVariant variant = registry.get(variantId);
+    public static boolean variantRequiresCatalyst(net.minecraft.world.level.Level level, ResourceLocation variantId) {
+        SlimeVariant variant = variantFor(level, variantId);
         return variant != null && variant.spawnCatalyst();
     }
 
     /**
-     * True when all six faces of the source are the catalyst block that arms
-     * this variant ({@link PFBlocks#catalystForVariant()}). A missing mapping
-     * (shouldn't happen for a shipped boss variant) fails closed: the source
-     * stays paused rather than spawning ungated.
+     * Completed catalyst faces (0-6): how many of the six neighbours are the
+     * catalyst block that arms this variant ({@link PFBlocks#catalystForVariant()}).
+     * 6 means the altar is complete. A missing mapping (shouldn't happen for a
+     * shipped boss variant) reads 0 - the gate fails closed, the source stays
+     * paused rather than spawning ungated.
      */
-    private static boolean altarComplete(ServerLevel level, BlockPos pos, ResourceLocation variantId) {
-        Block catalyst = PFBlocks.catalystForVariant().get(variantId);
-        if (catalyst == null) {
-            return false;
-        }
-        for (Direction dir : Direction.values()) {
-            if (!level.getBlockState(pos.relative(dir)).is(catalyst)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /** Count of completed catalyst faces (0-6), for the Jade readout. */
     public static int catalystFaceCount(net.minecraft.world.level.Level level, BlockPos pos, ResourceLocation variantId) {
         Block catalyst = PFBlocks.catalystForVariant().get(variantId);
         if (catalyst == null) {
@@ -321,16 +306,6 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
             }
         }
         return count;
-    }
-
-    /** Whether this variant is altar-gated, for the Jade readout (client-safe registry read). */
-    public static boolean variantRequiresCatalyst(net.minecraft.world.level.Level level, ResourceLocation variantId) {
-        var registry = level.registryAccess().registry(PFRegistries.SLIME_VARIANT).orElse(null);
-        if (registry == null) {
-            return false;
-        }
-        SlimeVariant variant = registry.get(variantId);
-        return variant != null && variant.spawnCatalyst();
     }
 
     private static boolean depletionEnabled() {

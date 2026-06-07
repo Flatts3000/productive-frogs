@@ -151,18 +151,28 @@ public final class PFBlocks {
     public static final DeferredBlock<Block> WITHER_SKELETON_SKULL_CATALYST = registerCatalyst("wither_skeleton_skull_catalyst");
     public static final DeferredBlock<Block> DRAGON_BREATH_CATALYST = registerCatalyst("dragon_breath_catalyst");
 
+    /** Memoized {@link #catalystForVariant()} - the blocks are stable post-registration. */
+    private static Map<ResourceLocation, Block> catalystMap;
+
     /**
      * Single source of truth wiring each boss variant id to the catalyst block
      * that arms its source - read by the 6-face gate in {@code SlimeMilkSourceBlock}
-     * and the recipe generator. Built lazily (blocks resolve after registration).
+     * and the recipe generator. Built once on first call (the DeferredBlocks
+     * resolve only after registration), then memoized: the gate runs per
+     * milk-source tick, so rebuilding a 4-entry map each call was needless churn.
      */
     public static Map<ResourceLocation, Block> catalystForVariant() {
-        return Map.of(
-            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star"), NETHER_STAR_CATALYST.get(),
-            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_egg"), DRAGON_EGG_CATALYST.get(),
-            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "wither_skeleton_skull"), WITHER_SKELETON_SKULL_CATALYST.get(),
-            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_breath"), DRAGON_BREATH_CATALYST.get()
-        );
+        Map<ResourceLocation, Block> map = catalystMap;
+        if (map == null) {
+            map = Map.of(
+                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star"), NETHER_STAR_CATALYST.get(),
+                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_egg"), DRAGON_EGG_CATALYST.get(),
+                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "wither_skeleton_skull"), WITHER_SKELETON_SKULL_CATALYST.get(),
+                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_breath"), DRAGON_BREATH_CATALYST.get()
+            );
+            catalystMap = map;
+        }
+        return map;
     }
 
     private static DeferredBlock<Block> registerCatalyst(String name) {
