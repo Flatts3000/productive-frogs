@@ -40,6 +40,21 @@ public final class PFFluidTypes {
             .canDrown(false);
     }
 
+    /**
+     * Molten metal (v1.12 Crucible melt lane): lava-like - dense, slow,
+     * glowing. Not placeable, so the swim/drown flags never matter in-world;
+     * set lava-ish anyway for any mod that inspects the type.
+     */
+    static FluidType.Properties moltenProperties() {
+        return FluidType.Properties.create()
+            .density(3000)
+            .viscosity(6000)
+            .temperature(1300)
+            .lightLevel(10)
+            .canSwim(false)
+            .canDrown(false);
+    }
+
     private PFFluidTypes() {
         // utility class
     }

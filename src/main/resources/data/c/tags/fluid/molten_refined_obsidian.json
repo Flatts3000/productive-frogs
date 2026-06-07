@@ -1,0 +1,6 @@
+{
+  "values": [
+    { "id": "productivefrogs:molten_refined_obsidian", "required": false },
+    { "id": "productivefrogs:molten_refined_obsidian_flowing", "required": false }
+  ]
+}

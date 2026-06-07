@@ -2655,8 +2655,44 @@ public final class PFGameTests {
     }
 
     /**
+     * Wave-2 molten lane, ATM-interop direction included: an iron Froglight
+     * melts to 180 mB (2 ingots' worth, Tinkers ore-doubling) of molten iron -
+     * and WHICH molten iron is environment-derived, mirroring the
+     * mod_loaded conditions on the generated recipes: AllTheOres loaded (the
+     * dev run/mods env) -> {@code alltheores:molten_iron}; lean env (CI) ->
+     * the PF-minted {@code productivefrogs:molten_iron} fallback. One test
+     * therefore pins the ATO-deferral path locally and the PF-mint path in CI.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void crucibleMeltsMetalFroglightToMoltenFluid(GameTestHelper helper) {
+        BlockPos base = new BlockPos(2, 1, 2);
+        helper.setBlock(base, net.minecraft.world.level.block.Blocks.STONE);
+        helper.setBlock(base.above(), net.minecraft.world.level.block.Blocks.TORCH);
+        helper.setBlock(base.above(2), PFBlocks.CRUCIBLE.get());
+        if (!(helper.getBlockEntity(base.above(2))
+                instanceof com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity crucible)) {
+            helper.fail("crucible block did not create a CrucibleBlockEntity");
+            return;
+        }
+        if (!crucible.acceptFroglight(stampedFroglight("iron"))) {
+            helper.fail("iron Froglight should queue (every metal has a molten mapping in wave 2)");
+            return;
+        }
+        ResourceLocation expected = net.neoforged.fml.ModList.get().isLoaded("alltheores")
+            ? ResourceLocation.parse("alltheores:molten_iron")
+            : ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "molten_iron");
+        helper.succeedWhen(() -> {
+            net.neoforged.neoforge.fluids.FluidStack fluid = crucible.fluid();
+            ResourceLocation actual = BuiltInRegistries.FLUID.getKey(fluid.getFluid());
+            helper.assertTrue(expected.equals(actual) && fluid.getAmount() == 180,
+                "iron Froglight should melt to 180 mB of " + expected + ", got "
+                    + fluid.getAmount() + " of " + actual);
+        });
+    }
+
+    /**
      * Insert gating on the solids model: (1) a Froglight with no
-     * {@code crucible_melting} recipe (iron) classifies REJECT and
+     * {@code crucible_melting} recipe (bone) classifies REJECT and
      * {@code acceptFroglight} refuses it; (2) the hopper-facing item
      * capability accepts lava Froglights one at a time until the solids
      * queue is full (4 x 1,000 mB), then bounces the fifth - pinning both
@@ -2672,13 +2708,16 @@ public final class PFGameTests {
             helper.fail("crucible block did not create a CrucibleBlockEntity");
             return;
         }
-        ItemStack iron = stampedFroglight("iron");
-        if (crucible.insertCheck(iron)
+        // Bone has no melt recipe (and never will - the melt roster is the
+        // metal lane). Iron stopped being the reject example when wave 2 gave
+        // every metal a molten mapping.
+        ItemStack bone = stampedFroglight("bone");
+        if (crucible.insertCheck(bone)
                 != com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity.InsertCheck.REJECT) {
-            helper.fail("iron Froglight has no melt recipe and must classify REJECT");
+            helper.fail("bone Froglight has no melt recipe and must classify REJECT");
             return;
         }
-        if (crucible.acceptFroglight(iron)) {
+        if (crucible.acceptFroglight(bone)) {
             helper.fail("acceptFroglight must refuse a REJECT-classified stack");
             return;
         }
