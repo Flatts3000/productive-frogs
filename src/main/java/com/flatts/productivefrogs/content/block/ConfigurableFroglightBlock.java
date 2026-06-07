@@ -1,15 +1,11 @@
 package com.flatts.productivefrogs.content.block;
 
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
-import com.flatts.productivefrogs.data.StoredEffect;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ColorParticleOption;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -67,14 +63,13 @@ public class ConfigurableFroglightBlock extends RotatedPillarBlock implements En
     @Override
     @Nullable
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        // Server-only: the aura application loop. A plain/decorative Froglight's
-        // BE early-outs on a single null check, so the per-tick cost of ticking
-        // every placed Froglight is one branch.
-        if (level.isClientSide()) {
-            return null;
-        }
+        // Server: the aura application loop. Client: the aura particle stream.
+        // Both early-out on a single null/flag check for a plain or toggled-off
+        // Froglight, so the per-tick cost on decorative Froglights is one branch.
         return createTickerHelper(type, PFBlockEntities.CONFIGURABLE_FROGLIGHT.get(),
-            ConfigurableFroglightBlockEntity::serverTick);
+            level.isClientSide()
+                ? ConfigurableFroglightBlockEntity::clientTick
+                : ConfigurableFroglightBlockEntity::serverTick);
     }
 
     /**
@@ -96,31 +91,6 @@ public class ConfigurableFroglightBlock extends RotatedPillarBlock implements En
                 SoundSource.BLOCKS, 0.4F, 1.5F);
         }
         return InteractionResult.sidedSuccess(level.isClientSide());
-    }
-
-    /**
-     * Effect-colored swirl while the aura is on. Reads the synced BE; silent and
-     * clean while off or on a plain Froglight. The block still glows light-15
-     * either way (its blockstate light, untouched here).
-     */
-    @Override
-    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        if (!(level.getBlockEntity(pos) instanceof ConfigurableFroglightBlockEntity froglight)
-                || !froglight.isAuraActive()) {
-            return;
-        }
-        StoredEffect effect = froglight.getEffect();
-        if (effect == null) {
-            return;
-        }
-        ColorParticleOption particle = ColorParticleOption.create(
-            ParticleTypes.ENTITY_EFFECT, effect.effect().value().getColor());
-        for (int i = 0; i < 2; i++) {
-            double x = pos.getX() + 0.5 + (random.nextDouble() - 0.5) * 1.4;
-            double y = pos.getY() + 0.5 + (random.nextDouble() - 0.5) * 1.4;
-            double z = pos.getZ() + 0.5 + (random.nextDouble() - 0.5) * 1.4;
-            level.addParticle(particle, x, y, z, 0.0, 0.01, 0.0);
-        }
     }
 
     /**

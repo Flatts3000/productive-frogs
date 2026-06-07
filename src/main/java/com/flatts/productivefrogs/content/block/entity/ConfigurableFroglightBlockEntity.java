@@ -6,6 +6,8 @@ import com.flatts.productivefrogs.registry.PFDataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.particles.ColorParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
@@ -67,6 +69,8 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
     public static final double AURA_RADIUS = 8.0;
     /** Ticks between aura applications (re-up cadence; the effect duration outlasts it so it never drops). */
     public static final int AURA_PULSE_TICKS = 40;
+    /** Ticks between client particle bursts while the aura is on. */
+    public static final int PARTICLE_INTERVAL_TICKS = 5;
 
     public ConfigurableFroglightBlockEntity(BlockPos pos, BlockState state) {
         super(PFBlockEntities.CONFIGURABLE_FROGLIGHT.get(), pos, state);
@@ -132,6 +136,28 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
         AABB area = new AABB(pos).inflate(AURA_RADIUS);
         for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, area)) {
             entity.addEffect(e.toInstance());
+        }
+    }
+
+    /**
+     * Client particle stream while the aura is on (#162). A steady few
+     * effect-colored swirl particles every {@link #PARTICLE_INTERVAL_TICKS}
+     * ticks rising off the top - deterministic and continuous, unlike the
+     * random {@code animateTick} (which fires too sparsely to read as on).
+     * Silent while off / on a plain Froglight, giving a clear on/off tell.
+     */
+    public static void clientTick(Level level, BlockPos pos, BlockState state, ConfigurableFroglightBlockEntity be) {
+        StoredEffect e = be.effect;
+        if (e == null || !e.enabled() || level.getGameTime() % PARTICLE_INTERVAL_TICKS != 0L) {
+            return;
+        }
+        ColorParticleOption particle = ColorParticleOption.create(
+            ParticleTypes.ENTITY_EFFECT, e.effect().value().getColor());
+        for (int i = 0; i < 3; i++) {
+            double x = pos.getX() + 0.5 + (level.random.nextDouble() - 0.5) * 1.2;
+            double y = pos.getY() + 0.9 + level.random.nextDouble() * 0.4;
+            double z = pos.getZ() + 0.5 + (level.random.nextDouble() - 0.5) * 1.2;
+            level.addParticle(particle, x, y, z, 0.0, 0.02, 0.0);
         }
     }
 
