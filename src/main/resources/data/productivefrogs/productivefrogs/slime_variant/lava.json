@@ -1,6 +1,6 @@
 {
-  "primer_item": "minecraft:magma_block",
-  "category": "infernal",
+  "primer_item": "minecraft:pointed_dripstone",
+  "category": "cave",
   "primary_color": 13916690,
   "secondary_color": 9715469,
   "inner_block": "minecraft:magma_block"
