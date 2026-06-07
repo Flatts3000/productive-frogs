@@ -89,6 +89,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         registration.registerBlockComponent(provider, SpawneryBlock.class);
         registration.registerBlockComponent(provider,
             com.flatts.productivefrogs.content.block.CrucibleBlock.class);
+        registration.registerBlockComponent(provider,
+            com.flatts.productivefrogs.content.block.CastingMoldBlock.class);
         registration.registerBlockComponent(MILK_SOURCE, SlimeMilkSourceBlock.class);
         registration.registerEntityComponent(new FrogStatsProvider(), ResourceFrog.class);
         registration.registerBlockComponent(PRIMED_EGG_STATS, PrimedFrogEggBlock.class);
@@ -137,6 +139,21 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                     // Froglight units (the number the player actually thinks in).
                     tooltip.add(Component.translatable("productivefrogs.jade.crucible_solids",
                         solids, String.format("%.1f", solids / 1000.0F)));
+                }
+            } else if (be instanceof com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity mold) {
+                // Buffered molten + cast progress, both off the BE's update tag
+                // (same client-read shape as the Crucible above).
+                var fluid = mold.fluid();
+                if (!fluid.isEmpty()) {
+                    tooltip.add(Component.translatable("productivefrogs.jade.crucible_fluid",
+                        fluid.getFluid().getFluidType().getDescription(),
+                        fluid.getAmount(),
+                        com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity.TANK_CAPACITY));
+                }
+                int progress = mold.progress();
+                if (progress > 0) {
+                    tooltip.add(Component.translatable("productivefrogs.jade.progress",
+                        percent(progress, com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity.CAST_TIME)));
                 }
             }
         }

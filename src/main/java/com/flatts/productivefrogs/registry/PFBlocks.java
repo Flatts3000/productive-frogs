@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.block.CastingMoldBlock;
 import com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock;
 import com.flatts.productivefrogs.content.block.CrucibleBlock;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
@@ -118,6 +119,21 @@ public final class PFBlocks {
             // neighbor faces behind it - which read as see-through-to-the-sky
             // holes in-world.
             .noOcclusion()
+    );
+
+    /**
+     * The Casting Mold (v1.12 wave 2) - solidifies molten metal into ingots.
+     * Sits on top of a Crucible to complete the heat / Crucible / Mold tower,
+     * or runs free-standing fed by pipes and buckets. Iron-and-bricks identity
+     * like the Crucible; METAL sound for the iron frame.
+     */
+    public static final DeferredBlock<CastingMoldBlock> CASTING_MOLD = BLOCKS.registerBlock(
+        "casting_mold",
+        CastingMoldBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .strength(2.0F)
+            .sound(SoundType.METAL)
     );
 
     private static Map<Category, DeferredBlock<PrimedFrogEggBlock>> buildPrimedEggs() {

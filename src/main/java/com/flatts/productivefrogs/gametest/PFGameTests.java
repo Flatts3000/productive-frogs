@@ -2529,15 +2529,17 @@ public final class PFGameTests {
     }
 
     /**
-     * End-to-end melt loop: torch (heat 1) under a Crucible, a lava Froglight
-     * loaded, and the melt must complete in MELT_TOTAL (400) ticks producing
-     * 1,000 mB of lava in the tank. Once full, three invariants are checked in
-     * the same world state: (1) a water Froglight is rejected (single-fluid
-     * tank: lava != water), (2) the FluidHandler.BLOCK capability refuses
-     * fill() (input is items, not fluid), and (3) the capability drains the
-     * full 1,000 mB of lava back out (the pipe/bucket path).
+     * End-to-end melt loop: a torch first pins the heat-1 data-map read, then
+     * the heat source swaps to soul fire (heat 5, permanent on soul sand) so
+     * the 1,000 mB lava Froglight melts in CI-friendly time (~1,340 ticks at
+     * 0.15 mB/tick/heat - over a torch the bulk fluids now take minutes by
+     * design). Once full, three invariants are checked in the same world
+     * state: (1) a water Froglight is rejected (single-fluid tank: lava !=
+     * water), (2) the FluidHandler.BLOCK capability refuses fill() (input is
+     * items, not fluid), and (3) the capability drains the full 1,000 mB of
+     * lava back out (the pipe/bucket path).
      */
-    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 500)
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 1600)
     public static void crucibleMeltsLavaFroglightOverTorchHeat(GameTestHelper helper) {
         BlockPos base = new BlockPos(2, 1, 2);
         helper.setBlock(base, net.minecraft.world.level.block.Blocks.STONE);
@@ -2550,6 +2552,13 @@ public final class PFGameTests {
         }
         if (crucible.heatBelow() != 1) {
             helper.fail("torch below should read heat 1 from the crucible_heat data map, got " + crucible.heatBelow());
+            return;
+        }
+        // Swap the torch for soul fire so the bulk melt finishes in CI time.
+        helper.setBlock(base, net.minecraft.world.level.block.Blocks.SOUL_SAND);
+        helper.setBlock(base.above(), net.minecraft.world.level.block.Blocks.SOUL_FIRE);
+        if (crucible.heatBelow() != 5) {
+            helper.fail("soul fire below should read heat 5 from the crucible_heat data map, got " + crucible.heatBelow());
             return;
         }
         if (!crucible.acceptFroglight(stampedFroglight("lava"))) {
@@ -2663,7 +2672,7 @@ public final class PFGameTests {
      * the PF-minted {@code productivefrogs:molten_iron} fallback. One test
      * therefore pins the ATO-deferral path locally and the PF-mint path in CI.
      */
-    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 1400)
     public static void crucibleMeltsMetalFroglightToMoltenFluid(GameTestHelper helper) {
         BlockPos base = new BlockPos(2, 1, 2);
         helper.setBlock(base, net.minecraft.world.level.block.Blocks.STONE);
@@ -2748,6 +2757,155 @@ public final class PFGameTests {
         ItemStack bounced = items.insertItem(0, fifth, false);
         if (bounced.isEmpty() || bounced.getCount() != 1) {
             helper.fail("fifth Froglight must bounce off the full solids queue");
+            return;
+        }
+        helper.succeed();
+    }
+
+    // ===================================================================
+    // Casting Mold (v1.12 wave 2 part B) — molten -> ingot
+    // ===================================================================
+
+    /** The molten-iron fluid this environment mints (mirrors the recipe conditions). */
+    private static net.minecraft.world.level.material.Fluid envMoltenIron() {
+        ResourceLocation id = net.neoforged.fml.ModList.get().isLoaded("alltheores")
+            ? ResourceLocation.parse("alltheores:molten_iron")
+            : ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "molten_iron");
+        return BuiltInRegistries.FLUID.get(id);
+    }
+
+    /**
+     * The full three-block tower, end to end: torch (heat 1) under a Crucible
+     * under a Casting Mold. An iron Froglight melts to 180 mB molten iron,
+     * the Mold tower-pulls it (no pipes), and two 90 mB casts land 2 iron
+     * ingots in the output slot - the Tinkers-convention ore-doubling yield
+     * surfacing as items. Environment-aware like the melt test: the molten
+     * fluid is ATO's or PF's, but the cast output is vanilla iron either way
+     * (the recipe matches by {@code c:molten_iron} TAG).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 1600)
+    public static void castingMoldTowerCastsIronFroglightToTwoIngots(GameTestHelper helper) {
+        BlockPos base = new BlockPos(2, 1, 2);
+        helper.setBlock(base, net.minecraft.world.level.block.Blocks.STONE);
+        helper.setBlock(base.above(), net.minecraft.world.level.block.Blocks.TORCH);
+        helper.setBlock(base.above(2), PFBlocks.CRUCIBLE.get());
+        helper.setBlock(base.above(3), PFBlocks.CASTING_MOLD.get());
+        if (!(helper.getBlockEntity(base.above(2))
+                instanceof com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity crucible)) {
+            helper.fail("crucible block did not create a CrucibleBlockEntity");
+            return;
+        }
+        if (!(helper.getBlockEntity(base.above(3))
+                instanceof com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity mold)) {
+            helper.fail("casting mold block did not create a CastingMoldBlockEntity");
+            return;
+        }
+        if (!crucible.acceptFroglight(stampedFroglight("iron"))) {
+            helper.fail("iron Froglight should queue into the crucible");
+            return;
+        }
+        helper.succeedWhen(() -> {
+            ItemStack out = mold.output().getStackInSlot(
+                com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity.OUTPUT_SLOT);
+            helper.assertTrue(out.is(net.minecraft.world.item.Items.IRON_INGOT) && out.getCount() == 2,
+                "tower should cast 2 iron ingots from one iron Froglight (180 mB / 90 mB), got "
+                    + out.getCount() + " x " + BuiltInRegistries.ITEM.getKey(out.getItem()));
+            helper.assertTrue(mold.fluid().isEmpty() && crucible.fluid().isEmpty(),
+                "both tanks should be empty after the full melt + double cast");
+        });
+    }
+
+    /**
+     * Free-standing Mold fed through the fill-enabled FluidHandler.BLOCK
+     * capability (the pipe path): 90 mB of this environment's molten iron
+     * fills, and one cast lands 1 iron ingot with the buffer drained.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void castingMoldCapabilityFillCastsOneIngot(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 1, 2);
+        helper.setBlock(pos, PFBlocks.CASTING_MOLD.get());
+        if (!(helper.getBlockEntity(pos)
+                instanceof com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity mold)) {
+            helper.fail("casting mold block did not create a CastingMoldBlockEntity");
+            return;
+        }
+        net.neoforged.neoforge.fluids.capability.IFluidHandler cap = helper.getLevel().getCapability(
+            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+            helper.absolutePos(pos), null);
+        if (cap == null) {
+            helper.fail("casting mold exposes no FluidHandler.BLOCK capability");
+            return;
+        }
+        int filled = cap.fill(new net.neoforged.neoforge.fluids.FluidStack(envMoltenIron(), 90),
+            net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+        if (filled != 90) {
+            helper.fail("capability should accept the full 90 mB of molten iron, took " + filled);
+            return;
+        }
+        // Fill-only handler: committed molten must not be pipeable back out -
+        // it leaves as a cast item or not at all.
+        if (!cap.drain(90, net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE).isEmpty()) {
+            helper.fail("mold capability must refuse drain (fill-only; molten leaves as an item)");
+            return;
+        }
+        helper.succeedWhen(() -> {
+            ItemStack out = mold.output().getStackInSlot(
+                com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity.OUTPUT_SLOT);
+            helper.assertTrue(out.is(net.minecraft.world.item.Items.IRON_INGOT) && out.getCount() == 1,
+                "90 mB molten iron should cast 1 iron ingot, got "
+                    + out.getCount() + " x " + BuiltInRegistries.ITEM.getKey(out.getItem()));
+            helper.assertTrue(mold.fluid().isEmpty(), "buffer should be drained after the cast");
+        });
+    }
+
+    /**
+     * Fill gating: the Mold accepts only fluids some {@code mold_casting}
+     * recipe consumes. Water and lava (no cast recipes) bounce off the
+     * capability with 0 accepted, and once molten iron is buffered a
+     * different castable molten is refused too (single-fluid buffer).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void castingMoldRejectsNonCastableFluids(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 1, 2);
+        helper.setBlock(pos, PFBlocks.CASTING_MOLD.get());
+        if (!(helper.getBlockEntity(pos)
+                instanceof com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity mold)) {
+            helper.fail("casting mold block did not create a CastingMoldBlockEntity");
+            return;
+        }
+        net.neoforged.neoforge.fluids.capability.IFluidHandler cap = helper.getLevel().getCapability(
+            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+            helper.absolutePos(pos), null);
+        if (cap == null) {
+            helper.fail("casting mold exposes no FluidHandler.BLOCK capability");
+            return;
+        }
+        if (cap.fill(new net.neoforged.neoforge.fluids.FluidStack(
+                net.minecraft.world.level.material.Fluids.WATER, 1000),
+                net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE) != 0) {
+            helper.fail("water has no mold_casting recipe and must be refused");
+            return;
+        }
+        if (cap.fill(new net.neoforged.neoforge.fluids.FluidStack(
+                net.minecraft.world.level.material.Fluids.LAVA, 1000),
+                net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE) != 0) {
+            helper.fail("lava has no mold_casting recipe and must be refused");
+            return;
+        }
+        // Buffer 45 mB molten iron (a partial tower pull's worth)...
+        if (cap.fill(new net.neoforged.neoforge.fluids.FluidStack(envMoltenIron(), 45),
+                net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE) != 45) {
+            helper.fail("a partial 45 mB of molten iron should still be accepted (amount is the solidify loop's concern)");
+            return;
+        }
+        // ...then a different castable molten must bounce (single-fluid buffer).
+        net.minecraft.world.level.material.Fluid copper = BuiltInRegistries.FLUID.get(
+            net.neoforged.fml.ModList.get().isLoaded("alltheores")
+                ? ResourceLocation.parse("alltheores:molten_copper")
+                : ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "molten_copper"));
+        if (cap.fill(new net.neoforged.neoforge.fluids.FluidStack(copper, 45),
+                net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE) != 0) {
+            helper.fail("molten copper must be refused while the buffer holds molten iron (single-fluid rule)");
             return;
         }
         helper.succeed();

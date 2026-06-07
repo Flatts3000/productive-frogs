@@ -29,9 +29,10 @@ import net.minecraft.world.item.crafting.RecipeHolder;
  * so datapack additions (including wave 2's molten metals) display with no
  * code change.
  *
- * <p>The arrow animates over the torch-heat melt duration (400 ticks at heat
- * 1); hotter sources melt proportionally faster - the heat ladder itself
- * lives in the companion {@link CrucibleHeatCategory}.
+ * <p>The arrow animates over the torch-heat melt duration of a 180 mB metal
+ * Froglight (1,200 ticks at heat 1); hotter sources and smaller recipes melt
+ * proportionally faster - the heat ladder itself lives in the companion
+ * {@link CrucibleHeatCategory}.
  */
 public final class CrucibleMeltCategory implements IRecipeCategory<RecipeHolder<CrucibleMeltRecipe>> {
 
@@ -46,9 +47,9 @@ public final class CrucibleMeltCategory implements IRecipeCategory<RecipeHolder<
     private static final int ARROW_X = 30;
     private static final int ARROW_Y = 4;
 
-    /** Torch-heat melt duration: MELT_TOTAL-equivalent ticks for one Froglight. */
+    /** Torch-heat melt duration of the reference 180 mB metal Froglight. */
     private static final int TORCH_MELT_TICKS =
-        1000 / CrucibleBlockEntity.MELT_PER_HEAT * CrucibleBlockEntity.MELT_PULSE_TICKS;
+        180 / CrucibleBlockEntity.MELT_PER_HEAT * CrucibleBlockEntity.MELT_PULSE_TICKS;
 
     private final IDrawable icon;
     private final IDrawableAnimated arrow;

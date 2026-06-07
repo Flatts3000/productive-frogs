@@ -77,6 +77,8 @@ CF_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 # deps auto-resolve. Verify the modid inside any jar before adding a slug here.
 TARGETS = {
     "powah": "Powah (crystal variants; uraninite #146)",
+    # Official Buuz135 distribution; required titanium dep auto-resolves.
+    "industrial-foregoing": "Industrial Foregoing (pink_slime / latex melt fluids)",
 }
 
 ROOT = Path(__file__).resolve().parent.parent

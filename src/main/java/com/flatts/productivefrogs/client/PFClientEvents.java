@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.client.renderer.ParentSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceFrogRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
+import com.flatts.productivefrogs.client.screen.CastingMoldScreen;
 import com.flatts.productivefrogs.client.screen.SlimeMilkerScreen;
 import com.flatts.productivefrogs.client.screen.SpawneryScreen;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
@@ -345,6 +346,7 @@ public final class PFClientEvents {
     public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
         event.register(PFMenuTypes.SLIME_MILKER.get(), SlimeMilkerScreen::new);
         event.register(PFMenuTypes.SPAWNERY.get(), SpawneryScreen::new);
+        event.register(PFMenuTypes.CASTING_MOLD.get(), CastingMoldScreen::new);
     }
 
     /**
