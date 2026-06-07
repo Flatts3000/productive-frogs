@@ -253,6 +253,20 @@ public final class PFModBusEvents {
     }
 
     /**
+     * Common setup: register the Curios {@code productivefrogs:brewed} slot
+     * validator (#169) when Curios is loaded. Behind the isLoaded guard +
+     * enqueued so CuriosCompat never classloads on a Curios-less pack and the
+     * static-API call runs on the main thread. The validator must exist before
+     * datapacks (slot JSONs) load, which is after common setup.
+     */
+    @SubscribeEvent
+    public static void onCommonSetup(net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) {
+        if (net.neoforged.fml.ModList.get().isLoaded("curios")) {
+            event.enqueueWork(com.flatts.productivefrogs.integration.curios.CuriosCompat::registerPredicate);
+        }
+    }
+
+    /**
      * Mirror of {@link Monster#checkMonsterSpawnRules} but typed against
      * {@link Mob} so it accepts our Slime-derived parent species (Slime does
      * not extend Monster in vanilla).

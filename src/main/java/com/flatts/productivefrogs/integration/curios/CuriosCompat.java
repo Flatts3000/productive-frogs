@@ -1,12 +1,15 @@
 package com.flatts.productivefrogs.integration.curios;
 
+import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
 import com.flatts.productivefrogs.data.StoredEffect;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFItems;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.CuriosCapability;
 import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.type.capability.ICurio;
@@ -40,6 +43,23 @@ public final class CuriosCompat {
             CuriosCapability.ITEM,
             (stack, ctx) -> new BrewedFroglightCurio(stack),
             PFItems.CONFIGURABLE_FROGLIGHT.get());
+    }
+
+    /**
+     * Register the {@code productivefrogs:brewed} slot validator and use it on
+     * the froglight slot (not {@code curios:tag}). The tag validator gates by
+     * ITEM, so it can't tell a brewed Froglight from a plain one - every
+     * Froglight matched, and JEI (which reads slot validity via
+     * {@code isStackValid}, never {@code canEquip}) showed them all as
+     * equippable. A component-aware predicate fixes both the GUI and JEI: only
+     * a stack actually carrying {@code STORED_EFFECT} is valid for the slot.
+     * Call once during common setup ({@code enqueueWork}); registered on both
+     * dist so the client GUI and JEI see it too.
+     */
+    public static void registerPredicate() {
+        CuriosApi.registerCurioPredicate(
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "brewed"),
+            slotResult -> slotResult.stack().has(PFDataComponents.STORED_EFFECT.get()));
     }
 
     /** Slot id of the dedicated Froglight curio slot (matches the slot JSON filename). */
