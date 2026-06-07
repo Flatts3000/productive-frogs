@@ -199,6 +199,21 @@ public final class PFModBusEvents {
             (be, side) -> be.itemHandler()
         );
 
+        // Casting Mold (v1.12 wave 2): fill-enabled fluid tank (recipe-
+        // validated, single-fluid - pipes and buckets pour molten in; drain
+        // is also exposed so excess can be pulled back out) plus an
+        // extract-only item view so hoppers can pull cast ingots.
+        event.registerBlockEntity(
+            Capabilities.FluidHandler.BLOCK,
+            PFBlockEntities.CASTING_MOLD.get(),
+            (be, side) -> be.fluidHandler()
+        );
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            PFBlockEntities.CASTING_MOLD.get(),
+            (be, side) -> be.outputView()
+        );
+
         // Per-variant Slime Milk buckets (v1.8) are SlimeMilkBucketItem extends
         // BucketItem. NeoForge only auto-registers FluidHandler.ITEM for the exact
         // BucketItem class, not subclasses, so wire each up explicitly - this is

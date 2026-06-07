@@ -299,6 +299,16 @@ public final class PFItems {
         new Item.Properties()
     );
 
+    /**
+     * Casting Mold BlockItem (v1.12 wave 2) - places {@link PFBlocks#CASTING_MOLD},
+     * the molten-to-ingot solidifier that completes the Crucible tower.
+     */
+    public static final DeferredItem<BlockItem> CASTING_MOLD = ITEMS.registerSimpleBlockItem(
+        "casting_mold",
+        PFBlocks.CASTING_MOLD,
+        new Item.Properties()
+    );
+
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {

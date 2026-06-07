@@ -1,0 +1,8 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "alltheores" }
+  ],
+  "type": "productivefrogs:mold_casting",
+  "fluid": { "tag": "c:molten_uranium", "amount": 90 },
+  "result": { "id": "alltheores:uranium_ingot" }
+}

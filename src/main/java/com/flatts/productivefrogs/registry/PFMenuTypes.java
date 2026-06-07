@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.menu.CastingMoldMenu;
 import com.flatts.productivefrogs.content.menu.SlimeMilkerMenu;
 import com.flatts.productivefrogs.content.menu.SpawneryMenu;
 import java.util.function.Supplier;
@@ -34,6 +35,12 @@ public final class PFMenuTypes {
         MENU_TYPES.register(
             "spawnery",
             () -> IMenuTypeExtension.create(SpawneryMenu::new)
+        );
+
+    public static final Supplier<MenuType<CastingMoldMenu>> CASTING_MOLD =
+        MENU_TYPES.register(
+            "casting_mold",
+            () -> IMenuTypeExtension.create(CastingMoldMenu::new)
         );
 
     private PFMenuTypes() {

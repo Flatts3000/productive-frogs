@@ -3,7 +3,6 @@ package com.flatts.productivefrogs.client.screen;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.menu.SpawneryMenu;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
@@ -18,7 +17,7 @@ import net.minecraft.world.entity.player.Inventory;
  * (primer slot frame added, vanilla burn-flame + progress-arrow sprites re-inlined
  * into the (176, *) atlas region so these blits work).
  */
-public class SpawneryScreen extends AbstractContainerScreen<SpawneryMenu> {
+public class SpawneryScreen extends PFContainerScreen<SpawneryMenu> {
 
     private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath(
         ProductiveFrogs.MOD_ID, "textures/gui/container/spawnery.png");
@@ -46,16 +45,6 @@ public class SpawneryScreen extends AbstractContainerScreen<SpawneryMenu> {
         super(menu, playerInv, title);
         this.imageWidth = 176;
         this.imageHeight = 166;
-    }
-
-    @Override
-    public void render(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-        // AbstractContainerScreen#render in NeoForge 1.21.1 draws the background,
-        // slots, and labels but does NOT render item tooltips - a renderBg-only
-        // screen shows none. Add the tooltip pass here; super.render does not
-        // render it, so there's no double-draw.
-        super.render(gui, mouseX, mouseY, partialTick);
-        this.renderTooltip(gui, mouseX, mouseY);
     }
 
     @Override

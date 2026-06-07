@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
@@ -69,6 +70,17 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "crucible",
             () -> BlockEntityType.Builder.of(CrucibleBlockEntity::new, PFBlocks.CRUCIBLE.get()).build(null)
+        );
+
+    /**
+     * BE type for the {@code casting_mold} block (v1.12 wave 2) - owns the
+     * 1,000 mB molten buffer, the cast-progress timer, and the one output
+     * slot. See {@link CastingMoldBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<CastingMoldBlockEntity>> CASTING_MOLD =
+        BLOCK_ENTITIES.register(
+            "casting_mold",
+            () -> BlockEntityType.Builder.of(CastingMoldBlockEntity::new, PFBlocks.CASTING_MOLD.get()).build(null)
         );
 
     /** BE type for the {@code spawnery} block - holds the 4-slot inventory + cook/burn timers. */

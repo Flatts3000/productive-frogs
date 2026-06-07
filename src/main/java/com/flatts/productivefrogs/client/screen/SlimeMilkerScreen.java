@@ -4,7 +4,6 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
 import com.flatts.productivefrogs.content.menu.SlimeMilkerMenu;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
@@ -21,7 +20,7 @@ import net.minecraft.world.entity.player.Inventory;
  * cook-progress fraction from the menu's synced {@link
  * net.minecraft.world.inventory.ContainerData}.
  */
-public class SlimeMilkerScreen extends AbstractContainerScreen<SlimeMilkerMenu> {
+public class SlimeMilkerScreen extends PFContainerScreen<SlimeMilkerMenu> {
 
     private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath(
         ProductiveFrogs.MOD_ID, "textures/gui/container/slime_milker.png");
@@ -50,16 +49,6 @@ public class SlimeMilkerScreen extends AbstractContainerScreen<SlimeMilkerMenu> 
         // Vanilla container size: 176x166 PNG region.
         this.imageWidth = 176;
         this.imageHeight = 166;
-    }
-
-    @Override
-    public void render(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-        // AbstractContainerScreen#render in NeoForge 1.21.1 draws the background,
-        // slots, and labels but does NOT render item tooltips - a renderBg-only
-        // screen shows none. Add the tooltip pass here; super.render does not
-        // render it, so there's no double-draw.
-        super.render(gui, mouseX, mouseY, partialTick);
-        this.renderTooltip(gui, mouseX, mouseY);
     }
 
     @Override

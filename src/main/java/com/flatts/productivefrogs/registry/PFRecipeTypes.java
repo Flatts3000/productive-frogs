@@ -33,6 +33,14 @@ public final class PFRecipeTypes {
     public static final Supplier<RecipeSerializer<CrucibleMeltRecipe>> CRUCIBLE_MELTING_SERIALIZER =
         RECIPE_SERIALIZERS.register("crucible_melting", CrucibleMeltRecipe.Serializer::new);
 
+    public static final Supplier<RecipeType<com.flatts.productivefrogs.content.recipe.MoldCastingRecipe>> MOLD_CASTING =
+        RECIPE_TYPES.register("mold_casting", () -> RecipeType.simple(
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "mold_casting")));
+
+    public static final Supplier<RecipeSerializer<com.flatts.productivefrogs.content.recipe.MoldCastingRecipe>> MOLD_CASTING_SERIALIZER =
+        RECIPE_SERIALIZERS.register("mold_casting",
+            com.flatts.productivefrogs.content.recipe.MoldCastingRecipe.Serializer::new);
+
     private PFRecipeTypes() {
         // utility class
     }
