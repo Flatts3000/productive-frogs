@@ -57,6 +57,40 @@ public class CastingMoldScreen extends PFContainerScreen<CastingMoldMenu> {
     }
 
     @Override
+    public void render(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+        super.render(gui, mouseX, mouseY, partialTick);
+        renderGaugeTooltip(gui, mouseX, mouseY);
+    }
+
+    /**
+     * Hover tooltip for the fluid gauge: the buffered fluid's name plus
+     * {@code amount / capacity mB} (or "Empty"). Slots have their own tooltip
+     * pass in {@link PFContainerScreen}; the gauge isn't a slot, so it needs
+     * this explicit hit-test.
+     */
+    private void renderGaugeTooltip(GuiGraphics gui, int mouseX, int mouseY) {
+        int gx = (this.width - this.imageWidth) / 2 + GAUGE_X;
+        int gy = (this.height - this.imageHeight) / 2 + GAUGE_Y;
+        if (mouseX < gx || mouseX >= gx + GAUGE_WIDTH || mouseY < gy || mouseY >= gy + GAUGE_HEIGHT) {
+            return;
+        }
+        CastingMoldBlockEntity be = this.menu.blockEntity();
+        FluidStack buffered = be == null ? FluidStack.EMPTY : be.fluid();
+        java.util.List<Component> lines = new java.util.ArrayList<>();
+        if (buffered.isEmpty()) {
+            lines.add(Component.translatable("productivefrogs.gui.fluid_empty"));
+        } else {
+            lines.add(buffered.getHoverName());
+            // Amount from the synced ContainerData (live while the menu is
+            // open), capacity from the constant.
+            lines.add(Component.translatable("productivefrogs.gui.fluid_amount",
+                this.menu.getFluidAmount(), CastingMoldBlockEntity.TANK_CAPACITY)
+                .withStyle(net.minecraft.ChatFormatting.GRAY));
+        }
+        gui.renderComponentTooltip(this.font, lines, mouseX, mouseY);
+    }
+
+    @Override
     protected void renderBg(GuiGraphics gui, float partialTick, int mouseX, int mouseY) {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
