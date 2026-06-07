@@ -191,7 +191,7 @@ The intended in-world layout is a vertical stack (decided 2026-06-06):
 ```
 [ Casting Mold ]   <- GUI, ingots out (hopper below... see note)
 [ Crucible      ]   <- GUI-less, Froglights in by right-click
-[ heat source   ]   <- vanilla block: magma block / fire / lava
+[ heat source   ]   <- vanilla block: torch / lava / fire (data-map driven)
 ```
 
 When a Casting Mold sits **directly on top of a Crucible**, it pulls molten
