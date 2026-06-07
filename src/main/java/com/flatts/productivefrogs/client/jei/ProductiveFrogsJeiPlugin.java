@@ -110,7 +110,8 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             new SlimeMilkerRecipeCategory(guiHelper),
             new SpawneryRecipeCategory(guiHelper),
             new CrucibleHeatCategory(guiHelper),
-            new CrucibleMeltCategory(guiHelper));
+            new CrucibleMeltCategory(guiHelper),
+            new MoldCastingCategory(guiHelper));
     }
 
     @Override
@@ -210,10 +211,13 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         addMilkerRecipes(reg, variants);
         addSpawneryRecipes(reg);
         addCrucibleHeatEntries(reg, variants);
-        // Melt recipes ride the real recipe type, so datapack additions
-        // (wave 2's molten metals included) surface with no code change.
+        // Melt + cast recipes ride their real recipe types, so datapack
+        // additions (molten metals, nugget/block casts) surface with no code
+        // change.
         reg.addRecipes(CrucibleMeltCategory.TYPE, level.getRecipeManager()
             .getAllRecipesFor(com.flatts.productivefrogs.registry.PFRecipeTypes.CRUCIBLE_MELTING.get()));
+        reg.addRecipes(MoldCastingCategory.TYPE, level.getRecipeManager()
+            .getAllRecipesFor(com.flatts.productivefrogs.registry.PFRecipeTypes.MOLD_CASTING.get()));
     }
 
     /**
@@ -275,6 +279,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(PFBlocks.SLIME_MILKER.get(), SlimeMilkerRecipeCategory.TYPE);
         registration.addRecipeCatalyst(PFBlocks.CRUCIBLE.get(), CrucibleHeatCategory.TYPE);
         registration.addRecipeCatalyst(PFBlocks.CRUCIBLE.get(), CrucibleMeltCategory.TYPE);
+        registration.addRecipeCatalyst(PFBlocks.CASTING_MOLD.get(), MoldCastingCategory.TYPE);
         // Spawnery catalyst only when enabled - the block is removed from JEI in
         // onRuntimeAvailable when off, and addSpawneryRecipes adds no recipes then,
         // so registering the catalyst would surface an empty category for a hidden
