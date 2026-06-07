@@ -1,7 +1,10 @@
 package com.flatts.productivefrogs.content.block;
 
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
+import com.flatts.productivefrogs.registry.PFDataComponents;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -40,5 +43,21 @@ public class ConfigurableFroglightBlock extends RotatedPillarBlock implements En
     @Override
     public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new ConfigurableFroglightBlockEntity(pos, state);
+    }
+
+    /**
+     * Pick-block (middle-click) - the third variant-transfer surface, easy to
+     * miss next to placement and loot: stamp the BE's variant onto the cloned
+     * stack, or creative pick-block hands back a generic (untinted, smeltless)
+     * Froglight.
+     */
+    @Override
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
+        ItemStack stack = super.getCloneItemStack(level, pos, state);
+        if (level.getBlockEntity(pos) instanceof ConfigurableFroglightBlockEntity froglight
+                && froglight.getVariantId() != null) {
+            stack.set(PFDataComponents.SLIME_VARIANT.get(), froglight.getVariantId());
+        }
+        return stack;
     }
 }
