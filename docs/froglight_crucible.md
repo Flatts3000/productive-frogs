@@ -215,11 +215,15 @@ down-face hopper courtesy applies to free-standing Molds.
 
 New `SlimeVariant` entries (datapack JSON, no Java):
 
-- **lava slime** - Infernal species. **Primer: `minecraft:magma_block`**
-  (cheap, thematic, reachable pre-lava via the Infernal chain).
+- **lava slime** - Cave species (shipped v1.12 as Infernal; recategorized to
+  Cave 2026-06-07, #164 - day-one renewable fluids belong in tier 1, and
+  Infernal gated renewable lava behind most of the campaign). **Primer:
+  `minecraft:magma_block`** - kept through the move: primers are obtainment
+  recipes, not species statements, and it stays cheap and already-taught.
   `inner_block: minecraft:magma_block`; colors per the lava theme.
-- **water slime** - Tide species. **Primer: `minecraft:kelp`** (renewable,
-  water-themed, dirt-cheap - correct for a fluid the player will want early).
+- **water slime** - Cave species (shipped v1.12 as Tide; recategorized with
+  lava, #164). **Primer: `minecraft:kelp`** - kept for the same reason
+  (renewable, dirt-cheap - correct for a fluid the player wants early).
   `inner_block: minecraft:blue_ice` or water-still texture per the texture
   generator's constraints; colors per the water theme.
 
