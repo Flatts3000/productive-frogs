@@ -39,9 +39,10 @@ public class CastingMoldScreen extends PFContainerScreen<CastingMoldMenu> {
     private static final int ARROW_WIDTH = 24;
     private static final int ARROW_HEIGHT = 16;
 
-    // Fluid gauge: a 16-wide column where the Milker's input slot sat,
-    // filling bottom-up with the buffered fluid.
-    private static final int GAUGE_X = 56;
+    // Fluid gauge: a 16-wide column on the left side of the panel (the sheet
+    // draws a recessed frame around it at (25, 16)), filling bottom-up with
+    // the buffered fluid.
+    private static final int GAUGE_X = 26;
     private static final int GAUGE_Y = 17;
     private static final int GAUGE_WIDTH = 16;
     private static final int GAUGE_HEIGHT = 52;
