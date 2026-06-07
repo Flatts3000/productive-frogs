@@ -212,6 +212,14 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 return;
             }
             data.putBoolean("MilkSource", true);
+            // Boss-tier altar (#184): N/6 catalyst faces, so an incomplete shell
+            // is debuggable. Written before the Unlimited early-return below so it
+            // shows even on an infinite (Endless-catalyst) boss source.
+            ResourceLocation variant = be.getVariantId();
+            if (SlimeMilkSourceBlock.variantRequiresCatalyst(accessor.getLevel(), variant)) {
+                data.putInt("AltarFaces",
+                    SlimeMilkSourceBlock.catalystFaceCount(accessor.getLevel(), accessor.getPosition(), variant));
+            }
             // Catalyst upgrade levels (v1.7): written before the count branch so
             // they still show on an infinite source. SpeedMax/QuantityMax travel
             // with the data so the client needs no config read.
@@ -243,6 +251,9 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             CompoundTag data = accessor.getServerData();
             if (data == null || !data.getBoolean("MilkSource")) {
                 return;
+            }
+            if (data.contains("AltarFaces")) {
+                tooltip.add(Component.translatable("productivefrogs.jade.altar", data.getInt("AltarFaces"), 6));
             }
             if (data.getBoolean("Unlimited")) {
                 tooltip.add(Component.translatable("productivefrogs.jade.spawns_unlimited"));

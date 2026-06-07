@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "productivefrogs:block/dragon_egg_catalyst"
+  }
+}

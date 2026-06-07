@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "productivefrogs_catalyst",
+  "pattern": [ "EEE", "EDE", "EEE" ],
+  "key": { "E": { "item": "minecraft:end_stone_bricks" }, "D": { "item": "minecraft:dragon_egg" } },
+  "result": { "id": "productivefrogs:dragon_egg_catalyst" }
+}

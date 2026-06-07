@@ -4,5 +4,6 @@
   "primary_color": 14405092,
   "secondary_color": 9201035,
   "inner_block": "minecraft:purpur_block",
-  "weight": 0
+  "weight": 0,
+  "spawn_catalyst": true
 }

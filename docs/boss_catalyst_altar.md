@@ -72,6 +72,15 @@ Each catalyst is crafted **consuming its own boss resource** (decision #184) - y
 
 The six-stars-per-altar cost is the real sink; it makes the first altar a genuine project and keeps boss resources from trivializing once the loop closes.
 
+## Toxic boss milk (the narrative glue)
+
+Boss-tier Slime Milk is **toxic to players** - standing in it inflicts Wither. This is *why* you cage a boss source in an altar: the milk is dangerous, so you contain it. `ToxicMilkHandler` (`PlayerTickEvent.Post`, server-only, once a second) applies Wither I to any player standing in a boss variant's milk.
+
+- **Players only** (decided): the boss slimes a source spawns wade through their own milk and must not poison themselves; non-player entities are untouched. Creative/spectator exempt.
+- **Same closed boss set** as the catalyst blocks (`PFBlocks.catalystForVariant().keySet()`); both source and flowing milk of a variant share one `FluidType`, so `isInFluidType` catches either.
+- **Independent of the altar gate**: toxicity is always-on for boss milk wherever it sits; the altar gates *spawning*, the toxicity gives the *reason* to wall it in. Wither (not Poison) because it can actually kill - the boss-tier "get out" signal - but it's escapable.
+- **No GameTest**: `PlayerTickEvent` doesn't fire for gametest mock players, and `isInFluidType` needs real fluid physics - manual `runClient` verification (wade into boss milk, take Wither; non-boss milk is harmless; creative is exempt).
+
 ## UX / feedback
 
 - **Jade line on the source**: `Catalyst altar: N/6` (the source BE is already Jade-annotated for spawns-remaining; add the line in the same provider, computed from the six neighbours). Makes a broken shell debuggable at a glance.
@@ -105,3 +114,4 @@ The six-stars-per-altar cost is the real sink; it makes the first altar a genuin
 5. **Pause, don't destroy** - an incomplete altar freezes the source; no budget waste.
 6. **Catalyst consumes the boss resource** - sacrifice-to-scale economic loop.
 7. **All six faces, strict** - no data-driven count (revisit only if a lighter gate is ever wanted).
+8. **Boss milk is toxic to players** (Wither), players-only - the narrative reason to contain a boss source in the altar (added 2026-06-07).

@@ -7,6 +7,7 @@ import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.item.MilkCatalyst;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.SlimeVariant;
+import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFRegistries;
@@ -208,6 +209,17 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
             scheduleNextSpawnTick(level, pos, random, be.getSpeedLevel());
             return;
         }
+        // Boss-tier altar gate (#184, docs/boss_catalyst_altar.md): a variant
+        // with spawn_catalyst spawns nothing until the matching catalyst block
+        // is on all six faces of the source. Pause WITHOUT spending the budget
+        // (like the density cap above) and reschedule, so the altar can be
+        // completed later without the source draining in the meantime.
+        if (requiresCatalyst(level, variantId) && !altarComplete(level, pos, variantId)) {
+            PFDebug.logOnce(PFDebug.Area.MILK_SOURCE, "altar#" + pos, () -> String.format(
+                "source @%s: paused, %s altar incomplete (needs 6 catalyst faces)", pos, variantId));
+            scheduleNextSpawnTick(level, pos, random, be.getSpeedLevel());
+            return;
+        }
         spawnBatch(level, pos, random, variantId, be);
         if (depleting) {
             be.decrementSpawns();
@@ -261,6 +273,64 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
         }
         SlimeVariant variant = registry.get(variantId);
         return variant == null ? null : variant.category();
+    }
+
+    /**
+     * True when this source's variant declares {@code spawn_catalyst} - the
+     * boss-tier altar gate (#184). Resolved from the registry; unknown/sentinel
+     * variants are not gated.
+     */
+    private static boolean requiresCatalyst(ServerLevel level, ResourceLocation variantId) {
+        var registry = level.registryAccess().registry(PFRegistries.SLIME_VARIANT).orElse(null);
+        if (registry == null) {
+            return false;
+        }
+        SlimeVariant variant = registry.get(variantId);
+        return variant != null && variant.spawnCatalyst();
+    }
+
+    /**
+     * True when all six faces of the source are the catalyst block that arms
+     * this variant ({@link PFBlocks#catalystForVariant()}). A missing mapping
+     * (shouldn't happen for a shipped boss variant) fails closed: the source
+     * stays paused rather than spawning ungated.
+     */
+    private static boolean altarComplete(ServerLevel level, BlockPos pos, ResourceLocation variantId) {
+        Block catalyst = PFBlocks.catalystForVariant().get(variantId);
+        if (catalyst == null) {
+            return false;
+        }
+        for (Direction dir : Direction.values()) {
+            if (!level.getBlockState(pos.relative(dir)).is(catalyst)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Count of completed catalyst faces (0-6), for the Jade readout. */
+    public static int catalystFaceCount(net.minecraft.world.level.Level level, BlockPos pos, ResourceLocation variantId) {
+        Block catalyst = PFBlocks.catalystForVariant().get(variantId);
+        if (catalyst == null) {
+            return 0;
+        }
+        int count = 0;
+        for (Direction dir : Direction.values()) {
+            if (level.getBlockState(pos.relative(dir)).is(catalyst)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /** Whether this variant is altar-gated, for the Jade readout (client-safe registry read). */
+    public static boolean variantRequiresCatalyst(net.minecraft.world.level.Level level, ResourceLocation variantId) {
+        var registry = level.registryAccess().registry(PFRegistries.SLIME_VARIANT).orElse(null);
+        if (registry == null) {
+            return false;
+        }
+        SlimeVariant variant = registry.get(variantId);
+        return variant != null && variant.spawnCatalyst();
     }
 
     private static boolean depletionEnabled() {

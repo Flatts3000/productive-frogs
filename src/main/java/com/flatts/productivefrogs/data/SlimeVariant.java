@@ -81,8 +81,21 @@ public record SlimeVariant(
     int secondaryColor,
     int weight,
     Optional<ResourceLocation> innerBlock,
-    Optional<ResourceLocation> spawnEntity
+    Optional<ResourceLocation> spawnEntity,
+    boolean spawnCatalyst
 ) {
+
+    /**
+     * Back-compat constructor without {@code spawnCatalyst} (defaults false).
+     * Lets the pre-#184 8-arg call sites (tests, any hand-construction) stand
+     * unchanged - only the codec and boss variants exercise the new field.
+     */
+    public SlimeVariant(Optional<ResourceLocation> primerItem, Optional<TagKey<Item>> primerTag,
+            Category category, int primaryColor, int secondaryColor, int weight,
+            Optional<ResourceLocation> innerBlock, Optional<ResourceLocation> spawnEntity) {
+        this(primerItem, primerTag, category, primaryColor, secondaryColor, weight,
+            innerBlock, spawnEntity, false);
+    }
 
     /**
      * Codec used by the datapack registry for both JSON loading and client
@@ -117,7 +130,12 @@ public record SlimeVariant(
             Codec.intRange(0, 0xFFFFFF).fieldOf("secondary_color").forGetter(SlimeVariant::secondaryColor),
             Codec.intRange(0, Integer.MAX_VALUE).optionalFieldOf("weight", 1).forGetter(SlimeVariant::weight),
             ResourceLocation.CODEC.optionalFieldOf("inner_block").forGetter(SlimeVariant::innerBlock),
-            ResourceLocation.CODEC.optionalFieldOf("spawn_entity").forGetter(SlimeVariant::spawnEntity)
+            ResourceLocation.CODEC.optionalFieldOf("spawn_entity").forGetter(SlimeVariant::spawnEntity),
+            // #184: when true, the variant's Slime Milk source spawns nothing
+            // until the matching catalyst block surrounds it on all 6 faces
+            // (the boss-tier altar gate). Generic field; the catalyst BLOCKS
+            // are hardcoded to the four boss resources in PFBlocks.
+            Codec.BOOL.optionalFieldOf("spawn_catalyst", false).forGetter(SlimeVariant::spawnCatalyst)
         ).apply(instance, SlimeVariant::new)
     ).comapFlatMap(SlimeVariant::requirePrimer, Function.<SlimeVariant>identity());
 

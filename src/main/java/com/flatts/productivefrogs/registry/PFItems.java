@@ -309,6 +309,20 @@ public final class PFItems {
         new Item.Properties()
     );
 
+    /**
+     * Boss-tier catalyst BlockItems (#184). Placing the matching catalyst on all
+     * six faces of a boss-variant Slime Milk source arms it. See
+     * {@code docs/boss_catalyst_altar.md}.
+     */
+    public static final DeferredItem<BlockItem> NETHER_STAR_CATALYST =
+        ITEMS.registerSimpleBlockItem("nether_star_catalyst", PFBlocks.NETHER_STAR_CATALYST, new Item.Properties());
+    public static final DeferredItem<BlockItem> DRAGON_EGG_CATALYST =
+        ITEMS.registerSimpleBlockItem("dragon_egg_catalyst", PFBlocks.DRAGON_EGG_CATALYST, new Item.Properties());
+    public static final DeferredItem<BlockItem> WITHER_SKELETON_SKULL_CATALYST =
+        ITEMS.registerSimpleBlockItem("wither_skeleton_skull_catalyst", PFBlocks.WITHER_SKELETON_SKULL_CATALYST, new Item.Properties());
+    public static final DeferredItem<BlockItem> DRAGON_BREATH_CATALYST =
+        ITEMS.registerSimpleBlockItem("dragon_breath_catalyst", PFBlocks.DRAGON_BREATH_CATALYST, new Item.Properties());
+
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {

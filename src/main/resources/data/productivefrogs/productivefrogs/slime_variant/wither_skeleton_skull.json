@@ -4,5 +4,6 @@
   "primary_color": 3289650,
   "secondary_color": 1513239,
   "inner_block": "minecraft:blackstone",
-  "weight": 0
+  "weight": 0,
+  "spawn_catalyst": true
 }

@@ -433,6 +433,65 @@ public final class PFGameTests {
     }
 
     /**
+     * Boss catalyst altar gate (#184, docs/boss_catalyst_altar.md). Tests the
+     * gate's decision logic directly via the public helpers (the spawn tick
+     * itself is scheduled + private; the predicate is the testable seam):
+     * (1) only spawn_catalyst variants are gated; (2) a 6-face count requires
+     * the MATCHING catalyst on all six faces; (3) a mismatched catalyst does
+     * not count.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void bossCatalystAltarGate(GameTestHelper helper) {
+        ResourceLocation netherStar = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star");
+        ResourceLocation iron = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+
+        // (1) gating predicate: boss variant requires a catalyst, iron does not.
+        if (!com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock
+                .variantRequiresCatalyst(helper.getLevel(), netherStar)) {
+            helper.fail("nether_star (spawn_catalyst) should require a catalyst altar");
+            return;
+        }
+        if (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock
+                .variantRequiresCatalyst(helper.getLevel(), iron)) {
+            helper.fail("iron is not a boss variant and must not be altar-gated");
+            return;
+        }
+
+        // (2) surround a center with nether_star_catalyst on 5 of 6 faces.
+        BlockPos center = new BlockPos(2, 2, 2);
+        net.minecraft.world.level.block.Block starCat = PFBlocks.NETHER_STAR_CATALYST.get();
+        net.minecraft.core.Direction[] dirs = net.minecraft.core.Direction.values();
+        for (int i = 0; i < dirs.length - 1; i++) {
+            helper.setBlock(center.relative(dirs[i]), starCat);
+        }
+        int five = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock
+            .catalystFaceCount(helper.getLevel(), helper.absolutePos(center), netherStar);
+        // catalystFaceCount takes a WORLD pos; helper.setBlock takes relative.
+        // Re-count against the relative center mapped to world via absolutePos.
+        if (five != 5) {
+            helper.fail("5 catalyst faces should read 5, got " + five);
+            return;
+        }
+        // (3) the 6th face: a MISMATCHED catalyst must not count.
+        helper.setBlock(center.relative(dirs[5]), PFBlocks.DRAGON_EGG_CATALYST.get());
+        int stillFive = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock
+            .catalystFaceCount(helper.getLevel(), helper.absolutePos(center), netherStar);
+        if (stillFive != 5) {
+            helper.fail("a dragon_egg_catalyst must not count toward a nether_star altar, got " + stillFive);
+            return;
+        }
+        // The matching 6th completes it.
+        helper.setBlock(center.relative(dirs[5]), starCat);
+        int six = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock
+            .catalystFaceCount(helper.getLevel(), helper.absolutePos(center), netherStar);
+        if (six != 6) {
+            helper.fail("6 matching catalyst faces should read 6, got " + six);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
      * V1.5: force discovery chance to 100% and split a Cave Slime; assert
      * every offspring is a Resource Slime carrying a variant from the live CAVE
      * pool. Verifies {@link SlimeVariant#pickWeighted} integration in
