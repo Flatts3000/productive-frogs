@@ -67,7 +67,7 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 
 ## Status
 
-**Latest release: v1.12.0 (beta on CurseForge since v1.9.1).** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, the Spawnery, frog stat breeding, Slime Milk catalysts, and fully pipeable per-variant Slime Milk. The v1.12 Froglight Crucible melts Froglights into real fluids over a heat source - renewable water and lava, plus molten metal at ore-doubling yield that the Casting Mold solidifies back into ingots.
+**Latest release: v1.13.0 (beta on CurseForge since v1.9.1).** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, the Spawnery, frog stat breeding, Slime Milk catalysts, and fully pipeable per-variant Slime Milk. The v1.12 Froglight Crucible melts Froglights into real fluids over a heat source - renewable water and lava, plus molten metal at ore-doubling yield that the Casting Mold solidifies back into ingots. v1.13 fills in six more vanilla resources and moves water/lava to the Cave frog.
 
 | Version line | Scope | Status |
 |---|---|---|
@@ -84,6 +84,7 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 | v1.10 | Obsidian -> Infernal recategorization | ✅ shipped |
 | v1.11 | Flux Networks + the full Powah ladder, Blaze rod | ✅ shipped |
 | v1.12 | The Froglight Crucible + Casting Mold (melt-and-cast lane) | ✅ shipped |
+| v1.13 | Six more vanilla variants; water/lava -> Cave | ✅ shipped |
 | v2 | Automation: power/multiblocks/terrariums | 🔭 future |
 
 Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope rationale: [`docs/versioning.md`](./docs/versioning.md).
