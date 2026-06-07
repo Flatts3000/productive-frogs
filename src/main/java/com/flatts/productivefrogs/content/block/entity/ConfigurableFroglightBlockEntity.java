@@ -151,8 +151,11 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
         if (e == null || !e.enabled() || level.getGameTime() % PARTICLE_INTERVAL_TICKS != 0L) {
             return;
         }
+        // MobEffect.getColor() is 0x00RRGGBB (no alpha); ColorParticleOption
+        // reads the top byte as alpha, so without this OR the swirl spawns fully
+        // transparent (the invisible-aura bug). Force opaque.
         ColorParticleOption particle = ColorParticleOption.create(
-            ParticleTypes.ENTITY_EFFECT, e.effect().value().getColor());
+            ParticleTypes.ENTITY_EFFECT, 0xFF000000 | e.effect().value().getColor());
         for (int i = 0; i < 3; i++) {
             double x = pos.getX() + 0.5 + (level.random.nextDouble() - 0.5) * 1.2;
             double y = pos.getY() + 0.9 + level.random.nextDouble() * 0.4;
