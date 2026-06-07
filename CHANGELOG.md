@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.13.0 - 2026-06-07 - Vanilla roster fills in, water & lava move to Cave
+
+### Added
+
+- **Six more vanilla resources are farmable.** Breeze rod (Cave), ghast tear (Infernal), phantom membrane (Void), armadillo scute and honeycomb (Bog), and turtle scute (Tide) all join the roster - prime a slime with one, feed it to the matching frog, and smelt the Froglight back into the same resource. These are the mob-adjacent drops the earlier vanilla sweep left out, several of them a real grind to farm by hand.
+- **JEI shows the Casting Mold's recipes.** Pressing U on an ingot now surfaces the Mold as a source, and the category shows molten -> ingot the way the Crucible category shows Froglight -> molten.
+
+### Changed
+
+- **Water and Lava slimes are now Cave resources** (they were Tide and Infernal). They exist to feed the Froglight Crucible's renewable-fluid lane, and water and lava are day-one bucket resources - gating them behind the Tide and Infernal frogs put renewable fluids too late in the journey. The Cave Frog now farms both. **Migration: the Lava Slime's primer changed from magma block to pointed dripstone** (cave-native and renewable, matching the new home). If you primed lava slimes with magma block, switch to pointed dripstone - existing Lava slimes, Froglights, buckets, and milk all carry over and re-home to Cave on world load; only the priming item changed. Water keeps its kelp primer.
+
 ## v1.12.0 - 2026-06-06 - The Froglight Crucible + Casting Mold
 
 ### Added
