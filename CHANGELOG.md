@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.14.0 - 2026-06-07 - Brewed Froglights + the boss tier
+
+### Added
+
+- **Brewed Froglights.** Splash or linger a potion onto a slime before a frog eats it, and the Froglight it drops captures that effect. A placed brewed Froglight is an aura: right-click to toggle it, and while it's on it bathes everything in range in the effect (good or bad - a Poison or Wither Froglight makes a defensive perimeter, a Regeneration one a healing room). Held in your main hand or offhand, it buffs just you. It glows while active and its tooltip names the effect. Negative effects are allowed on purpose.
+- **Curios slot for Brewed Froglights.** With Curios installed, a brewed Froglight goes in a dedicated Froglight charm slot (one at a time) and buffs you while worn - so you keep the effect without giving up a hand. Only brewed Froglights fit the slot.
+- **Boss and endgame resources.** Four trophy resources become farmable: Wither Skeleton Skull, Nether Star, Dragon Egg, and Dragon Breath. They're earned, not stumbled into - you have to prime the first slime with the real drop (kill the wither, spend the dragon egg), and a farm only runs once you've built an altar: the matching catalyst block on all six sides of the Slime Milk source. Four new catalyst blocks craft from the boss resource itself.
+- **Boss Slime Milk is toxic.** Standing in a boss resource's Slime Milk inflicts Wither on players - the reason you wall those sources off behind a catalyst altar. The slimes it spawns are unharmed, and creative players are immune.
+- **Five more vanilla resources** join the roster: bone, string, gunpowder, rotten flesh (Bog) and magma cream (Infernal).
+- **Refined Glowstone** is farmable with Mekanism installed (Infernal), alongside the Refined Obsidian already supported.
+
+### Fixed
+
+- **Resource Slimes show their inner block again.** A batch of recently-added slimes (ice, snow, the mob-drop and boss resources, and others) were rendering without the little block suspended inside them; their inner-surface textures are now generated. The Snow Slime in particular had been missing its inner block since it shipped.
+
 ## v1.13.0 - 2026-06-07 - Vanilla roster fills in, water & lava move to Cave
 
 ### Added

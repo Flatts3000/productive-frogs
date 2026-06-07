@@ -67,7 +67,7 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 
 ## Status
 
-**Latest release: v1.13.0 (beta on CurseForge since v1.9.1).** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, the Spawnery, frog stat breeding, Slime Milk catalysts, and fully pipeable per-variant Slime Milk. The v1.12 Froglight Crucible melts Froglights into real fluids over a heat source - renewable water and lava, plus molten metal at ore-doubling yield that the Casting Mold solidifies back into ingots. v1.13 fills in six more vanilla resources and moves water/lava to the Cave frog.
+**Latest release: v1.14.0 (beta on CurseForge since v1.9.1).** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, the Spawnery, frog stat breeding, Slime Milk catalysts, fully pipeable per-variant Slime Milk, and the Froglight Crucible + Casting Mold melt-and-cast lane. v1.14 adds Brewed Froglights (capture a potion effect into a Froglight aura/charm, with a Curios slot) and the boss/endgame tier - Wither Skeleton Skull, Nether Star, Dragon Egg, and Dragon Breath, each gated behind a prime-only sacrifice and a 6-face catalyst altar, with toxic boss milk.
 
 | Version line | Scope | Status |
 |---|---|---|
@@ -85,6 +85,7 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 | v1.11 | Flux Networks + the full Powah ladder, Blaze rod | ✅ shipped |
 | v1.12 | The Froglight Crucible + Casting Mold (melt-and-cast lane) | ✅ shipped |
 | v1.13 | Six more vanilla variants; water/lava -> Cave | ✅ shipped |
+| v1.14 | Brewed Froglights + Curios; the boss/endgame tier (catalyst altar, toxic milk) | ✅ shipped |
 | v2 | Automation: power/multiblocks/terrariums | 🔭 future |
 
 Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope rationale: [`docs/versioning.md`](./docs/versioning.md).
