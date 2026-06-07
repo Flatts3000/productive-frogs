@@ -2530,14 +2530,15 @@ public final class PFGameTests {
 
     /**
      * End-to-end melt loop: torch (heat 1) under a Crucible, a lava Froglight
-     * loaded, and the melt must complete in MELT_TOTAL (400) ticks producing
-     * 1,000 mB of lava in the tank. Once full, three invariants are checked in
-     * the same world state: (1) a water Froglight is rejected (single-fluid
-     * tank: lava != water), (2) the FluidHandler.BLOCK capability refuses
-     * fill() (input is items, not fluid), and (3) the capability drains the
-     * full 1,000 mB of lava back out (the pipe/bucket path).
+     * loaded, and the melt must complete in 1,200 ticks (heat 1 x 25 mB per
+     * 30-tick pulse) producing 1,000 mB of lava in the tank. Once full, three
+     * invariants are checked in the same world state: (1) a water Froglight is
+     * rejected (single-fluid tank: lava != water), (2) the FluidHandler.BLOCK
+     * capability refuses fill() (input is items, not fluid), and (3) the
+     * capability drains the full 1,000 mB of lava back out (the pipe/bucket
+     * path).
      */
-    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 500)
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 1400)
     public static void crucibleMeltsLavaFroglightOverTorchHeat(GameTestHelper helper) {
         BlockPos base = new BlockPos(2, 1, 2);
         helper.setBlock(base, net.minecraft.world.level.block.Blocks.STONE);
@@ -2663,7 +2664,7 @@ public final class PFGameTests {
      * the PF-minted {@code productivefrogs:molten_iron} fallback. One test
      * therefore pins the ATO-deferral path locally and the PF-mint path in CI.
      */
-    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 400)
     public static void crucibleMeltsMetalFroglightToMoltenFluid(GameTestHelper helper) {
         BlockPos base = new BlockPos(2, 1, 2);
         helper.setBlock(base, net.minecraft.world.level.block.Blocks.STONE);
@@ -2774,7 +2775,7 @@ public final class PFGameTests {
      * fluid is ATO's or PF's, but the cast output is vanilla iron either way
      * (the recipe matches by {@code c:molten_iron} TAG).
      */
-    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 600)
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 800)
     public static void castingMoldTowerCastsIronFroglightToTwoIngots(GameTestHelper helper) {
         BlockPos base = new BlockPos(2, 1, 2);
         helper.setBlock(base, net.minecraft.world.level.block.Blocks.STONE);
@@ -2831,6 +2832,12 @@ public final class PFGameTests {
             net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
         if (filled != 90) {
             helper.fail("capability should accept the full 90 mB of molten iron, took " + filled);
+            return;
+        }
+        // Fill-only handler: committed molten must not be pipeable back out -
+        // it leaves as a cast item or not at all.
+        if (!cap.drain(90, net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE).isEmpty()) {
+            helper.fail("mold capability must refuse drain (fill-only; molten leaves as an item)");
             return;
         }
         helper.succeedWhen(() -> {

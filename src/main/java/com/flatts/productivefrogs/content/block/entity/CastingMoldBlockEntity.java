@@ -123,7 +123,12 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
         }
     };
 
-    /** Fill-enabled fluid handler: accepts castable molten, drains freely. */
+    /**
+     * Fill-only fluid handler: accepts castable molten; drain is a no-op.
+     * Molten committed to the Mold leaves as a cast item, never back out as
+     * fluid - the inverse of the Crucible's extract-only handler, and it
+     * keeps pipe networks from fighting the cast loop over the buffer.
+     */
     private final IFluidHandler fluidHandler = new IFluidHandler() {
         @Override
         public int getTanks() {
@@ -160,22 +165,12 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
 
         @Override
         public FluidStack drain(FluidStack resource, FluidAction action) {
-            FluidStack drained = tank.drain(resource, action);
-            if (action.execute() && !drained.isEmpty()) {
-                setChanged();
-                syncToClients();
-            }
-            return drained;
+            return FluidStack.EMPTY;
         }
 
         @Override
         public FluidStack drain(int maxDrain, FluidAction action) {
-            FluidStack drained = tank.drain(maxDrain, action);
-            if (action.execute() && !drained.isEmpty()) {
-                setChanged();
-                syncToClients();
-            }
-            return drained;
+            return FluidStack.EMPTY;
         }
     };
 

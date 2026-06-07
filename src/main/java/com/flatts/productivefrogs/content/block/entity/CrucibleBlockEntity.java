@@ -46,11 +46,11 @@ import org.jetbrains.annotations.Nullable;
  * {@link #MAX_SOLIDS} (4,000 = four Froglights) queue; more Froglights can be
  * added while earlier ones are still melting, as long as the fluid matches.
  *
- * <p><b>Continuous melt.</b> Every 10 ticks, {@code heat * MELT_PER_HEAT} mB
- * move from solids into the tank - so a torch (heat 1) melts 1,000 mB in 400
- * ticks, matching the original spec timing, and a hotter source mid-melt just
- * speeds it up. No heat = solids wait. Tank full = solids wait (nothing is
- * ever voided or ejected).
+ * <p><b>Continuous melt.</b> Every {@link #MELT_PULSE_TICKS} ticks,
+ * {@code heat * MELT_PER_HEAT} mB move from solids into the tank - so a torch
+ * (heat 1) melts 1,000 mB in 1,200 ticks (a minute), and a hotter source
+ * mid-melt just speeds it up. No heat = solids wait. Tank full = solids wait
+ * (nothing is ever voided or ejected).
  *
  * <p><b>I/O.</b> Hand: right-click Froglight inserts; any fluid-handler item
  * (bucket) drains; a glass bottle pulls 250 mB when the tank holds water
@@ -74,13 +74,17 @@ public class CrucibleBlockEntity extends BlockEntity {
     public static final int TANK_CAPACITY = 4_000;
 
     /**
-     * mB melted per heat point per melt pulse (every 10 ticks). 25 keeps the
-     * spec's timing: 1,000 mB over a torch (heat 1) = 400 ticks.
+     * mB melted per heat point per melt pulse: 1,000 mB over a torch (heat 1)
+     * = 40 pulses = 1,200 ticks.
      */
     public static final int MELT_PER_HEAT = 25;
 
-    /** Ticks between melt pulses, mirroring Ex Deorum's half-second cadence. */
-    public static final int MELT_PULSE_TICKS = 10;
+    /**
+     * Ticks between melt pulses. Was 10 (Ex Deorum's half-second cadence);
+     * tripled after playtest - the tower turned Froglights into ingots too
+     * fast to feel like smelting.
+     */
+    public static final int MELT_PULSE_TICKS = 30;
 
     /** Glass-bottle extraction amount when the tank holds water. */
     public static final int BOTTLE_MB = 250;

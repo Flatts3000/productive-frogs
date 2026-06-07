@@ -199,9 +199,9 @@ public final class PFModBusEvents {
             (be, side) -> be.itemHandler()
         );
 
-        // Casting Mold (v1.12 wave 2): fill-enabled fluid tank (recipe-
+        // Casting Mold (v1.12 wave 2): fill-ONLY fluid tank (recipe-
         // validated, single-fluid - pipes and buckets pour molten in; drain
-        // is also exposed so excess can be pulled back out) plus an
+        // is a no-op, committed molten only leaves as a cast item) plus an
         // extract-only item view so hoppers can pull cast ingots.
         event.registerBlockEntity(
             Capabilities.FluidHandler.BLOCK,

@@ -29,7 +29,7 @@ import net.minecraft.world.item.crafting.RecipeHolder;
  * so datapack additions (including wave 2's molten metals) display with no
  * code change.
  *
- * <p>The arrow animates over the torch-heat melt duration (400 ticks at heat
+ * <p>The arrow animates over the torch-heat melt duration (1,200 ticks at heat
  * 1); hotter sources melt proportionally faster - the heat ladder itself
  * lives in the companion {@link CrucibleHeatCategory}.
  */

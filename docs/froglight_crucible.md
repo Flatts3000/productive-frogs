@@ -92,8 +92,10 @@ in v1.12.0; build wave 1 first and split the release only if wave 2 balloons.
   | lava | 3 |
   | fire, soul fire | 5 |
 
-  **Melt speed = heat value:** melt time is `400 / heat` ticks per Froglight
-  (torch 400, soul/campfire 200, lava ~133, fire 80). Yes, fire out-heats lava -
+  **Melt speed = heat value:** melt time is `1200 / heat` ticks per Froglight
+  (torch 1200, soul/campfire 600, lava 400, fire 240; tripled from the original
+  `400 / heat` after the v1.12 playtest - the tower was too fast to feel like
+  smelting). Yes, fire out-heats lava -
   that is Ex Deorum's balance, copied deliberately; fire-on-netherrack is the
   endgame heat plate, lava is the set-and-forget mid-tier.
   - **Mechanism:** a NeoForge **data map** (`data/productivefrogs/data_maps/
@@ -112,7 +114,7 @@ in v1.12.0; build wave 1 first and split the release only if wave 2 balloons.
   is items, not fluid).
 - **One Froglight melts at a time**; a second right-click while melting is
   rejected (composter model). Melt time per the heat table above
-  (`400 / heat` ticks).
+  (`1200 / heat` ticks).
 - **Recipe-driven Froglight -> fluid mapping** (datapack), not hardcoded:
   "this variant Froglight produces this fluid (this many mB)." Later fluids and
   cross-mod outputs are pure JSON gated by `neoforge:conditions`, no new Java -
