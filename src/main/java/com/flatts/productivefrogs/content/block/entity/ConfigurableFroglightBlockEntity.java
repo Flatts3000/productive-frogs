@@ -69,8 +69,8 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
     public static final double AURA_RADIUS = 8.0;
     /** Ticks between aura applications (re-up cadence; the effect duration outlasts it so it never drops). */
     public static final int AURA_PULSE_TICKS = 40;
-    /** Ticks between client particle bursts while the aura is on. */
-    public static final int PARTICLE_INTERVAL_TICKS = 5;
+    /** Ticks between client particle bursts while the aura is on (a calm, occasional wisp). */
+    public static final int PARTICLE_INTERVAL_TICKS = 12;
 
     public ConfigurableFroglightBlockEntity(BlockPos pos, BlockState state) {
         super(PFBlockEntities.CONFIGURABLE_FROGLIGHT.get(), pos, state);
@@ -156,12 +156,11 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
         // transparent (the invisible-aura bug). Force opaque.
         ColorParticleOption particle = ColorParticleOption.create(
             ParticleTypes.ENTITY_EFFECT, 0xFF000000 | e.effect().value().getColor());
-        for (int i = 0; i < 3; i++) {
-            double x = pos.getX() + 0.5 + (level.random.nextDouble() - 0.5) * 1.2;
-            double y = pos.getY() + 0.9 + level.random.nextDouble() * 0.4;
-            double z = pos.getZ() + 0.5 + (level.random.nextDouble() - 0.5) * 1.2;
-            level.addParticle(particle, x, y, z, 0.0, 0.02, 0.0);
-        }
+        // One gentle wisp per burst, drifting up slowly.
+        double x = pos.getX() + 0.5 + (level.random.nextDouble() - 0.5) * 1.0;
+        double y = pos.getY() + 0.9 + level.random.nextDouble() * 0.3;
+        double z = pos.getZ() + 0.5 + (level.random.nextDouble() - 0.5) * 1.0;
+        level.addParticle(particle, x, y, z, 0.0, 0.01, 0.0);
     }
 
     /**
