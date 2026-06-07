@@ -47,8 +47,10 @@ import org.jetbrains.annotations.Nullable;
  * added while earlier ones are still melting, as long as the fluid matches.
  *
  * <p><b>Continuous melt.</b> Every {@link #MELT_PULSE_TICKS} ticks,
- * {@code heat * MELT_PER_HEAT} mB move from solids into the tank - so a torch
- * (heat 1) melts 1,000 mB in 1,200 ticks (a minute), and a hotter source
+ * {@code heat * MELT_PER_HEAT} mB move from solids into the tank - melt time
+ * scales with the recipe's mB, so a 180 mB metal Froglight takes
+ * {@code 1200 / heat} ticks (a minute over a torch, vanilla-furnace pace over
+ * lava) while a 1,000 mB Lava Froglight is a bulk job. A hotter source
  * mid-melt just speeds it up. No heat = solids wait. Tank full = solids wait
  * (nothing is ever voided or ejected).
  *
@@ -74,17 +76,19 @@ public class CrucibleBlockEntity extends BlockEntity {
     public static final int TANK_CAPACITY = 4_000;
 
     /**
-     * mB melted per heat point per melt pulse: 1,000 mB over a torch (heat 1)
-     * = 40 pulses = 1,200 ticks.
+     * mB melted per heat point per melt pulse. Together with
+     * {@link #MELT_PULSE_TICKS} this is 0.15 mB/tick/heat, tuned around the
+     * metal lane (the v1.12 playtest target): a 180 mB metal Froglight melts
+     * in {@code 1200 / heat} ticks - 60s over a torch, ~vanilla-furnace pace
+     * per ingot over lava, ~blast-furnace pace over a Blaze Froglight. The
+     * 1,000 mB bulk fluids (lava, water) take proportionally longer. (Ex
+     * Deorum's original 25 mB/heat/10t cleared a metal Froglight in ~3s over
+     * lava - ingots faster than a furnace with doubling on top.)
      */
-    public static final int MELT_PER_HEAT = 25;
+    public static final int MELT_PER_HEAT = 3;
 
-    /**
-     * Ticks between melt pulses. Was 10 (Ex Deorum's half-second cadence);
-     * tripled after playtest - the tower turned Froglights into ingots too
-     * fast to feel like smelting.
-     */
-    public static final int MELT_PULSE_TICKS = 30;
+    /** Ticks between melt pulses (see {@link #MELT_PER_HEAT} for the tuning). */
+    public static final int MELT_PULSE_TICKS = 20;
 
     /** Glass-bottle extraction amount when the tank holds water. */
     public static final int BOTTLE_MB = 250;

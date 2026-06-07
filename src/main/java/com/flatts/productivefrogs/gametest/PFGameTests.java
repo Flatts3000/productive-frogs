@@ -2529,16 +2529,17 @@ public final class PFGameTests {
     }
 
     /**
-     * End-to-end melt loop: torch (heat 1) under a Crucible, a lava Froglight
-     * loaded, and the melt must complete in 1,200 ticks (heat 1 x 25 mB per
-     * 30-tick pulse) producing 1,000 mB of lava in the tank. Once full, three
-     * invariants are checked in the same world state: (1) a water Froglight is
-     * rejected (single-fluid tank: lava != water), (2) the FluidHandler.BLOCK
-     * capability refuses fill() (input is items, not fluid), and (3) the
-     * capability drains the full 1,000 mB of lava back out (the pipe/bucket
-     * path).
+     * End-to-end melt loop: a torch first pins the heat-1 data-map read, then
+     * the heat source swaps to soul fire (heat 5, permanent on soul sand) so
+     * the 1,000 mB lava Froglight melts in CI-friendly time (~1,340 ticks at
+     * 0.15 mB/tick/heat - over a torch the bulk fluids now take minutes by
+     * design). Once full, three invariants are checked in the same world
+     * state: (1) a water Froglight is rejected (single-fluid tank: lava !=
+     * water), (2) the FluidHandler.BLOCK capability refuses fill() (input is
+     * items, not fluid), and (3) the capability drains the full 1,000 mB of
+     * lava back out (the pipe/bucket path).
      */
-    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 1400)
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 1600)
     public static void crucibleMeltsLavaFroglightOverTorchHeat(GameTestHelper helper) {
         BlockPos base = new BlockPos(2, 1, 2);
         helper.setBlock(base, net.minecraft.world.level.block.Blocks.STONE);
@@ -2551,6 +2552,13 @@ public final class PFGameTests {
         }
         if (crucible.heatBelow() != 1) {
             helper.fail("torch below should read heat 1 from the crucible_heat data map, got " + crucible.heatBelow());
+            return;
+        }
+        // Swap the torch for soul fire so the bulk melt finishes in CI time.
+        helper.setBlock(base, net.minecraft.world.level.block.Blocks.SOUL_SAND);
+        helper.setBlock(base.above(), net.minecraft.world.level.block.Blocks.SOUL_FIRE);
+        if (crucible.heatBelow() != 5) {
+            helper.fail("soul fire below should read heat 5 from the crucible_heat data map, got " + crucible.heatBelow());
             return;
         }
         if (!crucible.acceptFroglight(stampedFroglight("lava"))) {
@@ -2664,7 +2672,7 @@ public final class PFGameTests {
      * the PF-minted {@code productivefrogs:molten_iron} fallback. One test
      * therefore pins the ATO-deferral path locally and the PF-mint path in CI.
      */
-    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 400)
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 1400)
     public static void crucibleMeltsMetalFroglightToMoltenFluid(GameTestHelper helper) {
         BlockPos base = new BlockPos(2, 1, 2);
         helper.setBlock(base, net.minecraft.world.level.block.Blocks.STONE);
@@ -2775,7 +2783,7 @@ public final class PFGameTests {
      * fluid is ATO's or PF's, but the cast output is vanilla iron either way
      * (the recipe matches by {@code c:molten_iron} TAG).
      */
-    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 800)
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 1600)
     public static void castingMoldTowerCastsIronFroglightToTwoIngots(GameTestHelper helper) {
         BlockPos base = new BlockPos(2, 1, 2);
         helper.setBlock(base, net.minecraft.world.level.block.Blocks.STONE);
