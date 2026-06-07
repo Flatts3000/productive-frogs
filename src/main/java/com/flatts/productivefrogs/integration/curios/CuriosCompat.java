@@ -42,12 +42,26 @@ public final class CuriosCompat {
             PFItems.CONFIGURABLE_FROGLIGHT.get());
     }
 
+    /** Slot id of the dedicated Froglight curio slot (matches the slot JSON filename). */
+    public static final String SLOT = "froglight";
+
     /** Per-stack {@link ICurio}: re-applies the captured effect to the wearer while worn + enabled. */
     private record BrewedFroglightCurio(ItemStack stack) implements ICurio {
 
         @Override
         public ItemStack getStack() {
             return stack;
+        }
+
+        /**
+         * Pin the Froglight to its own slot: Curios' generic {@code curio} slot
+         * has no validator and would otherwise accept any curio, so without this
+         * a Froglight could sit in a generic slot instead of the dedicated one.
+         * Restrict equipping to the {@code froglight} slot only.
+         */
+        @Override
+        public boolean canEquip(SlotContext context) {
+            return SLOT.equals(context.identifier());
         }
 
         @Override
