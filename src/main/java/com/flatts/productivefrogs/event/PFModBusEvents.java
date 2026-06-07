@@ -230,6 +230,15 @@ public final class PFModBusEvents {
                 );
             }
         }
+
+        // Brewed Froglight curio (#169) - register the Curios item capability
+        // ONLY when curios is loaded. The call is behind the guard so
+        // CuriosCompat (and the Curios API types it references) never classload
+        // on a curios-less pack - the Jade/JEI soft-dep posture. Curios is
+        // compileOnly + a run/mods drop-in, never bundled.
+        if (net.neoforged.fml.ModList.get().isLoaded("curios")) {
+            com.flatts.productivefrogs.integration.curios.CuriosCompat.registerCapabilities(event);
+        }
     }
 
     /**

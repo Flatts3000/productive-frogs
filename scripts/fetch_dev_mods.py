@@ -79,6 +79,9 @@ TARGETS = {
     "powah": "Powah (crystal variants; uraninite #146)",
     # Official Buuz135 distribution; required titanium dep auto-resolves.
     "industrial-foregoing": "Industrial Foregoing (pink_slime / latex melt fluids)",
+    # Brewed Froglight Curios slot (#169). compileOnly in build.gradle; this is
+    # the runtime drop-in (Jade posture - NOT runtimeOnly, no double-load). modid `curios`.
+    "curios": "Curios API (brewed Froglight charm slot)",
 }
 
 ROOT = Path(__file__).resolve().parent.parent
