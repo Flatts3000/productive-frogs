@@ -1,6 +1,6 @@
 # Boss Catalyst Altar (build spec)
 
-> **Status: build spec - target the release that ships the boss-tier variants.** Every open question resolved (issue #184, decisions 2026-06-07). Depends on the boss-tier variants (#172/#173) and their prime-only `weight 0` mechanic, which ship on the same branch (`feat/vanilla-boss-mob-roster`). The decision log at the bottom records how the shape was settled.
+> **Status: SHIPPED in v1.14.0 (#182, 2026-06-07).** Built as written. The boss-tier variants (#172/#173) + their prime-only `weight 0` mechanic shipped in the same release. The decision log at the bottom records how the shape was settled; everything below describes the shipped behavior.
 
 ## The pitch
 

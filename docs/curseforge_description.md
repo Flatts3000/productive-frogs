@@ -123,6 +123,8 @@ The mod is fully playable today. Everything below is live on CurseForge. Targets
 
 **v1.13.0 (shipped): more vanilla resources, and renewable fluids move earlier.** Six more vanilla materials became farmable: breeze rod, ghast tear, phantom membrane, armadillo scute, turtle scute, and honeycomb - several of them a real grind to gather by hand. And the Water and Lava slimes moved to the Cave frog (the first one you raise), since renewable water and lava are early-game staples and shouldn't wait until the aquatic and nether frogs. Heads-up if you already farm lava: the Lava slime is now primed with pointed dripstone instead of a magma block (your existing lava slimes carry over and just change frog).
 
+**v1.14.0 (shipped): Brewed Froglights and the boss tier.** Splash a potion onto a slime before your frog eats it and the Froglight it drops keeps that effect: place it as a glowing aura that buffs (or, with Poison or Wither, harms) everything around it, hold it to buff just yourself, or wear it in a Curios charm slot. And the trophy resources are now farmable - Wither Skeleton Skull, Nether Star, Dragon Egg, and Dragon Breath - but you earn them: you prime the first slime with the real drop, and a farm only runs once you've walled its Slime Milk source in a six-sided catalyst altar (the milk is toxic, so you want it contained). Plus five more everyday drops (bone, string, gunpowder, rotten flesh, magma cream) and, with Mekanism, Refined Glowstone.
+
 ### v2: automation
 
 The scale-up release. v1 lives unchanged; v2 layers automation on top. A player who never crafts a v2 block still has every v1 capability.
