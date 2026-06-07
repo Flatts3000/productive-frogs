@@ -121,6 +121,17 @@ dependencies {
     // class is simply never loaded. Modrinth yd8FKCmx = Jade 15.10.5+neoforge (1.21.1).
     compileOnly "maven.modrinth:jade:yd8FKCmx"
 
+    // Curios API (modid `curios`) - compileOnly ONLY, same posture as Jade.
+    // Brewed Froglights (#162/#169) self-buff while worn in a Curios slot; the
+    // capability + ICurio reference the Curios API at build time, but the
+    // capability is registered only when `curios` is loaded (PFModBusEvents),
+    // and Curios stays a manual run/mods drop-in at runtime - adding it
+    // runtimeOnly would double-load against the drop-in and trip NeoForge's
+    // duplicate-modid check. When Curios is absent the curio code never loads.
+    // Modrinth yohfFbgD = curios-neoforge 9.5.1+1.21.1 (the full jar carries the
+    // API classes we compile against). Installed into run/mods by fetch_dev_mods.py.
+    compileOnly "maven.modrinth:curios:yohfFbgD"
+
     // Refined Storage 2 (modid `refinedstorage`) - DEV RUNTIME ONLY, not a real
     // dependency and NOT bundled in the published jar. Our RS support is pure data
     // (slime_variant JSON + smelt recipes gated `mod_loaded: refinedstorage`), so

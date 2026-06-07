@@ -230,6 +230,15 @@ public final class PFModBusEvents {
                 );
             }
         }
+
+        // Brewed Froglight curio (#169) - register the Curios item capability
+        // ONLY when curios is loaded. The call is behind the guard so
+        // CuriosCompat (and the Curios API types it references) never classload
+        // on a curios-less pack - the Jade/JEI soft-dep posture. Curios is
+        // compileOnly + a run/mods drop-in, never bundled.
+        if (net.neoforged.fml.ModList.get().isLoaded("curios")) {
+            com.flatts.productivefrogs.integration.curios.CuriosCompat.registerCapabilities(event);
+        }
     }
 
     /**
@@ -241,6 +250,20 @@ public final class PFModBusEvents {
     public static void onRegisterDataMaps(net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent event) {
         event.register(com.flatts.productivefrogs.registry.PFDataMaps.CRUCIBLE_HEAT);
         event.register(com.flatts.productivefrogs.registry.PFDataMaps.FROGLIGHT_HEAT);
+    }
+
+    /**
+     * Common setup: register the Curios {@code productivefrogs:brewed} slot
+     * validator (#169) when Curios is loaded. Behind the isLoaded guard +
+     * enqueued so CuriosCompat never classloads on a Curios-less pack and the
+     * static-API call runs on the main thread. The validator must exist before
+     * datapacks (slot JSONs) load, which is after common setup.
+     */
+    @SubscribeEvent
+    public static void onCommonSetup(net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) {
+        if (net.neoforged.fml.ModList.get().isLoaded("curios")) {
+            event.enqueueWork(com.flatts.productivefrogs.integration.curios.CuriosCompat::registerPredicate);
+        }
     }
 
     /**
