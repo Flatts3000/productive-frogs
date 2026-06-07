@@ -1,0 +1,8 @@
+{
+  "primer_item": "minecraft:nether_star",
+  "category": "infernal",
+  "primary_color": 13161914,
+  "secondary_color": 5862773,
+  "inner_block": "minecraft:beacon",
+  "weight": 0
+}
