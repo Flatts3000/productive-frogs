@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "productivefrogs_catalyst",
+  "pattern": [ "SSS", "SKS", "SSS" ],
+  "key": { "S": { "item": "minecraft:soul_sand" }, "K": { "item": "minecraft:wither_skeleton_skull" } },
+  "result": { "id": "productivefrogs:wither_skeleton_skull_catalyst" }
+}

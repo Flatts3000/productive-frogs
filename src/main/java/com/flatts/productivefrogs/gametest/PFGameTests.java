@@ -373,21 +373,120 @@ public final class PFGameTests {
             helper.fail("expected productivefrogs:iron, got " + ironEntry.getKey());
         }
 
-        // An infernal-flavoured item that ISN'T any variant's primer should
-        // miss the variant lookup so the handler falls back to category-only.
-        // (Was ghast_tear, which became a primer in the v1.13 vanilla
-        // straggler sweep - ghast tears now resolve. Nether star is the
-        // never-a-primer stand-in: boss drops are progression gates, not
-        // resources, per #161.)
+        // An item that ISN'T any variant's primer should miss the variant
+        // lookup so the handler falls back to category-only. This example has
+        // chased the roster twice (ghast_tear fell to the v1.13 stragglers,
+        // nether_star to the v1.14 boss tier - #172) - bedrock is the durable
+        // pick: it cannot become a resource.
         if (SlimeVariant.findByPrimerItem(registry,
-                ResourceLocation.fromNamespaceAndPath("minecraft", "nether_star")) != null) {
-            helper.fail("nether_star is not a variant primer: lookup should miss");
+                ResourceLocation.fromNamespaceAndPath("minecraft", "bedrock")) != null) {
+            helper.fail("bedrock is not a variant primer: lookup should miss");
         }
 
         // Stick is in NO primer tag — must miss too.
         if (SlimeVariant.findByPrimerItem(registry,
                 ResourceLocation.fromNamespaceAndPath("minecraft", "stick")) != null) {
             helper.fail("stick is not a primer for any variant — lookup should miss");
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Weight 0 = prime-only (#172/#173): the boss-tier variants (dragon egg,
+     * dragon breath, nether star, wither skeleton skull) must NEVER come out
+     * of split-discovery - the frog loop amplifies a resource the player has
+     * earned, it never bypasses the boss. Hammers {@code pickWeighted} on the
+     * Void and Infernal pools and asserts no zero-weight variant is returned.
+     * Also asserts the boss variants resolve as PRIMERS (the prime path stays
+     * open - prime-only, not unreachable).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void zeroWeightVariantsArePrimeOnly(GameTestHelper helper) {
+        net.minecraft.core.Registry<SlimeVariant> registry =
+            helper.getLevel().registryAccess().registryOrThrow(PFRegistries.SLIME_VARIANT);
+        java.util.Set<ResourceLocation> bossTier = java.util.Set.of(
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_egg"),
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_breath"),
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star"),
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "wither_skeleton_skull"));
+        net.minecraft.util.RandomSource random = helper.getLevel().getRandom();
+        for (int i = 0; i < 500; i++) {
+            for (Category cat : new Category[] {Category.VOID, Category.INFERNAL}) {
+                java.util.Map.Entry<ResourceLocation, SlimeVariant> pick =
+                    SlimeVariant.pickWeighted(registry, cat, random);
+                if (pick != null && bossTier.contains(pick.getKey())) {
+                    helper.fail("weight-0 variant " + pick.getKey() + " came out of split-discovery");
+                    return;
+                }
+            }
+        }
+        // Prime path stays open: each boss variant resolves by its primer item.
+        for (ResourceLocation id : bossTier) {
+            java.util.Map.Entry<ResourceLocation, SlimeVariant> byPrimer = SlimeVariant.findByPrimerItem(
+                registry, ResourceLocation.fromNamespaceAndPath("minecraft", id.getPath()));
+            if (byPrimer == null || !byPrimer.getKey().equals(id)) {
+                helper.fail("boss variant " + id + " should still resolve via its primer item");
+                return;
+            }
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Boss catalyst altar gate (#184, docs/boss_catalyst_altar.md). Tests the
+     * gate's decision logic directly via the public helpers (the spawn tick
+     * itself is scheduled + private; the predicate is the testable seam):
+     * (1) only spawn_catalyst variants are gated; (2) a 6-face count requires
+     * the MATCHING catalyst on all six faces; (3) a mismatched catalyst does
+     * not count.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void bossCatalystAltarGate(GameTestHelper helper) {
+        ResourceLocation netherStar = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star");
+        ResourceLocation iron = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+
+        // (1) gating predicate: boss variant requires a catalyst, iron does not.
+        if (!com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock
+                .variantRequiresCatalyst(helper.getLevel(), netherStar)) {
+            helper.fail("nether_star (spawn_catalyst) should require a catalyst altar");
+            return;
+        }
+        if (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock
+                .variantRequiresCatalyst(helper.getLevel(), iron)) {
+            helper.fail("iron is not a boss variant and must not be altar-gated");
+            return;
+        }
+
+        // (2) surround a center with nether_star_catalyst on 5 of 6 faces.
+        BlockPos center = new BlockPos(2, 2, 2);
+        net.minecraft.world.level.block.Block starCat = PFBlocks.NETHER_STAR_CATALYST.get();
+        net.minecraft.core.Direction[] dirs = net.minecraft.core.Direction.values();
+        for (int i = 0; i < dirs.length - 1; i++) {
+            helper.setBlock(center.relative(dirs[i]), starCat);
+        }
+        int five = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock
+            .catalystFaceCount(helper.getLevel(), helper.absolutePos(center), netherStar);
+        // catalystFaceCount takes a WORLD pos; helper.setBlock takes relative.
+        // Re-count against the relative center mapped to world via absolutePos.
+        if (five != 5) {
+            helper.fail("5 catalyst faces should read 5, got " + five);
+            return;
+        }
+        // (3) the 6th face: a MISMATCHED catalyst must not count.
+        helper.setBlock(center.relative(dirs[5]), PFBlocks.DRAGON_EGG_CATALYST.get());
+        int stillFive = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock
+            .catalystFaceCount(helper.getLevel(), helper.absolutePos(center), netherStar);
+        if (stillFive != 5) {
+            helper.fail("a dragon_egg_catalyst must not count toward a nether_star altar, got " + stillFive);
+            return;
+        }
+        // The matching 6th completes it.
+        helper.setBlock(center.relative(dirs[5]), starCat);
+        int six = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock
+            .catalystFaceCount(helper.getLevel(), helper.absolutePos(center), netherStar);
+        if (six != 6) {
+            helper.fail("6 matching catalyst faces should read 6, got " + six);
+            return;
         }
         helper.succeed();
     }

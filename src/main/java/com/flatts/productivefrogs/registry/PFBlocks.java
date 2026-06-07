@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -135,6 +136,56 @@ public final class PFBlocks {
             .strength(2.0F)
             .sound(SoundType.METAL)
     );
+
+    /**
+     * Boss-tier catalyst blocks (#184, {@code docs/boss_catalyst_altar.md}). A
+     * Slime Milk source whose variant declares {@code spawn_catalyst: true}
+     * spawns nothing until the matching catalyst block surrounds it on all six
+     * faces. Four distinct blocks (one per boss resource, bespoke art - NOT one
+     * tinted block), keyed to the variant they arm by {@link #CATALYST_FOR_VARIANT}.
+     * Plain full cubes; the spawn gate lives in {@code SlimeMilkSourceBlock#tick},
+     * so the catalyst itself needs no BlockEntity.
+     */
+    public static final DeferredBlock<Block> NETHER_STAR_CATALYST = registerCatalyst("nether_star_catalyst");
+    public static final DeferredBlock<Block> DRAGON_EGG_CATALYST = registerCatalyst("dragon_egg_catalyst");
+    public static final DeferredBlock<Block> WITHER_SKELETON_SKULL_CATALYST = registerCatalyst("wither_skeleton_skull_catalyst");
+    public static final DeferredBlock<Block> DRAGON_BREATH_CATALYST = registerCatalyst("dragon_breath_catalyst");
+
+    /** Memoized {@link #catalystForVariant()} - the blocks are stable post-registration. */
+    private static Map<ResourceLocation, Block> catalystMap;
+
+    /**
+     * Single source of truth wiring each boss variant id to the catalyst block
+     * that arms its source - read by the 6-face gate in {@code SlimeMilkSourceBlock}
+     * and the recipe generator. Built once on first call (the DeferredBlocks
+     * resolve only after registration), then memoized: the gate runs per
+     * milk-source tick, so rebuilding a 4-entry map each call was needless churn.
+     */
+    public static Map<ResourceLocation, Block> catalystForVariant() {
+        Map<ResourceLocation, Block> map = catalystMap;
+        if (map == null) {
+            map = Map.of(
+                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star"), NETHER_STAR_CATALYST.get(),
+                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_egg"), DRAGON_EGG_CATALYST.get(),
+                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "wither_skeleton_skull"), WITHER_SKELETON_SKULL_CATALYST.get(),
+                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_breath"), DRAGON_BREATH_CATALYST.get()
+            );
+            catalystMap = map;
+        }
+        return map;
+    }
+
+    private static DeferredBlock<Block> registerCatalyst(String name) {
+        return BLOCKS.registerBlock(
+            name,
+            Block::new,
+            BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_BLACK)
+                .strength(3.0F, 6.0F)
+                .sound(SoundType.STONE)
+                .requiresCorrectToolForDrops()
+        );
+    }
 
     private static Map<Category, DeferredBlock<PrimedFrogEggBlock>> buildPrimedEggs() {
         EnumMap<Category, DeferredBlock<PrimedFrogEggBlock>> map = new EnumMap<>(Category.class);

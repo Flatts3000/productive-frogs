@@ -68,6 +68,11 @@ public final class PFCreativeTabs {
                     // the other appliances.
                     output.accept(PFItems.CRUCIBLE.get());
                     output.accept(PFItems.CASTING_MOLD.get());
+                    // Boss-tier catalyst altar blocks (#184).
+                    output.accept(PFItems.NETHER_STAR_CATALYST.get());
+                    output.accept(PFItems.DRAGON_EGG_CATALYST.get());
+                    output.accept(PFItems.WITHER_SKELETON_SKULL_CATALYST.get());
+                    output.accept(PFItems.DRAGON_BREATH_CATALYST.get());
                     // Spawnery only appears in the tab when enabled (skyblock
                     // bootstrap; off by default). isLoaded guards the title-screen
                     // build before COMMON config is available.
