@@ -59,6 +59,9 @@ FACE = 6
 # (Most storage blocks are <path>.png; these are the exceptions.)
 TEXTURE_OVERRIDE = {
     "magma_block": "magma",
+    # snow_block's vanilla texture file is block/snow.png (no snow_block.png),
+    # so the snow variant baked to the category fallback until this was added.
+    "snow_block": "snow",
 }
 # Suffixes to try when "<path>.png" is absent (top/side blocks).
 SUFFIXES = ["", "_side", "_top", "_front", "_0"]
