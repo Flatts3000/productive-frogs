@@ -373,12 +373,15 @@ public final class PFGameTests {
             helper.fail("expected productivefrogs:iron, got " + ironEntry.getKey());
         }
 
-        // An infernal-flavoured item that ISN'T any variant's primer
-        // (ghast_tear is deferred from v1.1 per docs/v1_1_scope.md) should miss
-        // the variant lookup so the handler falls back to category-only.
+        // An infernal-flavoured item that ISN'T any variant's primer should
+        // miss the variant lookup so the handler falls back to category-only.
+        // (Was ghast_tear, which became a primer in the v1.13 vanilla
+        // straggler sweep - ghast tears now resolve. Nether star is the
+        // never-a-primer stand-in: boss drops are progression gates, not
+        // resources, per #161.)
         if (SlimeVariant.findByPrimerItem(registry,
-                ResourceLocation.fromNamespaceAndPath("minecraft", "ghast_tear")) != null) {
-            helper.fail("ghast_tear is not a variant primer in v1.1: lookup should miss");
+                ResourceLocation.fromNamespaceAndPath("minecraft", "nether_star")) != null) {
+            helper.fail("nether_star is not a variant primer: lookup should miss");
         }
 
         // Stick is in NO primer tag — must miss too.
