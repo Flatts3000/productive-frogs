@@ -81,7 +81,10 @@ public final class MoldCastingCategory implements IRecipeCategory<RecipeHolder<M
     public void setRecipe(IRecipeLayoutBuilder builder, RecipeHolder<MoldCastingRecipe> holder, IFocusGroup focuses) {
         MoldCastingRecipe recipe = holder.value();
         // getFluids() resolves the tag to concrete stacks already carrying the
-        // recipe's mB, so the slot cycles exactly what this environment can cast.
+        // recipe's mB, so the slot cycles exactly what this environment can
+        // cast. A tag with no members renders a blank slot (JEI tolerates an
+        // empty ingredient list) - unreachable for the shipped roster, whose
+        // gated recipes only load alongside their providers.
         builder.addSlot(RecipeIngredientRole.INPUT, INPUT_X, SLOT_Y)
             .setStandardSlotBackground()
             .addIngredients(NeoForgeTypes.FLUID_STACK, List.of(recipe.fluid().getFluids()))
