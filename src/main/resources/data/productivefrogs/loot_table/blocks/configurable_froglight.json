@@ -12,7 +12,8 @@
               "function": "minecraft:copy_components",
               "source": "block_entity",
               "include": [
-                "productivefrogs:slime_variant"
+                "productivefrogs:slime_variant",
+                "productivefrogs:stored_effect"
               ]
             }
           ]

@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.data.StoredEffect;
 import com.mojang.serialization.Codec;
 import java.util.function.Supplier;
 import net.minecraft.core.component.DataComponentType;
@@ -133,6 +134,22 @@ public final class PFDataComponents {
         () -> DataComponentType.<Integer>builder()
             .persistent(Codec.INT)
             .networkSynchronized(ByteBufCodecs.VAR_INT)
+            .build()
+    );
+
+    /**
+     * The potion effect captured onto a Brewed Froglight (#162). Present =
+     * brewed; the {@code enabled} field inside is the on/off toggle. Stamped by
+     * {@code FrogTongueDropHandler} when a frog eats an effect-bearing slime,
+     * read by {@code ConfigurableFroglightItem} (charm) and copied onto
+     * {@code ConfigurableFroglightBlockEntity} (aura) on placement. See
+     * {@link StoredEffect}.
+     */
+    public static final Supplier<DataComponentType<StoredEffect>> STORED_EFFECT = COMPONENTS.register(
+        "stored_effect",
+        () -> DataComponentType.<StoredEffect>builder()
+            .persistent(StoredEffect.CODEC)
+            .networkSynchronized(StoredEffect.STREAM_CODEC)
             .build()
     );
 

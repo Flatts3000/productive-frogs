@@ -521,6 +521,163 @@ public final class PFGameTests {
     }
 
     /**
+     * Brewed Froglights (#162): a slime carrying a potion effect when eaten
+     * drops a Froglight stamped with that effect (enabled by default). Speed I
+     * on the slime -> the dropped configurable_froglight carries a STORED_EFFECT
+     * of movement_speed, amplifier 0, enabled.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void brewedSlimeKillStampsEffectOnFroglight(GameTestHelper helper) {
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 2));
+        frog.setCategory(Category.CAVE);
+        ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(3, 2, 2));
+        slime.setSize(1, true);
+        slime.setVariant(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        // Splash-potion stand-in: the effect is live on the slime when the frog eats it.
+        slime.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+            net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, 600, 0));
+        slime.hurt(helper.getLevel().damageSources().mobAttack(frog), 999.0F);
+
+        helper.succeedWhen(() -> {
+            boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                .map(net.minecraft.world.entity.item.ItemEntity::getItem)
+                .filter(s -> s.is(PFItems.CONFIGURABLE_FROGLIGHT.get()))
+                .map(s -> s.get(com.flatts.productivefrogs.registry.PFDataComponents.STORED_EFFECT.get()))
+                .anyMatch(e -> e != null
+                    && e.effect().value() == net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED.value()
+                    && e.amplifier() == 0 && e.enabled());
+            if (!found) {
+                helper.fail("dropped Froglight should carry STORED_EFFECT(movement_speed, 0, enabled)");
+            }
+        });
+    }
+
+    /**
+     * The one-effect pick rule (#162): highest amplifier wins. A slime carrying
+     * Speed I (amp 0) and Strength II (amp 1) yields a Froglight stamped with
+     * the Strength, not the Speed.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void brewedCapturePicksHighestAmplifier(GameTestHelper helper) {
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 2));
+        frog.setCategory(Category.CAVE);
+        ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(3, 2, 2));
+        slime.setSize(1, true);
+        slime.setVariant(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        slime.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+            net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, 600, 0));
+        slime.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+            net.minecraft.world.effect.MobEffects.DAMAGE_BOOST, 600, 1));
+        slime.hurt(helper.getLevel().damageSources().mobAttack(frog), 999.0F);
+
+        helper.succeedWhen(() -> {
+            boolean strengthFound = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                .map(net.minecraft.world.entity.item.ItemEntity::getItem)
+                .filter(s -> s.is(PFItems.CONFIGURABLE_FROGLIGHT.get()))
+                .map(s -> s.get(com.flatts.productivefrogs.registry.PFDataComponents.STORED_EFFECT.get()))
+                .anyMatch(e -> e != null
+                    && e.effect().value() == net.minecraft.world.effect.MobEffects.DAMAGE_BOOST.value()
+                    && e.amplifier() == 1);
+            if (!strengthFound) {
+                helper.fail("pick rule should capture the higher-amplifier Strength II over Speed I");
+            }
+        });
+    }
+
+    /**
+     * Placed brewed Froglight aura (#162): an enabled effect-stamped Froglight
+     * applies its effect to a nearby living entity. Place block, stamp the BE
+     * with Speed, spawn a pig adjacent, expect the pig buffed within a couple
+     * pulses.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 140)
+    public static void brewedFroglightAuraBuffsNearbyEntity(GameTestHelper helper) {
+        BlockPos blockPos = new BlockPos(2, 1, 2);
+        helper.setBlock(blockPos, PFBlocks.CONFIGURABLE_FROGLIGHT.get());
+        if (!(helper.getBlockEntity(blockPos)
+                instanceof com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity be)) {
+            helper.fail("configurable froglight did not create its BlockEntity");
+            return;
+        }
+        be.setEffect(new com.flatts.productivefrogs.data.StoredEffect(
+            net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, 0, true));
+        net.minecraft.world.entity.animal.Pig pig = helper.spawn(
+            net.minecraft.world.entity.EntityType.PIG, new BlockPos(2, 2, 3));
+        helper.succeedWhen(() -> helper.assertTrue(
+            pig.hasEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED),
+            "enabled aura should apply Speed to a nearby entity"));
+    }
+
+    /**
+     * Toggling the aura off stops application (#162): an effect-stamped but
+     * disabled Froglight does not buff. Stamp + immediately toggle off, then
+     * after a generous delay the nearby pig must have no Speed.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 140)
+    public static void brewedFroglightToggledOffDoesNotBuff(GameTestHelper helper) {
+        BlockPos blockPos = new BlockPos(2, 1, 2);
+        helper.setBlock(blockPos, PFBlocks.CONFIGURABLE_FROGLIGHT.get());
+        if (!(helper.getBlockEntity(blockPos)
+                instanceof com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity be)) {
+            helper.fail("configurable froglight did not create its BlockEntity");
+            return;
+        }
+        be.setEffect(new com.flatts.productivefrogs.data.StoredEffect(
+            net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, 0, true));
+        be.toggleAura(); // now off
+        if (be.isAuraActive()) {
+            helper.fail("toggleAura should have disabled the aura");
+            return;
+        }
+        net.minecraft.world.entity.animal.Pig pig = helper.spawn(
+            net.minecraft.world.entity.EntityType.PIG, new BlockPos(2, 2, 3));
+        helper.runAfterDelay(100L, () -> {
+            if (pig.hasEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED)) {
+                helper.fail("a toggled-off aura must not apply its effect");
+            } else {
+                helper.succeed();
+            }
+        });
+    }
+
+    /**
+     * Carried charm gating (#162): an enabled brewed Froglight HELD in the main
+     * hand self-buffs the carrier, but the same stack sitting in a non-hand
+     * inventory slot does not. Both cases drive {@code inventoryTick} directly
+     * (deterministic, no dependence on mock-player inventory auto-ticking).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 120)
+    public static void brewedFroglightHeldBuffsNotInventory(GameTestHelper helper) {
+        net.minecraft.world.entity.player.Player player =
+            helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        com.flatts.productivefrogs.content.item.ConfigurableFroglightItem item =
+            (com.flatts.productivefrogs.content.item.ConfigurableFroglightItem) PFItems.CONFIGURABLE_FROGLIGHT.get();
+
+        // Inventory (not held): tick the stack as a non-hand slot - must NOT buff.
+        ItemStack inInventory = new ItemStack(item);
+        inInventory.set(com.flatts.productivefrogs.registry.PFDataComponents.STORED_EFFECT.get(),
+            new com.flatts.productivefrogs.data.StoredEffect(
+                net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, 0, true));
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+        player.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, ItemStack.EMPTY);
+        for (int i = 0; i < 60; i++) {
+            item.inventoryTick(inInventory, helper.getLevel(), player, 9, false);
+        }
+        if (player.hasEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED)) {
+            helper.fail("a brewed Froglight in an inventory slot must not self-buff");
+            return;
+        }
+
+        // Held in main hand: same stack now in hand - must buff within one pulse.
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, inInventory);
+        helper.onEachTick(() -> item.inventoryTick(
+            player.getMainHandItem(), helper.getLevel(), player, 0, true));
+        helper.succeedWhen(() -> helper.assertTrue(
+            player.hasEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED),
+            "a held enabled brewed Froglight should self-buff the carrier"));
+    }
+
+    /**
      * Verify the {@code productivefrogs:slime_variant} datapack registry is
      * populated by server boot. Spot-checks the 11 v1.0 variants (the v1.1
      * additions extend the registry further; this list is a representative

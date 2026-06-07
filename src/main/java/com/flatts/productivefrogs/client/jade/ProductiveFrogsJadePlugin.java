@@ -91,6 +91,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             com.flatts.productivefrogs.content.block.CrucibleBlock.class);
         registration.registerBlockComponent(provider,
             com.flatts.productivefrogs.content.block.CastingMoldBlock.class);
+        registration.registerBlockComponent(provider,
+            com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock.class);
         registration.registerBlockComponent(MILK_SOURCE, SlimeMilkSourceBlock.class);
         registration.registerEntityComponent(new FrogStatsProvider(), ResourceFrog.class);
         registration.registerBlockComponent(PRIMED_EGG_STATS, PrimedFrogEggBlock.class);
@@ -155,6 +157,19 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                     tooltip.add(Component.translatable("productivefrogs.jade.progress",
                         percent(progress, com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity.CAST_TIME)));
                 }
+            } else if (be instanceof com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity froglight
+                    && froglight.getEffect() != null) {
+                // Brewed Froglight aura (#162): name the effect (with level) and
+                // its on/off state. Plain Froglights add no line.
+                com.flatts.productivefrogs.data.StoredEffect stored = froglight.getEffect();
+                net.minecraft.world.effect.MobEffect mobEffect = stored.effect().value();
+                Component effectName = stored.amplifier() > 0
+                    ? Component.translatable("potion.withAmplifier", mobEffect.getDisplayName(),
+                        Component.translatable("potion.potency." + stored.amplifier()))
+                    : mobEffect.getDisplayName();
+                tooltip.add(Component.translatable(
+                    stored.enabled() ? "productivefrogs.jade.aura_on" : "productivefrogs.jade.aura_off",
+                    effectName));
             }
         }
 
