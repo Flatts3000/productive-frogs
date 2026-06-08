@@ -148,6 +148,9 @@ ids + texture-faithful colors verified against Powah-6.2.10):
 - **uraninite** (`powah:uraninite`, the post-smelt crystal item) - Powah's mined
   base ore and the skyblock-critical resource (#146): no ore gen in a skyblock
   pack means Powah cannot bootstrap without it.
+- **ferricore** (`c:ingots/ferricore` -> `justdirethings:ferricore_ingot`) - Just
+  Dire Things' T1 overworld metal, iron-adjacent (#188; tag verified against
+  justdirethings-1.5.7, colors texture-faithful).
 
 ### GEODE (gems/crystals)
 | Resource | Tag | Providing mods |
@@ -200,6 +203,18 @@ fluid mints iff the variant loads - no orphan fluid on a vanilla-only pack.
   from dust). Colors are texture-faithful near-black with a magenta cast (the
   item texture averages 0x0A0A0A; the mod's magenta is GUI/glow identity, not
   pixel data).
+- **blazegold** (`c:ingots/blazegold` -> `justdirethings:blazegold_ingot`) - Just
+  Dire Things' T2 Nether metal, gold-adjacent (#188).
+- **celestigem** (`justdirethings:celestigem`, exact item - JDT registers only the
+  aggregate `c:gems`, no per-gem tag) - Just Dire Things' T3 gem. Placed INFERNAL
+  by maintainer ruling 2026-06-08 (over Geode/Void), keeping the JDT progression
+  metals together on the fire lineage with blazegold.
+- **blaze_ember** (`justdirethings:coal_t2`, exact item - JDT coals carry no `c:`
+  tag) - Just Dire Things' T2 fuel slime. **Crucible-only cash-out**: no furnace
+  smelt recipe; its Froglight melts to 1,000 mB of
+  `justdirethings:refined_t2_fluid_source` (maintainer ruling 2026-06-08: refined
+  fuel only, no coal items - see
+  [jdt_resource_variants.md](./jdt_resource_variants.md)).
 - Deferred (Thermal has no 1.21.1 release): sulfur (`c:dusts/sulfur`), signalum, lumium.
 
 ### VOID (end/arcane)
@@ -211,6 +226,16 @@ fluid mints iff the variant loads - no orphan fluid on a vanilla-only pack.
 - Mystical Agriculture essences (inferium, supremium) - bespoke, iconic. (Moved
   here from BOG in the 2026-05-28 Bog recategorization: essences are a magic line,
   not organic/swamp.)
+- **eclipsealloy** (`c:ingots/eclipsealloy` -> `justdirethings:eclipsealloy_ingot`) -
+  Just Dire Things' T4 capstone alloy (#188). Time Crystals deliberately excluded
+  (machine fuel, not a metal/gem).
+- **voidflame** + **eclipse_ember** (`justdirethings:coal_t3` / `coal_t4`, exact
+  items - JDT coals carry no `c:` tag) - Just Dire Things' T3/T4 fuel slimes.
+  **Crucible-only cash-out**: no furnace smelt recipes; the Froglights melt to
+  1,000 mB of `justdirethings:refined_t3_fluid_source` / `refined_t4_fluid_source`
+  (maintainer ruling 2026-06-08: refined fuel only, no coal items - see
+  [jdt_resource_variants.md](./jdt_resource_variants.md)). No T1 fuel slime: JDT
+  registers no T1 fluid.
 - Deferred (Thermal has no 1.21.1 release): enderium.
 
 ### BOG (swamp / organic)

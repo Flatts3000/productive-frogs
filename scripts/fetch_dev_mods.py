@@ -64,6 +64,7 @@ CURSEFORGE_TARGETS = {
     64578: "EnderIO (SAG Mill)",
     405593: "AllTheOres (dust + smelt-back fallback; real modid `alltheores`)",
     248020: "Flux Networks (flux_dust variant, #145)",
+    1002348: "Just Dire Things (ferricore/blazegold/celestigem/eclipsealloy variants, #188)",
 }
 CF_API = "https://www.curseforge.com/api/v1"
 # The CF website API rejects non-browser User-Agents at the load balancer.
