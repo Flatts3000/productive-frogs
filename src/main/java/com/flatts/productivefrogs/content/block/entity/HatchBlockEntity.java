@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.content.block.entity;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.menu.HatchMenu;
 import com.flatts.productivefrogs.content.multiblock.TerrariumManager;
@@ -50,9 +51,6 @@ public class HatchBlockEntity extends BlockEntity implements MenuProvider {
     public static final TagKey<Item> HATCH_COLLECTIBLE =
         TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "hatch_collectible"));
 
-    /** Cadence (ticks) of the in-cavity item vacuum. */
-    private static final int VACUUM_INTERVAL = 8;
-
     private int tickCounter;
 
     private final ItemStackHandler inventory = new ItemStackHandler(SLOTS) {
@@ -97,7 +95,7 @@ public class HatchBlockEntity extends BlockEntity implements MenuProvider {
         if (!(level instanceof ServerLevel server)) {
             return;
         }
-        if (++be.tickCounter < VACUUM_INTERVAL) {
+        if (++be.tickCounter < PFConfig.terrariumHatchVacuumIntervalTicks()) {
             return;
         }
         be.tickCounter = 0;

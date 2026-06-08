@@ -114,15 +114,17 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     /**
-     * Speed up the current incubation by feeding a Sweetslime: shave 10% of the
-     * full lifecycle off the remaining time. No-op (returns false) when nothing is
-     * incubating. The 10% scales with the config-driven {@link #growthTotal}.
+     * Speed up the current incubation by feeding a Sweetslime: shave
+     * {@code terrarium.sweetslimeAcceleratePercent}% (default 10) of the full
+     * lifecycle off the remaining time. No-op (returns false) when nothing is
+     * incubating or the speed-up is config-disabled (percent 0).
      */
     public boolean accelerateWithSweetslime() {
-        if (!isIncubating()) {
-            return false;
+        int percent = PFConfig.terrariumSweetslimeAcceleratePercent();
+        if (!isIncubating() || percent <= 0) {
+            return false; // nothing to accelerate, or the speed-up is config-disabled
         }
-        int reduction = Math.max(1, growthTotal / 10);
+        int reduction = Math.max(1, growthTotal * percent / 100);
         growthRemaining = Math.max(0, growthRemaining - reduction);
         syncToClients();
         return true;

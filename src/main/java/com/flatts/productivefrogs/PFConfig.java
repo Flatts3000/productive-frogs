@@ -61,6 +61,8 @@ public final class PFConfig {
     public static final ModConfigSpec.IntValue TERRARIUM_CONTROLLER_BUFFER_DEPTH;
     public static final ModConfigSpec.IntValue TERRARIUM_VALIDATION_INTERVAL_TICKS;
     public static final ModConfigSpec.IntValue TERRARIUM_SPRINKLER_TOPUP_THRESHOLD;
+    public static final ModConfigSpec.IntValue TERRARIUM_SWEETSLIME_ACCEL_PERCENT;
+    public static final ModConfigSpec.IntValue TERRARIUM_HATCH_VACUUM_INTERVAL_TICKS;
 
     // Deterministic, config-exposed lifecycle timings (docs/known_issues.md).
     // These are fixed (non-random) delays for the MODDED frog lifecycle; vanilla
@@ -103,6 +105,8 @@ public final class PFConfig {
     public static final int DEFAULT_TERRARIUM_CONTROLLER_BUFFER_DEPTH = 4;
     public static final int DEFAULT_TERRARIUM_VALIDATION_INTERVAL_TICKS = 30;
     public static final int DEFAULT_TERRARIUM_SPRINKLER_TOPUP_THRESHOLD = 4;
+    public static final int DEFAULT_TERRARIUM_SWEETSLIME_ACCEL_PERCENT = 10;
+    public static final int DEFAULT_TERRARIUM_HATCH_VACUUM_INTERVAL_TICKS = 8;
 
     public static final ModConfigSpec SPEC;
 
@@ -406,6 +410,20 @@ public final class PFConfig {
             )
             .defineInRange("sprinklerTopUpThreshold", DEFAULT_TERRARIUM_SPRINKLER_TOPUP_THRESHOLD, 0, 4096);
 
+        TERRARIUM_SWEETSLIME_ACCEL_PERCENT = builder
+            .comment(
+                "Percent of the full incubation lifecycle a single Sweetslime shaves off when",
+                "right-clicked into an incubating Incubator. Default 10 (10% per slime). 0 disables the speed-up."
+            )
+            .defineInRange("sweetslimeAcceleratePercent", DEFAULT_TERRARIUM_SWEETSLIME_ACCEL_PERCENT, 0, 100);
+
+        TERRARIUM_HATCH_VACUUM_INTERVAL_TICKS = builder
+            .comment(
+                "Ticks between a Hatch's auto-collect sweeps of loose items in the cavity. 20 ticks = 1 second.",
+                "Default 8. Lower picks items up sooner at slightly more scan cost."
+            )
+            .defineInRange("hatchVacuumIntervalTicks", DEFAULT_TERRARIUM_HATCH_VACUUM_INTERVAL_TICKS, 1, 1200);
+
         builder.pop();
 
         SPEC = builder.build();
@@ -525,6 +543,16 @@ public final class PFConfig {
     /** Sprinkler top-up threshold ({@code terrarium.sprinklerTopUpThreshold}); fallback {@value #DEFAULT_TERRARIUM_SPRINKLER_TOPUP_THRESHOLD}. */
     public static int terrariumSprinklerTopUpThreshold() {
         return SPEC.isLoaded() ? TERRARIUM_SPRINKLER_TOPUP_THRESHOLD.get() : DEFAULT_TERRARIUM_SPRINKLER_TOPUP_THRESHOLD;
+    }
+
+    /** Sweetslime acceleration percent ({@code terrarium.sweetslimeAcceleratePercent}); fallback {@value #DEFAULT_TERRARIUM_SWEETSLIME_ACCEL_PERCENT}. */
+    public static int terrariumSweetslimeAcceleratePercent() {
+        return SPEC.isLoaded() ? TERRARIUM_SWEETSLIME_ACCEL_PERCENT.get() : DEFAULT_TERRARIUM_SWEETSLIME_ACCEL_PERCENT;
+    }
+
+    /** Hatch auto-collect cadence in ticks ({@code terrarium.hatchVacuumIntervalTicks}); fallback {@value #DEFAULT_TERRARIUM_HATCH_VACUUM_INTERVAL_TICKS}. */
+    public static int terrariumHatchVacuumIntervalTicks() {
+        return SPEC.isLoaded() ? TERRARIUM_HATCH_VACUUM_INTERVAL_TICKS.get() : DEFAULT_TERRARIUM_HATCH_VACUUM_INTERVAL_TICKS;
     }
 
     // ------------------------------------------------------------------

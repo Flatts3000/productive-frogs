@@ -33,7 +33,7 @@ The cavity is axis-aligned and the shell is exactly one block thick, so the stru
 |---|---|---|---|
 | **Terrarium Controller** | exactly 1 | shell face, in/out axis | The multiblock anchor and the single milk input. Holds a small **charge buffer** (not a blended tank - see storage model) of one variant at a time. Validates the structure. Distributes milk **round-robin to empty Sprinklers** and **auto-tops-up** draining Sprinklers of the matching variant. Exposes a fluid-handler capability + a bucket slot on its outward face. |
 | **Sprinkler** | up to 25 | ceiling cells over the cavity | Spawn source AND storage. Holds **one bucket** of milk (full stats), retains its variant, and **runs the existing placed-Slime-Milk-source mechanics** (catalysts included) spawning slimes down into the cavity. **Drain: right-click with an empty bucket** returns the per-variant milk bucket. **Visual: slow milk-drip particles while filled.** |
-| **Incubator** | 1 or more | shell face, in/out axis | Insert frogspawn / tadpoles from the outward face; they mature inside and the adult frog spawns into the cavity through the inward face, **stats preserved**. Also the **catch basin for in-cavity breeding**: a frog bred inside a formed Terrarium lays its frogspawn into an Incubator (laying behavior overridden) instead of seeking water. At the frog cap, mature frogs **wait inside** and release as space frees. More Incubators = faster population ramp. **Right-click an incubating Incubator with a Sweetslime to hurry it (-10% of the lifecycle per slime).** |
+| **Incubator** | 1 or more | shell face, in/out axis | Insert frogspawn / tadpoles from the outward face; they mature inside and the adult frog spawns into the cavity through the inward face, **stats preserved**. Also the **catch basin for in-cavity breeding**: a frog bred inside a formed Terrarium lays its frogspawn into an Incubator (laying behavior overridden) instead of seeking water. At the frog cap, mature frogs **wait inside** and release as space frees. More Incubators = faster population ramp. **Right-click an incubating Incubator with a Sweetslime to hurry it (default -10% of the lifecycle per slime, `terrarium.sweetslimeAcceleratePercent`).** |
 | **Hatch** | exactly 1 | shell face, in/out axis | Froglight output. In a formed Terrarium the frog-eats-slime drop is **overridden to deposit the Froglight straight into the Hatch inventory** - no item entity ever spawns. Outward face exposes the inventory for piping. **When the Hatch is full, frogs stop eating (backpressure)** - nothing drops, nothing voids. |
 
 All four follow the V1 appliance pattern (`content/block/<Name>Block` + `content/block/entity/<Name>BlockEntity` + an `Inventory` where applicable + a `Menu` + a `client/screen/<Name>Screen` extending `PFContainerScreen`), with capability routing registered in `PFModBusEvents.onRegisterCapabilities`. The Sprinkler is the exception: it has no GUI (right-click drain only), more like the Crucible's GUI-less posture.
@@ -190,7 +190,9 @@ The Terrarium sits at the **Infernal tier**: its blocks are crafted from **Infer
 - `terrarium.frogCap` (default 8) - Incubators hold at this.
 - `terrarium.controllerBufferDepth` (default 4) - charges the Controller holds.
 - `terrarium.validationIntervalTicks` (default ~30) - revalidation cadence.
-- `terrarium.sprinklerTopUpThreshold` (default: some fraction of a charge) - when a draining matching Sprinkler gets topped up.
+- `terrarium.sprinklerTopUpThreshold` (default 4) - when a draining matching Sprinkler gets topped up.
+- `terrarium.sweetslimeAcceleratePercent` (default 10) - % of the full lifecycle a Sweetslime shaves off an incubating Incubator (0 disables).
+- `terrarium.hatchVacuumIntervalTicks` (default 8) - cadence of the Hatch's in-cavity item auto-collect sweep.
 - Sprinkler spawn cadence/cap reuse the existing `SlimeMilkSource` config, scoped to the cavity.
 
 ## Registration / wiring checklist
