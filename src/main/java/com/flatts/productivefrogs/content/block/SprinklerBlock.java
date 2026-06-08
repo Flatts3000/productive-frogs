@@ -1,9 +1,15 @@
 package com.flatts.productivefrogs.content.block;
 
 import com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity;
+import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
+import com.flatts.productivefrogs.registry.PFRegistries;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -70,6 +76,42 @@ public class SprinklerBlock extends Block implements EntityBlock {
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
         return state.setValue(FACING, mirror.mirror(state.getValue(FACING)));
+    }
+
+    /**
+     * Client ambient particles: a filled Sprinkler drips milk down into the
+     * cavity, tinted to the held variant's colour. Gated strictly on {@link #FILLED}
+     * AND a non-empty BE, so an empty/drained Sprinkler is silent. The variant id
+     * is synced to the client BE (see {@code SprinklerBlockEntity.sync()}), so the
+     * drip recolours the moment milk loads or drains.
+     */
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (!state.getValue(FILLED)) {
+            return;
+        }
+        if (!(level.getBlockEntity(pos) instanceof SprinklerBlockEntity be) || be.isEmpty()) {
+            return;
+        }
+        ResourceLocation variant = be.getVariantId();
+        int rgb = variant == null ? DEFAULT_MILK_RGB : variantColor(level, variant);
+        double x = pos.getX() + 0.25 + random.nextDouble() * 0.5;
+        double y = pos.getY() - 0.05; // just under the down face
+        double z = pos.getZ() + 0.25 + random.nextDouble() * 0.5;
+        level.addParticle(Category.dustParticle(rgb), x, y, z, 0.0, -0.06, 0.0);
+    }
+
+    /** Milky off-white fallback before the variant registry is available. */
+    private static final int DEFAULT_MILK_RGB = 0xF0F0E0;
+
+    private static int variantColor(Level level, ResourceLocation variant) {
+        Registry<SlimeVariant> registry = level.registryAccess()
+            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+        if (registry == null) {
+            return DEFAULT_MILK_RGB;
+        }
+        SlimeVariant v = registry.get(variant);
+        return v == null ? DEFAULT_MILK_RGB : v.primaryColor();
     }
 
     @Override
