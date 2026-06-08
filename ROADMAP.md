@@ -118,6 +118,14 @@ Six mob-adjacent vanilla resources became farmable (#161): breeze rod (Cave), gh
 
 **Brewed Froglights** (#162/#171): a slime carrying a potion effect when a frog eats it drops an effect-stamped Froglight - a toggleable aura when placed (affects all entities in range; Poison/Wither perimeters, Regen rooms), a self-buff when held in hand, or a worn charm in a dedicated Curios slot. JEI-invisible by construction (no per-effect row explosion); right-click toggle + glint + tooltip. **The boss/endgame tier** (#172/#173/#175/#184): Wither Skeleton Skull, Nether Star, Dragon Egg, and Dragon Breath plus five mob drops (bone/string/gunpowder/rotten flesh/magma cream). The four bosses are doubly gated - prime-only (weight 0, never from split-discovery; you spend the real drop to start) and a **6-face catalyst altar** that must wall the Slime Milk source before it spawns - and their milk is **toxic to players** (Wither), the narrative reason to cage them. Also: Mekanism Refined Glowstone (#180), and a fix baking the inner-block surface onto a batch of recently-added slimes (ice/snow/mob/boss) that had been rendering hollow. Roster: 94 variants.
 
+### v1.15.0 (shipped 2026-06-08): the Slime Churn + Just Dire Things
+
+**The Slime Churn** (#187): the Milker run backwards - load a variant Slime Milk bucket plus empties and it fills them with that variant's captured slimes, on the placed-source spawn economy (same cadence, budget, and catalysts), with a separate empty-bucket output slot so a self-feeding line never grabs an empty. **Just Dire Things support** (#188): Ferricore (Cave), Blazegold + Celestigem (Infernal), and Eclipse Alloy (Void) farm through the loop, plus Blaze Ember / Voidflame Coal / Eclipse Ember as a Crucible fuel lane (melt the Froglight straight into refined fuel, skipping JDT's own refining chain).
+
+### v1.16.0 (shipped 2026-06-08): the Terrarium
+
+The flagship multiblock (#185/#193). A sealed box automates the entire loop: Slime Milk piped into the **Controller** feeds ceiling **Sprinklers** that rain slimes into the cavity; frogs raised in **Incubators** (full egg-to-frog lifecycle, bred stats preserved, Sweetslime speed-up, frog-cap hold/release) eat them; and the Froglights land in the **Hatch**, which also auto-collects loose drops and reads as a chest. Sprinklers carry their milk's catalysts and accept catalyst tosses from above; Jade tooltips and a Controller status screen show structure state, buffered milk, machine counts, and live frog population; JEI shows the blocks. Tunable via `terrarium.*` config. Automation ships in the 1.x line - **"V2 is just a name, not a rule."**
+
 ---
 
 ## v2: automation
@@ -126,7 +134,7 @@ The scale-up release. v1 lives unchanged; v2 layers automation on top. A player 
 
 **Buffered / auto-upgrading Slime Milker:** the v1 Milker and Spawnery already expose basic hopper I/O (`Capabilities.ItemHandler.BLOCK`), so hoppers can feed and drain them today. The v2 layer is the buffered upgrade - internal slime/milk buffers and auto-cycling so a line keeps running without per-item hopper handoff.
 
-**Frog Terrarium / Habitat block:** placeable frog housing with input/output inventory. Houses one or more frogs in a contained system.
+**Frog Terrarium / Habitat block:** SHIPPED in v1.16.0 (see Shipped above) - it landed in the 1.x line per "V2 is just a name, not a rule."
 
 **Auto-feeders:** hopper-fed slime delivery to nearby frogs (the frog side, not the appliance side - distinct from the appliance hopper I/O that already shipped in v1). Alternative to milk-spawn proximity.
 

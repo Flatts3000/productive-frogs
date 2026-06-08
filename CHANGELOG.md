@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.16.0 - 2026-06-08 - The Terrarium
+
+### Added
+
+- **The Terrarium.** A sealed multiblock habitat that automates the whole frog loop. Pipe Slime Milk into the Controller and it feeds the ceiling Sprinklers, which rain slimes down into the enclosure; frogs raised in the Incubators eat them, and the Froglights they produce drop straight into the Hatch for piping out. Build the box, seal it, and it runs itself - the hand-operated Milker and Churn were the stepping stones to this.
+- **Sprinklers spawn just like a placed milk source.** Each Sprinkler holds a bucket of milk and rains its variant's slimes into the cavity on the same rules a source block uses - cadence, budget, and catalysts (Speed, Quantity, Count, Endless) all carry through from the bucket. You can drop catalyst items onto a Sprinkler from above to upgrade it in place, and a filled Sprinkler drips its milk's colour so you can read it at a glance.
+- **Incubators raise frogs with stats intact.** Drop a bottled frog egg into an Incubator and it grows a frog inside the habitat over the full egg-to-frog lifecycle, bred stats preserved. Frogs bred inside the Terrarium lay back into an Incubator instead of seeking water, and feeding an incubating Incubator a Sweetslime hurries it along. The habitat enforces a frog-population cap - Incubators hold matured frogs and release them as space frees, so it never overflows.
+- **The Hatch gathers everything.** Froglights land in it directly with no item to chase, and it auto-collects loose slimeballs, magma cream, and froglights from the cavity. It opens as an ordinary chest, and when it's full the frogs stop eating so nothing is wasted.
+- **Readouts everywhere.** Jade look-at tooltips and a status screen on the Controller show whether the structure is formed (and the first problem if not), the buffered milk, the Sprinkler/Incubator counts, and the live frog population; JEI shows the blocks and their recipes.
+- **Configurable.** New `terrarium.*` config tunes the slime and frog caps, the Controller's milk buffer, the Sweetslime speed-up, and more.
+
+Automation ships in the 1.x line - "V2 is just a name, not a rule."
+
 ## v1.15.0 - 2026-06-08 - The Slime Churn + Just Dire Things support
 
 ### Added
