@@ -123,6 +123,22 @@ public final class TerrariumManager {
         return null;
     }
 
+    /** The formed Terrarium whose Hatch is at {@code hatchPos}, or null. */
+    @Nullable
+    public static FormedTerrarium owningHatch(ServerLevel level, BlockPos hatchPos) {
+        Map<BlockPos, FormedTerrarium> byController = ACTIVE.get(level);
+        if (byController == null) {
+            return null;
+        }
+        BlockPos key = hatchPos.immutable();
+        for (FormedTerrarium t : byController.values()) {
+            if (t.hatchPos().equals(key)) {
+                return t;
+            }
+        }
+        return null;
+    }
+
     /** Drop all Terraria in a level (on {@code LevelEvent.Unload}). */
     public static void onLevelUnload(ServerLevel level) {
         ACTIVE.remove(level);

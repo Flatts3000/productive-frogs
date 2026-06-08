@@ -5090,6 +5090,40 @@ public final class PFGameTests {
         }
     }
 
+    /** The Hatch auto-collects loose collectible items (a slimeball) from the cavity. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumHatchVacuumsCavityItems(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 0);
+        ServerLevel level = helper.getLevel();
+        ((com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity)
+            helper.getBlockEntity(controller)).forceValidate(level, helper.absolutePos(controller));
+        BlockPos hatchRel = new BlockPos(7, 4, 4);
+        com.flatts.productivefrogs.content.block.entity.HatchBlockEntity hatch =
+            (com.flatts.productivefrogs.content.block.entity.HatchBlockEntity) helper.getBlockEntity(hatchRel);
+        // Drop a slimeball item entity inside the cavity.
+        BlockPos dropAbs = helper.absolutePos(new BlockPos(4, 3, 4));
+        net.minecraft.world.entity.item.ItemEntity item = new net.minecraft.world.entity.item.ItemEntity(
+            level, dropAbs.getX() + 0.5, dropAbs.getY() + 0.5, dropAbs.getZ() + 0.5,
+            new ItemStack(net.minecraft.world.item.Items.SLIME_BALL));
+        level.addFreshEntity(item);
+        BlockPos hatchAbs = helper.absolutePos(hatchRel);
+        BlockState hatchState = level.getBlockState(hatchAbs);
+        // Tick past the vacuum cadence so it fires.
+        for (int i = 0; i < 8; i++) {
+            com.flatts.productivefrogs.content.block.entity.HatchBlockEntity.serverTick(
+                level, hatchAbs, hatchState, hatch);
+        }
+        if (hatch.isEmpty()) {
+            helper.fail("Hatch did not vacuum the slimeball from the cavity");
+            return;
+        }
+        if (item.isAlive() && !item.getItem().isEmpty()) {
+            helper.fail("the slimeball item entity should be consumed by the Hatch");
+            return;
+        }
+        helper.succeed();
+    }
+
     /**
      * Build a valid Terrarium inside the 9x9x9 plot: a stone shell over rel
      * {@code x/z (1..7)} and {@code y (1..6)} (5x4x5 air cavity at rel

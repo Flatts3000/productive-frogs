@@ -1,18 +1,28 @@
 package com.flatts.productivefrogs.content.block.entity;
 
+import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.menu.HatchMenu;
+import com.flatts.productivefrogs.content.multiblock.TerrariumManager;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFItems;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -32,6 +42,19 @@ public class HatchBlockEntity extends BlockEntity implements MenuProvider {
 
     public static final int SLOTS = 18;
 
+    /**
+     * What the Hatch accepts and auto-collects: modded + vanilla Froglights plus
+     * the slimeball / magma-cream byproducts. Pack-extensible via
+     * {@code data/productivefrogs/tags/item/hatch_collectible.json}.
+     */
+    public static final TagKey<Item> HATCH_COLLECTIBLE =
+        TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "hatch_collectible"));
+
+    /** Cadence (ticks) of the in-cavity item vacuum. */
+    private static final int VACUUM_INTERVAL = 8;
+
+    private int tickCounter;
+
     private final ItemStackHandler inventory = new ItemStackHandler(SLOTS) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -40,8 +63,11 @@ public class HatchBlockEntity extends BlockEntity implements MenuProvider {
 
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            // The Terrarium only ever deposits Froglights; reject foreign inserts.
-            return stack.is(PFItems.CONFIGURABLE_FROGLIGHT.get());
+            // The modded Froglight (the direct frog drop) is always accepted by
+            // identity - it must work even before datapack tags bind (unit tests).
+            // The tag extends acceptance to vanilla Froglights + the slimeball /
+            // magma-cream byproducts; reject anything else (e.g. hopper junk).
+            return stack.is(PFItems.CONFIGURABLE_FROGLIGHT.get()) || stack.is(HATCH_COLLECTIBLE);
         }
     };
 
@@ -57,6 +83,48 @@ public class HatchBlockEntity extends BlockEntity implements MenuProvider {
     /** Insert a froglight; returns true only if it fully fit (the caller drops nothing otherwise). */
     public boolean insert(ItemStack froglight) {
         return ItemHandlerHelper.insertItem(inventory, froglight, false).isEmpty();
+    }
+
+    /**
+     * Auto-collect loose {@link #HATCH_COLLECTIBLE} items from the formed
+     * Terrarium's cavity - slimeballs, magma cream, and vanilla/modded Froglights
+     * that land as item entities (the direct frog-eat drop never spawns an entity;
+     * this catches everything else). Throttled, formed-only, and respects the
+     * full-Hatch backpressure: a full Hatch leaves items on the ground, never
+     * voids them.
+     */
+    public static void serverTick(Level level, BlockPos pos, BlockState state, HatchBlockEntity be) {
+        if (!(level instanceof ServerLevel server)) {
+            return;
+        }
+        if (++be.tickCounter < VACUUM_INTERVAL) {
+            return;
+        }
+        be.tickCounter = 0;
+        if (be.isFull()) {
+            return;
+        }
+        TerrariumManager.FormedTerrarium terrarium = TerrariumManager.owningHatch(server, pos);
+        if (terrarium == null) {
+            return; // only vacuums inside a formed Terrarium
+        }
+        List<ItemEntity> items = server.getEntitiesOfClass(ItemEntity.class, terrarium.cavity(),
+            e -> e.isAlive() && e.getItem().is(HATCH_COLLECTIBLE));
+        for (ItemEntity entity : items) {
+            ItemStack stack = entity.getItem();
+            ItemStack remainder = ItemHandlerHelper.insertItem(be.inventory, stack, false);
+            if (remainder.getCount() == stack.getCount()) {
+                continue; // nothing fit
+            }
+            if (remainder.isEmpty()) {
+                entity.discard();
+            } else {
+                entity.setItem(remainder);
+            }
+            if (be.isFull()) {
+                break;
+            }
+        }
     }
 
     /** Full = every slot occupied. Drives the eat-backpressure: frogs stop eating a full Hatch. */
