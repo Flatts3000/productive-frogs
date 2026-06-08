@@ -1,6 +1,6 @@
 # Slime Churn (#187)
 
-> **Status: built on `feat/slime-churn`, targeting v1.15.0.** The Milker's
+> **Status: SHIPPED in v1.15.0.** The Milker's
 > inverse: a V1 appliance that turns Slime Milk back into captured slimes,
 > in buckets, without ever spawning an entity.
 

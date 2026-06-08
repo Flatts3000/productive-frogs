@@ -67,7 +67,7 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 
 ## Status
 
-**Latest release: v1.14.0 (beta on CurseForge since v1.9.1).** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, the Spawnery, frog stat breeding, Slime Milk catalysts, fully pipeable per-variant Slime Milk, and the Froglight Crucible + Casting Mold melt-and-cast lane. v1.14 adds Brewed Froglights (capture a potion effect into a Froglight aura/charm, with a Curios slot) and the boss/endgame tier - Wither Skeleton Skull, Nether Star, Dragon Egg, and Dragon Breath, each gated behind a prime-only sacrifice and a 6-face catalyst altar, with toxic boss milk.
+**Latest release: v1.16.0 (beta on CurseForge since v1.9.1).** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, the Spawnery, frog stat breeding, Slime Milk catalysts, fully pipeable per-variant Slime Milk, the Froglight Crucible + Casting Mold melt-and-cast lane, Brewed Froglights, and the boss/endgame tier. v1.15 adds the Slime Churn (milk back into captured slimes) and Just Dire Things support. **v1.16 adds the Terrarium** - a sealed multiblock that automates the whole loop end to end: pipe Slime Milk into the Controller, ceiling Sprinklers rain slimes into the cavity, frogs raised in Incubators eat them, and the Froglights collect in the Hatch for piping out.
 
 | Version line | Scope | Status |
 |---|---|---|
@@ -86,7 +86,9 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 | v1.12 | The Froglight Crucible + Casting Mold (melt-and-cast lane) | ✅ shipped |
 | v1.13 | Six more vanilla variants; water/lava -> Cave | ✅ shipped |
 | v1.14 | Brewed Froglights + Curios; the boss/endgame tier (catalyst altar, toxic milk) | ✅ shipped |
-| v2 | Automation: power/multiblocks/terrariums | 🔭 future |
+| v1.15 | The Slime Churn; Just Dire Things support | ✅ shipped |
+| v1.16 | The Terrarium - automation multiblock (Controller / Sprinklers / Incubators / Hatch) | ✅ shipped |
+| v2 | Further automation: power, buffered appliances, auto-feeders | 🔭 future |
 
 Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope rationale: [`docs/versioning.md`](./docs/versioning.md).
 

@@ -1,6 +1,6 @@
 # Terrarium (build spec)
 
-> **Status: BUILT (PR #193, targeting v1.16.0).** The flagship multiblock frog habitat. Per the maintainer ruling **"V2 is just a name, not a rule"** (2026-06-08), the old "must not land in a V1.x branch" gate is dropped - it ships in the **1.x line**, not a 2.0.0. The full loop is implemented in one PR: structure + validation (the four blocks, the facing-aware candidate validator, `TerrariumManager`, config), the milk path (Controller charge buffer + Sprinkler spawn loop + component-preserving fluid wrapper + round-robin distribution + cavity cap), froglight output (direct-to-Hatch + two-layer backpressure), the Incubator (stat relay + frog-cap hold + breeding-lay redirect), Infernal-tier recipes, per-face block textures + oriented models, three GUIs (Controller/Incubator/Hatch), JEI info pages, and Jade look-at tooltips. **Construction guidance** ships as the native Controller validation feedback (right-click -> formed state + first structural problem in the Controller GUI); the **GuideME 3D scene is a deferred, separately-verified follow-up** (it needs a new dependency and a guidebook format that can't be CI-verified). Issue #185 holds the settled product rulings, reproduced in the decision log at the bottom.
+> **Status: SHIPPED in v1.16.0** (PR #193, 2026-06-08). The flagship multiblock frog habitat. Per the maintainer ruling **"V2 is just a name, not a rule"** (2026-06-08), the old "must not land in a V1.x branch" gate is dropped - it ships in the **1.x line**, not a 2.0.0. The full loop is implemented in one PR: structure + validation (the four blocks, the facing-aware candidate validator, `TerrariumManager`, config), the milk path (Controller charge buffer + Sprinkler spawn loop + component-preserving fluid wrapper + round-robin distribution + cavity cap), froglight output (direct-to-Hatch + two-layer backpressure), the Incubator (stat relay + frog-cap hold + breeding-lay redirect), Infernal-tier recipes, per-face block textures + oriented models, three GUIs (Controller/Incubator/Hatch), JEI info pages, and Jade look-at tooltips. **Construction guidance** ships as the native Controller validation feedback (right-click -> formed state + first structural problem in the Controller GUI); the **GuideME 3D scene is a deferred, separately-verified follow-up** (it needs a new dependency and a guidebook format that can't be CI-verified). Issue #185 holds the settled product rulings, reproduced in the decision log at the bottom.
 
 ## The pitch
 
@@ -197,19 +197,21 @@ The Terrarium sits at the **Infernal tier**: its blocks are crafted from **Infer
 
 ## Registration / wiring checklist
 
-- [ ] `PFBlocks`: `TERRARIUM_CONTROLLER`, `SPRINKLER`, `INCUBATOR`, `HATCH` (directional `FACING`, `FORMED`/`WORKING`-style state where useful). `PFItems`: four `BlockItem`s. `PFCreativeTabs`: after the appliances.
-- [ ] `PFBlockEntities`: one BE each (Controller, Sprinkler, Incubator, Hatch). **`PFBlocks` before `PFBlockEntities`** (the `BlockEntityType.Builder.of` ordering constraint already documented in `ProductiveFrogs.java`).
-- [ ] `PFMenuTypes` + `client/screen`: menus/screens for Controller (buffer + status), Incubator (input/held frog), Hatch (output inventory). Sprinkler has no menu (right-click drain only). Screens extend `PFContainerScreen`.
-- [ ] `PFModBusEvents.onRegisterCapabilities`: Controller `Capabilities.FluidHandler.BLOCK` (fill-only, outward face) + `Capabilities.ItemHandler.BLOCK` for the bucket slot; Hatch `Capabilities.ItemHandler.BLOCK` (extract-only, outward face); Incubator `Capabilities.ItemHandler.BLOCK` (insert, outward face).
-- [ ] **Component-preserving milk-bucket->fluid wrapper** (decided) - replace the plain `FluidBucketWrapper` PF registers for milk buckets with a subclass that copies the catalyst components onto the `FluidStack`, so piped milk keeps catalysts.
-- [ ] `FrogTongueDropHandler`: the formed-Terrarium override + backpressure; `TerrariumManager` per-level registry.
-- [ ] `ResourceFrogAttackablesSensor`: refuse prey when the owning Terrarium's Hatch is full (backpressure layer 1).
-- [ ] **`LayCategoryFrogspawn` override** (decided) - inside a formed Terrarium, redirect the lay target from water to the nearest Incubator with room, writing pending-offspring stats into the Incubator BE (`setPendingStats`) instead of placing a `PrimedFrogEggBlock`. Sweetslime breeding trigger stays the unmodified manual player action.
-- [ ] Sprinkler reuses `SlimeMilkSourceBlockEntity` spawn/budget/catalyst logic - factor the shared spawn loop so both the placed source and the Sprinkler call it (do not fork it). Sprinklers **deplete** (continuous-feed ruling); Infinite charge = non-depleting.
-- [ ] Incubator stat relay (mirror `PrimedFrogEggBlockEntity` stat fields; apply via `frog.setStats` post-`finalizeSpawn`). Manual seed accepts a bottled Frog Egg (baseline stats) or a captured tadpole (carries stats); bred stats arrive via the lay override above.
-- [ ] Blockstates + models + textures (gen/ pipeline) for four machines + Sprinkler; loot tables; `mineable/pickaxe` tags; lang (4-5 block names + tooltips + the validation-feedback messages + any GuideME page).
-- [ ] Crafting recipes for the five blocks, **built from Infernal-species resources** (Controller the heaviest sink, Sprinkler the cheapest).
-- [ ] GuideME guide page (3D scene) if shipping construction guidance.
+> All items below shipped in v1.16.0; the lone unchecked item (the GuideME guide page) is the deferred post-release follow-up.
+
+- [x] `PFBlocks`: `TERRARIUM_CONTROLLER`, `SPRINKLER`, `INCUBATOR`, `HATCH` (directional `FACING`, `FORMED`/`WORKING`-style state where useful). `PFItems`: four `BlockItem`s. `PFCreativeTabs`: after the appliances.
+- [x] `PFBlockEntities`: one BE each (Controller, Sprinkler, Incubator, Hatch). **`PFBlocks` before `PFBlockEntities`** (the `BlockEntityType.Builder.of` ordering constraint already documented in `ProductiveFrogs.java`).
+- [x] `PFMenuTypes` + `client/screen`: menus/screens for Controller (buffer + status), Incubator (input/held frog), Hatch (output inventory). Sprinkler has no menu (right-click drain only). Screens extend `PFContainerScreen`.
+- [x] `PFModBusEvents.onRegisterCapabilities`: Controller `Capabilities.FluidHandler.BLOCK` (fill-only, outward face) + `Capabilities.ItemHandler.BLOCK` for the bucket slot; Hatch `Capabilities.ItemHandler.BLOCK` (extract-only, outward face); Incubator `Capabilities.ItemHandler.BLOCK` (insert, outward face).
+- [x] **Component-preserving milk-bucket->fluid wrapper** (decided) - replace the plain `FluidBucketWrapper` PF registers for milk buckets with a subclass that copies the catalyst components onto the `FluidStack`, so piped milk keeps catalysts.
+- [x] `FrogTongueDropHandler`: the formed-Terrarium override + backpressure; `TerrariumManager` per-level registry.
+- [x] `ResourceFrogAttackablesSensor`: refuse prey when the owning Terrarium's Hatch is full (backpressure layer 1).
+- [x] **`LayCategoryFrogspawn` override** (decided) - inside a formed Terrarium, redirect the lay target from water to the nearest Incubator with room, writing pending-offspring stats into the Incubator BE (`setPendingStats`) instead of placing a `PrimedFrogEggBlock`. Sweetslime breeding trigger stays the unmodified manual player action.
+- [x] Sprinkler reuses `SlimeMilkSourceBlockEntity` spawn/budget/catalyst logic - factor the shared spawn loop so both the placed source and the Sprinkler call it (do not fork it). Sprinklers **deplete** (continuous-feed ruling); Infinite charge = non-depleting.
+- [x] Incubator stat relay (mirror `PrimedFrogEggBlockEntity` stat fields; apply via `frog.setStats` post-`finalizeSpawn`). Manual seed accepts a bottled Frog Egg (baseline stats) or a captured tadpole (carries stats); bred stats arrive via the lay override above.
+- [x] Blockstates + models + textures (gen/ pipeline) for four machines + Sprinkler; loot tables; `mineable/pickaxe` tags; lang (4-5 block names + tooltips + the validation-feedback messages + any GuideME page).
+- [x] Crafting recipes for the five blocks, **built from Infernal-species resources** (Controller the heaviest sink, Sprinkler the cheapest).
+- [ ] GuideME guide page (3D scene) - **deferred post-release follow-up** (needs the GuideME dependency + a manual runClient verification; native Controller right-click feedback ships in its place).
 
 ## GameTests
 
