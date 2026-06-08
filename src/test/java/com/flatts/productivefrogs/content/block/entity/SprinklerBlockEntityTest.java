@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.item.MilkCatalyst;
 import com.flatts.productivefrogs.content.multiblock.MilkCharge;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import net.minecraft.core.BlockPos;
@@ -78,6 +79,25 @@ class SprinklerBlockEntityTest {
         ItemStack bucket = s.drainToBucket(null, BlockPos.ZERO, PFBlocks.SPRINKLER.get().defaultBlockState());
         assertFalse(bucket.isEmpty(), "drain returns the per-variant milk bucket");
         assertTrue(s.isEmpty(), "draining clears the Sprinkler");
+    }
+
+    @Test
+    void applyCatalystUpgradesHeldMilkAndRefusesMaxed() {
+        SprinklerBlockEntity s = newSprinkler();
+        s.loadCharge(IRON, new MilkCharge(8, 8, 0, 0, false));
+        assertTrue(s.applyCatalyst(MilkCatalyst.SPEED), "speed applies");
+        assertEquals(1, s.getSpeedLevel());
+        assertTrue(s.applyCatalyst(MilkCatalyst.QUANTITY), "quantity applies");
+        assertEquals(1, s.getQuantityLevel());
+        assertTrue(s.applyCatalyst(MilkCatalyst.INFINITE), "infinite applies");
+        assertTrue(s.isInfinite());
+        assertFalse(s.applyCatalyst(MilkCatalyst.INFINITE), "already infinite -> refused");
+    }
+
+    @Test
+    void applyCatalystIsNoOpOnAnEmptySprinkler() {
+        SprinklerBlockEntity s = newSprinkler();
+        assertFalse(s.applyCatalyst(MilkCatalyst.SPEED), "nothing to upgrade when empty");
     }
 
     @Test

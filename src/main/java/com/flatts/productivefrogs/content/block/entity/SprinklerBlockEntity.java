@@ -4,13 +4,16 @@ import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.block.MilkSpawnEconomy;
 import com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock;
 import com.flatts.productivefrogs.content.block.SprinklerBlock;
+import com.flatts.productivefrogs.content.item.MilkCatalyst;
 import com.flatts.productivefrogs.content.multiblock.MilkCharge;
 import com.flatts.productivefrogs.content.multiblock.TerrariumManager;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFItems;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
@@ -18,13 +21,17 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -135,6 +142,93 @@ public class SprinklerBlockEntity extends BlockEntity {
         return Mth.clamp(v, 0, SlimeMilkSourceBlockEntity.MAX_STORED_SPAWNS);
     }
 
+    /**
+     * Apply one catalyst to the held milk, mirroring
+     * {@link SlimeMilkSourceBlockEntity#applyCatalyst}. Returns false (consuming
+     * nothing) when empty or the upgrade is already maxed/redundant. The
+     * depletion/infinite gating on Count/Infinite is done by the caller.
+     */
+    public boolean applyCatalyst(MilkCatalyst catalyst) {
+        if (variantId == null) {
+            return false;
+        }
+        boolean applied = switch (catalyst) {
+            case COUNT -> {
+                if (infinite || spawnsRemaining >= SlimeMilkSourceBlockEntity.MAX_STORED_SPAWNS) {
+                    yield false;
+                }
+                int added = PFConfig.catalystCountPer();
+                spawnsRemaining = clampSpawns(spawnsRemaining + added);
+                spawnsCapacity = clampSpawns(Math.max(spawnsCapacity, 0) + added);
+                yield true;
+            }
+            case SPEED -> {
+                if (speedLevel >= PFConfig.catalystMaxSpeedLevel()) {
+                    yield false;
+                }
+                speedLevel++;
+                yield true;
+            }
+            case QUANTITY -> {
+                if (quantityLevel >= PFConfig.catalystMaxQuantityLevel()) {
+                    yield false;
+                }
+                quantityLevel++;
+                yield true;
+            }
+            case INFINITE -> {
+                if (infinite) {
+                    yield false;
+                }
+                infinite = true;
+                yield true;
+            }
+        };
+        if (applied) {
+            sync();
+        }
+        return applied;
+    }
+
+    /**
+     * Absorb Slime Milk catalyst items dropped onto the Sprinkler from above (a
+     * tossed stack, a dropper, or a hopper feeding the terrarium roof) - the
+     * Sprinkler's analogue of a source block consuming catalysts dropped into its
+     * pool. Same gating: catalysts globally enabled, holding milk, and Count/Infinite
+     * only when depletion is on. A maxed upgrade leaves the item for the player.
+     */
+    private void absorbCatalystsFromAbove(ServerLevel level, BlockPos pos) {
+        if (variantId == null || !PFConfig.milkCatalystsEnabled()) {
+            return;
+        }
+        List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos.above()),
+            e -> e.isAlive() && MilkCatalyst.fromStack(e.getItem()) != null);
+        for (ItemEntity itemEntity : items) {
+            ItemStack stack = itemEntity.getItem();
+            MilkCatalyst catalyst = MilkCatalyst.fromStack(stack);
+            if (catalyst == null) {
+                continue;
+            }
+            // Count / Infinite are no-ops when depletion is globally off; leave them.
+            if ((catalyst == MilkCatalyst.COUNT || catalyst == MilkCatalyst.INFINITE) && !depletionEnabled()) {
+                continue;
+            }
+            if (!applyCatalyst(catalyst)) {
+                continue;
+            }
+            stack.shrink(1);
+            if (stack.isEmpty()) {
+                itemEntity.discard();
+            } else {
+                itemEntity.setItem(stack);
+            }
+            level.playSound(null, pos, SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS,
+                0.7F, 1.3F + level.getRandom().nextFloat() * 0.2F);
+            level.sendParticles(ParticleTypes.HAPPY_VILLAGER,
+                pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, 6, 0.25, 0.25, 0.25, 0.0);
+        }
+    }
+
     /** Test seam: make the next {@link #serverTick} fire immediately. */
     public void primeForImmediateSpawn() {
         this.intervalTotal = 1;
@@ -156,6 +250,7 @@ public class SprinklerBlockEntity extends BlockEntity {
             return;
         }
         setFilled(server, pos, state, true);
+        be.absorbCatalystsFromAbove(server, pos);
 
         boolean depleting = depletionEnabled() && !be.infinite;
         if (depleting && be.spawnsRemaining <= 0) {
