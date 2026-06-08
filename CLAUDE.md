@@ -148,6 +148,7 @@ A cross-cutting, opt-in debug logger (`PFDebug`) spans all layers (lifecycle, re
 
 - **Java 21, 4-space indent, no tabs, no wildcard imports.** Import order: **alphabetical, one block, no semantic groups** - matches Mojang vanilla style and existing files here. Records for value types; `@Nullable` (JetBrains, ships with NeoForge) on ambiguous returns.
 - **Conventional Commits** (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`, `ci:`, `perf:`). Body explains the *why*. One logical change per commit. `main` is protected; changes go via PR (squash-merged). Branch protection requires the `build` and `gameTest` CI jobs **and resolved review conversations** before merge.
+- **Recipes never hardcode a wood species** - where a recipe wants planks, use the `#minecraft:planks` tag, not `oak_planks` (maintainer ruling 2026-06-07; the Milker/Spawnery/Churn all follow it). Same instinct for other material families when a vanilla tag exists.
 - **Docs filenames are snake_case** (`categories_and_tiers.md`). Design changes update the relevant `docs/*.md` in the same PR.
 - **Line endings:** `.gitattributes` forces LF for `.java`/`.gradle`/`.json`/`.md`/`.yml`, CRLF for `.bat`/`.cmd`. Don't fight it.
 - **No hard mod dependencies.** Cross-mod entries use `c:` common tags + `neoforge:conditions → mod_loaded`. No `compat/` Java package - if you reach for one, stop and use a JSON condition instead.

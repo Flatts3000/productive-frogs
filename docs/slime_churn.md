@@ -70,11 +70,13 @@ churned bucket and a hand-captured bucket are interchangeable everywhere
 
 ## Recipe and identity (Bog)
 
-Crafted as an **oak barrel over a mud base** (maintainer-specified pattern):
+Crafted as a **plank barrel over a mud base** (maintainer-specified pattern;
+planks are the `#minecraft:planks` tag - recipes never hardcode a wood
+species):
 
 ```
-oak planks  moss block  oak planks
-oak planks  slime ball  oak planks
+planks      moss block  planks
+planks      slime ball  planks
 packed mud  packed mud  packed mud
 ```
 
