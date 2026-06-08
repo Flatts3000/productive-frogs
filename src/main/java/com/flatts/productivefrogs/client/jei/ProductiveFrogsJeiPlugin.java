@@ -108,6 +108,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         var guiHelper = registration.getJeiHelpers().getGuiHelper();
         registration.addRecipeCategories(
             new SlimeMilkerRecipeCategory(guiHelper),
+            new SlimeChurnRecipeCategory(guiHelper),
             new SpawneryRecipeCategory(guiHelper),
             new CrucibleHeatCategory(guiHelper),
             new CrucibleMeltCategory(guiHelper),
@@ -209,6 +210,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         addStaticInfoPages(reg);
 
         addMilkerRecipes(reg, variants);
+        addChurnRecipes(reg, variants);
         addSpawneryRecipes(reg);
         addCrucibleHeatEntries(reg, variants);
         // Melt + cast recipes ride their real recipe types, so datapack
@@ -277,6 +279,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
         registration.addRecipeCatalyst(PFBlocks.SLIME_MILKER.get(), SlimeMilkerRecipeCategory.TYPE);
+        registration.addRecipeCatalyst(PFBlocks.SLIME_CHURN.get(), SlimeChurnRecipeCategory.TYPE);
         registration.addRecipeCatalyst(PFBlocks.CRUCIBLE.get(), CrucibleHeatCategory.TYPE);
         registration.addRecipeCatalyst(PFBlocks.CRUCIBLE.get(), CrucibleMeltCategory.TYPE);
         registration.addRecipeCatalyst(PFBlocks.CASTING_MOLD.get(), MoldCastingCategory.TYPE);
@@ -310,6 +313,29 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             recipes.add(new SlimeMilkerRecipeCategory.Recipe(input, output));
         }
         reg.addRecipes(SlimeMilkerRecipeCategory.TYPE, recipes);
+    }
+
+    /**
+     * One Slime Churn recipe per shipped SlimeVariant - the Milker mapping
+     * inverted: a variant Slime Milk bucket (plus an empty bucket) converts
+     * to the matching captured variant Slime Bucket, returning the spent
+     * container. Same registry walk and {@link PFItems} stack builders as
+     * {@link #addMilkerRecipes}, so the two categories stay in lockstep.
+     */
+    private static void addChurnRecipes(IRecipeRegistration reg, Registry<SlimeVariant> variants) {
+        List<SlimeChurnRecipeCategory.Recipe> recipes = new ArrayList<>();
+        for (java.util.Map.Entry<ResourceKey<SlimeVariant>, SlimeVariant> entry : variants.entrySet()) {
+            ResourceLocation variantId = entry.getKey().location();
+            ItemStack milkBucket = PFItems.slimeMilkBucket(variantId);
+            // No per-variant milk fluid (content-only variant) = nothing the
+            // churn could consume - skip, mirroring addMilkerRecipes.
+            if (milkBucket.isEmpty()) {
+                continue;
+            }
+            ItemStack slimeBucket = PFItems.variantSlimeBucket(variantId, entry.getValue().category());
+            recipes.add(new SlimeChurnRecipeCategory.Recipe(milkBucket, slimeBucket));
+        }
+        reg.addRecipes(SlimeChurnRecipeCategory.TYPE, recipes);
     }
 
     /**
@@ -468,6 +494,12 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             new ItemStack(PFBlocks.SLIME_MILKER.get().asItem()),
             VanillaTypes.ITEM_STACK,
             Component.translatable("productivefrogs.jei.slime_milker.info"));
+
+        // Slime Churn (#187) - the Milker's inverse
+        reg.addIngredientInfo(
+            new ItemStack(PFBlocks.SLIME_CHURN.get().asItem()),
+            VanillaTypes.ITEM_STACK,
+            Component.translatable("productivefrogs.jei.slime_churn.info"));
 
         // Spawnery — only when enabled; when off it's removed from JEI entirely
         // in onRuntimeAvailable, so adding an info page for a hidden item would be

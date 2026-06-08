@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PMP",
+    "PSP",
+    "CCC"
+  ],
+  "key": {
+    "P": { "tag": "minecraft:planks" },
+    "M": { "item": "minecraft:moss_block" },
+    "S": { "item": "minecraft:slime_ball" },
+    "C": { "item": "minecraft:packed_mud" }
+  },
+  "result": {
+    "id": "productivefrogs:slime_churn",
+    "count": 1
+  }
+}

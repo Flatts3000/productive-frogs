@@ -172,6 +172,18 @@ public final class PFModBusEvents {
             }
         );
 
+        // Slime Churn (#187): bottom face = extract-only view over BOTH output
+        // slots (slime buckets + spent containers); every other face = the
+        // insert view over both input slots, routed by per-slot validity
+        // (milk buckets to the milk slot, empties to the bucket slot).
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            PFBlockEntities.SLIME_CHURN.get(),
+            (be, side) -> side == Direction.DOWN
+                ? be.getInventory().outputView()
+                : be.getInventory().inputView()
+        );
+
         // Spawnery: bottom face = extract-only output; every other face = the
         // insert view over the three input slots (bottle / fuel / primer), which
         // routes each pushed item to the slot that accepts it.

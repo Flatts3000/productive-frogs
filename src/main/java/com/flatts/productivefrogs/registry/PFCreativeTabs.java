@@ -64,6 +64,8 @@ public final class PFCreativeTabs {
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h ->
                         output.accept(PFItems.variantSlimeBucket(h.key().location(), h.value().category()))));
                     output.accept(PFItems.SLIME_MILKER.get());
+                    // The Slime Churn (#187) sits right after its inverse.
+                    output.accept(PFItems.SLIME_CHURN.get());
                     // The Froglight Crucible + Casting Mold (v1.12) sit with
                     // the other appliances.
                     output.accept(PFItems.CRUCIBLE.get());

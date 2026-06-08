@@ -3539,6 +3539,386 @@ public final class PFGameTests {
     }
 
     // ---------------------------------------------------------------------
+    // Slime Churn (#187 - the Milker's inverse, placed-source spawn economy)
+    // ---------------------------------------------------------------------
+
+    /** Place a Slime Churn and return its BlockEntity, failing the test if absent. */
+    @org.jetbrains.annotations.Nullable
+    private static com.flatts.productivefrogs.content.block.entity.SlimeChurnBlockEntity placeChurn(
+            GameTestHelper helper, BlockPos pos) {
+        helper.setBlock(pos, PFBlocks.SLIME_CHURN.get());
+        net.minecraft.world.level.block.entity.BlockEntity be =
+            helper.getLevel().getBlockEntity(helper.absolutePos(pos));
+        if (!(be instanceof com.flatts.productivefrogs.content.block.entity.SlimeChurnBlockEntity churn)) {
+            helper.fail("expected SlimeChurnBlockEntity at " + helper.absolutePos(pos) + ", got "
+                + (be == null ? "null" : be.getClass().getSimpleName()));
+            return null;
+        }
+        return churn;
+    }
+
+    /** Fresh iron Slime Milk bucket (no budget components - the churn seeds them). */
+    private static ItemStack ironMilkBucket(GameTestHelper helper) {
+        net.minecraft.world.item.Item bucket = PFVariantMilk.bucket(
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        if (bucket == null) {
+            helper.fail("iron slime milk bucket not registered");
+            return ItemStack.EMPTY;
+        }
+        return new ItemStack(bucket);
+    }
+
+    /** Drive the churn's serverTick {@code times} times, stopping early when the slime output fills. */
+    private static int driveChurnUntilOutput(GameTestHelper helper,
+            com.flatts.productivefrogs.content.block.entity.SlimeChurnBlockEntity churn,
+            BlockPos pos, int times) {
+        ServerLevel level = helper.getLevel();
+        BlockPos absPos = helper.absolutePos(pos);
+        for (int i = 0; i < times; i++) {
+            com.flatts.productivefrogs.content.block.entity.SlimeChurnBlockEntity.serverTick(
+                level, absPos, level.getBlockState(absPos), churn);
+            if (!churn.getInventory().getStackInSlot(
+                    com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.SLIME_OUTPUT_SLOT).isEmpty()) {
+                return i + 1;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Happy path: an iron milk bucket + empty buckets produce a captured
+     * iron Slime Bucket within one spawn interval, the milk's budget
+     * component seeds and decrements by exactly one, and one empty bucket is
+     * consumed. The produced bucket must parse back through the same Variant
+     * reader the Milker uses - churned and hand-captured buckets are
+     * interchangeable.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void slimeChurnProducesVariantSlimeBucketFromMilk(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var churn = placeChurn(helper, pos);
+        if (churn == null) {
+            return;
+        }
+        var inv = churn.getInventory();
+        inv.setStackInSlot(com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.MILK_SLOT,
+            ironMilkBucket(helper));
+        inv.setStackInSlot(com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.BUCKET_SLOT,
+            new ItemStack(Items.BUCKET, 16));
+
+        int maxTicks = com.flatts.productivefrogs.PFConfig.MAX_SPAWN_INTERVAL_TICKS.get() + 5;
+        int fired = driveChurnUntilOutput(helper, churn, pos, maxTicks);
+        if (fired < 0) {
+            helper.fail("churn produced nothing within " + maxTicks + " ticks");
+            return;
+        }
+        ItemStack out = inv.getStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.SLIME_OUTPUT_SLOT);
+        if (!out.is(PFItems.SLIME_BUCKET.get())) {
+            helper.fail("expected slime_bucket output, got " + BuiltInRegistries.ITEM.getKey(out.getItem()));
+            return;
+        }
+        ResourceLocation outVariant =
+            com.flatts.productivefrogs.content.block.SlimeMilkerBlock.readBucketVariantId(out);
+        ResourceLocation iron = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        if (!iron.equals(outVariant)) {
+            helper.fail("expected output Variant " + iron + ", got " + outVariant);
+            return;
+        }
+        ItemStack milk = inv.getStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.MILK_SLOT);
+        Integer remaining = milk.get(
+            com.flatts.productivefrogs.registry.PFDataComponents.SPAWNS_REMAINING.get());
+        int expected = com.flatts.productivefrogs.PFConfig.DEPLETION_COUNT.get() - 1;
+        if (remaining == null || remaining != expected) {
+            helper.fail("expected milk SPAWNS_REMAINING=" + expected + ", got " + remaining);
+            return;
+        }
+        ItemStack buckets = inv.getStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.BUCKET_SLOT);
+        if (buckets.getCount() != 15) {
+            helper.fail("expected 15 empty buckets left, got " + buckets.getCount());
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Depletion: a milk bucket down to its last spawn produces one slime
+     * bucket, then retires - the milk slot clears and the spent empty
+     * container lands in the SECOND output slot (#187's two-output design),
+     * never mixed into the slime output.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void slimeChurnDepletionReturnsEmptyContainerToSecondOutput(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var churn = placeChurn(helper, pos);
+        if (churn == null) {
+            return;
+        }
+        var inv = churn.getInventory();
+        ItemStack milk = ironMilkBucket(helper);
+        milk.set(com.flatts.productivefrogs.registry.PFDataComponents.SPAWNS_REMAINING.get(), 1);
+        inv.setStackInSlot(com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.MILK_SLOT, milk);
+        inv.setStackInSlot(com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.BUCKET_SLOT,
+            new ItemStack(Items.BUCKET, 4));
+
+        int maxTicks = com.flatts.productivefrogs.PFConfig.MAX_SPAWN_INTERVAL_TICKS.get() + 5;
+        if (driveChurnUntilOutput(helper, churn, pos, maxTicks) < 0) {
+            helper.fail("churn produced nothing within " + maxTicks + " ticks");
+            return;
+        }
+        if (!inv.getStackInSlot(
+                com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.MILK_SLOT).isEmpty()) {
+            helper.fail("expected milk slot cleared after depletion");
+            return;
+        }
+        ItemStack spent = inv.getStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.EMPTY_OUTPUT_SLOT);
+        if (!spent.is(Items.BUCKET) || spent.getCount() != 1) {
+            helper.fail("expected 1 empty bucket in the spent-container output, got "
+                + (spent.isEmpty() ? "EMPTY" : spent.getCount() + "x" + BuiltInRegistries.ITEM.getKey(spent.getItem())));
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Pause-without-waste: with no empty buckets to capture into, the churn
+     * holds ready and never spends budget - the source's pause semantics.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void slimeChurnPausesWithoutEmptyBuckets(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var churn = placeChurn(helper, pos);
+        if (churn == null) {
+            return;
+        }
+        var inv = churn.getInventory();
+        ItemStack milk = ironMilkBucket(helper);
+        milk.set(com.flatts.productivefrogs.registry.PFDataComponents.SPAWNS_REMAINING.get(), 5);
+        inv.setStackInSlot(com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.MILK_SLOT, milk);
+
+        int ticks = com.flatts.productivefrogs.PFConfig.MAX_SPAWN_INTERVAL_TICKS.get() + 50;
+        if (driveChurnUntilOutput(helper, churn, pos, ticks) >= 0) {
+            helper.fail("churn produced with no empty buckets available");
+            return;
+        }
+        Integer remaining = inv.getStackInSlot(
+                com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.MILK_SLOT)
+            .get(com.flatts.productivefrogs.registry.PFDataComponents.SPAWNS_REMAINING.get());
+        if (remaining == null || remaining != 5) {
+            helper.fail("expected budget untouched at 5, got " + remaining);
+            return;
+        }
+        // Furnace stall semantics: a blocked churn never advances progress -
+        // with no empty buckets present the interval must not even start.
+        if (churn.getIntervalTotal() != 0) {
+            helper.fail("expected NO interval progress with no empty buckets, got total="
+                + churn.getIntervalTotal());
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Pause-without-waste, furnace stall semantics: a full slime-output slot
+     * stalls the churn entirely - no budget spend, no empty-bucket
+     * consumption, and NO progress on the interval (the vanilla furnace
+     * full-output behavior, same as the Milker's stall).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void slimeChurnPausesWhenOutputFull(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var churn = placeChurn(helper, pos);
+        if (churn == null) {
+            return;
+        }
+        var inv = churn.getInventory();
+        ItemStack milk = ironMilkBucket(helper);
+        milk.set(com.flatts.productivefrogs.registry.PFDataComponents.SPAWNS_REMAINING.get(), 5);
+        inv.setStackInSlot(com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.MILK_SLOT, milk);
+        inv.setStackInSlot(com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.BUCKET_SLOT,
+            new ItemStack(Items.BUCKET, 16));
+        // Pre-occupy the slime output.
+        inv.setStackInSlot(com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.SLIME_OUTPUT_SLOT,
+            com.flatts.productivefrogs.content.item.SlimeBucketItem.forVariant(
+                Category.CAVE, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper")));
+
+        ServerLevel level = helper.getLevel();
+        BlockPos absPos = helper.absolutePos(pos);
+        int ticks = com.flatts.productivefrogs.PFConfig.MAX_SPAWN_INTERVAL_TICKS.get() + 50;
+        for (int i = 0; i < ticks; i++) {
+            com.flatts.productivefrogs.content.block.entity.SlimeChurnBlockEntity.serverTick(
+                level, absPos, level.getBlockState(absPos), churn);
+        }
+        Integer remaining = inv.getStackInSlot(
+                com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.MILK_SLOT)
+            .get(com.flatts.productivefrogs.registry.PFDataComponents.SPAWNS_REMAINING.get());
+        if (remaining == null || remaining != 5) {
+            helper.fail("expected budget untouched at 5 with output full, got " + remaining);
+            return;
+        }
+        if (inv.getStackInSlot(
+                com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.BUCKET_SLOT).getCount() != 16) {
+            helper.fail("expected no empty buckets consumed with output full");
+            return;
+        }
+        // Furnace stall semantics: the progress arrow must not run while the
+        // output is full - the interval never starts.
+        if (churn.getIntervalTotal() != 0) {
+            helper.fail("expected NO interval progress with output full, got total="
+                + churn.getIntervalTotal());
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Infinite catalyst: an Endless milk bucket produces repeatedly and never
+     * depletes - the budget component never moves and the bucket never
+     * retires. Two productions prove the loop continues past the first.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void slimeChurnInfiniteMilkNeverDepletes(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var churn = placeChurn(helper, pos);
+        if (churn == null) {
+            return;
+        }
+        var inv = churn.getInventory();
+        ItemStack milk = ironMilkBucket(helper);
+        milk.set(com.flatts.productivefrogs.registry.PFDataComponents.SPAWNS_REMAINING.get(), 7);
+        milk.set(com.flatts.productivefrogs.registry.PFDataComponents.MILK_INFINITE.get(), true);
+        inv.setStackInSlot(com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.MILK_SLOT, milk);
+        inv.setStackInSlot(com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.BUCKET_SLOT,
+            new ItemStack(Items.BUCKET, 16));
+
+        int maxTicks = com.flatts.productivefrogs.PFConfig.MAX_SPAWN_INTERVAL_TICKS.get() + 5;
+        for (int production = 0; production < 2; production++) {
+            if (driveChurnUntilOutput(helper, churn, pos, maxTicks) < 0) {
+                helper.fail("infinite milk stopped producing on production #" + (production + 1));
+                return;
+            }
+            inv.setStackInSlot(
+                com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.SLIME_OUTPUT_SLOT,
+                ItemStack.EMPTY);
+        }
+        ItemStack after = inv.getStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.MILK_SLOT);
+        Integer remaining = after.get(
+            com.flatts.productivefrogs.registry.PFDataComponents.SPAWNS_REMAINING.get());
+        if (after.isEmpty() || remaining == null || remaining != 7) {
+            helper.fail("expected infinite milk untouched at 7, got "
+                + (after.isEmpty() ? "EMPTY SLOT" : String.valueOf(remaining)));
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Quantity catalyst: one spawn event pays ONE budget but emits a batch of
+     * {@code 1 + quantityLevel} slime buckets, draining through the single
+     * output slot one per tick (the pendingBatch mechanism). Quantity is
+     * additive throughput, never extra cost - same as the placed source.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void slimeChurnQuantityBatchPaysOneBudget(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var churn = placeChurn(helper, pos);
+        if (churn == null) {
+            return;
+        }
+        var inv = churn.getInventory();
+        ItemStack milk = ironMilkBucket(helper);
+        milk.set(com.flatts.productivefrogs.registry.PFDataComponents.SPAWNS_REMAINING.get(), 5);
+        milk.set(com.flatts.productivefrogs.registry.PFDataComponents.MILK_QUANTITY.get(), 2);
+        inv.setStackInSlot(com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.MILK_SLOT, milk);
+        inv.setStackInSlot(com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.BUCKET_SLOT,
+            new ItemStack(Items.BUCKET, 16));
+
+        ServerLevel level = helper.getLevel();
+        BlockPos absPos = helper.absolutePos(pos);
+        int maxTicks = com.flatts.productivefrogs.PFConfig.MAX_SPAWN_INTERVAL_TICKS.get() + 5;
+        if (driveChurnUntilOutput(helper, churn, pos, maxTicks) < 0) {
+            helper.fail("churn produced nothing within " + maxTicks + " ticks");
+            return;
+        }
+        // Batch should be 3 (1 + quantity 2): first emitted at fire, two pending.
+        int produced = 1;
+        while (churn.getPendingBatch() > 0 && produced < 10) {
+            inv.setStackInSlot(
+                com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.SLIME_OUTPUT_SLOT,
+                ItemStack.EMPTY);
+            com.flatts.productivefrogs.content.block.entity.SlimeChurnBlockEntity.serverTick(
+                level, absPos, level.getBlockState(absPos), churn);
+            if (!inv.getStackInSlot(
+                    com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.SLIME_OUTPUT_SLOT).isEmpty()) {
+                produced++;
+            }
+        }
+        if (produced != 3) {
+            helper.fail("expected a batch of 3 slime buckets (quantity 2), got " + produced);
+            return;
+        }
+        Integer remaining = inv.getStackInSlot(
+                com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.MILK_SLOT)
+            .get(com.flatts.productivefrogs.registry.PFDataComponents.SPAWNS_REMAINING.get());
+        if (remaining == null || remaining != 4) {
+            helper.fail("expected ONE budget paid for the batch (5 -> 4), got " + remaining);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Speed catalyst: the churn's interval is initialized from the same
+     * Speed-modulated math as the placed source ({@code MilkSpawnEconomy}).
+     * One tick starts the interval; its total must sit inside the modulated
+     * bounds, below the unmodulated base minimum.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void slimeChurnSpeedCatalystShortensInterval(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var churn = placeChurn(helper, pos);
+        if (churn == null) {
+            return;
+        }
+        var inv = churn.getInventory();
+        int speedLevel = com.flatts.productivefrogs.PFConfig.catalystMaxSpeedLevel();
+        ItemStack milk = ironMilkBucket(helper);
+        milk.set(com.flatts.productivefrogs.registry.PFDataComponents.MILK_SPEED.get(), speedLevel);
+        inv.setStackInSlot(com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.MILK_SLOT, milk);
+        inv.setStackInSlot(com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.BUCKET_SLOT,
+            new ItemStack(Items.BUCKET, 16));
+
+        ServerLevel level = helper.getLevel();
+        BlockPos absPos = helper.absolutePos(pos);
+        com.flatts.productivefrogs.content.block.entity.SlimeChurnBlockEntity.serverTick(
+            level, absPos, level.getBlockState(absPos), churn);
+
+        // Recompute the modulated bounds with the same formula the economy uses.
+        int baseMin = com.flatts.productivefrogs.PFConfig.MIN_SPAWN_INTERVAL_TICKS.get();
+        int baseMax = com.flatts.productivefrogs.PFConfig.MAX_SPAWN_INTERVAL_TICKS.get();
+        double factor = Math.max(0.0,
+            1.0 - speedLevel * com.flatts.productivefrogs.PFConfig.catalystSpeedReductionPerLevel());
+        int floor = com.flatts.productivefrogs.PFConfig.catalystMinIntervalFloorTicks();
+        int modMin = Math.max(floor, (int) Math.round(baseMin * factor));
+        int modMax = Math.max(floor, (int) Math.round(baseMax * factor));
+
+        int total = churn.getIntervalTotal();
+        if (total < modMin || total > modMax) {
+            helper.fail("expected interval in [" + modMin + ", " + modMax + "], got " + total);
+            return;
+        }
+        if (modMax < baseMin && total >= baseMin) {
+            helper.fail("speed catalyst did not shorten the interval below base min " + baseMin);
+            return;
+        }
+        helper.succeed();
+    }
+
+    // ---------------------------------------------------------------------
     // Spawnery (skyblock bootstrap appliance)
     // ---------------------------------------------------------------------
 

@@ -68,7 +68,7 @@ This is the "stay close to vanilla" principle: where vanilla already has the rig
 
 ### Appliance blocks (furnace-style GUI stations)
 
-The hand-operated processing blocks - the **Slime Milker**, the **Spawnery**, and the **Casting Mold** - share one shape; copy it for any new appliance rather than inventing a layout. (The **Froglight Crucible** is the deliberate GUI-less exception: same Block + BE + `static serverTick` core, but no Menu/Screen - heat-from-below drives it and a BER renders the contents; see `docs/froglight_crucible.md`.)
+The hand-operated processing blocks - the **Slime Milker**, the **Slime Churn**, the **Spawnery**, and the **Casting Mold** - share one shape; copy it for any new appliance rather than inventing a layout. (The Churn is the Milker's inverse - milk bucket + empties -> captured Slime Buckets - and deliberately runs the **placed-source spawn economy** via the shared `MilkSpawnEconomy` helper instead of a flat cook timer; see `docs/slime_churn.md`.) (The **Froglight Crucible** is the deliberate GUI-less exception: same Block + BE + `static serverTick` core, but no Menu/Screen - heat-from-below drives it and a BER renders the contents; see `docs/froglight_crucible.md`.)
 
 - `content/block/<Name>Block` - the placed block (carries a `LIT`-style blockstate for the active glow), wires the BE ticker.
 - `content/block/entity/<Name>BlockEntity` - `implements MenuProvider`; owns the inventory, a `ContainerData` (syncs cook/burn progress to the open screen), and a **`static serverTick`** running a vanilla-furnace-style burn+cook loop (consume fuel to ignite a burn, advance `cookProgress`, `complete()` on the tick that fills the output).
@@ -142,12 +142,13 @@ Two optional integrations live under `client/` (**not** `compat/` - the same no-
 
 ### Observability - PFDebug
 
-A cross-cutting, opt-in debug logger (`PFDebug`) spans all layers (lifecycle, registry, config, infusion, split, tongue, egg, sensor, milker, milk_source, render, tint). Off by default; enable with `-Dproductivefrogs.debug=<areas>` or the `/pf debug <area> on` command. It logs each layer's resolution decisions to `latest.log` with a greppable `[PF/<area>]` prefix. Use it instead of adding ad-hoc logging when chasing a layer's behavior - client-render bugs in particular are invisible to GameTest, and this is how you trace them.
+A cross-cutting, opt-in debug logger (`PFDebug`) spans all layers (lifecycle, registry, config, infusion, split, tongue, egg, sensor, milker, milk_source, churn, render, tint). Off by default; enable with `-Dproductivefrogs.debug=<areas>` or the `/pf debug <area> on` command. It logs each layer's resolution decisions to `latest.log` with a greppable `[PF/<area>]` prefix. Use it instead of adding ad-hoc logging when chasing a layer's behavior - client-render bugs in particular are invisible to GameTest, and this is how you trace them.
 
 ## Project Conventions
 
 - **Java 21, 4-space indent, no tabs, no wildcard imports.** Import order: **alphabetical, one block, no semantic groups** - matches Mojang vanilla style and existing files here. Records for value types; `@Nullable` (JetBrains, ships with NeoForge) on ambiguous returns.
 - **Conventional Commits** (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`, `ci:`, `perf:`). Body explains the *why*. One logical change per commit. `main` is protected; changes go via PR (squash-merged). Branch protection requires the `build` and `gameTest` CI jobs **and resolved review conversations** before merge.
+- **Recipes never hardcode a wood species** - where a recipe wants planks, use the `#minecraft:planks` tag, not `oak_planks` (maintainer ruling 2026-06-07; the Milker/Spawnery/Churn all follow it). Same instinct for other material families when a vanilla tag exists.
 - **Docs filenames are snake_case** (`categories_and_tiers.md`). Design changes update the relevant `docs/*.md` in the same PR.
 - **Line endings:** `.gitattributes` forces LF for `.java`/`.gradle`/`.json`/`.md`/`.yml`, CRLF for `.bat`/`.cmd`. Don't fight it.
 - **No hard mod dependencies.** Cross-mod entries use `c:` common tags + `neoforge:conditions → mod_loaded`. No `compat/` Java package - if you reach for one, stop and use a JSON condition instead.

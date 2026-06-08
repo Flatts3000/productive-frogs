@@ -279,6 +279,17 @@ public final class PFItems {
     );
 
     /**
+     * Slime Churn BlockItem (#187) - places {@link PFBlocks#SLIME_CHURN}, the
+     * Milker's inverse (milk bucket + empty buckets -> captured Slime Buckets
+     * on the placed-source spawn economy).
+     */
+    public static final DeferredItem<BlockItem> SLIME_CHURN = ITEMS.registerSimpleBlockItem(
+        "slime_churn",
+        PFBlocks.SLIME_CHURN,
+        new Item.Properties()
+    );
+
+    /**
      * Spawnery BlockItem - places {@link PFBlocks#SPAWNERY}. Config-gated: only
      * craftable + shown in JEI/creative when {@code spawnery.enabled} is true (the
      * item is always registered so a placed block functions if obtained via /give).

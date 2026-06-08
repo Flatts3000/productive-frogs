@@ -20,7 +20,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -321,7 +320,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
      */
     private void spawnBatch(ServerLevel level, BlockPos pos, RandomSource random,
                             ResourceLocation variantId, SlimeMilkSourceBlockEntity be) {
-        int quantity = 1 + Mth.clamp(be.getQuantityLevel(), 0, PFConfig.catalystMaxQuantityLevel());
+        int quantity = MilkSpawnEconomy.batchQuantity(be.getQuantityLevel());
         for (int i = 0; i < quantity; i++) {
             spawn(level, pos, random, variantId);
         }
@@ -334,15 +333,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
      * stacked Speed levels can't drive the cadence to zero.
      */
     private static void scheduleNextSpawnTick(ServerLevel level, BlockPos pos, RandomSource random, int speedLevel) {
-        int min = PFConfig.MIN_SPAWN_INTERVAL_TICKS.get();
-        int max = PFConfig.MAX_SPAWN_INTERVAL_TICKS.get();
-        if (speedLevel > 0) {
-            double factor = Math.max(0.0, 1.0 - speedLevel * PFConfig.catalystSpeedReductionPerLevel());
-            int floor = PFConfig.catalystMinIntervalFloorTicks();
-            min = Math.max(floor, (int) Math.round(min * factor));
-            max = Math.max(floor, (int) Math.round(max * factor));
-        }
-        int delay = max <= min ? min : min + random.nextInt(max - min + 1);
+        int delay = MilkSpawnEconomy.intervalTicks(speedLevel, random);
         level.scheduleTick(pos, level.getBlockState(pos).getBlock(), delay);
     }
 

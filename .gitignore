@@ -51,3 +51,4 @@ docs/CODEMAPS/
 # assets/ explicitly.
 gen/
 build_errors.txt
+.claude/

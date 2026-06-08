@@ -43,6 +43,15 @@ public final class SlimeMilkBucketItem extends BucketItem {
     }
 
     /**
+     * The variant this bucket belongs to. The item identity carries it (v1.8,
+     * per-variant items) - this accessor is how appliances that consume milk
+     * buckets (the Slime Churn) resolve the variant without NBT.
+     */
+    public ResourceLocation variantId() {
+        return variant;
+    }
+
+    /**
      * Title-cased fallback name so a pack-added variant's bucket reads cleanly
      * ("Bucket of Adamantite Slime Milk") without shipping a lang key; PF's own
      * variants ship explicit {@code item.productivefrogs.<v>_slime_milk_bucket} keys.
@@ -117,6 +126,6 @@ public final class SlimeMilkBucketItem extends BucketItem {
     }
 
     private static int defaultSpawnCount() {
-        return PFConfig.SPEC.isLoaded() ? PFConfig.DEPLETION_COUNT.get() : 16;
+        return com.flatts.productivefrogs.content.block.MilkSpawnEconomy.defaultSpawnCount();
     }
 }
