@@ -126,6 +126,12 @@ cd productive-frogs
 
 Build output: `build/libs/productivefrogs-<version>.jar`.
 
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to file issues and open PRs.
+
+> **No bounties.** This project doesn't offer bounties or use Opire/Algora; bounty-platform commands are ignored, and unsolicited bot PRs are closed unreviewed. See [CONTRIBUTING](./CONTRIBUTING.md#no-bounties-no-automated-prs).
+
 ## License
 
 MIT. See `LICENSE`.
