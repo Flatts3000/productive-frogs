@@ -1,11 +1,15 @@
 package com.flatts.productivefrogs.content.multiblock;
 
+import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -35,6 +39,14 @@ public final class TerrariumValidator {
 
     /** Interior edge length (cavity is INTERIOR x INTERIOR x INTERIOR). */
     static final int INTERIOR = 5;
+
+    /**
+     * Themeable shell blocks that are NOT full-cube solids but still seal the
+     * shell - e.g. mud (a frog-habitat floor). Pack-extensible: add block ids to
+     * {@code data/productivefrogs/tags/block/terrarium_shell.json}.
+     */
+    static final TagKey<Block> TERRARIUM_SHELL =
+        TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "terrarium_shell"));
 
     /** Candidate (u,v) face offsets of the cavity near-corner, centered first. */
     static final int[][] CANDIDATE_ORDER = buildCandidateOrder();
@@ -139,7 +151,7 @@ public final class TerrariumValidator {
                                 incubatorList.add(ip);
                             }
                         }
-                    } else if (!s.isCollisionShapeFullBlock(level, p)) {
+                    } else if (!isShellSolid(s, level, p)) {
                         return TerrariumValidationResult.failed("not_solid", p.immutable());
                     }
                     // plain full-cube solid: legal at any role, nothing to tally
@@ -172,6 +184,11 @@ public final class TerrariumValidator {
         return x >= min.getX() && x <= max.getX()
             && y >= min.getY() && y <= max.getY()
             && z >= min.getZ() && z <= max.getZ();
+    }
+
+    /** A shell cell seals if it's a full-cube solid OR a themeable {@link #TERRARIUM_SHELL} block (e.g. mud). */
+    private static boolean isShellSolid(BlockState state, ServerLevel level, BlockPos pos) {
+        return state.isCollisionShapeFullBlock(level, pos) || state.is(TERRARIUM_SHELL);
     }
 
     static int extremes(int x, int y, int z, BlockPos shellMin, BlockPos shellMax) {

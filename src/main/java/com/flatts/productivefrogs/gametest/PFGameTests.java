@@ -4994,6 +4994,27 @@ public final class PFGameTests {
         helper.succeed();
     }
 
+    /** A mud floor (not a full-cube solid) still seals the shell via the terrarium_shell tag. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumAcceptsMudFloor(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 0);
+        // Swap the whole shell floor (y=1 layer) to mud - mud is not a full-cube
+        // solid, but the terrarium_shell tag whitelists it.
+        for (int x = 1; x <= 7; x++) {
+            for (int z = 1; z <= 7; z++) {
+                helper.setBlock(new BlockPos(x, 1, z), Blocks.MUD);
+            }
+        }
+        ServerLevel level = helper.getLevel();
+        com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity be =
+            (com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity) helper.getBlockEntity(controller);
+        if (!be.forceValidate(level, helper.absolutePos(controller)).formed()) {
+            helper.fail("a mud floor should still form the Terrarium (terrarium_shell tag)");
+            return;
+        }
+        helper.succeed();
+    }
+
     /** An Incubator releases a frog into the cavity with bred stats preserved post-finalizeSpawn. */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
     public static void terrariumIncubatorPreservesStats(GameTestHelper helper) {
