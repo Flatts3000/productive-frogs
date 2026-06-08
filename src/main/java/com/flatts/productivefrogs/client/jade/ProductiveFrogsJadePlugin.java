@@ -288,9 +288,10 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                     }
                 }
             } else if (be instanceof com.flatts.productivefrogs.content.block.entity.HatchBlockEntity) {
-                int fill = data != null && data.getBoolean("H_present") ? data.getInt("H_fill") : 0;
-                tooltip.add(Component.translatable("productivefrogs.jade.hatch_fill",
-                    fill, com.flatts.productivefrogs.content.block.entity.HatchBlockEntity.SLOTS));
+                if (data != null && data.getBoolean("H_present")) {
+                    tooltip.add(Component.translatable("productivefrogs.jade.hatch_fill",
+                        data.getInt("H_fill"), com.flatts.productivefrogs.content.block.entity.HatchBlockEntity.SLOTS));
+                }
             }
         }
 

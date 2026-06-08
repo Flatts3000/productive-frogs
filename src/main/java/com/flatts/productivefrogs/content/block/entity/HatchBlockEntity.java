@@ -135,19 +135,6 @@ public class HatchBlockEntity extends BlockEntity implements MenuProvider {
         return true;
     }
 
-    /** Hand-collect: move all stored froglights into the player (or drop what won't fit). */
-    public void collectInto(Player player) {
-        for (int i = 0; i < inventory.getSlots(); i++) {
-            ItemStack stack = inventory.getStackInSlot(i);
-            if (!stack.isEmpty()) {
-                if (!player.getInventory().add(stack)) {
-                    player.drop(stack, false);
-                }
-                inventory.setStackInSlot(i, ItemStack.EMPTY);
-            }
-        }
-    }
-
     /** Test seam: occupy every slot so {@link #isFull()} is true. */
     public void fillForTest() {
         for (int i = 0; i < inventory.getSlots(); i++) {

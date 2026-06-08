@@ -73,6 +73,8 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
     };
 
     private int tickCounter;
+    /** Validate on the first tick after placement/load so the formed state + GUI are correct within a tick. */
+    private boolean needsInitialValidation = true;
     private boolean formed;
     @Nullable
     private TerrariumValidationResult lastResult;
@@ -169,6 +171,13 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
     public static void serverTick(Level level, BlockPos pos, BlockState state, TerrariumControllerBlockEntity be) {
         if (!(level instanceof ServerLevel server)) {
             return;
+        }
+        // First tick after placement/load: validate immediately so the formed state,
+        // TerrariumManager registration, and GUI are correct within a tick rather than
+        // after a full validation interval.
+        if (be.needsInitialValidation) {
+            be.needsInitialValidation = false;
+            be.runValidation(server, pos, state);
         }
         int interval = Math.max(1, PFConfig.terrariumValidationIntervalTicks());
         if (++be.tickCounter >= interval) {
@@ -391,7 +400,8 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
             }
             tag.put("Charges", list);
         }
-        tag.putInt("DistributeCursor", distributeCursor);
+        // distributeCursor is a transient round-robin position; it self-establishes
+        // within one distribute cycle, so it is intentionally not persisted.
     }
 
     @Override
@@ -406,7 +416,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
                 charges.addLast(MilkCharge.fromTag(list.getCompound(i)));
             }
         }
-        distributeCursor = Math.max(0, tag.getInt("DistributeCursor"));
+        distributeCursor = 0;
     }
 
     @Override

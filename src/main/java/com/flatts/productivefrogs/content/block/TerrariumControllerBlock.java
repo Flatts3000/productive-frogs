@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  * The Terrarium Controller - the multiblock anchor and the single milk input
  * (milk intake + distribution land in phase 2). Phase 1 wires the validation
  * loop: a server ticker on the {@link TerrariumControllerBlockEntity} re-validates
- * the 7x7x7 shell around its 5x5x5 cavity on a throttled cadence and lights
+ * the 7x6x7 shell around its 5x4x5 cavity on a throttled cadence and lights
  * {@link #FORMED}; right-clicking forces a validate and reports the first
  * structural problem in chat.
  *
@@ -101,19 +101,25 @@ public class TerrariumControllerBlock extends Block implements EntityBlock {
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
             Player player, InteractionHand hand, BlockHitResult hit) {
         // Hand-feed: a per-variant Slime Milk bucket pushes a charge into the funnel.
-        if (stack.getItem() instanceof SlimeMilkBucketItem
+        // Only intercept when the buffer can actually take it (right variant, not full,
+        // not boss-tier); otherwise fall through so the right-click opens the GUI and
+        // the player can see why (instead of a dead swing with no feedback).
+        if (stack.getItem() instanceof SlimeMilkBucketItem milk
                 && level.getBlockEntity(pos) instanceof TerrariumControllerBlockEntity be) {
-            if (!level.isClientSide() && be.pushChargeFromBucket(stack)) {
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                    ItemStack empty = new ItemStack(Items.BUCKET);
-                    if (!player.getInventory().add(empty)) {
-                        player.drop(empty, false);
+            var variant = milk.variantId();
+            if (variant != null && be.canAccept(variant)) {
+                if (!level.isClientSide() && be.pushChargeFromBucket(stack)) {
+                    if (!player.getAbilities().instabuild) {
+                        stack.shrink(1);
+                        ItemStack empty = new ItemStack(Items.BUCKET);
+                        if (!player.getInventory().add(empty)) {
+                            player.drop(empty, false);
+                        }
                     }
+                    level.playSound(null, pos, SoundEvents.BUCKET_EMPTY, SoundSource.BLOCKS, 1.0F, 1.0F);
                 }
-                level.playSound(null, pos, SoundEvents.BUCKET_EMPTY, SoundSource.BLOCKS, 1.0F, 1.0F);
+                return ItemInteractionResult.sidedSuccess(level.isClientSide());
             }
-            return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }

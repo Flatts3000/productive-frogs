@@ -1,8 +1,10 @@
 package com.flatts.productivefrogs.content.multiblock;
 
 import com.flatts.productivefrogs.content.block.MilkSpawnEconomy;
+import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
 
@@ -58,7 +60,11 @@ public record MilkCharge(int spawnsRemaining, int capacity, int speed, int quant
     }
 
     public static MilkCharge fromTag(CompoundTag tag) {
-        return new MilkCharge(tag.getInt("Remaining"), tag.getInt("Capacity"),
-            tag.getInt("Speed"), tag.getInt("Quantity"), tag.getBoolean("Infinite"));
+        // Clamp on load so a hand-edited / corrupted save can't inject a junk charge
+        // (negative budget, etc.) into the Controller's dispatch queue.
+        int rem = Mth.clamp(tag.getInt("Remaining"), 0, SlimeMilkSourceBlockEntity.MAX_STORED_SPAWNS);
+        int cap = Mth.clamp(Math.max(tag.getInt("Capacity"), rem), 0, SlimeMilkSourceBlockEntity.MAX_STORED_SPAWNS);
+        return new MilkCharge(rem, cap, Math.max(0, tag.getInt("Speed")),
+            Math.max(0, tag.getInt("Quantity")), tag.getBoolean("Infinite"));
     }
 }

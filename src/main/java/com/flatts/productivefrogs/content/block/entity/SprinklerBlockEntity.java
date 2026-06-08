@@ -420,8 +420,8 @@ public class SprinklerBlockEntity extends BlockEntity {
             variantId = ResourceLocation.tryParse(tag.getString("Variant"));
             spawnsRemaining = clampSpawns(tag.getInt("SpawnsRemaining"));
             spawnsCapacity = clampSpawns(Math.max(tag.getInt("SpawnsCapacity"), spawnsRemaining));
-            speedLevel = Math.max(0, tag.getInt("SpeedLevel"));
-            quantityLevel = Math.max(0, tag.getInt("QuantityLevel"));
+            speedLevel = Mth.clamp(tag.getInt("SpeedLevel"), 0, PFConfig.catalystMaxSpeedLevel());
+            quantityLevel = Mth.clamp(tag.getInt("QuantityLevel"), 0, PFConfig.catalystMaxQuantityLevel());
             infinite = tag.getBoolean("Infinite");
             intervalTotal = Math.max(0, tag.getInt("IntervalTotal"));
             intervalRemaining = Math.max(0, Math.min(tag.getInt("IntervalRemaining"), intervalTotal));

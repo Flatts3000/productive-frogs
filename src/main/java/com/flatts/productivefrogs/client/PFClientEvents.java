@@ -379,12 +379,6 @@ public final class PFClientEvents {
         event.register(PFMenuTypes.TERRARIUM_CONTROLLER.get(), com.flatts.productivefrogs.client.screen.TerrariumControllerScreen::new);
     }
 
-    /**
-     * Drop the Resource Slime renderer's texture-existence cache on resource
-     * reload. Without this, a pack that adds or removes a
-     * {@code <variant>_resource_slime.png} between reloads keeps serving the
-     * stale presence result (the category fallback would stick, or vice versa).
-     */
     /** Bind the tintable Sprinkler-drip particle to its sprite set. */
     @SubscribeEvent
     public static void onRegisterParticleProviders(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent event) {
@@ -392,6 +386,12 @@ public final class PFClientEvents {
             com.flatts.productivefrogs.client.particle.SprinklerDripParticle.Provider::new);
     }
 
+    /**
+     * Drop the Resource Slime renderer's texture-existence cache on resource
+     * reload. Without this, a pack that adds or removes a
+     * {@code <variant>_resource_slime.png} between reloads keeps serving the
+     * stale presence result (the category fallback would stick, or vice versa).
+     */
     @SubscribeEvent
     public static void onRegisterReloadListeners(RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(

@@ -95,7 +95,7 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
             case 2 -> MATURED_TEXT;
             default -> EMPTY_TEXT;
         };
-        gui.drawString(this.font, status, statusX, 20, statusColor, false);
+        gui.drawString(this.font, status, statusX, SWATCH_Y + 1, statusColor, false);
 
         int belowBar = BAR_Y + BAR_H + 4;
         if (state == 1 && this.menu.growthTotal() > 0) {
