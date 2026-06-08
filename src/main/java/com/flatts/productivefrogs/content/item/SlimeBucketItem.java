@@ -112,23 +112,19 @@ public final class SlimeBucketItem extends MobBucketItem {
 
     /**
      * Mint a captured-slime bucket for a variant <b>without</b> a live entity -
-     * the Slime Churn produces these. Writes the same {@code Category} +
-     * {@code Variant} NBT shape {@code ResourceSlime#saveToBucketTag} stamps on
-     * a real capture; release runs the normal {@code loadFromBucketTag} path
-     * (size forced to 1, marked bucket-originated), so a churned bucket and a
-     * hand-captured bucket are interchangeable. The standard mob-bucket keys
-     * (Health, NoAI, ...) are deliberately absent - {@code
-     * Bucketable.loadDefaultDataFromBucketTag} treats each as optional, so the
-     * released slime just takes entity defaults.
+     * the Slime Churn produces these. Delegates to
+     * {@link PFItems#variantSlimeBucket} (the single writer of the minimal
+     * {@code Category}+{@code Variant} bucket NBT shape, shared with the
+     * creative tab and JEI) so churned buckets are component-identical to
+     * every other display/capture stack. Release runs the normal
+     * {@code loadFromBucketTag} path (size forced to 1, marked
+     * bucket-originated), so a churned bucket and a hand-captured bucket are
+     * interchangeable; the standard mob-bucket keys (Health, NoAI, ...) are
+     * deliberately absent - {@code Bucketable.loadDefaultDataFromBucketTag}
+     * treats each as optional.
      */
     public static ItemStack forVariant(Category category, ResourceLocation variantId) {
-        ItemStack stack = new ItemStack(PFItems.SLIME_BUCKET.get());
-        net.minecraft.world.item.component.CustomData.update(
-            net.minecraft.core.component.DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
-                tag.putString("Category", category.name());
-                tag.putString("Variant", variantId.toString());
-            });
-        return stack;
+        return PFItems.variantSlimeBucket(variantId, category);
     }
 
     @Override

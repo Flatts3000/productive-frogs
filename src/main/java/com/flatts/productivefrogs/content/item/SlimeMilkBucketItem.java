@@ -126,6 +126,6 @@ public final class SlimeMilkBucketItem extends BucketItem {
     }
 
     private static int defaultSpawnCount() {
-        return PFConfig.SPEC.isLoaded() ? PFConfig.DEPLETION_COUNT.get() : 16;
+        return com.flatts.productivefrogs.content.block.MilkSpawnEconomy.defaultSpawnCount();
     }
 }

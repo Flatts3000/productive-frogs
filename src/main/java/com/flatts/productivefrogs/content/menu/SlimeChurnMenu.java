@@ -130,8 +130,15 @@ public class SlimeChurnMenu extends AbstractContainerMenu {
         addDataSlots(dataAccess);
     }
 
+    /**
+     * Elapsed fraction of the current interval for the arrow fill, derived
+     * from the two synced raw values (remaining + total). Clamped at 0 so a
+     * mid-sync mismatch can never render a negative fill.
+     */
     public int getIntervalProgress() {
-        return dataAccess.get(SlimeChurnBlockEntity.DATA_INTERVAL_PROGRESS);
+        int total = dataAccess.get(SlimeChurnBlockEntity.DATA_INTERVAL_TOTAL);
+        int remaining = dataAccess.get(SlimeChurnBlockEntity.DATA_INTERVAL_REMAINING);
+        return Math.max(0, total - remaining);
     }
 
     public int getIntervalTotal() {

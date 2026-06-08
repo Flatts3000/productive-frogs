@@ -66,7 +66,7 @@ import org.jetbrains.annotations.Nullable;
 public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
 
     /** Indices into the {@link #dataAccess} ContainerData for menu sync. */
-    public static final int DATA_INTERVAL_PROGRESS = 0;
+    public static final int DATA_INTERVAL_REMAINING = 0;
     public static final int DATA_INTERVAL_TOTAL = 1;
     public static final int DATA_COUNT = 2;
 
@@ -82,11 +82,14 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
 
     private final SlimeChurnInventory inventory = new SlimeChurnInventory(this::setChanged);
 
+    // Syncs the raw remaining + total; the menu derives the progress fraction
+    // for the arrow. (The client menu actually holds a SimpleContainerData
+    // from the network ctor - this instance only ever runs server-side.)
     private final ContainerData dataAccess = new ContainerData() {
         @Override
         public int get(int index) {
             return switch (index) {
-                case DATA_INTERVAL_PROGRESS -> intervalTotal - intervalRemaining;
+                case DATA_INTERVAL_REMAINING -> intervalRemaining;
                 case DATA_INTERVAL_TOTAL -> intervalTotal;
                 default -> 0;
             };
@@ -94,11 +97,10 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
 
         @Override
         public void set(int index, int value) {
-            // Client-side sync writes; progress is derived, total is authoritative.
-            if (index == DATA_INTERVAL_TOTAL) {
+            if (index == DATA_INTERVAL_REMAINING) {
+                intervalRemaining = value;
+            } else if (index == DATA_INTERVAL_TOTAL) {
                 intervalTotal = value;
-            } else if (index == DATA_INTERVAL_PROGRESS) {
-                intervalRemaining = intervalTotal - value;
             }
         }
 
@@ -149,17 +151,6 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
             return;
         }
         ResourceLocation variantId = milkItem.variantId();
-        SlimeVariant variant = level.registryAccess()
-            .registry(PFRegistries.SLIME_VARIANT).map(r -> r.get(variantId)).orElse(null);
-        if (variant == null) {
-            // Bucket of a variant the registry doesn't know (removed datapack
-            // entry) - fail closed, like the Milker's no-variant input.
-            PFDebug.logOnce(PFDebug.Area.CHURN, "novariant#" + pos,
-                () -> String.format("churn @%s fail-closed: unknown variant %s", pos, variantId));
-            be.resetInterval();
-            setWorking(level, pos, state, false);
-            return;
-        }
 
         // 2. Seed the budget components on first processing so the bucket
         //    drains visibly and survives being pulled out half-spent
@@ -185,8 +176,15 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
             return;
         }
 
-        // 4. Countdown. Start a fresh interval if none is running.
+        // 4. Countdown. Start a fresh interval if none is running. The variant
+        //    registry is resolved ONLY at interval start and at fire (below) -
+        //    never on the mid-countdown ticks - matching the placed source,
+        //    which only resolves on its scheduled ticks.
         if (be.intervalTotal <= 0) {
+            if (resolveVariant(level, variantId) == null) {
+                failClosedUnknownVariant(level, pos, state, be, variantId);
+                return;
+            }
             be.startInterval(level, milk);
         }
         if (be.intervalRemaining > 0) {
@@ -197,7 +195,13 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
         }
 
         // 5. Fire the spawn event: pay one budget, queue the batch, emit the
-        //    first slime bucket this tick.
+        //    first slime bucket this tick. Re-resolve for the category (the
+        //    variant may have vanished in a datapack reload mid-interval).
+        SlimeVariant variant = resolveVariant(level, variantId);
+        if (variant == null) {
+            failClosedUnknownVariant(level, pos, state, be, variantId);
+            return;
+        }
         be.pendingBatch = MilkSpawnEconomy.batchQuantity(quantityLevel(milk));
         be.pendingVariant = variantId;
         be.pendingCategory = variant.category();
@@ -285,6 +289,26 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
         return true;
     }
 
+    /** Resolve a variant from the datapack registry, or null when unknown. */
+    @Nullable
+    private static SlimeVariant resolveVariant(Level level, ResourceLocation variantId) {
+        return level.registryAccess()
+            .registry(PFRegistries.SLIME_VARIANT).map(r -> r.get(variantId)).orElse(null);
+    }
+
+    /**
+     * Bucket of a variant the registry doesn't know (removed datapack entry):
+     * fail closed, like the Milker's no-variant input - no interval, no
+     * budget spend, logged once.
+     */
+    private static void failClosedUnknownVariant(Level level, BlockPos pos, BlockState state,
+            SlimeChurnBlockEntity be, ResourceLocation variantId) {
+        PFDebug.logOnce(PFDebug.Area.CHURN, "novariant#" + pos,
+            () -> String.format("churn @%s fail-closed: unknown variant %s", pos, variantId));
+        be.resetInterval();
+        setWorking(level, pos, state, false);
+    }
+
     private void startInterval(Level level, ItemStack milk) {
         intervalTotal = MilkSpawnEconomy.intervalTicks(speedLevel(milk), level.getRandom());
         intervalRemaining = intervalTotal;
@@ -335,12 +359,21 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
         return Boolean.TRUE.equals(milk.get(PFDataComponents.MILK_INFINITE.get()));
     }
 
+    /**
+     * Mirrors {@code SlimeMilkSourceBlock.depletionEnabled} INCLUDING its
+     * GameTest override hook, so a test that pins depletion on/off for the
+     * placed source gets the same answer from the Churn.
+     */
     private static boolean depletionEnabled() {
+        Boolean override = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride;
+        if (override != null) {
+            return override;
+        }
         return !PFConfig.SPEC.isLoaded() || PFConfig.DEPLETION_ENABLED.get();
     }
 
     private static int defaultSpawnCount() {
-        return PFConfig.SPEC.isLoaded() ? PFConfig.DEPLETION_COUNT.get() : 16;
+        return MilkSpawnEconomy.defaultSpawnCount();
     }
 
     /**

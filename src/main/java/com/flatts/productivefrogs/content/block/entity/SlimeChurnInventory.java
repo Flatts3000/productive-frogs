@@ -48,8 +48,8 @@ public class SlimeChurnInventory extends ItemStackHandler {
     public SlimeChurnInventory(Runnable onChanged) {
         super(SLOT_COUNT);
         this.onChanged = onChanged;
-        this.inputView = new MultiSlotView(this, new int[] {MILK_SLOT, BUCKET_SLOT}, true, false);
-        this.outputView = new MultiSlotView(this, new int[] {SLIME_OUTPUT_SLOT, EMPTY_OUTPUT_SLOT}, false, true);
+        this.inputView = new MultiSlotItemView(this, new int[] {MILK_SLOT, BUCKET_SLOT}, true, false);
+        this.outputView = new MultiSlotItemView(this, new int[] {SLIME_OUTPUT_SLOT, EMPTY_OUTPUT_SLOT}, false, true);
     }
 
     @Override
@@ -85,73 +85,4 @@ public class SlimeChurnInventory extends ItemStackHandler {
         deserializeNBT(RegistryAccess.EMPTY, tag);
     }
 
-    /**
-     * Delegating view exposing a fixed subset of the parent's slots, with
-     * insert and/or extract gated. Hoppers iterate the view's slots and call
-     * {@code insertItem(slot, ...)} per slot; routing to
-     * {@code delegate.insertItem} preserves the per-slot {@link #isItemValid}
-     * filter, so a milk bucket lands in the milk slot, an empty bucket in the
-     * bucket slot, and anything else bounces. (Same shape as
-     * {@code SpawneryInventory.MultiSlotView}.)
-     */
-    private static final class MultiSlotView implements IItemHandler {
-
-        private final SlimeChurnInventory delegate;
-        private final int[] indices;
-        private final boolean allowInsert;
-        private final boolean allowExtract;
-
-        MultiSlotView(SlimeChurnInventory delegate, int[] indices, boolean allowInsert, boolean allowExtract) {
-            this.delegate = delegate;
-            this.indices = indices;
-            this.allowInsert = allowInsert;
-            this.allowExtract = allowExtract;
-        }
-
-        @Override
-        public int getSlots() {
-            return indices.length;
-        }
-
-        /** Map a view-local slot to its delegate index, or -1 if out of range. */
-        private int target(int slot) {
-            return (slot >= 0 && slot < indices.length) ? indices[slot] : -1;
-        }
-
-        @Override
-        public ItemStack getStackInSlot(int slot) {
-            int i = target(slot);
-            return i < 0 ? ItemStack.EMPTY : delegate.getStackInSlot(i);
-        }
-
-        @Override
-        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-            int i = target(slot);
-            if (!allowInsert || i < 0) {
-                return stack;
-            }
-            return delegate.insertItem(i, stack, simulate);
-        }
-
-        @Override
-        public ItemStack extractItem(int slot, int amount, boolean simulate) {
-            int i = target(slot);
-            if (!allowExtract || i < 0) {
-                return ItemStack.EMPTY;
-            }
-            return delegate.extractItem(i, amount, simulate);
-        }
-
-        @Override
-        public int getSlotLimit(int slot) {
-            int i = target(slot);
-            return i < 0 ? 0 : delegate.getSlotLimit(i);
-        }
-
-        @Override
-        public boolean isItemValid(int slot, ItemStack stack) {
-            int i = target(slot);
-            return allowInsert && i >= 0 && delegate.isItemValid(i, stack);
-        }
-    }
 }

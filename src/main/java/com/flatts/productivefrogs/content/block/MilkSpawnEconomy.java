@@ -47,4 +47,16 @@ public final class MilkSpawnEconomy {
     public static int batchQuantity(int quantityLevel) {
         return 1 + Mth.clamp(quantityLevel, 0, PFConfig.catalystMaxQuantityLevel());
     }
+
+    /**
+     * Default per-bucket spawn budget: the config depletion count, or 16 when
+     * the COMMON spec isn't loaded yet (title screen). Single source for the
+     * "DEPLETION_COUNT-or-16" default the Churn and the milk bucket tooltip
+     * both read. (The source BE's {@code defaultSpawnCount} keeps its own
+     * variant deliberately - it clamps into the BE's storage bounds and falls
+     * back to a different pre-config constant.)
+     */
+    public static int defaultSpawnCount() {
+        return PFConfig.SPEC.isLoaded() ? PFConfig.DEPLETION_COUNT.get() : 16;
+    }
 }
