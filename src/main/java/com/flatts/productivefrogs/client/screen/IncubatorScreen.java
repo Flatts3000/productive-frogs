@@ -6,6 +6,7 @@ import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
@@ -35,7 +36,7 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
     public IncubatorScreen(IncubatorMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
         this.imageWidth = 176;
-        this.imageHeight = 78;
+        this.imageHeight = 92;
     }
 
     @Override
@@ -94,14 +95,26 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
             int done = this.menu.growthTotal() - this.menu.growthRemaining();
             int pct = Math.max(0, Math.min(100, done * 100 / this.menu.growthTotal()));
             gui.drawCenteredString(this.font, pct + "%", BAR_X + BAR_W / 2, BAR_Y + 3, 0xFFFFFFFF);
+            int y = BAR_Y + BAR_H + 4;
             gui.drawString(this.font,
                 Component.translatable("productivefrogs.gui.incubator.time", formatTime(this.menu.growthRemaining())),
-                BAR_X, BAR_Y + BAR_H + 4, TEXT, false);
+                BAR_X, y, TEXT, false);
+            // Hint: feed a Sweetslime to hurry it along.
+            drawWrapped(gui, Component.translatable("productivefrogs.gui.incubator.sweetslime_hint")
+                .withStyle(ChatFormatting.DARK_GRAY), BAR_X, y + 12);
         } else if (state == 0) {
-            // Empty: tell the player how to seed it.
-            gui.drawString(this.font,
-                Component.translatable("productivefrogs.gui.incubator.empty_hint").withStyle(ChatFormatting.DARK_GRAY),
-                BAR_X, BAR_Y + BAR_H + 4, TEXT, false);
+            // Empty: tell the player how to seed it (wrapped so it never overflows).
+            drawWrapped(gui, Component.translatable("productivefrogs.gui.incubator.empty_hint")
+                .withStyle(ChatFormatting.DARK_GRAY), BAR_X, BAR_Y + BAR_H + 4);
+        }
+    }
+
+    /** Draw a hint wrapped to the panel width so long / localized strings never overflow. */
+    private void drawWrapped(GuiGraphics gui, Component text, int x, int y) {
+        int maxWidth = this.imageWidth - x - 8;
+        for (FormattedCharSequence line : this.font.split(text, maxWidth)) {
+            gui.drawString(this.font, line, x, y, TEXT, false);
+            y += this.font.lineHeight;
         }
     }
 
