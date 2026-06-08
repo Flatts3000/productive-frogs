@@ -11,6 +11,7 @@ import com.flatts.productivefrogs.registry.PFFluidTypes;
 import com.flatts.productivefrogs.registry.PFFluids;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
+import com.flatts.productivefrogs.registry.PFParticles;
 import com.flatts.productivefrogs.registry.PFRecipeTypes;
 import com.flatts.productivefrogs.registry.PFSensors;
 import com.flatts.productivefrogs.registry.PFVariantMilk;
@@ -73,6 +74,7 @@ public final class ProductiveFrogs {
         PFBlockEntities.register(modEventBus);
         PFMenuTypes.register(modEventBus);
         PFEntities.register(modEventBus);
+        PFParticles.register(modEventBus);
         PFSensors.register(modEventBus);
         PFCreativeTabs.register(modEventBus);
         PFGameTests.register(modEventBus);

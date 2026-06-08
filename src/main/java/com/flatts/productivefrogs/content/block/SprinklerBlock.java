@@ -1,13 +1,14 @@
 package com.flatts.productivefrogs.content.block;
 
 import com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity;
-import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
+import com.flatts.productivefrogs.registry.PFParticles;
 import com.flatts.productivefrogs.registry.PFRegistries;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
+import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
@@ -98,7 +99,9 @@ public class SprinklerBlock extends Block implements EntityBlock {
         double x = pos.getX() + 0.25 + random.nextDouble() * 0.5;
         double y = pos.getY() - 0.05; // just under the down face
         double z = pos.getZ() + 0.25 + random.nextDouble() * 0.5;
-        level.addParticle(Category.dustParticle(rgb), x, y, z, 0.0, -0.06, 0.0);
+        // A tintable drip (dripstone hang-and-fall look, milk-variant colour).
+        ColorParticleOption drip = ColorParticleOption.create(PFParticles.SPRINKLER_DRIP.get(), 0xFF000000 | rgb);
+        level.addParticle(drip, x, y, z, 0.0, 0.0, 0.0);
     }
 
     /** Milky off-white fallback before the variant registry is available. */

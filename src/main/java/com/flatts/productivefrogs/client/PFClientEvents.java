@@ -19,6 +19,7 @@ import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
+import com.flatts.productivefrogs.registry.PFParticles;
 import com.flatts.productivefrogs.registry.PFRegistries;
 import com.flatts.productivefrogs.registry.PFVariantMilk;
 import com.flatts.productivefrogs.util.PFDebug;
@@ -384,6 +385,13 @@ public final class PFClientEvents {
      * {@code <variant>_resource_slime.png} between reloads keeps serving the
      * stale presence result (the category fallback would stick, or vice versa).
      */
+    /** Bind the tintable Sprinkler-drip particle to its sprite set. */
+    @SubscribeEvent
+    public static void onRegisterParticleProviders(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent event) {
+        event.registerSpriteSet(PFParticles.SPRINKLER_DRIP.get(),
+            com.flatts.productivefrogs.client.particle.SprinklerDripParticle.Provider::new);
+    }
+
     @SubscribeEvent
     public static void onRegisterReloadListeners(RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(
