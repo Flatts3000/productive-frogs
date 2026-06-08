@@ -1,0 +1,12 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "justdirethings"
+    }
+  ],
+  "primer_item": "justdirethings:celestigem",
+  "category": "geode",
+  "primary_color": 3057569,
+  "secondary_color": 9500899
+}
