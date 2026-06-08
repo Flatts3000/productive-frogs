@@ -2,24 +2,69 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "productivefrogs:block/sprinkler_side",
-    "north": "productivefrogs:block/sprinkler_front",
-    "south": "productivefrogs:block/sprinkler_back",
-    "east": "productivefrogs:block/sprinkler_side",
-    "west": "productivefrogs:block/sprinkler_side",
-    "down": "productivefrogs:block/sprinkler_bottom",
+    "front": "productivefrogs:block/sprinkler_front",
+    "back": "productivefrogs:block/sprinkler_back",
+    "side": "productivefrogs:block/sprinkler_side",
+    "top": "productivefrogs:block/sprinkler_side",
+    "bottom": "productivefrogs:block/sprinkler_bottom",
     "milk": "productivefrogs:block/slime_milk_still"
   },
   "elements": [
     {
+      "__comment": "body; its top at y=14 is the milk pool floor (tinted), framed by the rim above",
       "from": [0, 0, 0],
+      "to": [16, 14, 16],
+      "faces": {
+        "north": { "uv": [0, 2, 16, 16], "texture": "#front", "cullface": "north" },
+        "south": { "uv": [0, 2, 16, 16], "texture": "#back", "cullface": "south" },
+        "east": { "uv": [0, 2, 16, 16], "texture": "#side", "cullface": "east" },
+        "west": { "uv": [0, 2, 16, 16], "texture": "#side", "cullface": "west" },
+        "down": { "uv": [0, 0, 16, 16], "texture": "#bottom", "cullface": "down" },
+        "up": { "uv": [4, 4, 12, 12], "texture": "#milk", "tintindex": 1 }
+      }
+    },
+    {
+      "__comment": "north rim bar (z 0-4)",
+      "from": [0, 14, 0],
+      "to": [16, 16, 4],
+      "faces": {
+        "north": { "uv": [0, 0, 16, 2], "texture": "#front", "cullface": "north" },
+        "up": { "uv": [0, 0, 16, 4], "texture": "#top" },
+        "south": { "uv": [0, 14, 16, 16], "texture": "#side" },
+        "west": { "uv": [0, 0, 4, 2], "texture": "#side" },
+        "east": { "uv": [12, 0, 16, 2], "texture": "#side" }
+      }
+    },
+    {
+      "__comment": "south rim bar (z 12-16)",
+      "from": [0, 14, 12],
       "to": [16, 16, 16],
       "faces": {
-        "north": { "uv": [0, 0, 16, 16], "texture": "#north", "cullface": "north" },
-        "south": { "uv": [0, 0, 16, 16], "texture": "#south", "cullface": "south" },
-        "east": { "uv": [0, 0, 16, 16], "texture": "#east", "cullface": "east" },
-        "west": { "uv": [0, 0, 16, 16], "texture": "#west", "cullface": "west" },
-        "up": { "uv": [0, 0, 16, 16], "texture": "#milk", "tintindex": 1, "cullface": "up" },
-        "down": { "uv": [0, 0, 16, 16], "texture": "#down", "cullface": "down" }
+        "south": { "uv": [0, 0, 16, 2], "texture": "#back", "cullface": "south" },
+        "up": { "uv": [0, 12, 16, 16], "texture": "#top" },
+        "north": { "uv": [0, 14, 16, 16], "texture": "#side" },
+        "west": { "uv": [0, 0, 4, 2], "texture": "#side" },
+        "east": { "uv": [12, 0, 16, 2], "texture": "#side" }
+      }
+    },
+    {
+      "__comment": "west rim bar (x 0-4, between the north/south bars)",
+      "from": [0, 14, 4],
+      "to": [4, 16, 12],
+      "faces": {
+        "west": { "uv": [4, 0, 12, 2], "texture": "#side" },
+        "up": { "uv": [0, 4, 4, 12], "texture": "#top" },
+        "east": { "uv": [4, 14, 12, 16], "texture": "#side" }
+      }
+    },
+    {
+      "__comment": "east rim bar (x 12-16, between the north/south bars)",
+      "from": [12, 14, 4],
+      "to": [16, 16, 12],
+      "faces": {
+        "east": { "uv": [4, 0, 12, 2], "texture": "#side" },
+        "up": { "uv": [12, 4, 16, 12], "texture": "#top" },
+        "west": { "uv": [4, 14, 12, 16], "texture": "#side" }
       }
     }
   ]
