@@ -34,10 +34,10 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 public final class TerrariumValidator {
 
     /** Interior edge length (cavity is INTERIOR x INTERIOR x INTERIOR). */
-    private static final int INTERIOR = 5;
+    static final int INTERIOR = 5;
 
     /** Candidate (u,v) face offsets of the cavity near-corner, centered first. */
-    private static final int[][] CANDIDATE_ORDER = buildCandidateOrder();
+    static final int[][] CANDIDATE_ORDER = buildCandidateOrder();
 
     private TerrariumValidator() {
         // utility class
@@ -49,22 +49,10 @@ public final class TerrariumValidator {
             return TerrariumValidationResult.failed("not_a_controller", controllerPos);
         }
         Direction outward = controllerState.getValue(BlockStateProperties.FACING);
-        Direction inward = outward.getOpposite();
-        Direction[] perp = perpendicular(inward.getAxis());
-        Direction uDir = perp[0];
-        Direction vDir = perp[1];
-        BlockPos faceCell = controllerPos.relative(inward); // candidate cavity near-face cell
-
         TerrariumValidationResult centeredFailure = null;
         for (int[] ab : CANDIDATE_ORDER) {
-            BlockPos nearCorner = faceCell.relative(uDir, -ab[0]).relative(vDir, -ab[1]);
-            BlockPos farCorner = nearCorner
-                .relative(uDir, INTERIOR - 1)
-                .relative(vDir, INTERIOR - 1)
-                .relative(inward, INTERIOR - 1);
-            BlockPos cavityMin = componentMin(nearCorner, farCorner);
-            BlockPos cavityMax = componentMax(nearCorner, farCorner);
-            TerrariumValidationResult r = validateCandidate(level, controllerPos, cavityMin, cavityMax);
+            BlockPos[] bounds = cavityBounds(controllerPos, outward, ab[0], ab[1]);
+            TerrariumValidationResult r = validateCandidate(level, controllerPos, bounds[0], bounds[1]);
             if (r.formed()) {
                 return r;
             }
@@ -75,6 +63,23 @@ public final class TerrariumValidator {
         return centeredFailure != null
             ? centeredFailure
             : TerrariumValidationResult.failed("not_solid", controllerPos);
+    }
+
+    /**
+     * Pure geometry: the 5x5x5 cavity bounds (inclusive {@code [min, max]}) for
+     * candidate face-offset {@code (a, b)} from the Controller anchor. Extracted
+     * so the anchor math is unit-testable without a level.
+     */
+    static BlockPos[] cavityBounds(BlockPos controllerPos, Direction outward, int a, int b) {
+        Direction inward = outward.getOpposite();
+        Direction[] perp = perpendicular(inward.getAxis());
+        BlockPos faceCell = controllerPos.relative(inward); // cavity near-face cell
+        BlockPos nearCorner = faceCell.relative(perp[0], -a).relative(perp[1], -b);
+        BlockPos farCorner = nearCorner
+            .relative(perp[0], INTERIOR - 1)
+            .relative(perp[1], INTERIOR - 1)
+            .relative(inward, INTERIOR - 1);
+        return new BlockPos[] { componentMin(nearCorner, farCorner), componentMax(nearCorner, farCorner) };
     }
 
     private static TerrariumValidationResult validateCandidate(ServerLevel level, BlockPos controllerPos,
@@ -169,7 +174,7 @@ public final class TerrariumValidator {
             && z >= min.getZ() && z <= max.getZ();
     }
 
-    private static int extremes(int x, int y, int z, BlockPos shellMin, BlockPos shellMax) {
+    static int extremes(int x, int y, int z, BlockPos shellMin, BlockPos shellMax) {
         int e = 0;
         if (x == shellMin.getX() || x == shellMax.getX()) {
             e++;
@@ -183,7 +188,7 @@ public final class TerrariumValidator {
         return e;
     }
 
-    private static Direction[] perpendicular(Direction.Axis inAxis) {
+    static Direction[] perpendicular(Direction.Axis inAxis) {
         List<Direction> dirs = new ArrayList<>(2);
         for (Direction.Axis axis : Direction.Axis.values()) {
             if (axis != inAxis) {
