@@ -4840,6 +4840,35 @@ public final class PFGameTests {
         helper.succeed();
     }
 
+    /** The Controller refuses boss-tier (spawn_catalyst) milk - no altar bypass via the Terrarium. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumControllerRejectsBossMilk(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 1);
+        ServerLevel level = helper.getLevel();
+        com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity be =
+            (com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity) helper.getBlockEntity(controller);
+        be.forceValidate(level, helper.absolutePos(controller));
+        ItemStack bossMilk = PFItems.slimeMilkBucket(
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star"));
+        if (bossMilk.isEmpty()) {
+            helper.fail("nether_star (boss) milk bucket should exist");
+            return;
+        }
+        if (be.canAccept(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star"))) {
+            helper.fail("Controller must refuse boss-tier milk (canAccept)");
+            return;
+        }
+        if (be.pushChargeFromBucket(bossMilk)) {
+            helper.fail("Controller must refuse a boss-tier milk bucket");
+            return;
+        }
+        if (be.bufferedCharges() != 0) {
+            helper.fail("no boss charge should have been buffered");
+            return;
+        }
+        helper.succeed();
+    }
+
     /** A charge built from a catalyzed bucket stamps the Sprinkler with the same stats. */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
     public static void terrariumChargePreservesCatalysts(GameTestHelper helper) {

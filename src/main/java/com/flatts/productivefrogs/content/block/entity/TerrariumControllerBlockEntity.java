@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.content.block.entity;
 
 import com.flatts.productivefrogs.PFConfig;
+import com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock;
 import com.flatts.productivefrogs.content.block.TerrariumControllerBlock;
 import com.flatts.productivefrogs.content.item.SlimeMilkBucketItem;
 import com.flatts.productivefrogs.content.multiblock.MilkCharge;
@@ -197,10 +198,23 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
 
     // ---- milk funnel (phase 2) -----------------------------------------
 
-    /** Whether the buffer can take another charge of {@code variant} (reject-until-empty). */
+    /**
+     * Whether the buffer can take another charge of {@code variant}: buffer not
+     * full, reject-until-empty on variant, AND not a boss-tier ({@code spawn_catalyst})
+     * variant. Boss milk is refused outright - a Sprinkler can't reproduce the
+     * source's 6-face catalyst altar gate, so the Terrarium must not become an
+     * altar bypass (issue #184). All intake paths (bucket, pipe fill, isFluidValid)
+     * funnel through here.
+     */
     public boolean canAccept(ResourceLocation variant) {
         return charges.size() < PFConfig.terrariumControllerBufferDepth()
-            && (tankVariant == null || tankVariant.equals(variant));
+            && (tankVariant == null || tankVariant.equals(variant))
+            && !requiresCatalystAltar(variant);
+    }
+
+    /** Boss-tier variants ({@code spawn_catalyst}) are altar-gated; the Controller refuses them. */
+    private boolean requiresCatalystAltar(ResourceLocation variant) {
+        return level != null && SlimeMilkSourceBlock.variantRequiresCatalyst(level, variant);
     }
 
     /**
