@@ -11,60 +11,60 @@
   },
   "elements": [
     {
-      "__comment": "body; its top at y=15 is the milk pool floor (tinted), 12x12 visible through the rim",
+      "__comment": "body; its top at y=14 is the milk pool floor (tinted), framed by the rim above",
       "from": [0, 0, 0],
-      "to": [16, 15, 16],
+      "to": [16, 14, 16],
       "faces": {
-        "north": { "uv": [0, 1, 16, 16], "texture": "#front", "cullface": "north" },
-        "south": { "uv": [0, 1, 16, 16], "texture": "#back", "cullface": "south" },
-        "east": { "uv": [0, 1, 16, 16], "texture": "#side", "cullface": "east" },
-        "west": { "uv": [0, 1, 16, 16], "texture": "#side", "cullface": "west" },
+        "north": { "uv": [0, 2, 16, 16], "texture": "#front", "cullface": "north" },
+        "south": { "uv": [0, 2, 16, 16], "texture": "#back", "cullface": "south" },
+        "east": { "uv": [0, 2, 16, 16], "texture": "#side", "cullface": "east" },
+        "west": { "uv": [0, 2, 16, 16], "texture": "#side", "cullface": "west" },
         "down": { "uv": [0, 0, 16, 16], "texture": "#bottom", "cullface": "down" },
-        "up": { "uv": [0, 0, 16, 16], "texture": "#milk", "tintindex": 1 }
+        "up": { "uv": [4, 4, 12, 12], "texture": "#milk", "tintindex": 1 }
       }
     },
     {
-      "__comment": "north rim (z 0-2)",
-      "from": [0, 15, 0],
-      "to": [16, 16, 2],
+      "__comment": "north rim bar (z 0-4)",
+      "from": [0, 14, 0],
+      "to": [16, 16, 4],
       "faces": {
-        "north": { "uv": [0, 0, 16, 1], "texture": "#front", "cullface": "north" },
-        "up": { "uv": [0, 0, 16, 2], "texture": "#top" },
-        "south": { "uv": [0, 0, 16, 1], "texture": "#side" },
-        "west": { "uv": [0, 0, 2, 1], "texture": "#side" },
-        "east": { "uv": [14, 0, 16, 1], "texture": "#side" }
+        "north": { "uv": [0, 0, 16, 2], "texture": "#front", "cullface": "north" },
+        "up": { "uv": [0, 0, 16, 4], "texture": "#top" },
+        "south": { "uv": [0, 14, 16, 16], "texture": "#side" },
+        "west": { "uv": [0, 0, 4, 2], "texture": "#side" },
+        "east": { "uv": [12, 0, 16, 2], "texture": "#side" }
       }
     },
     {
-      "__comment": "south rim (z 14-16)",
-      "from": [0, 15, 14],
+      "__comment": "south rim bar (z 12-16)",
+      "from": [0, 14, 12],
       "to": [16, 16, 16],
       "faces": {
-        "south": { "uv": [0, 0, 16, 1], "texture": "#back", "cullface": "south" },
-        "up": { "uv": [0, 14, 16, 16], "texture": "#top" },
-        "north": { "uv": [0, 0, 16, 1], "texture": "#side" },
-        "west": { "uv": [14, 0, 16, 1], "texture": "#side" },
-        "east": { "uv": [14, 0, 16, 1], "texture": "#side" }
+        "south": { "uv": [0, 0, 16, 2], "texture": "#back", "cullface": "south" },
+        "up": { "uv": [0, 12, 16, 16], "texture": "#top" },
+        "north": { "uv": [0, 14, 16, 16], "texture": "#side" },
+        "west": { "uv": [0, 0, 4, 2], "texture": "#side" },
+        "east": { "uv": [12, 0, 16, 2], "texture": "#side" }
       }
     },
     {
-      "__comment": "west rim (x 0-2, between the north/south rims)",
-      "from": [0, 15, 2],
-      "to": [2, 16, 14],
+      "__comment": "west rim bar (x 0-4, between the north/south bars)",
+      "from": [0, 14, 4],
+      "to": [4, 16, 12],
       "faces": {
-        "west": { "uv": [2, 0, 14, 1], "texture": "#side" },
-        "up": { "uv": [0, 2, 2, 14], "texture": "#top" },
-        "east": { "uv": [2, 0, 14, 1], "texture": "#side" }
+        "west": { "uv": [4, 0, 12, 2], "texture": "#side" },
+        "up": { "uv": [0, 4, 4, 12], "texture": "#top" },
+        "east": { "uv": [4, 14, 12, 16], "texture": "#side" }
       }
     },
     {
-      "__comment": "east rim (x 14-16, between the north/south rims)",
-      "from": [14, 15, 2],
-      "to": [16, 16, 14],
+      "__comment": "east rim bar (x 12-16, between the north/south bars)",
+      "from": [12, 14, 4],
+      "to": [16, 16, 12],
       "faces": {
-        "east": { "uv": [2, 0, 14, 1], "texture": "#side" },
-        "up": { "uv": [14, 2, 16, 14], "texture": "#top" },
-        "west": { "uv": [2, 0, 14, 1], "texture": "#side" }
+        "east": { "uv": [4, 0, 12, 2], "texture": "#side" },
+        "up": { "uv": [12, 4, 16, 12], "texture": "#top" },
+        "west": { "uv": [4, 14, 12, 16], "texture": "#side" }
       }
     }
   ]
