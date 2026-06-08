@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.15.0 - 2026-06-08 - The Slime Churn + Just Dire Things support
+
+### Added
+
+- **The Slime Churn.** The Slime Milker run backwards: a hand-operated block that turns Slime Milk back into captured slimes in buckets, with no entity to chase. Load a variant Slime Milk bucket plus some empty buckets, and it fills them with that variant's Slime Buckets on the exact rules a placed milk source spawns by - same cadence, same per-bucket budget, same catalyst behavior (Count, Speed, and Infinite all carry through). The milk bucket drains visibly as it works and can be pulled out half-spent to finish in-world, and the emptied milk container comes out its own slot, so a hopper draining slime buckets never grabs an empty - loop the empty straight back into the input for a self-feeding line. (#187)
+- **Just Dire Things support.** With Just Dire Things installed, its resources farm through the frog loop: Ferricore (Cave), Blazegold and Celestigem (Infernal), and Eclipse Alloy (Void). Prime a slime with the ingot or gem, feed it to the matching frog, and smelt the Froglight back into the resource. Pipe-automatable Slime Milk included, like every variant. (#188)
+- **Just Dire Things fuels, farmed through the Crucible.** Blaze Ember, Voidflame Coal, and Eclipse Ember run as a fuel lane with no furnace step: prime a slime with the coal, feed it to its frog, and melt the Froglight in the Froglight Crucible straight into a bucket of the matching refined fuel. The frog loop skips Just Dire Things' own coal-to-fuel refining chain entirely - the refined fuel is the payoff. (#188)
+
 ## v1.14.0 - 2026-06-07 - Brewed Froglights + the boss tier
 
 ### Added
