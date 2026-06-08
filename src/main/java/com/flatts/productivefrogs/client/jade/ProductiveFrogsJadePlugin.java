@@ -93,6 +93,14 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             com.flatts.productivefrogs.content.block.CastingMoldBlock.class);
         registration.registerBlockComponent(provider,
             com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock.class);
+        registration.registerBlockComponent(provider,
+            com.flatts.productivefrogs.content.block.TerrariumControllerBlock.class);
+        registration.registerBlockComponent(provider,
+            com.flatts.productivefrogs.content.block.SprinklerBlock.class);
+        registration.registerBlockComponent(provider,
+            com.flatts.productivefrogs.content.block.IncubatorBlock.class);
+        registration.registerBlockComponent(provider,
+            com.flatts.productivefrogs.content.block.HatchBlock.class);
         registration.registerBlockComponent(MILK_SOURCE, SlimeMilkSourceBlock.class);
         registration.registerEntityComponent(new FrogStatsProvider(), ResourceFrog.class);
         registration.registerBlockComponent(PRIMED_EGG_STATS, PrimedFrogEggBlock.class);
@@ -170,6 +178,32 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 tooltip.add(Component.translatable(
                     stored.enabled() ? "productivefrogs.jade.aura_on" : "productivefrogs.jade.aura_off",
                     effectName));
+            } else if (be instanceof com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity controller) {
+                BlockState state = accessor.getBlockState();
+                boolean formed = state.hasProperty(com.flatts.productivefrogs.content.block.TerrariumControllerBlock.FORMED)
+                    && state.getValue(com.flatts.productivefrogs.content.block.TerrariumControllerBlock.FORMED);
+                tooltip.add(Component.translatable(formed
+                    ? "productivefrogs.jade.terrarium_formed" : "productivefrogs.jade.terrarium_unformed"));
+                if (controller.tankVariant() != null) {
+                    tooltip.add(Component.translatable("productivefrogs.jade.controller_buffer",
+                        controller.bufferedCharges(), PFConfig.terrariumControllerBufferDepth()));
+                }
+            } else if (be instanceof com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity sprinkler
+                    && !sprinkler.isEmpty()) {
+                tooltip.add(sprinkler.isInfinite()
+                    ? Component.translatable("productivefrogs.jade.sprinkler_filled_infinite")
+                    : Component.translatable("productivefrogs.jade.sprinkler_filled", sprinkler.getSpawnsRemaining()));
+            } else if (be instanceof com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity incubator
+                    && incubator.getCategory() != null) {
+                if (incubator.isWaitingForSpace()) {
+                    tooltip.add(Component.translatable("productivefrogs.gui.incubator.waiting"));
+                } else {
+                    tooltip.add(Component.translatable("productivefrogs.jade.incubator_growing",
+                        percent(incubator.growthTotal() - incubator.growthRemaining(), incubator.growthTotal())));
+                }
+            } else if (be instanceof com.flatts.productivefrogs.content.block.entity.HatchBlockEntity hatch) {
+                tooltip.add(Component.translatable("productivefrogs.jade.hatch_fill",
+                    hatch.fillCount(), com.flatts.productivefrogs.content.block.entity.HatchBlockEntity.SLOTS));
             }
         }
 

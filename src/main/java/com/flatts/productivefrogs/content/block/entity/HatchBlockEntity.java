@@ -98,6 +98,30 @@ public class HatchBlockEntity extends BlockEntity implements MenuProvider {
         return true;
     }
 
+    /** Occupied slots, for the Jade look-at fill readout. */
+    public int fillCount() {
+        int n = 0;
+        for (int i = 0; i < inventory.getSlots(); i++) {
+            if (!inventory.getStackInSlot(i).isEmpty()) {
+                n++;
+            }
+        }
+        return n;
+    }
+
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag tag = super.getUpdateTag(registries);
+        saveAdditional(tag, registries); // sync the inventory so Jade can count it
+        return tag;
+    }
+
+    @Override
+    @Nullable
+    public net.minecraft.network.protocol.Packet<net.minecraft.network.protocol.game.ClientGamePacketListener> getUpdatePacket() {
+        return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
+    }
+
     @Override
     public Component getDisplayName() {
         return Component.translatable("block.productivefrogs.hatch");

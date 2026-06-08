@@ -96,6 +96,19 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
         return category == null;
     }
 
+    /** Matured but held back at the frog cap (for the Jade look-at). */
+    public boolean isWaitingForSpace() {
+        return pendingRelease;
+    }
+
+    public int growthRemaining() {
+        return growthRemaining;
+    }
+
+    public int growthTotal() {
+        return growthTotal;
+    }
+
     @Nullable
     public Category getCategory() {
         return category;
@@ -243,5 +256,18 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
         } else {
             category = null;
         }
+    }
+
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag tag = super.getUpdateTag(registries);
+        saveAdditional(tag, registries); // sync category + growth for Jade
+        return tag;
+    }
+
+    @Override
+    @Nullable
+    public net.minecraft.network.protocol.Packet<net.minecraft.network.protocol.game.ClientGamePacketListener> getUpdatePacket() {
+        return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
     }
 }

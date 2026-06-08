@@ -306,9 +306,7 @@ public class SprinklerBlockEntity extends BlockEntity {
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = super.getUpdateTag(registries);
-        if (variantId != null) {
-            tag.putString("Variant", variantId.toString());
-        }
+        saveAdditional(tag, registries); // sync variant + spawns for Jade + the FILLED visual
         return tag;
     }
 
