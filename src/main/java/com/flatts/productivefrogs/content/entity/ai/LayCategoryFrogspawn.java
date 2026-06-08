@@ -1,10 +1,13 @@
 package com.flatts.productivefrogs.content.entity.ai;
 
+import com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
+import com.flatts.productivefrogs.content.multiblock.TerrariumManager;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
@@ -41,6 +44,35 @@ public final class LayCategoryFrogspawn {
         // utility class, behavior factory only
     }
 
+    /**
+     * Redirect a bred frog's lay into the nearest Incubator with room when the
+     * frog is inside a formed Terrarium. Carries pending-offspring stats straight
+     * into the Incubator (so bred lineage flows frog -&gt; Incubator BE -&gt; matured
+     * frog, no stat-bearing item needed); a non-bred lay seeds baseline. Returns
+     * false when there is no Terrarium or no Incubator with room.
+     */
+    private static boolean tryLayIntoIncubator(ServerLevel level, ResourceFrog frog) {
+        TerrariumManager.FormedTerrarium terrarium = TerrariumManager.containing(level, frog.position());
+        if (terrarium == null) {
+            return false;
+        }
+        for (BlockPos incubatorPos : terrarium.incubators()) {
+            if (level.getBlockEntity(incubatorPos) instanceof IncubatorBlockEntity incubator && incubator.hasRoom()) {
+                boolean seeded = frog.hasPendingOffspring()
+                    ? incubator.seedFromBreeding(frog.getCategory(),
+                        frog.getPendingOffspringAppetite(), frog.getPendingOffspringBounty(),
+                        frog.getPendingOffspringReach())
+                    : incubator.seedBaseline(frog.getCategory());
+                if (seeded) {
+                    frog.clearPendingOffspring();
+                    level.playSound(null, incubatorPos, SoundEvents.FROG_LAY_SPAWN, SoundSource.BLOCKS, 1.0F, 1.0F);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public static BehaviorControl<Frog> create() {
         return BehaviorBuilder.create(
             instance -> instance.group(
@@ -52,6 +84,15 @@ public final class LayCategoryFrogspawn {
                 (attackTarget, walkTarget, isPregnant) -> (level, frog, time) -> {
                     if (!(frog instanceof ResourceFrog resourceFrog)) {
                         return false;
+                    }
+                    // Terrarium redirect (#185): inside a formed Terrarium, lay into
+                    // the nearest Incubator with room instead of seeking water - no
+                    // loose frogspawn in the cavity, and bred stats flow straight
+                    // into the Incubator. Falls through to the water-lay below when
+                    // there's no Incubator with room (or no Terrarium).
+                    if (tryLayIntoIncubator(level, resourceFrog)) {
+                        isPregnant.erase();
+                        return true;
                     }
                     if (frog.isInWater() || !frog.onGround()) {
                         return false;

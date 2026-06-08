@@ -107,6 +107,22 @@ public final class TerrariumManager {
         return null;
     }
 
+    /** The formed Terrarium that owns {@code incubatorPos} as one of its Incubators, or null. */
+    @Nullable
+    public static FormedTerrarium owningIncubator(ServerLevel level, BlockPos incubatorPos) {
+        Map<BlockPos, FormedTerrarium> byController = ACTIVE.get(level);
+        if (byController == null) {
+            return null;
+        }
+        BlockPos key = incubatorPos.immutable();
+        for (FormedTerrarium t : byController.values()) {
+            if (t.incubators().contains(key)) {
+                return t;
+            }
+        }
+        return null;
+    }
+
     /** Drop all Terraria in a level (on {@code LevelEvent.Unload}). */
     public static void onLevelUnload(ServerLevel level) {
         ACTIVE.remove(level);

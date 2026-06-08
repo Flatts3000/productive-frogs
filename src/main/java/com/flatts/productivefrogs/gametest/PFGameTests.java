@@ -4994,6 +4994,81 @@ public final class PFGameTests {
         helper.succeed();
     }
 
+    /** An Incubator releases a frog into the cavity with bred stats preserved post-finalizeSpawn. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumIncubatorPreservesStats(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 0);
+        ServerLevel level = helper.getLevel();
+        ((com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity)
+            helper.getBlockEntity(controller)).forceValidate(level, helper.absolutePos(controller));
+        BlockPos incRel = new BlockPos(4, 4, 1);
+        com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity inc =
+            (com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity) helper.getBlockEntity(incRel);
+        com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity.frogCapOverride = 64;
+        try {
+            inc.seedFromBreeding(Category.CAVE, 5, 7, 3);
+            inc.primeForImmediateRelease();
+            com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity.serverTick(
+                level, helper.absolutePos(incRel), level.getBlockState(helper.absolutePos(incRel)), inc);
+            java.util.List<ResourceFrog> frogs = level.getEntitiesOfClass(ResourceFrog.class,
+                net.minecraft.world.phys.AABB.encapsulatingFullBlocks(
+                    helper.absolutePos(new BlockPos(2, 2, 2)), helper.absolutePos(new BlockPos(6, 6, 6))));
+            if (frogs.isEmpty()) {
+                helper.fail("Incubator released no frog");
+                return;
+            }
+            ResourceFrog f = frogs.get(0);
+            if (f.getAppetite() != 5 || f.getBounty() != 7 || f.getReach() != 3) {
+                helper.fail("stats not preserved: appetite=" + f.getAppetite()
+                    + " bounty=" + f.getBounty() + " reach=" + f.getReach());
+                return;
+            }
+            helper.succeed();
+        } finally {
+            com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity.frogCapOverride = null;
+        }
+    }
+
+    /** At the frog cap an Incubator holds the matured frog; it releases once space frees. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumFrogCapHoldsInIncubator(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 0);
+        ServerLevel level = helper.getLevel();
+        ((com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity)
+            helper.getBlockEntity(controller)).forceValidate(level, helper.absolutePos(controller));
+        BlockPos incRel = new BlockPos(4, 4, 1);
+        com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity inc =
+            (com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity) helper.getBlockEntity(incRel);
+        BlockState iState = level.getBlockState(helper.absolutePos(incRel));
+        net.minecraft.world.phys.AABB cavity = net.minecraft.world.phys.AABB.encapsulatingFullBlocks(
+            helper.absolutePos(new BlockPos(2, 2, 2)), helper.absolutePos(new BlockPos(6, 6, 6)));
+        try {
+            inc.seedFromBreeding(Category.CAVE, 1, 1, 1);
+            inc.primeForImmediateRelease();
+            // Cap 0 -> hold (no release, still incubating).
+            com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity.frogCapOverride = 0;
+            com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity.serverTick(level, helper.absolutePos(incRel), iState, inc);
+            if (!level.getEntitiesOfClass(ResourceFrog.class, cavity).isEmpty()) {
+                helper.fail("frog released at the cap (should hold)");
+                return;
+            }
+            if (inc.hasRoom()) {
+                helper.fail("held Incubator should still be incubating");
+                return;
+            }
+            // Raise the cap -> releases.
+            com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity.frogCapOverride = 8;
+            com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity.serverTick(level, helper.absolutePos(incRel), iState, inc);
+            if (level.getEntitiesOfClass(ResourceFrog.class, cavity).isEmpty()) {
+                helper.fail("Incubator did not release once the cap rose");
+                return;
+            }
+            helper.succeed();
+        } finally {
+            com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity.frogCapOverride = null;
+        }
+    }
+
     /**
      * Build a valid Terrarium inside the 9x9x9 plot: a stone shell over rel
      * {@code (1..7)} (5x5x5 air cavity at rel {@code (2..6)}), a Controller / Hatch
