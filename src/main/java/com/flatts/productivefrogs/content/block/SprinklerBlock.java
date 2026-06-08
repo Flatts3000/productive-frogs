@@ -9,6 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ColorParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
@@ -102,6 +103,15 @@ public class SprinklerBlock extends Block implements EntityBlock {
         // A tintable drip (dripstone hang-and-fall look, milk-variant colour).
         ColorParticleOption drip = ColorParticleOption.create(PFParticles.SPRINKLER_DRIP.get(), 0xFF000000 | rgb);
         level.addParticle(drip, x, y, z, 0.0, 0.0, 0.0);
+        // Infinite (Endless catalyst) indicator, mirroring the source block's
+        // END_ROD glint - here it drifts down into the cavity so it reads from below.
+        if (be.isInfinite() && random.nextInt(3) == 0) {
+            level.addParticle(ParticleTypes.END_ROD,
+                pos.getX() + 0.25 + random.nextDouble() * 0.5,
+                pos.getY() - 0.1,
+                pos.getZ() + 0.25 + random.nextDouble() * 0.5,
+                0.0, -0.01, 0.0);
+        }
     }
 
     /** Milky off-white fallback before the variant registry is available. */
