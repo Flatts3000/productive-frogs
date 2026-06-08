@@ -90,11 +90,10 @@ public final class PFBlocks {
      * The Slime Churn (#187) - the Milker's inverse: consumes a per-variant
      * Slime Milk bucket + empty buckets, produces captured variant Slime
      * Buckets on the placed-source spawn economy (cadence, budget, catalysts).
-     * Two inputs / two outputs; hopper-compatible like the Milker. The picked
-     * texture identity is a wooden barrel churn over a packed-mud base with
-     * moss accents (the Bog recipe materials read in the mud + moss; the
-     * barrel body carries the dairy identity shared with the Milker), so the
-     * block feels like wood.
+     * Two inputs / two outputs; hopper-compatible like the Milker. Identity:
+     * an oak barrel churn over a packed-mud base with moss accents - the
+     * texture follows the recipe (oak planks frame / moss lid / slime core /
+     * packed-mud base row), so the block feels like wood.
      */
     public static final DeferredBlock<SlimeChurnBlock> SLIME_CHURN = BLOCKS.registerBlock(
         "slime_churn",

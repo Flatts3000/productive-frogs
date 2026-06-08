@@ -2,15 +2,15 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "MMM",
-    "CSC",
-    "CBC"
+    "PMP",
+    "PSP",
+    "CCC"
   ],
   "key": {
+    "P": { "item": "minecraft:oak_planks" },
     "M": { "item": "minecraft:moss_block" },
-    "C": { "item": "minecraft:packed_mud" },
     "S": { "item": "minecraft:slime_ball" },
-    "B": { "item": "minecraft:bucket" }
+    "C": { "item": "minecraft:packed_mud" }
   },
   "result": {
     "id": "productivefrogs:slime_churn",

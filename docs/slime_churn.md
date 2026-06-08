@@ -70,11 +70,18 @@ churned bucket and a hand-captured bucket are interchangeable everywhere
 
 ## Recipe and identity (Bog)
 
-Crafted from **Bog materials**: moss blocks (lid) over a packed-mud body with
-a slime ball core and a bucket. The texture follows the crafting materials -
-a packed-mud churn vessel with a mossy lid (the rule, per the Milker's
-wood-over-cobble following its planks-over-cobblestone recipe). Sound/feel:
-packed mud.
+Crafted as an **oak barrel over a mud base** (maintainer-specified pattern):
+
+```
+oak planks  moss block  oak planks
+oak planks  slime ball  oak planks
+packed mud  packed mud  packed mud
+```
+
+The texture follows the crafting materials (the rule, per the Milker's
+wood-over-cobble following its planks-over-cobblestone recipe): an oak barrel
+churn with iron-banded planks, moss tufts, a slime-green churn window, and a
+packed-mud base. Sound/feel: wood.
 
 ## Implementation map
 
