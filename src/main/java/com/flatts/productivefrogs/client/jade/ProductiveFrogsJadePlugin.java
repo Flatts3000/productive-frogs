@@ -215,7 +215,10 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 }
             } else if (be instanceof com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity incubator
                     && incubator.getCategory() != null) {
-                if (incubator.isWaitingForSpace()) {
+                // Key "done" off growthRemaining (synced periodically + at 0), not the
+                // pendingRelease flag (single sync point that can lag), so a matured /
+                // cap-held Incubator never sticks on "Incubating: 100%".
+                if (incubator.isWaitingForSpace() || incubator.growthRemaining() <= 0) {
                     tooltip.add(Component.translatable("productivefrogs.gui.incubator.waiting"));
                 } else {
                     tooltip.add(Component.translatable("productivefrogs.jade.incubator_growing",
