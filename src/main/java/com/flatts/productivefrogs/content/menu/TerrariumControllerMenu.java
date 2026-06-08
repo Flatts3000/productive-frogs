@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockE
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -25,6 +26,8 @@ public class TerrariumControllerMenu extends AbstractContainerMenu {
 
     private final ContainerLevelAccess access;
     private final ContainerData dataAccess;
+    @Nullable
+    private final TerrariumControllerBlockEntity be;
 
     public TerrariumControllerMenu(int containerId, Inventory playerInv, RegistryFriendlyByteBuf buf) {
         this(containerId, playerInv, resolveBlockEntity(playerInv, buf.readBlockPos()),
@@ -34,11 +37,18 @@ public class TerrariumControllerMenu extends AbstractContainerMenu {
     public TerrariumControllerMenu(int containerId, Inventory playerInv,
             @Nullable TerrariumControllerBlockEntity be, ContainerData data) {
         super(PFMenuTypes.TERRARIUM_CONTROLLER.get(), containerId);
+        this.be = be;
         this.access = be == null
             ? ContainerLevelAccess.NULL
             : ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());
         this.dataAccess = data;
         addDataSlots(dataAccess);
+    }
+
+    /** The milk variant currently buffered (read off the synced client BE), or null when empty. */
+    @Nullable
+    public ResourceLocation tankVariant() {
+        return be == null ? null : be.tankVariant();
     }
 
     public boolean formed() {

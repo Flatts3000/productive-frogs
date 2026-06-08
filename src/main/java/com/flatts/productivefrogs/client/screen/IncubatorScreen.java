@@ -9,26 +9,33 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
- * Status screen for the Incubator: a growth-progress bar and a one-line state
- * (empty / incubating / waiting for space). Procedural panel - no GUI sheet.
+ * Status screen for the Incubator. A category-tinted growth bar with the percent
+ * overlaid, the incubating species (with a colour swatch), the time remaining, and
+ * a hint when empty. Procedural panel - no GUI sheet.
  */
 public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
 
     private static final int PANEL = 0xFFC6C6C6;
     private static final int BEVEL_LIGHT = 0xFFFFFFFF;
     private static final int BEVEL_DARK = 0xFF555555;
-    private static final int BAR_BG = 0xFF373737;
-    private static final int BAR_FILL = 0xFF8FCB5A; // slime green
+    private static final int BAR_BORDER = 0xFF373737;
+    private static final int BAR_TRACK = 0xFF8B8B8B;
+    private static final int BAR_WAITING = 0xFFE0A030; // amber: matured, held at cap
+    private static final int SWATCH_BORDER = 0xFF2B2B2B;
+    private static final int TEXT = 0x404040;
 
-    private static final int BAR_X = 18;
-    private static final int BAR_Y = 44;
-    private static final int BAR_W = 140;
-    private static final int BAR_H = 10;
+    private static final int SWATCH_X = 9;
+    private static final int SWATCH_Y = 19;
+    private static final int SWATCH = 9;
+    private static final int BAR_X = 9;
+    private static final int BAR_Y = 38;
+    private static final int BAR_W = 158;
+    private static final int BAR_H = 14;
 
     public IncubatorScreen(IncubatorMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
         this.imageWidth = 176;
-        this.imageHeight = 72;
+        this.imageHeight = 78;
     }
 
     @Override
@@ -41,38 +48,60 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
         gui.fill(x, y + this.imageHeight - 1, x + this.imageWidth, y + this.imageHeight, BEVEL_DARK);
         gui.fill(x + this.imageWidth - 1, y, x + this.imageWidth, y + this.imageHeight, BEVEL_DARK);
 
-        // Progress bar (only meaningful while growing).
+        int state = this.menu.state();
+        Category cat = this.menu.incubatingCategory();
+
+        // Species colour swatch (only while it holds a seed).
+        if (cat != null) {
+            int sx = x + SWATCH_X;
+            int sy = y + SWATCH_Y;
+            gui.fill(sx - 1, sy - 1, sx + SWATCH + 1, sy + SWATCH + 1, SWATCH_BORDER);
+            gui.fill(sx, sy, sx + SWATCH, sy + SWATCH, 0xFF000000 | cat.tintRgb());
+        }
+
+        // Growth bar: recessed track + category-tinted fill (amber when held at cap).
         int bx = x + BAR_X;
         int by = y + BAR_Y;
-        gui.fill(bx - 1, by - 1, bx + BAR_W + 1, by + BAR_H + 1, BAR_BG);
-        int state = this.menu.state();
+        gui.fill(bx - 1, by - 1, bx + BAR_W + 1, by + BAR_H + 1, BAR_BORDER);
+        gui.fill(bx, by, bx + BAR_W, by + BAR_H, BAR_TRACK);
         int total = this.menu.growthTotal();
         if (state == 1 && total > 0) {
             int done = total - this.menu.growthRemaining();
             int filled = Math.max(0, Math.min(BAR_W, done * BAR_W / total));
-            gui.fill(bx, by, bx + filled, by + BAR_H, BAR_FILL);
+            int fill = cat != null ? (0xFF000000 | cat.tintRgb()) : BAR_WAITING;
+            gui.fill(bx, by, bx + filled, by + BAR_H, fill);
         } else if (state == 2) {
-            gui.fill(bx, by, bx + BAR_W, by + BAR_H, BAR_FILL); // full, held
+            gui.fill(bx, by, bx + BAR_W, by + BAR_H, BAR_WAITING);
         }
     }
 
     @Override
     protected void renderLabels(GuiGraphics gui, int mouseX, int mouseY) {
-        gui.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 0x404040, false);
+        gui.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, TEXT, false);
         int state = this.menu.state();
+
+        // Status line (swatch is drawn in renderBg; text sits beside it when seeded).
+        int statusX = this.menu.incubatingCategory() != null ? SWATCH_X + SWATCH + 4 : SWATCH_X;
         Component status = switch (state) {
             case 1 -> Component.translatable("productivefrogs.gui.incubator.growing", speciesName());
-            case 2 -> Component.translatable("productivefrogs.gui.incubator.waiting")
-                .withStyle(ChatFormatting.DARK_RED);
-            default -> Component.translatable("productivefrogs.gui.incubator.empty")
-                .withStyle(ChatFormatting.DARK_GRAY);
+            case 2 -> Component.translatable("productivefrogs.gui.incubator.waiting").withStyle(ChatFormatting.GOLD);
+            default -> Component.translatable("productivefrogs.gui.incubator.empty").withStyle(ChatFormatting.DARK_GRAY);
         };
-        gui.drawString(this.font, status, 18, 26, 0x404040, false);
-        // Time remaining (m:ss), only meaningful while growing.
-        if (state == 1) {
+        gui.drawString(this.font, status, statusX, 20, TEXT, false);
+
+        if (state == 1 && this.menu.growthTotal() > 0) {
+            // Percent overlaid centered on the bar.
+            int done = this.menu.growthTotal() - this.menu.growthRemaining();
+            int pct = Math.max(0, Math.min(100, done * 100 / this.menu.growthTotal()));
+            gui.drawCenteredString(this.font, pct + "%", BAR_X + BAR_W / 2, BAR_Y + 3, 0xFFFFFFFF);
             gui.drawString(this.font,
                 Component.translatable("productivefrogs.gui.incubator.time", formatTime(this.menu.growthRemaining())),
-                18, 58, 0x404040, false);
+                BAR_X, BAR_Y + BAR_H + 4, TEXT, false);
+        } else if (state == 0) {
+            // Empty: tell the player how to seed it.
+            gui.drawString(this.font,
+                Component.translatable("productivefrogs.gui.incubator.empty_hint").withStyle(ChatFormatting.DARK_GRAY),
+                BAR_X, BAR_Y + BAR_H + 4, TEXT, false);
         }
     }
 
