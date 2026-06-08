@@ -236,6 +236,13 @@ public final class PFModBusEvents {
             (be, side) -> be.fluidHandler()
         );
 
+        // Terrarium Hatch (#185): the froglight output inventory, for piping out.
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            PFBlockEntities.HATCH.get(),
+            (be, side) -> be.inventory()
+        );
+
         // Per-variant Slime Milk buckets (v1.8) are SlimeMilkBucketItem extends
         // BucketItem. NeoForge only auto-registers FluidHandler.ITEM for the exact
         // BucketItem class, not subclasses, so wire each up explicitly - this is

@@ -4938,6 +4938,62 @@ public final class PFGameTests {
         }
     }
 
+    /** Inside a formed Terrarium the frog-eat drop lands in the Hatch with no item entity. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumHatchReceivesFroglightDirectly(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 0);
+        ServerLevel level = helper.getLevel();
+        ((com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity)
+            helper.getBlockEntity(controller)).forceValidate(level, helper.absolutePos(controller));
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(4, 4, 4));
+        frog.setCategory(Category.CAVE);
+        com.flatts.productivefrogs.event.FrogTongueDropHandler.dropFroglightAtFrog(
+            frog, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        if (!(helper.getBlockEntity(new BlockPos(7, 4, 4))
+                instanceof com.flatts.productivefrogs.content.block.entity.HatchBlockEntity hatch) || hatch.isEmpty()) {
+            helper.fail("Hatch did not receive the froglight");
+            return;
+        }
+        java.util.List<net.minecraft.world.entity.item.ItemEntity> items = level.getEntitiesOfClass(
+            net.minecraft.world.entity.item.ItemEntity.class,
+            net.minecraft.world.phys.AABB.encapsulatingFullBlocks(
+                helper.absolutePos(new BlockPos(2, 2, 2)), helper.absolutePos(new BlockPos(6, 6, 6))));
+        if (!items.isEmpty()) {
+            helper.fail("a froglight item entity spawned inside the Terrarium (should be entity-free)");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** A full Hatch is backpressure: the drop deposits nothing and spills no item entity. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumFullHatchStopsDrop(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 0);
+        ServerLevel level = helper.getLevel();
+        ((com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity)
+            helper.getBlockEntity(controller)).forceValidate(level, helper.absolutePos(controller));
+        com.flatts.productivefrogs.content.block.entity.HatchBlockEntity hatch =
+            (com.flatts.productivefrogs.content.block.entity.HatchBlockEntity) helper.getBlockEntity(new BlockPos(7, 4, 4));
+        hatch.fillForTest();
+        if (!hatch.isFull()) {
+            helper.fail("Hatch should be full after fillForTest");
+            return;
+        }
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(4, 4, 4));
+        frog.setCategory(Category.CAVE);
+        com.flatts.productivefrogs.event.FrogTongueDropHandler.dropFroglightAtFrog(
+            frog, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        java.util.List<net.minecraft.world.entity.item.ItemEntity> items = level.getEntitiesOfClass(
+            net.minecraft.world.entity.item.ItemEntity.class,
+            net.minecraft.world.phys.AABB.encapsulatingFullBlocks(
+                helper.absolutePos(new BlockPos(2, 2, 2)), helper.absolutePos(new BlockPos(6, 6, 6))));
+        if (!items.isEmpty()) {
+            helper.fail("a full Hatch must not spill froglights into the world");
+            return;
+        }
+        helper.succeed();
+    }
+
     /**
      * Build a valid Terrarium inside the 9x9x9 plot: a stone shell over rel
      * {@code (1..7)} (5x5x5 air cavity at rel {@code (2..6)}), a Controller / Hatch

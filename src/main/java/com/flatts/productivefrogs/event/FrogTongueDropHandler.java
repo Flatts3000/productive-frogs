@@ -129,14 +129,32 @@ public final class FrogTongueDropHandler {
         // bountyMaxDrops at the cap (FrogStats step curve). Each ItemEntity gets
         // the constructor's natural random spread so the stack scatters.
         int count = FrogStats.bountyDropCount(frog.getBounty(), PFConfig.bountyMaxDrops(), PFConfig.statCap());
+
+        // Terrarium override (#185): inside a formed Terrarium the Froglight is
+        // deposited straight into the Hatch inventory - no item entity, ever.
+        // A full Hatch is backpressure: stop depositing rather than spill into
+        // the world (the sensor also refuses prey at this point, so a frog
+        // normally won't have eaten - this is the safety net).
+        com.flatts.productivefrogs.content.multiblock.TerrariumManager.FormedTerrarium terrarium =
+            com.flatts.productivefrogs.content.multiblock.TerrariumManager.containing(level, frog.position());
+        if (terrarium != null) {
+            com.flatts.productivefrogs.content.block.entity.HatchBlockEntity hatch =
+                level.getBlockEntity(terrarium.hatchPos())
+                    instanceof com.flatts.productivefrogs.content.block.entity.HatchBlockEntity h ? h : null;
+            for (int i = 0; i < count && hatch != null; i++) {
+                if (!hatch.insert(buildFroglight(variantId, captured))) {
+                    break; // Hatch full - drop nothing more, spawn no entity
+                }
+            }
+            PFDebug.log(PFDebug.Area.TONGUE, () -> String.format(
+                "terrarium drop: frog category=%s -> Hatch %s (variant=%s)",
+                frog.getCategory(), terrarium.hatchPos(), variantId));
+            return;
+        }
+
         Vec3 pos = frog.position();
         for (int i = 0; i < count; i++) {
-            ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
-            froglight.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
-            if (captured != null) {
-                froglight.set(PFDataComponents.STORED_EFFECT.get(), captured);
-            }
-            ItemEntity drop = new ItemEntity(level, pos.x, pos.y, pos.z, froglight);
+            ItemEntity drop = new ItemEntity(level, pos.x, pos.y, pos.z, buildFroglight(variantId, captured));
             drop.setDefaultPickUpDelay();
             level.addFreshEntity(drop);
         }
@@ -145,5 +163,15 @@ public final class FrogTongueDropHandler {
             frog.getCategory(), frog.getBounty(), count, variantId,
             captured == null ? "none" : captured.effect().unwrapKey().map(k -> k.location().toString()).orElse("?"),
             frog.blockPosition()));
+    }
+
+    /** One variant-stamped (and optionally effect-stamped) Configurable Froglight. */
+    private static ItemStack buildFroglight(ResourceLocation variantId, @Nullable StoredEffect captured) {
+        ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
+        froglight.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
+        if (captured != null) {
+            froglight.set(PFDataComponents.STORED_EFFECT.get(), captured);
+        }
+        return froglight;
     }
 }

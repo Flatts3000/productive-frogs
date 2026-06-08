@@ -54,6 +54,13 @@ public class ResourceFrogAttackablesSensor extends FrogAttackablesSensor {
         if (frog.getBrain().hasMemoryValue(MemoryModuleType.HAS_HUNTING_COOLDOWN)) {
             return false;
         }
+        // Terrarium backpressure (#185): a frog inside a formed Terrarium whose
+        // Hatch is full refuses all prey - nothing it ate would have anywhere to
+        // go, so it stops eating rather than wasting slimes (layer 1; the drop
+        // handler is the safety net).
+        if (isOwningHatchFull(frog)) {
+            return false;
+        }
         if (!Sensor.isEntityAttackable(frog, target) || !Frog.canEat(target) || isUnreachable(frog, target)) {
             return false;
         }
@@ -79,6 +86,16 @@ public class ResourceFrogAttackablesSensor extends FrogAttackablesSensor {
                     slime.getId(), slime.getCategory(), inReach ? "ATTACKABLE" : "out-of-reach"));
         }
         return inReach;
+    }
+
+    /** True when the frog sits in a formed Terrarium whose Hatch is full (backpressure). */
+    private static boolean isOwningHatchFull(ResourceFrog frog) {
+        com.flatts.productivefrogs.content.multiblock.TerrariumManager.FormedTerrarium terrarium =
+            com.flatts.productivefrogs.content.multiblock.TerrariumManager.containing(frog.level(), frog.position());
+        return terrarium != null
+            && frog.level().getBlockEntity(terrarium.hatchPos())
+                instanceof com.flatts.productivefrogs.content.block.entity.HatchBlockEntity hatch
+            && hatch.isFull();
     }
 
     /** The frog's Reach-scaled prey-scan radius (config-tunable; defaults 8..16). */

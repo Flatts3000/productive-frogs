@@ -3,6 +3,8 @@ package com.flatts.productivefrogs.content.block;
 import com.flatts.productivefrogs.content.block.entity.HatchBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -58,5 +60,15 @@ public class HatchBlock extends Block implements EntityBlock {
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new HatchBlockEntity(pos, state);
+    }
+
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, net.minecraft.world.level.Level level,
+            BlockPos pos, Player player, net.minecraft.world.phys.BlockHitResult hit) {
+        // Hand-collect the stored froglights (a proper GUI lands in the ship phase).
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof HatchBlockEntity be) {
+            be.collectInto(player);
+        }
+        return InteractionResult.SUCCESS;
     }
 }
