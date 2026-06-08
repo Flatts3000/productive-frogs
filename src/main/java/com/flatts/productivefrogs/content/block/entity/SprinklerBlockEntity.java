@@ -86,6 +86,15 @@ public class SprinklerBlockEntity extends BlockEntity {
         return speedLevel;
     }
 
+    public int getQuantityLevel() {
+        return quantityLevel;
+    }
+
+    /** Capacity high-water mark (the {@code N / cap} denominator), never below remaining. */
+    public int getSpawnsCapacity() {
+        return Math.max(spawnsCapacity, getSpawnsRemaining());
+    }
+
     public boolean isInfinite() {
         return infinite;
     }

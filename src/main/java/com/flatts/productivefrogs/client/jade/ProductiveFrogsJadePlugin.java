@@ -190,9 +190,29 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 }
             } else if (be instanceof com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity sprinkler
                     && !sprinkler.isEmpty()) {
-                tooltip.add(sprinkler.isInfinite()
-                    ? Component.translatable("productivefrogs.jade.sprinkler_filled_infinite")
-                    : Component.translatable("productivefrogs.jade.sprinkler_filled", sprinkler.getSpawnsRemaining()));
+                // Name the held milk variant, then the same Count / Speed / Quantity
+                // lines a Slime Milk source block shows, so a Sprinkler reads like
+                // the source it was filled from. (The client BE is kept fresh by
+                // SprinklerBlockEntity.sync().)
+                ResourceLocation variant = sprinkler.getVariantId();
+                if (variant != null) {
+                    tooltip.add(Component.translatable("productivefrogs.jade.sprinkler_milk",
+                        Component.translatable("block.productivefrogs." + variant.getPath() + "_slime_milk")));
+                }
+                if (sprinkler.isInfinite()) {
+                    tooltip.add(Component.translatable("productivefrogs.jade.spawns_unlimited"));
+                } else {
+                    tooltip.add(Component.translatable("productivefrogs.jade.spawns_left",
+                        sprinkler.getSpawnsRemaining(), sprinkler.getSpawnsCapacity()));
+                }
+                if (sprinkler.getSpeedLevel() > 0) {
+                    tooltip.add(Component.translatable("productivefrogs.jade.catalyst_speed",
+                        sprinkler.getSpeedLevel(), PFConfig.catalystMaxSpeedLevel()));
+                }
+                if (sprinkler.getQuantityLevel() > 0) {
+                    tooltip.add(Component.translatable("productivefrogs.jade.catalyst_quantity",
+                        sprinkler.getQuantityLevel(), PFConfig.catalystMaxQuantityLevel()));
+                }
             } else if (be instanceof com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity incubator
                     && incubator.getCategory() != null) {
                 if (incubator.isWaitingForSpace()) {
