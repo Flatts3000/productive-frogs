@@ -100,6 +100,9 @@ packed-mud base. Sound/feel: wood.
 - `SlimeBucketItem.forVariant` - entity-less variant bucket minting.
 - `SlimeMilkBucketItem.variantId()` - the reverse lookup accessor.
 - Debug area: `-Dproductivefrogs.debug=churn` / `/pf debug churn on`.
+- `client/jei/SlimeChurnRecipeCategory` - one JEI recipe per variant (the
+  Milker category inverted: milk bucket + empty in, slime bucket + returned
+  container out), plus the item info page.
 
 ## GameTests (PFGameTests, 7)
 
@@ -115,8 +118,6 @@ inside the Speed-modulated bounds rather than racing randomness.
 
 - A Jade cook-progress provider (the Milker has one; the Churn's interval is
   randomized, so the readout needs a "next slime in ~Ns" framing).
-- A JEI recipe category (the Milker's category shipped v1.5.3; the Churn has
-  a JEI info page only for now).
 - Any auto-pull of milk from an adjacent tank (fluid handling is the V2
   Terrarium's lane; the Churn is deliberately bucket-item-based).
 
