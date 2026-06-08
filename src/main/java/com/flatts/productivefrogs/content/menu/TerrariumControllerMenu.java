@@ -78,6 +78,16 @@ public class TerrariumControllerMenu extends AbstractContainerMenu {
         return dataAccess.get(TerrariumControllerBlockEntity.DATA_INCUBATORS);
     }
 
+    /** Live frogs in the cavity (0 when unformed). */
+    public int frogCount() {
+        return dataAccess.get(TerrariumControllerBlockEntity.DATA_FROGS);
+    }
+
+    /** Configured frog cap. */
+    public int frogCap() {
+        return dataAccess.get(TerrariumControllerBlockEntity.DATA_FROG_CAP);
+    }
+
     @Override
     public boolean stillValid(Player player) {
         return AbstractContainerMenu.stillValid(access, player, PFBlocks.TERRARIUM_CONTROLLER.get());

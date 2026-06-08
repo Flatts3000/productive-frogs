@@ -66,13 +66,15 @@ public class TerrariumControllerScreen extends PFContainerScreen<TerrariumContro
         gui.fill(dx - 1, dy - 1, dx + DOT + 1, dy + DOT + 1, SWATCH_BORDER);
         gui.fill(dx, dy, dx + DOT, dy + DOT, formed ? OK_GREEN : BAD_RED);
 
-        // Milk swatch (variant colour, or the milky default when empty).
+        // Milk swatch - only when milk is actually buffered (no empty placeholder).
         ResourceLocation variant = this.menu.tankVariant();
         int milkColor = variant == null ? DEFAULT_MILK : variantColor(variant);
-        int sx = x + SWATCH_X;
-        int sy = y + SWATCH_Y;
-        gui.fill(sx - 1, sy - 1, sx + SWATCH + 1, sy + SWATCH + 1, SWATCH_BORDER);
-        gui.fill(sx, sy, sx + SWATCH, sy + SWATCH, variant == null ? BAR_TRACK : milkColor);
+        if (variant != null) {
+            int sx = x + SWATCH_X;
+            int sy = y + SWATCH_Y;
+            gui.fill(sx - 1, sy - 1, sx + SWATCH + 1, sy + SWATCH + 1, SWATCH_BORDER);
+            gui.fill(sx, sy, sx + SWATCH, sy + SWATCH, milkColor);
+        }
 
         // Buffer bar: recessed track + variant-tinted fill.
         int bx = x + BAR_X;
@@ -106,27 +108,31 @@ public class TerrariumControllerScreen extends PFContainerScreen<TerrariumContro
         }
         gui.drawString(this.font, structure, DOT_X + DOT + 4, DOT_Y, TEXT, false);
 
-        // Milk name beside the swatch.
+        // Milk name beside the swatch - only when milk is buffered.
         ResourceLocation variant = this.menu.tankVariant();
-        Component milk = variant == null
-            ? Component.translatable("productivefrogs.gui.controller.no_milk").withStyle(ChatFormatting.DARK_GRAY)
-            : Component.translatable("block.productivefrogs." + variant.getPath() + "_slime_milk");
-        gui.drawString(this.font, milk, SWATCH_X + SWATCH + 4, SWATCH_Y + 1, TEXT, false);
+        if (variant != null) {
+            gui.drawString(this.font,
+                Component.translatable("block.productivefrogs." + variant.getPath() + "_slime_milk"),
+                SWATCH_X + SWATCH + 4, SWATCH_Y + 1, TEXT, false);
+        }
 
         // Charge count overlaid on the buffer bar.
         gui.drawCenteredString(this.font, this.menu.charges() + " / " + this.menu.bufferDepth(),
             BAR_X + BAR_W / 2, BAR_Y + 2, 0xFFFFFFFF);
 
-        // Multiblock contents (dashes when unformed).
+        // Multiblock contents + live population (dashes when unformed).
         boolean formed = this.menu.formed();
-        Object sprinklers = formed ? this.menu.sprinklerCount() : "-";
-        Object incubators = formed ? this.menu.incubatorCount() : "-";
+        int row = BAR_Y + BAR_H + 6;
         gui.drawString(this.font,
-            Component.translatable("productivefrogs.gui.controller.sprinklers", String.valueOf(sprinklers)),
-            BAR_X, BAR_Y + BAR_H + 6, TEXT, false);
+            Component.translatable("productivefrogs.gui.controller.sprinklers", formed ? String.valueOf(this.menu.sprinklerCount()) : "-"),
+            BAR_X, row, TEXT, false);
         gui.drawString(this.font,
-            Component.translatable("productivefrogs.gui.controller.incubators", String.valueOf(incubators)),
-            BAR_X + 88, BAR_Y + BAR_H + 6, TEXT, false);
+            Component.translatable("productivefrogs.gui.controller.incubators", formed ? String.valueOf(this.menu.incubatorCount()) : "-"),
+            BAR_X + 88, row, TEXT, false);
+        gui.drawString(this.font,
+            Component.translatable("productivefrogs.gui.controller.frogs",
+                formed ? this.menu.frogCount() + " / " + this.menu.frogCap() : "-"),
+            BAR_X, row + 11, TEXT, false);
     }
 
     /** Opaque ARGB primary colour for a milk variant, or the milky default when unresolved. */

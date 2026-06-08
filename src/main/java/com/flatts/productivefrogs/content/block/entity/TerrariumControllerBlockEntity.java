@@ -62,7 +62,9 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
     public static final int DATA_PROBLEM = 3; // index into PROBLEM_KEYS, or -1
     public static final int DATA_SPRINKLERS = 4; // count in the formed multiblock, 0 when unformed
     public static final int DATA_INCUBATORS = 5; // count in the formed multiblock, 0 when unformed
-    public static final int DATA_COUNT = 6;
+    public static final int DATA_FROGS = 6; // live frogs in the cavity, 0 when unformed
+    public static final int DATA_FROG_CAP = 7; // configured frog cap
+    public static final int DATA_COUNT = 8;
 
     /** Stable order of validation failure keys for {@link #DATA_PROBLEM} sync. */
     public static final String[] PROBLEM_KEYS = {
@@ -93,6 +95,8 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
                 case DATA_PROBLEM -> problemOrdinal();
                 case DATA_SPRINKLERS -> formedCount(true);
                 case DATA_INCUBATORS -> formedCount(false);
+                case DATA_FROGS -> cavityFrogCount();
+                case DATA_FROG_CAP -> PFConfig.terrariumFrogCap();
                 default -> 0;
             };
         }
@@ -114,6 +118,20 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
 
     public ContainerData getDataAccess() {
         return dataAccess;
+    }
+
+    /** Live frogs whose center is inside the cavity (the value the frog cap compares against); 0 when unformed. */
+    private int cavityFrogCount() {
+        if (!formed || !(level instanceof ServerLevel server)) {
+            return 0;
+        }
+        TerrariumManager.FormedTerrarium t = TerrariumManager.byController(server, worldPosition);
+        if (t == null) {
+            return 0;
+        }
+        var cavity = t.cavity();
+        return server.getEntitiesOfClass(com.flatts.productivefrogs.content.entity.ResourceFrog.class, cavity,
+            f -> cavity.contains(f.getX(), f.getY(), f.getZ())).size();
     }
 
     /** Sprinkler ({@code true}) or Incubator ({@code false}) count in the formed multiblock; 0 when unformed. */
@@ -232,8 +250,16 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
         }
         tankVariant = variant;
         charges.addLast(MilkCharge.fromBucket(milkBucket));
-        setChanged();
+        syncToClients();
         return true;
+    }
+
+    /** Mark dirty AND push a BE update so the GUI/Jade see the buffered variant (not just the int charge count). */
+    private void syncToClients() {
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
     }
 
     private void distribute(ServerLevel level, BlockPos pos) {
@@ -277,7 +303,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
         if (charges.isEmpty()) {
             tankVariant = null;
         }
-        setChanged();
+        syncToClients();
     }
 
     /** Fill-only fluid handler for pipe intake (catalysts ride the FluidStack). */
@@ -334,7 +360,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
                 for (int i = 0; i < chargesToFill; i++) {
                     charges.addLast(MilkCharge.fromFluid(resource));
                 }
-                setChanged();
+                syncToClients();
             }
             return chargesToFill * 1000;
         }

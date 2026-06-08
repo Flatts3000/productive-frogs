@@ -262,7 +262,12 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     private static int frogCount(ServerLevel level, TerrariumManager.FormedTerrarium terrarium) {
-        return level.getEntitiesOfClass(ResourceFrog.class, terrarium.cavity()).size();
+        // Count only frogs whose CENTER is inside the cavity, not merely overlapping
+        // the box - so a frog standing against an outside wall (its bounding box
+        // grazing the cavity boundary) is never counted toward the cap.
+        var cavity = terrarium.cavity();
+        return level.getEntitiesOfClass(ResourceFrog.class, cavity,
+            f -> cavity.contains(f.getX(), f.getY(), f.getZ())).size();
     }
 
     private static int frogCap() {
