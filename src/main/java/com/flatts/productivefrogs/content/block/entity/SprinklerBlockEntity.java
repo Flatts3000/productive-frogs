@@ -232,8 +232,11 @@ public class SprinklerBlockEntity extends BlockEntity {
         this.quantityLevel = 0;
         this.infinite = false;
         resetInterval();
-        sync();
+        // Flip the blockstate to empty FIRST, then sync the (now empty) BE so the
+        // end-of-tick broadcast carries the final empty state - the Jade look-at
+        // drops the milk line on the tick the last slime spawns.
         setFilled(level, pos, state, false);
+        sync();
     }
 
     /**

@@ -21,6 +21,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -141,7 +142,7 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
         this.growthTotal = Math.max(1, PFConfig.hatchTicks() + PFConfig.tadpoleGrowthTicks());
         this.growthRemaining = this.growthTotal;
         this.pendingRelease = false;
-        setChanged();
+        syncToClients();
         return true;
     }
 
@@ -172,10 +173,18 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
         if (!be.pendingRelease) {
             if (be.growthRemaining > 0) {
                 be.growthRemaining--;
-                be.setChanged();
+                // Periodic client sync (~1/sec) so the Jade look-at percent updates;
+                // the open GUI uses ContainerData and is already live each tick, so
+                // we don't sendBlockUpdated every tick.
+                if (be.growthRemaining % 20 == 0) {
+                    be.syncToClients();
+                } else {
+                    be.setChanged();
+                }
                 return;
             }
             be.pendingRelease = true;
+            be.syncToClients(); // matured -> "waiting" state flip
         }
         // Matured: release into the cavity unless the frog cap is reached (then hold).
         if (frogCount(server, terrarium) >= frogCap()) {
@@ -215,7 +224,21 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
         this.growthRemaining = 0;
         this.growthTotal = 0;
         this.pendingRelease = false;
+        syncToClients();
+    }
+
+    /**
+     * Mark dirty AND push a block-entity update to clients. Plain
+     * {@link #setChanged()} only flags the chunk for saving, so the Jade look-at
+     * (which reads the client BE) would otherwise show a frozen growth percent.
+     * Not called every tick - only on seed, state flips, clear, and a periodic
+     * growth tick.
+     */
+    private void syncToClients() {
         setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
     }
 
     private static int frogCount(ServerLevel level, TerrariumManager.FormedTerrarium terrarium) {
