@@ -65,9 +65,10 @@ public class HatchBlock extends Block implements EntityBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, net.minecraft.world.level.Level level,
             BlockPos pos, Player player, net.minecraft.world.phys.BlockHitResult hit) {
-        // Hand-collect the stored froglights (a proper GUI lands in the ship phase).
-        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof HatchBlockEntity be) {
-            be.collectInto(player);
+        // Open the 18-slot froglight output inventory.
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof HatchBlockEntity be
+                && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            serverPlayer.openMenu(be, buf -> buf.writeBlockPos(pos));
         }
         return InteractionResult.SUCCESS;
     }

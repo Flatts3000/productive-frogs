@@ -349,6 +349,7 @@ public final class PFClientEvents {
         event.register(PFMenuTypes.SLIME_CHURN.get(), SlimeChurnScreen::new);
         event.register(PFMenuTypes.SPAWNERY.get(), SpawneryScreen::new);
         event.register(PFMenuTypes.CASTING_MOLD.get(), CastingMoldScreen::new);
+        event.register(PFMenuTypes.HATCH.get(), com.flatts.productivefrogs.client.screen.HatchScreen::new);
     }
 
     /**

@@ -1,18 +1,24 @@
 package com.flatts.productivefrogs.content.block.entity;
 
+import com.flatts.productivefrogs.content.menu.HatchMenu;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Hatch block entity (phase 3): the Terrarium's froglight output. Inside a formed
@@ -22,7 +28,7 @@ import net.neoforged.neoforge.items.ItemStackHandler;
  * prey). Pipes/hoppers pull from the outward face; right-clicking collects the
  * contents by hand (a GUI lands in the ship phase).
  */
-public class HatchBlockEntity extends BlockEntity {
+public class HatchBlockEntity extends BlockEntity implements MenuProvider {
 
     public static final int SLOTS = 18;
 
@@ -90,6 +96,17 @@ public class HatchBlockEntity extends BlockEntity {
             }
         }
         return true;
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable("block.productivefrogs.hatch");
+    }
+
+    @Nullable
+    @Override
+    public AbstractContainerMenu createMenu(int containerId, Inventory playerInv, Player player) {
+        return new HatchMenu(containerId, playerInv, this);
     }
 
     @Override
