@@ -21,9 +21,11 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
     private static final int BEVEL_DARK = 0xFF555555;
     private static final int BAR_BORDER = 0xFF373737;
     private static final int BAR_TRACK = 0xFF8B8B8B;
-    private static final int BAR_WAITING = 0xFFE0A030; // amber: matured, held at cap
+    private static final int BAR_WAITING = 0xFFD9BE73; // soft honey: matured, held at cap
     private static final int SWATCH_BORDER = 0xFF2B2B2B;
     private static final int TEXT = 0x404040;
+    private static final int MATURED_TEXT = 0x6E5210; // dark goldenrod, readable on the grey panel
+    private static final int EMPTY_TEXT = 0x707070;
 
     private static final int SWATCH_X = 9;
     private static final int SWATCH_Y = 19;
@@ -85,27 +87,38 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
         int statusX = this.menu.incubatingCategory() != null ? SWATCH_X + SWATCH + 4 : SWATCH_X;
         Component status = switch (state) {
             case 1 -> Component.translatable("productivefrogs.gui.incubator.growing", speciesName());
-            case 2 -> Component.translatable("productivefrogs.gui.incubator.waiting").withStyle(ChatFormatting.GOLD);
-            default -> Component.translatable("productivefrogs.gui.incubator.empty").withStyle(ChatFormatting.DARK_GRAY);
+            case 2 -> Component.translatable("productivefrogs.gui.incubator.waiting");
+            default -> Component.translatable("productivefrogs.gui.incubator.empty");
         };
-        gui.drawString(this.font, status, statusX, 20, TEXT, false);
+        int statusColor = switch (state) {
+            case 1 -> TEXT;
+            case 2 -> MATURED_TEXT;
+            default -> EMPTY_TEXT;
+        };
+        gui.drawString(this.font, status, statusX, 20, statusColor, false);
 
+        int belowBar = BAR_Y + BAR_H + 4;
         if (state == 1 && this.menu.growthTotal() > 0) {
             // Percent overlaid centered on the bar.
             int done = this.menu.growthTotal() - this.menu.growthRemaining();
             int pct = Math.max(0, Math.min(100, done * 100 / this.menu.growthTotal()));
             gui.drawCenteredString(this.font, pct + "%", BAR_X + BAR_W / 2, BAR_Y + 3, 0xFFFFFFFF);
-            int y = BAR_Y + BAR_H + 4;
             gui.drawString(this.font,
                 Component.translatable("productivefrogs.gui.incubator.time", formatTime(this.menu.growthRemaining())),
-                BAR_X, y, TEXT, false);
+                BAR_X, belowBar, TEXT, false);
             // Hint: feed a Sweetslime to hurry it along.
             drawWrapped(gui, Component.translatable("productivefrogs.gui.incubator.sweetslime_hint")
-                .withStyle(ChatFormatting.DARK_GRAY), BAR_X, y + 12);
-        } else if (state == 0) {
+                .withStyle(ChatFormatting.DARK_GRAY), BAR_X, belowBar + 12);
+        } else if (state == 2) {
+            // Waiting at the cap: show the population so the hold is self-explanatory.
+            gui.drawString(this.font,
+                Component.translatable("productivefrogs.gui.incubator.population",
+                    this.menu.frogCount(), this.menu.frogCap()),
+                BAR_X, belowBar, TEXT, false);
+        } else {
             // Empty: tell the player how to seed it (wrapped so it never overflows).
             drawWrapped(gui, Component.translatable("productivefrogs.gui.incubator.empty_hint")
-                .withStyle(ChatFormatting.DARK_GRAY), BAR_X, BAR_Y + BAR_H + 4);
+                .withStyle(ChatFormatting.DARK_GRAY), BAR_X, belowBar);
         }
     }
 

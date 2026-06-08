@@ -43,7 +43,9 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
     public static final int DATA_GROWTH_TOTAL = 1;
     public static final int DATA_STATE = 2; // 0=empty, 1=growing, 2=waiting at cap
     public static final int DATA_CATEGORY = 3; // category ordinal, -1 when empty
-    public static final int DATA_COUNT = 4;
+    public static final int DATA_FROGS = 4; // live frogs in the cavity
+    public static final int DATA_FROG_CAP = 5; // configured frog cap
+    public static final int DATA_COUNT = 6;
 
     /** Test override for the frog cap (volatile for cross-thread visibility). */
     @Nullable
@@ -67,6 +69,8 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
                 case DATA_GROWTH_TOTAL -> growthTotal;
                 case DATA_STATE -> category == null ? 0 : (pendingRelease ? 2 : 1);
                 case DATA_CATEGORY -> category == null ? -1 : category.ordinal();
+                case DATA_FROGS -> cavityFrogCount();
+                case DATA_FROG_CAP -> frogCap();
                 default -> 0;
             };
         }
@@ -259,6 +263,15 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
+    }
+
+    /** Live frogs in this Incubator's cavity (0 when not part of a formed Terrarium). */
+    private int cavityFrogCount() {
+        if (!(level instanceof ServerLevel server)) {
+            return 0;
+        }
+        TerrariumManager.FormedTerrarium t = TerrariumManager.owningIncubator(server, worldPosition);
+        return t == null ? 0 : frogCount(server, t);
     }
 
     private static int frogCount(ServerLevel level, TerrariumManager.FormedTerrarium terrarium) {

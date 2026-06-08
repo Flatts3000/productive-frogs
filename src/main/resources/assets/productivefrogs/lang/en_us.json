@@ -160,6 +160,7 @@
   "productivefrogs.gui.incubator.growing": "Incubating: %s",
   "productivefrogs.gui.incubator.time": "Time left: %s",
   "productivefrogs.gui.incubator.waiting": "Matured - waiting for space",
+  "productivefrogs.gui.incubator.population": "Frogs: %1$s / %2$s",
   "productivefrogs.gui.incubator.empty": "Empty",
   "productivefrogs.gui.incubator.empty_hint": "Right-click with a bottle of frog eggs",
   "productivefrogs.gui.incubator.sweetslime_hint": "Right-click with a Sweetslime to speed up",

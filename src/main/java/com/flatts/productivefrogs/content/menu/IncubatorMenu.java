@@ -61,6 +61,16 @@ public class IncubatorMenu extends AbstractContainerMenu {
         return ordinal < 0 ? null : Category.fromOrdinalOrDefault(ordinal);
     }
 
+    /** Live frogs in this Incubator's cavity. */
+    public int frogCount() {
+        return dataAccess.get(IncubatorBlockEntity.DATA_FROGS);
+    }
+
+    /** Configured frog cap. */
+    public int frogCap() {
+        return dataAccess.get(IncubatorBlockEntity.DATA_FROG_CAP);
+    }
+
     @Override
     public boolean stillValid(Player player) {
         return AbstractContainerMenu.stillValid(access, player, PFBlocks.INCUBATOR.get());
