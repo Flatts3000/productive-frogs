@@ -52,6 +52,16 @@ public final class PFConfig {
     public static final ModConfigSpec.IntValue STATS_REACH_RADIUS_MAX;
     public static final ModConfigSpec.BooleanValue FROGS_PERSISTENT;
 
+    // Terrarium multiblock (#185, docs/terrarium.md). slimeCap/frogCap are the
+    // box's entity budgets; controllerBufferDepth + sprinklerTopUpThreshold tune
+    // the phase-2 milk distribution; validationIntervalTicks is the throttled
+    // re-validation cadence (the only key phase 1 reads).
+    public static final ModConfigSpec.IntValue TERRARIUM_SLIME_CAP;
+    public static final ModConfigSpec.IntValue TERRARIUM_FROG_CAP;
+    public static final ModConfigSpec.IntValue TERRARIUM_CONTROLLER_BUFFER_DEPTH;
+    public static final ModConfigSpec.IntValue TERRARIUM_VALIDATION_INTERVAL_TICKS;
+    public static final ModConfigSpec.IntValue TERRARIUM_SPRINKLER_TOPUP_THRESHOLD;
+
     // Deterministic, config-exposed lifecycle timings (docs/known_issues.md).
     // These are fixed (non-random) delays for the MODDED frog lifecycle; vanilla
     // frogspawn/tadpoles/frogs keep their own stock pacing.
@@ -87,6 +97,12 @@ public final class PFConfig {
     public static final boolean DEFAULT_SPAWN_CAP_ENABLED = true;
     public static final int DEFAULT_MAX_NEARBY_SLIMES = 30;
     public static final int DEFAULT_SPAWN_CAP_RADIUS = 8;
+    // Terrarium defaults (single source of truth for spec + fallbacks).
+    public static final int DEFAULT_TERRARIUM_SLIME_CAP = 15;
+    public static final int DEFAULT_TERRARIUM_FROG_CAP = 8;
+    public static final int DEFAULT_TERRARIUM_CONTROLLER_BUFFER_DEPTH = 4;
+    public static final int DEFAULT_TERRARIUM_VALIDATION_INTERVAL_TICKS = 30;
+    public static final int DEFAULT_TERRARIUM_SPRINKLER_TOPUP_THRESHOLD = 4;
 
     public static final ModConfigSpec SPEC;
 
@@ -353,6 +369,45 @@ public final class PFConfig {
 
         builder.pop();
 
+        builder.push("terrarium");
+
+        TERRARIUM_SLIME_CAP = builder
+            .comment(
+                "Max slimes allowed inside a formed Terrarium's 5x5x5 cavity before its Sprinklers",
+                "pause spawning. Counts ALL slimes in the cavity however they arrived. Default 15."
+            )
+            .defineInRange("slimeCap", DEFAULT_TERRARIUM_SLIME_CAP, 1, 4096);
+
+        TERRARIUM_FROG_CAP = builder
+            .comment(
+                "Max frogs a formed Terrarium releases into its cavity. At the cap, Incubators hold",
+                "matured frogs and release them as space frees. Default 8."
+            )
+            .defineInRange("frogCap", DEFAULT_TERRARIUM_FROG_CAP, 1, 4096);
+
+        TERRARIUM_CONTROLLER_BUFFER_DEPTH = builder
+            .comment(
+                "How many bucket-equivalent milk charges the Controller's funnel buffers before it",
+                "stops accepting more. The Controller holds one variant at a time. Default 4."
+            )
+            .defineInRange("controllerBufferDepth", DEFAULT_TERRARIUM_CONTROLLER_BUFFER_DEPTH, 1, 64);
+
+        TERRARIUM_VALIDATION_INTERVAL_TICKS = builder
+            .comment(
+                "Ticks between a Controller's automatic structure re-validations. 20 ticks = 1 second.",
+                "Default 30. Lower revalidates sooner after a shell change at slightly more scan cost."
+            )
+            .defineInRange("validationIntervalTicks", DEFAULT_TERRARIUM_VALIDATION_INTERVAL_TICKS, 1, 1200);
+
+        TERRARIUM_SPRINKLER_TOPUP_THRESHOLD = builder
+            .comment(
+                "When a matching-variant Sprinkler's remaining spawns fall to or below this, the",
+                "Controller tops it up from a buffered charge (phase 2). Default 4."
+            )
+            .defineInRange("sprinklerTopUpThreshold", DEFAULT_TERRARIUM_SPRINKLER_TOPUP_THRESHOLD, 0, 4096);
+
+        builder.pop();
+
         SPEC = builder.build();
     }
 
@@ -441,6 +496,35 @@ public final class PFConfig {
     /** Post-breed re-breed cooldown in ticks ({@code lifecycle.breedingCooldownTicks}); fallback {@value #DEFAULT_BREEDING_COOLDOWN_TICKS}. */
     public static int breedingCooldownTicks() {
         return SPEC.isLoaded() ? LIFECYCLE_BREEDING_COOLDOWN_TICKS.get() : DEFAULT_BREEDING_COOLDOWN_TICKS;
+    }
+
+    // ------------------------------------------------------------------
+    // Terrarium accessors (#185, docs/terrarium.md).
+    // ------------------------------------------------------------------
+
+    /** Cavity slime cap ({@code terrarium.slimeCap}); fallback {@value #DEFAULT_TERRARIUM_SLIME_CAP}. */
+    public static int terrariumSlimeCap() {
+        return SPEC.isLoaded() ? TERRARIUM_SLIME_CAP.get() : DEFAULT_TERRARIUM_SLIME_CAP;
+    }
+
+    /** Frog cap ({@code terrarium.frogCap}); fallback {@value #DEFAULT_TERRARIUM_FROG_CAP}. */
+    public static int terrariumFrogCap() {
+        return SPEC.isLoaded() ? TERRARIUM_FROG_CAP.get() : DEFAULT_TERRARIUM_FROG_CAP;
+    }
+
+    /** Controller milk-charge buffer depth ({@code terrarium.controllerBufferDepth}); fallback {@value #DEFAULT_TERRARIUM_CONTROLLER_BUFFER_DEPTH}. */
+    public static int terrariumControllerBufferDepth() {
+        return SPEC.isLoaded() ? TERRARIUM_CONTROLLER_BUFFER_DEPTH.get() : DEFAULT_TERRARIUM_CONTROLLER_BUFFER_DEPTH;
+    }
+
+    /** Controller re-validation cadence in ticks ({@code terrarium.validationIntervalTicks}); fallback {@value #DEFAULT_TERRARIUM_VALIDATION_INTERVAL_TICKS}. */
+    public static int terrariumValidationIntervalTicks() {
+        return SPEC.isLoaded() ? TERRARIUM_VALIDATION_INTERVAL_TICKS.get() : DEFAULT_TERRARIUM_VALIDATION_INTERVAL_TICKS;
+    }
+
+    /** Sprinkler top-up threshold ({@code terrarium.sprinklerTopUpThreshold}); fallback {@value #DEFAULT_TERRARIUM_SPRINKLER_TOPUP_THRESHOLD}. */
+    public static int terrariumSprinklerTopUpThreshold() {
+        return SPEC.isLoaded() ? TERRARIUM_SPRINKLER_TOPUP_THRESHOLD.get() : DEFAULT_TERRARIUM_SPRINKLER_TOPUP_THRESHOLD;
     }
 
     // ------------------------------------------------------------------

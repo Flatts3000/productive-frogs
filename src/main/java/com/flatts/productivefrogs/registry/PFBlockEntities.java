@@ -4,11 +4,15 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.HatchBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeChurnBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SpawneryBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -119,6 +123,38 @@ public final class PFBlockEntities {
                     .map(java.util.function.Supplier::get)
                     .toArray(net.minecraft.world.level.block.Block[]::new)
             ).build(null)
+        );
+
+    /**
+     * BE type for the Terrarium Controller (#185) - the only ticking Terrarium
+     * BE in phase 1 (runs the throttled validation loop). See
+     * {@link TerrariumControllerBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<TerrariumControllerBlockEntity>> TERRARIUM_CONTROLLER =
+        BLOCK_ENTITIES.register(
+            "terrarium_controller",
+            () -> BlockEntityType.Builder.of(TerrariumControllerBlockEntity::new, PFBlocks.TERRARIUM_CONTROLLER.get()).build(null)
+        );
+
+    /** BE type for the Sprinkler (#185). Inert in phase 1; spawn loop lands in phase 2. */
+    public static final Supplier<BlockEntityType<SprinklerBlockEntity>> SPRINKLER =
+        BLOCK_ENTITIES.register(
+            "sprinkler",
+            () -> BlockEntityType.Builder.of(SprinklerBlockEntity::new, PFBlocks.SPRINKLER.get()).build(null)
+        );
+
+    /** BE type for the Incubator (#185). Inert in phase 1; stat relay lands in phase 4. */
+    public static final Supplier<BlockEntityType<IncubatorBlockEntity>> INCUBATOR =
+        BLOCK_ENTITIES.register(
+            "incubator",
+            () -> BlockEntityType.Builder.of(IncubatorBlockEntity::new, PFBlocks.INCUBATOR.get()).build(null)
+        );
+
+    /** BE type for the Hatch (#185). Inert in phase 1; output inventory lands in phase 3. */
+    public static final Supplier<BlockEntityType<HatchBlockEntity>> HATCH =
+        BLOCK_ENTITIES.register(
+            "hatch",
+            () -> BlockEntityType.Builder.of(HatchBlockEntity::new, PFBlocks.HATCH.get()).build(null)
         );
 
     private PFBlockEntities() {

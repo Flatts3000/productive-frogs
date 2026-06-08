@@ -106,7 +106,9 @@ representable. Spec: [slime_milk_catalysts.md](./slime_milk_catalysts.md).
 
 ## V2 - Automation
 
-Tools and blocks that let the player scale and automate the V1 loop. Built on top of V1; never replaces it.
+> **"V2 is just a name, not a rule"** (maintainer ruling 2026-06-08). This section groups the *automation era* of work, but it is no longer a release gate: the mod stays on the **1.x version line** and these features ship as 1.x minors (the Terrarium starting at v1.16.0), not a 2.0.0. "Built on top of V1; never replaces it" still holds.
+
+Tools and blocks that let the player scale and automate the loop. Built on top of the V1 foundation; never replaces it.
 
 **In scope:**
 

@@ -4704,4 +4704,159 @@ public final class PFGameTests {
             }
         }
     }
+
+    // =================================================================
+    // Terrarium multiblock (#185) - structure validation (phase 1)
+    // =================================================================
+
+    /**
+     * A complete, valid Terrarium forms: the Controller validates, registers in
+     * {@link TerrariumManager}, and the registry knows the cavity + Hatch.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumFormsWith5x5x5Cavity(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 2);
+        ServerLevel level = helper.getLevel();
+        if (!(helper.getBlockEntity(controller)
+                instanceof com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity be)) {
+            helper.fail("no Terrarium Controller block entity at " + controller);
+            return;
+        }
+        com.flatts.productivefrogs.content.multiblock.TerrariumValidationResult result =
+            be.forceValidate(level, helper.absolutePos(controller));
+        if (!result.formed()) {
+            helper.fail("expected formed, got problem: "
+                + (result.firstProblem() == null ? "(none)" : result.firstProblem().messageKey()));
+            return;
+        }
+        net.minecraft.world.phys.Vec3 center =
+            net.minecraft.world.phys.Vec3.atCenterOf(helper.absolutePos(new BlockPos(4, 4, 4)));
+        com.flatts.productivefrogs.content.multiblock.TerrariumManager.FormedTerrarium formed =
+            com.flatts.productivefrogs.content.multiblock.TerrariumManager.containing(level, center);
+        if (formed == null) {
+            helper.fail("formed Terrarium not registered in TerrariumManager");
+            return;
+        }
+        if (!formed.hatchPos().equals(helper.absolutePos(new BlockPos(7, 4, 4)))) {
+            helper.fail("registered hatchPos mismatch: " + formed.hatchPos());
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** A machine on a shell edge cell fails with {@code machine_on_edge}. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumRejectsMachineOnEdge(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 0);
+        // (1,1,4): x and y both extreme -> a shell EDGE; a machine here is illegal.
+        helper.setBlock(new BlockPos(1, 1, 4),
+            PFBlocks.INCUBATOR.get().defaultBlockState().setValue(
+                com.flatts.productivefrogs.content.block.IncubatorBlock.FACING, net.minecraft.core.Direction.WEST));
+        assertTerrariumProblem(helper, controller, "machine_on_edge");
+    }
+
+    /** A Sprinkler in a wall (non-ceiling) face cell fails with {@code sprinkler_off_ceiling}. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumRejectsSprinklerOffCeiling(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 0);
+        // (1,2,4): west-wall face cell, not the ceiling (y != 7).
+        helper.setBlock(new BlockPos(1, 2, 4),
+            PFBlocks.SPRINKLER.get().defaultBlockState().setValue(
+                com.flatts.productivefrogs.content.block.SprinklerBlock.FACING, net.minecraft.core.Direction.DOWN));
+        assertTerrariumProblem(helper, controller, "sprinkler_off_ceiling");
+    }
+
+    /** Breaking a shell cell deregisters a formed Terrarium; repair would re-form it. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumShellBreakDeregisters(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 0);
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(controller);
+        if (!(helper.getBlockEntity(controller)
+                instanceof com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity be)) {
+            helper.fail("no Terrarium Controller block entity at " + controller);
+            return;
+        }
+        if (!be.forceValidate(level, abs).formed()) {
+            helper.fail("expected the built Terrarium to form initially");
+            return;
+        }
+        net.minecraft.world.phys.Vec3 center =
+            net.minecraft.world.phys.Vec3.atCenterOf(helper.absolutePos(new BlockPos(4, 4, 4)));
+        if (com.flatts.productivefrogs.content.multiblock.TerrariumManager.containing(level, center) == null) {
+            helper.fail("formed Terrarium not registered before the shell break");
+            return;
+        }
+        // Punch a hole in the floor (a plain solid shell cell).
+        helper.setBlock(new BlockPos(4, 1, 4), Blocks.AIR);
+        if (be.forceValidate(level, abs).formed()) {
+            helper.fail("expected not formed after the shell break");
+            return;
+        }
+        if (com.flatts.productivefrogs.content.multiblock.TerrariumManager.containing(level, center) != null) {
+            helper.fail("Terrarium still registered after the shell break");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Build a valid Terrarium inside the 9x9x9 plot: a stone shell over rel
+     * {@code (1..7)} (5x5x5 air cavity at rel {@code (2..6)}), a Controller / Hatch
+     * / Incubator on opposing wall-face centers (each facing inward), and
+     * {@code sprinklerCount} Sprinklers in the ceiling. Returns the Controller's
+     * relative position.
+     */
+    private static BlockPos buildValidTerrarium(GameTestHelper helper, int sprinklerCount) {
+        for (int x = 1; x <= 7; x++) {
+            for (int y = 1; y <= 7; y++) {
+                for (int z = 1; z <= 7; z++) {
+                    boolean shell = x == 1 || x == 7 || y == 1 || y == 7 || z == 1 || z == 7;
+                    helper.setBlock(new BlockPos(x, y, z), shell ? Blocks.STONE : Blocks.AIR);
+                }
+            }
+        }
+        // FACING points outward (front-to-player); the opposite face abuts the cavity.
+        helper.setBlock(new BlockPos(1, 4, 4),
+            PFBlocks.TERRARIUM_CONTROLLER.get().defaultBlockState().setValue(
+                com.flatts.productivefrogs.content.block.TerrariumControllerBlock.FACING, net.minecraft.core.Direction.WEST));
+        helper.setBlock(new BlockPos(7, 4, 4),
+            PFBlocks.HATCH.get().defaultBlockState().setValue(
+                com.flatts.productivefrogs.content.block.HatchBlock.FACING, net.minecraft.core.Direction.EAST));
+        helper.setBlock(new BlockPos(4, 4, 1),
+            PFBlocks.INCUBATOR.get().defaultBlockState().setValue(
+                com.flatts.productivefrogs.content.block.IncubatorBlock.FACING, net.minecraft.core.Direction.NORTH));
+        int placed = 0;
+        for (int x = 2; x <= 6 && placed < sprinklerCount; x++) {
+            for (int z = 2; z <= 6 && placed < sprinklerCount; z++) {
+                helper.setBlock(new BlockPos(x, 7, z),
+                    PFBlocks.SPRINKLER.get().defaultBlockState().setValue(
+                        com.flatts.productivefrogs.content.block.SprinklerBlock.FACING, net.minecraft.core.Direction.DOWN));
+                placed++;
+            }
+        }
+        return new BlockPos(1, 4, 4);
+    }
+
+    /** Force a Controller validate and assert it failed with the expected message key. */
+    private static void assertTerrariumProblem(GameTestHelper helper, BlockPos controllerRel, String expectedKey) {
+        ServerLevel level = helper.getLevel();
+        if (!(helper.getBlockEntity(controllerRel)
+                instanceof com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity be)) {
+            helper.fail("no Terrarium Controller block entity at " + controllerRel);
+            return;
+        }
+        com.flatts.productivefrogs.content.multiblock.TerrariumValidationResult result =
+            be.forceValidate(level, helper.absolutePos(controllerRel));
+        if (result.formed()) {
+            helper.fail("expected failure '" + expectedKey + "' but the Terrarium formed");
+            return;
+        }
+        String key = result.firstProblem() == null ? "(none)" : result.firstProblem().messageKey();
+        if (!expectedKey.equals(key)) {
+            helper.fail("expected problem '" + expectedKey + "', got '" + key + "'");
+            return;
+        }
+        helper.succeed();
+    }
 }

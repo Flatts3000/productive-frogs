@@ -1,6 +1,6 @@
 # Terrarium (build spec)
 
-> **Status: SPEC ONLY - not started.** This is the flagship **V2** feature (the "Frog Terrarium / Habitat" line in [versioning.md](./versioning.md) V2 scope). It is a multiblock with automated milk-in / froglight-out, so by the V1/V2 rule (`if it adds power, pipes, or multiblocks it is V2`) it **must not land in a V1.x branch**. This document is the implementation plan; issue #185 holds the settled product rulings, reproduced in the decision log at the bottom.
+> **Status: IN IMPLEMENTATION (phased, 1.x line).** The flagship multiblock frog habitat. Per the maintainer ruling **"V2 is just a name, not a rule"** (2026-06-08), the old "must not land in a V1.x branch" gate is dropped - this ships across phased **1.x** PRs (next: v1.16.0), not a 2.0.0. Phase 1 (structure + validation: the four blocks, the multiblock validator, `TerrariumManager`, Controller feedback, config, GameTests) is the first slice; the milk path, frog output, and Incubator follow. This document is the implementation plan; issue #185 holds the settled product rulings, reproduced in the decision log at the bottom.
 
 ## The pitch
 
