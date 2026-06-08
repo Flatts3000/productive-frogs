@@ -59,7 +59,9 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
     public static final int DATA_CHARGES = 1;
     public static final int DATA_BUFFER_DEPTH = 2;
     public static final int DATA_PROBLEM = 3; // index into PROBLEM_KEYS, or -1
-    public static final int DATA_COUNT = 4;
+    public static final int DATA_SPRINKLERS = 4; // count in the formed multiblock, 0 when unformed
+    public static final int DATA_INCUBATORS = 5; // count in the formed multiblock, 0 when unformed
+    public static final int DATA_COUNT = 6;
 
     /** Stable order of validation failure keys for {@link #DATA_PROBLEM} sync. */
     public static final String[] PROBLEM_KEYS = {
@@ -88,6 +90,8 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
                 case DATA_CHARGES -> charges.size();
                 case DATA_BUFFER_DEPTH -> PFConfig.terrariumControllerBufferDepth();
                 case DATA_PROBLEM -> problemOrdinal();
+                case DATA_SPRINKLERS -> formedCount(true);
+                case DATA_INCUBATORS -> formedCount(false);
                 default -> 0;
             };
         }
@@ -109,6 +113,14 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
 
     public ContainerData getDataAccess() {
         return dataAccess;
+    }
+
+    /** Sprinkler ({@code true}) or Incubator ({@code false}) count in the formed multiblock; 0 when unformed. */
+    private int formedCount(boolean sprinklers) {
+        if (!formed || lastResult == null || !lastResult.formed()) {
+            return 0;
+        }
+        return (sprinklers ? lastResult.sprinklers() : lastResult.incubators()).size();
     }
 
     private int problemOrdinal() {

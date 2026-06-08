@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.content.menu;
 
 import com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity;
+import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
 import net.minecraft.core.BlockPos;
@@ -51,6 +52,13 @@ public class IncubatorMenu extends AbstractContainerMenu {
     /** 0 = empty, 1 = growing, 2 = waiting at the frog cap. */
     public int state() {
         return dataAccess.get(IncubatorBlockEntity.DATA_STATE);
+    }
+
+    /** The species currently incubating, or null when empty. */
+    @Nullable
+    public Category incubatingCategory() {
+        int ordinal = dataAccess.get(IncubatorBlockEntity.DATA_CATEGORY);
+        return ordinal < 0 ? null : Category.fromOrdinalOrDefault(ordinal);
     }
 
     @Override

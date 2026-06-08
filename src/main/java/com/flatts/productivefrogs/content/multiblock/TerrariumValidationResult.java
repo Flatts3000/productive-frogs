@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * Controller ("why won't it form"): a lang message key plus the offending
  * {@link BlockPos}.
  *
- * <p>The 5x5x5 / 7x7x7 geometry and the placement rules are the settled
+ * <p>The 5x4x5 / 7x6x7 geometry and the placement rules are the settled
  * rulings from issue #185 / {@code docs/terrarium.md}.
  */
 public record TerrariumValidationResult(

@@ -41,7 +41,8 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
     public static final int DATA_GROWTH_REMAINING = 0;
     public static final int DATA_GROWTH_TOTAL = 1;
     public static final int DATA_STATE = 2; // 0=empty, 1=growing, 2=waiting at cap
-    public static final int DATA_COUNT = 3;
+    public static final int DATA_CATEGORY = 3; // category ordinal, -1 when empty
+    public static final int DATA_COUNT = 4;
 
     /** Test override for the frog cap (volatile for cross-thread visibility). */
     @Nullable
@@ -64,6 +65,7 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
                 case DATA_GROWTH_REMAINING -> growthRemaining;
                 case DATA_GROWTH_TOTAL -> growthTotal;
                 case DATA_STATE -> category == null ? 0 : (pendingRelease ? 2 : 1);
+                case DATA_CATEGORY -> category == null ? -1 : category.ordinal();
                 default -> 0;
             };
         }

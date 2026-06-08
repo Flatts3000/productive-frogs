@@ -58,6 +58,16 @@ public class TerrariumControllerMenu extends AbstractContainerMenu {
         return dataAccess.get(TerrariumControllerBlockEntity.DATA_PROBLEM);
     }
 
+    /** Sprinklers in the formed multiblock (0 when unformed). */
+    public int sprinklerCount() {
+        return dataAccess.get(TerrariumControllerBlockEntity.DATA_SPRINKLERS);
+    }
+
+    /** Incubators in the formed multiblock (0 when unformed). */
+    public int incubatorCount() {
+        return dataAccess.get(TerrariumControllerBlockEntity.DATA_INCUBATORS);
+    }
+
     @Override
     public boolean stillValid(Player player) {
         return AbstractContainerMenu.stillValid(access, player, PFBlocks.TERRARIUM_CONTROLLER.get());

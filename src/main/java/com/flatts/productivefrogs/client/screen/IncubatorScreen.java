@@ -1,6 +1,8 @@
 package com.flatts.productivefrogs.client.screen;
 
 import com.flatts.productivefrogs.content.menu.IncubatorMenu;
+import com.flatts.productivefrogs.data.Category;
+import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -57,13 +59,34 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
     @Override
     protected void renderLabels(GuiGraphics gui, int mouseX, int mouseY) {
         gui.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 0x404040, false);
-        Component status = switch (this.menu.state()) {
-            case 1 -> Component.translatable("productivefrogs.gui.incubator.growing");
+        int state = this.menu.state();
+        Component status = switch (state) {
+            case 1 -> Component.translatable("productivefrogs.gui.incubator.growing", speciesName());
             case 2 -> Component.translatable("productivefrogs.gui.incubator.waiting")
                 .withStyle(ChatFormatting.DARK_RED);
             default -> Component.translatable("productivefrogs.gui.incubator.empty")
                 .withStyle(ChatFormatting.DARK_GRAY);
         };
         gui.drawString(this.font, status, 18, 26, 0x404040, false);
+        // Time remaining (m:ss), only meaningful while growing.
+        if (state == 1) {
+            gui.drawString(this.font,
+                Component.translatable("productivefrogs.gui.incubator.time", formatTime(this.menu.growthRemaining())),
+                18, 58, 0x404040, false);
+        }
+    }
+
+    /** Display name of the species being incubated (e.g. "Cave Frog"); blank when empty. */
+    private Component speciesName() {
+        Category cat = this.menu.incubatingCategory();
+        return cat == null
+            ? Component.empty()
+            : Component.translatable("entity.productivefrogs.resource_frog." + cat.name().toLowerCase(Locale.ROOT));
+    }
+
+    /** Ticks -> "m:ss" (20 ticks = 1 second). */
+    private static String formatTime(int ticks) {
+        int seconds = Math.max(0, ticks) / 20;
+        return String.format(Locale.ROOT, "%d:%02d", seconds / 60, seconds % 60);
     }
 }

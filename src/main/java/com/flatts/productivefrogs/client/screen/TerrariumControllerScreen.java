@@ -28,7 +28,7 @@ public class TerrariumControllerScreen extends PFContainerScreen<TerrariumContro
     public TerrariumControllerScreen(TerrariumControllerMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
         this.imageWidth = 176;
-        this.imageHeight = 80;
+        this.imageHeight = 96;
     }
 
     @Override
@@ -71,5 +71,16 @@ public class TerrariumControllerScreen extends PFContainerScreen<TerrariumContro
         gui.drawString(this.font,
             Component.translatable("productivefrogs.gui.controller.buffer", this.menu.charges(), this.menu.bufferDepth()),
             18, 38, 0x404040, false);
+
+        // Multiblock contents: Sprinkler / Incubator counts (dashes when unformed).
+        boolean formed = this.menu.formed();
+        Object sprinklers = formed ? this.menu.sprinklerCount() : "-";
+        Object incubators = formed ? this.menu.incubatorCount() : "-";
+        gui.drawString(this.font,
+            Component.translatable("productivefrogs.gui.controller.sprinklers", String.valueOf(sprinklers)),
+            18, 64, 0x404040, false);
+        gui.drawString(this.font,
+            Component.translatable("productivefrogs.gui.controller.incubators", String.valueOf(incubators)),
+            18, 74, 0x404040, false);
     }
 }
