@@ -109,7 +109,7 @@ public class SprinklerBlockEntity extends BlockEntity {
         this.quantityLevel = Mth.clamp(charge.quantity(), 0, PFConfig.catalystMaxQuantityLevel());
         this.infinite = charge.infinite();
         resetInterval();
-        setChanged();
+        sync();
     }
 
     /** Merge a charge into a matching-variant Sprinkler (top-up: pool budget, take the better stats). */
@@ -119,7 +119,7 @@ public class SprinklerBlockEntity extends BlockEntity {
         this.speedLevel = Math.max(speedLevel, Mth.clamp(charge.speed(), 0, PFConfig.catalystMaxSpeedLevel()));
         this.quantityLevel = Math.max(quantityLevel, Mth.clamp(charge.quantity(), 0, PFConfig.catalystMaxQuantityLevel()));
         this.infinite = this.infinite || charge.infinite();
-        setChanged();
+        sync();
     }
 
     private static int clampSpawns(int v) {
@@ -174,7 +174,7 @@ public class SprinklerBlockEntity extends BlockEntity {
             be.spawnsRemaining = Math.max(0, be.spawnsRemaining - 1);
         }
         be.resetInterval();
-        be.setChanged();
+        be.sync(); // push the new spawn count to clients (Jade reads the client BE)
         if (depleting && be.spawnsRemaining <= 0) {
             be.clear(server, pos, state);
         }
@@ -223,8 +223,23 @@ public class SprinklerBlockEntity extends BlockEntity {
         this.quantityLevel = 0;
         this.infinite = false;
         resetInterval();
-        setChanged();
+        sync();
         setFilled(level, pos, state, false);
+    }
+
+    /**
+     * Mark dirty AND push a block-entity update packet to tracking clients.
+     * {@link #setChanged()} alone only flags the chunk for saving; it does not
+     * re-send {@link #getUpdatePacket()}, so client-side reads (Jade, the FILLED
+     * visual, the drip tint) would otherwise see stale values. Call this from
+     * every path that mutates a client-visible field (variant / spawn count /
+     * catalysts), but NOT from the per-tick interval countdown.
+     */
+    private void sync() {
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
     }
 
     /**
