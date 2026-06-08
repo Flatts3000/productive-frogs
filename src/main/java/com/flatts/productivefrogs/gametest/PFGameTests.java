@@ -4714,7 +4714,7 @@ public final class PFGameTests {
      * {@link TerrariumManager}, and the registry knows the cavity + Hatch.
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
-    public static void terrariumFormsWith5x5x5Cavity(GameTestHelper helper) {
+    public static void terrariumFormsWith5x4x5Cavity(GameTestHelper helper) {
         BlockPos controller = buildValidTerrarium(helper, 2);
         ServerLevel level = helper.getLevel();
         if (!(helper.getBlockEntity(controller)
@@ -4759,7 +4759,7 @@ public final class PFGameTests {
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
     public static void terrariumRejectsSprinklerOffCeiling(GameTestHelper helper) {
         BlockPos controller = buildValidTerrarium(helper, 0);
-        // (1,2,4): west-wall face cell, not the ceiling (y != 7).
+        // (1,2,4): west-wall face cell, not the ceiling (y != 6).
         helper.setBlock(new BlockPos(1, 2, 4),
             PFBlocks.SPRINKLER.get().defaultBlockState().setValue(
                 com.flatts.productivefrogs.content.block.SprinklerBlock.FACING, net.minecraft.core.Direction.DOWN));
@@ -4855,7 +4855,7 @@ public final class PFGameTests {
         be.pushChargeFromBucket(iron);
         com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity.serverTick(
             level, helper.absolutePos(controller), state, be);
-        if (!(helper.getBlockEntity(new BlockPos(2, 7, 2))
+        if (!(helper.getBlockEntity(new BlockPos(2, 6, 2))
                 instanceof com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity sprinkler)) {
             helper.fail("no Sprinkler BE at the ceiling cell");
             return;
@@ -4875,7 +4875,7 @@ public final class PFGameTests {
         ServerLevel level = helper.getLevel();
         ((com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity)
             helper.getBlockEntity(controller)).forceValidate(level, helper.absolutePos(controller));
-        BlockPos sprinklerRel = new BlockPos(2, 7, 2);
+        BlockPos sprinklerRel = new BlockPos(2, 6, 2);
         com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity sprinkler =
             (com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity) helper.getBlockEntity(sprinklerRel);
         ResourceLocation ironId = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
@@ -4912,7 +4912,7 @@ public final class PFGameTests {
         ServerLevel level = helper.getLevel();
         ((com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity)
             helper.getBlockEntity(controller)).forceValidate(level, helper.absolutePos(controller));
-        BlockPos sprinklerRel = new BlockPos(2, 7, 2);
+        BlockPos sprinklerRel = new BlockPos(2, 6, 2);
         com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity sprinkler =
             (com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity) helper.getBlockEntity(sprinklerRel);
         ResourceLocation ironId = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
@@ -5092,16 +5092,17 @@ public final class PFGameTests {
 
     /**
      * Build a valid Terrarium inside the 9x9x9 plot: a stone shell over rel
-     * {@code (1..7)} (5x5x5 air cavity at rel {@code (2..6)}), a Controller / Hatch
-     * / Incubator on opposing wall-face centers (each facing inward), and
-     * {@code sprinklerCount} Sprinklers in the ceiling. Returns the Controller's
-     * relative position.
+     * {@code x/z (1..7)} and {@code y (1..6)} (5x4x5 air cavity at rel
+     * {@code x/z (2..6)}, {@code y (2..5)}), a Controller / Hatch / Incubator on
+     * opposing wall-face centers (each facing inward, at y=4), and
+     * {@code sprinklerCount} Sprinklers in the ceiling (y=6). Returns the
+     * Controller's relative position.
      */
     private static BlockPos buildValidTerrarium(GameTestHelper helper, int sprinklerCount) {
         for (int x = 1; x <= 7; x++) {
-            for (int y = 1; y <= 7; y++) {
+            for (int y = 1; y <= 6; y++) {
                 for (int z = 1; z <= 7; z++) {
-                    boolean shell = x == 1 || x == 7 || y == 1 || y == 7 || z == 1 || z == 7;
+                    boolean shell = x == 1 || x == 7 || y == 1 || y == 6 || z == 1 || z == 7;
                     helper.setBlock(new BlockPos(x, y, z), shell ? Blocks.STONE : Blocks.AIR);
                 }
             }
@@ -5119,7 +5120,7 @@ public final class PFGameTests {
         int placed = 0;
         for (int x = 2; x <= 6 && placed < sprinklerCount; x++) {
             for (int z = 2; z <= 6 && placed < sprinklerCount; z++) {
-                helper.setBlock(new BlockPos(x, 7, z),
+                helper.setBlock(new BlockPos(x, 6, z),
                     PFBlocks.SPRINKLER.get().defaultBlockState().setValue(
                         com.flatts.productivefrogs.content.block.SprinklerBlock.FACING, net.minecraft.core.Direction.DOWN));
                 placed++;

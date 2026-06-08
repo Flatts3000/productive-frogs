@@ -113,7 +113,7 @@ Tools and blocks that let the player scale and automate the loop. Built on top o
 **In scope:**
 
 - **Buffered / auto-upgrading Slime Milker**: basic hopper I/O on the V1 Milker (and Spawnery) already shipped (`Capabilities.ItemHandler.BLOCK`, V1.0 above). The V2 layer is the *buffered* upgrade: internal slime/milk buffers and auto-cycling so a line runs without per-item hopper handoff, not the basic hopper hookup
-- **Frog Terrarium / Habitat** - the flagship V2 feature: a 5x5x5-interior multiblock that contains the whole milk-in / froglight-out loop (Controller / Sprinklers / Incubator / Hatch). Full build spec: [terrarium.md](./terrarium.md) (issue #185)
+- **Frog Terrarium / Habitat** - the flagship V2 feature: a 5x4x5-interior multiblock that contains the whole milk-in / froglight-out loop (Controller / Sprinklers / Incubator / Hatch). Full build spec: [terrarium.md](./terrarium.md) (issue #185)
 - **Auto-feeders** - hopper-fed slime delivery to nearby frogs (alternative to milk-spawn proximity)
 - **Capacity / efficiency upgrades** for habitat blocks
 - **Pipe/hopper-aware fluid handling** for Slime Milk

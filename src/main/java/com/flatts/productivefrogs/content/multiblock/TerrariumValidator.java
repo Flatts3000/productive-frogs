@@ -16,29 +16,43 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 /**
  * Validates the loose-adjacency Terrarium multiblock from a Controller anchor.
- * The geometry is the settled #185 ruling: a <b>5x5x5 interior cavity</b>
- * (unrestricted - any blocks/air) wrapped in a one-thick shell, so the full
- * footprint is 7x7x7 and the shell is 7^3 - 5^3 = 218 cells.
+ * The geometry is the settled #185 ruling, refined for slime survivability: a
+ * <b>5x4x5 interior cavity</b> ({@code FOOTPRINT}x{@code HEIGHT}x{@code FOOTPRINT},
+ * unrestricted - any blocks/air) wrapped in a one-thick shell, so the full
+ * footprint is 7x6x7 and the shell is 7*6*7 - 5*4*5 = 194 cells. The height is
+ * capped at 4 because slimes spawned from ceiling Sprinklers take fatal fall
+ * damage from a taller drop; sizing is strict (only exactly 5x4x5 forms).
+ *
+ * <p><b>Strictness is structural.</b> Each candidate fixes the cavity at exactly
+ * 5x4x5 and the shell is checked at exactly cavity-inflated-by-1; a too-large or
+ * too-small air pocket puts a shell cell in the wrong place ({@code not_solid})
+ * and fails. Exactly-5x4x5 falls out of the shell-exact scan - there is no range
+ * check to loosen.
  *
  * <p><b>The anchor ambiguity.</b> The Controller's inward direction is known
  * ({@code FACING.getOpposite()}; FACING points outward, front-to-player like the
- * other appliances), but it may sit on any of the 25 cells of its shell face,
- * so the cavity origin is ambiguous on the two axes perpendicular to inward.
- * The interior is unrestricted (may be fully solid), so flood-fill-on-air can't
- * locate it. Instead we <b>enumerate the 25 candidate cavity placements</b>
- * (the centered cell first) and accept the first that fully validates. Two
- * distinct candidates cannot both pass under a one-thick shell - a wrong
- * candidate's shell cuts through the real cavity's air and fails {@code not_solid}
- * - so first-pass-wins is unambiguous and there are no false positives.
+ * other appliances), but it may sit on any face cell of its shell face, so the
+ * cavity origin is ambiguous on the two axes perpendicular to inward. The
+ * interior is unrestricted (may be fully solid), so flood-fill-on-air can't
+ * locate it. Instead we <b>enumerate the candidate cavity placements</b> (the
+ * centered cell first) and accept the first that fully validates. The candidate
+ * count is facing-dependent: a Controller on the floor/ceiling (inward = Y) has
+ * two footprint perpendiculars -> 5x5 = 25 candidates; one on a wall (inward
+ * horizontal) has one footprint and one height perpendicular -> 5x4 = 20. Two
+ * distinct candidates cannot both pass under a one-thick shell, so
+ * first-pass-wins is unambiguous and there are no false positives.
  *
- * <p>Cost ceiling per validate: 25 candidates x 218 cells = ~5,450
+ * <p>Cost ceiling per validate: 25 candidates x 194 cells = ~4,850
  * {@code getBlockState} calls; the Controller throttles validation to a config
  * cadence (~30 ticks) and caches the result between runs, so this is cheap.
  */
 public final class TerrariumValidator {
 
-    /** Interior edge length (cavity is INTERIOR x INTERIOR x INTERIOR). */
-    static final int INTERIOR = 5;
+    /** Cavity edge length on the two horizontal (footprint) axes. */
+    static final int FOOTPRINT = 5;
+
+    /** Cavity edge length on the vertical (Y) axis - capped so ceiling-spawned slimes survive the drop. */
+    static final int HEIGHT = 4;
 
     /**
      * Themeable shell blocks that are NOT full-cube solids but still seal the
@@ -48,11 +62,13 @@ public final class TerrariumValidator {
     static final TagKey<Block> TERRARIUM_SHELL =
         TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "terrarium_shell"));
 
-    /** Candidate (u,v) face offsets of the cavity near-corner, centered first. */
-    static final int[][] CANDIDATE_ORDER = buildCandidateOrder();
-
     private TerrariumValidator() {
         // utility class
+    }
+
+    /** Cavity edge length along {@code axis}: {@link #HEIGHT} for Y, else {@link #FOOTPRINT}. */
+    static int sizeOf(Direction.Axis axis) {
+        return axis == Direction.Axis.Y ? HEIGHT : FOOTPRINT;
     }
 
     public static TerrariumValidationResult validate(ServerLevel level, BlockPos controllerPos,
@@ -61,8 +77,10 @@ public final class TerrariumValidator {
             return TerrariumValidationResult.failed("not_a_controller", controllerPos);
         }
         Direction outward = controllerState.getValue(BlockStateProperties.FACING);
+        Direction[] perp = perpendicular(outward.getAxis());
+        int[][] candidateOrder = buildCandidateOrder(sizeOf(perp[0].getAxis()), sizeOf(perp[1].getAxis()));
         TerrariumValidationResult centeredFailure = null;
-        for (int[] ab : CANDIDATE_ORDER) {
+        for (int[] ab : candidateOrder) {
             BlockPos[] bounds = cavityBounds(controllerPos, outward, ab[0], ab[1]);
             TerrariumValidationResult r = validateCandidate(level, controllerPos, bounds[0], bounds[1]);
             if (r.formed()) {
@@ -78,9 +96,12 @@ public final class TerrariumValidator {
     }
 
     /**
-     * Pure geometry: the 5x5x5 cavity bounds (inclusive {@code [min, max]}) for
-     * candidate face-offset {@code (a, b)} from the Controller anchor. Extracted
-     * so the anchor math is unit-testable without a level.
+     * Pure geometry: the 5x4x5 cavity bounds (inclusive {@code [min, max]}) for
+     * candidate face-offset {@code (a, b)} from the Controller anchor, where
+     * {@code a} slides along {@code perp[0]} and {@code b} along {@code perp[1]}.
+     * Each axis uses its own size ({@link #sizeOf}) so the cavity is 5 on the two
+     * footprint axes and 4 on Y regardless of which face the Controller mounts on.
+     * Extracted so the anchor math is unit-testable without a level.
      */
     static BlockPos[] cavityBounds(BlockPos controllerPos, Direction outward, int a, int b) {
         Direction inward = outward.getOpposite();
@@ -88,9 +109,9 @@ public final class TerrariumValidator {
         BlockPos faceCell = controllerPos.relative(inward); // cavity near-face cell
         BlockPos nearCorner = faceCell.relative(perp[0], -a).relative(perp[1], -b);
         BlockPos farCorner = nearCorner
-            .relative(perp[0], INTERIOR - 1)
-            .relative(perp[1], INTERIOR - 1)
-            .relative(inward, INTERIOR - 1);
+            .relative(perp[0], sizeOf(perp[0].getAxis()) - 1)
+            .relative(perp[1], sizeOf(perp[1].getAxis()) - 1)
+            .relative(inward, sizeOf(inward.getAxis()) - 1);
         return new BlockPos[] { componentMin(nearCorner, farCorner), componentMax(nearCorner, farCorner) };
     }
 
@@ -223,13 +244,20 @@ public final class TerrariumValidator {
         return new BlockPos(Math.max(a.getX(), b.getX()), Math.max(a.getY(), b.getY()), Math.max(a.getZ(), b.getZ()));
     }
 
-    private static int[][] buildCandidateOrder() {
-        List<int[]> order = new ArrayList<>(INTERIOR * INTERIOR);
-        int center = INTERIOR / 2;
-        order.add(new int[] { center, center });
-        for (int u = 0; u < INTERIOR; u++) {
-            for (int v = 0; v < INTERIOR; v++) {
-                if (u != center || v != center) {
+    /**
+     * Candidate {@code (a, b)} face offsets of the cavity near-corner, the centered
+     * cell first. {@code sizeA}/{@code sizeB} are the cavity sizes along the two
+     * axes perpendicular to inward, so the grid is {@code sizeA x sizeB}
+     * (5x5 = 25 for a floor/ceiling anchor, 5x4 = 20 for a wall anchor).
+     */
+    static int[][] buildCandidateOrder(int sizeA, int sizeB) {
+        List<int[]> order = new ArrayList<>(sizeA * sizeB);
+        int centerA = sizeA / 2;
+        int centerB = sizeB / 2;
+        order.add(new int[] { centerA, centerB });
+        for (int u = 0; u < sizeA; u++) {
+            for (int v = 0; v < sizeB; v++) {
+                if (u != centerA || v != centerB) {
                     order.add(new int[] { u, v });
                 }
             }

@@ -17,15 +17,31 @@ import org.junit.jupiter.api.Test;
 class TerrariumValidatorGeometryTest {
 
     @Test
-    void candidateOrderCoversThe5x5FaceCenteredFirst() {
-        assertEquals(25, TerrariumValidator.CANDIDATE_ORDER.length, "one candidate per 5x5 face cell");
-        assertArrayEquals(new int[] {2, 2}, TerrariumValidator.CANDIDATE_ORDER[0], "centered cell tried first");
+    void candidateOrderFloorAnchorCoversThe5x5FaceCenteredFirst() {
+        // Floor/ceiling anchor: both perpendiculars are footprint (5x5 = 25).
+        int[][] order = TerrariumValidator.buildCandidateOrder(5, 5);
+        assertEquals(25, order.length, "one candidate per 5x5 face cell");
+        assertArrayEquals(new int[] {2, 2}, order[0], "centered cell tried first");
         Set<String> seen = new HashSet<>();
-        for (int[] ab : TerrariumValidator.CANDIDATE_ORDER) {
+        for (int[] ab : order) {
             assertTrue(ab[0] >= 0 && ab[0] < 5 && ab[1] >= 0 && ab[1] < 5, "offsets within 0..4");
             seen.add(ab[0] + "," + ab[1]);
         }
         assertEquals(25, seen.size(), "all 25 offsets are distinct");
+    }
+
+    @Test
+    void candidateOrderWallAnchorCoversThe5x4FaceCenteredFirst() {
+        // Wall anchor: one footprint perpendicular (5) + one height perpendicular (4) = 20.
+        int[][] order = TerrariumValidator.buildCandidateOrder(5, 4);
+        assertEquals(20, order.length, "one candidate per 5x4 face cell");
+        assertArrayEquals(new int[] {2, 2}, order[0], "centered cell tried first");
+        Set<String> seen = new HashSet<>();
+        for (int[] ab : order) {
+            assertTrue(ab[0] >= 0 && ab[0] < 5 && ab[1] >= 0 && ab[1] < 4, "offsets within 0..4 x 0..3");
+            seen.add(ab[0] + "," + ab[1]);
+        }
+        assertEquals(20, seen.size(), "all 20 offsets are distinct");
     }
 
     @Test
@@ -53,16 +69,17 @@ class TerrariumValidatorGeometryTest {
     }
 
     @Test
-    void cavityBoundsAreExactlyFiveCubedAtTheCenteredAnchor() {
+    void cavityBoundsAreExactlyFiveByFourByFiveAtTheCenteredAnchor() {
         // Controller at origin facing WEST (outward) -> inward EAST(+X); its inward
         // neighbour (1,0,0) is the cavity near-face. Centered offsets (2,2) put the
-        // cavity symmetric on the two perpendicular axes.
+        // cavity symmetric on the two perpendicular axes. Inward axis X = footprint
+        // (5), Y = height (4), Z = footprint (5).
         BlockPos[] bounds = TerrariumValidator.cavityBounds(new BlockPos(0, 0, 0), Direction.WEST, 2, 2);
         BlockPos cavityMin = bounds[0];
         BlockPos cavityMax = bounds[1];
-        assertEquals(5, cavityMax.getX() - cavityMin.getX() + 1, "5 along X");
-        assertEquals(5, cavityMax.getY() - cavityMin.getY() + 1, "5 along Y");
-        assertEquals(5, cavityMax.getZ() - cavityMin.getZ() + 1, "5 along Z");
+        assertEquals(5, cavityMax.getX() - cavityMin.getX() + 1, "5 along X (footprint, inward)");
+        assertEquals(4, cavityMax.getY() - cavityMin.getY() + 1, "4 along Y (height)");
+        assertEquals(5, cavityMax.getZ() - cavityMin.getZ() + 1, "5 along Z (footprint)");
         // Near face one step inward from the Controller, cavity spans x 1..5.
         assertEquals(1, cavityMin.getX(), "near face abuts the Controller's inward neighbour");
         assertEquals(5, cavityMax.getX());

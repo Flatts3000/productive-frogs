@@ -1,6 +1,6 @@
 # Terrarium (build spec)
 
-> **Status: BUILT (PR #193, targeting v1.16.0).** The flagship multiblock frog habitat. Per the maintainer ruling **"V2 is just a name, not a rule"** (2026-06-08), the old "must not land in a V1.x branch" gate is dropped - it ships in the **1.x line**, not a 2.0.0. The full loop is implemented in one PR: structure + validation (the four blocks, the 25-candidate validator, `TerrariumManager`, config), the milk path (Controller charge buffer + Sprinkler spawn loop + component-preserving fluid wrapper + round-robin distribution + cavity cap), froglight output (direct-to-Hatch + two-layer backpressure), the Incubator (stat relay + frog-cap hold + breeding-lay redirect), Infernal-tier recipes, per-face block textures + oriented models, three GUIs (Controller/Incubator/Hatch), JEI info pages, and Jade look-at tooltips. **Construction guidance** ships as the native Controller validation feedback (right-click -> formed state + first structural problem in the Controller GUI); the **GuideME 3D scene is a deferred, separately-verified follow-up** (it needs a new dependency and a guidebook format that can't be CI-verified). Issue #185 holds the settled product rulings, reproduced in the decision log at the bottom.
+> **Status: BUILT (PR #193, targeting v1.16.0).** The flagship multiblock frog habitat. Per the maintainer ruling **"V2 is just a name, not a rule"** (2026-06-08), the old "must not land in a V1.x branch" gate is dropped - it ships in the **1.x line**, not a 2.0.0. The full loop is implemented in one PR: structure + validation (the four blocks, the facing-aware candidate validator, `TerrariumManager`, config), the milk path (Controller charge buffer + Sprinkler spawn loop + component-preserving fluid wrapper + round-robin distribution + cavity cap), froglight output (direct-to-Hatch + two-layer backpressure), the Incubator (stat relay + frog-cap hold + breeding-lay redirect), Infernal-tier recipes, per-face block textures + oriented models, three GUIs (Controller/Incubator/Hatch), JEI info pages, and Jade look-at tooltips. **Construction guidance** ships as the native Controller validation feedback (right-click -> formed state + first structural problem in the Controller GUI); the **GuideME 3D scene is a deferred, separately-verified follow-up** (it needs a new dependency and a guidebook format that can't be CI-verified). Issue #185 holds the settled product rulings, reproduced in the decision log at the bottom.
 
 ## The pitch
 
@@ -16,8 +16,8 @@ A **Terrarium** is a multiblock frog habitat that contains the whole frog loop i
 
 The geometry, verbatim from the settled rulings:
 
-- **The 5x5x5 is the INTERIOR cavity, not the walls.** It is the open air space the frogs live in. With a one-block-thick shell on every face, the full footprint is **7x7x7 outside**. The shell is not counted in the 5x5x5.
-- **Interior (the 5x5x5 cavity): unrestricted.** Air, blocks, entities, decorations - anything. Validation never inspects the interior except to count entities for the caps.
+- **The 5x4x5 is the INTERIOR cavity, not the walls.** It is the open air space the frogs live in: 5x5 in plan, **4 blocks high**. The height is capped at 4 because slimes spawned from ceiling Sprinklers take fatal fall damage from a taller drop. With a one-block-thick shell on every face, the full footprint is **7x6x7 outside**. The shell is not counted in the 5x4x5.
+- **Interior (the 5x4x5 cavity): unrestricted.** Air, blocks, entities, decorations - anything. Validation never inspects the interior except to count entities for the caps.
 - **Shell (the 6 faces wrapping the cavity): any solid block.** Only `state.isSolidRender` / full-cube solidity is required (themeable), with the machine blocks and Sprinklers as the allowed exceptions that also satisfy "shell is sealed."
 - **Machine blocks sit IN the shell, replacing shell blocks, FACE positions only.** Controller / Incubator(s) / Hatch each occupy one shell cell on one of the six faces, flat against the cavity. **Corners and edges are banned** - a corner/edge cell has no unambiguous inside/outside axis.
 - **Directionality:** Controller, Incubators, and Hatch are `FACING`-blocks placed so one face points INTO the cavity (habitat interaction) and the opposite face points OUT (GUI / piping). Validation requires the inward face to be the cavity-facing one.
@@ -25,7 +25,7 @@ The geometry, verbatim from the settled rulings:
 
 ### Why loose-adjacency works here
 
-The cavity is axis-aligned and the shell is exactly one block thick, so the structure is fully described by a single anchor (the Controller) plus the known 7x7x7 offsets. Validation does not need a template: from the Controller's position and facing, derive the cavity bounds, then check every shell cell. This is the same family as the catalyst altar's 6-face scan, just larger.
+The cavity is axis-aligned and the shell is exactly one block thick, so the structure is fully described by a single anchor (the Controller) plus the known 7x6x7 offsets. Validation does not need a template: from the Controller's position and facing, derive the cavity bounds, then check every shell cell. This is the same family as the catalyst altar's 6-face scan, just larger.
 
 ## The four machine blocks
 
@@ -143,7 +143,7 @@ if (t != null) {
 - **Frog cap: 8** (default, `terrarium.frogCap` config). At the cap, **Incubators hold mature frogs** instead of releasing, releasing as space frees.
 - **Item half is entity-free:** direct-to-Hatch means zero froglight item entities. Frogs and slimes still exist (the habitat is the point); only the item leg is entity-free.
 - **Everything quiesces:** full Hatch stalls eating; the slime cap then stalls Sprinkler spawning; the frog cap stalls Incubator releases. Every failure direction goes quiet instead of leaking. **Worst case per Terrarium: 15 slimes + 8 frogs + 0 items.**
-- **Validation cadence:** the Controller revalidates on a throttled tick (e.g. every 20-40 ticks) and on neighbour-change events, not every tick. The 7x7x7 scan is ~218 shell cells worst case; throttling keeps it cheap. Cache the formed/unformed result and the cavity AABB between scans.
+- **Validation cadence:** the Controller revalidates on a throttled tick (e.g. every 20-40 ticks) and on neighbour-change events, not every tick. The 7x6x7 scan is ~194 shell cells worst case; throttling keeps it cheap. Cache the formed/unformed result and the cavity AABB between scans.
 
 ## Shell broken mid-operation
 
@@ -158,9 +158,9 @@ The structure **pauses, never spills:**
 
 From the Controller (the anchor), given its `pos` and `FACING` (outward):
 
-1. **Derive the cavity.** The Controller sits in a shell face; its inward direction is `FACING.opposite()`. Walk inward one block to the cavity boundary, then the cavity is the 5x5x5 box positioned so the Controller's cell is on the shell directly outside one cavity face. (Anchor math: the Controller can be on any of the 25 cells of its face; derive the cavity origin by finding which 5x5 face-grid the Controller's inward neighbour belongs to. The simplest robust form: scan inward for the first air/cavity cell, flood-fill-bounded to confirm a 5x5x5 open box, then derive shell bounds as the box inflated by 1.)
-2. **Confirm the cavity is a clean 5x5x5** (open or filled is fine - "unrestricted interior"; the bound just has to be 5 on each axis). Reject if the bounded region is not exactly 5x5x5.
-3. **Check every shell cell** (the 7x7x7 minus the 5x5x5 interior = 218 cells): each must be either a solid full-cube block OR an allowed machine/Sprinkler block in a legal position.
+1. **Derive the cavity.** The Controller sits in a shell face; its inward direction is `FACING.opposite()`. Walk inward one block to the cavity boundary, then the cavity is the 5x4x5 box (5 on the footprint axes, 4 on Y) positioned so the Controller's cell is on the shell directly outside one cavity face. (Anchor math: the Controller can be on any face cell of its face; the implementation enumerates the candidate cavity placements - the centered cell first - and accepts the first that fully validates. The candidate count is facing-dependent: a floor/ceiling anchor has two footprint perpendiculars -> 5x5 = 25 candidates; a wall anchor has one footprint + one height perpendicular -> 5x4 = 20.)
+2. **Confirm the cavity is a clean 5x4x5** (open or filled is fine - "unrestricted interior"; the bound just has to be 5 on the footprint axes and 4 high). Reject if the bounded region is not exactly 5x4x5.
+3. **Check every shell cell** (the 7x6x7 minus the 5x4x5 interior = 194 cells): each must be either a solid full-cube block OR an allowed machine/Sprinkler block in a legal position.
 4. **Check machine placement rules:** exactly 1 Controller (this one) on a face, exactly 1 Hatch on a face, 1+ Incubators on faces, 0-25 Sprinklers in ceiling cells only, all directional machines facing inward. Corners/edges of the shell may only be plain solid blocks (no machines).
 5. **On success:** register in `ACTIVE` with the cavity AABB and Hatch pos; light up (a `FORMED` blockstate on the Controller for a glow/indicator).
 6. **On failure:** deregister; the Controller's right-click reports the **first** structural problem (chat/HUD line + particle highlight at the offending cell) - "missing solid block at X,Y,Z", "machine on an edge", "Sprinkler outside the ceiling", "no Hatch found", "more than one Controller". This is the "why won't it form" debugging story and ships regardless of any guide-mod integration.
@@ -213,7 +213,7 @@ The Terrarium sits at the **Infernal tier**: its blocks are crafted from **Infer
 
 GameTest is blind to client visuals (particles, glow, GUI) - those ride a manual `runClient` pass. Server-side behavior to cover:
 
-- `terrariumFormsWith5x5x5Cavity`: build a valid shell + 1 Controller + 1 Hatch + 1 Incubator + N Sprinklers; assert the Controller validates (registers in `ACTIVE`).
+- `terrariumFormsWith5x4x5Cavity`: build a valid shell + 1 Controller + 1 Hatch + 1 Incubator + N Sprinklers; assert the Controller validates (registers in `ACTIVE`).
 - `terrariumRejectsMachineOnEdge`: a Controller on a shell edge/corner fails validation.
 - `terrariumRejectsSprinklerOffCeiling`: a Sprinkler in a wall cell does not count and breaks the seal.
 - `controllerRejectsSecondVariantUntilEmpty`: feed variant A, then a B bucket while charges remain -> B refused; drain to empty -> B accepted.
@@ -241,7 +241,7 @@ Resolved by the 2026-06-07 rulings (no longer open): the fluid-wrapper question 
 
 | Question | Ruling |
 |---|---|
-| Geometry | **5x5x5 is the INTERIOR cavity**; one-block shell -> 7x7x7 outside |
+| Geometry | **5x4x5 is the INTERIOR cavity** (5x5 plan, 4 high - slime fall-damage cap); one-block shell -> 7x6x7 outside |
 | Interior contents | **Unrestricted** - any blocks/entities/air |
 | Shell blocks | **Any solid block** (themeable); machines/Sprinklers are the sealed exceptions |
 | Machine placement | **Faces only** - corners and edges banned |
