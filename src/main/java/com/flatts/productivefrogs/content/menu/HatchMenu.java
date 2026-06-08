@@ -29,11 +29,13 @@ public class HatchMenu extends AbstractContainerMenu {
     private static final int COLS = 9;
     private static final int ROWS = 2;
     private static final int SLOTS = COLS * ROWS;
+    // Vanilla 2-row generic-container layout (so the slots align with the
+    // generic_54.png chest texture the screen blits).
     private static final int OUTPUT_X = 8;
     private static final int OUTPUT_Y = 18;
     private static final int INVENTORY_X = 8;
-    private static final int INVENTORY_Y = 58;
-    private static final int HOTBAR_Y = 116;
+    private static final int INVENTORY_Y = 67;
+    private static final int HOTBAR_Y = 125;
 
     private final ContainerLevelAccess access;
 
