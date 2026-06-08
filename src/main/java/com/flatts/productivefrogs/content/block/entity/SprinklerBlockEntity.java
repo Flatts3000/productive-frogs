@@ -175,6 +175,13 @@ public class SprinklerBlockEntity extends BlockEntity {
             be.resetInterval();
             return;
         }
+        // Spawn target (the cavity cell below) must be open, mirroring the source's
+        // chooseSpawnPos non-blocking check - a slime dropped into a solid interior
+        // cell would suffocate/clip. Pause without spending until it clears.
+        if (level.getBlockState(pos.below()).blocksMotion()) {
+            be.resetInterval();
+            return;
+        }
         int batch = MilkSpawnEconomy.batchQuantity(be.quantityLevel);
         for (int i = 0; i < batch; i++) {
             be.spawnInto(server, pos);
