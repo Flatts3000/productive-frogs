@@ -147,6 +147,30 @@ public final class PFClientEvents {
             },
             PFBlocks.CONFIGURABLE_FROGLIGHT.get()
         );
+        // Filled Sprinkler: the top milk surface (tintIndex 1) reads the held
+        // variant off the BE and tints to its primary_color, so a filled Sprinkler
+        // shows what milk is inside it from above. The base faces (tintIndex 0)
+        // and an empty Sprinkler (no variant / empty model has no tinted face)
+        // are untinted.
+        event.register(
+            (state, level, pos, tintIndex) -> {
+                if (tintIndex != 1 || level == null || pos == null) {
+                    return -1;
+                }
+                if (!(level.getBlockEntity(pos)
+                        instanceof com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity sprinkler)
+                        || sprinkler.isEmpty()) {
+                    return -1;
+                }
+                ResourceLocation variantId = sprinkler.getVariantId();
+                if (variantId == null) {
+                    return -1;
+                }
+                int color = variantTint(variantId);
+                return color != -1 ? color : opaque(0xF0F0E0);
+            },
+            PFBlocks.SPRINKLER.get()
+        );
     }
 
     /**
