@@ -1,6 +1,12 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube",
   "textures": {
-    "all": "minecraft:block/ochre_froglight_top"
+    "particle": "productivefrogs:block/incubator_side",
+    "north": "productivefrogs:block/incubator_front",
+    "south": "productivefrogs:block/incubator_back",
+    "east": "productivefrogs:block/incubator_side",
+    "west": "productivefrogs:block/incubator_side",
+    "up": "productivefrogs:block/incubator_side",
+    "down": "productivefrogs:block/incubator_side"
   }
 }

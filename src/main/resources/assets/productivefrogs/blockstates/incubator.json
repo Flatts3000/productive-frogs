@@ -1,5 +1,10 @@
 {
-  "multipart": [
-    { "apply": { "model": "productivefrogs:block/incubator" } }
-  ]
+  "variants": {
+    "facing=north": { "model": "productivefrogs:block/incubator" },
+    "facing=south": { "model": "productivefrogs:block/incubator", "y": 180 },
+    "facing=west":  { "model": "productivefrogs:block/incubator", "y": 270 },
+    "facing=east":  { "model": "productivefrogs:block/incubator", "y": 90 },
+    "facing=up":    { "model": "productivefrogs:block/incubator", "x": 270 },
+    "facing=down":  { "model": "productivefrogs:block/incubator", "x": 90 }
+  }
 }

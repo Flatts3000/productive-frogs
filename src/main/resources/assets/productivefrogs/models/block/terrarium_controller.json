@@ -1,6 +1,12 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube",
   "textures": {
-    "all": "minecraft:block/crying_obsidian"
+    "particle": "productivefrogs:block/terrarium_controller_side",
+    "north": "productivefrogs:block/terrarium_controller_front",
+    "south": "productivefrogs:block/terrarium_controller_back",
+    "east": "productivefrogs:block/terrarium_controller_side",
+    "west": "productivefrogs:block/terrarium_controller_side",
+    "up": "productivefrogs:block/terrarium_controller_side",
+    "down": "productivefrogs:block/terrarium_controller_side"
   }
 }
