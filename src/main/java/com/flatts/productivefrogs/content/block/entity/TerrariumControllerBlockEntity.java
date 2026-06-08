@@ -7,6 +7,7 @@ import com.flatts.productivefrogs.content.multiblock.MilkCharge;
 import com.flatts.productivefrogs.content.multiblock.TerrariumManager;
 import com.flatts.productivefrogs.content.multiblock.TerrariumValidationResult;
 import com.flatts.productivefrogs.content.multiblock.TerrariumValidator;
+import com.flatts.productivefrogs.content.menu.TerrariumControllerMenu;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFVariantMilk;
 import java.util.ArrayDeque;
@@ -17,8 +18,14 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -45,7 +52,20 @@ import org.jetbrains.annotations.Nullable;
  *       hand + pipe are the phase-2 intake paths.</li>
  * </ol>
  */
-public class TerrariumControllerBlockEntity extends BlockEntity {
+public class TerrariumControllerBlockEntity extends BlockEntity implements MenuProvider {
+
+    /** ContainerData indices for the status screen. */
+    public static final int DATA_FORMED = 0;
+    public static final int DATA_CHARGES = 1;
+    public static final int DATA_BUFFER_DEPTH = 2;
+    public static final int DATA_PROBLEM = 3; // index into PROBLEM_KEYS, or -1
+    public static final int DATA_COUNT = 4;
+
+    /** Stable order of validation failure keys for {@link #DATA_PROBLEM} sync. */
+    public static final String[] PROBLEM_KEYS = {
+        "not_a_controller", "not_solid", "machine_on_edge", "machine_facing_wrong",
+        "sprinkler_off_ceiling", "no_hatch", "multiple_hatches", "no_incubator", "multiple_controllers"
+    };
 
     private int tickCounter;
     private boolean formed;
@@ -60,8 +80,59 @@ public class TerrariumControllerBlockEntity extends BlockEntity {
 
     private final ControllerFluidIntake fluidIntake = new ControllerFluidIntake();
 
+    private final ContainerData dataAccess = new ContainerData() {
+        @Override
+        public int get(int index) {
+            return switch (index) {
+                case DATA_FORMED -> formed ? 1 : 0;
+                case DATA_CHARGES -> charges.size();
+                case DATA_BUFFER_DEPTH -> PFConfig.terrariumControllerBufferDepth();
+                case DATA_PROBLEM -> problemOrdinal();
+                default -> 0;
+            };
+        }
+
+        @Override
+        public void set(int index, int value) {
+            // client-side mirror only; server is authoritative
+        }
+
+        @Override
+        public int getCount() {
+            return DATA_COUNT;
+        }
+    };
+
     public TerrariumControllerBlockEntity(BlockPos pos, BlockState state) {
         super(PFBlockEntities.TERRARIUM_CONTROLLER.get(), pos, state);
+    }
+
+    public ContainerData getDataAccess() {
+        return dataAccess;
+    }
+
+    private int problemOrdinal() {
+        if (formed || lastResult == null || lastResult.firstProblem() == null) {
+            return -1;
+        }
+        String key = lastResult.firstProblem().messageKey();
+        for (int i = 0; i < PROBLEM_KEYS.length; i++) {
+            if (PROBLEM_KEYS[i].equals(key)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable("block.productivefrogs.terrarium_controller");
+    }
+
+    @Nullable
+    @Override
+    public AbstractContainerMenu createMenu(int containerId, Inventory playerInv, Player player) {
+        return new TerrariumControllerMenu(containerId, playerInv, this, dataAccess);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, TerrariumControllerBlockEntity be) {

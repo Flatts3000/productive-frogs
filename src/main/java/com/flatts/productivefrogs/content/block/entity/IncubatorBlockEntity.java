@@ -6,13 +6,20 @@ import com.flatts.productivefrogs.content.multiblock.TerrariumManager;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFEntities;
+import com.flatts.productivefrogs.content.menu.IncubatorMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -28,7 +35,13 @@ import org.jetbrains.annotations.Nullable;
  * the v1.5 stat chain that {@code ResourceTadpole.ageUp} uses. At the frog cap it
  * holds the matured frog and releases it as space frees.
  */
-public class IncubatorBlockEntity extends BlockEntity {
+public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
+
+    /** ContainerData indices for the status screen. */
+    public static final int DATA_GROWTH_REMAINING = 0;
+    public static final int DATA_GROWTH_TOTAL = 1;
+    public static final int DATA_STATE = 2; // 0=empty, 1=growing, 2=waiting at cap
+    public static final int DATA_COUNT = 3;
 
     /** Test override for the frog cap (volatile for cross-thread visibility). */
     @Nullable
@@ -41,10 +54,41 @@ public class IncubatorBlockEntity extends BlockEntity {
     private int bounty;
     private int reach;
     private int growthRemaining;
+    private int growthTotal;
     private boolean pendingRelease;
+
+    private final ContainerData dataAccess = new ContainerData() {
+        @Override
+        public int get(int index) {
+            return switch (index) {
+                case DATA_GROWTH_REMAINING -> growthRemaining;
+                case DATA_GROWTH_TOTAL -> growthTotal;
+                case DATA_STATE -> category == null ? 0 : (pendingRelease ? 2 : 1);
+                default -> 0;
+            };
+        }
+
+        @Override
+        public void set(int index, int value) {
+            switch (index) {
+                case DATA_GROWTH_REMAINING -> growthRemaining = value;
+                case DATA_GROWTH_TOTAL -> growthTotal = value;
+                default -> { }
+            }
+        }
+
+        @Override
+        public int getCount() {
+            return DATA_COUNT;
+        }
+    };
 
     public IncubatorBlockEntity(BlockPos pos, BlockState state) {
         super(PFBlockEntities.INCUBATOR.get(), pos, state);
+    }
+
+    public ContainerData getDataAccess() {
+        return dataAccess;
     }
 
     /** Room for a new seed (not currently incubating). */
@@ -77,9 +121,21 @@ public class IncubatorBlockEntity extends BlockEntity {
         this.bounty = bounty;
         this.reach = reach;
         this.growthRemaining = Math.max(1, PFConfig.tadpoleGrowthTicks());
+        this.growthTotal = this.growthRemaining;
         this.pendingRelease = false;
         setChanged();
         return true;
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable("block.productivefrogs.incubator");
+    }
+
+    @Nullable
+    @Override
+    public AbstractContainerMenu createMenu(int containerId, Inventory playerInv, Player player) {
+        return new IncubatorMenu(containerId, playerInv, this, dataAccess);
     }
 
     /** Test seam: skip the growth wait so the next tick releases. */
@@ -139,6 +195,7 @@ public class IncubatorBlockEntity extends BlockEntity {
         this.bounty = 0;
         this.reach = 0;
         this.growthRemaining = 0;
+        this.growthTotal = 0;
         this.pendingRelease = false;
         setChanged();
     }
@@ -162,6 +219,7 @@ public class IncubatorBlockEntity extends BlockEntity {
             tag.putInt("Bounty", bounty);
             tag.putInt("Reach", reach);
             tag.putInt("GrowthRemaining", growthRemaining);
+            tag.putInt("GrowthTotal", growthTotal);
             tag.putBoolean("PendingRelease", pendingRelease);
         }
     }
@@ -180,6 +238,7 @@ public class IncubatorBlockEntity extends BlockEntity {
             bounty = tag.getInt("Bounty");
             reach = tag.getInt("Reach");
             growthRemaining = Math.max(0, tag.getInt("GrowthRemaining"));
+            growthTotal = Math.max(growthRemaining, tag.getInt("GrowthTotal"));
             pendingRelease = tag.getBoolean("PendingRelease");
         } else {
             category = null;

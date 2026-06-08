@@ -82,6 +82,17 @@ public class IncubatorBlock extends Block implements EntityBlock {
     }
 
     @Override
+    protected net.minecraft.world.InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
+            Player player, BlockHitResult hit) {
+        // Empty-hand right-click opens the status screen (growth progress / state).
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof IncubatorBlockEntity be
+                && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            serverPlayer.openMenu(be, buf -> buf.writeBlockPos(pos));
+        }
+        return net.minecraft.world.InteractionResult.SUCCESS;
+    }
+
+    @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
             Player player, InteractionHand hand, BlockHitResult hit) {
         // Seed with a Frog Egg bottle: read its species and start an incubation

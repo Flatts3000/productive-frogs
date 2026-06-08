@@ -1,12 +1,9 @@
 package com.flatts.productivefrogs.content.block;
 
 import com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity;
-import com.flatts.productivefrogs.content.multiblock.TerrariumValidationResult;
-import com.flatts.productivefrogs.registry.PFBlockEntities;
-import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import com.flatts.productivefrogs.content.item.SlimeMilkBucketItem;
+import com.flatts.productivefrogs.registry.PFBlockEntities;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -128,25 +125,14 @@ public class TerrariumControllerBlock extends Block implements EntityBlock {
         }
         if (level.getBlockEntity(pos) instanceof TerrariumControllerBlockEntity be
                 && level instanceof ServerLevel serverLevel) {
-            TerrariumValidationResult result = be.forceValidate(serverLevel, pos);
-            player.displayClientMessage(describe(result), false);
+            // Validate now so the status screen reflects the live structure, then
+            // open it (the "why won't it form" diagnostic lives in the screen).
+            be.forceValidate(serverLevel, pos);
+            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                serverPlayer.openMenu(be, buf -> buf.writeBlockPos(pos));
+            }
         }
         return InteractionResult.SUCCESS;
-    }
-
-    private static Component describe(TerrariumValidationResult result) {
-        if (result.formed()) {
-            return Component.translatable("message.productivefrogs.terrarium.formed")
-                .withStyle(ChatFormatting.GREEN);
-        }
-        TerrariumValidationResult.Problem problem = result.firstProblem();
-        String key = problem == null ? "not_solid" : problem.messageKey();
-        Component reason = Component.translatable("message.productivefrogs.terrarium." + key);
-        Component message = problem != null && problem.at() != null
-            ? Component.translatable("message.productivefrogs.terrarium.problem_at",
-                reason, problem.at().getX(), problem.at().getY(), problem.at().getZ())
-            : reason;
-        return message.copy().withStyle(ChatFormatting.RED);
     }
 
     @Override

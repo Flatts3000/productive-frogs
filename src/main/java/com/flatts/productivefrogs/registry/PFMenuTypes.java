@@ -3,9 +3,11 @@ package com.flatts.productivefrogs.registry;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.menu.CastingMoldMenu;
 import com.flatts.productivefrogs.content.menu.HatchMenu;
+import com.flatts.productivefrogs.content.menu.IncubatorMenu;
 import com.flatts.productivefrogs.content.menu.SlimeChurnMenu;
 import com.flatts.productivefrogs.content.menu.SlimeMilkerMenu;
 import com.flatts.productivefrogs.content.menu.SpawneryMenu;
+import com.flatts.productivefrogs.content.menu.TerrariumControllerMenu;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
@@ -55,6 +57,18 @@ public final class PFMenuTypes {
         MENU_TYPES.register(
             "hatch",
             () -> IMenuTypeExtension.create(HatchMenu::new)
+        );
+
+    public static final Supplier<MenuType<IncubatorMenu>> INCUBATOR =
+        MENU_TYPES.register(
+            "incubator",
+            () -> IMenuTypeExtension.create(IncubatorMenu::new)
+        );
+
+    public static final Supplier<MenuType<TerrariumControllerMenu>> TERRARIUM_CONTROLLER =
+        MENU_TYPES.register(
+            "terrarium_controller",
+            () -> IMenuTypeExtension.create(TerrariumControllerMenu::new)
         );
 
     private PFMenuTypes() {
