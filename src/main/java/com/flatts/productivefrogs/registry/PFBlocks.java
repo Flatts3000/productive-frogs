@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.content.block.CastingMoldBlock;
 import com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock;
 import com.flatts.productivefrogs.content.block.CrucibleBlock;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
+import com.flatts.productivefrogs.content.block.SlimeChurnBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
 import com.flatts.productivefrogs.content.block.SpawneryBlock;
 import com.flatts.productivefrogs.data.Category;
@@ -83,6 +84,24 @@ public final class PFBlocks {
             .mapColor(MapColor.METAL)
             .strength(0.5F)
             .sound(SoundType.METAL)
+    );
+
+    /**
+     * The Slime Churn (#187) - the Milker's inverse: consumes a per-variant
+     * Slime Milk bucket + empty buckets, produces captured variant Slime
+     * Buckets on the placed-source spawn economy (cadence, budget, catalysts).
+     * Two inputs / two outputs; hopper-compatible like the Milker. Mud feel
+     * to match its Bog recipe (moss lid over a packed-mud body) - the
+     * texture follows the crafting materials, like the Milker's wood-over-
+     * cobble follows planks-over-cobblestone.
+     */
+    public static final DeferredBlock<SlimeChurnBlock> SLIME_CHURN = BLOCKS.registerBlock(
+        "slime_churn",
+        SlimeChurnBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.DIRT)
+            .strength(0.5F)
+            .sound(SoundType.PACKED_MUD)
     );
 
     /**

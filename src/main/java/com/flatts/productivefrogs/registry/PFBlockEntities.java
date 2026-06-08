@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.SlimeChurnBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SpawneryBlockEntity;
@@ -35,6 +36,17 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "slime_milker",
             () -> BlockEntityType.Builder.of(SlimeMilkerBlockEntity::new, PFBlocks.SLIME_MILKER.get()).build(null)
+        );
+
+    /**
+     * BE type for the {@code slime_churn} block (#187) - owns the 2-in/2-out
+     * inventory, the spawn-interval countdown, and the pending-batch state.
+     * See {@link SlimeChurnBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<SlimeChurnBlockEntity>> SLIME_CHURN =
+        BLOCK_ENTITIES.register(
+            "slime_churn",
+            () -> BlockEntityType.Builder.of(SlimeChurnBlockEntity::new, PFBlocks.SLIME_CHURN.get()).build(null)
         );
 
     /**

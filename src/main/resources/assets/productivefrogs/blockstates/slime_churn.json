@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,working=false": { "model": "productivefrogs:block/slime_churn" },
+    "facing=east,working=false":  { "model": "productivefrogs:block/slime_churn", "y":  90 },
+    "facing=south,working=false": { "model": "productivefrogs:block/slime_churn", "y": 180 },
+    "facing=west,working=false":  { "model": "productivefrogs:block/slime_churn", "y": 270 },
+    "facing=north,working=true":  { "model": "productivefrogs:block/slime_churn_working" },
+    "facing=east,working=true":   { "model": "productivefrogs:block/slime_churn_working", "y":  90 },
+    "facing=south,working=true":  { "model": "productivefrogs:block/slime_churn_working", "y": 180 },
+    "facing=west,working=true":   { "model": "productivefrogs:block/slime_churn_working", "y": 270 }
+  }
+}

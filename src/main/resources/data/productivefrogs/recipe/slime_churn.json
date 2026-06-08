@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "MMM",
+    "CSC",
+    "CBC"
+  ],
+  "key": {
+    "M": { "item": "minecraft:moss_block" },
+    "C": { "item": "minecraft:packed_mud" },
+    "S": { "item": "minecraft:slime_ball" },
+    "B": { "item": "minecraft:bucket" }
+  },
+  "result": {
+    "id": "productivefrogs:slime_churn",
+    "count": 1
+  }
+}

@@ -469,6 +469,12 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             VanillaTypes.ITEM_STACK,
             Component.translatable("productivefrogs.jei.slime_milker.info"));
 
+        // Slime Churn (#187) - the Milker's inverse
+        reg.addIngredientInfo(
+            new ItemStack(PFBlocks.SLIME_CHURN.get().asItem()),
+            VanillaTypes.ITEM_STACK,
+            Component.translatable("productivefrogs.jei.slime_churn.info"));
+
         // Spawnery — only when enabled; when off it's removed from JEI entirely
         // in onRuntimeAvailable, so adding an info page for a hidden item would be
         // pointless (and JEI warns about info for an absent ingredient).

@@ -66,6 +66,7 @@ public final class PFDebug {
         SENSOR("sensor"),
         MILKER("milker"),
         MILK_SOURCE("milk_source"),
+        CHURN("churn"),
         RENDER("render"),
         TINT("tint"),
         SPAWNERY("spawnery");
