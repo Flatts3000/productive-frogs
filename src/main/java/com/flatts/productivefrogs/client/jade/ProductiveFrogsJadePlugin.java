@@ -65,6 +65,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
     private static final PrimedEggStatsProvider PRIMED_EGG_STATS = new PrimedEggStatsProvider();
     private static final TadpoleStatsProvider TADPOLE_STATS = new TadpoleStatsProvider();
     private static final MilkSourceProvider MILK_SOURCE = new MilkSourceProvider();
+    private static final ApplianceProvider APPLIANCES = new ApplianceProvider();
 
     /**
      * Common (server-side) registration. The pending offspring stats on a laid
@@ -80,11 +81,21 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         // blockstate so it updates live as the source depletes (the prior
         // client-blockstate read could show a stale full count).
         registration.registerBlockDataProvider(MILK_SOURCE, SlimeMilkSourceBlock.class);
+        // The Terrarium machines change state fast; fetch their readouts from the
+        // server BE each Jade refresh (see ApplianceProvider#appendServerData).
+        registration.registerBlockDataProvider(APPLIANCES,
+            com.flatts.productivefrogs.content.block.SprinklerBlock.class);
+        registration.registerBlockDataProvider(APPLIANCES,
+            com.flatts.productivefrogs.content.block.TerrariumControllerBlock.class);
+        registration.registerBlockDataProvider(APPLIANCES,
+            com.flatts.productivefrogs.content.block.IncubatorBlock.class);
+        registration.registerBlockDataProvider(APPLIANCES,
+            com.flatts.productivefrogs.content.block.HatchBlock.class);
     }
 
     @Override
     public void registerClient(IWailaClientRegistration registration) {
-        ApplianceProvider provider = new ApplianceProvider();
+        ApplianceProvider provider = APPLIANCES;
         registration.registerBlockComponent(provider, SlimeMilkerBlock.class);
         registration.registerBlockComponent(provider, SpawneryBlock.class);
         registration.registerBlockComponent(provider,
@@ -93,6 +104,14 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             com.flatts.productivefrogs.content.block.CastingMoldBlock.class);
         registration.registerBlockComponent(provider,
             com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock.class);
+        registration.registerBlockComponent(provider,
+            com.flatts.productivefrogs.content.block.TerrariumControllerBlock.class);
+        registration.registerBlockComponent(provider,
+            com.flatts.productivefrogs.content.block.SprinklerBlock.class);
+        registration.registerBlockComponent(provider,
+            com.flatts.productivefrogs.content.block.IncubatorBlock.class);
+        registration.registerBlockComponent(provider,
+            com.flatts.productivefrogs.content.block.HatchBlock.class);
         registration.registerBlockComponent(MILK_SOURCE, SlimeMilkSourceBlock.class);
         registration.registerEntityComponent(new FrogStatsProvider(), ResourceFrog.class);
         registration.registerBlockComponent(PRIMED_EGG_STATS, PrimedFrogEggBlock.class);
@@ -100,7 +119,52 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
     }
 
     /** Provider for the Slime Milker + Spawnery appliances; branches on the BlockEntity. */
-    private static final class ApplianceProvider implements IBlockComponentProvider {
+    private static final class ApplianceProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
+
+        /**
+         * The Terrarium machines change state fast (per spawn / per distribution
+         * tick), so - like {@link MilkSourceProvider} - they read the authoritative
+         * SERVER BlockEntity here and Jade re-fetches on its interval. A client-BE
+         * read can lag (the look-at sticks on a stale count). The other appliances
+         * (Milker / Spawnery / Crucible / Mold / Froglight) ride their update tag and
+         * stay client reads in {@link #appendTooltip}.
+         */
+        @Override
+        public void appendServerData(net.minecraft.nbt.CompoundTag data, BlockAccessor accessor) {
+            BlockEntity be = accessor.getBlockEntity();
+            if (be instanceof com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity s && !s.isEmpty()) {
+                data.putString("S_variant", String.valueOf(s.getVariantId()));
+                data.putBoolean("S_infinite", s.isInfinite());
+                data.putInt("S_remaining", s.getSpawnsRemaining());
+                data.putInt("S_cap", s.getSpawnsCapacity());
+                data.putInt("S_speed", s.getSpeedLevel());
+                data.putInt("S_speedMax", PFConfig.catalystMaxSpeedLevel());
+                data.putInt("S_quantity", s.getQuantityLevel());
+                data.putInt("S_quantityMax", PFConfig.catalystMaxQuantityLevel());
+            } else if (be instanceof com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity c) {
+                data.putBoolean("C_present", true);
+                data.putBoolean("C_formed", c.isFormed());
+                data.putInt("C_charges", c.bufferedCharges());
+                data.putInt("C_depth", PFConfig.terrariumControllerBufferDepth());
+                if (c.tankVariant() != null) {
+                    data.putString("C_variant", c.tankVariant().toString());
+                }
+            } else if (be instanceof com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity i
+                    && i.getCategory() != null) {
+                data.putBoolean("I_present", true);
+                data.putBoolean("I_waiting", i.isWaitingForSpace() || i.growthRemaining() <= 0);
+                data.putInt("I_remaining", i.growthRemaining());
+                data.putInt("I_total", i.growthTotal());
+            } else if (be instanceof com.flatts.productivefrogs.content.block.entity.HatchBlockEntity h) {
+                data.putBoolean("H_present", true);
+                data.putInt("H_fill", h.fillCount());
+            }
+        }
+
+        @Override
+        public ResourceLocation getUid() {
+            return UID;
+        }
 
         @Override
         public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
@@ -108,6 +172,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             if (be == null) {
                 return;
             }
+            net.minecraft.nbt.CompoundTag data = accessor.getServerData();
             if (be instanceof SlimeMilkerBlockEntity milker) {
                 int progress = milker.getCookProgress();
                 if (progress > 0) {
@@ -170,12 +235,64 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 tooltip.add(Component.translatable(
                     stored.enabled() ? "productivefrogs.jade.aura_on" : "productivefrogs.jade.aura_off",
                     effectName));
+            } else if (be instanceof com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity) {
+                // Formed-state + milk buffer, read from authoritative server data.
+                boolean formed;
+                if (data != null && data.getBoolean("C_present")) {
+                    formed = data.getBoolean("C_formed");
+                    tooltip.add(Component.translatable(formed
+                        ? "productivefrogs.jade.terrarium_formed" : "productivefrogs.jade.terrarium_unformed"));
+                    if (data.contains("C_variant")) {
+                        tooltip.add(Component.translatable("productivefrogs.jade.controller_buffer",
+                            data.getInt("C_charges"), data.getInt("C_depth")));
+                    }
+                } else {
+                    BlockState state = accessor.getBlockState();
+                    formed = state.hasProperty(com.flatts.productivefrogs.content.block.TerrariumControllerBlock.FORMED)
+                        && state.getValue(com.flatts.productivefrogs.content.block.TerrariumControllerBlock.FORMED);
+                    tooltip.add(Component.translatable(formed
+                        ? "productivefrogs.jade.terrarium_formed" : "productivefrogs.jade.terrarium_unformed"));
+                }
+            } else if (be instanceof com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity) {
+                // Held milk variant + the source-style Count / Speed / Quantity lines,
+                // from server data (re-fetched each Jade refresh) so the count never
+                // sticks on a stale value.
+                if (data != null && data.contains("S_variant")) {
+                    ResourceLocation variant = ResourceLocation.tryParse(data.getString("S_variant"));
+                    if (variant != null) {
+                        tooltip.add(Component.translatable("productivefrogs.jade.sprinkler_milk",
+                            Component.translatable("block.productivefrogs." + variant.getPath() + "_slime_milk")));
+                    }
+                    if (data.getBoolean("S_infinite")) {
+                        tooltip.add(Component.translatable("productivefrogs.jade.spawns_unlimited"));
+                    } else {
+                        tooltip.add(Component.translatable("productivefrogs.jade.spawns_left",
+                            data.getInt("S_remaining"), data.getInt("S_cap")));
+                    }
+                    if (data.getInt("S_speed") > 0) {
+                        tooltip.add(Component.translatable("productivefrogs.jade.catalyst_speed",
+                            data.getInt("S_speed"), data.getInt("S_speedMax")));
+                    }
+                    if (data.getInt("S_quantity") > 0) {
+                        tooltip.add(Component.translatable("productivefrogs.jade.catalyst_quantity",
+                            data.getInt("S_quantity"), data.getInt("S_quantityMax")));
+                    }
+                }
+            } else if (be instanceof com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity) {
+                if (data != null && data.getBoolean("I_present")) {
+                    if (data.getBoolean("I_waiting")) {
+                        tooltip.add(Component.translatable("productivefrogs.gui.incubator.waiting"));
+                    } else {
+                        tooltip.add(Component.translatable("productivefrogs.jade.incubator_growing",
+                            percent(data.getInt("I_total") - data.getInt("I_remaining"), data.getInt("I_total"))));
+                    }
+                }
+            } else if (be instanceof com.flatts.productivefrogs.content.block.entity.HatchBlockEntity) {
+                if (data != null && data.getBoolean("H_present")) {
+                    tooltip.add(Component.translatable("productivefrogs.jade.hatch_fill",
+                        data.getInt("H_fill"), com.flatts.productivefrogs.content.block.entity.HatchBlockEntity.SLOTS));
+                }
             }
-        }
-
-        @Override
-        public ResourceLocation getUid() {
-            return UID;
         }
 
         private static int percent(int value, int total) {

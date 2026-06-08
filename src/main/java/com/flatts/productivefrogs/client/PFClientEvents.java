@@ -19,6 +19,7 @@ import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
+import com.flatts.productivefrogs.registry.PFParticles;
 import com.flatts.productivefrogs.registry.PFRegistries;
 import com.flatts.productivefrogs.registry.PFVariantMilk;
 import com.flatts.productivefrogs.util.PFDebug;
@@ -146,6 +147,30 @@ public final class PFClientEvents {
                 return argb;
             },
             PFBlocks.CONFIGURABLE_FROGLIGHT.get()
+        );
+        // Filled Sprinkler: the top milk surface (tintIndex 1) reads the held
+        // variant off the BE and tints to its primary_color, so a filled Sprinkler
+        // shows what milk is inside it from above. The base faces (tintIndex 0)
+        // and an empty Sprinkler (no variant / empty model has no tinted face)
+        // are untinted.
+        event.register(
+            (state, level, pos, tintIndex) -> {
+                if (tintIndex != 1 || level == null || pos == null) {
+                    return -1;
+                }
+                if (!(level.getBlockEntity(pos)
+                        instanceof com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity sprinkler)
+                        || sprinkler.isEmpty()) {
+                    return -1;
+                }
+                ResourceLocation variantId = sprinkler.getVariantId();
+                if (variantId == null) {
+                    return -1;
+                }
+                int color = variantTint(variantId);
+                return color != -1 ? color : opaque(0xF0F0E0);
+            },
+            PFBlocks.SPRINKLER.get()
         );
     }
 
@@ -349,6 +374,16 @@ public final class PFClientEvents {
         event.register(PFMenuTypes.SLIME_CHURN.get(), SlimeChurnScreen::new);
         event.register(PFMenuTypes.SPAWNERY.get(), SpawneryScreen::new);
         event.register(PFMenuTypes.CASTING_MOLD.get(), CastingMoldScreen::new);
+        event.register(PFMenuTypes.HATCH.get(), com.flatts.productivefrogs.client.screen.HatchScreen::new);
+        event.register(PFMenuTypes.INCUBATOR.get(), com.flatts.productivefrogs.client.screen.IncubatorScreen::new);
+        event.register(PFMenuTypes.TERRARIUM_CONTROLLER.get(), com.flatts.productivefrogs.client.screen.TerrariumControllerScreen::new);
+    }
+
+    /** Bind the tintable Sprinkler-drip particle to its sprite set. */
+    @SubscribeEvent
+    public static void onRegisterParticleProviders(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent event) {
+        event.registerSpriteSet(PFParticles.SPRINKLER_DRIP.get(),
+            com.flatts.productivefrogs.client.particle.SprinklerDripParticle.Provider::new);
     }
 
     /**

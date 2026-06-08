@@ -453,7 +453,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
      * resolves its category from the {@code slime_variant} registry on setVariant).
      */
     @Nullable
-    private static Slime createSlimeForVariant(ServerLevel level, ResourceLocation variantId) {
+    public static Slime createSlimeForVariant(ServerLevel level, ResourceLocation variantId) {
         // The two built-in specials are NOT registry variants (no primer, no
         // froglight, no spawn egg), so they are matched by sentinel id here
         // rather than via the registry - a deliberate, contained seam.

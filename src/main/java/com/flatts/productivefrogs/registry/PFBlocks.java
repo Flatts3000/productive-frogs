@@ -4,10 +4,14 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.CastingMoldBlock;
 import com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock;
 import com.flatts.productivefrogs.content.block.CrucibleBlock;
+import com.flatts.productivefrogs.content.block.HatchBlock;
+import com.flatts.productivefrogs.content.block.IncubatorBlock;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
 import com.flatts.productivefrogs.content.block.SlimeChurnBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
 import com.flatts.productivefrogs.content.block.SpawneryBlock;
+import com.flatts.productivefrogs.content.block.SprinklerBlock;
+import com.flatts.productivefrogs.content.block.TerrariumControllerBlock;
 import com.flatts.productivefrogs.data.Category;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -152,6 +156,57 @@ public final class PFBlocks {
         CastingMoldBlock::new,
         BlockBehaviour.Properties.of()
             .mapColor(MapColor.METAL)
+            .strength(2.0F)
+            .sound(SoundType.METAL)
+    );
+
+    /**
+     * The Terrarium Controller (#185) - the multiblock anchor. Validates the
+     * 7x7x7 shell around a 5x5x5 cavity on a throttled tick and lights
+     * {@link TerrariumControllerBlock#FORMED} when formed. Infernal-tier
+     * identity (the blocks craft from Infernal-species resources); the milk
+     * intake + Sprinkler distribution land in phase 2.
+     */
+    public static final DeferredBlock<TerrariumControllerBlock> TERRARIUM_CONTROLLER = BLOCKS.registerBlock(
+        "terrarium_controller",
+        TerrariumControllerBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.FIRE)
+            .strength(2.5F)
+            .sound(SoundType.METAL)
+            .lightLevel(state -> state.getValue(TerrariumControllerBlock.FORMED) ? 10 : 0)
+    );
+
+    /**
+     * The Sprinkler (#185) - a ceiling-cell spawn source. Up to 25 sit in the
+     * cavity ceiling; phase 2 gives each the placed-Slime-Milk spawn loop.
+     * Cheapest of the five (you craft many).
+     */
+    public static final DeferredBlock<SprinklerBlock> SPRINKLER = BLOCKS.registerBlock(
+        "sprinkler",
+        SprinklerBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.FIRE)
+            .strength(1.0F)
+            .sound(SoundType.METAL)
+    );
+
+    /** The Incubator (#185) - grows frogspawn/tadpoles into stat-preserving frogs (phase 4). */
+    public static final DeferredBlock<IncubatorBlock> INCUBATOR = BLOCKS.registerBlock(
+        "incubator",
+        IncubatorBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.FIRE)
+            .strength(2.0F)
+            .sound(SoundType.METAL)
+    );
+
+    /** The Hatch (#185) - the Terrarium's froglight output inventory (phase 3). */
+    public static final DeferredBlock<HatchBlock> HATCH = BLOCKS.registerBlock(
+        "hatch",
+        HatchBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.FIRE)
             .strength(2.0F)
             .sound(SoundType.METAL)
     );

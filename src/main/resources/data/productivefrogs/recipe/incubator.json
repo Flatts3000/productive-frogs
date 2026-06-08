@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "productivefrogs",
+  "pattern": [
+    "NGN",
+    "GSG",
+    "NGN"
+  ],
+  "key": {
+    "N": { "item": "minecraft:nether_bricks" },
+    "G": { "item": "minecraft:glowstone" },
+    "S": { "item": "productivefrogs:sweetslime" }
+  },
+  "result": { "id": "productivefrogs:incubator", "count": 1 }
+}

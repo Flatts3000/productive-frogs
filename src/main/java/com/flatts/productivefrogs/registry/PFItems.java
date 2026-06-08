@@ -321,6 +321,19 @@ public final class PFItems {
     );
 
     /**
+     * Terrarium BlockItems (#185). The four machine blocks of the multiblock
+     * habitat - Controller / Sprinkler / Incubator / Hatch.
+     */
+    public static final DeferredItem<BlockItem> TERRARIUM_CONTROLLER =
+        ITEMS.registerSimpleBlockItem("terrarium_controller", PFBlocks.TERRARIUM_CONTROLLER, new Item.Properties());
+    public static final DeferredItem<BlockItem> SPRINKLER =
+        ITEMS.registerSimpleBlockItem("sprinkler", PFBlocks.SPRINKLER, new Item.Properties());
+    public static final DeferredItem<BlockItem> INCUBATOR =
+        ITEMS.registerSimpleBlockItem("incubator", PFBlocks.INCUBATOR, new Item.Properties());
+    public static final DeferredItem<BlockItem> HATCH =
+        ITEMS.registerSimpleBlockItem("hatch", PFBlocks.HATCH, new Item.Properties());
+
+    /**
      * Boss-tier catalyst BlockItems (#184). Placing the matching catalyst on all
      * six faces of a boss-variant Slime Milk source arms it. See
      * {@code docs/boss_catalyst_altar.md}.

@@ -501,6 +501,16 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             VanillaTypes.ITEM_STACK,
             Component.translatable("productivefrogs.jei.slime_churn.info"));
 
+        // Terrarium multiblock (#185) - one info page per machine block.
+        reg.addIngredientInfo(new ItemStack(PFBlocks.TERRARIUM_CONTROLLER.get().asItem()),
+            VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.terrarium_controller.info"));
+        reg.addIngredientInfo(new ItemStack(PFBlocks.SPRINKLER.get().asItem()),
+            VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.sprinkler.info"));
+        reg.addIngredientInfo(new ItemStack(PFBlocks.INCUBATOR.get().asItem()),
+            VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.incubator.info"));
+        reg.addIngredientInfo(new ItemStack(PFBlocks.HATCH.get().asItem()),
+            VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.hatch.info"));
+
         // Spawnery — only when enabled; when off it's removed from JEI entirely
         // in onRuntimeAvailable, so adding an info page for a hidden item would be
         // pointless (and JEI warns about info for an absent ingredient).

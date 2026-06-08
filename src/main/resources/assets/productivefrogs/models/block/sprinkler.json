@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "productivefrogs:block/sprinkler_side",
+    "north": "productivefrogs:block/sprinkler_front",
+    "south": "productivefrogs:block/sprinkler_back",
+    "east": "productivefrogs:block/sprinkler_side",
+    "west": "productivefrogs:block/sprinkler_side",
+    "up": "productivefrogs:block/sprinkler_side",
+    "down": "productivefrogs:block/sprinkler_bottom"
+  }
+}

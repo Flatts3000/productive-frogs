@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "productivefrogs",
+  "pattern": [
+    "NHN",
+    "ICI",
+    "NHN"
+  ],
+  "key": {
+    "N": { "item": "minecraft:nether_bricks" },
+    "H": { "item": "minecraft:hopper" },
+    "I": { "item": "minecraft:iron_ingot" },
+    "C": { "item": "minecraft:chest" }
+  },
+  "result": { "id": "productivefrogs:hatch", "count": 1 }
+}

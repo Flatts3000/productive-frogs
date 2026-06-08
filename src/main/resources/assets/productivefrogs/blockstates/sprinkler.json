@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "filled=false": { "model": "productivefrogs:block/sprinkler" },
+    "filled=true": { "model": "productivefrogs:block/sprinkler_filled" }
+  }
+}

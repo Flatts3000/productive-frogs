@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "productivefrogs",
+  "pattern": [
+    "GQG",
+    "BCB",
+    "NNN"
+  ],
+  "key": {
+    "G": { "item": "minecraft:glowstone" },
+    "Q": { "item": "minecraft:quartz_block" },
+    "B": { "item": "minecraft:blaze_rod" },
+    "C": { "item": "minecraft:magma_cream" },
+    "N": { "item": "minecraft:nether_bricks" }
+  },
+  "result": { "id": "productivefrogs:terrarium_controller", "count": 1 }
+}

@@ -2,6 +2,12 @@
 
 Thanks for your interest in contributing! This document covers how to file issues, submit pull requests, and what to expect from the project's maintenance pace.
 
+## No bounties, no automated PRs
+
+This project does **not** offer bounties and does not participate in Opire, Algora, or any other third-party bounty platform. There is no payment for any issue or pull request. Comments invoking bounty-platform commands (`/opire`, `/algora`, `/try`, and the like) are ignored, and an issue showing up on a bounty board does not mean one is offered here.
+
+**Unsolicited automated / bot pull requests are closed without review.** Machine-generated "automated fix by [bot]" PRs consistently target the wrong loader or Minecraft version, fail to compile, and exist to farm bounty platforms or contribution history. If you are a human who genuinely wants to work on an issue, say so in a comment first, then open the PR yourself.
+
 ## Reporting Issues
 
 - **Bugs**: open an issue using the **Bug Report** template. Include your Minecraft version, NeoForge version, mod list (or modpack name), and steps to reproduce.

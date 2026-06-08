@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "productivefrogs:block/hatch_side",
+    "north": "productivefrogs:block/hatch_front",
+    "south": "productivefrogs:block/hatch_back",
+    "east": "productivefrogs:block/hatch_side",
+    "west": "productivefrogs:block/hatch_side",
+    "up": "productivefrogs:block/hatch_side",
+    "down": "productivefrogs:block/hatch_side"
+  }
+}

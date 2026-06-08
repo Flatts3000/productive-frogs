@@ -226,18 +226,37 @@ public final class PFModBusEvents {
             (be, side) -> be.outputView()
         );
 
+        // Terrarium Controller (#185): fill-only fluid intake for piped milk. The
+        // catalyst components ride the FluidStack (via MilkFluidBucketWrapper), so
+        // the Controller reads them back into a MilkCharge. Drain is a no-op (the
+        // funnel converts fluid to charges, it is not a reservoir).
+        event.registerBlockEntity(
+            Capabilities.FluidHandler.BLOCK,
+            PFBlockEntities.TERRARIUM_CONTROLLER.get(),
+            (be, side) -> be.fluidHandler()
+        );
+
+        // Terrarium Hatch (#185): the froglight output inventory, for piping out.
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            PFBlockEntities.HATCH.get(),
+            (be, side) -> be.inventory()
+        );
+
         // Per-variant Slime Milk buckets (v1.8) are SlimeMilkBucketItem extends
         // BucketItem. NeoForge only auto-registers FluidHandler.ITEM for the exact
         // BucketItem class, not subclasses, so wire each up explicitly - this is
-        // what lets tank/pipe mods pump a variant's milk and round-trip it (the
-        // bucket's content is its own variant fluid, so the vanilla
-        // FluidBucketWrapper preserves the variant for free).
+        // what lets tank/pipe mods pump a variant's milk and round-trip it. The
+        // component-preserving MilkFluidBucketWrapper additionally copies the
+        // catalyst components onto the drained FluidStack (#185), so piped milk
+        // keeps Count/Speed/Quantity/Infinite end to end; the variant rides the
+        // fluid identity regardless.
         for (ResourceLocation variantId : PFVariantMilk.registeredVariants()) {
             net.minecraft.world.item.Item bucket = PFVariantMilk.bucket(variantId);
             if (bucket != null) {
                 event.registerItem(
                     Capabilities.FluidHandler.ITEM,
-                    (stack, ctx) -> new net.neoforged.neoforge.fluids.capability.wrappers.FluidBucketWrapper(stack),
+                    (stack, ctx) -> new com.flatts.productivefrogs.content.fluid.MilkFluidBucketWrapper(stack),
                     bucket
                 );
             }
