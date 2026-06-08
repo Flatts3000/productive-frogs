@@ -161,12 +161,6 @@ ids + texture-faithful colors verified against Powah-6.2.10):
 | silicon | `c:silicon` | AE2 + Refined Storage (one tag covers both) |
 | basic / improved / advanced processor | `refinedstorage:*_processor` (exact item) | Refined Storage |
 
-Bespoke GEODE addition (2026-06-08, #188): **celestigem**
-(`justdirethings:celestigem`, exact item - JDT registers only the aggregate
-`c:gems`, no per-gem tag) - Just Dire Things' T3 End-mined gem. Placed GEODE by
-the standing "modded gems under Geode" rule (maintainer's call over the
-End-origin Void argument).
-
 (apatite, `c:gems/apatite`, is Thermal-only - deferred until Thermal ports to 1.21.1.)
 
 The three Refined Storage **processors** (Basic / Improved / Advanced) are crafted
@@ -211,6 +205,10 @@ fluid mints iff the variant loads - no orphan fluid on a vanilla-only pack.
   pixel data).
 - **blazegold** (`c:ingots/blazegold` -> `justdirethings:blazegold_ingot`) - Just
   Dire Things' T2 Nether metal, gold-adjacent (#188).
+- **celestigem** (`justdirethings:celestigem`, exact item - JDT registers only the
+  aggregate `c:gems`, no per-gem tag) - Just Dire Things' T3 gem. Placed INFERNAL
+  by maintainer ruling 2026-06-08 (over Geode/Void), keeping the JDT progression
+  metals together on the fire lineage with blazegold.
 - Deferred (Thermal has no 1.21.1 release): sulfur (`c:dusts/sulfur`), signalum, lumium.
 
 ### VOID (end/arcane)
