@@ -84,6 +84,29 @@ public final class TerrariumManager {
         return null;
     }
 
+    /** The formed Terrarium anchored at {@code controllerPos}, or null. */
+    @Nullable
+    public static FormedTerrarium byController(ServerLevel level, BlockPos controllerPos) {
+        Map<BlockPos, FormedTerrarium> byController = ACTIVE.get(level);
+        return byController == null ? null : byController.get(controllerPos.immutable());
+    }
+
+    /** The formed Terrarium that owns {@code sprinklerPos} as one of its Sprinklers, or null. */
+    @Nullable
+    public static FormedTerrarium owningSprinkler(ServerLevel level, BlockPos sprinklerPos) {
+        Map<BlockPos, FormedTerrarium> byController = ACTIVE.get(level);
+        if (byController == null) {
+            return null;
+        }
+        BlockPos key = sprinklerPos.immutable();
+        for (FormedTerrarium t : byController.values()) {
+            if (t.sprinklers().contains(key)) {
+                return t;
+            }
+        }
+        return null;
+    }
+
     /** Drop all Terraria in a level (on {@code LevelEvent.Unload}). */
     public static void onLevelUnload(ServerLevel level) {
         ACTIVE.remove(level);

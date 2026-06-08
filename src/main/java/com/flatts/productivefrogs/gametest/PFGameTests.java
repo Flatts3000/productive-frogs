@@ -4800,6 +4800,144 @@ public final class PFGameTests {
         helper.succeed();
     }
 
+    /** The Controller buffer holds one variant at a time: a second is refused until it drains. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumControllerRejectsSecondVariantUntilEmpty(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 1);
+        ServerLevel level = helper.getLevel();
+        BlockState state = level.getBlockState(helper.absolutePos(controller));
+        if (!(helper.getBlockEntity(controller)
+                instanceof com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity be)) {
+            helper.fail("no Controller BE");
+            return;
+        }
+        be.forceValidate(level, helper.absolutePos(controller));
+        ItemStack iron = PFItems.slimeMilkBucket(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        ItemStack copper = PFItems.slimeMilkBucket(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper"));
+        if (iron.isEmpty() || copper.isEmpty()) {
+            helper.fail("iron/copper milk buckets should exist");
+            return;
+        }
+        if (!be.pushChargeFromBucket(iron)) {
+            helper.fail("first (iron) charge should be accepted");
+            return;
+        }
+        if (be.pushChargeFromBucket(copper)) {
+            helper.fail("copper must be refused while the buffer holds iron");
+            return;
+        }
+        // Drain the buffer into the Sprinkler, then copper is accepted.
+        com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity.serverTick(
+            level, helper.absolutePos(controller), state, be);
+        if (be.bufferedCharges() != 0 || be.tankVariant() != null) {
+            helper.fail("buffer should be empty after distributing the iron charge");
+            return;
+        }
+        if (!be.pushChargeFromBucket(copper)) {
+            helper.fail("copper should be accepted once the buffer drained");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** A charge built from a catalyzed bucket stamps the Sprinkler with the same stats. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumChargePreservesCatalysts(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 1);
+        ServerLevel level = helper.getLevel();
+        BlockState state = level.getBlockState(helper.absolutePos(controller));
+        com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity be =
+            (com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity) helper.getBlockEntity(controller);
+        be.forceValidate(level, helper.absolutePos(controller));
+        ItemStack iron = PFItems.slimeMilkBucket(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        iron.set(com.flatts.productivefrogs.registry.PFDataComponents.MILK_SPEED.get(), 2);
+        iron.set(com.flatts.productivefrogs.registry.PFDataComponents.MILK_INFINITE.get(), true);
+        be.pushChargeFromBucket(iron);
+        com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity.serverTick(
+            level, helper.absolutePos(controller), state, be);
+        if (!(helper.getBlockEntity(new BlockPos(2, 7, 2))
+                instanceof com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity sprinkler)) {
+            helper.fail("no Sprinkler BE at the ceiling cell");
+            return;
+        }
+        if (!sprinkler.isInfinite() || sprinkler.getSpeedLevel() != 2) {
+            helper.fail("Sprinkler did not inherit the charge's catalysts: infinite="
+                + sprinkler.isInfinite() + " speed=" + sprinkler.getSpeedLevel());
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** A filled Sprinkler spawns its variant's slime into the cavity below and spends one budget. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumSprinklerSpawnsIntoCavity(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 1);
+        ServerLevel level = helper.getLevel();
+        ((com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity)
+            helper.getBlockEntity(controller)).forceValidate(level, helper.absolutePos(controller));
+        BlockPos sprinklerRel = new BlockPos(2, 7, 2);
+        com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity sprinkler =
+            (com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity) helper.getBlockEntity(sprinklerRel);
+        ResourceLocation ironId = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = Boolean.TRUE;
+        com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity.cavitySlimeCapOverride = 64;
+        try {
+            sprinkler.loadCharge(ironId, new com.flatts.productivefrogs.content.multiblock.MilkCharge(8, 8, 0, 0, false));
+            sprinkler.primeForImmediateSpawn();
+            BlockState sState = level.getBlockState(helper.absolutePos(sprinklerRel));
+            com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity.serverTick(
+                level, helper.absolutePos(sprinklerRel), sState, sprinkler);
+            java.util.List<ResourceSlime> slimes = level.getEntitiesOfClass(ResourceSlime.class,
+                net.minecraft.world.phys.AABB.encapsulatingFullBlocks(
+                    helper.absolutePos(new BlockPos(2, 2, 2)), helper.absolutePos(new BlockPos(6, 6, 6))));
+            if (slimes.isEmpty()) {
+                helper.fail("Sprinkler did not spawn a slime into the cavity");
+                return;
+            }
+            if (sprinkler.getSpawnsRemaining() != 7) {
+                helper.fail("expected remaining 7 after one spawn, got " + sprinkler.getSpawnsRemaining());
+                return;
+            }
+            helper.succeed();
+        } finally {
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = null;
+            com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity.cavitySlimeCapOverride = null;
+        }
+    }
+
+    /** At the cavity slime cap, a Sprinkler pauses without spawning or spending budget. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumCavityCapPausesSprinkler(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 1);
+        ServerLevel level = helper.getLevel();
+        ((com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity)
+            helper.getBlockEntity(controller)).forceValidate(level, helper.absolutePos(controller));
+        BlockPos sprinklerRel = new BlockPos(2, 7, 2);
+        com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity sprinkler =
+            (com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity) helper.getBlockEntity(sprinklerRel);
+        ResourceLocation ironId = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = Boolean.TRUE;
+        com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity.cavitySlimeCapOverride = 1;
+        try {
+            // Seed the cavity at the cap (1), then a spawn attempt must pause.
+            ResourceSlime existing = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(4, 3, 4));
+            existing.setVariant(ironId);
+            sprinkler.loadCharge(ironId, new com.flatts.productivefrogs.content.multiblock.MilkCharge(8, 8, 0, 0, false));
+            sprinkler.primeForImmediateSpawn();
+            BlockState sState = level.getBlockState(helper.absolutePos(sprinklerRel));
+            com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity.serverTick(
+                level, helper.absolutePos(sprinklerRel), sState, sprinkler);
+            if (sprinkler.getSpawnsRemaining() != 8) {
+                helper.fail("capped Sprinkler must not spend budget; remaining=" + sprinkler.getSpawnsRemaining());
+                return;
+            }
+            helper.succeed();
+        } finally {
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = null;
+            com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity.cavitySlimeCapOverride = null;
+        }
+    }
+
     /**
      * Build a valid Terrarium inside the 9x9x9 plot: a stone shell over rel
      * {@code (1..7)} (5x5x5 air cavity at rel {@code (2..6)}), a Controller / Hatch

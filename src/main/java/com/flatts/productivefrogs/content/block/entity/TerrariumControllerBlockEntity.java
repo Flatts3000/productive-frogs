@@ -2,32 +2,48 @@ package com.flatts.productivefrogs.content.block.entity;
 
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.block.TerrariumControllerBlock;
+import com.flatts.productivefrogs.content.item.SlimeMilkBucketItem;
+import com.flatts.productivefrogs.content.multiblock.MilkCharge;
 import com.flatts.productivefrogs.content.multiblock.TerrariumManager;
 import com.flatts.productivefrogs.content.multiblock.TerrariumValidationResult;
 import com.flatts.productivefrogs.content.multiblock.TerrariumValidator;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
+import com.flatts.productivefrogs.registry.PFVariantMilk;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The Terrarium Controller's block entity - the multiblock anchor. In phase 1
- * (structure + validation) it does one job: on a throttled tick it re-runs
- * {@link TerrariumValidator}, registers/deregisters the result in
- * {@link TerrariumManager}, and flips the block's {@link TerrariumControllerBlock#FORMED}
- * state (which drives the glow). Right-clicking the block forces a validate and
- * reports the first structural problem - the "why won't it form" story.
+ * The Terrarium Controller's block entity. Two jobs:
  *
- * <p>Phase 2 (milk path) adds the charge buffer here - a FIFO of {@code MilkCharge}
- * (one variant at a time, reject-until-empty) plus the bucket-slot / fluid-handler
- * intake and the round-robin Sprinkler distribution. Those fields are intentionally
- * absent until that phase so the skeleton stays minimal; the validation tick and
- * the {@code FormedTerrarium} (which already carries the sprinkler list) are the
- * hooks they will build on.
+ * <ol>
+ *   <li><b>Validation</b> (phase 1): a throttled tick re-runs {@link TerrariumValidator},
+ *       registers/deregisters in {@link TerrariumManager}, and flips
+ *       {@link TerrariumControllerBlock#FORMED}.</li>
+ *   <li><b>Milk funnel</b> (phase 2): a FIFO buffer of {@link MilkCharge} - one
+ *       variant at a time, rejected until the buffer drains - fed by hand
+ *       (right-click a milk bucket) or by pipe ({@link #fluidHandler()}, fill-only;
+ *       catalysts ride the {@code FluidStack} via the component-preserving wrapper).
+ *       Each tick it round-robins a charge into an empty Sprinkler, or tops up a
+ *       draining matching one, so a Sprinkler spawns identically to a hand-placed
+ *       catalyzed source. The hopper-fed bucket slot arrives with the GUI (phase 5);
+ *       hand + pipe are the phase-2 intake paths.</li>
+ * </ol>
  */
 public class TerrariumControllerBlockEntity extends BlockEntity {
 
@@ -36,24 +52,34 @@ public class TerrariumControllerBlockEntity extends BlockEntity {
     @Nullable
     private TerrariumValidationResult lastResult;
 
+    /** FIFO buffer of milk charges; all share {@link #tankVariant}. */
+    private final Deque<MilkCharge> charges = new ArrayDeque<>();
+    @Nullable
+    private ResourceLocation tankVariant;
+    private int distributeCursor;
+
+    private final ControllerFluidIntake fluidIntake = new ControllerFluidIntake();
+
     public TerrariumControllerBlockEntity(BlockPos pos, BlockState state) {
         super(PFBlockEntities.TERRARIUM_CONTROLLER.get(), pos, state);
     }
 
-    /** Throttled validation tick (cadence = {@code terrarium.validationIntervalTicks}). */
     public static void serverTick(Level level, BlockPos pos, BlockState state, TerrariumControllerBlockEntity be) {
-        int interval = Math.max(1, PFConfig.terrariumValidationIntervalTicks());
-        if (++be.tickCounter < interval) {
+        if (!(level instanceof ServerLevel server)) {
             return;
         }
-        be.tickCounter = 0;
-        be.runValidation((ServerLevel) level, pos, state);
+        int interval = Math.max(1, PFConfig.terrariumValidationIntervalTicks());
+        if (++be.tickCounter >= interval) {
+            be.tickCounter = 0;
+            be.runValidation(server, pos, state);
+        }
+        if (be.formed) {
+            be.distribute(server, pos);
+        }
     }
 
-    /**
-     * Validate now, sync the {@link TerrariumManager} registry and the
-     * {@link TerrariumControllerBlock#FORMED} state to the result, and cache it.
-     */
+    // ---- validation (phase 1) ------------------------------------------
+
     public TerrariumValidationResult runValidation(ServerLevel level, BlockPos pos, BlockState state) {
         TerrariumValidationResult result = TerrariumValidator.validate(level, pos, state);
         this.lastResult = result;
@@ -69,12 +95,10 @@ public class TerrariumControllerBlockEntity extends BlockEntity {
         return result;
     }
 
-    /** Force a validate against the live state - the right-click entry and the test seam. */
     public TerrariumValidationResult forceValidate(ServerLevel level, BlockPos pos) {
         return runValidation(level, pos, level.getBlockState(pos));
     }
 
-    /** Whether the structure was formed as of the last validation. */
     public boolean isFormed() {
         return formed;
     }
@@ -84,8 +108,181 @@ public class TerrariumControllerBlockEntity extends BlockEntity {
         return lastResult;
     }
 
-    /** Deregister on break / chunk-unload so a stale entry never lingers. */
     public void onBroken(ServerLevel level, BlockPos pos) {
         TerrariumManager.deregister(level, pos);
+    }
+
+    // ---- milk funnel (phase 2) -----------------------------------------
+
+    /** Whether the buffer can take another charge of {@code variant} (reject-until-empty). */
+    public boolean canAccept(ResourceLocation variant) {
+        return charges.size() < PFConfig.terrariumControllerBufferDepth()
+            && (tankVariant == null || tankVariant.equals(variant));
+    }
+
+    /**
+     * Hand-feed entry: push a charge built from a milk bucket. Returns false (and
+     * consumes nothing) when the bucket isn't milk, has no variant, or the buffer
+     * is full / holds another variant.
+     */
+    public boolean pushChargeFromBucket(ItemStack milkBucket) {
+        if (!(milkBucket.getItem() instanceof SlimeMilkBucketItem milk)) {
+            return false;
+        }
+        ResourceLocation variant = milk.variantId();
+        if (variant == null || !canAccept(variant)) {
+            return false;
+        }
+        tankVariant = variant;
+        charges.addLast(MilkCharge.fromBucket(milkBucket));
+        setChanged();
+        return true;
+    }
+
+    private void distribute(ServerLevel level, BlockPos pos) {
+        if (charges.isEmpty() || tankVariant == null) {
+            return;
+        }
+        TerrariumManager.FormedTerrarium terrarium = TerrariumManager.byController(level, pos);
+        if (terrarium == null) {
+            return;
+        }
+        List<BlockPos> sprinklers = terrarium.sprinklers();
+        int n = sprinklers.size();
+        if (n == 0) {
+            return;
+        }
+        // 1. Round-robin a fresh charge into the next empty Sprinkler.
+        for (int i = 0; i < n; i++) {
+            int idx = (distributeCursor + i) % n;
+            if (level.getBlockEntity(sprinklers.get(idx)) instanceof SprinklerBlockEntity sprinkler
+                    && sprinkler.acceptsFreshCharge()) {
+                sprinkler.loadCharge(tankVariant, charges.removeFirst());
+                distributeCursor = (idx + 1) % n;
+                onChargesChanged();
+                return;
+            }
+        }
+        // 2. Else top up the first draining matching Sprinkler.
+        int threshold = PFConfig.terrariumSprinklerTopUpThreshold();
+        for (BlockPos sprinklerPos : sprinklers) {
+            if (level.getBlockEntity(sprinklerPos) instanceof SprinklerBlockEntity sprinkler
+                    && sprinkler.wantsTopUp(tankVariant, threshold)) {
+                sprinkler.mergeCharge(charges.removeFirst());
+                onChargesChanged();
+                return;
+            }
+        }
+    }
+
+    /** A drained buffer can switch variant; clear the lock so a new variant is accepted. */
+    private void onChargesChanged() {
+        if (charges.isEmpty()) {
+            tankVariant = null;
+        }
+        setChanged();
+    }
+
+    /** Fill-only fluid handler for pipe intake (catalysts ride the FluidStack). */
+    public IFluidHandler fluidHandler() {
+        return fluidIntake;
+    }
+
+    /** Test seam: current buffered charge count. */
+    public int bufferedCharges() {
+        return charges.size();
+    }
+
+    /** Test seam: the variant the buffer currently holds, or null. */
+    @Nullable
+    public ResourceLocation tankVariant() {
+        return tankVariant;
+    }
+
+    private final class ControllerFluidIntake implements IFluidHandler {
+        @Override
+        public int getTanks() {
+            return 1;
+        }
+
+        @Override
+        public FluidStack getFluidInTank(int tank) {
+            return FluidStack.EMPTY; // a funnel, not a reservoir - contents live as charges
+        }
+
+        @Override
+        public int getTankCapacity(int tank) {
+            return PFConfig.terrariumControllerBufferDepth() * 1000;
+        }
+
+        @Override
+        public boolean isFluidValid(int tank, FluidStack stack) {
+            ResourceLocation variant = PFVariantMilk.variantOf(stack.getFluid());
+            return variant != null && canAccept(variant);
+        }
+
+        @Override
+        public int fill(FluidStack resource, FluidAction action) {
+            ResourceLocation variant = PFVariantMilk.variantOf(resource.getFluid());
+            if (variant == null || !canAccept(variant)) {
+                return 0;
+            }
+            int room = PFConfig.terrariumControllerBufferDepth() - charges.size();
+            int chargesToFill = Math.min(room, resource.getAmount() / 1000);
+            if (chargesToFill <= 0) {
+                return 0;
+            }
+            if (action.execute()) {
+                tankVariant = variant;
+                for (int i = 0; i < chargesToFill; i++) {
+                    charges.addLast(MilkCharge.fromFluid(resource));
+                }
+                setChanged();
+            }
+            return chargesToFill * 1000;
+        }
+
+        @Override
+        public FluidStack drain(FluidStack resource, FluidAction action) {
+            return FluidStack.EMPTY;
+        }
+
+        @Override
+        public FluidStack drain(int maxDrain, FluidAction action) {
+            return FluidStack.EMPTY;
+        }
+    }
+
+    // ---- serialization -------------------------------------------------
+
+    @Override
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        if (tankVariant != null) {
+            tag.putString("TankVariant", tankVariant.toString());
+        }
+        if (!charges.isEmpty()) {
+            ListTag list = new ListTag();
+            for (MilkCharge charge : charges) {
+                list.add(charge.toTag());
+            }
+            tag.put("Charges", list);
+        }
+        tag.putInt("DistributeCursor", distributeCursor);
+    }
+
+    @Override
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        tankVariant = tag.contains("TankVariant", Tag.TAG_STRING)
+            ? ResourceLocation.tryParse(tag.getString("TankVariant")) : null;
+        charges.clear();
+        if (tag.contains("Charges", Tag.TAG_LIST)) {
+            ListTag list = tag.getList("Charges", Tag.TAG_COMPOUND);
+            for (int i = 0; i < list.size(); i++) {
+                charges.addLast(MilkCharge.fromTag(list.getCompound(i)));
+            }
+        }
+        distributeCursor = Math.max(0, tag.getInt("DistributeCursor"));
     }
 }

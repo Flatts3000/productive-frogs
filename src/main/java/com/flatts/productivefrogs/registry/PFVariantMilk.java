@@ -24,6 +24,7 @@ import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Dynamic per-variant Slime Milk registration. For each variant id discovered at
@@ -132,6 +133,22 @@ public final class PFVariantMilk {
     public static SlimeMilkFluid.Source sourceFluid(ResourceLocation variantId) {
         DeferredHolder<Fluid, SlimeMilkFluid.Source> h = SOURCES.get(variantId);
         return h == null ? null : h.get();
+    }
+
+    /**
+     * Reverse lookup: the variant id whose source fluid is {@code fluid}, or null.
+     * Used by the Terrarium Controller's fluid intake to map a piped milk
+     * {@code FluidStack} back to its variant (the variant rides the fluid identity,
+     * so it survives even a non-PF pipe that strips catalyst components).
+     */
+    @Nullable
+    public static ResourceLocation variantOf(Fluid fluid) {
+        for (Map.Entry<ResourceLocation, DeferredHolder<Fluid, SlimeMilkFluid.Source>> e : SOURCES.entrySet()) {
+            if (e.getValue().get() == fluid) {
+                return e.getKey();
+            }
+        }
+        return null;
     }
 
     public static FluidType fluidType(ResourceLocation variantId) {
