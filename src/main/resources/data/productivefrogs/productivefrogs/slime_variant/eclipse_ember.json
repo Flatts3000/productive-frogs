@@ -1,0 +1,12 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "justdirethings"
+    }
+  ],
+  "primer_item": "justdirethings:coal_t4",
+  "category": "void",
+  "primary_color": 1447968,
+  "secondary_color": 2897723
+}

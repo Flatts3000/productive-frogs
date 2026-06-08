@@ -209,6 +209,12 @@ fluid mints iff the variant loads - no orphan fluid on a vanilla-only pack.
   aggregate `c:gems`, no per-gem tag) - Just Dire Things' T3 gem. Placed INFERNAL
   by maintainer ruling 2026-06-08 (over Geode/Void), keeping the JDT progression
   metals together on the fire lineage with blazegold.
+- **blaze_ember** (`justdirethings:coal_t2`, exact item - JDT coals carry no `c:`
+  tag) - Just Dire Things' T2 fuel slime. **Crucible-only cash-out**: no furnace
+  smelt recipe; its Froglight melts to 1,000 mB of
+  `justdirethings:refined_t2_fluid_source` (maintainer ruling 2026-06-08: refined
+  fuel only, no coal items - see
+  [jdt_resource_variants.md](./jdt_resource_variants.md)).
 - Deferred (Thermal has no 1.21.1 release): sulfur (`c:dusts/sulfur`), signalum, lumium.
 
 ### VOID (end/arcane)
@@ -223,6 +229,13 @@ fluid mints iff the variant loads - no orphan fluid on a vanilla-only pack.
 - **eclipsealloy** (`c:ingots/eclipsealloy` -> `justdirethings:eclipsealloy_ingot`) -
   Just Dire Things' T4 capstone alloy (#188). Time Crystals deliberately excluded
   (machine fuel, not a metal/gem).
+- **voidflame** + **eclipse_ember** (`justdirethings:coal_t3` / `coal_t4`, exact
+  items - JDT coals carry no `c:` tag) - Just Dire Things' T3/T4 fuel slimes.
+  **Crucible-only cash-out**: no furnace smelt recipes; the Froglights melt to
+  1,000 mB of `justdirethings:refined_t3_fluid_source` / `refined_t4_fluid_source`
+  (maintainer ruling 2026-06-08: refined fuel only, no coal items - see
+  [jdt_resource_variants.md](./jdt_resource_variants.md)). No T1 fuel slime: JDT
+  registers no T1 fluid.
 - Deferred (Thermal has no 1.21.1 release): enderium.
 
 ### BOG (swamp / organic)

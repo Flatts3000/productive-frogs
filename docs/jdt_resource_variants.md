@@ -46,11 +46,40 @@ resolves because the variant is JDT-gated -
 |---|---|---|---|---|
 | `time_crystal` | GEODE (or VOID) | `primer_item: justdirethings:time_crystal` | `justdirethings:time_crystal` | bright green crystal (`~#52DE5C` / `~#2BA53A`); renewable via a budding-amethyst-style cluster. Lower priority - different mechanic from the Goo ores, no `c:` tag. |
 
+## Fuel slimes (shipped - maintainer rulings 2026-06-08)
+
+Originally excluded ("a slime made of coal is a weak fit"), revisited after the core four shipped.
+The fit that works is **the fuel fluid, not the coal**: each fuel slime's Froglight melts in the
+Froglight Crucible directly into JDT's **refined** fuel fluid - skipping JDT's own production chain
+(coal + Polymorphic Fluid -> unrefined -> Goo-refined) deliberately; the frog loop is the shortcut,
+that is the mod's premise.
+
+| Variant | Category | Primer | Crucible melt output | Yield |
+|---|---|---|---|---|
+| `blaze_ember` | INFERNAL | `primer_item: justdirethings:coal_t2` | `justdirethings:refined_t2_fluid_source` | 1,000 mB |
+| `voidflame` | VOID | `primer_item: justdirethings:coal_t3` | `justdirethings:refined_t3_fluid_source` | 1,000 mB |
+| `eclipse_ember` | VOID | `primer_item: justdirethings:coal_t4` | `justdirethings:refined_t4_fluid_source` | 1,000 mB |
+
+Rulings, recorded:
+
+- **Refined fuel only, no coal.** No furnace smelt recipe for any fuel slime - the fluid is the
+  sole cash-out, same precedent as the water/lava variants (whose resource IS the fluid). The coal
+  items stay JDT-side (renewable there via Goo).
+- **No T1 slime.** JDT registers fuel fluids for tiers 2-4 only (verified in
+  justdirethings-1.5.7: `refined_t2/t3/t4_fluid_source`); there is no T1 fluid, so Primal Coal
+  gets no slime.
+- **Categories:** T2 -> INFERNAL (fire lineage with blazegold), T3 + T4 -> VOID (End-origin
+  default; the gems-under-Geode ruling that moved celestigem does not apply to coals).
+- **Yield: 1,000 mB per Froglight** (one bucket) - matches the water/lava bulk-fluid precedent and
+  JDT's own ratio (one coal converts one 1,000 mB Polymorphic fluid block into unrefined fuel).
+  Bulk melt job (`~6,700 / heat` ticks), fits the 4,000 mB tank. Tunable if playtests say so.
+- Primers are the coal items (exact `primer_item` - JDT coals carry no `c:` tag, same situation as
+  celestigem). Colors are texture-faithful midtone/bright medians from the coal_t2/t3/t4 item
+  textures (JDT tints a shared greyscale fluid texture in code, so the coals are the per-tier art).
+
 ## Excluded
 
-- **Tiered coals** (`coal_t1`..`coal_t4` - Primal Coal / Blaze Ember / Voidflame Coal / Eclipse Ember):
-  real renewable items, but they are fuel, have no `c:` tag, and "a slime made of coal" is a weak fit.
-  Skip unless fuel-themed variants are wanted later.
+- **Primal Coal** (`coal_t1`) - no JDT T1 fluid exists to melt into (see fuel slimes above).
 - **Goo blocks / soil, storage blocks, dimensional fluids** - infrastructure, not farmable resources.
 
 ## Per-variant authoring

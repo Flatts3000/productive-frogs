@@ -8,6 +8,7 @@
     "armadillo_scute",
     "basic_processor",
     "blaze",
+    "blaze_ember",
     "blazegold",
     "blazing",
     "bone",
@@ -26,6 +27,7 @@
     "dragon_egg",
     "dry_ice",
     "echo_shard",
+    "eclipse_ember",
     "eclipsealloy",
     "emerald",
     "end_stone",
@@ -96,6 +98,7 @@
     "turtle_scute",
     "uraninite",
     "uranium",
+    "voidflame",
     "water",
     "wither_skeleton_skull",
     "zinc"
