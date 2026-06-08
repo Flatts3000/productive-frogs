@@ -29,7 +29,8 @@ class IncubatorBlockEntityTest {
         assertTrue(i.seedBaseline(Category.CAVE));
         assertFalse(i.hasRoom(), "seeded -> no room");
         assertEquals(Category.CAVE, i.getCategory());
-        assertEquals(PFConfig.tadpoleGrowthTicks(), i.growthTotal(), "growth timer = config maturation time");
+        assertEquals(PFConfig.hatchTicks() + PFConfig.tadpoleGrowthTicks(), i.growthTotal(),
+            "growth timer = full egg->frog lifecycle (hatch + maturation), both from config");
         assertEquals(i.growthTotal(), i.growthRemaining(), "starts at the full timer");
         assertFalse(i.isWaitingForSpace());
     }

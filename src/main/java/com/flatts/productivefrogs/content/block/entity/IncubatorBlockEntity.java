@@ -135,8 +135,11 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
         this.appetite = appetite;
         this.bounty = bounty;
         this.reach = reach;
-        this.growthRemaining = Math.max(1, PFConfig.tadpoleGrowthTicks());
-        this.growthTotal = this.growthRemaining;
+        // Full egg -> frog lifecycle: the primed-frogspawn hatch delay plus tadpole
+        // maturation, so an Incubator takes exactly as long as the natural
+        // egg -> tadpole -> frog path. Both halves read from config (lifecycle.*).
+        this.growthTotal = Math.max(1, PFConfig.hatchTicks() + PFConfig.tadpoleGrowthTicks());
+        this.growthRemaining = this.growthTotal;
         this.pendingRelease = false;
         setChanged();
         return true;
