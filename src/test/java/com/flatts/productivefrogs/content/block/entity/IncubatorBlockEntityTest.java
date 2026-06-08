@@ -44,6 +44,22 @@ class IncubatorBlockEntityTest {
     }
 
     @Test
+    void sweetslimeShavesTenPercentOffWhileIncubating() {
+        IncubatorBlockEntity i = newIncubator();
+        i.seedBaseline(Category.CAVE);
+        int before = i.growthRemaining();
+        int expectedCut = Math.max(1, i.growthTotal() / 10);
+        assertTrue(i.accelerateWithSweetslime(), "a sweetslime accelerates an active incubation");
+        assertEquals(before - expectedCut, i.growthRemaining(), "shaves 10% of the full lifecycle");
+    }
+
+    @Test
+    void sweetslimeIsNoOpWhenEmpty() {
+        IncubatorBlockEntity i = newIncubator();
+        assertFalse(i.accelerateWithSweetslime(), "nothing to accelerate when empty");
+    }
+
+    @Test
     void nbtRoundTripPreservesSeed() {
         IncubatorBlockEntity i = newIncubator();
         i.seedFromBreeding(Category.INFERNAL, 5, 7, 3);

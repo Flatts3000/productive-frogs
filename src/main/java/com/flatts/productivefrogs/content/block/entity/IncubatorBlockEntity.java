@@ -104,6 +104,26 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
         return pendingRelease;
     }
 
+    /** Actively growing a seed (not empty, not yet matured/waiting). */
+    public boolean isIncubating() {
+        return category != null && !pendingRelease && growthRemaining > 0;
+    }
+
+    /**
+     * Speed up the current incubation by feeding a Sweetslime: shave 10% of the
+     * full lifecycle off the remaining time. No-op (returns false) when nothing is
+     * incubating. The 10% scales with the config-driven {@link #growthTotal}.
+     */
+    public boolean accelerateWithSweetslime() {
+        if (!isIncubating()) {
+            return false;
+        }
+        int reduction = Math.max(1, growthTotal / 10);
+        growthRemaining = Math.max(0, growthRemaining - reduction);
+        syncToClients();
+        return true;
+    }
+
     public int growthRemaining() {
         return growthRemaining;
     }

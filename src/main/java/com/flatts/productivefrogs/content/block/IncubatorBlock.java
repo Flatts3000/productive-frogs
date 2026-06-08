@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFDataComponents;
+import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
@@ -95,6 +96,23 @@ public class IncubatorBlock extends Block implements EntityBlock {
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
             Player player, InteractionHand hand, BlockHitResult hit) {
+        // Sweetslime: feed an actively-incubating Incubator to shave time off (10%
+        // of the full lifecycle per slime), like hurrying a tadpole along.
+        if (stack.is(PFItems.SWEETSLIME.get())
+                && level.getBlockEntity(pos) instanceof IncubatorBlockEntity be && be.isIncubating()) {
+            if (!level.isClientSide() && be.accelerateWithSweetslime()) {
+                if (!player.getAbilities().instabuild) {
+                    stack.shrink(1);
+                }
+                level.playSound(null, pos, net.minecraft.sounds.SoundEvents.SLIME_SQUISH,
+                    net.minecraft.sounds.SoundSource.BLOCKS, 0.8F, 1.4F);
+                if (level instanceof net.minecraft.server.level.ServerLevel server) {
+                    server.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER,
+                        pos.getX() + 0.5, pos.getY() + 0.8, pos.getZ() + 0.5, 8, 0.25, 0.25, 0.25, 0.0);
+                }
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide());
+        }
         // Seed with a Frog Egg bottle: read its species and start an incubation
         // (baseline stats - a bottled egg carries none; bred stats arrive via the
         // LayCategoryFrogspawn redirect).
