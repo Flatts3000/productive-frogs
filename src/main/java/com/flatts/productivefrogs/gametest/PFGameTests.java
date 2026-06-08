@@ -3711,12 +3711,21 @@ public final class PFGameTests {
             helper.fail("expected budget untouched at 5, got " + remaining);
             return;
         }
+        // Furnace stall semantics: a blocked churn never advances progress -
+        // with no empty buckets present the interval must not even start.
+        if (churn.getIntervalTotal() != 0) {
+            helper.fail("expected NO interval progress with no empty buckets, got total="
+                + churn.getIntervalTotal());
+            return;
+        }
         helper.succeed();
     }
 
     /**
-     * Pause-without-waste: a full slime-output slot stalls the fire and the
-     * budget stays untouched (matches the Milker's full-output stall).
+     * Pause-without-waste, furnace stall semantics: a full slime-output slot
+     * stalls the churn entirely - no budget spend, no empty-bucket
+     * consumption, and NO progress on the interval (the vanilla furnace
+     * full-output behavior, same as the Milker's stall).
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
     public static void slimeChurnPausesWhenOutputFull(GameTestHelper helper) {
@@ -3753,6 +3762,13 @@ public final class PFGameTests {
         if (inv.getStackInSlot(
                 com.flatts.productivefrogs.content.block.entity.SlimeChurnInventory.BUCKET_SLOT).getCount() != 16) {
             helper.fail("expected no empty buckets consumed with output full");
+            return;
+        }
+        // Furnace stall semantics: the progress arrow must not run while the
+        // output is full - the interval never starts.
+        if (churn.getIntervalTotal() != 0) {
+            helper.fail("expected NO interval progress with output full, got total="
+                + churn.getIntervalTotal());
             return;
         }
         helper.succeed();

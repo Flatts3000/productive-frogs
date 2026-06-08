@@ -175,7 +175,17 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
             return;
         }
 
-        // 3. Countdown. Start a fresh interval if none is running.
+        // 3. Furnace stall semantics (the Milker's full-output behavior): the
+        //    countdown only advances while the spawn event could actually
+        //    realize - one empty bucket available AND a free slime-output
+        //    slot. A blocked churn holds its progress (never resets, never
+        //    spends budget) and resumes where it paused.
+        if (!be.canEmitOne()) {
+            setWorking(level, pos, state, false);
+            return;
+        }
+
+        // 4. Countdown. Start a fresh interval if none is running.
         if (be.intervalTotal <= 0) {
             be.startInterval(level, milk);
         }
@@ -183,13 +193,6 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
             be.intervalRemaining--;
             be.setChanged();
             setWorking(level, pos, state, true);
-            return;
-        }
-
-        // 4. Ready to fire. Hold here (budget untouched) until the event can
-        //    actually realize: one empty bucket + a free slime-output slot.
-        if (!be.canEmitOne()) {
-            setWorking(level, pos, state, false);
             return;
         }
 

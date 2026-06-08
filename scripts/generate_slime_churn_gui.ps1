@@ -66,18 +66,27 @@ try {
             $tileGfx.DrawImage($src, $dstRect, $srcRect, [System.Drawing.GraphicsUnit]::Pixel)
         } finally { $tileGfx.Dispose() }
 
+        # Tile the eraser across the rect, CLAMPED to the rect bounds - a
+        # naive 8px step overshoots up to 7px past the rect edge, which is
+        # exactly how v1 of this script wiped the top rows of the lower-left
+        # slot well (the in-game "truncated slot" bug).
         function Erase-Region([System.Drawing.Graphics]$gfx, [System.Drawing.Bitmap]$t, [int]$x, [int]$y, [int]$w, [int]$h) {
             for ($ty = $y; $ty -lt ($y + $h); $ty += 8) {
+                $th = [Math]::Min(8, $y + $h - $ty)
                 for ($tx = $x; $tx -lt ($x + $w); $tx += 8) {
-                    $gfx.DrawImage($t, $tx, $ty, 8, 8)
+                    $tw = [Math]::Min(8, $x + $w - $tx)
+                    $dstRect = New-Object System.Drawing.Rectangle $tx, $ty, $tw, $th
+                    $srcRect = New-Object System.Drawing.Rectangle 0, 0, $tw, $th
+                    $gfx.DrawImage($t, $dstRect, $srcRect, [System.Drawing.GraphicsUnit]::Pixel)
                 }
             }
         }
 
         # Erase the vanilla 26x26 result well at (111,30) and the burn-flame
-        # outline between the left slots (~(56,36) 14x14).
+        # outline between the left slots (~(56,36) 14x14). The flame rect
+        # stops at y=50 so it can never clip the fuel well that starts at 51.
         Erase-Region $g $tile 108 28 32 32
-        Erase-Region $g $tile 54 34 18 18
+        Erase-Region $g $tile 54 34 18 16
 
         # Copy the 20x20 input-slot well (frame + bevel) from vanilla's input
         # position (54,15).
@@ -92,9 +101,12 @@ try {
         } finally { $slotGfx.Dispose() }
 
         # Right column: slime output (114,15) + spent-container output (114,51),
-        # mirroring the left column's input (54,15) + fuel (54,51) wells.
+        # mirroring the left column's input (54,15) + fuel (54,51) wells. The
+        # left-bottom well is re-pasted too, so the layout is correct even if
+        # an erase rect ever grazes it again.
         $g.DrawImage($slot, 114, 15, 20, 20)
         $g.DrawImage($slot, 114, 51, 20, 20)
+        $g.DrawImage($slot, 54, 51, 20, 20)
         $slot.Dispose()
         $tile.Dispose()
 

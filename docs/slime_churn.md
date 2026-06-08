@@ -48,9 +48,11 @@ The Churn runs `MilkSpawnEconomy` - the **same math** the placed
   Buckets stack to 1, so a multi-bucket batch drains through the output slot
   one per tick (`pendingBatch`, persisted in NBT - a paid-for batch is never
   voided).
-- **Pause-without-waste** (the source's pause semantics): no empty buckets,
-  output occupied, or container-output full all hold the churn with the
-  budget untouched. At "ready" it fires the instant the blockage clears.
+- **Pause-without-waste, furnace stall semantics**: no empty buckets, output
+  occupied, or container-output full all stall the churn with the budget
+  untouched - and the **progress arrow does not advance while blocked**
+  (vanilla-furnace full-output behavior, same as the Milker). Progress is
+  held, never reset; it resumes where it paused once the blockage clears.
 
 **Yield equivalence is the design contract:** a catalyzed milk bucket spent in
 the Churn yields exactly as many slimes as hand-placing it - they just arrive
