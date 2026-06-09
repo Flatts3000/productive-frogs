@@ -9,7 +9,7 @@
   "item.productivefrogs.frog_egg.void": "Bottle of Void Frog Eggs",
   "item.productivefrogs.sweetslime": "Sweetslime",
   "item.productivefrogs.frog_net": "Frog Net",
-  "productivefrogs.frog_net.empty": "Right-click a Resource Frog to catch it",
+  "productivefrogs.frog_net.empty": "Right-click a frog to catch it",
   "productivefrogs.frog_net.stats": "Appetite %1$s  Bounty %2$s  Reach %3$s",
   "productivefrogs.frog_net.release": "Right-click a block to release",
   "item.productivefrogs.count_catalyst": "Bountiful Catalyst",
