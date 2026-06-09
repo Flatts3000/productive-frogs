@@ -115,6 +115,7 @@ public final class PFCreativeTabs {
                     if (PFConfig.frogLegsEnabled()) {
                         output.accept(PFItems.RAW_FROG_LEGS.get());
                         output.accept(PFItems.COOKED_FROG_LEGS.get());
+                        output.accept(PFItems.FROG_LEGS_SOUP.get());
                     }
                     // Slime Milk catalysts (drop into a source to buff it). Each
                     // shows only when its own per-catalyst flag - ANDed with the

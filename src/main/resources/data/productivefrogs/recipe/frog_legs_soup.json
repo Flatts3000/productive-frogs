@@ -1,0 +1,15 @@
+{
+  "neoforge:conditions": [
+    { "type": "productivefrogs:config_enabled", "config": "frog_legs" }
+  ],
+  "type": "minecraft:crafting_shapeless",
+  "category": "food",
+  "group": "productivefrogs_frog_legs",
+  "ingredients": [
+    { "item": "minecraft:bowl" },
+    { "item": "productivefrogs:cooked_frog_legs" },
+    { "item": "minecraft:brown_mushroom" },
+    { "item": "minecraft:red_mushroom" }
+  ],
+  "result": { "id": "productivefrogs:frog_legs_soup", "count": 1 }
+}

@@ -2,6 +2,7 @@ package com.flatts.productivefrogs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -48,6 +49,32 @@ class FrogLegsRecipeTest {
     @Test
     void campfireCooksRawIntoCooked() {
         assertCookingRecipe("cooked_frog_legs_campfire.json", "minecraft:campfire_cooking");
+    }
+
+    @Test
+    void soupIsCraftedFromCookedLegsAndGated() {
+        JsonObject recipe = parse(RECIPE_ROOT.resolve("frog_legs_soup.json"));
+        assertEquals("minecraft:crafting_shapeless", recipe.get("type").getAsString(), "soup: recipe type");
+        assertEquals("productivefrogs:frog_legs_soup",
+            recipe.getAsJsonObject("result").get("id").getAsString(), "soup: result");
+
+        JsonArray ingredients = recipe.getAsJsonArray("ingredients");
+        boolean usesCookedLegs = false;
+        boolean usesBowl = false;
+        for (var el : ingredients) {
+            String item = el.getAsJsonObject().get("item").getAsString();
+            usesCookedLegs |= "productivefrogs:cooked_frog_legs".equals(item);
+            usesBowl |= "minecraft:bowl".equals(item);
+        }
+        assertTrue(usesCookedLegs, "soup: must be crafted from cooked frog legs");
+        assertTrue(usesBowl, "soup: must include a bowl (the returned container)");
+
+        JsonArray conditions = recipe.getAsJsonArray("neoforge:conditions");
+        assertNotNull(conditions, "soup: must carry a config_enabled condition");
+        assertEquals(1, conditions.size(), "soup: exactly one condition");
+        JsonObject cond = conditions.get(0).getAsJsonObject();
+        assertEquals("productivefrogs:config_enabled", cond.get("type").getAsString(), "soup: condition type");
+        assertEquals("frog_legs", cond.get("config").getAsString(), "soup: gated on frog_legs");
     }
 
     private static void assertCookingRecipe(String file, String type) {

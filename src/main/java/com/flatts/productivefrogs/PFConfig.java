@@ -39,6 +39,7 @@ public final class PFConfig {
     public static final ModConfigSpec.BooleanValue BREWED_FROGLIGHTS_ENABLED;
     public static final ModConfigSpec.BooleanValue FROG_NET_ENABLED;
     public static final ModConfigSpec.BooleanValue FROG_LEGS_ENABLED;
+    public static final ModConfigSpec.BooleanValue HOPPING_ENABLED;
     public static final ModConfigSpec.BooleanValue FROGLIGHT_WEAPON_ENABLED;
     public static final ModConfigSpec.IntValue CATALYST_COUNT_PER;
     public static final ModConfigSpec.IntValue CATALYST_MAX_SPEED_LEVEL;
@@ -339,6 +340,20 @@ public final class PFConfig {
                 "and a brewed slime's effect carries onto the Froglight). Gated by boss Froglights in its",
                 "recipe, so it's pure endgame. When false the sword is uncraftable, hidden from JEI + the",
                 "creative tab, and harvests no Froglight if obtained another way. Recipe toggle needs a world reload."
+            )
+            .define("enabled", true);
+
+        builder.pop();
+
+        builder.push("hopping");
+
+        HOPPING_ENABLED = builder
+            .comment(
+                "Whether the Potion of Hopping is enabled. Default true.",
+                "Brewed from an awkward potion + raw Frog Legs. While the effect is active a jump",
+                "launches you forward (a frog leap, distinct from vanilla's vertical Jump Boost), and",
+                "falls are softened. When false the brewing recipe is not registered and the effect does",
+                "nothing if applied another way. Toggling the brew requires a restart."
             )
             .define("enabled", true);
 
@@ -717,6 +732,11 @@ public final class PFConfig {
     /** Whether killing a frog drops Frog Legs ({@code frog_legs.enabled}); fallback true. */
     public static boolean frogLegsEnabled() {
         return !SPEC.isLoaded() || FROG_LEGS_ENABLED.get();
+    }
+
+    /** Whether the Potion of Hopping is enabled ({@code hopping.enabled}); fallback true. */
+    public static boolean hoppingEnabled() {
+        return !SPEC.isLoaded() || HOPPING_ENABLED.get();
     }
 
     /** Whether the Froglight Cleaver is enabled ({@code froglight_weapon.enabled}); fallback true. */
