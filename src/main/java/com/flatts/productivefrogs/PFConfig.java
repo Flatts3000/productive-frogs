@@ -38,6 +38,7 @@ public final class PFConfig {
     public static final ModConfigSpec.BooleanValue CATALYST_INFINITE_ENABLED;
     public static final ModConfigSpec.BooleanValue BREWED_FROGLIGHTS_ENABLED;
     public static final ModConfigSpec.BooleanValue FROG_NET_ENABLED;
+    public static final ModConfigSpec.BooleanValue FROG_LEGS_ENABLED;
     public static final ModConfigSpec.IntValue CATALYST_COUNT_PER;
     public static final ModConfigSpec.IntValue CATALYST_MAX_SPEED_LEVEL;
     public static final ModConfigSpec.IntValue CATALYST_MAX_QUANTITY_LEVEL;
@@ -309,6 +310,20 @@ public final class PFConfig {
                 "it elsewhere (right-click a block), preserving its species and bred stats. When false the",
                 "net is uncraftable, hidden from JEI + the creative tab, and inert if obtained another way",
                 "(it neither catches nor releases). Toggling the recipe requires a world reload."
+            )
+            .define("enabled", true);
+
+        builder.pop();
+
+        builder.push("frog_legs");
+
+        FROG_LEGS_ENABLED = builder
+            .comment(
+                "Whether killing a frog drops Frog Legs. Default true.",
+                "Any frog (vanilla, Resource, or a modded frog in the productivefrogs:frogs tag) drops 1-2",
+                "raw Frog Legs when killed, Looting-scaled, and cooked Frog Legs instead if it was on fire",
+                "(the cow/chicken behaviour). When false, no legs drop and the items are uncraftable/hidden.",
+                "Set false for packs that want losing a frog to sting. Toggling recipes requires a world reload."
             )
             .define("enabled", true);
 
@@ -682,6 +697,11 @@ public final class PFConfig {
     /** Whether the Frog Net is enabled ({@code frog_net.enabled}); fallback true. */
     public static boolean frogNetEnabled() {
         return !SPEC.isLoaded() || FROG_NET_ENABLED.get();
+    }
+
+    /** Whether killing a frog drops Frog Legs ({@code frog_legs.enabled}); fallback true. */
+    public static boolean frogLegsEnabled() {
+        return !SPEC.isLoaded() || FROG_LEGS_ENABLED.get();
     }
 
     /** Whether Slime Milk catalysts are enabled ({@code slime_milk_catalysts.enabled}); fallback true. */

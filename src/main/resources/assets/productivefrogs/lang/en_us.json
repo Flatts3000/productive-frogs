@@ -8,6 +8,8 @@
   "item.productivefrogs.frog_egg.infernal": "Bottle of Infernal Frog Eggs",
   "item.productivefrogs.frog_egg.void": "Bottle of Void Frog Eggs",
   "item.productivefrogs.sweetslime": "Sweetslime",
+  "item.productivefrogs.raw_frog_legs": "Raw Frog Legs",
+  "item.productivefrogs.cooked_frog_legs": "Cooked Frog Legs",
   "item.productivefrogs.frog_net": "Frog Net",
   "productivefrogs.frog_net.empty": "Right-click a frog to catch it",
   "productivefrogs.frog_net.stats": "Appetite %1$s  Bounty %2$s  Reach %3$s",

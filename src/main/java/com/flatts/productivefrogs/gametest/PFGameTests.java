@@ -819,6 +819,27 @@ public final class PFGameTests {
     }
 
     /**
+     * Killing a frog drops Frog Legs (#194). Spawn a Resource Frog, kill it, and
+     * expect a raw_frog_legs item entity (the cow/chicken-style death drop, here
+     * via FrogLegDropHandler so it works for any frog).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 60)
+    public static void killedFrogDropsRawLegs(GameTestHelper helper) {
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 2));
+        frog.setCategory(Category.CAVE);
+        frog.hurt(helper.getLevel().damageSources().generic(), 1000.0F);
+
+        helper.succeedWhen(() -> {
+            boolean dropped = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                .map(net.minecraft.world.entity.item.ItemEntity::getItem)
+                .anyMatch(s -> s.is(PFItems.RAW_FROG_LEGS.get()));
+            if (!dropped) {
+                helper.fail("a killed frog should drop raw frog legs");
+            }
+        });
+    }
+
+    /**
      * Toggling the aura off stops application (#162): an effect-stamped but
      * disabled Froglight does not buff. Stamp + immediately toggle off, then
      * after a generous delay the nearby pig must have no Speed.

@@ -22,6 +22,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
@@ -87,6 +88,27 @@ public final class PFItems {
     public static final DeferredItem<Item> SWEETSLIME = ITEMS.registerItem(
         "sweetslime",
         Item::new
+    );
+
+    /**
+     * Frog legs (#194) - the death payoff for killing a frog, a renewable meat on a
+     * skyblock where animals are scarce. Raw is chicken-tier; cooked is a step up
+     * (cooked-chicken values). Plain {@link Item}s with {@link FoodProperties}; the
+     * drop is handled by {@code FrogLegDropHandler} and cooking by the smelting /
+     * smoking / campfire recipes, all gated by {@code frog_legs.enabled}.
+     */
+    public static final FoodProperties RAW_FROG_LEGS_FOOD =
+        new FoodProperties.Builder().nutrition(2).saturationModifier(0.3F).build();
+    public static final FoodProperties COOKED_FROG_LEGS_FOOD =
+        new FoodProperties.Builder().nutrition(6).saturationModifier(0.6F).build();
+
+    public static final DeferredItem<Item> RAW_FROG_LEGS = ITEMS.registerItem(
+        "raw_frog_legs",
+        props -> new Item(props.food(RAW_FROG_LEGS_FOOD))
+    );
+    public static final DeferredItem<Item> COOKED_FROG_LEGS = ITEMS.registerItem(
+        "cooked_frog_legs",
+        props -> new Item(props.food(COOKED_FROG_LEGS_FOOD))
     );
 
     /**

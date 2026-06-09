@@ -71,6 +71,13 @@ class ConfigEnabledConditionTest {
     }
 
     @Test
+    void frogLegsKeyRoundTrips() {
+        assertEquals("frog_legs", ConfigEnabledCondition.Key.FROG_LEGS.getSerializedName());
+        assertSame(ConfigEnabledCondition.Key.FROG_LEGS,
+            ConfigEnabledCondition.Key.CODEC.byName("frog_legs"));
+    }
+
+    @Test
     void codecRejectsUnknownKey() {
         assertNull(ConfigEnabledCondition.Key.CODEC.byName("does_not_exist"));
     }

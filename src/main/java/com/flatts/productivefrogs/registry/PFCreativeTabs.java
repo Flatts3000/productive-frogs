@@ -105,6 +105,12 @@ public final class PFCreativeTabs {
                     if (PFConfig.frogNetEnabled()) {
                         output.accept(PFItems.FROG_NET.get());
                     }
+                    // Frog Legs - the death-drop food (#194); shown by default,
+                    // hidden when the feature is config-disabled.
+                    if (PFConfig.frogLegsEnabled()) {
+                        output.accept(PFItems.RAW_FROG_LEGS.get());
+                        output.accept(PFItems.COOKED_FROG_LEGS.get());
+                    }
                     // Slime Milk catalysts (drop into a source to buff it). Each
                     // shows only when its own per-catalyst flag - ANDed with the
                     // catalysts master inside the accessor - is on (#201); shown by
