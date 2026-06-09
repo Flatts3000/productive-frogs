@@ -102,11 +102,21 @@ public final class PFCreativeTabs {
                     // Slime Milk catalysts (drop into a source to buff it). Hidden
                     // when the feature is config-disabled, mirroring the Spawnery;
                     // shown by default. isLoaded guards the title-screen build.
+                    // Master gates the group; each catalyst then shows only when its
+                    // own flag is on (#201). isLoaded guards the title-screen build.
                     if (PFConfig.SPEC.isLoaded() && PFConfig.MILK_CATALYSTS_ENABLED.get()) {
-                        output.accept(PFItems.COUNT_CATALYST.get());
-                        output.accept(PFItems.SPEED_CATALYST.get());
-                        output.accept(PFItems.QUANTITY_CATALYST.get());
-                        output.accept(PFItems.INFINITE_CATALYST.get());
+                        if (PFConfig.CATALYST_COUNT_ENABLED.get()) {
+                            output.accept(PFItems.COUNT_CATALYST.get());
+                        }
+                        if (PFConfig.CATALYST_SPEED_ENABLED.get()) {
+                            output.accept(PFItems.SPEED_CATALYST.get());
+                        }
+                        if (PFConfig.CATALYST_QUANTITY_ENABLED.get()) {
+                            output.accept(PFItems.QUANTITY_CATALYST.get());
+                        }
+                        if (PFConfig.CATALYST_INFINITE_ENABLED.get()) {
+                            output.accept(PFItems.INFINITE_CATALYST.get());
+                        }
                     }
                     // One Slime Milk bucket per registry variant that has a
                     // per-variant fluid (v1.8). A content-only variant (in the

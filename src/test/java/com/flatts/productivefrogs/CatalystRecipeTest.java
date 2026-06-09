@@ -17,11 +17,13 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Shape gate for the four Slime Milk catalyst recipes (docs/slime_milk_catalysts.md).
- * Pins: every catalyst recipe carries the {@code productivefrogs:config_enabled} /
- * {@code milk_catalysts} condition that gates the feature, each result id is correct,
- * and the Infinite catalyst is genuinely <i>built from</i> Count catalysts (the
- * design decision: Infinite is the final tier of the count line). A dropped
- * condition or a recipe that stopped consuming Count catalysts then fails the build.
+ * Pins: every catalyst recipe carries the {@code productivefrogs:config_enabled}
+ * condition keyed on its own per-catalyst config id (#201 - {@code count_catalyst},
+ * {@code speed_catalyst}, {@code quantity_catalyst}, {@code infinite_catalyst}; each
+ * ANDs the catalysts master under the hood), each result id is correct, and the
+ * Infinite catalyst is genuinely <i>built from</i> Count catalysts (the design
+ * decision: Infinite is the final tier of the count line). A dropped condition, a
+ * wrong gate key, or a recipe that stopped consuming Count catalysts then fails the build.
  */
 class CatalystRecipeTest {
 
@@ -40,10 +42,10 @@ class CatalystRecipeTest {
 
     @Test
     void everyCatalystRecipeIsConfigGatedAndYieldsItsItem() {
-        assertGatedRecipe("count_catalyst.json", "productivefrogs:count_catalyst");
-        assertGatedRecipe("speed_catalyst.json", "productivefrogs:speed_catalyst");
-        assertGatedRecipe("quantity_catalyst.json", "productivefrogs:quantity_catalyst");
-        assertGatedRecipe("infinite_catalyst.json", "productivefrogs:infinite_catalyst");
+        assertGatedRecipe("count_catalyst.json", "productivefrogs:count_catalyst", "count_catalyst");
+        assertGatedRecipe("speed_catalyst.json", "productivefrogs:speed_catalyst", "speed_catalyst");
+        assertGatedRecipe("quantity_catalyst.json", "productivefrogs:quantity_catalyst", "quantity_catalyst");
+        assertGatedRecipe("infinite_catalyst.json", "productivefrogs:infinite_catalyst", "infinite_catalyst");
     }
 
     @Test
@@ -61,7 +63,7 @@ class CatalystRecipeTest {
         assertTrue(usesCount, "infinite catalyst must be crafted from count catalysts");
     }
 
-    private static void assertGatedRecipe(String file, String resultId) {
+    private static void assertGatedRecipe(String file, String resultId, String configKey) {
         JsonObject recipe = parse(RECIPE_ROOT.resolve(file));
         assertEquals(resultId, recipe.getAsJsonObject("result").get("id").getAsString(), file + ": result id");
         JsonArray conditions = recipe.getAsJsonArray("neoforge:conditions");
@@ -69,7 +71,7 @@ class CatalystRecipeTest {
         assertEquals(1, conditions.size(), file + ": exactly one condition");
         JsonObject cond = conditions.get(0).getAsJsonObject();
         assertEquals("productivefrogs:config_enabled", cond.get("type").getAsString(), file + ": condition type");
-        assertEquals("milk_catalysts", cond.get("config").getAsString(), file + ": condition config key");
+        assertEquals(configKey, cond.get("config").getAsString(), file + ": condition config key");
     }
 
     private static JsonObject parse(Path file) {

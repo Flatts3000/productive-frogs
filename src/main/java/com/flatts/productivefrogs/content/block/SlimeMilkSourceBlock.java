@@ -383,6 +383,11 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
         if (catalyst == null) {
             return;
         }
+        // Per-catalyst gate (#201): a config-disabled catalyst is inert - leave the
+        // item floating for the player rather than consuming it for no effect.
+        if (!catalyst.isEnabled()) {
+            return;
+        }
         SlimeMilkSourceBlockEntity be = getSourceBE(level, pos);
         if (be == null || effectiveVariant(be) == null) {
             return;

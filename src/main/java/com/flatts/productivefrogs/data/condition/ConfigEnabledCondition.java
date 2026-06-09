@@ -63,6 +63,32 @@ public record ConfigEnabledCondition(Key config) implements ICondition {
                 return PFConfig.MILK_CATALYSTS_ENABLED.get();
             }
         },
+        // Per-catalyst recipe gates (#201): each ANDs the catalysts master so the
+        // master still drops all four, and the child adds individual granularity.
+        COUNT_CATALYST("count_catalyst") {
+            @Override
+            boolean read() {
+                return PFConfig.MILK_CATALYSTS_ENABLED.get() && PFConfig.CATALYST_COUNT_ENABLED.get();
+            }
+        },
+        SPEED_CATALYST("speed_catalyst") {
+            @Override
+            boolean read() {
+                return PFConfig.MILK_CATALYSTS_ENABLED.get() && PFConfig.CATALYST_SPEED_ENABLED.get();
+            }
+        },
+        QUANTITY_CATALYST("quantity_catalyst") {
+            @Override
+            boolean read() {
+                return PFConfig.MILK_CATALYSTS_ENABLED.get() && PFConfig.CATALYST_QUANTITY_ENABLED.get();
+            }
+        },
+        INFINITE_CATALYST("infinite_catalyst") {
+            @Override
+            boolean read() {
+                return PFConfig.MILK_CATALYSTS_ENABLED.get() && PFConfig.CATALYST_INFINITE_ENABLED.get();
+            }
+        },
         SLIME_MILKER("slime_milker") {
             @Override
             boolean read() {
