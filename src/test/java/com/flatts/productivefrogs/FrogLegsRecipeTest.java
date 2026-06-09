@@ -50,6 +50,28 @@ class FrogLegsRecipeTest {
         assertCookingRecipe("cooked_frog_legs_campfire.json", "minecraft:campfire_cooking");
     }
 
+    @Test
+    void soupIsCraftedFromCookedLegsAndGated() {
+        JsonObject recipe = parse(RECIPE_ROOT.resolve("frog_legs_soup.json"));
+        assertEquals("minecraft:crafting_shapeless", recipe.get("type").getAsString(), "soup: recipe type");
+        assertEquals("productivefrogs:frog_legs_soup",
+            recipe.getAsJsonObject("result").get("id").getAsString(), "soup: result");
+
+        JsonArray ingredients = recipe.getAsJsonArray("ingredients");
+        boolean usesCookedLegs = false;
+        for (var el : ingredients) {
+            if ("productivefrogs:cooked_frog_legs".equals(el.getAsJsonObject().get("item").getAsString())) {
+                usesCookedLegs = true;
+            }
+        }
+        org.junit.jupiter.api.Assertions.assertTrue(usesCookedLegs, "soup: must be crafted from cooked frog legs");
+
+        JsonArray conditions = recipe.getAsJsonArray("neoforge:conditions");
+        assertNotNull(conditions, "soup: must carry a config_enabled condition");
+        assertEquals("frog_legs",
+            conditions.get(0).getAsJsonObject().get("config").getAsString(), "soup: gated on frog_legs");
+    }
+
     private static void assertCookingRecipe(String file, String type) {
         JsonObject recipe = parse(RECIPE_ROOT.resolve(file));
         assertEquals(type, recipe.get("type").getAsString(), file + ": recipe type");
