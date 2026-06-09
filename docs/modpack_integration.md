@@ -13,6 +13,7 @@ This doc is the consolidated surface; each section links to the detailed design 
 | Add a new farmable resource (vanilla or modded) | datapack registry | `data/<ns>/productivefrogs/slime_variant/<name>.json` |
 | Map a (modded) slime entity to a species | datapack registry | `data/<ns>/productivefrogs/parent_species/<name>.json` |
 | Tune milk output / spawn cadence / discovery rate | config | `config/productivefrogs-common.toml` |
+| Disable specific resources, whole species, or the boss tier | config `[variants]` | `config/productivefrogs-common.toml` |
 | Add or change cross-mod crush yields | recipe JSON | `data/<ns>/productivefrogs/recipe/<modid>/<name>.json` |
 
 `<ns>` is your pack's namespace for new content, or `productivefrogs` to override the mod's own files.
@@ -34,6 +35,13 @@ A COMMON config, generated on first launch. Toggling a value that gates a recipe
 | `[slime_milk_catalysts]` | `maxSpeedLevel` / `maxQuantityLevel` | `4` / `3` | Caps on the Speed / Quantity upgrades. |
 | `[slime_milk_catalysts]` | `speedReductionPerLevel` / `minIntervalFloorTicks` | `0.20` / `20` | Speed scaling and the spawn-interval floor. |
 | `[discovery]` | `discoveryChancePerOffspring` | `0.05` | Per-offspring chance a parent-species split converts to a Resource Slime. |
+| `[variants]` | `disabledVariants` | `[]` | Variant ids to force-off (e.g. `["productivefrogs:iron", "productivefrogs:tin"]`). A disabled variant is unprimable, never discovered, and hidden from JEI + the creative tab. |
+| `[variants]` | `disabledCategories` | `[]` | Whole species to force-off, by lowercase name: `cave`, `geode`, `bog`, `tide`, `infernal`, `void`. Disables every variant in the species. |
+| `[variants]` | `bossVariantsEnabled` | `true` | The boss tier's prime-only variants (wither skull, nether star, dragon egg, dragon breath) in one switch. `false` makes them unprimable + hidden. |
+
+### Scoping content with `[variants]`
+
+Use this to ship a smaller mod surface without datapack surgery - say, only the Cave and Bog lines (`disabledCategories = ["geode", "tide", "infernal", "void"]`), or to drop a single noisy resource (`disabledVariants = ["productivefrogs:redstone"]`). The toggles are a **soft hide**: the registry entry stays, so a disabled variant's already-placed slimes, buckets, and froglights keep working, and re-enabling restores everything (no save surgery). One caveat - a disabled variant may still have its per-variant Slime Milk *fluid* registered (that is minted at mod-init, before this config loads), but it stays unobtainable since every way to reach the variant is gated. Changes apply on world reload.
 
 ## 2. Adding a farmable resource (the `slime_variant` registry)
 

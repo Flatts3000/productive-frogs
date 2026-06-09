@@ -63,6 +63,14 @@ the whole loop because it is the fluid's identity.
   buffs for automation.
 - **Hard world break.** The old `slime_milk` fluid/block/bucket ids were removed;
   pre-1.8 placed milk and inventory buckets orphan. No migration.
+- **A config-disabled variant (#203) still keeps its milk fluid registered.** The
+  per-variant fluids are minted at mod-init, before the COMMON config loads, so the
+  `variants.disabledVariants` / `disabledCategories` / `bossVariantsEnabled` toggles
+  cannot suppress the fluid object itself. The fluid stays inert and unobtainable -
+  the disabled variant is unprimable, undiscoverable, and hidden from JEI + the
+  creative tab, so no Milker/Churn recipe or milk bucket for it is reachable. This
+  mirrors the unknown-variant rule above (the fluid registry is a mod-init artifact,
+  the disable toggle is a world-reload one). See `docs/modpack_integration.md`.
 
 ## Adding your own automatable variant (pack authors)
 

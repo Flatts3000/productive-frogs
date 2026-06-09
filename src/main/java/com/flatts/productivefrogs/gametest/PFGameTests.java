@@ -475,6 +475,157 @@ public final class PFGameTests {
     }
 
     /**
+     * #203 per-variant disable: a variant named in {@code variants.disabledVariants}
+     * is unprimable (both the exact-item and held-stack paths miss), while a
+     * non-disabled variant still resolves; re-enabling restores it. Mutates the
+     * live config in a try/finally so the global state is always reset.
+     *
+     * <p><b>Isolation:</b> the set -&gt; assert -&gt; reset runs synchronously in a
+     * single method invocation on the server thread (no {@code runAfterDelay} /
+     * {@code onEachTick} yielding), so no concurrently-scheduled test body can
+     * observe the mutated config between the set and the {@code finally} reset.
+     * {@code helper.fail()} does not throw on 1.21.1, and each {@code fail()} is
+     * followed by a {@code return} inside the try, so the {@code finally} still
+     * fires on every failure path. Fails fast (rather than skipping) if COMMON
+     * config isn't loaded, so the assertions can't silently false-green.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void disabledVariantConfigSuppressesResolution(GameTestHelper helper) {
+        if (!com.flatts.productivefrogs.PFConfig.SPEC.isLoaded()) {
+            helper.fail("COMMON config must be loaded for the variant-disable tests to be meaningful");
+            return;
+        }
+        net.minecraft.core.Registry<SlimeVariant> registry =
+            helper.getLevel().registryAccess().registryOrThrow(PFRegistries.SLIME_VARIANT);
+        ResourceLocation iron = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        ResourceLocation ironIngot = ResourceLocation.fromNamespaceAndPath("minecraft", "iron_ingot");
+        net.minecraft.util.RandomSource random = helper.getLevel().getRandom();
+
+        // Baseline: iron resolves before we disable it.
+        if (SlimeVariant.findByPrimerItem(registry, ironIngot) == null) {
+            helper.fail("baseline: iron should resolve by its primer item");
+            return;
+        }
+        try {
+            com.flatts.productivefrogs.PFConfig.DISABLED_VARIANTS.set(java.util.List.of(iron.toString()));
+            if (SlimeVariant.findByPrimerItem(registry, ironIngot) != null) {
+                helper.fail("disabled iron should not resolve via findByPrimerItem");
+                return;
+            }
+            if (SlimeVariant.findByPrimer(registry, new ItemStack(Items.IRON_INGOT)) != null) {
+                helper.fail("disabled iron should not resolve via findByPrimer (held stack)");
+                return;
+            }
+            // The rest of iron's CAVE pool is unaffected: discovery still produces
+            // non-iron variants and never the disabled one.
+            boolean sawCave = false;
+            for (int i = 0; i < 300; i++) {
+                java.util.Map.Entry<ResourceLocation, SlimeVariant> pick =
+                    SlimeVariant.pickWeighted(registry, Category.CAVE, random);
+                if (pick != null) {
+                    sawCave = true;
+                    if (pick.getKey().equals(iron)) {
+                        helper.fail("disabled iron should never come out of split-discovery");
+                        return;
+                    }
+                }
+            }
+            if (!sawCave) {
+                helper.fail("CAVE pool should still produce non-iron variants while only iron is disabled");
+                return;
+            }
+        } finally {
+            com.flatts.productivefrogs.PFConfig.DISABLED_VARIANTS.set(java.util.List.of());
+        }
+        // Restored: iron primes again after re-enabling.
+        if (SlimeVariant.findByPrimerItem(registry, ironIngot) == null) {
+            helper.fail("iron should resolve again after re-enabling");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * #203 per-category disable: disabling a whole category empties its discovery
+     * pool and makes its variants unprimable, while other categories keep working.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void disabledCategoryConfigSuppressesPool(GameTestHelper helper) {
+        if (!com.flatts.productivefrogs.PFConfig.SPEC.isLoaded()) {
+            helper.fail("COMMON config must be loaded for the variant-disable tests to be meaningful");
+            return;
+        }
+        net.minecraft.core.Registry<SlimeVariant> registry =
+            helper.getLevel().registryAccess().registryOrThrow(PFRegistries.SLIME_VARIANT);
+        net.minecraft.util.RandomSource random = helper.getLevel().getRandom();
+
+        if (SlimeVariant.pickWeighted(registry, Category.CAVE, random) == null) {
+            helper.fail("baseline: the CAVE pool should be non-empty");
+            return;
+        }
+        try {
+            com.flatts.productivefrogs.PFConfig.DISABLED_CATEGORIES.set(java.util.List.of(Category.CAVE.id()));
+            for (int i = 0; i < 100; i++) {
+                if (SlimeVariant.pickWeighted(registry, Category.CAVE, random) != null) {
+                    helper.fail("a disabled category should yield an empty discovery pool");
+                    return;
+                }
+            }
+            // iron is CAVE: disabling the category makes it unprimable too.
+            if (SlimeVariant.findByPrimer(registry, new ItemStack(Items.IRON_INGOT)) != null) {
+                helper.fail("a CAVE-category variant should be unprimable when CAVE is disabled");
+                return;
+            }
+            // A different category still produces picks.
+            if (SlimeVariant.pickWeighted(registry, Category.BOG, random) == null) {
+                helper.fail("BOG should still pick while only CAVE is disabled");
+                return;
+            }
+        } finally {
+            com.flatts.productivefrogs.PFConfig.DISABLED_CATEGORIES.set(java.util.List.of());
+        }
+        helper.succeed();
+    }
+
+    /**
+     * #203 boss-tier switch: {@code variants.bossVariantsEnabled=false} makes the
+     * weight-0 prime-only variants unprimable (they are already absent from
+     * discovery via the weight gate). Re-enabling restores the prime path.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void bossVariantsDisabledMakesThemUnprimable(GameTestHelper helper) {
+        if (!com.flatts.productivefrogs.PFConfig.SPEC.isLoaded()) {
+            helper.fail("COMMON config must be loaded for the variant-disable tests to be meaningful");
+            return;
+        }
+        net.minecraft.core.Registry<SlimeVariant> registry =
+            helper.getLevel().registryAccess().registryOrThrow(PFRegistries.SLIME_VARIANT);
+        ResourceLocation netherStar = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star");
+        ResourceLocation netherStarItem = ResourceLocation.fromNamespaceAndPath("minecraft", "nether_star");
+
+        java.util.Map.Entry<ResourceLocation, SlimeVariant> baseline =
+            SlimeVariant.findByPrimerItem(registry, netherStarItem);
+        if (baseline == null || !baseline.getKey().equals(netherStar)) {
+            helper.fail("baseline: nether_star should prime (prime-only, not unreachable)");
+            return;
+        }
+        try {
+            com.flatts.productivefrogs.PFConfig.BOSS_VARIANTS_ENABLED.set(false);
+            if (SlimeVariant.findByPrimerItem(registry, netherStarItem) != null) {
+                helper.fail("with the boss tier off, nether_star should be unprimable");
+                return;
+            }
+        } finally {
+            com.flatts.productivefrogs.PFConfig.BOSS_VARIANTS_ENABLED.set(true);
+        }
+        if (SlimeVariant.findByPrimerItem(registry, netherStarItem) == null) {
+            helper.fail("nether_star should prime again after re-enabling the boss tier");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
      * Boss catalyst altar gate (#184, docs/boss_catalyst_altar.md). Tests the
      * gate's decision logic directly via the public helpers (the spawn tick
      * itself is scheduled + private; the predicate is the testable seam):

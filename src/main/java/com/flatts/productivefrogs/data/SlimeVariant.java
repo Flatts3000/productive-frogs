@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.data;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -158,6 +159,20 @@ public record SlimeVariant(
     }
 
     /**
+     * Whether this variant is enabled under the current config (#203). A pack can
+     * force-off an individual variant, its whole category, or the boss tier; a
+     * disabled variant is treated as if it weren't in the registry at every
+     * resolution site (priming, split-discovery, JEI, creative tab) while its
+     * registry entry stays put (save-safe). Delegates to
+     * {@link PFConfig#variantEnabled} - which fails open before the config loads,
+     * so this is non-breaking by default. The id is passed in because the record
+     * doesn't carry its own registry key.
+     */
+    public boolean isEnabled(ResourceLocation id) {
+        return PFConfig.variantEnabled(id, this.category, this.weight);
+    }
+
+    /**
      * Find the variant primed by the given held stack, or {@code null}. Matches
      * a variant's exact {@code primer_item} (by item id) OR its {@code primer_tag}
      * (by tag membership). The tag path is what lets a single cross-mod variant
@@ -183,13 +198,20 @@ public record SlimeVariant(
         Map.Entry<ResourceLocation, SlimeVariant> tagMatch = null;
         for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
             SlimeVariant variant = entry.getValue();
+            ResourceLocation loc = entry.getKey().location();
+            // A config-disabled variant (#203) is unprimable: skip it entirely so
+            // priming its resource does nothing (and a disabled exact-item variant
+            // can't shadow an enabled tag match below).
+            if (!variant.isEnabled(loc)) {
+                continue;
+            }
             // Exact primer_item match wins immediately — specific beats general.
             if (variant.primerItem().filter(itemId::equals).isPresent()) {
-                return Map.entry(entry.getKey().location(), variant);
+                return Map.entry(loc, variant);
             }
             // Remember the first tag match but keep scanning for an exact item match.
             if (tagMatch == null && variant.primerTag().map(stack::is).orElse(false)) {
-                tagMatch = Map.entry(entry.getKey().location(), variant);
+                tagMatch = Map.entry(loc, variant);
             }
         }
         return tagMatch;
@@ -220,6 +242,10 @@ public record SlimeVariant(
     public static Map.Entry<ResourceLocation, SlimeVariant> findByPrimerItem(
             Registry<SlimeVariant> registry, ResourceLocation itemId) {
         for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
+            // Skip config-disabled variants (#203) - a disabled resource is unprimable.
+            if (!entry.getValue().isEnabled(entry.getKey().location())) {
+                continue;
+            }
             if (entry.getValue().primerItem().filter(id -> id.equals(itemId)).isPresent()) {
                 return Map.entry(entry.getKey().location(), entry.getValue());
             }
@@ -254,6 +280,10 @@ public record SlimeVariant(
             // defensive fallback, and an all-zero category cleanly yields null
             // (no nextInt(0) crash).
             if (entry.getValue().weight() <= 0) continue;
+            // Config-disabled variants (#203) drop out of the discovery pool too;
+            // a fully-disabled category then yields an empty pool -> null, exactly
+            // like a category with no variants.
+            if (!entry.getValue().isEnabled(entry.getKey().location())) continue;
             pool.add(Map.entry(entry.getKey().location(), entry.getValue()));
             totalWeight += entry.getValue().weight();
         }
