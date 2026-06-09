@@ -10,7 +10,7 @@ frog loop (wade into a slime farm and swing, instead of waiting on frogs).
   Froglight - the same variant-stamped (and, if the slime was brewed,
   effect-stamped) `configurable_froglight` a frog would produce on eating it.
 - **Looting** on the cleaver raises the drop count (1 + 0..Looting).
-- A normal netherite-tier sword otherwise (takes Sharpness, Unbreaking, etc.).
+- Netherite-tier but clearly stronger: +7 attack-damage bonus (12 displayed, vs netherite's 8) and fire-resistant. Takes the usual sword enchants.
 - Bigger slimes split rather than dropping a Froglight, same as the tongue path.
 
 ## Why it's balanced
@@ -35,8 +35,7 @@ recipes.
 
 ## Design
 
-- A plain netherite-tier `SwordItem` (`PFItems.FROGLIGHT_CLEAVER`); the harvest is
-  event-driven, not item-class behavior.
+- A netherite-tier `SwordItem` (`PFItems.FROGLIGHT_CLEAVER`) buffed to +7 attack-damage bonus (12 displayed) and `fireResistant()`; the harvest is event-driven, not item-class behavior.
 - `FroglightWeaponHandler` (`LivingDeathEvent`): when a `ResourceSlime` dies to a
   killer holding the cleaver, it reuses `FrogTongueDropHandler.buildFroglight`
   (now public) so variant + brewed-effect stamping lives in one place, shared with
