@@ -129,9 +129,13 @@ public class TerrariumControllerScreen extends PFContainerScreen<TerrariumContro
         gui.drawString(this.font,
             Component.translatable("productivefrogs.gui.controller.incubators", formed ? String.valueOf(this.menu.incubatorCount()) : "-"),
             BAR_X + 88, row, TEXT, false);
+        // Live frog count only - no "/ cap" denominator. The cap is just an
+        // Incubator release gate, not a hard limit (frogs can be led/placed in
+        // past it), so showing "10 / 8" read as a broken cap. See the Incubator
+        // GUI for the cap that actually governs its releases.
         gui.drawString(this.font,
             Component.translatable("productivefrogs.gui.controller.frogs",
-                formed ? this.menu.frogCount() + " / " + this.menu.frogCap() : "-"),
+                formed ? String.valueOf(this.menu.frogCount()) : "-"),
             BAR_X, row + 11, TEXT, false);
     }
 

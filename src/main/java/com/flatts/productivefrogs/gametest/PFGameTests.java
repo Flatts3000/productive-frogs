@@ -5272,6 +5272,30 @@ public final class PFGameTests {
      * {@code sprinklerCount} Sprinklers in the ceiling (y=6). Returns the
      * Controller's relative position.
      */
+    /**
+     * Incubators are optional (maintainer ruling): a sealed box with a Controller,
+     * a Hatch, and no Incubator still forms. Build the valid shell, replace the
+     * incubator face cell with plain shell, and assert it forms.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumFormsWithoutIncubator(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 1);
+        // Swap the incubator (placed at 4,4,1 by the helper) for a plain solid
+        // shell cell, so the box has zero incubators.
+        helper.setBlock(new BlockPos(4, 4, 1), Blocks.STONE);
+        ServerLevel level = helper.getLevel();
+        if (!(helper.getBlockEntity(controller)
+                instanceof com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity be)) {
+            helper.fail("no Terrarium Controller block entity at " + controller);
+            return;
+        }
+        if (!be.forceValidate(level, helper.absolutePos(controller)).formed()) {
+            helper.fail("a Terrarium with zero incubators should still form");
+            return;
+        }
+        helper.succeed();
+    }
+
     private static BlockPos buildValidTerrarium(GameTestHelper helper, int sprinklerCount) {
         for (int x = 1; x <= 7; x++) {
             for (int y = 1; y <= 6; y++) {

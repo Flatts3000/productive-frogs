@@ -11,6 +11,11 @@
 - **Config toggles for the Froglight Crucible and Casting Mold** (`appliances.crucible` / `appliances.castingMold`, default on). When off, the appliance is uncraftable and its JEI lane (melt / cast categories) is hidden, along with the creative-tab entry; a placed block still works. Lets a pack ship the resource loop without the melt-and-cast fluid lane. (#196)
 - **Per-catalyst config toggles for Slime Milk catalysts** (`slime_milk_catalysts.count` / `.speed` / `.quantity` / `.infinite`, default on; each effective only when the catalysts master `enabled` is on). Lets a pack keep some catalysts while removing others - for example turn off the Infinite (Endless) catalyst while keeping Count, Speed, and Quantity. A disabled catalyst is uncraftable, hidden from JEI and the creative tab, and inert if dropped into a source or Sprinkler (the item is left for the player); upgrades already applied to existing sources are still honoured. (#201)
 
+### Changed
+
+- **Terrarium Incubators are now optional.** A Terrarium forms with zero Incubators - add them only if you want it to breed frogs in place; otherwise lead or net frogs in yourself. (Previously the structure refused to form without at least one Incubator.)
+- **The Terrarium Controller GUI shows just the live frog count, not `count / cap`.** The cap is only an Incubator release gate, not a hard population limit (you can lead or net more frogs in past it), so the old `10 / 8` readout looked like a broken cap. The Incubator GUI still shows the cap that actually governs its releases.
+
 ### Fixed
 
 - **Bucketing a bred tadpole no longer wipes its stats.** Scooping a Resource Tadpole that carried inherited Appetite/Bounty/Reach into a bucket and placing it back down dropped those stats, so it matured into a baseline 1/1/1 frog. The bucket now carries the inherited stats the same way a world save does, so a bucketed tadpole grows into the frog it was bred to be.

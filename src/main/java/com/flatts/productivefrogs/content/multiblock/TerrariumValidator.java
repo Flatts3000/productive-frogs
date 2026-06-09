@@ -127,7 +127,6 @@ public final class TerrariumValidator {
 
         int controllers = 0;
         int hatches = 0;
-        int incubators = 0;
         BlockPos hatchPos = null;
         List<BlockPos> sprinklerList = new ArrayList<>();
         List<BlockPos> incubatorList = new ArrayList<>();
@@ -168,7 +167,8 @@ public final class TerrariumValidator {
                                 hatches++;
                                 hatchPos = ip;
                             } else {
-                                incubators++;
+                                // Incubators are optional (you can lead/place frogs
+                                // in by hand); just record any that are present.
                                 incubatorList.add(ip);
                             }
                         }
@@ -194,9 +194,9 @@ public final class TerrariumValidator {
         if (hatches > 1) {
             return TerrariumValidationResult.failed("multiple_hatches", null);
         }
-        if (incubators == 0) {
-            return TerrariumValidationResult.failed("no_incubator", null);
-        }
+        // Incubators are optional: a box with none still forms (it just won't breed
+        // frogs on its own - lead them in or seed it with caught frogs). The
+        // "no_incubator" PROBLEM_KEYS entry is kept for sync-index stability.
         return TerrariumValidationResult.formed(controllerPos, cavityMin, cavityMax, hatchPos,
             sprinklerList, incubatorList);
     }
