@@ -8,5 +8,5 @@
     "items": [ "productivefrogs:configurable_froglight" ],
     "components": { "productivefrogs:slime_variant": "productivefrogs:plastic" }
   },
-  "result": { "id": "industrialforegoing:latex", "amount": 1350 }
+  "result": { "id": "industrialforegoing:latex", "amount": 1000 }
 }
