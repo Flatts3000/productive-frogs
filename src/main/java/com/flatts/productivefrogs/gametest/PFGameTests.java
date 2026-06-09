@@ -478,8 +478,16 @@ public final class PFGameTests {
      * #203 per-variant disable: a variant named in {@code variants.disabledVariants}
      * is unprimable (both the exact-item and held-stack paths miss), while a
      * non-disabled variant still resolves; re-enabling restores it. Mutates the
-     * live config in a try/finally so the global state is always reset, and skips
-     * cleanly if the spec isn't loaded (can't exercise the lists without it).
+     * live config in a try/finally so the global state is always reset.
+     *
+     * <p><b>Isolation:</b> the set -&gt; assert -&gt; reset runs synchronously in a
+     * single method invocation on the server thread (no {@code runAfterDelay} /
+     * {@code onEachTick} yielding), so no concurrently-scheduled test body can
+     * observe the mutated config between the set and the {@code finally} reset.
+     * {@code helper.fail()} does not throw on 1.21.1, and each {@code fail()} is
+     * followed by a {@code return} inside the try, so the {@code finally} still
+     * fires on every failure path. Fails fast (rather than skipping) if COMMON
+     * config isn't loaded, so the assertions can't silently false-green.
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void disabledVariantConfigSuppressesResolution(GameTestHelper helper) {

@@ -651,7 +651,14 @@ public final class PFConfig {
         SPEC = builder.build();
     }
 
-    /** True if {@code o} is a parseable resource-location string (variant id list element). */
+    /**
+     * True if {@code o} is a parseable resource-location string (variant id list
+     * element). Only checks syntax, not registry membership: the slime_variant
+     * datapack registry loads after this config spec, so a registry lookup here is
+     * impossible. A typo'd id is therefore accepted and simply matches nothing
+     * (the variant stays enabled) - intentional, since the list may legitimately
+     * name a pack/datapack variant not present this launch.
+     */
     private static boolean isValidVariantId(Object o) {
         return o instanceof String s && ResourceLocation.tryParse(s) != null;
     }
@@ -809,6 +816,15 @@ public final class PFConfig {
      *
      * <p>Order: a {@code weight 0} boss variant is gated by {@link #bossVariantsEnabled()};
      * then a disabled category; then an explicitly disabled id.
+     *
+     * <p><b>Extending this (e.g. #204 per-integration force-off):</b> add the new
+     * dimension <i>inside</i> {@link com.flatts.productivefrogs.data.SlimeVariant#isEnabled}
+     * (which can read the
+     * variant's own fields - {@code primer_tag} etc. - to resolve its integration)
+     * rather than threading a new parameter through this signature. Every
+     * resolution site (priming, discovery, JEI, the creative tab) routes through
+     * {@code variant.isEnabled(id)}, so a clause added there is picked up by all of
+     * them with no call-site changes.
      */
     public static boolean variantEnabled(ResourceLocation id, Category category, int weight) {
         if (!SPEC.isLoaded()) {

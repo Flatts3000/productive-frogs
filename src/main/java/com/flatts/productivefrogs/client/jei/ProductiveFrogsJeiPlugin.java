@@ -327,8 +327,11 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         for (var e : variants.getDataMap(
                 com.flatts.productivefrogs.registry.PFDataMaps.FROGLIGHT_HEAT).entrySet()) {
             SlimeVariant sv = variants.get(e.getKey());
-            if (sv != null && !sv.isEnabled(e.getKey().location())) {
-                continue; // disabled variant (#203): no JEI heat entry
+            // Skip a config-disabled variant (#203); also skip a null lookup
+            // defensively - a froglight-heat data-map key should always back a
+            // registry entry, but an orphan key shouldn't mint a variant-less entry.
+            if (sv == null || !sv.isEnabled(e.getKey().location())) {
+                continue;
             }
             ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
             froglight.set(PFDataComponents.SLIME_VARIANT.get(), e.getKey().location());
