@@ -23,15 +23,17 @@ undercut early/mid farming. The cleaver can simply be good.
 ## Recipe (maintainer-prescribed)
 
 ```
-[Nether Star FL][Nether Star FL][Dragon's Breath]
-[Dragon Egg FL ][Nether Star FL][Dragon's Breath]
-[Dragon Egg FL ][              ][               ]
+[Dragon's Breath][Nether Star FL][Dragon's Breath]
+[Dragon's Breath][Nether Star FL][Dragon's Breath]
+[Dragon's Breath][Dragon Egg FL ][Dragon's Breath]
 ```
 
-3 Nether Star Froglights + 2 Dragon Egg Froglights + 2 Dragon's Breath. The
-Froglight slots are component-ingredients (`neoforge:components`) requiring a
-`configurable_froglight` of the exact boss variant, like the Crucible melt
-recipes.
+A traditional sword shape - the centre column is the blade (2 Nether Star
+Froglights) over the hilt (1 Dragon Egg Froglight) - with 6 Dragon's Breath
+surrounding it. The Froglight slots are component-ingredients
+(`neoforge:components`) requiring a `configurable_froglight` of the exact boss
+variant, like the Crucible melt recipes. The layout mirrors the item texture
+(pale Nether-Star blade, dark Dragon-Egg hilt, Dragon's-Breath aura).
 
 ## Design
 

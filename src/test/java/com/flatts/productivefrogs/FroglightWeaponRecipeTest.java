@@ -16,8 +16,9 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Shape gate for the Froglight Cleaver crafting recipe (#212). Pins the
- * maintainer-prescribed grid (3 Nether Star froglights, 2 Dragon Egg froglights,
- * 2 Dragon's Breath), the component-ingredient variants, the result, and the
+ * maintainer-prescribed grid - a traditional sword shape (centre column: 2 Nether
+ * Star froglight blade + 1 Dragon Egg froglight hilt) with 6 Dragon's Breath
+ * surrounding - the component-ingredient variants, the result, and the
  * {@code froglight_weapon} config gate. A stray edit then fails the build.
  */
 class FroglightWeaponRecipeTest {
@@ -42,10 +43,12 @@ class FroglightWeaponRecipeTest {
         assertEquals("productivefrogs:froglight_cleaver",
             recipe.getAsJsonObject("result").get("id").getAsString(), "cleaver: result");
 
+        // Traditional sword shape (centre column = blade over hilt) with the six
+        // side cells filled by Dragon's Breath.
         JsonArray pattern = recipe.getAsJsonArray("pattern");
-        assertEquals("NNB", pattern.get(0).getAsString(), "cleaver: row 0");
-        assertEquals("DNB", pattern.get(1).getAsString(), "cleaver: row 1");
-        assertEquals("D  ", pattern.get(2).getAsString(), "cleaver: row 2");
+        assertEquals("BNB", pattern.get(0).getAsString(), "cleaver: row 0");
+        assertEquals("BNB", pattern.get(1).getAsString(), "cleaver: row 1");
+        assertEquals("BDB", pattern.get(2).getAsString(), "cleaver: row 2");
 
         JsonObject key = recipe.getAsJsonObject("key");
         assertFroglightVariant(key.getAsJsonObject("N"), "productivefrogs:nether_star");

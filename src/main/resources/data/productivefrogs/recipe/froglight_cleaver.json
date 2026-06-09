@@ -6,9 +6,9 @@
   "category": "equipment",
   "group": "productivefrogs",
   "pattern": [
-    "NNB",
-    "DNB",
-    "D  "
+    "BNB",
+    "BNB",
+    "BDB"
   ],
   "key": {
     "N": {
