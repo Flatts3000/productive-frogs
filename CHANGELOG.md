@@ -18,6 +18,7 @@
 
 ### Changed
 
+- **The Terrarium Hatch now auto-collects Raw Frog Legs.** A frog that dies inside the enclosure (eaten by another, fall damage, etc.) drops Raw Frog Legs into the cavity; the Hatch vacuums them up alongside slimeballs, magma cream, and froglights so the meat pipes out with everything else. (#194)
 - **Terrarium Incubators are now optional.** A Terrarium forms with zero Incubators - add them only if you want it to breed frogs in place; otherwise lead or net frogs in yourself. (Previously the structure refused to form without at least one Incubator.)
 - **The Terrarium Controller GUI shows just the live frog count, not `count / cap`.** The cap is only an Incubator release gate, not a hard population limit (you can lead or net more frogs in past it), so the old `10 / 8` readout looked like a broken cap. The Incubator GUI still shows the cap that actually governs its releases.
 
