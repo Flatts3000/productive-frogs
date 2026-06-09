@@ -11,6 +11,7 @@
   "item.productivefrogs.raw_frog_legs": "Raw Frog Legs",
   "item.productivefrogs.cooked_frog_legs": "Cooked Frog Legs",
   "item.productivefrogs.frog_net": "Frog Net",
+  "item.productivefrogs.froglight_cleaver": "Froglight Cleaver",
   "productivefrogs.frog_net.empty": "Right-click a frog to catch it",
   "productivefrogs.frog_net.stats": "Appetite %1$s  Bounty %2$s  Reach %3$s",
   "productivefrogs.frog_net.release": "Right-click a block to release",

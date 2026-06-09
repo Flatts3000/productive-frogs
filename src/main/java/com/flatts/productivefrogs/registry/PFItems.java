@@ -31,6 +31,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MobBucketItem;
 import net.minecraft.world.item.PlaceOnWaterBlockItem;
 import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.Tiers;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.bus.api.IEventBus;
@@ -73,6 +75,19 @@ public final class PFItems {
     public static final DeferredItem<FrogNetItem> FROG_NET = ITEMS.registerItem(
         "frog_net",
         props -> new FrogNetItem(props.stacksTo(1))
+    );
+
+    /**
+     * Froglight Cleaver (#212) - a late-game sword that drops a slime's Froglight
+     * when it kills it (handled by {@code FroglightWeaponHandler}), the active-play
+     * counterpart to the passive frog loop. Plain netherite-tier {@link SwordItem};
+     * the harvest behaviour is event-driven. Gated by boss Froglights in its recipe
+     * (`froglight_weapon`), so it's pure endgame.
+     */
+    public static final DeferredItem<SwordItem> FROGLIGHT_CLEAVER = ITEMS.registerItem(
+        "froglight_cleaver",
+        props -> new SwordItem(Tiers.NETHERITE,
+            props.attributes(SwordItem.createAttributes(Tiers.NETHERITE, 3, -2.4F)))
     );
 
     /**

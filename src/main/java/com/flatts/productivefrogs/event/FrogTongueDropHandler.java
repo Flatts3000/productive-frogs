@@ -168,7 +168,13 @@ public final class FrogTongueDropHandler {
     }
 
     /** One variant-stamped (and optionally effect-stamped) Configurable Froglight. */
-    private static ItemStack buildFroglight(ResourceLocation variantId, @Nullable StoredEffect captured) {
+    /**
+     * Build a variant-stamped (and optionally brewed) {@code configurable_froglight}
+     * item - the single froglight-construction point, shared by the frog tongue
+     * drop here and the Froglight weapon (#212), so variant + effect stamping lives
+     * in one place.
+     */
+    public static ItemStack buildFroglight(ResourceLocation variantId, @Nullable StoredEffect captured) {
         ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
         froglight.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
         if (captured != null) {

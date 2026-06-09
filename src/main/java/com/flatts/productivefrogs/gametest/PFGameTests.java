@@ -694,6 +694,32 @@ public final class PFGameTests {
     }
 
     /**
+     * Froglight Cleaver (#212): killing a size-1 Resource Slime with the cleaver
+     * drops the slime's Froglight. A zombie holding the cleaver is the killer, so
+     * FroglightWeaponHandler fires (not the frog tongue path).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void froglightCleaverKillDropsFroglight(GameTestHelper helper) {
+        net.minecraft.world.entity.monster.Zombie killer =
+            helper.spawn(net.minecraft.world.entity.EntityType.ZOMBIE, new BlockPos(1, 2, 2));
+        killer.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,
+            new net.minecraft.world.item.ItemStack(PFItems.FROGLIGHT_CLEAVER.get()));
+        ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(3, 2, 2));
+        slime.setSize(1, true);
+        slime.setVariant(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        slime.hurt(helper.getLevel().damageSources().mobAttack(killer), 999.0F);
+
+        helper.succeedWhen(() -> {
+            boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                .map(net.minecraft.world.entity.item.ItemEntity::getItem)
+                .anyMatch(s -> s.is(PFItems.CONFIGURABLE_FROGLIGHT.get()));
+            if (!found) {
+                helper.fail("killing a slime with the Froglight Cleaver should drop a Froglight");
+            }
+        });
+    }
+
+    /**
      * The one-effect pick rule (#162): highest amplifier wins. A slime carrying
      * Speed I (amp 0) and Strength II (amp 1) yields a Froglight stamped with
      * the Strength, not the Speed.
