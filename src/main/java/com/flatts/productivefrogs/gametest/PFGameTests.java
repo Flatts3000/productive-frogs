@@ -711,7 +711,7 @@ public final class PFGameTests {
      * Frog Net round trip (#205): catching a stat-stamped Resource Frog into a net
      * and rebuilding it from the stack preserves species and bred stats. Exercises
      * the capture/release core ({@code FrogNetItem.captureEntity} +
-     * {@code frogFromStack}) without a player - the interaction wrappers just call
+     * {@code entityFromStack}) without a player - the interaction wrappers just call
      * these.
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 20)
@@ -730,10 +730,10 @@ public final class PFGameTests {
             return;
         }
 
-        ResourceFrog restored = com.flatts.productivefrogs.content.item.FrogNetItem
-            .frogFromStack(net, helper.getLevel());
-        if (restored == null) {
-            helper.fail("net should rebuild a Resource Frog on release");
+        net.minecraft.world.entity.Entity rebuilt = com.flatts.productivefrogs.content.item.FrogNetItem
+            .entityFromStack(net, helper.getLevel());
+        if (!(rebuilt instanceof ResourceFrog restored)) {
+            helper.fail("net should rebuild a Resource Frog on release, got " + rebuilt);
             return;
         }
         helper.assertTrue(restored.getCategory() == Category.GEODE,
@@ -743,6 +743,36 @@ public final class PFGameTests {
             "released frog stats should be 7/5/9, were " + restored.getAppetite()
                 + "/" + restored.getBounty() + "/" + restored.getReach());
         restored.discard();
+        helper.succeed();
+    }
+
+    /**
+     * The Frog Net catches any frog, not just Resource Frogs (#205 follow-up): a
+     * plain vanilla frog is catchable and round-trips through the net as a vanilla
+     * frog. Guards the "any frog vanilla or modded" requirement.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 20)
+    public static void frogNetCatchesVanillaFrog(GameTestHelper helper) {
+        net.minecraft.world.entity.animal.frog.Frog frog =
+            helper.spawn(net.minecraft.world.entity.EntityType.FROG, new BlockPos(2, 2, 2));
+
+        if (!com.flatts.productivefrogs.content.item.FrogNetItem.isCatchable(frog)) {
+            helper.fail("a vanilla frog should be catchable");
+            return;
+        }
+
+        net.minecraft.world.item.ItemStack netStack =
+            new net.minecraft.world.item.ItemStack(PFItems.FROG_NET.get());
+        com.flatts.productivefrogs.content.item.FrogNetItem.captureEntity(frog, netStack);
+        frog.discard();
+
+        net.minecraft.world.entity.Entity rebuilt = com.flatts.productivefrogs.content.item.FrogNetItem
+            .entityFromStack(netStack, helper.getLevel());
+        if (rebuilt == null || rebuilt.getType() != net.minecraft.world.entity.EntityType.FROG) {
+            helper.fail("net should rebuild a vanilla frog, got " + rebuilt);
+            return;
+        }
+        rebuilt.discard();
         helper.succeed();
     }
 

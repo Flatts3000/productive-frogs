@@ -1,27 +1,35 @@
 # Frog Net
 
-The Frog Net (issue #205) is a reusable tool that catches a Resource Frog into
-the item and releases it elsewhere, stats intact - so a bred-up frog can be
-relocated, or a Terrarium restocked, without leashing, water-pushing, or killing
-it.
+The Frog Net (issue #205) is a reusable tool that catches a frog into the item
+and releases it elsewhere - so a bred-up Resource Frog can be relocated, or a
+Terrarium restocked, without leashing, water-pushing, or killing it. It works on
+any frog, vanilla or modded.
 
 ## Behavior
 
-- **Catch:** right-click a Resource Frog with an empty net. The frog is removed
-  from the world and stored in the net; the net renders "filled" and its name
-  reads `Frog Net (Cave Frog)`.
+- **Catch:** right-click a frog with an empty net. The frog is removed from the
+  world and stored in the net; the net renders "filled" and its name reads e.g.
+  `Frog Net (Cave Frog)`.
 - **Release:** right-click a block face with a loaded net. The frog spawns in the
   cell adjacent to that face and the net returns to empty (reusable - it is not
   consumed).
-- **Scope:** catches **only** Productive Frogs Resource Frogs. Vanilla frogs,
-  Resource Tadpoles (that is the Resource Tadpole Bucket's job), and slimes are
-  rejected.
-- **Preserved:** the whole entity is serialized via `Entity.saveWithoutId`, so
-  species/category, the bred Appetite/Bounty/Reach stats, persistence, health,
-  and a custom name all survive the round trip. The stored UUID is dropped so a
-  released frog gets a fresh identity (no duplicate-UUID risk if a loaded net is
-  creative-copied).
-- **Tooltip:** a loaded net shows the caught frog's stats and a release hint.
+- **Scope:** catches **any** frog, vanilla or modded - anything that is a vanilla
+  `Frog` (covers the vanilla frog, the Resource Frog, and any frog mob that
+  subclasses it) or whose entity type is in the `productivefrogs:frogs`
+  entity-type tag. A pack adds a modded frog that doesn't subclass `Frog` by
+  dropping its entity id into that tag. Resource Tadpoles (the bucket's job) and
+  non-frog mobs are left alone.
+- **Preserved:** the whole entity is serialized via `Entity.saveWithoutId`, so for
+  a Resource Frog the category, bred Appetite/Bounty/Reach stats, persistence,
+  health, and a custom name all survive the round trip (and any other frog comes
+  back identical). The stored UUID is dropped so a released frog gets a fresh
+  identity (no duplicate-UUID risk if a loaded net is creative-copied).
+- **Held-stack handling:** the catch builds a fresh filled net and puts it back in
+  hand via `setItemInHand`, rather than mutating the held stack in place, so the
+  loaded net reliably resyncs to the client (an in-place component change could
+  leave the client showing an empty net while the frog was already gone).
+- **Tooltip:** a loaded Resource-Frog net shows the caught frog's stats; every
+  loaded net shows a release hint.
 
 ## Design
 

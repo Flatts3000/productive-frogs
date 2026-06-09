@@ -1,18 +1,22 @@
 package com.flatts.productivefrogs.content.item;
 
 import com.flatts.productivefrogs.PFConfig;
-import com.flatts.productivefrogs.content.entity.ResourceFrog;
+import com.flatts.productivefrogs.ProductiveFrogs;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.frog.Frog;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -23,23 +27,27 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A reusable tool that catches a {@link ResourceFrog} into the item and releases
- * it elsewhere, so a bred-up frog can be relocated (or a Terrarium restocked)
- * without leashing or killing it (issue #205).
+ * A reusable tool that catches a frog into the item and releases it elsewhere, so
+ * a bred-up Resource Frog can be relocated (or a Terrarium restocked) without
+ * leashing or killing it (issue #205).
  *
  * <p>Modelled directly on Productive Bees' Bee Cage (the
  * {@code SturdyBeeCage} reusable variant): a plain {@link Item} that stores the
  * captured entity as a {@link net.minecraft.nbt.CompoundTag} in the vanilla
  * {@link DataComponents#CUSTOM_DATA} component, catches via
  * {@link #interactLivingEntity} and releases via {@link #useOn}. The whole
- * entity is serialized with {@link Entity#saveWithoutId}, so species/category,
- * the bred Appetite/Bounty/Reach stats, persistence, health, and a custom name
- * all survive the round trip - no hand-picked field list to keep current.
+ * entity is serialized with {@link Entity#saveWithoutId}, so for a Resource Frog
+ * the category, bred Appetite/Bounty/Reach stats, persistence, health, and a
+ * custom name all survive the round trip - no hand-picked field list to keep
+ * current - and any other captured frog comes back identical too.
  *
- * <p>Unlike the bee cage it catches <b>only</b> Productive Frogs Resource Frogs;
- * vanilla frogs, Resource Tadpoles (that is the bucket's job), and slimes are
- * rejected. A loaded net renders "filled" via the {@code productivefrogs:filled}
- * item-model property (registered in {@code PFClientEvents}).
+ * <p>Catches <b>any</b> frog, vanilla or modded: anything that is a vanilla
+ * {@link Frog} (covers the vanilla frog, the Resource Frog, and any frog mob that
+ * subclasses it) or whose entity type is in the {@code productivefrogs:frogs}
+ * entity-type tag (the data-driven hook a pack adds a non-subclass modded frog
+ * to). Non-frogs are left alone. A loaded net renders "filled" via the
+ * {@code productivefrogs:filled} item-model property (registered in
+ * {@code PFClientEvents}).
  */
 public class FrogNetItem extends Item {
 
@@ -48,8 +56,21 @@ public class FrogNetItem extends Item {
     /** NBT key for the captured frog's resolved display name, for the item name suffix. */
     private static final String TAG_NAME = "name";
 
+    /**
+     * Entity types this net may catch beyond vanilla {@link Frog} subclasses -
+     * the {@code productivefrogs:frogs} tag (vanilla frog + Resource Frog by
+     * default; a pack adds modded frogs that don't subclass {@code Frog}).
+     */
+    public static final TagKey<EntityType<?>> CATCHABLE = TagKey.create(
+        Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "frogs"));
+
     public FrogNetItem(Properties properties) {
         super(properties);
+    }
+
+    /** Whether this net is allowed to catch the target - any vanilla/modded frog. */
+    public static boolean isCatchable(Entity target) {
+        return target instanceof Frog || target.getType().is(CATCHABLE);
     }
 
     /** Whether the stack holds a captured frog (CUSTOM_DATA present and carrying an entity id). */
@@ -67,23 +88,23 @@ public class FrogNetItem extends Item {
      * The stored UUID is dropped so a released frog always gets a fresh identity
      * (no duplicate-UUID risk if a filled net is creative-copied).
      */
-    public static void captureEntity(ResourceFrog frog, ItemStack netStack) {
+    public static void captureEntity(Entity target, ItemStack netStack) {
         CompoundTag nbt = new CompoundTag();
-        frog.saveWithoutId(nbt);
+        target.saveWithoutId(nbt);
         nbt.remove("UUID");
-        nbt.putString(TAG_ENTITY, EntityType.getKey(frog.getType()).toString());
-        nbt.putString(TAG_NAME, frog.getName().getString());
+        nbt.putString(TAG_ENTITY, EntityType.getKey(target.getType()).toString());
+        nbt.putString(TAG_NAME, target.getName().getString());
         netStack.set(DataComponents.CUSTOM_DATA, CustomData.of(nbt));
     }
 
     /**
      * Rebuild the captured frog from a filled net (entity created from the stored
      * type id, then {@link Entity#load}ed with the saved NBT), or {@code null} if
-     * the stack is empty or its stored type is not a Resource Frog. Does not place
-     * it - the caller positions and adds it to the level.
+     * the stack is empty or its stored type can't be created. Does not place it -
+     * the caller positions and adds it to the level.
      */
     @Nullable
-    public static ResourceFrog frogFromStack(ItemStack netStack, Level level) {
+    public static Entity entityFromStack(ItemStack netStack, Level level) {
         CustomData data = netStack.get(DataComponents.CUSTOM_DATA);
         if (data == null) {
             return null;
@@ -94,14 +115,11 @@ public class FrogNetItem extends Item {
             return null;
         }
         Entity entity = type.create(level);
-        if (!(entity instanceof ResourceFrog frog)) {
-            if (entity != null) {
-                entity.discard();
-            }
+        if (entity == null) {
             return null;
         }
-        frog.load(tag);
-        return frog;
+        entity.load(tag);
+        return entity;
     }
 
     @Override
@@ -110,8 +128,9 @@ public class FrogNetItem extends Item {
         if (!PFConfig.frogNetEnabled()) {
             return InteractionResult.PASS;
         }
-        // Only living Resource Frogs; an already-loaded net is inert until released.
-        if (isFilled(stack) || !target.isAlive() || !(target instanceof ResourceFrog frog)) {
+        // Any living frog (vanilla or modded); an already-loaded net is inert
+        // until released.
+        if (isFilled(stack) || !target.isAlive() || !isCatchable(target)) {
             return InteractionResult.PASS;
         }
         if (player.level().isClientSide()) {
@@ -119,9 +138,15 @@ public class FrogNetItem extends Item {
             return InteractionResult.SUCCESS;
         }
 
-        // The net stacks to 1, so the held stack is always the one net being filled.
-        captureEntity(frog, stack);
-        frog.discard();
+        // Build a fresh filled net and put it back in hand rather than mutating the
+        // held stack in place - setItemInHand flags the slot so the loaded net
+        // reliably resyncs to the client (an in-place component change could leave
+        // the client showing an empty net while the frog is already gone). The net
+        // stacks to 1, so the copy carries the single net.
+        ItemStack filled = stack.copy();
+        captureEntity(target, filled);
+        player.setItemInHand(hand, filled);
+        target.discard();
         player.swing(hand);
         return InteractionResult.SUCCESS;
     }
@@ -133,7 +158,7 @@ public class FrogNetItem extends Item {
         if (level.isClientSide() || !PFConfig.frogNetEnabled() || !isFilled(stack)) {
             return InteractionResult.FAIL;
         }
-        ResourceFrog frog = frogFromStack(stack, level);
+        Entity frog = entityFromStack(stack, level);
         if (frog == null) {
             return InteractionResult.FAIL;
         }
