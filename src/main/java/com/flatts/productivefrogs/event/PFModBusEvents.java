@@ -1,9 +1,12 @@
 package com.flatts.productivefrogs.event;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFEntities;
+import com.flatts.productivefrogs.registry.PFItems;
+import com.flatts.productivefrogs.registry.PFPotions;
 import com.flatts.productivefrogs.registry.PFVariantMilk;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -22,6 +25,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.minecraft.world.item.alchemy.Potions;
+import net.neoforged.neoforge.event.brewing.RegisterBrewingRecipesEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 
@@ -36,6 +41,20 @@ public final class PFModBusEvents {
 
     private PFModBusEvents() {
         // event handler, not instantiable
+    }
+
+    /**
+     * Brewing recipe for the Potion of Hopping (#215): awkward potion + raw Frog
+     * Legs -> Hopping, the rabbit's-foot -> Leaping parallel with our reagent and
+     * a forward-leap effect. Gated by {@code hopping.enabled}; brewing is
+     * registered once at startup, so toggling it needs a restart.
+     */
+    @SubscribeEvent
+    public static void onRegisterBrewingRecipes(RegisterBrewingRecipesEvent event) {
+        if (!PFConfig.hoppingEnabled()) {
+            return;
+        }
+        event.getBuilder().addMix(Potions.AWKWARD, PFItems.RAW_FROG_LEGS.get(), PFPotions.HOPPING);
     }
 
     @SubscribeEvent

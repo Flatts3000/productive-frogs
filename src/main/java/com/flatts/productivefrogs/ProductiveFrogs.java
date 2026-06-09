@@ -6,12 +6,14 @@ import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFConditions;
 import com.flatts.productivefrogs.registry.PFCreativeTabs;
 import com.flatts.productivefrogs.registry.PFDataComponents;
+import com.flatts.productivefrogs.registry.PFEffects;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFFluidTypes;
 import com.flatts.productivefrogs.registry.PFFluids;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
 import com.flatts.productivefrogs.registry.PFParticles;
+import com.flatts.productivefrogs.registry.PFPotions;
 import com.flatts.productivefrogs.registry.PFRecipeTypes;
 import com.flatts.productivefrogs.registry.PFSensors;
 import com.flatts.productivefrogs.registry.PFVariantMilk;
@@ -68,6 +70,10 @@ public final class ProductiveFrogs {
         PFFluids.register(modEventBus);
         PFBlocks.register(modEventBus);
         PFItems.register(modEventBus);
+        // Hopping (#215): effects before potions, since the potion references the
+        // effect holder.
+        PFEffects.register(modEventBus);
+        PFPotions.register(modEventBus);
         // BlockEntities + MenuTypes after Blocks because SLIME_MILKER's
         // BlockEntityType.Builder.of references PFBlocks.SLIME_MILKER at
         // BE registration time.
