@@ -5265,6 +5265,30 @@ public final class PFGameTests {
     }
 
     /**
+     * Incubators are optional (maintainer ruling): a sealed box with a Controller,
+     * a Hatch, and no Incubator still forms. Build the valid shell, replace the
+     * incubator face cell with plain shell, and assert it forms.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumFormsWithoutIncubator(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 1);
+        // Swap the incubator (placed at 4,4,1 by the helper) for a plain solid
+        // shell cell, so the box has zero incubators.
+        helper.setBlock(new BlockPos(4, 4, 1), Blocks.STONE);
+        ServerLevel level = helper.getLevel();
+        if (!(helper.getBlockEntity(controller)
+                instanceof com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity be)) {
+            helper.fail("no Terrarium Controller block entity at " + controller);
+            return;
+        }
+        if (!be.forceValidate(level, helper.absolutePos(controller)).formed()) {
+            helper.fail("a Terrarium with zero incubators should still form");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
      * Build a valid Terrarium inside the 9x9x9 plot: a stone shell over rel
      * {@code x/z (1..7)} and {@code y (1..6)} (5x4x5 air cavity at rel
      * {@code x/z (2..6)}, {@code y (2..5)}), a Controller / Hatch / Incubator on
