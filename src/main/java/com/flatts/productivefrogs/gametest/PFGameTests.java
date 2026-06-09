@@ -840,6 +840,30 @@ public final class PFGameTests {
     }
 
     /**
+     * A frog killed while on fire drops COOKED legs, not raw (#194) - the
+     * cow/chicken furnace_smelt-on-fire behaviour. Ignite the frog, give the
+     * on-fire flag a couple ticks to set, then kill it and expect cooked legs.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 60)
+    public static void burningFrogDropsCookedLegs(GameTestHelper helper) {
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 2));
+        frog.setCategory(Category.CAVE);
+        frog.igniteForSeconds(5);
+        // Let the on-fire flag settle (set during the entity tick), then kill.
+        helper.runAfterDelay(3, () ->
+            frog.hurt(helper.getLevel().damageSources().generic(), 1000.0F));
+
+        helper.succeedWhen(() -> {
+            boolean cooked = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
+                .map(net.minecraft.world.entity.item.ItemEntity::getItem)
+                .anyMatch(s -> s.is(PFItems.COOKED_FROG_LEGS.get()));
+            if (!cooked) {
+                helper.fail("a frog killed while on fire should drop cooked frog legs");
+            }
+        });
+    }
+
+    /**
      * Toggling the aura off stops application (#162): an effect-stamped but
      * disabled Froglight does not buff. Stamp + immediately toggle off, then
      * after a generous delay the nearby pig must have no Speed.
