@@ -26,6 +26,11 @@ public final class PFPotions {
         "hopping",
         () -> new Potion("hopping", new MobEffectInstance(PFEffects.HOPPING, 3600)));
 
+    /** 1.5 minutes of Hopping II (the glowstone upgrade), mirroring vanilla strong potions. */
+    public static final Holder<Potion> HOPPING_STRONG = POTIONS.register(
+        "hopping_strong",
+        () -> new Potion("hopping_strong", new MobEffectInstance(PFEffects.HOPPING, 1800, 1)));
+
     private PFPotions() {
         // registry holder
     }

@@ -8,7 +8,8 @@ Jump Boost. It gives Frog Legs (#194) a second use as a brewing reagent.
 
 - **Brew:** awkward potion + **raw Frog Legs** -> Potion of Hopping (the
   rabbit's-foot -> Leaping parallel, our reagent). Splash / lingering / tipped-arrow
-  variants come for free from the base potion.
+  variants come for free from the base potion. **Glowstone** upgrades it to
+  Hopping II (the vanilla strong-potion pattern), which hops further.
 - **Effect:** while Hopping is active, a jump adds a forward horizontal impulse in
   your facing direction (0.45 blocks/level), so you leap forward. Level II hops
   further.

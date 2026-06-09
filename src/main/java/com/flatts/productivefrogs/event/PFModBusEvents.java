@@ -19,13 +19,13 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.entity.animal.frog.Tadpole;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.minecraft.world.item.alchemy.Potions;
 import net.neoforged.neoforge.event.brewing.RegisterBrewingRecipesEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
@@ -55,6 +55,8 @@ public final class PFModBusEvents {
             return;
         }
         event.getBuilder().addMix(Potions.AWKWARD, PFItems.RAW_FROG_LEGS.get(), PFPotions.HOPPING);
+        // Glowstone upgrades to Hopping II (the vanilla strong-potion pattern).
+        event.getBuilder().addMix(PFPotions.HOPPING, net.minecraft.world.item.Items.GLOWSTONE_DUST, PFPotions.HOPPING_STRONG);
     }
 
     @SubscribeEvent

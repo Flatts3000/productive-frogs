@@ -16,9 +16,10 @@ import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
  * jump gets a forward horizontal impulse (a frog leap), and falls are softened so
  * leaping off a ledge does not punish - frogs do not splat.
  *
- * <p>Applied in {@link LivingEvent.LivingJumpEvent}, the same hook vanilla Jump
- * Boost uses, so it runs on whichever side simulates the entity (client for the
- * local player, server for mobs) and stays in sync the same way Jump Boost does.
+ * <p>Applied in {@link LivingEvent.LivingJumpEvent}, which fires on whichever side
+ * simulates the entity (client for the local player, server for mobs), so the
+ * forward impulse stays in sync the same way a jump itself does. (Vanilla Jump
+ * Boost works via an attribute modifier, not this event - we only borrow the timing.)
  */
 @EventBusSubscriber(modid = ProductiveFrogs.MOD_ID)
 public final class HoppingEffectHandler {
