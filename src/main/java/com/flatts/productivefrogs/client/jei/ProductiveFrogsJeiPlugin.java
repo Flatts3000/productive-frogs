@@ -145,6 +145,10 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         if (!PFConfig.catalystInfiniteEnabled()) {
             hidden.add(new ItemStack(PFItems.INFINITE_CATALYST.get()));
         }
+        // Frog Net (#205): hide when config-disabled, like the appliances.
+        if (!PFConfig.frogNetEnabled()) {
+            hidden.add(new ItemStack(PFItems.FROG_NET.get()));
+        }
         if (!hidden.isEmpty()) {
             jeiRuntime.getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hidden);
         }
