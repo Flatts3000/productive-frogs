@@ -78,6 +78,13 @@ class ConfigEnabledConditionTest {
     }
 
     @Test
+    void froglightWeaponKeyRoundTrips() {
+        assertEquals("froglight_weapon", ConfigEnabledCondition.Key.FROGLIGHT_WEAPON.getSerializedName());
+        assertSame(ConfigEnabledCondition.Key.FROGLIGHT_WEAPON,
+            ConfigEnabledCondition.Key.CODEC.byName("froglight_weapon"));
+    }
+
+    @Test
     void codecRejectsUnknownKey() {
         assertNull(ConfigEnabledCondition.Key.CODEC.byName("does_not_exist"));
     }
