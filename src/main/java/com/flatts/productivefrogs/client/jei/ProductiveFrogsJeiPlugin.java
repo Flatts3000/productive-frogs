@@ -149,10 +149,11 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         if (!PFConfig.frogNetEnabled()) {
             hidden.add(new ItemStack(PFItems.FROG_NET.get()));
         }
-        // Frog Legs (#194): hide both when the feature is disabled.
+        // Frog Legs (#194) + Soup (#217): hide all when the feature is disabled.
         if (!PFConfig.frogLegsEnabled()) {
             hidden.add(new ItemStack(PFItems.RAW_FROG_LEGS.get()));
             hidden.add(new ItemStack(PFItems.COOKED_FROG_LEGS.get()));
+            hidden.add(new ItemStack(PFItems.FROG_LEGS_SOUP.get()));
         }
         if (!hidden.isEmpty()) {
             jeiRuntime.getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hidden);
