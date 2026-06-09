@@ -1,0 +1,6 @@
+{
+  "models": {
+    "item/frog_net": "productivefrogs:item/frog_net",
+    "item/frog_net_full": "productivefrogs:item/frog_net_full"
+  }
+}
