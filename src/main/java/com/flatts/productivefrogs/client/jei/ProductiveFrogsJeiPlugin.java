@@ -326,6 +326,10 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         // variant, not item, so they bypass the `seen` set.
         for (var e : variants.getDataMap(
                 com.flatts.productivefrogs.registry.PFDataMaps.FROGLIGHT_HEAT).entrySet()) {
+            SlimeVariant sv = variants.get(e.getKey());
+            if (sv != null && !sv.isEnabled(e.getKey().location())) {
+                continue; // disabled variant (#203): no JEI heat entry
+            }
             ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
             froglight.set(PFDataComponents.SLIME_VARIANT.get(), e.getKey().location());
             entries.add(new CrucibleHeatCategory.Entry(froglight, e.getValue(),
@@ -384,6 +388,9 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         List<SlimeMilkerRecipeCategory.Recipe> recipes = new ArrayList<>();
         for (java.util.Map.Entry<ResourceKey<SlimeVariant>, SlimeVariant> entry : variants.entrySet()) {
             ResourceLocation variantId = entry.getKey().location();
+            if (!entry.getValue().isEnabled(variantId)) {
+                continue; // disabled variant (#203): no Milker recipe in JEI
+            }
             ItemStack output = PFItems.slimeMilkBucket(variantId);
             // A content-only variant (no per-variant milk fluid minted at mod-init)
             // has no milk bucket - skip it rather than show a broken empty-output recipe.
@@ -407,6 +414,9 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         List<SlimeChurnRecipeCategory.Recipe> recipes = new ArrayList<>();
         for (java.util.Map.Entry<ResourceKey<SlimeVariant>, SlimeVariant> entry : variants.entrySet()) {
             ResourceLocation variantId = entry.getKey().location();
+            if (!entry.getValue().isEnabled(variantId)) {
+                continue; // disabled variant (#203): no Churn recipe in JEI
+            }
             ItemStack milkBucket = PFItems.slimeMilkBucket(variantId);
             // No per-variant milk fluid (content-only variant) = nothing the
             // churn could consume - skip, mirroring addMilkerRecipes.
@@ -463,6 +473,9 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
      */
     private static void addVariantInfoPages(IRecipeRegistration reg, Registry<SlimeVariant> variants) {
         for (java.util.Map.Entry<ResourceKey<SlimeVariant>, SlimeVariant> entry : variants.entrySet()) {
+            if (!entry.getValue().isEnabled(entry.getKey().location())) {
+                continue; // disabled variant (#203): no JEI info page
+            }
             String variantName = entry.getKey().location().getPath(); // "iron", "copper", etc.
             SlimeVariant variant = entry.getValue();
 

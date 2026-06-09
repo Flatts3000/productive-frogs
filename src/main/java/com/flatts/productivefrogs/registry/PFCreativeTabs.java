@@ -61,8 +61,11 @@ public final class PFCreativeTabs {
                     // writes when a player buckets a variant-locked slime
                     // (Category + Variant strings in BUCKET_ENTITY_DATA).
                     output.accept(PFItems.SLIME_BUCKET.get());
-                    variantLookup.ifPresent(reg -> reg.listElements().forEach(h ->
-                        output.accept(PFItems.variantSlimeBucket(h.key().location(), h.value().category()))));
+                    variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
+                        if (h.value().isEnabled(h.key().location())) {
+                            output.accept(PFItems.variantSlimeBucket(h.key().location(), h.value().category()));
+                        }
+                    }));
                     // Milker / Churn appear only when enabled (config-gated, #196).
                     if (!PFConfig.SPEC.isLoaded() || PFConfig.SLIME_MILKER_ENABLED.get()) {
                         output.accept(PFItems.SLIME_MILKER.get());
@@ -148,6 +151,9 @@ public final class PFCreativeTabs {
                     // (The vanilla/magma sentinels likewise have no bucket now.)
                     // Empty at the title screen until a world's datapacks load.
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
+                        if (!h.value().isEnabled(h.key().location())) {
+                            return;
+                        }
                         ItemStack milk = PFItems.slimeMilkBucket(h.key().location());
                         if (!milk.isEmpty()) {
                             output.accept(milk);
@@ -166,6 +172,9 @@ public final class PFCreativeTabs {
                     // carries its variant id in the SLIME_VARIANT data component so
                     // creative testers can see what the production loop produces.
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
+                        if (!h.value().isEnabled(h.key().location())) {
+                            return;
+                        }
                         ItemStack stack = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
                         stack.set(PFDataComponents.SLIME_VARIANT.get(), h.key().location());
                         output.accept(stack);
@@ -181,8 +190,11 @@ public final class PFCreativeTabs {
                     // One stamped stack per variant (no unstamped base egg — a
                     // variant-less Resource Slime egg isn't a meaningful creative
                     // entry; the item still counts as "in a tab" via these stacks).
-                    variantLookup.ifPresent(reg -> reg.listElements().forEach(h ->
-                        output.accept(PFItems.resourceSlimeSpawnEgg(h.key().location()))));
+                    variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
+                        if (h.value().isEnabled(h.key().location())) {
+                            output.accept(PFItems.resourceSlimeSpawnEgg(h.key().location()));
+                        }
+                    }));
                     // Parent species spawn eggs (Cave / Geode / Tide / Void) —
                     // not category-themed, kept after the variant eggs so the
                     // tab reads as: variants first, then upstream sources.

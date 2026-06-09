@@ -1,5 +1,8 @@
 package com.flatts.productivefrogs;
 
+import com.flatts.productivefrogs.data.Category;
+import java.util.List;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
@@ -78,6 +81,17 @@ public final class PFConfig {
     public static final ModConfigSpec.IntValue TERRARIUM_SPRINKLER_TOPUP_THRESHOLD;
     public static final ModConfigSpec.IntValue TERRARIUM_SWEETSLIME_ACCEL_PERCENT;
     public static final ModConfigSpec.IntValue TERRARIUM_HATCH_VACUUM_INTERVAL_TICKS;
+
+    // Per-variant / per-category content scoping (#203). COMMON config: variants
+    // are server/world state. The lists name what to force-OFF (empty = nothing
+    // disabled = the non-breaking default); bossVariantsEnabled is the convenience
+    // switch over the weight-0 prime-only boss tier (the half #200 consumes). The
+    // single read point is variantEnabled(id, category, weight); a disabled variant
+    // is unprimable, undiscoverable, and hidden from JEI + the creative tab. The
+    // registry entry stays (save-safe soft-hide), so re-enabling restores it.
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> DISABLED_VARIANTS;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> DISABLED_CATEGORIES;
+    public static final ModConfigSpec.BooleanValue BOSS_VARIANTS_ENABLED;
 
     // Deterministic, config-exposed lifecycle timings (docs/known_issues.md).
     // These are fixed (non-random) delays for the MODDED frog lifecycle; vanilla
@@ -598,7 +612,61 @@ public final class PFConfig {
 
         builder.pop();
 
+        builder.push("variants");
+
+        DISABLED_VARIANTS = builder
+            .comment(
+                "Slime variants to force-OFF, by full id (e.g. \"productivefrogs:iron\", \"productivefrogs:tin\").",
+                "A disabled variant cannot be primed, never appears in split-discovery, and is hidden from",
+                "JEI and the creative tab. The registry entry stays, so re-enabling restores it (no save",
+                "surgery). Default empty (nothing disabled). Already-placed slimes/buckets/froglights of a",
+                "disabled variant keep working - this gates resolution, it does not delete world content.",
+                "Note: a disabled variant may still have its per-variant Slime Milk fluid registered (that is",
+                "minted at mod-init before this config loads), but it stays unobtainable since every way to",
+                "reach the variant is gated. Applies on world reload."
+            )
+            .defineListAllowEmpty("disabledVariants", List.of(), () -> "productivefrogs:example",
+                PFConfig::isValidVariantId);
+
+        DISABLED_CATEGORIES = builder
+            .comment(
+                "Whole species/categories to force-OFF, by lowercase name: cave, geode, bog, tide, infernal, void.",
+                "Disabling a category disables every variant in it (same effect as listing them all in",
+                "disabledVariants). Default empty. Use this to ship, say, only the Cave and Bog lines."
+            )
+            .defineListAllowEmpty("disabledCategories", List.of(), () -> "void",
+                PFConfig::isValidCategoryName);
+
+        BOSS_VARIANTS_ENABLED = builder
+            .comment(
+                "Whether the boss tier's prime-only variants (weight 0: wither skull, nether star, dragon egg,",
+                "dragon breath) are enabled. Default true. When false they cannot be primed and are hidden from",
+                "JEI + the creative tab - the one-switch way to drop boss farming without listing each id.",
+                "(The catalyst altars and boss recipes have their own master under the boss section, #200.)"
+            )
+            .define("bossVariantsEnabled", true);
+
+        builder.pop();
+
         SPEC = builder.build();
+    }
+
+    /** True if {@code o} is a parseable resource-location string (variant id list element). */
+    private static boolean isValidVariantId(Object o) {
+        return o instanceof String s && ResourceLocation.tryParse(s) != null;
+    }
+
+    /** True if {@code o} is one of the six lowercase {@link Category} names. */
+    private static boolean isValidCategoryName(Object o) {
+        if (!(o instanceof String s)) {
+            return false;
+        }
+        for (Category c : Category.values()) {
+            if (c.id().equals(s)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ------------------------------------------------------------------
@@ -725,6 +793,39 @@ public final class PFConfig {
     /** Hatch auto-collect cadence in ticks ({@code terrarium.hatchVacuumIntervalTicks}); fallback {@value #DEFAULT_TERRARIUM_HATCH_VACUUM_INTERVAL_TICKS}. */
     public static int terrariumHatchVacuumIntervalTicks() {
         return SPEC.isLoaded() ? TERRARIUM_HATCH_VACUUM_INTERVAL_TICKS.get() : DEFAULT_TERRARIUM_HATCH_VACUUM_INTERVAL_TICKS;
+    }
+
+    // ------------------------------------------------------------------
+    // Variant / category scoping (#203). One predicate, read at every variant
+    // resolution site so a disabled variant is unprimable, undiscoverable, and
+    // invisible. Fails open (everything enabled) until the spec loads.
+    // ------------------------------------------------------------------
+
+    /**
+     * Whether a variant is enabled given its id, category, and weight. The single
+     * gate for {@code SlimeVariant} resolution, JEI, and the creative tab. Fails
+     * open before the config loads (mod-init, title screen) so the default - and
+     * any pre-config-load resolution - treats everything as enabled (non-breaking).
+     *
+     * <p>Order: a {@code weight 0} boss variant is gated by {@link #bossVariantsEnabled()};
+     * then a disabled category; then an explicitly disabled id.
+     */
+    public static boolean variantEnabled(ResourceLocation id, Category category, int weight) {
+        if (!SPEC.isLoaded()) {
+            return true;
+        }
+        if (weight == 0 && !BOSS_VARIANTS_ENABLED.get()) {
+            return false;
+        }
+        if (DISABLED_CATEGORIES.get().contains(category.id())) {
+            return false;
+        }
+        return !DISABLED_VARIANTS.get().contains(id.toString());
+    }
+
+    /** Whether the boss-tier prime-only variants are enabled ({@code variants.bossVariantsEnabled}); fallback true. */
+    public static boolean bossVariantsEnabled() {
+        return !SPEC.isLoaded() || BOSS_VARIANTS_ENABLED.get();
     }
 
     // ------------------------------------------------------------------
