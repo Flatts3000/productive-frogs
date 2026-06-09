@@ -5265,14 +5265,6 @@ public final class PFGameTests {
     }
 
     /**
-     * Build a valid Terrarium inside the 9x9x9 plot: a stone shell over rel
-     * {@code x/z (1..7)} and {@code y (1..6)} (5x4x5 air cavity at rel
-     * {@code x/z (2..6)}, {@code y (2..5)}), a Controller / Hatch / Incubator on
-     * opposing wall-face centers (each facing inward, at y=4), and
-     * {@code sprinklerCount} Sprinklers in the ceiling (y=6). Returns the
-     * Controller's relative position.
-     */
-    /**
      * Incubators are optional (maintainer ruling): a sealed box with a Controller,
      * a Hatch, and no Incubator still forms. Build the valid shell, replace the
      * incubator face cell with plain shell, and assert it forms.
@@ -5296,6 +5288,14 @@ public final class PFGameTests {
         helper.succeed();
     }
 
+    /**
+     * Build a valid Terrarium inside the 9x9x9 plot: a stone shell over rel
+     * {@code x/z (1..7)} and {@code y (1..6)} (5x4x5 air cavity at rel
+     * {@code x/z (2..6)}, {@code y (2..5)}), a Controller / Hatch / Incubator on
+     * opposing wall-face centers (each facing inward, at y=4), and
+     * {@code sprinklerCount} Sprinklers in the ceiling (y=6). Returns the
+     * Controller's relative position.
+     */
     private static BlockPos buildValidTerrarium(GameTestHelper helper, int sprinklerCount) {
         for (int x = 1; x <= 7; x++) {
             for (int y = 1; y <= 6; y++) {
