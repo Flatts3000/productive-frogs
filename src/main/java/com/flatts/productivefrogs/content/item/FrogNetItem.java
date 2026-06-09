@@ -118,6 +118,17 @@ public class FrogNetItem extends Item {
         if (entity == null) {
             return null;
         }
+        // Defense in depth: only ever rebuild a frog. The catch path gates on
+        // isCatchable, but CUSTOM_DATA could be written by an NBT editor or other
+        // code; re-checking here stops a tampered net from spawning an arbitrary
+        // mob on release.
+        if (!isCatchable(entity)) {
+            entity.discard();
+            return null;
+        }
+        // Drop any serialized passengers - they weren't part of the catch, and a
+        // crafted Passengers tree could drive deep recursion in load().
+        tag.remove("Passengers");
         entity.load(tag);
         return entity;
     }
@@ -142,8 +153,9 @@ public class FrogNetItem extends Item {
         // held stack in place - setItemInHand flags the slot so the loaded net
         // reliably resyncs to the client (an in-place component change could leave
         // the client showing an empty net while the frog is already gone). The net
-        // stacks to 1, so the copy carries the single net.
-        ItemStack filled = stack.copy();
+        // stacks to 1; copyWithCount(1) guards against a creative-held count > 1
+        // leaking into the filled net.
+        ItemStack filled = stack.copyWithCount(1);
         captureEntity(target, filled);
         player.setItemInHand(hand, filled);
         target.discard();
@@ -154,9 +166,16 @@ public class FrogNetItem extends Item {
     @Override
     public InteractionResult useOn(UseOnContext context) {
         ItemStack stack = context.getItemInHand();
+        // An empty or config-disabled net has nothing to do here - let the click
+        // fall through to other handlers.
+        if (!PFConfig.frogNetEnabled() || !isFilled(stack)) {
+            return InteractionResult.PASS;
+        }
         Level level = context.getLevel();
-        if (level.isClientSide() || !PFConfig.frogNetEnabled() || !isFilled(stack)) {
-            return InteractionResult.FAIL;
+        // Client predicts success (swing) so it stays in step with the server,
+        // which does the actual release below.
+        if (level.isClientSide()) {
+            return InteractionResult.SUCCESS;
         }
         Entity frog = entityFromStack(stack, level);
         if (frog == null) {
@@ -196,7 +215,11 @@ public class FrogNetItem extends Item {
                 .withStyle(ChatFormatting.GRAY));
             return;
         }
-        CompoundTag tag = stack.get(DataComponents.CUSTOM_DATA).copyTag();
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data == null) {
+            return;
+        }
+        CompoundTag tag = data.copyTag();
         // Bred stats live on the frog NBT (ResourceFrog.addAdditionalSaveData);
         // surface them so the player can read a caught frog without releasing it.
         if (tag.contains("Appetite") || tag.contains("Bounty") || tag.contains("Reach")) {
