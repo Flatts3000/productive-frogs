@@ -1,6 +1,6 @@
 {
   "neoforge:conditions": [
-    { "type": "productivefrogs:config_enabled", "config": "milk_catalysts" }
+    { "type": "productivefrogs:config_enabled", "config": "speed_catalyst" }
   ],
   "type": "minecraft:crafting_shapeless",
   "category": "misc",

@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.content.item;
 
+import com.flatts.productivefrogs.PFConfig;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,5 +43,28 @@ public enum MilkCatalyst {
     @Nullable
     public static MilkCatalyst fromStack(ItemStack stack) {
         return stack.getItem() instanceof MilkCatalystItem item ? item.getCatalyst() : null;
+    }
+
+    /**
+     * Whether this specific catalyst is enabled in config (#201). Each per-catalyst
+     * flag is ANDed with the catalysts master toggle. Reads live config (delegates
+     * to {@code PFConfig.catalyst*Enabled()}), so it is not a pure value query and
+     * fails open before the config spec loads.
+     *
+     * <p>The two consume sites ({@code SlimeMilkSourceBlock#entityInside},
+     * {@code SprinklerBlockEntity#absorbCatalystsFromAbove}) call this to leave a
+     * disabled catalyst floating for the player rather than eating it. This is the
+     * <i>enabled</i> gate only; the separate "is this upgrade already maxed / not
+     * applicable" gate is {@code applyCatalyst}'s return value. Both gates live at
+     * the consume site, not inside {@code applyCatalyst}, so upgrades already on an
+     * existing source stay honoured.
+     */
+    public boolean isEnabled() {
+        return switch (this) {
+            case COUNT -> PFConfig.catalystCountEnabled();
+            case SPEED -> PFConfig.catalystSpeedEnabled();
+            case QUANTITY -> PFConfig.catalystQuantityEnabled();
+            case INFINITE -> PFConfig.catalystInfiniteEnabled();
+        };
     }
 }

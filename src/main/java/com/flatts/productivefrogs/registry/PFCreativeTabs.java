@@ -99,13 +99,22 @@ public final class PFCreativeTabs {
                     // after the appliances so the two machines stay adjacent in the
                     // tab. It's the hand-fed item that drives same-species breeding.
                     output.accept(PFItems.SWEETSLIME.get());
-                    // Slime Milk catalysts (drop into a source to buff it). Hidden
-                    // when the feature is config-disabled, mirroring the Spawnery;
-                    // shown by default. isLoaded guards the title-screen build.
-                    if (PFConfig.SPEC.isLoaded() && PFConfig.MILK_CATALYSTS_ENABLED.get()) {
+                    // Slime Milk catalysts (drop into a source to buff it). Each
+                    // shows only when its own per-catalyst flag - ANDed with the
+                    // catalysts master inside the accessor - is on (#201); shown by
+                    // default, like the other default-on appliances above. The
+                    // accessors fail open until the config spec loads, so the
+                    // title-screen build shows them.
+                    if (PFConfig.catalystCountEnabled()) {
                         output.accept(PFItems.COUNT_CATALYST.get());
+                    }
+                    if (PFConfig.catalystSpeedEnabled()) {
                         output.accept(PFItems.SPEED_CATALYST.get());
+                    }
+                    if (PFConfig.catalystQuantityEnabled()) {
                         output.accept(PFItems.QUANTITY_CATALYST.get());
+                    }
+                    if (PFConfig.catalystInfiniteEnabled()) {
                         output.accept(PFItems.INFINITE_CATALYST.get());
                     }
                     // One Slime Milk bucket per registry variant that has a

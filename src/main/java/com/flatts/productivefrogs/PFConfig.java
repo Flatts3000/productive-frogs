@@ -31,6 +31,11 @@ public final class PFConfig {
     // block (docs/slime_milk_catalysts.md). The early-game stopgap toward
     // lower-friction production before the V2 Frog Habitat.
     public static final ModConfigSpec.BooleanValue MILK_CATALYSTS_ENABLED;
+    // Per-catalyst on/off, each effective only when MILK_CATALYSTS_ENABLED is on (#201).
+    public static final ModConfigSpec.BooleanValue CATALYST_COUNT_ENABLED;
+    public static final ModConfigSpec.BooleanValue CATALYST_SPEED_ENABLED;
+    public static final ModConfigSpec.BooleanValue CATALYST_QUANTITY_ENABLED;
+    public static final ModConfigSpec.BooleanValue CATALYST_INFINITE_ENABLED;
     public static final ModConfigSpec.BooleanValue BREWED_FROGLIGHTS_ENABLED;
     public static final ModConfigSpec.IntValue CATALYST_COUNT_PER;
     public static final ModConfigSpec.IntValue CATALYST_MAX_SPEED_LEVEL;
@@ -202,6 +207,43 @@ public final class PFConfig {
                 "off/on requires a world reload to re-evaluate the recipe condition."
             )
             .define("enabled", true);
+
+        CATALYST_COUNT_ENABLED = builder
+            .comment(
+                "Whether the Count catalyst is enabled. Default true.",
+                "Effective only when the catalysts master 'enabled' is also true. When off, the Count",
+                "catalyst is uncraftable, hidden from JEI + the creative tab, and inert if dropped into",
+                "a source/Sprinkler (the item is left for the player). Toggling requires a world reload."
+            )
+            .define("count", true);
+
+        CATALYST_SPEED_ENABLED = builder
+            .comment(
+                "Whether the Speed catalyst is enabled. Default true.",
+                "Effective only when the catalysts master 'enabled' is also true. When off, the Speed",
+                "catalyst is uncraftable, hidden from JEI + the creative tab, and inert if dropped in.",
+                "Toggling requires a world reload."
+            )
+            .define("speed", true);
+
+        CATALYST_QUANTITY_ENABLED = builder
+            .comment(
+                "Whether the Quantity catalyst is enabled. Default true.",
+                "Effective only when the catalysts master 'enabled' is also true. When off, the Quantity",
+                "catalyst is uncraftable, hidden from JEI + the creative tab, and inert if dropped in.",
+                "Toggling requires a world reload."
+            )
+            .define("quantity", true);
+
+        CATALYST_INFINITE_ENABLED = builder
+            .comment(
+                "Whether the Infinite (Endless) catalyst is enabled. Default true.",
+                "Effective only when the catalysts master 'enabled' is also true. When off, the Infinite",
+                "catalyst is uncraftable, hidden from JEI + the creative tab, and inert if dropped in.",
+                "The Infinite catalyst is crafted from Count catalysts, so disabling 'count' also leaves",
+                "Infinite uncraftable in survival even if this stays on. Toggling requires a world reload."
+            )
+            .define("infinite", true);
 
         CATALYST_COUNT_PER = builder
             .comment(
@@ -625,6 +667,31 @@ public final class PFConfig {
     /** Whether Slime Milk catalysts are enabled ({@code slime_milk_catalysts.enabled}); fallback true. */
     public static boolean milkCatalystsEnabled() {
         return !SPEC.isLoaded() || MILK_CATALYSTS_ENABLED.get();
+    }
+
+    // The four per-catalyst accessors are the runtime (fail-open) copy of the
+    // master-AND-child relationship; ConfigEnabledCondition.Key.{COUNT,SPEED,
+    // QUANTITY,INFINITE}_CATALYST.read() is the recipe-load (fail-closed) copy.
+    // Keep the two in sync if the relationship changes (#201).
+
+    /** Whether the Count catalyst is enabled (master AND {@code slime_milk_catalysts.count}); fallback true. */
+    public static boolean catalystCountEnabled() {
+        return !SPEC.isLoaded() || (MILK_CATALYSTS_ENABLED.get() && CATALYST_COUNT_ENABLED.get());
+    }
+
+    /** Whether the Speed catalyst is enabled (master AND {@code slime_milk_catalysts.speed}); fallback true. */
+    public static boolean catalystSpeedEnabled() {
+        return !SPEC.isLoaded() || (MILK_CATALYSTS_ENABLED.get() && CATALYST_SPEED_ENABLED.get());
+    }
+
+    /** Whether the Quantity catalyst is enabled (master AND {@code slime_milk_catalysts.quantity}); fallback true. */
+    public static boolean catalystQuantityEnabled() {
+        return !SPEC.isLoaded() || (MILK_CATALYSTS_ENABLED.get() && CATALYST_QUANTITY_ENABLED.get());
+    }
+
+    /** Whether the Infinite catalyst is enabled (master AND {@code slime_milk_catalysts.infinite}); fallback true. */
+    public static boolean catalystInfiniteEnabled() {
+        return !SPEC.isLoaded() || (MILK_CATALYSTS_ENABLED.get() && CATALYST_INFINITE_ENABLED.get());
     }
 
     /** Spawns added per Count catalyst ({@code slime_milk_catalysts.countPerCatalyst}); fallback {@value #DEFAULT_CATALYST_COUNT_PER}. */

@@ -119,16 +119,25 @@ the items hard-code each other.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `enabled` | `true` | Master toggle. Off = uncraftable + hidden from JEI (placed sources still work; applied upgrades still honoured). Recipe gate via the `config_enabled`/`milk_catalysts` condition. |
+| `enabled` | `true` | Master toggle. Off = all four catalysts uncraftable + hidden from JEI + creative (placed sources still work; applied upgrades still honoured). |
+| `count` | `true` | Count catalyst on/off (effective only when master `enabled`). Off = uncraftable, hidden, and inert if dropped in. |
+| `speed` | `true` | Speed catalyst on/off (effective only when master `enabled`). |
+| `quantity` | `true` | Quantity catalyst on/off (effective only when master `enabled`). |
+| `infinite` | `true` | Infinite (Endless) catalyst on/off (effective only when master `enabled`). Crafted from Count catalysts, so its recipe is gated on **both** `count` and `infinite`: disabling `count` also drops the Infinite recipe (no dangling recipe whose ingredient is uncraftable). |
 | `countPerCatalyst` | 16 | Spawns added per Count catalyst. |
 | `maxSpeedLevel` | 4 | Speed cap. |
 | `maxQuantityLevel` | 3 | Quantity cap. |
 | `speedReductionPerLevel` | 0.20 | Interval reduction per Speed level. |
 | `minIntervalFloorTicks` | 20 | Floor the Speed-reduced interval can't drop below. |
 
-The recipe gate reuses the Spawnery's `ConfigEnabledCondition` machinery (new
-`Key.MILK_CATALYSTS`); toggling requires a world reload to re-evaluate the recipe
-condition, exactly like the Spawnery.
+The recipe gate reuses the Spawnery's `ConfigEnabledCondition` machinery. The
+master uses `Key.MILK_CATALYSTS`; each catalyst recipe now carries its own
+per-catalyst key (`count_catalyst` / `speed_catalyst` / `quantity_catalyst` /
+`infinite_catalyst`, #201), and each of those ANDs the master so the master still
+drops all four. Toggling requires a world reload to re-evaluate the recipe
+condition, exactly like the Spawnery. The same per-catalyst flag also gates the
+creative-tab entry, the JEI ingredient + info page, and the runtime consume at a
+source block / Sprinkler (a disabled catalyst dropped in is left for the player).
 
 ## Jade
 
@@ -140,8 +149,10 @@ depletion is config-off). Read server-side from the BE.
 
 - **JUnit** `SlimeMilkSourceCatalystTest` - seed, apply, caps, idempotent
   infinite, decrement floor, restore clamping.
-- **JUnit** `CatalystRecipeTest` - all four recipes config-gated; Infinite built
-  from Count.
+- **JUnit** `CatalystRecipeTest` - all four recipes config-gated on their own
+  per-catalyst key (#201); Infinite built from Count.
+- **JUnit** `ConfigEnabledConditionTest` - the per-catalyst condition keys
+  serialize + codec-round-trip.
 - **GameTest** - `catalystDroppedInPoolIsConsumed` (the `entityInside` de-risk),
   `catalystInfiniteSourceNeverDrains`, `catalystAtCapIsNotConsumed`,
   `catalystUpgradesSurviveBucketRoundTrip`, plus the existing milk-source

@@ -44,6 +44,26 @@ class ConfigEnabledConditionTest {
     }
 
     @Test
+    void perCatalystKeysSerializeToTheirIds() {
+        assertEquals("count_catalyst", ConfigEnabledCondition.Key.COUNT_CATALYST.getSerializedName());
+        assertEquals("speed_catalyst", ConfigEnabledCondition.Key.SPEED_CATALYST.getSerializedName());
+        assertEquals("quantity_catalyst", ConfigEnabledCondition.Key.QUANTITY_CATALYST.getSerializedName());
+        assertEquals("infinite_catalyst", ConfigEnabledCondition.Key.INFINITE_CATALYST.getSerializedName());
+    }
+
+    @Test
+    void codecRoundTripsPerCatalystKeys() {
+        assertSame(ConfigEnabledCondition.Key.COUNT_CATALYST,
+            ConfigEnabledCondition.Key.CODEC.byName("count_catalyst"));
+        assertSame(ConfigEnabledCondition.Key.SPEED_CATALYST,
+            ConfigEnabledCondition.Key.CODEC.byName("speed_catalyst"));
+        assertSame(ConfigEnabledCondition.Key.QUANTITY_CATALYST,
+            ConfigEnabledCondition.Key.CODEC.byName("quantity_catalyst"));
+        assertSame(ConfigEnabledCondition.Key.INFINITE_CATALYST,
+            ConfigEnabledCondition.Key.CODEC.byName("infinite_catalyst"));
+    }
+
+    @Test
     void codecRejectsUnknownKey() {
         assertNull(ConfigEnabledCondition.Key.CODEC.byName("does_not_exist"));
     }

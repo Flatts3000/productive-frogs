@@ -131,6 +131,20 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         if (!castingMoldEnabled()) {
             hidden.add(new ItemStack(PFItems.CASTING_MOLD.get()));
         }
+        // Per-catalyst hide (#201): each accessor ANDs the catalysts master, so a
+        // disabled master hides all four and an individual flag hides just its own.
+        if (!PFConfig.catalystCountEnabled()) {
+            hidden.add(new ItemStack(PFItems.COUNT_CATALYST.get()));
+        }
+        if (!PFConfig.catalystSpeedEnabled()) {
+            hidden.add(new ItemStack(PFItems.SPEED_CATALYST.get()));
+        }
+        if (!PFConfig.catalystQuantityEnabled()) {
+            hidden.add(new ItemStack(PFItems.QUANTITY_CATALYST.get()));
+        }
+        if (!PFConfig.catalystInfiniteEnabled()) {
+            hidden.add(new ItemStack(PFItems.INFINITE_CATALYST.get()));
+        }
         if (!hidden.isEmpty()) {
             jeiRuntime.getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hidden);
         }
@@ -587,15 +601,23 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             VanillaTypes.ITEM_STACK,
             Component.translatable("productivefrogs.jei.empty_tadpole_bucket.info"));
 
-        // Slime Milk catalysts - only when enabled (uncraftable + untaught when
-        // the feature is config-off), mirroring the Spawnery guard above.
-        if (PFConfig.SPEC.isLoaded() && PFConfig.MILK_CATALYSTS_ENABLED.get()) {
+        // Slime Milk catalysts - each only when its own flag is enabled (#201).
+        // The accessors AND the catalysts master, so an off master drops all four
+        // and an individual flag drops just its own info page (a page for a hidden
+        // item would orphan + warn, mirroring the Spawnery guard above).
+        if (PFConfig.catalystCountEnabled()) {
             reg.addIngredientInfo(new ItemStack(PFItems.COUNT_CATALYST.get()),
                 VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.count_catalyst.info"));
+        }
+        if (PFConfig.catalystSpeedEnabled()) {
             reg.addIngredientInfo(new ItemStack(PFItems.SPEED_CATALYST.get()),
                 VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.speed_catalyst.info"));
+        }
+        if (PFConfig.catalystQuantityEnabled()) {
             reg.addIngredientInfo(new ItemStack(PFItems.QUANTITY_CATALYST.get()),
                 VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.quantity_catalyst.info"));
+        }
+        if (PFConfig.catalystInfiniteEnabled()) {
             reg.addIngredientInfo(new ItemStack(PFItems.INFINITE_CATALYST.get()),
                 VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.infinite_catalyst.info"));
         }

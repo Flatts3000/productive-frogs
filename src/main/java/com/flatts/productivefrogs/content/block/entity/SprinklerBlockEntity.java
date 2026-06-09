@@ -209,6 +209,10 @@ public class SprinklerBlockEntity extends BlockEntity {
             if (catalyst == null) {
                 continue;
             }
+            // Per-catalyst gate (#201): a config-disabled catalyst is inert - leave it.
+            if (!catalyst.isEnabled()) {
+                continue;
+            }
             // Count / Infinite are no-ops when depletion is globally off; leave them.
             if ((catalyst == MilkCatalyst.COUNT || catalyst == MilkCatalyst.INFINITE) && !depletionEnabled()) {
                 continue;
