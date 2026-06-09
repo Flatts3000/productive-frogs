@@ -99,6 +99,16 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         return !PFConfig.SPEC.isLoaded() || PFConfig.SLIME_CHURN_ENABLED.get();
     }
 
+    /** Whether the Froglight Crucible is enabled (#196). Default-on: fail OPEN until config loads. */
+    private static boolean crucibleEnabled() {
+        return !PFConfig.SPEC.isLoaded() || PFConfig.CRUCIBLE_ENABLED.get();
+    }
+
+    /** Whether the Casting Mold is enabled (#196). Default-on: fail OPEN until config loads. */
+    private static boolean castingMoldEnabled() {
+        return !PFConfig.SPEC.isLoaded() || PFConfig.CASTING_MOLD_ENABLED.get();
+    }
+
     @Override
     public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
         // Hide any config-disabled appliance from the JEI ingredient list so JEI
@@ -114,6 +124,12 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         }
         if (!slimeChurnEnabled()) {
             hidden.add(new ItemStack(PFItems.SLIME_CHURN.get()));
+        }
+        if (!crucibleEnabled()) {
+            hidden.add(new ItemStack(PFItems.CRUCIBLE.get()));
+        }
+        if (!castingMoldEnabled()) {
+            hidden.add(new ItemStack(PFItems.CASTING_MOLD.get()));
         }
         if (!hidden.isEmpty()) {
             jeiRuntime.getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hidden);
@@ -233,14 +249,18 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             addChurnRecipes(reg, variants);
         }
         addSpawneryRecipes(reg);
-        addCrucibleHeatEntries(reg, variants);
-        // Melt + cast recipes ride their real recipe types, so datapack
-        // additions (molten metals, nugget/block casts) surface with no code
-        // change.
-        reg.addRecipes(CrucibleMeltCategory.TYPE, level.getRecipeManager()
-            .getAllRecipesFor(com.flatts.productivefrogs.registry.PFRecipeTypes.CRUCIBLE_MELTING.get()));
-        reg.addRecipes(MoldCastingCategory.TYPE, level.getRecipeManager()
-            .getAllRecipesFor(com.flatts.productivefrogs.registry.PFRecipeTypes.MOLD_CASTING.get()));
+        // Melt + cast recipes ride their real recipe types, so datapack additions
+        // (molten metals, nugget/block casts) surface with no code change. Gated by
+        // the Crucible/Mold toggles (#196) so a disabled lane leaves no JEI category.
+        if (crucibleEnabled()) {
+            addCrucibleHeatEntries(reg, variants);
+            reg.addRecipes(CrucibleMeltCategory.TYPE, level.getRecipeManager()
+                .getAllRecipesFor(com.flatts.productivefrogs.registry.PFRecipeTypes.CRUCIBLE_MELTING.get()));
+        }
+        if (castingMoldEnabled()) {
+            reg.addRecipes(MoldCastingCategory.TYPE, level.getRecipeManager()
+                .getAllRecipesFor(com.flatts.productivefrogs.registry.PFRecipeTypes.MOLD_CASTING.get()));
+        }
     }
 
     /**
@@ -305,9 +325,13 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         if (slimeChurnEnabled()) {
             registration.addRecipeCatalyst(PFBlocks.SLIME_CHURN.get(), SlimeChurnRecipeCategory.TYPE);
         }
-        registration.addRecipeCatalyst(PFBlocks.CRUCIBLE.get(), CrucibleHeatCategory.TYPE);
-        registration.addRecipeCatalyst(PFBlocks.CRUCIBLE.get(), CrucibleMeltCategory.TYPE);
-        registration.addRecipeCatalyst(PFBlocks.CASTING_MOLD.get(), MoldCastingCategory.TYPE);
+        if (crucibleEnabled()) {
+            registration.addRecipeCatalyst(PFBlocks.CRUCIBLE.get(), CrucibleHeatCategory.TYPE);
+            registration.addRecipeCatalyst(PFBlocks.CRUCIBLE.get(), CrucibleMeltCategory.TYPE);
+        }
+        if (castingMoldEnabled()) {
+            registration.addRecipeCatalyst(PFBlocks.CASTING_MOLD.get(), MoldCastingCategory.TYPE);
+        }
         // Spawnery catalyst only when enabled - the block is removed from JEI in
         // onRuntimeAvailable when off, and addSpawneryRecipes adds no recipes then,
         // so registering the catalyst would surface an empty category for a hidden

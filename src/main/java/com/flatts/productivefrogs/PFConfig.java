@@ -41,6 +41,8 @@ public final class PFConfig {
     public static final ModConfigSpec.BooleanValue SPAWNERY_ENABLED;
     public static final ModConfigSpec.BooleanValue SLIME_MILKER_ENABLED;
     public static final ModConfigSpec.BooleanValue SLIME_CHURN_ENABLED;
+    public static final ModConfigSpec.BooleanValue CRUCIBLE_ENABLED;
+    public static final ModConfigSpec.BooleanValue CASTING_MOLD_ENABLED;
     public static final ModConfigSpec.IntValue SPAWNERY_PRODUCTION_TICKS;
 
     // Frog stat breeding (docs/frog_breeding.md).
@@ -306,6 +308,22 @@ public final class PFConfig {
                 "Churn still works. Toggling requires a world reload to re-evaluate the recipe condition."
             )
             .define("slimeChurn", true);
+
+        CRUCIBLE_ENABLED = builder
+            .comment(
+                "Whether the Froglight Crucible is craftable. Default true.",
+                "When false the Crucible is uncraftable and its melt lane (Froglights -> fluids) is hidden",
+                "from JEI + the creative tab; a placed Crucible still works. Toggling requires a world reload."
+            )
+            .define("crucible", true);
+
+        CASTING_MOLD_ENABLED = builder
+            .comment(
+                "Whether the Casting Mold is craftable. Default true.",
+                "When false the Mold is uncraftable and its cast lane (molten fluids -> ingots/blocks) is",
+                "hidden from JEI + the creative tab; a placed Mold still works. Toggling requires a world reload."
+            )
+            .define("castingMold", true);
 
         builder.pop();
 

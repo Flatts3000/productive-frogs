@@ -85,6 +85,28 @@ class SpawneryRecipeTest {
         assertConfigGate(recipe, "slime_churn");
     }
 
+    @Test
+    void crucibleRecipeIsConfigGated() {
+        JsonObject recipe = parse(RECIPE_ROOT.resolve("crucible.json"));
+        assertEquals("minecraft:crafting_shaped", recipe.get("type").getAsString(), "crucible: recipe type");
+        assertResultId(recipe, "productivefrogs:crucible");
+        assertPattern(recipe, "I I", "B B", "BBB");
+        assertIngredientItem(recipe, "I", "minecraft:iron_ingot");
+        assertIngredientItem(recipe, "B", "minecraft:brick");
+        assertConfigGate(recipe, "crucible");
+    }
+
+    @Test
+    void castingMoldRecipeIsConfigGated() {
+        JsonObject recipe = parse(RECIPE_ROOT.resolve("casting_mold.json"));
+        assertEquals("minecraft:crafting_shaped", recipe.get("type").getAsString(), "casting_mold: recipe type");
+        assertResultId(recipe, "productivefrogs:casting_mold");
+        assertPattern(recipe, "B B", "I I", "III");
+        assertIngredientItem(recipe, "I", "minecraft:iron_ingot");
+        assertIngredientItem(recipe, "B", "minecraft:brick");
+        assertConfigGate(recipe, "casting_mold");
+    }
+
     /** Assert the recipe carries exactly one {@code productivefrogs:config_enabled} condition with {@code config == key}. */
     private static void assertConfigGate(JsonObject recipe, String key) {
         JsonArray conditions = recipe.getAsJsonArray("neoforge:conditions");

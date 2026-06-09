@@ -74,6 +74,18 @@ public record ConfigEnabledCondition(Key config) implements ICondition {
             boolean read() {
                 return PFConfig.SLIME_CHURN_ENABLED.get();
             }
+        },
+        CRUCIBLE("crucible") {
+            @Override
+            boolean read() {
+                return PFConfig.CRUCIBLE_ENABLED.get();
+            }
+        },
+        CASTING_MOLD("casting_mold") {
+            @Override
+            boolean read() {
+                return PFConfig.CASTING_MOLD_ENABLED.get();
+            }
         };
 
         public static final StringRepresentable.EnumCodec<Key> CODEC =

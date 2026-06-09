@@ -1,4 +1,7 @@
 {
+  "neoforge:conditions": [
+    { "type": "productivefrogs:config_enabled", "config": "crucible" }
+  ],
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "group": "productivefrogs",

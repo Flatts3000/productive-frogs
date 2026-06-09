@@ -6,6 +6,7 @@
 
 - **Config toggle to disable Brewed Froglights** (`brewed_froglights.enabled`, default on - no change for existing packs). When off, a frog eating an effect-carrying slime drops a plain Froglight (no captured effect), and any already-brewed Froglights go inert: they keep their stored effect but apply no placed-aura / held / worn buff and read as plain. Lets a pack keep the resource loop without the potion-aura system. (#195)
 - **Config toggles for the Slime Milker and Slime Churn** (`appliances.slimeMilker` / `appliances.slimeChurn`, default on). When off, the appliance is uncraftable and hidden from JEI and the creative tab; an already-placed block still works. Lets a pack ship a subset of the production appliances. (#196)
+- **Config toggles for the Froglight Crucible and Casting Mold** (`appliances.crucible` / `appliances.castingMold`, default on). When off, the appliance is uncraftable and its JEI lane (melt / cast categories) is hidden, along with the creative-tab entry; a placed block still works. Lets a pack ship the resource loop without the melt-and-cast fluid lane. (#196)
 
 ## v1.16.0 - 2026-06-08 - The Terrarium
 
