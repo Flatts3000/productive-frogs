@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.content.block;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFDataComponents;
@@ -81,7 +82,7 @@ public class ConfigurableFroglightBlock extends RotatedPillarBlock implements En
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!(level.getBlockEntity(pos) instanceof ConfigurableFroglightBlockEntity froglight)
-                || froglight.getEffect() == null) {
+                || froglight.getEffect() == null || !PFConfig.brewedFroglightsEnabled()) {
             return InteractionResult.PASS;
         }
         if (!level.isClientSide()) {

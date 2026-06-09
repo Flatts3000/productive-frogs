@@ -223,7 +223,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                         percent(progress, com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity.CAST_TIME)));
                 }
             } else if (be instanceof com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity froglight
-                    && froglight.getEffect() != null) {
+                    && froglight.getEffect() != null && PFConfig.brewedFroglightsEnabled()) {
                 // Brewed Froglight aura (#162): name the effect (with level) and
                 // its on/off state. Plain Froglights add no line.
                 com.flatts.productivefrogs.data.StoredEffect stored = froglight.getEffect();

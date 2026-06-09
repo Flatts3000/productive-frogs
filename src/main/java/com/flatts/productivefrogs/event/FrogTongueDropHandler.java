@@ -85,8 +85,10 @@ public final class FrogTongueDropHandler {
         frog.startEatCooldown();
         // Brewed Froglights (#162): if the slime was carrying a potion effect
         // (splashed/lingered onto it before the frog ate it), capture the one
-        // effect by the decided rule and stamp it on the drop.
-        StoredEffect captured = StoredEffect.pick(slime.getActiveEffects());
+        // effect by the decided rule and stamp it on the drop. Gated by config
+        // (#195): when disabled, the Froglight drops plain.
+        StoredEffect captured = PFConfig.brewedFroglightsEnabled()
+            ? StoredEffect.pick(slime.getActiveEffects()) : null;
         dropFroglightAtFrog(frog, slime.getVariantId(), captured);
     }
 

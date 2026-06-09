@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.content.block.entity;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.data.StoredEffect;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFDataComponents;
@@ -87,9 +88,9 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
         return effect;
     }
 
-    /** True when this Froglight carries an effect that is currently toggled on. */
+    /** True when this Froglight carries an effect that is currently toggled on AND the feature is enabled. */
     public boolean isAuraActive() {
-        return effect != null && effect.enabled();
+        return effect != null && effect.enabled() && PFConfig.brewedFroglightsEnabled();
     }
 
     /**
@@ -113,7 +114,7 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * activate vs deactivate sound.
      */
     public boolean toggleAura() {
-        if (effect == null) {
+        if (effect == null || !PFConfig.brewedFroglightsEnabled()) {
             return false;
         }
         setEffect(effect.withEnabled(!effect.enabled()));
@@ -129,10 +130,10 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * Froglight, decorative included - the guard keeps that cost to one branch).
      */
     public static void serverTick(Level level, BlockPos pos, BlockState state, ConfigurableFroglightBlockEntity be) {
-        StoredEffect e = be.effect;
-        if (e == null || !e.enabled() || level.getGameTime() % AURA_PULSE_TICKS != 0L) {
+        if (!be.isAuraActive() || level.getGameTime() % AURA_PULSE_TICKS != 0L) {
             return;
         }
+        StoredEffect e = be.effect;
         AABB area = new AABB(pos).inflate(AURA_RADIUS);
         for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, area)) {
             entity.addEffect(e.toInstance());
@@ -147,10 +148,10 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * Silent while off / on a plain Froglight, giving a clear on/off tell.
      */
     public static void clientTick(Level level, BlockPos pos, BlockState state, ConfigurableFroglightBlockEntity be) {
-        StoredEffect e = be.effect;
-        if (e == null || !e.enabled() || level.getGameTime() % PARTICLE_INTERVAL_TICKS != 0L) {
+        if (!be.isAuraActive() || level.getGameTime() % PARTICLE_INTERVAL_TICKS != 0L) {
             return;
         }
+        StoredEffect e = be.effect;
         // MobEffect.getColor() is 0x00RRGGBB (no alpha); ColorParticleOption
         // reads the top byte as alpha, so without this OR the swirl spawns fully
         // transparent (the invisible-aura bug). Force opaque.
