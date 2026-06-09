@@ -91,6 +91,7 @@ public final class PFConfig {
     // registry entry stays (save-safe soft-hide), so re-enabling restores it.
     public static final ModConfigSpec.ConfigValue<List<? extends String>> DISABLED_VARIANTS;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> DISABLED_CATEGORIES;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> DISABLED_INTEGRATIONS;
     public static final ModConfigSpec.BooleanValue BOSS_VARIANTS_ENABLED;
 
     // Deterministic, config-exposed lifecycle timings (docs/known_issues.md).
@@ -637,6 +638,23 @@ public final class PFConfig {
             .defineListAllowEmpty("disabledCategories", List.of(), () -> "void",
                 PFConfig::isValidCategoryName);
 
+        DISABLED_INTEGRATIONS = builder
+            .comment(
+                "Host mods whose cross-mod variants you want force-OFF, by modid (e.g.",
+                "[\"mekanism\", \"powah\"]). Every variant gated solely behind a listed mod becomes",
+                "disabled exactly like disabledVariants: unprimable, undiscovered, hidden from JEI +",
+                "the creative tab. Use this to keep a host mod for its machines while dropping its",
+                "Resource Slime variants. Default empty.",
+                "The provider mod is read from each variant's mod_loaded gate, so the key is that gate's",
+                "modid (e.g. AllTheOres-sourced metals like tin/lead are under \"alltheores\", not a per-",
+                "metal mod). A variant shared by several providers (only \"silicon\": ae2 OR refinedstorage)",
+                "is disabled only when EVERY one of its providers is listed - disabling one leaves it",
+                "reachable via the other; to drop such a variant outright, name it in disabledVariants.",
+                "Only built-in variants are covered; a variant added through a live world datapack is not."
+            )
+            .defineListAllowEmpty("disabledIntegrations", List.of(), () -> "examplemod",
+                PFConfig::isValidIntegrationKey);
+
         BOSS_VARIANTS_ENABLED = builder
             .comment(
                 "Whether the boss tier's prime-only variants (weight 0: wither skull, nether star, dragon egg,",
@@ -674,6 +692,16 @@ public final class PFConfig {
             }
         }
         return false;
+    }
+
+    /**
+     * True if {@code o} is a syntactically valid modid string (the integration-key
+     * charset: lowercase letters, digits, {@code _ - .}). Membership isn't checked
+     * - the mod may be absent this launch, in which case its variants already don't
+     * load and listing it is a harmless no-op.
+     */
+    private static boolean isValidIntegrationKey(Object o) {
+        return o instanceof String s && !s.isEmpty() && s.matches("[a-z0-9_.-]+");
     }
 
     // ------------------------------------------------------------------
@@ -842,6 +870,17 @@ public final class PFConfig {
     /** Whether the boss-tier prime-only variants are enabled ({@code variants.bossVariantsEnabled}); fallback true. */
     public static boolean bossVariantsEnabled() {
         return !SPEC.isLoaded() || BOSS_VARIANTS_ENABLED.get();
+    }
+
+    /**
+     * Whether {@code id}'s provider integration is force-disabled
+     * ({@code variants.disabledIntegrations}, #204). True only for a known cross-mod
+     * variant whose every provider mod is listed; fails closed (not disabled) before
+     * the config loads. Consulted by {@link com.flatts.productivefrogs.data.SlimeVariant#isEnabled}.
+     */
+    public static boolean integrationDisabled(ResourceLocation id) {
+        return SPEC.isLoaded()
+            && com.flatts.productivefrogs.setup.VariantIntegrations.allProvidersDisabled(id, DISABLED_INTEGRATIONS.get());
     }
 
     // ------------------------------------------------------------------

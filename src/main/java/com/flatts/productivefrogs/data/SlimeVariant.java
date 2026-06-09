@@ -169,7 +169,12 @@ public record SlimeVariant(
      * doesn't carry its own registry key.
      */
     public boolean isEnabled(ResourceLocation id) {
-        return PFConfig.variantEnabled(id, this.category, this.weight);
+        // Per-variant / category / boss gate (#203), then the per-integration
+        // force-off (#204). Both fail open before the config loads. The
+        // integration dimension lives here (not as a parameter on variantEnabled)
+        // so every resolution site that calls isEnabled(id) picks it up for free.
+        return PFConfig.variantEnabled(id, this.category, this.weight)
+            && !PFConfig.integrationDisabled(id);
     }
 
     /**

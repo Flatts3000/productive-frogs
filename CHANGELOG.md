@@ -5,6 +5,7 @@
 ### Added
 
 - **Config: disable individual variants, whole species, or the boss tier.** A new `[variants]` config section lets a pack scope content without datapack surgery: `disabledVariants` force-offs resources by id, `disabledCategories` force-offs whole species (cave/geode/bog/tide/infernal/void), and `bossVariantsEnabled` toggles the prime-only boss tier in one switch. A disabled variant is unprimable, never appears in split-discovery, and is hidden from JEI and the creative tab. It is a soft hide - the registry entry stays, so already-placed content keeps working and re-enabling restores everything (no save surgery). Default: nothing disabled, fully non-breaking. Applies on world reload. (#203)
+- **Config: force off a host mod's variants with `variants.disabledIntegrations`.** List a provider modid (e.g. `["mekanism"]`) and every cross-mod variant gated solely behind that mod is disabled, exactly like `disabledVariants` - so a pack can keep a mod for its machines while dropping its Resource Slime variants. The provider is read from each variant's `mod_loaded` gate (most cross-mod metals are under `alltheores`); a variant shared by several providers (only `silicon`) is disabled only when all of them are listed. Default empty, non-breaking. (#204)
 
 ## v1.17.0 - 2026-06-09 - Frog Legs and Fairy Tales
 
