@@ -212,9 +212,21 @@ public class ResourceTadpole extends Tadpole {
     public void saveToBucketTag(ItemStack stack) {
         super.saveToBucketTag(stack);
         Category category = getCategory();
-        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag ->
-            tag.putString("Category", category.name())
-        );
+        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
+            tag.putString("Category", category.name());
+            // Carry the inherited (pending) breeding stats through the bucket the
+            // same way addAdditionalSaveData carries them through a world save -
+            // otherwise scooping a bred tadpole and re-placing it drops its stats,
+            // and it matures into a baseline 1/1/1 frog (the bucket is transport,
+            // not a stat sink). Keys match addAdditionalSaveData so the two paths
+            // stay interchangeable.
+            if (hasPendingStats) {
+                tag.putBoolean("HasPendingStats", true);
+                tag.putInt("PendingAppetite", pendingAppetite);
+                tag.putInt("PendingBounty", pendingBounty);
+                tag.putInt("PendingReach", pendingReach);
+            }
+        });
     }
 
     @Override
@@ -226,6 +238,10 @@ public class ResourceTadpole extends Tadpole {
             } catch (IllegalArgumentException ignored) {
                 // Unknown category in bucket NBT — leave default.
             }
+        }
+        if (tag.getBoolean("HasPendingStats")) {
+            setPendingStats(tag.getInt("PendingAppetite"),
+                tag.getInt("PendingBounty"), tag.getInt("PendingReach"));
         }
     }
 
