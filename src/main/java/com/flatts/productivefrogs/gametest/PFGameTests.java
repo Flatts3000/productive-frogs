@@ -5197,6 +5197,28 @@ public final class PFGameTests {
         helper.succeed();
     }
 
+    /** The Hatch auto-collects loose Raw Frog Legs from the cavity (#194 drop + hatch_collectible tag). */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumHatchVacuumsRawFrogLegs(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 0);
+        ServerLevel level = helper.getLevel();
+        ((com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity)
+            helper.getBlockEntity(controller)).forceValidate(level, helper.absolutePos(controller));
+        // Drop raw frog legs loose in the cavity; the Hatch's vacuum should pull them in.
+        BlockPos dropAbs = helper.absolutePos(new BlockPos(4, 3, 4));
+        net.minecraft.world.entity.item.ItemEntity legs = new net.minecraft.world.entity.item.ItemEntity(
+            level, dropAbs.getX() + 0.5, dropAbs.getY(), dropAbs.getZ() + 0.5,
+            new net.minecraft.world.item.ItemStack(PFItems.RAW_FROG_LEGS.get()));
+        level.addFreshEntity(legs);
+        helper.succeedWhen(() -> {
+            if (!(helper.getBlockEntity(new BlockPos(7, 4, 4))
+                    instanceof com.flatts.productivefrogs.content.block.entity.HatchBlockEntity hatch)
+                    || hatch.isEmpty()) {
+                helper.fail("Hatch should vacuum the raw frog legs from the cavity");
+            }
+        });
+    }
+
     /** A full Hatch is backpressure: the drop deposits nothing and spills no item entity. */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
     public static void terrariumFullHatchStopsDrop(GameTestHelper helper) {

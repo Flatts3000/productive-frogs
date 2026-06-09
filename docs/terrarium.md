@@ -192,7 +192,7 @@ The Terrarium sits at the **Infernal tier**: its blocks are crafted from **Infer
 - `terrarium.validationIntervalTicks` (default ~30) - revalidation cadence.
 - `terrarium.sprinklerTopUpThreshold` (default 4) - when a draining matching Sprinkler gets topped up.
 - `terrarium.sweetslimeAcceleratePercent` (default 10) - % of the full lifecycle a Sweetslime shaves off an incubating Incubator (0 disables).
-- `terrarium.hatchVacuumIntervalTicks` (default 8) - cadence of the Hatch's in-cavity item auto-collect sweep.
+- `terrarium.hatchVacuumIntervalTicks` (default 8) - cadence of the Hatch's in-cavity item auto-collect sweep. The whitelist of items it vacuums is the `productivefrogs:hatch_collectible` item tag (slimeballs, magma cream, froglights, and Raw Frog Legs from frogs that die in the cavity); extend the tag to collect more.
 - Sprinkler spawn cadence/cap reuse the existing `SlimeMilkSource` config, scoped to the cavity.
 
 ## Registration / wiring checklist

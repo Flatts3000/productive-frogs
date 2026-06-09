@@ -5,6 +5,7 @@
     "minecraft:ochre_froglight",
     "minecraft:verdant_froglight",
     "minecraft:pearlescent_froglight",
-    "productivefrogs:configurable_froglight"
+    "productivefrogs:configurable_froglight",
+    "productivefrogs:raw_frog_legs"
   ]
 }
