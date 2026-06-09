@@ -354,6 +354,48 @@ public final class PFGameTests {
     }
 
     /**
+     * Bucketing a bred tadpole must preserve its inherited (pending) stats, the
+     * same as a world save does - otherwise scooping a 10/10/10 tadpole and
+     * re-placing it drops the stats and it matures into a baseline 1/1/1 frog
+     * (the bug OldManLeroy reported). Mirrors the category round-trip above: write
+     * a stat-stamped tadpole into a bucket, load it onto a fresh tadpole, and
+     * assert the pending stats came back.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void tadpoleBucketRoundTripPreservesPendingStats(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos.below(), Blocks.WATER);
+
+        ResourceTadpole source = helper.spawn(PFEntities.RESOURCE_TADPOLE.get(), pos);
+        source.setCategory(Category.GEODE);
+        source.setPendingStats(10, 10, 10);
+
+        ItemStack bucket = new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
+        source.saveToBucketTag(bucket);
+
+        ResourceTadpole released = helper.spawn(PFEntities.RESOURCE_TADPOLE.get(), pos.east());
+        net.minecraft.world.item.component.CustomData data =
+            bucket.get(net.minecraft.core.component.DataComponents.BUCKET_ENTITY_DATA);
+        if (data == null) {
+            helper.fail("bucket's BUCKET_ENTITY_DATA is unexpectedly null after saveToBucketTag");
+            return;
+        }
+        released.loadFromBucketTag(data.copyTag());
+
+        if (!released.hasPendingStats()
+                || released.getPendingAppetite() != 10
+                || released.getPendingBounty() != 10
+                || released.getPendingReach() != 10) {
+            helper.fail("released tadpole lost its bred stats through the bucket: hasPending="
+                + released.hasPendingStats() + " stats=" + released.getPendingAppetite()
+                + "/" + released.getPendingBounty() + "/" + released.getPendingReach()
+                + " (expected 10/10/10)");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
      * Verify {@link SlimeVariant#findByPrimerItem} resolves item ids to the
      * correct variants — covers the path the slime infusion handler walks
      * before calling {@code setVariant} on the transformed slime.
