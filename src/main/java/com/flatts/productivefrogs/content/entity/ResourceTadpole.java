@@ -212,9 +212,21 @@ public class ResourceTadpole extends Tadpole {
     public void saveToBucketTag(ItemStack stack) {
         super.saveToBucketTag(stack);
         Category category = getCategory();
-        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag ->
-            tag.putString("Category", category.name())
-        );
+        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
+            tag.putString("Category", category.name());
+            // Carry the inherited (pending) breeding stats through the bucket the
+            // same way addAdditionalSaveData carries them through a world save -
+            // otherwise scooping a bred tadpole and re-placing it drops its stats,
+            // and it matures into a baseline 1/1/1 frog (the bucket is transport,
+            // not a stat sink). Keys match addAdditionalSaveData so the two paths
+            // stay interchangeable.
+            if (hasPendingStats) {
+                tag.putBoolean("HasPendingStats", true);
+                tag.putInt("PendingAppetite", pendingAppetite);
+                tag.putInt("PendingBounty", pendingBounty);
+                tag.putInt("PendingReach", pendingReach);
+            }
+        });
     }
 
     @Override
@@ -226,6 +238,16 @@ public class ResourceTadpole extends Tadpole {
             } catch (IllegalArgumentException ignored) {
                 // Unknown category in bucket NBT — leave default.
             }
+        }
+        // Assign the flag unconditionally (mirrors readAdditionalSaveData exactly,
+        // not via setPendingStats) so an old/category-only bucket explicitly clears
+        // it to false rather than leaving a prior value - keeps the two load paths
+        // mechanically interchangeable.
+        hasPendingStats = tag.getBoolean("HasPendingStats");
+        if (hasPendingStats) {
+            pendingAppetite = tag.getInt("PendingAppetite");
+            pendingBounty = tag.getInt("PendingBounty");
+            pendingReach = tag.getInt("PendingReach");
         }
     }
 
