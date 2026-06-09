@@ -62,6 +62,18 @@ public record ConfigEnabledCondition(Key config) implements ICondition {
             boolean read() {
                 return PFConfig.MILK_CATALYSTS_ENABLED.get();
             }
+        },
+        SLIME_MILKER("slime_milker") {
+            @Override
+            boolean read() {
+                return PFConfig.SLIME_MILKER_ENABLED.get();
+            }
+        },
+        SLIME_CHURN("slime_churn") {
+            @Override
+            boolean read() {
+                return PFConfig.SLIME_CHURN_ENABLED.get();
+            }
         };
 
         public static final StringRepresentable.EnumCodec<Key> CODEC =
