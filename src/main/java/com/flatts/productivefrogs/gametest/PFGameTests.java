@@ -712,9 +712,11 @@ public final class PFGameTests {
         helper.succeedWhen(() -> {
             boolean found = helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).stream()
                 .map(net.minecraft.world.entity.item.ItemEntity::getItem)
-                .anyMatch(s -> s.is(PFItems.CONFIGURABLE_FROGLIGHT.get()));
+                .filter(s -> s.is(PFItems.CONFIGURABLE_FROGLIGHT.get()))
+                .anyMatch(s -> ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron")
+                    .equals(s.get(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get())));
             if (!found) {
-                helper.fail("killing a slime with the Froglight Cleaver should drop a Froglight");
+                helper.fail("the Cleaver kill should drop an iron-variant Froglight");
             }
         });
     }

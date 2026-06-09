@@ -167,7 +167,6 @@ public final class FrogTongueDropHandler {
             frog.blockPosition()));
     }
 
-    /** One variant-stamped (and optionally effect-stamped) Configurable Froglight. */
     /**
      * Build a variant-stamped (and optionally brewed) {@code configurable_froglight}
      * item - the single froglight-construction point, shared by the frog tongue
