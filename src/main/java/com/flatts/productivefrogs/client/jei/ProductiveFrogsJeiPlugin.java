@@ -149,6 +149,10 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         if (!PFConfig.frogNetEnabled()) {
             hidden.add(new ItemStack(PFItems.FROG_NET.get()));
         }
+        // Froglight Cleaver (#212): hide when config-disabled.
+        if (!PFConfig.froglightWeaponEnabled()) {
+            hidden.add(new ItemStack(PFItems.FROGLIGHT_CLEAVER.get()));
+        }
         // Frog Legs (#194) + Soup (#217): hide all when the feature is disabled.
         if (!PFConfig.frogLegsEnabled()) {
             hidden.add(new ItemStack(PFItems.RAW_FROG_LEGS.get()));

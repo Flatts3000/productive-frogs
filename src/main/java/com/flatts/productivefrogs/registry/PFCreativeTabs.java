@@ -105,6 +105,11 @@ public final class PFCreativeTabs {
                     if (PFConfig.frogNetEnabled()) {
                         output.accept(PFItems.FROG_NET.get());
                     }
+                    // Froglight Cleaver - late-game harvest weapon (#212); shown by
+                    // default, hidden when config-disabled.
+                    if (PFConfig.froglightWeaponEnabled()) {
+                        output.accept(PFItems.FROGLIGHT_CLEAVER.get());
+                    }
                     // Frog Legs - the death-drop food (#194); shown by default,
                     // hidden when the feature is config-disabled.
                     if (PFConfig.frogLegsEnabled()) {

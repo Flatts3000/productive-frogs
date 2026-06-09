@@ -21,6 +21,7 @@
   "item.minecraft.lingering_potion.effect.hopping_strong": "Lingering Potion of Hopping II",
   "item.minecraft.tipped_arrow.effect.hopping_strong": "Arrow of Hopping II",
   "item.productivefrogs.frog_net": "Frog Net",
+  "item.productivefrogs.froglight_cleaver": "Froglight Cleaver",
   "productivefrogs.frog_net.empty": "Right-click a frog to catch it",
   "productivefrogs.frog_net.stats": "Appetite %1$s  Bounty %2$s  Reach %3$s",
   "productivefrogs.frog_net.release": "Right-click a block to release",

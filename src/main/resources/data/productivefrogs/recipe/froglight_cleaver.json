@@ -1,0 +1,27 @@
+{
+  "neoforge:conditions": [
+    { "type": "productivefrogs:config_enabled", "config": "froglight_weapon" }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "productivefrogs",
+  "pattern": [
+    "BNB",
+    "BNB",
+    "BDB"
+  ],
+  "key": {
+    "N": {
+      "type": "neoforge:components",
+      "items": [ "productivefrogs:configurable_froglight" ],
+      "components": { "productivefrogs:slime_variant": "productivefrogs:nether_star" }
+    },
+    "D": {
+      "type": "neoforge:components",
+      "items": [ "productivefrogs:configurable_froglight" ],
+      "components": { "productivefrogs:slime_variant": "productivefrogs:dragon_egg" }
+    },
+    "B": { "item": "minecraft:dragon_breath" }
+  },
+  "result": { "id": "productivefrogs:froglight_cleaver", "count": 1 }
+}

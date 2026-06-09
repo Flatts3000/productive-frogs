@@ -40,6 +40,7 @@ public final class PFConfig {
     public static final ModConfigSpec.BooleanValue FROG_NET_ENABLED;
     public static final ModConfigSpec.BooleanValue FROG_LEGS_ENABLED;
     public static final ModConfigSpec.BooleanValue HOPPING_ENABLED;
+    public static final ModConfigSpec.BooleanValue FROGLIGHT_WEAPON_ENABLED;
     public static final ModConfigSpec.IntValue CATALYST_COUNT_PER;
     public static final ModConfigSpec.IntValue CATALYST_MAX_SPEED_LEVEL;
     public static final ModConfigSpec.IntValue CATALYST_MAX_QUANTITY_LEVEL;
@@ -325,6 +326,20 @@ public final class PFConfig {
                 "raw Frog Legs when killed, Looting-scaled, and cooked Frog Legs instead if it was on fire",
                 "(the cow/chicken behaviour). When false, no legs drop and the items are uncraftable/hidden.",
                 "Set false for packs that want losing a frog to sting. Toggling recipes requires a world reload."
+            )
+            .define("enabled", true);
+
+        builder.pop();
+
+        builder.push("froglight_weapon");
+
+        FROGLIGHT_WEAPON_ENABLED = builder
+            .comment(
+                "Whether the Froglight Cleaver is enabled. Default true.",
+                "A late-game sword that drops a Resource Slime's Froglight when it kills it (Looting-scaled,",
+                "and a brewed slime's effect carries onto the Froglight). Gated by boss Froglights in its",
+                "recipe, so it's pure endgame. When false the sword is uncraftable, hidden from JEI + the",
+                "creative tab, and harvests no Froglight if obtained another way. Recipe toggle needs a world reload."
             )
             .define("enabled", true);
 
@@ -722,6 +737,11 @@ public final class PFConfig {
     /** Whether the Potion of Hopping is enabled ({@code hopping.enabled}); fallback true. */
     public static boolean hoppingEnabled() {
         return !SPEC.isLoaded() || HOPPING_ENABLED.get();
+    }
+
+    /** Whether the Froglight Cleaver is enabled ({@code froglight_weapon.enabled}); fallback true. */
+    public static boolean froglightWeaponEnabled() {
+        return !SPEC.isLoaded() || FROGLIGHT_WEAPON_ENABLED.get();
     }
 
     /** Whether Slime Milk catalysts are enabled ({@code slime_milk_catalysts.enabled}); fallback true. */
