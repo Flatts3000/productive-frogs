@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## v1.17.0 - 2026-06-09 - Frog Legs and Fairy Tales
+
 ### Added
 
 - **The Froglight Cleaver.** A late-game sword that drops a Resource Slime's Froglight when it kills it - the active-play counterpart to the passive frog loop. It hits clearly harder than a netherite sword and is fire-resistant. Looting raises the Froglight yield, and a brewed slime's effect carries onto the Froglight, exactly like a frog eating it. Crafted in a sword shape from boss Froglights (Nether Star blade + Dragon Egg hilt) ringed with Dragon's Breath, so it is pure endgame. Config-gated (`froglight_weapon.enabled`, default on). (#212)
