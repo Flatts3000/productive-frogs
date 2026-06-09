@@ -133,6 +133,15 @@ public record ConfigEnabledCondition(Key config) implements ICondition {
             boolean read() {
                 return PFConfig.FROGLIGHT_WEAPON_ENABLED.get();
             }
+        },
+        // Boss-tier master (#200): gates the catalyst-altar block recipes and the
+        // boss Froglight smelt-backs. The variant suppression half rides
+        // PFConfig.variantEnabled, not a recipe condition.
+        BOSS("boss") {
+            @Override
+            boolean read() {
+                return PFConfig.BOSS_ENABLED.get();
+            }
         };
 
         public static final StringRepresentable.EnumCodec<Key> CODEC =

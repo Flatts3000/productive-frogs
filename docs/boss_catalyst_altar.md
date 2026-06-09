@@ -1,6 +1,8 @@
 # Boss Catalyst Altar (build spec)
 
 > **Status: SHIPPED in v1.14.0 (#182, 2026-06-07).** Built as written. The boss-tier variants (#172/#173) + their prime-only `weight 0` mechanic shipped in the same release. The decision log at the bottom records how the shape was settled; everything below describes the shipped behavior.
+>
+> **Config master (#200):** the whole tier can be turned off with `boss.enabled = false`. That suppresses the four boss variants (so no priming, no source, no toxic milk, no altar in play), makes the four catalyst-altar blocks uncraftable + hidden, and drops the boss Froglight smelt-backs - the standard loop with no boss farming in one switch. The narrower `variants.bossVariantsEnabled` (#203) drops just the variants while keeping the altar blocks craftable. See [modpack_integration.md](./modpack_integration.md).
 
 ## The pitch
 

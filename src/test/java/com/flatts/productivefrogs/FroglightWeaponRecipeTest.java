@@ -58,8 +58,12 @@ class FroglightWeaponRecipeTest {
 
         JsonArray conditions = recipe.getAsJsonArray("neoforge:conditions");
         assertNotNull(conditions, "cleaver: must carry a config_enabled condition");
+        assertEquals(2, conditions.size(), "cleaver: gated on both froglight_weapon and boss (#200)");
         assertEquals("froglight_weapon",
             conditions.get(0).getAsJsonObject().get("config").getAsString(), "cleaver: gated on froglight_weapon");
+        assertEquals("boss",
+            conditions.get(1).getAsJsonObject().get("config").getAsString(),
+            "cleaver: also gated on the boss master so it drops with the boss tier (#200)");
     }
 
     /** A component-ingredient requiring a configurable_froglight of the given variant. */

@@ -626,6 +626,54 @@ public final class PFGameTests {
     }
 
     /**
+     * #200 boss master: {@code boss.enabled=false} suppresses the weight-0 boss
+     * variants exactly like {@code variants.bossVariantsEnabled=false} (the two are
+     * ANDed), while leaving a normal variant untouched. The recipe/creative gating
+     * half rides the already-tested {@code config_enabled} condition + the
+     * per-variant isEnabled gate, so this covers the runtime suppression seam.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void bossMasterDisablesBossVariants(GameTestHelper helper) {
+        if (!com.flatts.productivefrogs.PFConfig.SPEC.isLoaded()) {
+            helper.fail("COMMON config must be loaded for the variant-disable tests to be meaningful");
+            return;
+        }
+        net.minecraft.core.Registry<SlimeVariant> registry =
+            helper.getLevel().registryAccess().registryOrThrow(PFRegistries.SLIME_VARIANT);
+        ResourceLocation netherStarItem = ResourceLocation.fromNamespaceAndPath("minecraft", "nether_star");
+        ResourceLocation ironItem = ResourceLocation.fromNamespaceAndPath("minecraft", "iron_ingot");
+
+        if (SlimeVariant.findByPrimerItem(registry, netherStarItem) == null
+                || !com.flatts.productivefrogs.PFConfig.bossEnabled()) {
+            helper.fail("baseline: nether_star should prime and boss should be enabled");
+            return;
+        }
+        try {
+            com.flatts.productivefrogs.PFConfig.BOSS_ENABLED.set(false);
+            if (com.flatts.productivefrogs.PFConfig.bossEnabled()) {
+                helper.fail("bossEnabled() should be false when the master is off");
+                return;
+            }
+            if (SlimeVariant.findByPrimerItem(registry, netherStarItem) != null) {
+                helper.fail("with the boss master off, nether_star should be unprimable");
+                return;
+            }
+            // A normal (non-boss) variant is untouched by the boss master.
+            if (SlimeVariant.findByPrimerItem(registry, ironItem) == null) {
+                helper.fail("iron should still prime when only the boss master is off");
+                return;
+            }
+        } finally {
+            com.flatts.productivefrogs.PFConfig.BOSS_ENABLED.set(true);
+        }
+        if (SlimeVariant.findByPrimerItem(registry, netherStarItem) == null) {
+            helper.fail("nether_star should prime again after re-enabling the boss master");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
      * Boss catalyst altar gate (#184, docs/boss_catalyst_altar.md). Tests the
      * gate's decision logic directly via the public helpers (the spawn tick
      * itself is scheduled + private; the predicate is the testable seam):
