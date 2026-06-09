@@ -89,18 +89,35 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         return PFConfig.SPEC.isLoaded() && PFConfig.SPAWNERY_ENABLED.get();
     }
 
+    /** Whether the Slime Milker is enabled (#196). Default-on: fail OPEN until config loads. */
+    private static boolean slimeMilkerEnabled() {
+        return !PFConfig.SPEC.isLoaded() || PFConfig.SLIME_MILKER_ENABLED.get();
+    }
+
+    /** Whether the Slime Churn is enabled (#196). Default-on: fail OPEN until config loads. */
+    private static boolean slimeChurnEnabled() {
+        return !PFConfig.SPEC.isLoaded() || PFConfig.SLIME_CHURN_ENABLED.get();
+    }
+
     @Override
     public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
-        // When the Spawnery is disabled (the default), hide its item from the JEI
-        // ingredient list so JEI doesn't surface a block players can't obtain. The
-        // recipe condition + creative-tab guard cover crafting/creative; this covers
-        // the JEI sidebar. No-op (and harmless) if the item is already absent.
-        if (spawneryEnabled()) {
-            return;
+        // Hide any config-disabled appliance from the JEI ingredient list so JEI
+        // doesn't surface a block players can't obtain. The recipe condition +
+        // creative-tab guard cover crafting/creative; this covers the JEI sidebar.
+        // No-op (and harmless) if an item is already absent.
+        java.util.List<ItemStack> hidden = new java.util.ArrayList<>();
+        if (!spawneryEnabled()) {
+            hidden.add(new ItemStack(PFItems.SPAWNERY.get()));
         }
-        jeiRuntime.getIngredientManager().removeIngredientsAtRuntime(
-            VanillaTypes.ITEM_STACK,
-            java.util.List.of(new ItemStack(PFItems.SPAWNERY.get())));
+        if (!slimeMilkerEnabled()) {
+            hidden.add(new ItemStack(PFItems.SLIME_MILKER.get()));
+        }
+        if (!slimeChurnEnabled()) {
+            hidden.add(new ItemStack(PFItems.SLIME_CHURN.get()));
+        }
+        if (!hidden.isEmpty()) {
+            jeiRuntime.getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hidden);
+        }
     }
 
     @Override
@@ -209,8 +226,12 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         addSpeciesInfoPages(reg);
         addStaticInfoPages(reg);
 
-        addMilkerRecipes(reg, variants);
-        addChurnRecipes(reg, variants);
+        if (slimeMilkerEnabled()) {
+            addMilkerRecipes(reg, variants);
+        }
+        if (slimeChurnEnabled()) {
+            addChurnRecipes(reg, variants);
+        }
         addSpawneryRecipes(reg);
         addCrucibleHeatEntries(reg, variants);
         // Melt + cast recipes ride their real recipe types, so datapack
@@ -278,8 +299,12 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
 
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
-        registration.addRecipeCatalyst(PFBlocks.SLIME_MILKER.get(), SlimeMilkerRecipeCategory.TYPE);
-        registration.addRecipeCatalyst(PFBlocks.SLIME_CHURN.get(), SlimeChurnRecipeCategory.TYPE);
+        if (slimeMilkerEnabled()) {
+            registration.addRecipeCatalyst(PFBlocks.SLIME_MILKER.get(), SlimeMilkerRecipeCategory.TYPE);
+        }
+        if (slimeChurnEnabled()) {
+            registration.addRecipeCatalyst(PFBlocks.SLIME_CHURN.get(), SlimeChurnRecipeCategory.TYPE);
+        }
         registration.addRecipeCatalyst(PFBlocks.CRUCIBLE.get(), CrucibleHeatCategory.TYPE);
         registration.addRecipeCatalyst(PFBlocks.CRUCIBLE.get(), CrucibleMeltCategory.TYPE);
         registration.addRecipeCatalyst(PFBlocks.CASTING_MOLD.get(), MoldCastingCategory.TYPE);

@@ -63,9 +63,14 @@ public final class PFCreativeTabs {
                     output.accept(PFItems.SLIME_BUCKET.get());
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h ->
                         output.accept(PFItems.variantSlimeBucket(h.key().location(), h.value().category()))));
-                    output.accept(PFItems.SLIME_MILKER.get());
+                    // Milker / Churn appear only when enabled (config-gated, #196).
+                    if (!PFConfig.SPEC.isLoaded() || PFConfig.SLIME_MILKER_ENABLED.get()) {
+                        output.accept(PFItems.SLIME_MILKER.get());
+                    }
                     // The Slime Churn (#187) sits right after its inverse.
-                    output.accept(PFItems.SLIME_CHURN.get());
+                    if (!PFConfig.SPEC.isLoaded() || PFConfig.SLIME_CHURN_ENABLED.get()) {
+                        output.accept(PFItems.SLIME_CHURN.get());
+                    }
                     // The Froglight Crucible + Casting Mold (v1.12) sit with
                     // the other appliances.
                     output.accept(PFItems.CRUCIBLE.get());

@@ -1,7 +1,6 @@
 package com.flatts.productivefrogs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.google.gson.JsonArray;
@@ -16,13 +15,13 @@ import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
 
 /**
- * Shape gate for the two appliance crafting recipes that share the
- * 5-cobblestone / 3-planks frame: the Spawnery (config-gated, bonemeal centre)
- * and the Slime Milker (always craftable, slime-ball centre). Pins the
- * ingredient counts, the planks-on-top layout, the result id, and - for the
- * Spawnery - the {@code productivefrogs:config_enabled} / {@code spawnery}
- * condition that gates it off by default. A stray hand-edit, a missing condition,
- * or the Milker regressing to uncraftable then fails the build.
+ * Shape gate for the appliance crafting recipes. The Spawnery and Slime Milker
+ * share the 5-cobblestone / 3-planks frame (bonemeal vs slime-ball centre); the
+ * Slime Churn uses its own moss / packed-mud frame. Pins the ingredient counts,
+ * layout, and result ids, plus the {@code productivefrogs:config_enabled}
+ * conditions that make each appliance per-feature disableable (Spawnery off by
+ * default; Milker + Churn on by default, #196). A stray hand-edit or a missing /
+ * wrong config gate then fails the build.
  */
 class SpawneryRecipeTest {
 
@@ -52,12 +51,7 @@ class SpawneryRecipeTest {
         assertIngredientTag(recipe, "P", "minecraft:planks");
 
         // Config gate: a single config_enabled condition keyed on "spawnery".
-        JsonArray conditions = recipe.getAsJsonArray("neoforge:conditions");
-        assertNotNull(conditions, "spawnery: must carry a config_enabled condition");
-        assertEquals(1, conditions.size(), "spawnery: exactly one condition");
-        JsonObject cond = conditions.get(0).getAsJsonObject();
-        assertEquals("productivefrogs:config_enabled", cond.get("type").getAsString(), "spawnery: condition type");
-        assertEquals("spawnery", cond.get("config").getAsString(), "spawnery: condition config key");
+        assertConfigGate(recipe, "spawnery");
     }
 
     @Test
@@ -71,8 +65,27 @@ class SpawneryRecipeTest {
         assertIngredientItem(recipe, "S", "minecraft:slime_ball");
         assertIngredientTag(recipe, "P", "minecraft:planks");
 
-        // The Milker is always craftable - no config gate.
-        assertFalse(recipe.has("neoforge:conditions"), "slime_milker: must NOT be config-gated");
+        // Config gate (#196): the Milker is now per-appliance disableable.
+        assertConfigGate(recipe, "slime_milker");
+    }
+
+    @Test
+    void slimeChurnRecipeIsConfigGated() {
+        JsonObject recipe = parse(RECIPE_ROOT.resolve("slime_churn.json"));
+        assertEquals("minecraft:crafting_shaped", recipe.get("type").getAsString(), "slime_churn: recipe type");
+        assertResultId(recipe, "productivefrogs:slime_churn");
+        // Config gate (#196): the Churn is per-appliance disableable.
+        assertConfigGate(recipe, "slime_churn");
+    }
+
+    /** Assert the recipe carries exactly one {@code productivefrogs:config_enabled} condition with {@code config == key}. */
+    private static void assertConfigGate(JsonObject recipe, String key) {
+        JsonArray conditions = recipe.getAsJsonArray("neoforge:conditions");
+        assertNotNull(conditions, key + ": must carry a config_enabled condition");
+        assertEquals(1, conditions.size(), key + ": exactly one condition");
+        JsonObject cond = conditions.get(0).getAsJsonObject();
+        assertEquals("productivefrogs:config_enabled", cond.get("type").getAsString(), key + ": condition type");
+        assertEquals(key, cond.get("config").getAsString(), key + ": condition config key");
     }
 
     private static void assertPattern(JsonObject recipe, String... rows) {

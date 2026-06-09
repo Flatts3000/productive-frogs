@@ -1,4 +1,7 @@
 {
+  "neoforge:conditions": [
+    { "type": "productivefrogs:config_enabled", "config": "slime_churn" }
+  ],
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [

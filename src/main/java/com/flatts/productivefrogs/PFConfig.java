@@ -39,6 +39,8 @@ public final class PFConfig {
     public static final ModConfigSpec.IntValue CATALYST_MIN_INTERVAL_FLOOR_TICKS;
     public static final ModConfigSpec.DoubleValue DISCOVERY_CHANCE_PER_OFFSPRING;
     public static final ModConfigSpec.BooleanValue SPAWNERY_ENABLED;
+    public static final ModConfigSpec.BooleanValue SLIME_MILKER_ENABLED;
+    public static final ModConfigSpec.BooleanValue SLIME_CHURN_ENABLED;
     public static final ModConfigSpec.IntValue SPAWNERY_PRODUCTION_TICKS;
 
     // Frog stat breeding (docs/frog_breeding.md).
@@ -283,6 +285,27 @@ public final class PFConfig {
                 "20 ticks = 1 second. Default 200 (10 seconds)."
             )
             .defineInRange("productionTicks", 200, 1, 24000);
+
+        builder.pop();
+
+        builder.push("appliances");
+
+        SLIME_MILKER_ENABLED = builder
+            .comment(
+                "Whether the Slime Milker is craftable. Default true.",
+                "When false the Slime Milker is uncraftable and hidden from JEI + the creative tab; a placed",
+                "Milker still works (the flag gates crafting/JEI/creative visibility only). Toggling requires a",
+                "world reload to re-evaluate the recipe condition."
+            )
+            .define("slimeMilker", true);
+
+        SLIME_CHURN_ENABLED = builder
+            .comment(
+                "Whether the Slime Churn is craftable. Default true.",
+                "When false the Slime Churn is uncraftable and hidden from JEI + the creative tab; a placed",
+                "Churn still works. Toggling requires a world reload to re-evaluate the recipe condition."
+            )
+            .define("slimeChurn", true);
 
         builder.pop();
 
