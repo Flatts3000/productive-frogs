@@ -2,6 +2,7 @@ package com.flatts.productivefrogs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -59,17 +60,21 @@ class FrogLegsRecipeTest {
 
         JsonArray ingredients = recipe.getAsJsonArray("ingredients");
         boolean usesCookedLegs = false;
+        boolean usesBowl = false;
         for (var el : ingredients) {
-            if ("productivefrogs:cooked_frog_legs".equals(el.getAsJsonObject().get("item").getAsString())) {
-                usesCookedLegs = true;
-            }
+            String item = el.getAsJsonObject().get("item").getAsString();
+            usesCookedLegs |= "productivefrogs:cooked_frog_legs".equals(item);
+            usesBowl |= "minecraft:bowl".equals(item);
         }
-        org.junit.jupiter.api.Assertions.assertTrue(usesCookedLegs, "soup: must be crafted from cooked frog legs");
+        assertTrue(usesCookedLegs, "soup: must be crafted from cooked frog legs");
+        assertTrue(usesBowl, "soup: must include a bowl (the returned container)");
 
         JsonArray conditions = recipe.getAsJsonArray("neoforge:conditions");
         assertNotNull(conditions, "soup: must carry a config_enabled condition");
-        assertEquals("frog_legs",
-            conditions.get(0).getAsJsonObject().get("config").getAsString(), "soup: gated on frog_legs");
+        assertEquals(1, conditions.size(), "soup: exactly one condition");
+        JsonObject cond = conditions.get(0).getAsJsonObject();
+        assertEquals("productivefrogs:config_enabled", cond.get("type").getAsString(), "soup: condition type");
+        assertEquals("frog_legs", cond.get("config").getAsString(), "soup: gated on frog_legs");
     }
 
     private static void assertCookingRecipe(String file, String type) {

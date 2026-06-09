@@ -43,7 +43,7 @@ functions in code.
 ## Frog Legs Soup (#217)
 
 A bowl meal one tier above Cooked Frog Legs (rabbit-stew-tier food values): a
-`BowlFoodItem` (stacks to 1, returns the bowl on eat), crafted shapeless from a
+a plain `Item` with `FoodProperties.usingConvertsTo(Items.BOWL)` (stacks to 1, returns the bowl on eat; the old `BowlFoodItem` class is gone in 1.21.1), crafted shapeless from a
 bowl + Cooked Frog Legs + a brown and a red mushroom. Shares the `frog_legs`
 config gate (no legs feature, no soup). Texture baked by
 `scripts/generate_frog_legs_soup_texture.py`.
