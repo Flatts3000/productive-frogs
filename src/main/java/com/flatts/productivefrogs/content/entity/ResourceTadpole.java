@@ -239,9 +239,15 @@ public class ResourceTadpole extends Tadpole {
                 // Unknown category in bucket NBT — leave default.
             }
         }
-        if (tag.getBoolean("HasPendingStats")) {
-            setPendingStats(tag.getInt("PendingAppetite"),
-                tag.getInt("PendingBounty"), tag.getInt("PendingReach"));
+        // Assign the flag unconditionally (mirrors readAdditionalSaveData exactly,
+        // not via setPendingStats) so an old/category-only bucket explicitly clears
+        // it to false rather than leaving a prior value - keeps the two load paths
+        // mechanically interchangeable.
+        hasPendingStats = tag.getBoolean("HasPendingStats");
+        if (hasPendingStats) {
+            pendingAppetite = tag.getInt("PendingAppetite");
+            pendingBounty = tag.getInt("PendingBounty");
+            pendingReach = tag.getInt("PendingReach");
         }
     }
 
