@@ -13,10 +13,11 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.VillagerType;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
 /**
@@ -74,6 +75,10 @@ public final class PrincessKissHandler {
         // nitwit, which must be set explicitly - so it can take a job.
         villager.finalizeSpawn(level, level.getCurrentDifficultyAt(frog.blockPosition()),
             MobSpawnType.CONVERSION, null);
+        // CONVERSION spawns don't pick a biome villager type, so it would default
+        // to PLAINS everywhere; set it from the conversion biome explicitly.
+        villager.setVillagerData(villager.getVillagerData()
+            .setType(VillagerType.byBiome(level.getBiome(frog.blockPosition()))));
         if (frog.hasCustomName()) {
             villager.setCustomName(frog.getCustomName());
         }
@@ -86,16 +91,21 @@ public final class PrincessKissHandler {
 
     /**
      * The Ender Dragon - the princess - drops one Princess's Kiss when slain. The
-     * dragon's death is custom and skips the normal loot path, so handle it on
-     * death and spawn the item at the dragon's position.
+     * dragon's death does NOT fire {@code LivingDeathEvent}: its custom death
+     * animation calls {@code remove(RemovalReason.KILLED)} directly, bypassing
+     * {@code LivingEntity#die}. So hook removal instead and filter to a killed
+     * dragon, spawning the Kiss at its position. Drops on every kill (re-fights via
+     * end crystals cost the player, so a guaranteed drop is the intended gate).
      */
     @SubscribeEvent
-    public static void onDragonDeath(LivingDeathEvent event) {
+    public static void onDragonRemoved(EntityLeaveLevelEvent event) {
         if (!PFConfig.princessKissEnabled()) {
             return;
         }
         Entity dragon = event.getEntity();
-        if (dragon.getType() != EntityType.ENDER_DRAGON || !(dragon.level() instanceof ServerLevel level)) {
+        if (dragon.getType() != EntityType.ENDER_DRAGON
+                || dragon.getRemovalReason() != Entity.RemovalReason.KILLED
+                || !(dragon.level() instanceof ServerLevel level)) {
             return;
         }
         ItemEntity drop = new ItemEntity(level, dragon.getX(), dragon.getY(), dragon.getZ(),
