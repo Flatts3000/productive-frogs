@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.content.item;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
 import com.flatts.productivefrogs.data.StoredEffect;
@@ -155,7 +156,7 @@ public final class ConfigurableFroglightItem extends BlockItem {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
-        if (stored == null) {
+        if (stored == null || !PFConfig.brewedFroglightsEnabled()) {
             return InteractionResultHolder.pass(stack);
         }
         if (!level.isClientSide()) {
@@ -182,7 +183,7 @@ public final class ConfigurableFroglightItem extends BlockItem {
             return;
         }
         StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
-        if (stored == null || !stored.enabled()) {
+        if (stored == null || !stored.enabled() || !PFConfig.brewedFroglightsEnabled()) {
             return;
         }
         boolean held = living.getMainHandItem() == stack || living.getOffhandItem() == stack;
@@ -200,7 +201,7 @@ public final class ConfigurableFroglightItem extends BlockItem {
     @Override
     public boolean isFoil(ItemStack stack) {
         StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
-        return (stored != null && stored.enabled()) || super.isFoil(stack);
+        return (stored != null && stored.enabled() && PFConfig.brewedFroglightsEnabled()) || super.isFoil(stack);
     }
 
     /**
@@ -212,8 +213,8 @@ public final class ConfigurableFroglightItem extends BlockItem {
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, context, tooltip, flag);
         StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
-        if (stored == null) {
-            return;
+        if (stored == null || !PFConfig.brewedFroglightsEnabled()) {
+            return; // feature off -> a brewed Froglight reads as plain
         }
         // "Speed II" the way vanilla potion tooltips build it: effect name +
         // (for amplifier > 0) the potion.potency.N level key, colored by the

@@ -31,6 +31,7 @@ public final class PFConfig {
     // block (docs/slime_milk_catalysts.md). The early-game stopgap toward
     // lower-friction production before the V2 Frog Habitat.
     public static final ModConfigSpec.BooleanValue MILK_CATALYSTS_ENABLED;
+    public static final ModConfigSpec.BooleanValue BREWED_FROGLIGHTS_ENABLED;
     public static final ModConfigSpec.IntValue CATALYST_COUNT_PER;
     public static final ModConfigSpec.IntValue CATALYST_MAX_SPEED_LEVEL;
     public static final ModConfigSpec.IntValue CATALYST_MAX_QUANTITY_LEVEL;
@@ -235,6 +236,20 @@ public final class PFConfig {
                 "Stops stacked Speed levels from driving the interval to zero."
             )
             .defineInRange("minIntervalFloorTicks", DEFAULT_CATALYST_MIN_INTERVAL_FLOOR_TICKS, 1, 24000);
+
+        builder.pop();
+
+        builder.push("brewed_froglights");
+
+        BREWED_FROGLIGHTS_ENABLED = builder
+            .comment(
+                "Whether Brewed Froglights are enabled. Default true.",
+                "When a frog eats a slime carrying a potion effect (splash/linger), the Froglight it drops",
+                "captures that effect: a toggleable aura when placed, a self-buff when held or worn in the",
+                "Curios slot. When false, no effect is captured (Froglights drop plain) and any already-brewed",
+                "Froglights go inert - they keep their stored effect but apply nothing and read as plain."
+            )
+            .define("enabled", true);
 
         builder.pop();
 
@@ -561,7 +576,12 @@ public final class PFConfig {
     // and its BlockEntity touch these on the server tick path.
     // ------------------------------------------------------------------
 
-    /** Whether catalysts are enabled ({@code slime_milk_catalysts.enabled}); fallback true. */
+    /** Whether Brewed Froglights are enabled ({@code brewed_froglights.enabled}); fallback true. */
+    public static boolean brewedFroglightsEnabled() {
+        return !SPEC.isLoaded() || BREWED_FROGLIGHTS_ENABLED.get();
+    }
+
+    /** Whether Slime Milk catalysts are enabled ({@code slime_milk_catalysts.enabled}); fallback true. */
     public static boolean milkCatalystsEnabled() {
         return !SPEC.isLoaded() || MILK_CATALYSTS_ENABLED.get();
     }

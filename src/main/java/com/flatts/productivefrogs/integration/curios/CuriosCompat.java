@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.integration.curios;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
 import com.flatts.productivefrogs.data.StoredEffect;
@@ -91,7 +92,7 @@ public final class CuriosCompat {
                 return;
             }
             StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
-            if (stored == null || !stored.enabled()) {
+            if (stored == null || !stored.enabled() || !PFConfig.brewedFroglightsEnabled()) {
                 return;
             }
             if (wearer.level().getGameTime() % ConfigurableFroglightBlockEntity.AURA_PULSE_TICKS == 0L) {

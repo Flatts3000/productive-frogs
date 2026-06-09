@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **Config toggle to disable Brewed Froglights** (`brewed_froglights.enabled`, default on - no change for existing packs). When off, a frog eating an effect-carrying slime drops a plain Froglight (no captured effect), and any already-brewed Froglights go inert: they keep their stored effect but apply no placed-aura / held / worn buff and read as plain. Lets a pack keep the resource loop without the potion-aura system. (#195)
+
 ## v1.16.0 - 2026-06-08 - The Terrarium
 
 ### Added
