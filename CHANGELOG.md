@@ -24,6 +24,7 @@
 
 ### Fixed
 
+- **Crucible plastic and pink_slime melts now yield exactly one bucket.** Every other fluid melt outputs 1000 mB (one bucket), but the Industrial Foregoing plastic Froglight melted to 1350 mB of latex (a partial-bucket remainder) and the pink_slime Froglight to 2000 mB (a silent double). Both now output 1000 mB, so "one Froglight melts into one bucket" holds across the board. (#223)
 - **Bucketing a bred tadpole no longer wipes its stats.** Scooping a Resource Tadpole that carried inherited Appetite/Bounty/Reach into a bucket and placing it back down dropped those stats, so it matured into a baseline 1/1/1 frog. The bucket now carries the inherited stats the same way a world save does, so a bucketed tadpole grows into the frog it was bred to be.
 
 ## v1.16.0 - 2026-06-08 - The Terrarium

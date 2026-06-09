@@ -8,5 +8,5 @@
     "items": [ "productivefrogs:configurable_froglight" ],
     "components": { "productivefrogs:slime_variant": "productivefrogs:pink_slime" }
   },
-  "result": { "id": "industrialforegoing:pink_slime", "amount": 2000 }
+  "result": { "id": "industrialforegoing:pink_slime", "amount": 1000 }
 }
