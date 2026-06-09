@@ -31,6 +31,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MobBucketItem;
 import net.minecraft.world.item.PlaceOnWaterBlockItem;
 import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.Tiers;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.bus.api.IEventBus;
@@ -73,6 +75,21 @@ public final class PFItems {
     public static final DeferredItem<FrogNetItem> FROG_NET = ITEMS.registerItem(
         "frog_net",
         props -> new FrogNetItem(props.stacksTo(1))
+    );
+
+    /**
+     * Froglight Cleaver (#212) - a late-game sword that drops a slime's Froglight
+     * when it kills it (handled by {@code FroglightWeaponHandler}), the active-play
+     * counterpart to the passive frog loop. Netherite-tier {@link SwordItem} but
+     * clearly stronger: +7 attack-damage bonus (12 displayed, vs netherite's 8) and
+     * fire-resistant (it's forged from boss froglights + dragon's breath). The
+     * harvest behaviour is event-driven. Gated by boss Froglights in its recipe
+     * (`froglight_weapon`), so it's pure endgame and the extra power is earned.
+     */
+    public static final DeferredItem<SwordItem> FROGLIGHT_CLEAVER = ITEMS.registerItem(
+        "froglight_cleaver",
+        props -> new SwordItem(Tiers.NETHERITE,
+            props.fireResistant().attributes(SwordItem.createAttributes(Tiers.NETHERITE, 7, -2.4F)))
     );
 
     /**
@@ -120,6 +137,22 @@ public final class PFItems {
     public static final DeferredItem<Item> COOKED_FROG_LEGS = ITEMS.registerItem(
         "cooked_frog_legs",
         props -> new Item(props.food(COOKED_FROG_LEGS_FOOD))
+    );
+
+    /**
+     * Frog Legs Soup (#217) - the bowl-meal step above Cooked Frog Legs, the
+     * mod's rabbit-stew analogue. Stacks to 1 and returns an empty bowl on eat
+     * via {@code usingConvertsTo} (the 1.21.1 way; the old {@code BowlFoodItem}
+     * class is gone). Stew-tier food. Crafted from Cooked Frog Legs; shares the
+     * {@code frog_legs} config gate.
+     */
+    public static final FoodProperties FROG_LEGS_SOUP_FOOD =
+        new FoodProperties.Builder().nutrition(10).saturationModifier(0.6F)
+            .usingConvertsTo(Items.BOWL).build();
+
+    public static final DeferredItem<Item> FROG_LEGS_SOUP = ITEMS.registerItem(
+        "frog_legs_soup",
+        props -> new Item(props.stacksTo(1).food(FROG_LEGS_SOUP_FOOD))
     );
 
     /**
