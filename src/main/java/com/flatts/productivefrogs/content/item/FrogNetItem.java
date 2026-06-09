@@ -1,22 +1,18 @@
 package com.flatts.productivefrogs.content.item;
 
 import com.flatts.productivefrogs.PFConfig;
-import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.registry.PFEntityTags;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.animal.frog.Frog;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -41,11 +37,10 @@ import org.jetbrains.annotations.Nullable;
  * custom name all survive the round trip - no hand-picked field list to keep
  * current - and any other captured frog comes back identical too.
  *
- * <p>Catches <b>any</b> frog, vanilla or modded: anything that is a vanilla
- * {@link Frog} (covers the vanilla frog, the Resource Frog, and any frog mob that
- * subclasses it) or whose entity type is in the {@code productivefrogs:frogs}
- * entity-type tag (the data-driven hook a pack adds a non-subclass modded frog
- * to). Non-frogs are left alone. A loaded net renders "filled" via the
+ * <p>Catches <b>any</b> frog, vanilla or modded - see {@link PFEntityTags#isFrog}
+ * (anything that is a vanilla {@code Frog}, including the Resource Frog, or whose
+ * entity type is in the {@code productivefrogs:frogs} tag). Non-frogs are left
+ * alone. A loaded net renders "filled" via the
  * {@code productivefrogs:filled} item-model property (registered in
  * {@code PFClientEvents}).
  */
@@ -56,21 +51,17 @@ public class FrogNetItem extends Item {
     /** NBT key for the captured frog's resolved display name, for the item name suffix. */
     private static final String TAG_NAME = "name";
 
-    /**
-     * Entity types this net may catch beyond vanilla {@link Frog} subclasses -
-     * the {@code productivefrogs:frogs} tag (vanilla frog + Resource Frog by
-     * default; a pack adds modded frogs that don't subclass {@code Frog}).
-     */
-    public static final TagKey<EntityType<?>> CATCHABLE = TagKey.create(
-        Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "frogs"));
-
     public FrogNetItem(Properties properties) {
         super(properties);
     }
 
-    /** Whether this net is allowed to catch the target - any vanilla/modded frog. */
+    /**
+     * Whether this net is allowed to catch the target - any vanilla/modded frog.
+     * Shares {@link PFEntityTags#isFrog} with the frog-leg drop so "what's a frog"
+     * is defined in one place.
+     */
     public static boolean isCatchable(Entity target) {
-        return target instanceof Frog || target.getType().is(CATCHABLE);
+        return PFEntityTags.isFrog(target);
     }
 
     /** Whether the stack holds a captured frog (CUSTOM_DATA present and carrying an entity id). */

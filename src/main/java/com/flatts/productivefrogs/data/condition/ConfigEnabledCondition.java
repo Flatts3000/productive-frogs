@@ -121,6 +121,12 @@ public record ConfigEnabledCondition(Key config) implements ICondition {
             boolean read() {
                 return PFConfig.FROG_NET_ENABLED.get();
             }
+        },
+        FROG_LEGS("frog_legs") {
+            @Override
+            boolean read() {
+                return PFConfig.FROG_LEGS_ENABLED.get();
+            }
         };
 
         public static final StringRepresentable.EnumCodec<Key> CODEC =
