@@ -11,6 +11,7 @@ import com.flatts.productivefrogs.client.screen.SlimeMilkerScreen;
 import com.flatts.productivefrogs.client.screen.SpawneryScreen;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
 import com.flatts.productivefrogs.content.item.FrogEggItem;
+import com.flatts.productivefrogs.content.item.FrogNetItem;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.SlimeVariant;
@@ -46,6 +47,8 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.fluids.FluidType;
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 
 /**
  * Client-only setup. Registers:
@@ -377,6 +380,20 @@ public final class PFClientEvents {
         event.register(PFMenuTypes.HATCH.get(), com.flatts.productivefrogs.client.screen.HatchScreen::new);
         event.register(PFMenuTypes.INCUBATOR.get(), com.flatts.productivefrogs.client.screen.IncubatorScreen::new);
         event.register(PFMenuTypes.TERRARIUM_CONTROLLER.get(), com.flatts.productivefrogs.client.screen.TerrariumControllerScreen::new);
+    }
+
+    /**
+     * Client-setup-time registrations. The Frog Net's {@code productivefrogs:filled}
+     * item-model property drives its empty/loaded model override (mirrors Productive
+     * Bees' bee-cage {@code filled} property). {@code ItemProperties.register} mutates
+     * a shared map, so it runs on the main thread via {@code enqueueWork}.
+     */
+    @SubscribeEvent
+    public static void onClientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> ItemProperties.register(
+            PFItems.FROG_NET.get(),
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "filled"),
+            (stack, level, entity, seed) -> FrogNetItem.isFilled(stack) ? 1.0F : 0.0F));
     }
 
     /** Bind the tintable Sprinkler-drip particle to its sprite set. */

@@ -4,6 +4,8 @@
 
 ### Added
 
+- **The Frog Net.** A reusable tool that catches a Resource Frog into the item (right-click the frog) and releases it elsewhere (right-click a block), so a bred-up frog can be relocated or a Terrarium restocked without leashing or killing it. The whole frog is preserved - species, the bred Appetite/Bounty/Reach stats, persistence, health, and a custom name - and a loaded net shows the caught frog's stats in its tooltip. Catches Resource Frogs only (not vanilla frogs, tadpoles, or slimes). Config-gated (`frog_net.enabled`, default on). Modelled on Productive Bees' bee cage. (#205)
+
 - **Config toggle to disable Brewed Froglights** (`brewed_froglights.enabled`, default on - no change for existing packs). When off, a frog eating an effect-carrying slime drops a plain Froglight (no captured effect), and any already-brewed Froglights go inert: they keep their stored effect but apply no placed-aura / held / worn buff and read as plain. Lets a pack keep the resource loop without the potion-aura system. (#195)
 - **Config toggles for the Slime Milker and Slime Churn** (`appliances.slimeMilker` / `appliances.slimeChurn`, default on). When off, the appliance is uncraftable and hidden from JEI and the creative tab; an already-placed block still works. Lets a pack ship a subset of the production appliances. (#196)
 - **Config toggles for the Froglight Crucible and Casting Mold** (`appliances.crucible` / `appliances.castingMold`, default on). When off, the appliance is uncraftable and its JEI lane (melt / cast categories) is hidden, along with the creative-tab entry; a placed block still works. Lets a pack ship the resource loop without the melt-and-cast fluid lane. (#196)

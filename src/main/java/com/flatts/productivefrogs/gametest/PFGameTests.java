@@ -708,6 +708,45 @@ public final class PFGameTests {
     }
 
     /**
+     * Frog Net round trip (#205): catching a stat-stamped Resource Frog into a net
+     * and rebuilding it from the stack preserves species and bred stats. Exercises
+     * the capture/release core ({@code FrogNetItem.captureEntity} +
+     * {@code frogFromStack}) without a player - the interaction wrappers just call
+     * these.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 20)
+    public static void frogNetPreservesSpeciesAndStats(GameTestHelper helper) {
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 2));
+        frog.setCategory(Category.GEODE);
+        frog.setStats(7, 5, 9);
+
+        net.minecraft.world.item.ItemStack net =
+            new net.minecraft.world.item.ItemStack(PFItems.FROG_NET.get());
+        com.flatts.productivefrogs.content.item.FrogNetItem.captureEntity(frog, net);
+        frog.discard();
+
+        if (!com.flatts.productivefrogs.content.item.FrogNetItem.isFilled(net)) {
+            helper.fail("net should be filled after capture");
+            return;
+        }
+
+        ResourceFrog restored = com.flatts.productivefrogs.content.item.FrogNetItem
+            .frogFromStack(net, helper.getLevel());
+        if (restored == null) {
+            helper.fail("net should rebuild a Resource Frog on release");
+            return;
+        }
+        helper.assertTrue(restored.getCategory() == Category.GEODE,
+            "released frog category should be GEODE, was " + restored.getCategory());
+        helper.assertTrue(
+            restored.getAppetite() == 7 && restored.getBounty() == 5 && restored.getReach() == 9,
+            "released frog stats should be 7/5/9, were " + restored.getAppetite()
+                + "/" + restored.getBounty() + "/" + restored.getReach());
+        restored.discard();
+        helper.succeed();
+    }
+
+    /**
      * Toggling the aura off stops application (#162): an effect-stamped but
      * disabled Froglight does not buff. Stamp + immediately toggle off, then
      * after a generous delay the nearby pig must have no Speed.

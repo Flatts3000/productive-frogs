@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.registry;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.item.ConfigurableFroglightItem;
 import com.flatts.productivefrogs.content.item.FrogEggItem;
+import com.flatts.productivefrogs.content.item.FrogNetItem;
 import com.flatts.productivefrogs.content.item.MilkCatalyst;
 import com.flatts.productivefrogs.content.item.MilkCatalystItem;
 import com.flatts.productivefrogs.content.item.ResourceSlimeSpawnEggItem;
@@ -59,6 +60,18 @@ public final class PFItems {
     public static final DeferredItem<FrogEggItem> FROG_EGG = ITEMS.registerItem(
         "frog_egg",
         props -> new FrogEggItem(props.stacksTo(1))
+    );
+
+    /**
+     * The Frog Net (#205) - catches a Resource Frog into the item and releases it
+     * elsewhere, stats intact. Reusable; mirrors Productive Bees' Sturdy Bee Cage
+     * (see {@link com.flatts.productivefrogs.content.item.FrogNetItem}). Stacks to 1:
+     * a loaded net is unique, and one net per slot keeps the catch/release UX simple.
+     * Config-gated ({@code frog_net.enabled}) at the recipe layer.
+     */
+    public static final DeferredItem<FrogNetItem> FROG_NET = ITEMS.registerItem(
+        "frog_net",
+        props -> new FrogNetItem(props.stacksTo(1))
     );
 
     /**

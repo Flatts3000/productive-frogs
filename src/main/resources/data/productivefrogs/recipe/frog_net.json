@@ -1,0 +1,18 @@
+{
+  "neoforge:conditions": [
+    { "type": "productivefrogs:config_enabled", "config": "frog_net" }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "group": "productivefrogs",
+  "pattern": [
+    "SSS",
+    "S S",
+    " I "
+  ],
+  "key": {
+    "S": { "item": "minecraft:string" },
+    "I": { "item": "minecraft:stick" }
+  },
+  "result": { "id": "productivefrogs:frog_net", "count": 1 }
+}

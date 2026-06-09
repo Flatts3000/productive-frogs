@@ -37,6 +37,7 @@ public final class PFConfig {
     public static final ModConfigSpec.BooleanValue CATALYST_QUANTITY_ENABLED;
     public static final ModConfigSpec.BooleanValue CATALYST_INFINITE_ENABLED;
     public static final ModConfigSpec.BooleanValue BREWED_FROGLIGHTS_ENABLED;
+    public static final ModConfigSpec.BooleanValue FROG_NET_ENABLED;
     public static final ModConfigSpec.IntValue CATALYST_COUNT_PER;
     public static final ModConfigSpec.IntValue CATALYST_MAX_SPEED_LEVEL;
     public static final ModConfigSpec.IntValue CATALYST_MAX_QUANTITY_LEVEL;
@@ -294,6 +295,20 @@ public final class PFConfig {
                 "captures that effect: a toggleable aura when placed, a self-buff when held or worn in the",
                 "Curios slot. When false, no effect is captured (Froglights drop plain) and any already-brewed",
                 "Froglights go inert - they keep their stored effect but apply nothing and read as plain."
+            )
+            .define("enabled", true);
+
+        builder.pop();
+
+        builder.push("frog_net");
+
+        FROG_NET_ENABLED = builder
+            .comment(
+                "Whether the Frog Net is enabled. Default true.",
+                "The Frog Net catches a Resource Frog into the item (right-click the frog) and releases",
+                "it elsewhere (right-click a block), preserving its species and bred stats. When false the",
+                "net is uncraftable, hidden from JEI + the creative tab, and inert if obtained another way",
+                "(it neither catches nor releases). Toggling the recipe requires a world reload."
             )
             .define("enabled", true);
 
@@ -662,6 +677,11 @@ public final class PFConfig {
     /** Whether Brewed Froglights are enabled ({@code brewed_froglights.enabled}); fallback true. */
     public static boolean brewedFroglightsEnabled() {
         return !SPEC.isLoaded() || BREWED_FROGLIGHTS_ENABLED.get();
+    }
+
+    /** Whether the Frog Net is enabled ({@code frog_net.enabled}); fallback true. */
+    public static boolean frogNetEnabled() {
+        return !SPEC.isLoaded() || FROG_NET_ENABLED.get();
     }
 
     /** Whether Slime Milk catalysts are enabled ({@code slime_milk_catalysts.enabled}); fallback true. */

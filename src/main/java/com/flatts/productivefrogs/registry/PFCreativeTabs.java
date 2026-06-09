@@ -99,6 +99,12 @@ public final class PFCreativeTabs {
                     // after the appliances so the two machines stay adjacent in the
                     // tab. It's the hand-fed item that drives same-species breeding.
                     output.accept(PFItems.SWEETSLIME.get());
+                    // The Frog Net - catch/release tool (#205); shown by default,
+                    // hidden when config-disabled. Only the empty net is a creative
+                    // entry (a half-stamped loaded net has no frog NBT to release).
+                    if (PFConfig.frogNetEnabled()) {
+                        output.accept(PFItems.FROG_NET.get());
+                    }
                     // Slime Milk catalysts (drop into a source to buff it). Each
                     // shows only when its own per-catalyst flag - ANDed with the
                     // catalysts master inside the accessor - is on (#201); shown by
