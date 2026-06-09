@@ -514,17 +514,22 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         reg.addIngredientInfo(unprimedBottle, VanillaTypes.ITEM_STACK,
             Component.translatable("productivefrogs.jei.empty_frog_egg.info"));
 
-        // Slime Milker
-        reg.addIngredientInfo(
-            new ItemStack(PFBlocks.SLIME_MILKER.get().asItem()),
-            VanillaTypes.ITEM_STACK,
-            Component.translatable("productivefrogs.jei.slime_milker.info"));
+        // Slime Milker - only when enabled (removed from JEI in onRuntimeAvailable
+        // when off, so an info page for a hidden item would orphan + warn).
+        if (slimeMilkerEnabled()) {
+            reg.addIngredientInfo(
+                new ItemStack(PFBlocks.SLIME_MILKER.get().asItem()),
+                VanillaTypes.ITEM_STACK,
+                Component.translatable("productivefrogs.jei.slime_milker.info"));
+        }
 
-        // Slime Churn (#187) - the Milker's inverse
-        reg.addIngredientInfo(
-            new ItemStack(PFBlocks.SLIME_CHURN.get().asItem()),
-            VanillaTypes.ITEM_STACK,
-            Component.translatable("productivefrogs.jei.slime_churn.info"));
+        // Slime Churn (#187) - the Milker's inverse; same enable gate.
+        if (slimeChurnEnabled()) {
+            reg.addIngredientInfo(
+                new ItemStack(PFBlocks.SLIME_CHURN.get().asItem()),
+                VanillaTypes.ITEM_STACK,
+                Component.translatable("productivefrogs.jei.slime_churn.info"));
+        }
 
         // Terrarium multiblock (#185) - one info page per machine block.
         reg.addIngredientInfo(new ItemStack(PFBlocks.TERRARIUM_CONTROLLER.get().asItem()),

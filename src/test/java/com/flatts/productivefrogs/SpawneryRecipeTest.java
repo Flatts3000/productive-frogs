@@ -74,6 +74,13 @@ class SpawneryRecipeTest {
         JsonObject recipe = parse(RECIPE_ROOT.resolve("slime_churn.json"));
         assertEquals("minecraft:crafting_shaped", recipe.get("type").getAsString(), "slime_churn: recipe type");
         assertResultId(recipe, "productivefrogs:slime_churn");
+
+        assertPattern(recipe, "PMP", "PSP", "CCC");
+        assertIngredientTag(recipe, "P", "minecraft:planks");
+        assertIngredientItem(recipe, "M", "minecraft:moss_block");
+        assertIngredientItem(recipe, "S", "minecraft:slime_ball");
+        assertIngredientItem(recipe, "C", "minecraft:packed_mud");
+
         // Config gate (#196): the Churn is per-appliance disableable.
         assertConfigGate(recipe, "slime_churn");
     }
