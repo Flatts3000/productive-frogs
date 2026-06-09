@@ -117,6 +117,11 @@ public final class PFCreativeTabs {
                         output.accept(PFItems.COOKED_FROG_LEGS.get());
                         output.accept(PFItems.FROG_LEGS_SOUP.get());
                     }
+                    // Princess's Kiss - the Ender Dragon drop (#216); shown by
+                    // default, hidden when config-disabled.
+                    if (PFConfig.princessKissEnabled()) {
+                        output.accept(PFItems.PRINCESS_KISS.get());
+                    }
                     // Slime Milk catalysts (drop into a source to buff it). Each
                     // shows only when its own per-catalyst flag - ANDed with the
                     // catalysts master inside the accessor - is on (#201); shown by

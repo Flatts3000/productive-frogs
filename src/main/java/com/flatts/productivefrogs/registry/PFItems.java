@@ -108,6 +108,17 @@ public final class PFItems {
     );
 
     /**
+     * Princess's Kiss (#216) - a rare Ender Dragon drop. Right-click a frog to turn
+     * it into a villager (the Frog Prince), a timed conversion like the zombie cure.
+     * Behaviour lives in {@link com.flatts.productivefrogs.content.item.PrincessKissItem}
+     * + {@code PrincessKissHandler}. Stacks to 16 (it's a consumable trophy).
+     */
+    public static final DeferredItem<Item> PRINCESS_KISS = ITEMS.registerItem(
+        "princess_kiss",
+        props -> new com.flatts.productivefrogs.content.item.PrincessKissItem(props.stacksTo(16))
+    );
+
+    /**
      * Frog legs (#194) - the death payoff for killing a frog, a renewable meat on a
      * skyblock where animals are scarce. Raw is chicken-tier; cooked is a step up
      * (cooked-chicken values). Plain {@link Item}s with {@link FoodProperties}; the

@@ -159,6 +159,10 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             hidden.add(new ItemStack(PFItems.COOKED_FROG_LEGS.get()));
             hidden.add(new ItemStack(PFItems.FROG_LEGS_SOUP.get()));
         }
+        // Princess's Kiss (#216): hide when config-disabled.
+        if (!PFConfig.princessKissEnabled()) {
+            hidden.add(new ItemStack(PFItems.PRINCESS_KISS.get()));
+        }
         if (!hidden.isEmpty()) {
             jeiRuntime.getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hidden);
         }
