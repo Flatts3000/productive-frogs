@@ -72,9 +72,13 @@ public final class PFCreativeTabs {
                         output.accept(PFItems.SLIME_CHURN.get());
                     }
                     // The Froglight Crucible + Casting Mold (v1.12) sit with
-                    // the other appliances.
-                    output.accept(PFItems.CRUCIBLE.get());
-                    output.accept(PFItems.CASTING_MOLD.get());
+                    // the other appliances; each appears only when enabled (#196).
+                    if (!PFConfig.SPEC.isLoaded() || PFConfig.CRUCIBLE_ENABLED.get()) {
+                        output.accept(PFItems.CRUCIBLE.get());
+                    }
+                    if (!PFConfig.SPEC.isLoaded() || PFConfig.CASTING_MOLD_ENABLED.get()) {
+                        output.accept(PFItems.CASTING_MOLD.get());
+                    }
                     // Boss-tier catalyst altar blocks (#184).
                     output.accept(PFItems.NETHER_STAR_CATALYST.get());
                     output.accept(PFItems.DRAGON_EGG_CATALYST.get());
