@@ -123,7 +123,7 @@ the items hard-code each other.
 | `count` | `true` | Count catalyst on/off (effective only when master `enabled`). Off = uncraftable, hidden, and inert if dropped in. |
 | `speed` | `true` | Speed catalyst on/off (effective only when master `enabled`). |
 | `quantity` | `true` | Quantity catalyst on/off (effective only when master `enabled`). |
-| `infinite` | `true` | Infinite (Endless) catalyst on/off (effective only when master `enabled`). Crafted from Count catalysts, so disabling `count` also leaves Infinite uncraftable in survival. |
+| `infinite` | `true` | Infinite (Endless) catalyst on/off (effective only when master `enabled`). Crafted from Count catalysts, so its recipe is gated on **both** `count` and `infinite`: disabling `count` also drops the Infinite recipe (no dangling recipe whose ingredient is uncraftable). |
 | `countPerCatalyst` | 16 | Spawns added per Count catalyst. |
 | `maxSpeedLevel` | 4 | Speed cap. |
 | `maxQuantityLevel` | 3 | Quantity cap. |

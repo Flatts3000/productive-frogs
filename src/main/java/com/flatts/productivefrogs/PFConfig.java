@@ -669,6 +669,11 @@ public final class PFConfig {
         return !SPEC.isLoaded() || MILK_CATALYSTS_ENABLED.get();
     }
 
+    // The four per-catalyst accessors are the runtime (fail-open) copy of the
+    // master-AND-child relationship; ConfigEnabledCondition.Key.{COUNT,SPEED,
+    // QUANTITY,INFINITE}_CATALYST.read() is the recipe-load (fail-closed) copy.
+    // Keep the two in sync if the relationship changes (#201).
+
     /** Whether the Count catalyst is enabled (master AND {@code slime_milk_catalysts.count}); fallback true. */
     public static boolean catalystCountEnabled() {
         return !SPEC.isLoaded() || (MILK_CATALYSTS_ENABLED.get() && CATALYST_COUNT_ENABLED.get());

@@ -1,5 +1,6 @@
 {
   "neoforge:conditions": [
+    { "type": "productivefrogs:config_enabled", "config": "count_catalyst" },
     { "type": "productivefrogs:config_enabled", "config": "infinite_catalyst" }
   ],
   "type": "minecraft:crafting_shaped",

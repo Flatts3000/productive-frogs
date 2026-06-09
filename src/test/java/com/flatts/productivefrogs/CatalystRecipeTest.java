@@ -45,7 +45,31 @@ class CatalystRecipeTest {
         assertGatedRecipe("count_catalyst.json", "productivefrogs:count_catalyst", "count_catalyst");
         assertGatedRecipe("speed_catalyst.json", "productivefrogs:speed_catalyst", "speed_catalyst");
         assertGatedRecipe("quantity_catalyst.json", "productivefrogs:quantity_catalyst", "quantity_catalyst");
-        assertGatedRecipe("infinite_catalyst.json", "productivefrogs:infinite_catalyst", "infinite_catalyst");
+    }
+
+    /**
+     * The Infinite recipe is gated on BOTH {@code count_catalyst} and
+     * {@code infinite_catalyst} (NeoForge ANDs a condition array). Because Infinite
+     * is crafted from Count catalysts, disabling Count must also drop the Infinite
+     * recipe rather than leave a recipe whose only ingredient is uncraftable (#201).
+     */
+    @Test
+    void infiniteCatalystRecipeIsGatedOnBothCountAndInfinite() {
+        JsonObject recipe = parse(RECIPE_ROOT.resolve("infinite_catalyst.json"));
+        assertEquals("productivefrogs:infinite_catalyst",
+            recipe.getAsJsonObject("result").get("id").getAsString(), "infinite: result id");
+        JsonArray conditions = recipe.getAsJsonArray("neoforge:conditions");
+        assertNotNull(conditions, "infinite: must carry config_enabled conditions");
+        assertEquals(2, conditions.size(), "infinite: exactly two conditions (count AND infinite)");
+        java.util.Set<String> keys = new java.util.HashSet<>();
+        for (var el : conditions) {
+            JsonObject cond = el.getAsJsonObject();
+            assertEquals("productivefrogs:config_enabled", cond.get("type").getAsString(),
+                "infinite: condition type");
+            keys.add(cond.get("config").getAsString());
+        }
+        assertEquals(java.util.Set.of("count_catalyst", "infinite_catalyst"), keys,
+            "infinite: gated on both count_catalyst and infinite_catalyst");
     }
 
     @Test

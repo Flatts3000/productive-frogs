@@ -65,6 +65,9 @@ public record ConfigEnabledCondition(Key config) implements ICondition {
         },
         // Per-catalyst recipe gates (#201): each ANDs the catalysts master so the
         // master still drops all four, and the child adds individual granularity.
+        // This is the recipe-load (fail-closed) copy of the same master-AND-child
+        // relationship that PFConfig.catalyst*Enabled() expresses for the runtime
+        // (fail-open) paths - keep the two in sync if the relationship changes.
         COUNT_CATALYST("count_catalyst") {
             @Override
             boolean read() {

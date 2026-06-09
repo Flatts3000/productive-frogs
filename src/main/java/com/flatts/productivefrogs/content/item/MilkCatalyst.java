@@ -47,12 +47,17 @@ public enum MilkCatalyst {
 
     /**
      * Whether this specific catalyst is enabled in config (#201). Each per-catalyst
-     * flag is ANDed with the catalysts master toggle, so a disabled catalyst is left
-     * uncraftable, hidden, and inert at the consume sites
-     * ({@code SlimeMilkSourceBlock#entityInside},
-     * {@code SprinklerBlockEntity#absorbCatalystsFromAbove}). Gating happens at the
-     * consume site, not in {@code applyCatalyst}, so upgrades already on an existing
-     * source stay honoured.
+     * flag is ANDed with the catalysts master toggle. Reads live config (delegates
+     * to {@code PFConfig.catalyst*Enabled()}), so it is not a pure value query and
+     * fails open before the config spec loads.
+     *
+     * <p>The two consume sites ({@code SlimeMilkSourceBlock#entityInside},
+     * {@code SprinklerBlockEntity#absorbCatalystsFromAbove}) call this to leave a
+     * disabled catalyst floating for the player rather than eating it. This is the
+     * <i>enabled</i> gate only; the separate "is this upgrade already maxed / not
+     * applicable" gate is {@code applyCatalyst}'s return value. Both gates live at
+     * the consume site, not inside {@code applyCatalyst}, so upgrades already on an
+     * existing source stay honoured.
      */
     public boolean isEnabled() {
         return switch (this) {
