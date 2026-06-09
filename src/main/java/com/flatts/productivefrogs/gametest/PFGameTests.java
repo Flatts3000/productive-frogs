@@ -819,6 +819,25 @@ public final class PFGameTests {
     }
 
     /**
+     * Princess's Kiss (#216): a frog with the conversion attachment ticks down and
+     * is replaced by a villager. Seeds the attachment directly (the item just sets
+     * it) and lets PrincessKissHandler's tick handler run the conversion.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 60)
+    public static void princessKissConvertsFrogToVillager(GameTestHelper helper) {
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 2));
+        frog.setData(com.flatts.productivefrogs.registry.PFAttachments.PRINCESS_CONVERTING.get(), 2);
+
+        helper.succeedWhen(() -> {
+            boolean villager = !helper.getEntities(net.minecraft.world.entity.EntityType.VILLAGER).isEmpty();
+            boolean frogGone = helper.getEntities(PFEntities.RESOURCE_FROG.get()).isEmpty();
+            if (!villager || !frogGone) {
+                helper.fail("the kiss conversion should replace the frog with a villager");
+            }
+        });
+    }
+
+    /**
      * Killing a frog drops Frog Legs (#194). Spawn a Resource Frog, kill it, and
      * expect a raw_frog_legs item entity (the cow/chicken-style death drop, here
      * via FrogLegDropHandler so it works for any frog).

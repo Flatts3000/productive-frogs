@@ -39,6 +39,7 @@ public final class PFConfig {
     public static final ModConfigSpec.BooleanValue BREWED_FROGLIGHTS_ENABLED;
     public static final ModConfigSpec.BooleanValue FROG_NET_ENABLED;
     public static final ModConfigSpec.BooleanValue FROG_LEGS_ENABLED;
+    public static final ModConfigSpec.BooleanValue PRINCESS_KISS_ENABLED;
     public static final ModConfigSpec.IntValue CATALYST_COUNT_PER;
     public static final ModConfigSpec.IntValue CATALYST_MAX_SPEED_LEVEL;
     public static final ModConfigSpec.IntValue CATALYST_MAX_QUANTITY_LEVEL;
@@ -324,6 +325,19 @@ public final class PFConfig {
                 "raw Frog Legs when killed, Looting-scaled, and cooked Frog Legs instead if it was on fire",
                 "(the cow/chicken behaviour). When false, no legs drop and the items are uncraftable/hidden.",
                 "Set false for packs that want losing a frog to sting. Toggling recipes requires a world reload."
+            )
+            .define("enabled", true);
+
+        builder.pop();
+
+        builder.push("princess_kiss");
+
+        PRINCESS_KISS_ENABLED = builder
+            .comment(
+                "Whether the Princess's Kiss is enabled. Default true.",
+                "A rare Ender Dragon drop: right-click a frog to turn it into a villager (the Frog Prince),",
+                "a timed conversion like the zombie cure. When false the dragon does not drop it and the",
+                "item does nothing if obtained another way."
             )
             .define("enabled", true);
 
@@ -702,6 +716,11 @@ public final class PFConfig {
     /** Whether killing a frog drops Frog Legs ({@code frog_legs.enabled}); fallback true. */
     public static boolean frogLegsEnabled() {
         return !SPEC.isLoaded() || FROG_LEGS_ENABLED.get();
+    }
+
+    /** Whether the Princess's Kiss is enabled ({@code princess_kiss.enabled}); fallback true. */
+    public static boolean princessKissEnabled() {
+        return !SPEC.isLoaded() || PRINCESS_KISS_ENABLED.get();
     }
 
     /** Whether Slime Milk catalysts are enabled ({@code slime_milk_catalysts.enabled}); fallback true. */

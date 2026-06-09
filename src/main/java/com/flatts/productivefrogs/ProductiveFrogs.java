@@ -2,6 +2,7 @@ package com.flatts.productivefrogs;
 
 import com.flatts.productivefrogs.gametest.PFGameTests;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
+import com.flatts.productivefrogs.registry.PFAttachments;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFConditions;
 import com.flatts.productivefrogs.registry.PFCreativeTabs;
@@ -47,6 +48,7 @@ public final class ProductiveFrogs {
         PFDebug.bootstrapFromSystemProperty();
 
         PFDataComponents.register(modEventBus);
+        PFAttachments.register(modEventBus);
         // Per-variant Slime Milk (v1.8): discover the variant ids that get their
         // own fluid (built-in index + config/productivefrogs/variants) and mint a
         // fluid/block/bucket for each. Must run BEFORE the Fluid/Block/Item
