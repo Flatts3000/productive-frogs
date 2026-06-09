@@ -112,6 +112,22 @@ public final class PFItems {
     );
 
     /**
+     * Frog Legs Soup (#217) - the bowl-meal step above Cooked Frog Legs, the
+     * mod's rabbit-stew analogue. Stacks to 1 and returns an empty bowl on eat
+     * via {@code usingConvertsTo} (the 1.21.1 way; the old {@code BowlFoodItem}
+     * class is gone). Stew-tier food. Crafted from Cooked Frog Legs; shares the
+     * {@code frog_legs} config gate.
+     */
+    public static final FoodProperties FROG_LEGS_SOUP_FOOD =
+        new FoodProperties.Builder().nutrition(10).saturationModifier(0.6F)
+            .usingConvertsTo(Items.BOWL).build();
+
+    public static final DeferredItem<Item> FROG_LEGS_SOUP = ITEMS.registerItem(
+        "frog_legs_soup",
+        props -> new Item(props.stacksTo(1).food(FROG_LEGS_SOUP_FOOD))
+    );
+
+    /**
      * The four Slime Milk catalysts - hand-crafted items dropped into a placed
      * Slime Milk source to buff it (the early-game stopgap toward lower-friction
      * production; see {@code docs/slime_milk_catalysts.md}). All plain
