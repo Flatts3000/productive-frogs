@@ -85,7 +85,9 @@ public final class PrincessKissHandler {
         level.addFreshEntity(villager);
         level.sendParticles(ParticleTypes.HAPPY_VILLAGER,
             frog.getX(), frog.getY() + 0.5, frog.getZ(), 20, 0.4, 0.5, 0.4, 0.0);
-        level.playSound(null, frog.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.NEUTRAL, 1.0F, 1.2F);
+        // The cured-zombie-villager fanfare, to match the vanilla conversion.
+        level.playSound(null, frog.blockPosition(), SoundEvents.ZOMBIE_VILLAGER_CONVERTED,
+            SoundSource.NEUTRAL, 1.0F, 1.0F);
         frog.discard();
     }
 
