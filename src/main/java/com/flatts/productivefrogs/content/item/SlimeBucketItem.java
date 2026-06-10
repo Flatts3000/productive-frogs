@@ -75,10 +75,20 @@ public final class SlimeBucketItem extends MobBucketItem {
      * skips the fluid placement and just plays the empty sound, so {@code use} still
      * proceeds to {@link #checkExtraContent} (which spawns the slime via
      * {@code MobBucketItem#spawn}). Net effect: slime out, no water.
+     *
+     * <p><b>Why the 5-arg signature on 1.21.1 NeoForge:</b> NeoForge patches
+     * {@code BucketItem} to add an extra {@code ItemStack} parameter on
+     * {@code emptyContents}; {@code BucketItem#use} invokes that 5-arg overload
+     * directly (the player right-click path), and the inherited 4-arg method
+     * just delegates to it with a {@code null} stack. Overriding the 4-arg
+     * alone leaves the player path on vanilla's 5-arg implementation, which
+     * places water - so we override the 5-arg here. The 4-arg call sites
+     * (notably {@link DispensibleContainerItem} dispatched from our dispenser
+     * behaviour) still flow through this override via vanilla's delegation.
      */
     @Override
     public boolean emptyContents(@Nullable Player player, Level level, BlockPos pos,
-                                 @Nullable BlockHitResult result) {
+                                 @Nullable BlockHitResult result, @Nullable ItemStack container) {
         this.playEmptySound(player, level, pos);
         return true;
     }
