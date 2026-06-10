@@ -3354,7 +3354,7 @@ public final class PFGameTests {
             helper.fail("soul fire below should read heat 5 from the crucible_heat data map, got " + crucible.heatBelow());
             return;
         }
-        if (!crucible.acceptFroglight(stampedFroglight("lava"))) {
+        if (!crucible.acceptMelt(stampedFroglight("lava"))) {
             helper.fail("lava Froglight should queue into an idle, empty crucible");
             return;
         }
@@ -3389,6 +3389,54 @@ public final class PFGameTests {
     }
 
     /**
+     * Ex-Deorum heated-crucible parity: a raw block melts to lava over heat, the
+     * same loop the Froglight lane uses. Four cobblestone (250 mB each, matching
+     * Ex Deorum's c:cobblestones -> 250 mB) melt to one full bucket of lava over
+     * soul fire; a non-meltable block (dirt) is REJECTed by the recipe gate.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 1600)
+    public static void crucibleMeltsCobblestoneToLavaOverHeat(GameTestHelper helper) {
+        BlockPos base = new BlockPos(2, 1, 2);
+        helper.setBlock(base, net.minecraft.world.level.block.Blocks.SOUL_SAND);
+        helper.setBlock(base.above(), net.minecraft.world.level.block.Blocks.SOUL_FIRE);
+        helper.setBlock(base.above(2), PFBlocks.CRUCIBLE.get());
+        if (!(helper.getBlockEntity(base.above(2))
+                instanceof com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity crucible)) {
+            helper.fail("crucible block did not create a CrucibleBlockEntity");
+            return;
+        }
+        // The recipe gate accepts cobblestone (has a melt recipe) and rejects dirt.
+        if (crucible.insertCheck(new ItemStack(net.minecraft.world.item.Items.COBBLESTONE))
+                != com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity.InsertCheck.OK) {
+            helper.fail("cobblestone should classify OK (c:cobblestones -> lava)");
+            return;
+        }
+        if (crucible.insertCheck(new ItemStack(net.minecraft.world.item.Items.DIRT))
+                != com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity.InsertCheck.REJECT) {
+            helper.fail("dirt has no melt recipe and must be REJECTed");
+            return;
+        }
+        // Four cobblestone -> 4 x 250 = 1000 mB lava (one bucket).
+        for (int i = 0; i < 4; i++) {
+            if (!crucible.acceptMelt(new ItemStack(net.minecraft.world.item.Items.COBBLESTONE))) {
+                helper.fail("cobblestone " + (i + 1) + " should queue into the crucible");
+                return;
+            }
+        }
+        if (crucible.solids() != 1000) {
+            helper.fail("four cobblestone should queue 1000 mB solids, got " + crucible.solids());
+            return;
+        }
+        helper.succeedWhen(() -> {
+            net.neoforged.neoforge.fluids.FluidStack fluid = crucible.fluid();
+            helper.assertTrue(fluid.getFluid() == net.minecraft.world.level.material.Fluids.LAVA
+                    && fluid.getAmount() == 1000,
+                "tank should hold 1000 mB lava after melting four cobblestone, holds "
+                    + fluid.getAmount() + " of " + fluid.getFluid());
+        });
+    }
+
+    /**
      * No heat below = no melt progress. Loading is deliberately allowed
      * (stage the Froglight, light the fire after), but with stone below the
      * loop must not advance: after a generous delay the tank stays empty,
@@ -3404,7 +3452,7 @@ public final class PFGameTests {
             helper.fail("crucible block did not create a CrucibleBlockEntity");
             return;
         }
-        if (!crucible.acceptFroglight(stampedFroglight("lava"))) {
+        if (!crucible.acceptMelt(stampedFroglight("lava"))) {
             helper.fail("queueing a Froglight must not require heat (stage first, light after)");
             return;
         }
@@ -3476,7 +3524,7 @@ public final class PFGameTests {
             helper.fail("crucible block did not create a CrucibleBlockEntity");
             return;
         }
-        if (!crucible.acceptFroglight(stampedFroglight("iron"))) {
+        if (!crucible.acceptMelt(stampedFroglight("iron"))) {
             helper.fail("iron Froglight should queue (every metal has a molten mapping in wave 2)");
             return;
         }
@@ -3495,7 +3543,7 @@ public final class PFGameTests {
     /**
      * Insert gating on the solids model: (1) a Froglight with no
      * {@code crucible_melting} recipe (bone) classifies REJECT and
-     * {@code acceptFroglight} refuses it; (2) the hopper-facing item
+     * {@code acceptMelt} refuses it; (2) the hopper-facing item
      * capability accepts lava Froglights one at a time until the solids
      * queue is full (4 x 1,000 mB), then bounces the fifth - pinning both
      * the automation path and the MAX_SOLIDS cap.
@@ -3519,8 +3567,8 @@ public final class PFGameTests {
             helper.fail("bone Froglight has no melt recipe and must classify REJECT");
             return;
         }
-        if (crucible.acceptFroglight(bone)) {
-            helper.fail("acceptFroglight must refuse a REJECT-classified stack");
+        if (crucible.acceptMelt(bone)) {
+            helper.fail("acceptMelt must refuse a REJECT-classified stack");
             return;
         }
         net.neoforged.neoforge.items.IItemHandler items = helper.getLevel().getCapability(
@@ -3593,7 +3641,7 @@ public final class PFGameTests {
             helper.fail("casting mold block did not create a CastingMoldBlockEntity");
             return;
         }
-        if (!crucible.acceptFroglight(stampedFroglight("iron"))) {
+        if (!crucible.acceptMelt(stampedFroglight("iron"))) {
             helper.fail("iron Froglight should queue into the crucible");
             return;
         }
