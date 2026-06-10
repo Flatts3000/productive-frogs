@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## v1.19.1 - 2026-06-10 - Survival of the Fittest
+
+### Changed
+
+- **Frogs breed up faster.** The default frog-stat improvement chance rises from `0.20` to `0.40` per stat, so a breed now improves at least one of the three stats about 78% of the time (up from ~49%). A run of breeds with no gain is now rare, while a single breed still usually moves just one or two stats, not all three - the climb to a maxed frog is brisker without being a giveaway. Tuning only; the inheritance mechanic is unchanged and packs can still retune `breeding.improvementChance`. (#232)
+
 ## v1.19.0 - 2026-06-09 - Stone Soup
 
 ### Added
