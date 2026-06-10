@@ -2941,6 +2941,61 @@ public final class PFGameTests {
         }
     }
 
+    /**
+     * Water poured onto a Slime Milk source must not wash it away (#235). A milk source
+     * is a no-collision {@link com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock}
+     * ({@code LiquidBlock}), so without the {@code LiquidBlockContainer} guard vanilla's
+     * {@code canHoldFluid} lets a falling water source flow straight in and overwrite the
+     * production pool. Places a water source directly above and lets it tick; the milk
+     * source must still be a milk source afterwards (the water just sits on top).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 60)
+    public static void slimeMilkSourceSurvivesWaterFlood(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+        placeMilkSource(helper, sourcePos, "iron");
+        helper.setBlock(sourcePos.above(), Blocks.WATER);
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(sourcePos);
+        helper.runAfterDelay(20, () -> {
+            BlockState state = level.getBlockState(abs);
+            if (!(state.getBlock() instanceof com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock)) {
+                helper.fail("water displaced the Slime Milk source -> " + state);
+                return;
+            }
+            if (!level.getFluidState(abs).isSource()) {
+                helper.fail("Slime Milk source is no longer a source fluid -> " + level.getFluidState(abs).getType());
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /**
+     * Lava (the "other fluids" half of #235) must not wash away a Slime Milk source
+     * either - the same {@code LiquidBlockContainer} guard rejects every foreign fluid,
+     * not just water. Mirror of {@link #slimeMilkSourceSurvivesWaterFlood} with lava.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 60)
+    public static void slimeMilkSourceSurvivesLavaFlood(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+        placeMilkSource(helper, sourcePos, "iron");
+        helper.setBlock(sourcePos.above(), Blocks.LAVA);
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(sourcePos);
+        helper.runAfterDelay(30, () -> {
+            BlockState state = level.getBlockState(abs);
+            if (!(state.getBlock() instanceof com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock)) {
+                helper.fail("lava displaced the Slime Milk source -> " + state);
+                return;
+            }
+            if (!level.getFluidState(abs).isSource()) {
+                helper.fail("Slime Milk source is no longer a source fluid -> " + level.getFluidState(abs).getType());
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
     // ---------------------------------------------------------------------
     // Slime Milk catalysts (docs/slime_milk_catalysts.md)
     // ---------------------------------------------------------------------
