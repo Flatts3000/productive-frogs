@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.content.block;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
@@ -97,8 +98,10 @@ public class IncubatorBlock extends Block implements EntityBlock {
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
             Player player, InteractionHand hand, BlockHitResult hit) {
         // Sweetslime: feed an actively-incubating Incubator to shave time off (10%
-        // of the full lifecycle per slime), like hurrying a tadpole along.
-        if (stack.is(PFItems.SWEETSLIME.get())
+        // of the full lifecycle per slime), like hurrying a tadpole along. Gated on
+        // the frog-stat layer (#202) so "stats off" means Sweetslime does nothing
+        // anywhere (it is also uncraftable then) rather than leaving a dead-end use.
+        if (stack.is(PFItems.SWEETSLIME.get()) && PFConfig.frogStatsEnabled()
                 && level.getBlockEntity(pos) instanceof IncubatorBlockEntity be && be.isIncubating()) {
             if (!level.isClientSide() && be.accelerateWithSweetslime()) {
                 if (!player.getAbilities().instabuild) {

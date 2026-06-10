@@ -130,7 +130,7 @@ public final class FrogTongueDropHandler {
         // Bounty multiplies the yield: 1 Froglight at low Bounty up to
         // bountyMaxDrops at the cap (FrogStats step curve). Each ItemEntity gets
         // the constructor's natural random spread so the stack scatters.
-        int count = FrogStats.bountyDropCount(frog.getBounty(), PFConfig.bountyMaxDrops(), PFConfig.statCap());
+        int count = FrogStats.bountyDropCount(frog.effectiveBounty(), PFConfig.bountyMaxDrops(), PFConfig.statCap());
 
         // Terrarium override (#185): inside a formed Terrarium the Froglight is
         // deposited straight into the Hatch inventory - no item entity, ever.

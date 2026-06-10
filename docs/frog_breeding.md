@@ -6,6 +6,8 @@
 > are resolved (see Open questions, below). Cosmetic tiers are the one deferred
 > piece - the stats already sync client-side, so a later render-layer PR can read
 > them with no data change.
+>
+> **Config master (#202):** the entire layer can be turned off with `frog_stats.enabled = false`. When off, behavior reads `effectiveAppetite()`/`effectiveBounty()`/`effectiveReach()` on `ResourceFrog` - the stored stat when on, a fixed baseline (stat 1) when off - so every frog acts identically with no variance; `isFood` stops accepting Sweetslime (no breeding), the Sweetslime recipe is gated off (`config_enabled: frog_stats`) and it is hidden from JEI + the creative tab, conception stamps baseline, and the Jade stat lines (all three providers route through `appendStatLines`) are suppressed. The stored stats are **frozen, not deleted** - the getters and NBT keep them - so flipping the flag back on restores each frog's bred behavior. See [modpack_integration.md](./modpack_integration.md).
 
 ## Summary
 

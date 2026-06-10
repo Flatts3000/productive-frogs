@@ -104,8 +104,11 @@ public final class PFCreativeTabs {
                     }
                     // The Sweetslime breeding treat (slime ball + sugar), placed
                     // after the appliances so the two machines stay adjacent in the
-                    // tab. It's the hand-fed item that drives same-species breeding.
-                    output.accept(PFItems.SWEETSLIME.get());
+                    // tab. It's the hand-fed item that drives same-species breeding;
+                    // hidden when the frog-stat layer is off (#202).
+                    if (PFConfig.frogStatsEnabled()) {
+                        output.accept(PFItems.SWEETSLIME.get());
+                    }
                     // The Frog Net - catch/release tool (#205); shown by default,
                     // hidden when config-disabled. Only the empty net is a creative
                     // entry (a half-stamped loaded net has no frog NBT to release).

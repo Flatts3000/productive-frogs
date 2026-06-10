@@ -142,6 +142,14 @@ public record ConfigEnabledCondition(Key config) implements ICondition {
             boolean read() {
                 return PFConfig.BOSS_ENABLED.get();
             }
+        },
+        // Frog stats master (#202): gates the Sweetslime recipe. The behavioral
+        // suppression (baseline stats, no breeding, no Jade lines) is in Java.
+        FROG_STATS("frog_stats") {
+            @Override
+            boolean read() {
+                return PFConfig.FROG_STATS_ENABLED.get();
+            }
         };
 
         public static final StringRepresentable.EnumCodec<Key> CODEC =
