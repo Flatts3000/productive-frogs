@@ -398,6 +398,12 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
 
     /** Append the three breeding-stat lines as {@code value/cap} to a tooltip. */
     private static void appendStatLines(ITooltip tooltip, int appetite, int bounty, int reach, int cap) {
+        // Stat layer off (#202): hide the readout entirely (frog, egg, and tadpole
+        // providers all route through here). Stored stats are untouched - this only
+        // suppresses the display - so re-enabling brings the lines back.
+        if (!PFConfig.frogStatsEnabled()) {
+            return;
+        }
         tooltip.add(Component.translatable("productivefrogs.jade.appetite", appetite, cap));
         tooltip.add(Component.translatable("productivefrogs.jade.bounty", bounty, cap));
         tooltip.add(Component.translatable("productivefrogs.jade.reach", reach, cap));

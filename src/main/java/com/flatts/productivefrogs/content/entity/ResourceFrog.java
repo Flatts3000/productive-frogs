@@ -328,7 +328,31 @@ public class ResourceFrog extends Frog {
      */
     @Override
     public boolean isFood(ItemStack stack) {
-        return stack.is(PFItems.SWEETSLIME.get());
+        // With the stat layer off (#202) Sweetslime is not a breeding food, so
+        // there is no breeding minigame at all (Sweetslime is also uncraftable).
+        return PFConfig.frogStatsEnabled() && stack.is(PFItems.SWEETSLIME.get());
+    }
+
+    // ---- effective stats (#202) ----
+    // Behavior reads these, not the raw getters: when the stat layer is config-off
+    // every frog acts at the baseline (stat 1) regardless of its stored stats, so
+    // there is no per-frog variance. The stored stats are left untouched (the
+    // getters/NBT still hold them) - a freeze, not a delete, so flipping the flag
+    // back on restores each frog's bred behavior. See docs/frog_breeding.md.
+
+    /** Appetite as applied to the eat cooldown - stored value when the layer is on, else baseline. */
+    public int effectiveAppetite() {
+        return PFConfig.frogStatsEnabled() ? getAppetite() : FrogStats.STAT_MIN;
+    }
+
+    /** Bounty as applied to the Froglight drop count - stored value when the layer is on, else baseline. */
+    public int effectiveBounty() {
+        return PFConfig.frogStatsEnabled() ? getBounty() : FrogStats.STAT_MIN;
+    }
+
+    /** Reach as applied to the prey-scan radius - stored value when the layer is on, else baseline. */
+    public int effectiveReach() {
+        return PFConfig.frogStatsEnabled() ? getReach() : FrogStats.STAT_MIN;
     }
 
     /**
@@ -378,6 +402,15 @@ public class ResourceFrog extends Frog {
     }
 
     private void captureOffspringStats(ResourceFrog mate, RandomSource random) {
+        // Stat layer off (#202): stamp baseline so a frog bred by any path (another
+        // mod, a command) carries default stats rather than a hidden rolled value.
+        if (!PFConfig.frogStatsEnabled()) {
+            this.pendingOffspringAppetite = FrogStats.STAT_MIN;
+            this.pendingOffspringBounty = FrogStats.STAT_MIN;
+            this.pendingOffspringReach = FrogStats.STAT_MIN;
+            this.hasPendingOffspring = true;
+            return;
+        }
         double improvement = PFConfig.improvementChance();
         double regression = PFConfig.regressionChance();
         int cap = PFConfig.statCap();
@@ -537,7 +570,7 @@ public class ResourceFrog extends Frog {
      */
     public void startEatCooldown() {
         int ticks = FrogStats.appetiteCooldownTicks(
-            getAppetite(), PFConfig.appetiteCooldownMin(), PFConfig.appetiteCooldownMax(), PFConfig.statCap());
+            effectiveAppetite(), PFConfig.appetiteCooldownMin(), PFConfig.appetiteCooldownMax(), PFConfig.statCap());
         getBrain().setMemoryWithExpiry(MemoryModuleType.HAS_HUNTING_COOLDOWN, true, ticks);
     }
 

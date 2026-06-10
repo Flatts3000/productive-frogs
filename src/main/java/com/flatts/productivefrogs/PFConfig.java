@@ -70,6 +70,13 @@ public final class PFConfig {
     public static final ModConfigSpec.IntValue STATS_REACH_RADIUS_MAX;
     public static final ModConfigSpec.BooleanValue FROGS_PERSISTENT;
 
+    // Master switch for the whole frog stat-breeding layer (#202). When off,
+    // Sweetslime is uncraftable + no longer a breeding food, every frog behaves at
+    // the baseline (stat 1) regardless of its stored stats (which are frozen, not
+    // deleted), new offspring are stamped baseline, and the Jade stat readouts are
+    // suppressed. The breeding.* / stats.* knobs below only matter when this is on.
+    public static final ModConfigSpec.BooleanValue FROG_STATS_ENABLED;
+
     // Terrarium multiblock (#185, docs/terrarium.md). slimeCap/frogCap are the
     // box's entity budgets; controllerBufferDepth + sprinklerTopUpThreshold tune
     // the phase-2 milk distribution; validationIntervalTicks is the throttled
@@ -465,6 +472,23 @@ public final class PFConfig {
 
         builder.pop();
 
+        builder.push("frog_stats");
+
+        FROG_STATS_ENABLED = builder
+            .comment(
+                "Master switch for the frog stat-breeding layer - Appetite / Bounty / Reach bred via",
+                "Sweetslime (#202). Default true. When false, a pack gets the plain six-species froglight",
+                "loop with no breeding minigame: Sweetslime is uncraftable and hidden from JEI + the creative",
+                "tab and no longer breeds frogs, every frog behaves at the baseline (as if stat 1) so there is",
+                "no per-frog variance, newly bred frogs carry baseline stats, and the Jade stat lines are",
+                "hidden. Stored stats on existing frogs are frozen, not deleted - re-enabling restores them.",
+                "The breeding.* and stats.* tuning below only takes effect while this is on. Recipe gating",
+                "needs a world reload."
+            )
+            .define("enabled", true);
+
+        builder.pop();
+
         builder.push("breeding");
 
         BREEDING_SAME_SPECIES_ONLY = builder
@@ -735,6 +759,11 @@ public final class PFConfig {
     // pattern that was hand-copied across ResourceFrog, the drop handler, the
     // sensor, and the Jade plugin into one place per value.
     // ------------------------------------------------------------------
+
+    /** Whether the frog stat-breeding layer is enabled ({@code frog_stats.enabled}, #202); fallback true. */
+    public static boolean frogStatsEnabled() {
+        return !SPEC.isLoaded() || FROG_STATS_ENABLED.get();
+    }
 
     /** Per-stat cap ({@code breeding.statCap}); fallback {@value #DEFAULT_STAT_CAP}. */
     public static int statCap() {

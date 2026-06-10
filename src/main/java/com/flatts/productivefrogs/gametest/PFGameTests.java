@@ -753,6 +753,59 @@ public final class PFGameTests {
     }
 
     /**
+     * #202 frog-stats master: {@code frog_stats.enabled=false} makes every frog
+     * behave at the baseline (effective stats = 1) regardless of its stored stats,
+     * stops Sweetslime being a breeding food, and - crucially - leaves the stored
+     * stats untouched (a freeze, not a delete) so re-enabling restores them.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void frogStatsDisabledForcesBaseline(GameTestHelper helper) {
+        if (!com.flatts.productivefrogs.PFConfig.SPEC.isLoaded()) {
+            helper.fail("COMMON config must be loaded for the variant-disable tests to be meaningful");
+            return;
+        }
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 2));
+        frog.setCategory(Category.CAVE);
+        frog.setStats(8, 8, 8);
+        ItemStack sweetslime = new ItemStack(PFItems.SWEETSLIME.get());
+
+        // Baseline (layer on): effective stats track the stored stats; Sweetslime breeds.
+        if (frog.effectiveAppetite() != 8 || frog.effectiveBounty() != 8 || frog.effectiveReach() != 8
+                || !frog.isFood(sweetslime)) {
+            helper.fail("baseline: effective stats should equal the stored 8s and Sweetslime should be food");
+            return;
+        }
+        try {
+            com.flatts.productivefrogs.PFConfig.FROG_STATS_ENABLED.set(false);
+            // Effective stats collapse to baseline; Sweetslime is no longer food.
+            if (frog.effectiveAppetite() != com.flatts.productivefrogs.content.entity.FrogStats.STAT_MIN
+                    || frog.effectiveBounty() != com.flatts.productivefrogs.content.entity.FrogStats.STAT_MIN
+                    || frog.effectiveReach() != com.flatts.productivefrogs.content.entity.FrogStats.STAT_MIN) {
+                helper.fail("layer off: effective stats should be baseline (1)");
+                return;
+            }
+            if (frog.isFood(sweetslime)) {
+                helper.fail("layer off: Sweetslime should not be a breeding food");
+                return;
+            }
+            // Freeze, not delete: the stored stats are untouched.
+            if (frog.getAppetite() != 8 || frog.getBounty() != 8 || frog.getReach() != 8) {
+                helper.fail("layer off: stored stats must be frozen (still 8), not deleted");
+                return;
+            }
+        } finally {
+            com.flatts.productivefrogs.PFConfig.FROG_STATS_ENABLED.set(true);
+        }
+        // Restored: effective stats track the stored stats again.
+        if (frog.effectiveAppetite() != 8 || frog.effectiveBounty() != 8 || frog.effectiveReach() != 8
+                || !frog.isFood(sweetslime)) {
+            helper.fail("re-enabled: effective stats and Sweetslime breeding should be back");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
      * Boss catalyst altar gate (#184, docs/boss_catalyst_altar.md). Tests the
      * gate's decision logic directly via the public helpers (the spawn tick
      * itself is scheduled + private; the predicate is the testable seam):

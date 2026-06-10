@@ -82,7 +82,7 @@ public class ResourceFrogAttackablesSensor extends FrogAttackablesSensor {
             PFDebug.logOnce(PFDebug.Area.SENSOR,
                 "sensor#" + frog.getId() + "/" + slime.getId() + "/" + inReach,
                 () -> String.format("frog id=%d category=%s reach=%d(r=%d) vs slime id=%d category=%s -> %s",
-                    frog.getId(), frog.getCategory(), frog.getReach(), radius,
+                    frog.getId(), frog.getCategory(), frog.effectiveReach(), radius,
                     slime.getId(), slime.getCategory(), inReach ? "ATTACKABLE" : "out-of-reach"));
         }
         return inReach;
@@ -101,7 +101,7 @@ public class ResourceFrogAttackablesSensor extends FrogAttackablesSensor {
     /** The frog's Reach-scaled prey-scan radius (config-tunable; defaults 8..16). */
     private static int reachRadius(ResourceFrog frog) {
         return FrogStats.reachRadius(
-            frog.getReach(), PFConfig.reachRadiusMin(), PFConfig.reachRadiusMax(), PFConfig.statCap());
+            frog.effectiveReach(), PFConfig.reachRadiusMin(), PFConfig.reachRadiusMax(), PFConfig.statCap());
     }
 
     /**

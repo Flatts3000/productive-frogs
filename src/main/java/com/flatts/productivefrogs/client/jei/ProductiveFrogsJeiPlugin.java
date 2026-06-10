@@ -173,6 +173,10 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         if (!PFConfig.princessKissEnabled()) {
             hidden.add(new ItemStack(PFItems.PRINCESS_KISS.get()));
         }
+        // Sweetslime (#202): hide when the frog-stat / breeding layer is off.
+        if (!PFConfig.frogStatsEnabled()) {
+            hidden.add(new ItemStack(PFItems.SWEETSLIME.get()));
+        }
         if (!hidden.isEmpty()) {
             jeiRuntime.getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hidden);
         }
