@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## v1.18.0 - 2026-06-09 - Made to Measure
+
 ### Added
 
 - **Config: frog stat-breeding master switch (`frog_stats.enabled`, default on).** One toggle drops the whole Appetite / Bounty / Reach breeding layer for a pack that wants the plain six-species froglight loop without the minigame. When off, Sweetslime is uncraftable and hidden from JEI + the creative tab and no longer breeds frogs, every frog behaves at the baseline (effective stats fixed at 1, so no per-frog variance), newly bred frogs carry baseline stats, and the Jade Appetite/Bounty/Reach readouts are hidden. Stored stats on existing frogs are frozen, not deleted - re-enabling restores each frog's bred behavior. Non-breaking; recipe gating applies on world reload. (#202)
