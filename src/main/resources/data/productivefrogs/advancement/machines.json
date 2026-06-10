@@ -1,0 +1,27 @@
+{
+  "parent": "productivefrogs:root",
+  "display": {
+    "icon": { "id": "productivefrogs:slime_milker" },
+    "title": { "translate": "advancement.productivefrogs.machines.title" },
+    "description": { "translate": "advancement.productivefrogs.machines.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "slime_milker": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": { "items": [ { "items": "productivefrogs:slime_milker" } ] }
+    },
+    "crucible": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": { "items": [ { "items": "productivefrogs:crucible" } ] }
+    },
+    "casting_mold": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": { "items": [ { "items": "productivefrogs:casting_mold" } ] }
+    }
+  },
+  "requirements": [["slime_milker"], ["crucible"], ["casting_mold"]]
+}

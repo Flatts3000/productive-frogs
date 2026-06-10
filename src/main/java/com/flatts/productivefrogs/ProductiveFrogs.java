@@ -6,6 +6,7 @@ import com.flatts.productivefrogs.registry.PFAttachments;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFConditions;
 import com.flatts.productivefrogs.registry.PFCreativeTabs;
+import com.flatts.productivefrogs.registry.PFCriterionTriggers;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEffects;
 import com.flatts.productivefrogs.registry.PFEntities;
@@ -91,6 +92,8 @@ public final class ProductiveFrogs {
         PFConditions.register(modEventBus);
         // Custom recipe types (crucible_melting, v1.12). No ordering dependency.
         PFRecipeTypes.register(modEventBus);
+        // Custom advancement criterion triggers (frog_produced, #183). No ordering dependency.
+        PFCriterionTriggers.register(modEventBus);
 
         // COMMON config — depletion + spawn cadence + discovery chance.
         // Registered here so the config file is generated on first boot and

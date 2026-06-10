@@ -1,0 +1,19 @@
+{
+  "parent": "productivefrogs:root",
+  "display": {
+    "icon": { "id": "productivefrogs:tide_frog_egg" },
+    "title": { "translate": "advancement.productivefrogs.farm_tide.title" },
+    "description": { "translate": "advancement.productivefrogs.farm_tide.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "produced": {
+      "trigger": "productivefrogs:frog_produced",
+      "conditions": { "category": "tide" }
+    }
+  },
+  "requirements": [["produced"]]
+}
