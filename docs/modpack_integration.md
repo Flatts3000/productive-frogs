@@ -37,7 +37,8 @@ A COMMON config, generated on first launch. Toggling a value that gates a recipe
 | `[discovery]` | `discoveryChancePerOffspring` | `0.05` | Per-offspring chance a parent-species split converts to a Resource Slime. |
 | `[variants]` | `disabledVariants` | `[]` | Variant ids to force-off (e.g. `["productivefrogs:iron", "productivefrogs:tin"]`). A disabled variant is unprimable, never discovered, and hidden from JEI + the creative tab. |
 | `[variants]` | `disabledCategories` | `[]` | Whole species to force-off, by lowercase name: `cave`, `geode`, `bog`, `tide`, `infernal`, `void`. Disables every variant in the species. |
-| `[variants]` | `bossVariantsEnabled` | `true` | The boss tier's prime-only variants (wither skull, nether star, dragon egg, dragon breath) in one switch. `false` makes them unprimable + hidden. |
+| `[variants]` | `bossVariantsEnabled` | `true` | The boss tier's prime-only variants (wither skull, nether star, dragon egg, dragon breath) in one switch. `false` makes them unprimable + hidden. Narrower than `[boss] enabled` - drops just the variants, keeps the altar blocks craftable. |
+| `[boss]` | `enabled` | `true` | Master switch for the whole boss tier. `false` suppresses the four boss variants (like `bossVariantsEnabled=false`, so no toxic milk / altar gating), makes the four catalyst-altar blocks uncraftable + hidden, and drops the boss Froglight smelt-backs - the standard loop with no boss farming in one toggle. Recipe gating needs a world reload. |
 
 ### Scoping content with `[variants]`
 
