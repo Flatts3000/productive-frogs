@@ -61,6 +61,13 @@ Matching is per-variant via the `neoforge:components` ingredient - there is **no
 ### 🔵 No `compat/` Java package - deliberate
 Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:conditions → mod_loaded`. Variants for modded resources (e.g. Mythic Metals) similarly ship as JSON `SlimeVariant` entries with `mod_loaded` conditions. See `docs/architecture.md` for the schema.
 
+### 🔵 Building Gadgets Copy-Paste loses the Froglight variant (upstream limitation)
+Copying placed Resource Froglights with Building Gadgets' **Copy-Paste Gadget** and pasting them elsewhere produces untinted (plain-looking) Froglights - the variant is dropped. Cause is upstream: the Copy-Paste Gadget [does not copy block-entity / tile data](https://github.com/Direwolf20-MC/BuildingGadgets/issues/660), only the blockstate. A Resource Froglight stores its variant in its BlockEntity (the blockstate carries only the pillar `axis`), so the paste rebuilds the block with an empty BE. This is the same limitation that strips Mekanism machine configs, IE multiblock data, and pipe I/O settings, not something specific to this mod.
+
+Our side already exposes the variant through every standard capture path - NeoForge implicit data components (`collectImplicitComponents`/`applyImplicitComponents`), pick-block (`getCloneItemStack`), the break-drop loot table, and BE NBT - so vanilla `/clone`, middle-click pick-block, and breaking + replacing all preserve it. Building Gadgets simply reads none of those on copy.
+
+**Not fixable on our side, and not planned.** The only workaround that would satisfy the gadget is encoding the variant in the blockstate, which we deliberately do not do: the variant is a datapack registry with an unbounded value space (packs/datapacks add variants with no code change), so it cannot live in a compile-time-fixed blockstate property (rationale in `ConfigurableFroglightBlock`'s javadoc). Workaround for players: place Froglights normally, or pick-block + place rather than copy-paste, when the tint matters.
+
 ---
 
 ## How to report a new issue
@@ -75,4 +82,4 @@ Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:con
 
 ---
 
-*Last updated: 2026-06-05 (Chorus Fruit Froglight now smelts 1:1 back to chorus fruit, archived; no open issues remain).*
+*Last updated: 2026-06-09 (logged the Building Gadgets Copy-Paste variant-loss as an upstream cross-mod limitation; no open issues remain).*
