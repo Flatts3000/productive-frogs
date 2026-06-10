@@ -628,6 +628,83 @@ public final class PFGameTests {
     }
 
     /**
+     * #204 per-integration force-off. Two parts, both independent of which cross-mod
+     * mods are loaded in the test env (the mapping is derived from the bundled
+     * variant JSONs' mod_loaded gates, not the live registry):
+     * (1) the variant -&gt; provider mapping is correct (tin -&gt; alltheores; the
+     *     shared silicon -&gt; ae2 + refinedstorage; first-party iron -&gt; none);
+     * (2) {@code disabledIntegrations} disables a single-provider variant, leaves a
+     *     shared variant alive until ALL its providers are listed, and never touches
+     *     a first-party variant. Exercised through {@code SlimeVariant.isEnabled},
+     *     which keys the integration check off the id, so a freshly-built dummy
+     *     variant suffices regardless of registry contents.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void disabledIntegrationSuppressesVariants(GameTestHelper helper) {
+        if (!com.flatts.productivefrogs.PFConfig.SPEC.isLoaded()) {
+            helper.fail("COMMON config must be loaded for the variant-disable tests to be meaningful");
+            return;
+        }
+        ResourceLocation tin = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tin");
+        ResourceLocation silicon = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "silicon");
+        ResourceLocation iron = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+
+        // (1) mapping derived from bundled JSON conditions.
+        if (!com.flatts.productivefrogs.setup.VariantIntegrations.providersOf(tin).equals(java.util.Set.of("alltheores"))) {
+            helper.fail("tin should map to provider {alltheores}, got "
+                + com.flatts.productivefrogs.setup.VariantIntegrations.providersOf(tin));
+            return;
+        }
+        if (!com.flatts.productivefrogs.setup.VariantIntegrations.providersOf(silicon).equals(java.util.Set.of("ae2", "refinedstorage"))) {
+            helper.fail("silicon should map to {ae2, refinedstorage}, got "
+                + com.flatts.productivefrogs.setup.VariantIntegrations.providersOf(silicon));
+            return;
+        }
+        if (!com.flatts.productivefrogs.setup.VariantIntegrations.providersOf(iron).isEmpty()) {
+            helper.fail("first-party iron should have no provider integration");
+            return;
+        }
+
+        // (2) the isEnabled integration clause. The dummy's own fields don't matter -
+        // the integration gate keys off the id argument's bundled mapping.
+        SlimeVariant dummy = new SlimeVariant(java.util.Optional.empty(),
+            java.util.Optional.empty(), Category.CAVE, 0xFFFFFF, 0xFFFFFF, 1,
+            java.util.Optional.empty(), java.util.Optional.empty());
+        try {
+            com.flatts.productivefrogs.PFConfig.DISABLED_INTEGRATIONS.set(java.util.List.of("alltheores"));
+            if (dummy.isEnabled(tin)) {
+                helper.fail("tin should be disabled when its only provider (alltheores) is disabled");
+                return;
+            }
+            if (!dummy.isEnabled(silicon)) {
+                helper.fail("silicon should stay enabled when only one of its two providers is disabled");
+                return;
+            }
+            if (!dummy.isEnabled(iron)) {
+                helper.fail("first-party iron should be unaffected by disabledIntegrations");
+                return;
+            }
+            // All of silicon's providers listed -> now disabled.
+            com.flatts.productivefrogs.PFConfig.DISABLED_INTEGRATIONS.set(java.util.List.of("ae2", "refinedstorage"));
+            if (dummy.isEnabled(silicon)) {
+                helper.fail("silicon should be disabled when ALL its providers are listed");
+                return;
+            }
+            if (!dummy.isEnabled(tin)) {
+                helper.fail("tin should be re-enabled when alltheores is no longer listed");
+                return;
+            }
+        } finally {
+            com.flatts.productivefrogs.PFConfig.DISABLED_INTEGRATIONS.set(java.util.List.of());
+        }
+        if (!dummy.isEnabled(tin) || !dummy.isEnabled(silicon)) {
+            helper.fail("all variants should be enabled again after clearing disabledIntegrations");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
      * #200 boss master: {@code boss.enabled=false} suppresses the weight-0 boss
      * variants exactly like {@code variants.bossVariantsEnabled=false} (the two are
      * ANDed), while leaving a normal variant untouched. The recipe/creative gating

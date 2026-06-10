@@ -89,6 +89,16 @@ public final class VariantFluidDiscovery {
     }
 
     /**
+     * The parsed bundled {@code slime_variant} JSON for a built-in variant name, or
+     * {@code null} if absent/unreadable. Shared with {@link VariantIntegrations},
+     * which reads the same files at mod-init to map a variant to its provider mods
+     * (#204) - keeping all bundled-variant-JSON reading in one place.
+     */
+    static JsonObject readBundledVariant(String name) {
+        return readJsonResource(BUILTIN_VARIANT_DIR + name + ".json");
+    }
+
+    /**
      * Every bundled variant name from {@code variants_index.json}, conditions NOT
      * evaluated - the full roster, present-or-not. {@link #discover()} is the
      * condition-filtered subset; the difference between the two is exactly the
