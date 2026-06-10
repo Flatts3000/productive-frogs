@@ -1,6 +1,7 @@
 {
   "neoforge:conditions": [
-    { "type": "productivefrogs:config_enabled", "config": "froglight_weapon" }
+    { "type": "productivefrogs:config_enabled", "config": "froglight_weapon" },
+    { "type": "productivefrogs:config_enabled", "config": "boss" }
   ],
   "type": "minecraft:crafting_shaped",
   "category": "equipment",

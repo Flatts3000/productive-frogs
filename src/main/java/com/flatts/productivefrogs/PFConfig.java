@@ -94,6 +94,13 @@ public final class PFConfig {
     public static final ModConfigSpec.ConfigValue<List<? extends String>> DISABLED_INTEGRATIONS;
     public static final ModConfigSpec.BooleanValue BOSS_VARIANTS_ENABLED;
 
+    // Boss-tier master (#200). One switch over the whole boss tier: the four
+    // weight-0 prime-only variants (ANDed with BOSS_VARIANTS_ENABLED), the four
+    // catalyst-altar block recipes, the boss Froglight smelt-backs, and creative
+    // visibility of the altar blocks. Toxic boss milk + the 6-face altar gate fall
+    // out transitively (no variant -> no source -> no milk). Default true.
+    public static final ModConfigSpec.BooleanValue BOSS_ENABLED;
+
     // Deterministic, config-exposed lifecycle timings (docs/known_issues.md).
     // These are fixed (non-random) delays for the MODDED frog lifecycle; vanilla
     // frogspawn/tadpoles/frogs keep their own stock pacing.
@@ -666,6 +673,24 @@ public final class PFConfig {
 
         builder.pop();
 
+        builder.push("boss");
+
+        BOSS_ENABLED = builder
+            .comment(
+                "Master switch for the whole boss tier (#200). Default true. When false:",
+                "- the four prime-only boss variants (wither skull, nether star, dragon egg, dragon breath)",
+                "  are suppressed exactly like variants.bossVariantsEnabled=false (unprimable, undiscovered,",
+                "  hidden from JEI + the creative tab), which also removes their toxic milk and altar gating;",
+                "- the four catalyst-altar blocks become uncraftable and hidden from JEI + the creative tab;",
+                "- the boss Froglight smelt-back recipes are dropped.",
+                "Lets a pack run the standard froglight loop with no boss farming in one toggle. The narrower",
+                "variants.bossVariantsEnabled stays available to drop just the variants while keeping the altar",
+                "blocks craftable. Recipe gating needs a world reload."
+            )
+            .define("enabled", true);
+
+        builder.pop();
+
         SPEC = builder.build();
     }
 
@@ -858,7 +883,9 @@ public final class PFConfig {
         if (!SPEC.isLoaded()) {
             return true;
         }
-        if (weight == 0 && !BOSS_VARIANTS_ENABLED.get()) {
+        // A weight-0 boss variant is gated by BOTH the boss master (#200) and the
+        // narrow per-variant switch (#203): either being off suppresses it.
+        if (weight == 0 && !(BOSS_ENABLED.get() && BOSS_VARIANTS_ENABLED.get())) {
             return false;
         }
         if (DISABLED_CATEGORIES.get().contains(category.id())) {
@@ -867,9 +894,18 @@ public final class PFConfig {
         return !DISABLED_VARIANTS.get().contains(id.toString());
     }
 
-    /** Whether the boss-tier prime-only variants are enabled ({@code variants.bossVariantsEnabled}); fallback true. */
+    /**
+     * Whether the boss-tier prime-only variants are effectively enabled - the boss
+     * master ({@code boss.enabled}, #200) AND the narrow switch
+     * ({@code variants.bossVariantsEnabled}, #203). Fallback true.
+     */
     public static boolean bossVariantsEnabled() {
-        return !SPEC.isLoaded() || BOSS_VARIANTS_ENABLED.get();
+        return !SPEC.isLoaded() || (BOSS_ENABLED.get() && BOSS_VARIANTS_ENABLED.get());
+    }
+
+    /** Whether the boss tier master is on ({@code boss.enabled}, #200); fallback true. */
+    public static boolean bossEnabled() {
+        return !SPEC.isLoaded() || BOSS_ENABLED.get();
     }
 
     /**

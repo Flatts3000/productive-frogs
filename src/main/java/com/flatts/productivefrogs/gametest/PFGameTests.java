@@ -484,10 +484,12 @@ public final class PFGameTests {
      * single method invocation on the server thread (no {@code runAfterDelay} /
      * {@code onEachTick} yielding), so no concurrently-scheduled test body can
      * observe the mutated config between the set and the {@code finally} reset.
-     * {@code helper.fail()} does not throw on 1.21.1, and each {@code fail()} is
-     * followed by a {@code return} inside the try, so the {@code finally} still
-     * fires on every failure path. Fails fast (rather than skipping) if COMMON
-     * config isn't loaded, so the assertions can't silently false-green.
+     * {@code helper.fail(String)} throws {@code GameTestAssertException}, so on a
+     * failed assertion the throw propagates out through the {@code try} - the
+     * {@code finally} still restores the config before the test is marked failed.
+     * (The {@code return} after each {@code fail()} is therefore unreachable, but
+     * it is the idiomatic shape used throughout this file.) Fails fast (rather than
+     * skipping) if COMMON config isn't loaded, so the assertions can't false-green.
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void disabledVariantConfigSuppressesResolution(GameTestHelper helper) {
@@ -697,6 +699,54 @@ public final class PFGameTests {
         }
         if (!dummy.isEnabled(tin) || !dummy.isEnabled(silicon)) {
             helper.fail("all variants should be enabled again after clearing disabledIntegrations");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * #200 boss master: {@code boss.enabled=false} suppresses the weight-0 boss
+     * variants exactly like {@code variants.bossVariantsEnabled=false} (the two are
+     * ANDed), while leaving a normal variant untouched. The recipe/creative gating
+     * half rides the already-tested {@code config_enabled} condition + the
+     * per-variant isEnabled gate, so this covers the runtime suppression seam.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void bossMasterDisablesBossVariants(GameTestHelper helper) {
+        if (!com.flatts.productivefrogs.PFConfig.SPEC.isLoaded()) {
+            helper.fail("COMMON config must be loaded for the variant-disable tests to be meaningful");
+            return;
+        }
+        net.minecraft.core.Registry<SlimeVariant> registry =
+            helper.getLevel().registryAccess().registryOrThrow(PFRegistries.SLIME_VARIANT);
+        ResourceLocation netherStarItem = ResourceLocation.fromNamespaceAndPath("minecraft", "nether_star");
+        ResourceLocation ironItem = ResourceLocation.fromNamespaceAndPath("minecraft", "iron_ingot");
+
+        if (SlimeVariant.findByPrimerItem(registry, netherStarItem) == null
+                || !com.flatts.productivefrogs.PFConfig.bossEnabled()) {
+            helper.fail("baseline: nether_star should prime and boss should be enabled");
+            return;
+        }
+        try {
+            com.flatts.productivefrogs.PFConfig.BOSS_ENABLED.set(false);
+            if (com.flatts.productivefrogs.PFConfig.bossEnabled()) {
+                helper.fail("bossEnabled() should be false when the master is off");
+                return;
+            }
+            if (SlimeVariant.findByPrimerItem(registry, netherStarItem) != null) {
+                helper.fail("with the boss master off, nether_star should be unprimable");
+                return;
+            }
+            // A normal (non-boss) variant is untouched by the boss master.
+            if (SlimeVariant.findByPrimerItem(registry, ironItem) == null) {
+                helper.fail("iron should still prime when only the boss master is off");
+                return;
+            }
+        } finally {
+            com.flatts.productivefrogs.PFConfig.BOSS_ENABLED.set(true);
+        }
+        if (SlimeVariant.findByPrimerItem(registry, netherStarItem) == null) {
+            helper.fail("nether_star should prime again after re-enabling the boss master");
             return;
         }
         helper.succeed();

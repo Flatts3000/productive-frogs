@@ -82,11 +82,15 @@ public final class PFCreativeTabs {
                     if (!PFConfig.SPEC.isLoaded() || PFConfig.CASTING_MOLD_ENABLED.get()) {
                         output.accept(PFItems.CASTING_MOLD.get());
                     }
-                    // Boss-tier catalyst altar blocks (#184).
-                    output.accept(PFItems.NETHER_STAR_CATALYST.get());
-                    output.accept(PFItems.DRAGON_EGG_CATALYST.get());
-                    output.accept(PFItems.WITHER_SKELETON_SKULL_CATALYST.get());
-                    output.accept(PFItems.DRAGON_BREATH_CATALYST.get());
+                    // Boss-tier catalyst altar blocks (#184), hidden when the boss
+                    // master is off (#200). The boss variants' own entries (buckets,
+                    // froglights, eggs) hide via the per-variant isEnabled gate.
+                    if (PFConfig.bossEnabled()) {
+                        output.accept(PFItems.NETHER_STAR_CATALYST.get());
+                        output.accept(PFItems.DRAGON_EGG_CATALYST.get());
+                        output.accept(PFItems.WITHER_SKELETON_SKULL_CATALYST.get());
+                        output.accept(PFItems.DRAGON_BREATH_CATALYST.get());
+                    }
                     // Terrarium multiblock machines (#185).
                     output.accept(PFItems.TERRARIUM_CONTROLLER.get());
                     output.accept(PFItems.SPRINKLER.get());
@@ -109,8 +113,10 @@ public final class PFCreativeTabs {
                         output.accept(PFItems.FROG_NET.get());
                     }
                     // Froglight Cleaver - late-game harvest weapon (#212); shown by
-                    // default, hidden when config-disabled.
-                    if (PFConfig.froglightWeaponEnabled()) {
+                    // default, hidden when its own toggle OR the boss master is off
+                    // (its recipe needs boss Froglights, so boss off makes it
+                    // uncraftable - keep creative in lockstep with the recipe, #200).
+                    if (PFConfig.froglightWeaponEnabled() && PFConfig.bossEnabled()) {
                         output.accept(PFItems.FROGLIGHT_CLEAVER.get());
                     }
                     // Frog Legs - the death-drop food (#194); shown by default,
