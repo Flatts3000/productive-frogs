@@ -138,6 +138,10 @@ The pre-release config suite - the knobs a modpack author needs to scope the mod
 
 Renewable lava, two ways. **Lava Froglights now burn as furnace fuel** worth one lava bucket (20,000 ticks, a hundred smelts), joining the Coal and Blaze Froglights - so the renewable lava loop doubles as a no-bucket solid fuel (#231). **The Froglight Crucible melts stone straight to lava** (Ex Deorum heated-crucible parity, #230): drop cobblestone, stone, gravel, or netherrack into a heated Crucible and it melts to lava on the same heat-from-below loop the Froglight lane uses, no frog required - amounts and tags copied verbatim from Ex Deorum (cobblestone / stone / gravel 250 mB each, netherrack 500 mB). Pure-data recipes (one JSON per input), so a pack retunes or extends them freely; the Crucible's right-click insert now accepts any block with a melt recipe, not just Froglights.
 
+### v1.19.1 (shipped 2026-06-10): Survival of the Fittest
+
+Breeding balance. The default frog-stat improvement chance rises from `0.20` to `0.40` per stat (#232), so a breed now improves at least one of the three stats about 78% of the time (up from ~49%) - a run of breeds with no gain becomes rare while a single breed still usually moves only one or two stats, not all three. Tuning only: the inheritance mechanic is unchanged and packs can still retune `breeding.improvementChance`.
+
 ---
 
 ## v2: automation

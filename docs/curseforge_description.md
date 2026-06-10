@@ -135,6 +135,8 @@ The mod is fully playable today. Everything below is live on CurseForge. Targets
 
 **v1.19.0 (shipped): renewable lava, two ways.** Lava Froglights now burn as furnace fuel worth a full lava bucket, so the renewable-lava loop doubles as a renewable solid fuel with no empty bucket to juggle. And the Froglight Crucible now melts stone straight to lava - drop in cobblestone, stone, gravel, or netherrack over heat and it renders down to lava, no frog required (matching Ex Deorum's heated crucible).
 
+**v1.19.1 (shipped): Survival of the Fittest.** Frog stat breeding climbs faster. A breed now improves at least one of the three stats about three-quarters of the time (up from roughly half), so stat farming feels rewarding instead of grindy - while a single breed still usually nudges just one or two stats, not all three. Packs can still retune the rate in the config.
+
 ### v2: automation
 
 The scale-up release. v1 lives unchanged; v2 layers automation on top. A player who never crafts a v2 block still has every v1 capability.
