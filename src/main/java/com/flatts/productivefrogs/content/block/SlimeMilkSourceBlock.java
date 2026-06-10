@@ -27,15 +27,19 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.LiquidBlockContainer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FlowingFluid;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -62,7 +66,7 @@ import org.jetbrains.annotations.Nullable;
  * dropping catalyst items into the pool; {@link #entityInside} consumes them. See
  * {@code docs/slime_milk_catalysts.md}.
  */
-public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
+public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, LiquidBlockContainer {
 
     /**
      * Fallback starting spawn budget used only before COMMON config loads (the
@@ -160,6 +164,46 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock {
             be.setVariantId(blockVariant);
         }
         scheduleNextSpawnTick(serverLevel, pos, level.getRandom(), 0);
+    }
+
+    /**
+     * Reject every fluid except this source's own Slime Milk (#235). A milk source is
+     * a {@link LiquidBlock} with no collision, so vanilla's
+     * {@code FlowingFluid#canHoldFluid} (which returns {@code !blocksMotion()} for a
+     * plain block) would otherwise let any neighbouring water, lava, or modded fluid
+     * flow in and overwrite it - destroying the production pool. Implementing
+     * {@link LiquidBlockContainer} routes that gate through here: we allow only our
+     * own milk family and refuse all others, so a foreign fluid treats the source as
+     * a wall instead of washing it away.
+     *
+     * <p>"Own milk" is matched by {@code FluidType} identity, not {@code Fluid#isSame}
+     * (which is reference equality, so the milk's own <i>flowing</i> form would fail a
+     * source-vs-flowing check): a variant's source and flowing fluids share one
+     * per-variant FluidType ({@code PFVariantMilk}), and water / lava / a different
+     * variant's milk each have a distinct type. This is the victim-side counterpart to
+     * {@link com.flatts.productivefrogs.content.fluid.SlimeMilkFluid}'s aggressor-side
+     * {@code canSpreadTo} guard.
+     */
+    @Override
+    public boolean canPlaceLiquid(@Nullable Player player, BlockGetter level, BlockPos pos,
+                                  BlockState state, Fluid fluid) {
+        return fluid.getFluidType() == this.fluid.getFluidType();
+    }
+
+    /**
+     * Only our own milk fluid ever reaches here ({@link #canPlaceLiquid} gates the rest
+     * out). Mirror vanilla {@code FlowingFluid#spreadTo}'s non-container branch for that
+     * case so milk's own flow into an existing flowing-milk neighbour keeps levelling:
+     * write the milk fluid's legacy block. Never overwrite a real source position (it
+     * owns the spawn-economy {@link SlimeMilkSourceBlockEntity}); fluid spread only ever
+     * targets non-source cells, so the guard is defensive rather than a flow change.
+     */
+    @Override
+    public boolean placeLiquid(LevelAccessor level, BlockPos pos, BlockState state, FluidState fluidState) {
+        if (!state.getFluidState().isSource()) {
+            level.setBlock(pos, fluidState.createLegacyBlock(), Block.UPDATE_ALL);
+        }
+        return true;
     }
 
     /**

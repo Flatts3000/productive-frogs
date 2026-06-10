@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Water, lava, and other fluids no longer wash away Slime Milk source blocks.** A milk source is a no-collision fluid block, so a neighbouring water/lava flow (or a foreign modded fluid) could flow straight in and overwrite it, destroying the production pool. The source now rejects every fluid except its own milk, so an adjacent fluid treats it as a wall - while the milk's own flow is unchanged. Complements the existing guard that stops milk from washing away water, frogspawn, and other milk sources. (#235)
+
 ## v1.19.1 - 2026-06-10 - Survival of the Fittest
 
 ### Changed
