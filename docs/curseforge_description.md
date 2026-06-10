@@ -125,13 +125,23 @@ The mod is fully playable today. Everything below is live on CurseForge. Targets
 
 **v1.14.0 (shipped): Brewed Froglights and the boss tier.** Splash a potion onto a slime before your frog eats it and the Froglight it drops keeps that effect: place it as a glowing aura that buffs (or, with Poison or Wither, harms) everything around it, hold it to buff just yourself, or wear it in a Curios charm slot. And the trophy resources are now farmable - Wither Skeleton Skull, Nether Star, Dragon Egg, and Dragon Breath - but you earn them: you prime the first slime with the real drop, and a farm only runs once you've walled its Slime Milk source in a six-sided catalyst altar (the milk is toxic, so you want it contained). Plus five more everyday drops (bone, string, gunpowder, rotten flesh, magma cream) and, with Mekanism, Refined Glowstone.
 
+**v1.15.0 (shipped): the Slime Churn + Just Dire Things.** The Slime Churn is the Milker run backwards - load a bucket of a variant's Slime Milk plus empty buckets and it fills them with that variant's captured slimes, on the same spawn economy as a placed source, so you can store and ship slimes as easily as milk. And Just Dire Things support: Ferricore, Blazegold, Celestigem, and Eclipse Alloy farm through the loop, plus a Crucible fuel lane that melts those Froglights straight into JDT's refined fuels.
+
+**v1.16.0 (shipped): the Terrarium.** The flagship automation block - a sealed multiblock that runs the whole loop on its own. Pipe Slime Milk into the Controller, ceiling Sprinklers rain slimes into the cavity, frogs raised in built-in Incubators eat them, and the Froglights collect in the Hatch for piping out. The Incubators handle the full egg-to-frog lifecycle and keep bred stats; the Controller screen and Jade tooltips show structure state, buffered milk, and live frog count.
+
+**v1.17.0 (shipped): Frog Legs and Fairy Tales.** A content drop for skyblock and beyond. Killing any frog now drops Frog Legs - a renewable meat (cook it, or make Frog Legs Soup); brew a Potion of Hopping from them to leap forward and land soft. The Froglight Cleaver is an endgame sword that drops a slime's Froglight when it kills it. The Ender Dragon now drops a Princess's Kiss that turns a frog into a villager - a single kiss can bootstrap a trading economy. And the Frog Net catches and relocates a frog without leashing or killing it, keeping a bred frog's stats intact. Plus a wide set of config switches so a pack can ship just the parts it wants.
+
+**v1.18.0 (shipped): Made to Measure.** A full set of config controls for modpack authors: switch off individual resources, whole species, the boss tier, the stat-breeding system, or just a particular mod's variants - all without touching datapacks. Every toggle is a soft one, so disabling content never breaks a world and re-enabling restores it.
+
+**v1.19.0 (shipped): renewable lava, two ways.** Lava Froglights now burn as furnace fuel worth a full lava bucket, so the renewable-lava loop doubles as a renewable solid fuel with no empty bucket to juggle. And the Froglight Crucible now melts stone straight to lava - drop in cobblestone, stone, gravel, or netherrack over heat and it renders down to lava, no frog required (matching Ex Deorum's heated crucible).
+
 ### v2: automation
 
 The scale-up release. v1 lives unchanged; v2 layers automation on top. A player who never crafts a v2 block still has every v1 capability.
 
 **Auto-fed Slime Milker:** an upgraded variant that pulls and pushes buckets without you standing there. (Basic hopper input/output already works in v1.)
 
-**Frog Terrarium / Habitat block:** placeable frog housing with input/output inventory.
+**Frog Terrarium / Habitat block:** shipped in v1.16.0 (see the release notes above) - the sealed multiblock that automates the whole loop.
 
 **Auto-feeders:** hopper-fed slime delivery to nearby frogs.
 

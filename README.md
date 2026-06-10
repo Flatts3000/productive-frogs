@@ -67,7 +67,7 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 
 ## Status
 
-**Latest release: v1.16.0 (beta on CurseForge since v1.9.1).** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, the Spawnery, frog stat breeding, Slime Milk catalysts, fully pipeable per-variant Slime Milk, the Froglight Crucible + Casting Mold melt-and-cast lane, Brewed Froglights, and the boss/endgame tier. v1.15 adds the Slime Churn (milk back into captured slimes) and Just Dire Things support. **v1.16 adds the Terrarium** - a sealed multiblock that automates the whole loop end to end: pipe Slime Milk into the Controller, ceiling Sprinklers rain slimes into the cavity, frogs raised in Incubators eat them, and the Froglights collect in the Hatch for piping out.
+**Latest release: v1.19.0 (beta on CurseForge since v1.9.1).** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, the Spawnery, frog stat breeding, Slime Milk catalysts, fully pipeable per-variant Slime Milk, the Froglight Crucible + Casting Mold melt-and-cast lane, Brewed Froglights, and the boss/endgame tier. v1.15 adds the Slime Churn (milk back into captured slimes) and Just Dire Things support. **v1.16 adds the Terrarium** - a sealed multiblock that automates the whole loop end to end: pipe Slime Milk into the Controller, ceiling Sprinklers rain slimes into the cavity, frogs raised in Incubators eat them, and the Froglights collect in the Hatch for piping out. **v1.17 adds Frog Legs** (a renewable meat), the Froglight Cleaver, Princess's Kiss, the Frog Net, and a config sweep that lets a pack ship a subset of features. **v1.18 adds the pre-release config suite** - disable individual variants, whole species, a host mod's variants, the boss tier, or the stat-breeding layer. **v1.19 makes Lava Froglights burn as furnace fuel and the Crucible melt stone to lava** (Ex Deorum heated-crucible parity).
 
 | Version line | Scope | Status |
 |---|---|---|
@@ -88,6 +88,9 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 | v1.14 | Brewed Froglights + Curios; the boss/endgame tier (catalyst altar, toxic milk) | ✅ shipped |
 | v1.15 | The Slime Churn; Just Dire Things support | ✅ shipped |
 | v1.16 | The Terrarium - automation multiblock (Controller / Sprinklers / Incubators / Hatch) | ✅ shipped |
+| v1.17 | Frog Legs + Froglight Cleaver + Princess's Kiss + Frog Net; feature config sweep | ✅ shipped |
+| v1.18 | Pre-release config suite (disable variants / species / integrations / boss / stat breeding) | ✅ shipped |
+| v1.19 | Lava Froglight furnace fuel; Crucible melts stone to lava (Ex Deorum parity) | ✅ shipped |
 | v2 | Further automation: power, buffered appliances, auto-feeders | 🔭 future |
 
 Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope rationale: [`docs/versioning.md`](./docs/versioning.md).
