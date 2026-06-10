@@ -194,15 +194,22 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * Only our own milk fluid ever reaches here ({@link #canPlaceLiquid} gates the rest
      * out). Mirror vanilla {@code FlowingFluid#spreadTo}'s non-container branch for that
      * case so milk's own flow into an existing flowing-milk neighbour keeps levelling:
-     * write the milk fluid's legacy block. Never overwrite a real source position (it
-     * owns the spawn-economy {@link SlimeMilkSourceBlockEntity}); fluid spread only ever
-     * targets non-source cells, so the guard is defensive rather than a flow change.
+     * write the milk fluid's legacy block and report {@code true} (placed).
+     *
+     * <p>Never overwrite a real source position (it owns the spawn-economy
+     * {@link SlimeMilkSourceBlockEntity}); return {@code false} there, honouring the
+     * {@link LiquidBlockContainer} contract ({@code true} == liquid was placed) so a
+     * caller that checks the result (e.g. a modded pipe deciding whether to drain its
+     * tank) isn't told a placement happened. Vanilla {@code spreadTo} / {@code BucketItem}
+     * ignore the return, and fluid spread never targets a source cell, so this is a
+     * defensive, contract-correct guard rather than a flow change.
      */
     @Override
     public boolean placeLiquid(LevelAccessor level, BlockPos pos, BlockState state, FluidState fluidState) {
-        if (!state.getFluidState().isSource()) {
-            level.setBlock(pos, fluidState.createLegacyBlock(), Block.UPDATE_ALL);
+        if (state.getFluidState().isSource()) {
+            return false;
         }
+        level.setBlock(pos, fluidState.createLegacyBlock(), Block.UPDATE_ALL);
         return true;
     }
 
