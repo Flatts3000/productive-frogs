@@ -119,7 +119,7 @@ public final class PFConfig {
     // ModConfigSpec definitions below AND by the accessor methods' pre-config-load
     // fallbacks, so the spec default and the fallback can never drift apart.
     public static final int DEFAULT_STAT_CAP = 10;
-    public static final double DEFAULT_IMPROVEMENT_CHANCE = 0.20;
+    public static final double DEFAULT_IMPROVEMENT_CHANCE = 0.40;
     public static final double DEFAULT_REGRESSION_CHANCE = 0.30;
     public static final int DEFAULT_APPETITE_COOLDOWN_MIN = 30;
     public static final int DEFAULT_APPETITE_COOLDOWN_MAX = 100;
@@ -502,7 +502,9 @@ public final class PFConfig {
         BREEDING_IMPROVEMENT_CHANCE = builder
             .comment(
                 "Per-stat chance the offspring rolls one above the better parent (min(cap, hi + 1)).",
-                "Default 0.20. Raising this makes the climb to a maxed frog brisker."
+                "Default 0.40. Each of the three stats rolls independently, so a breed improves at",
+                "least one stat about 78% of the time (1 - (1 - 0.40)^3) - the floor a player feels.",
+                "Raising this makes the climb to a maxed frog brisker."
             )
             .defineInRange("improvementChance", DEFAULT_IMPROVEMENT_CHANCE, 0.0, 1.0);
 

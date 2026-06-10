@@ -82,17 +82,19 @@ When breeding produces an offspring, each of the three stats is rolled
 **independently** from the two parents. Let `hi = max(parentA, parentB)` and
 `lo = min(parentA, parentB)`:
 
-- with probability `IMPROVEMENT_CHANCE` (default 0.20): offspring = `min(10, hi + 1)`
+- with probability `IMPROVEMENT_CHANCE` (default 0.40): offspring = `min(10, hi + 1)`
 - else with probability `REGRESSION_CHANCE` (default 0.30): offspring = `round((hi + lo) / 2)`
 - else: offspring = `hi`
 
-So most offspring match the better parent, ~1 in 5 improve a stat by one, and ~30%
-regress toward the average. The player keeps improvers, culls regressors, and
-re-breeds the best pair - the ladder to 10/10/10. When both parents are already equal
-on a stat, regression is a no-op (average == hi), so a maxed-leaning pair only ever
-holds or ticks up, which is the intended late-game grind (breeding two 9s for the
-occasional 10). All three probabilities are config-tunable; raising
-`IMPROVEMENT_CHANCE` makes the climb brisker.
+So per stat each offspring improves ~2 in 5 of the time, regresses toward the average
+~30%, and otherwise holds at the better parent. Because the three stats roll
+independently, a breed improves **at least one stat about 78% of the time**
+(`1 - 0.6^3`) - the practical floor a player feels, so a run of breeds with no gain is
+rare. The player keeps improvers, culls regressors, and re-breeds the best pair - the
+ladder to 10/10/10. When both parents are already equal on a stat, regression is a
+no-op (average == hi), so a maxed-leaning pair only ever holds or ticks up, which is
+the intended late-game grind (breeding two 9s for the occasional 10). All three
+probabilities are config-tunable; raising `IMPROVEMENT_CHANCE` makes the climb brisker.
 
 **Carrying stats through the frogspawn intermediary** is the one non-trivial bit of
 plumbing: vanilla breeding lays a frogspawn *block*, which spawns tadpoles on its own
@@ -149,7 +151,7 @@ ship in a follow-up if art lags. Exact visuals are an art-pass decision.
 | Key | Default | Meaning |
 |---|---|---|
 | `breeding.sameSpeciesOnly` | true | enforce the same-species gate |
-| `breeding.improvementChance` | 0.20 | per-stat chance offspring rolls `hi + 1` |
+| `breeding.improvementChance` | 0.40 | per-stat chance offspring rolls `hi + 1` (~78% of breeds improve at least one of the three stats) |
 | `breeding.regressionChance` | 0.30 | per-stat chance offspring rolls the average |
 | `breeding.statCap` | 10 | maximum per-stat value |
 | `stats.appetiteCooldownMin` / `Max` | 30 / 100 | eat cooldown (ticks) at stat 10 / 1 |
