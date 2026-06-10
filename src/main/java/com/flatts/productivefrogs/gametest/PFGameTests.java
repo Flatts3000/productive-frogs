@@ -2644,6 +2644,35 @@ public final class PFGameTests {
     }
 
     /**
+     * A Lava Froglight burns as furnace fuel worth exactly one lava bucket (#231):
+     * 20000 ticks, a hundred smelts, with no empty bucket to manage. Asserts the
+     * value matches a real lava bucket, and that a non-fuel variant (iron) is not
+     * fuel - the burn map is per-variant, not per-item.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void lavaFroglightBurnsLikeLavaBucket(GameTestHelper helper) {
+        ItemStack lavaFroglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
+        lavaFroglight.set(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get(),
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "lava"));
+        int froglightBurn = lavaFroglight.getBurnTime(null);
+        int bucketBurn = new ItemStack(Items.LAVA_BUCKET).getBurnTime(null);
+        if (froglightBurn != 20000 || froglightBurn != bucketBurn) {
+            helper.fail("lava Froglight should burn 20000t (one lava bucket = " + bucketBurn
+                + "), got " + froglightBurn);
+            return;
+        }
+        ItemStack ironFroglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
+        ironFroglight.set(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get(),
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        if (ironFroglight.getBurnTime(null) > 0) {
+            helper.fail("a non-fuel variant (iron) Froglight must not be furnace fuel, got "
+                + ironFroglight.getBurnTime(null));
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
      * Density cap (v1.8): a source pauses spawning when its own species already
      * crowds the area, and crucially does NOT spend its remaining-spawn budget
      * while paused. Uses {@code spawnCapOverride=2} so the test needs only 2 slimes

@@ -63,14 +63,17 @@ public final class ConfigurableFroglightItem extends BlockItem {
      * Froglight variants that double as furnace fuel, mapped to their burn time
      * in ticks. Each value matches the vanilla item that species is themed on:
      * {@code coal} -> a coal item (1600t, eight smelts); {@code blaze} -> a blaze
-     * rod (2400t, twelve smelts). A Froglight is the resource block of its slime
+     * rod (2400t, twelve smelts); {@code lava} -> a lava bucket (20000t, a hundred
+     * smelts), so the renewable lava loop doubles as a renewable solid fuel with no
+     * empty bucket to manage (#231). A Froglight is the resource block of its slime
      * species, so the fuel-resource species burning is the natural read. Every
      * variant absent from this map stays inert decoration. Add an entry to make a
      * new variant fuel.
      */
     private static final Map<ResourceLocation, Integer> FUEL_BURN_TICKS = Map.of(
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "coal"), 1600,
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "blaze"), 2400
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "blaze"), 2400,
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "lava"), 20000
     );
 
     public ConfigurableFroglightItem(Block block, Properties properties) {

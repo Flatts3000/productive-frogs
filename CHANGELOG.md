@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Lava Froglights burn as furnace fuel worth one lava bucket** (20,000 ticks, a hundred smelts) - so the renewable lava loop doubles as a renewable solid fuel with no empty bucket to manage. Joins the Coal (1600t) and Blaze (2400t) Froglights that already burn; the value is per-variant, so other Froglights stay inert decoration. (#231)
 - **The Froglight Crucible now melts stone straight to lava** (Ex Deorum heated-crucible parity). Drop cobblestone, stone, gravel, or netherrack into a heated Crucible and it melts to lava on the same heat-from-below loop the Froglight lane uses - no frog required. Amounts and tags are copied verbatim from Ex Deorum: cobblestone / stone / gravel = 250 mB each (four to a bucket), netherrack = 500 mB (two to a bucket). Heat is required, like every Crucible melt. Pure-data recipes (one JSON per input), so a pack retunes or extends them freely; the right-click insert now accepts any block with a melt recipe, not just Froglights.
 
 ## v1.18.0 - 2026-06-09 - Made to Measure
