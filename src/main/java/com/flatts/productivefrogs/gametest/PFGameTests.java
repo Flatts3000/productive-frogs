@@ -2544,9 +2544,13 @@ public final class PFGameTests {
         BlockPos abs = helper.absolutePos(pos);
         helper.setBlock(pos, Blocks.AIR);
 
-        // 1) Emptying the bucket places no fluid.
+        // 1) Emptying the bucket places no fluid. Drives the same 5-arg overload
+        // that BucketItem#use calls on the player right-click path - the 4-arg
+        // method in vanilla just delegates here, so testing only the 4-arg signature
+        // is a false positive that misses water leaking via use().
         var bucketItem = (com.flatts.productivefrogs.content.item.SlimeBucketItem) PFItems.SLIME_BUCKET.get();
-        bucketItem.emptyContents(null, level, abs, null);
+        ItemStack heldBucket = new ItemStack(bucketItem);
+        bucketItem.emptyContents(null, level, abs, null, heldBucket);
         if (!level.getFluidState(abs).isEmpty()) {
             helper.fail("Slime Bucket release placed a fluid at " + pos + " (expected none)");
             return;
