@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## v1.19.0 - 2026-06-09 - Stone Soup
+
 ### Added
 
 - **Lava Froglights burn as furnace fuel worth one lava bucket** (20,000 ticks, a hundred smelts) - so the renewable lava loop doubles as a renewable solid fuel with no empty bucket to manage. Joins the Coal (1600t) and Blaze (2400t) Froglights that already burn; the value is per-variant, so other Froglights stay inert decoration. (#231)
