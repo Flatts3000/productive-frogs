@@ -3,6 +3,7 @@ package com.flatts.productivefrogs;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.flatts.productivefrogs.data.Category;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.IOException;
@@ -163,6 +164,54 @@ class LangCompletenessTest {
         assertTrue(missing.isEmpty(),
             () -> "JEI plugin references info keys with no en_us.json entry:\n  "
                 + String.join("\n  ", missing));
+    }
+
+    /**
+     * Every {@code translate} key referenced by a shipped advancement JSON (#183)
+     * must have an {@code en_us.json} entry - advancements have no runtime
+     * title-case fallback, so a missing key renders as the raw key in the
+     * advancement screen. Scans the hand-authored JSON under
+     * {@code data/productivefrogs/advancement/} and asserts each
+     * {@code advancement.productivefrogs.*} key exists.
+     */
+    @Test
+    void everyAdvancementTranslateKeyExists() {
+        Path advancementDir = RESOURCES_ROOT.resolve("data/productivefrogs/advancement");
+        List<String> missing = new ArrayList<>();
+        try (Stream<Path> files = Files.list(advancementDir)) {
+            for (Path file : files.filter(p -> p.toString().endsWith(".json")).sorted().toList()) {
+                JsonObject advancement = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
+                for (String key : collectTranslateKeys(advancement)) {
+                    if (key.startsWith("advancement.productivefrogs.") && !LANG_KEYS.contains(key)) {
+                        missing.add(file.getFileName() + " -> " + key);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException("could not scan " + advancementDir, e);
+        }
+        assertTrue(missing.isEmpty(),
+            () -> "Advancement JSON references translate keys with no en_us.json entry:\n  "
+                + String.join("\n  ", missing));
+    }
+
+    /** Recursively collect every value of a {@code "translate"} property in a JSON tree. */
+    private static List<String> collectTranslateKeys(JsonElement element) {
+        List<String> keys = new ArrayList<>();
+        if (element.isJsonObject()) {
+            for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+                if (entry.getKey().equals("translate") && entry.getValue().isJsonPrimitive()) {
+                    keys.add(entry.getValue().getAsString());
+                } else {
+                    keys.addAll(collectTranslateKeys(entry.getValue()));
+                }
+            }
+        } else if (element.isJsonArray()) {
+            for (JsonElement child : element.getAsJsonArray()) {
+                keys.addAll(collectTranslateKeys(child));
+            }
+        }
+        return keys;
     }
 
     /**

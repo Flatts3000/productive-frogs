@@ -1,0 +1,19 @@
+{
+  "parent": "productivefrogs:root",
+  "display": {
+    "icon": { "id": "productivefrogs:wither_skeleton_skull_catalyst" },
+    "title": { "translate": "advancement.productivefrogs.catalyst_wither_skeleton_skull.title" },
+    "description": { "translate": "advancement.productivefrogs.catalyst_wither_skeleton_skull.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "obtain": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": { "items": [ { "items": "productivefrogs:wither_skeleton_skull_catalyst" } ] }
+    }
+  },
+  "requirements": [["obtain"]]
+}
