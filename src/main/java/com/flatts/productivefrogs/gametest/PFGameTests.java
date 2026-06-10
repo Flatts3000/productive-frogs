@@ -484,10 +484,12 @@ public final class PFGameTests {
      * single method invocation on the server thread (no {@code runAfterDelay} /
      * {@code onEachTick} yielding), so no concurrently-scheduled test body can
      * observe the mutated config between the set and the {@code finally} reset.
-     * {@code helper.fail()} does not throw on 1.21.1, and each {@code fail()} is
-     * followed by a {@code return} inside the try, so the {@code finally} still
-     * fires on every failure path. Fails fast (rather than skipping) if COMMON
-     * config isn't loaded, so the assertions can't silently false-green.
+     * {@code helper.fail(String)} throws {@code GameTestAssertException}, so on a
+     * failed assertion the throw propagates out through the {@code try} - the
+     * {@code finally} still restores the config before the test is marked failed.
+     * (The {@code return} after each {@code fail()} is therefore unreachable, but
+     * it is the idiomatic shape used throughout this file.) Fails fast (rather than
+     * skipping) if COMMON config isn't loaded, so the assertions can't false-green.
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void disabledVariantConfigSuppressesResolution(GameTestHelper helper) {
