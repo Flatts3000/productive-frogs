@@ -2,7 +2,6 @@ package com.flatts.productivefrogs.content.block;
 
 import com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
-import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
@@ -145,30 +144,30 @@ public class CrucibleBlock extends Block implements EntityBlock {
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
-        // Froglight (or anything else with a melt recipe) -> queue as solids.
-        // Click semantics mirror Ex Deorum: OK consumes one (free in
-        // creative), FULL still consumes the CLICK (no awkward pass-through
-        // while holding a valid input), REJECT passes through.
-        if (stack.is(PFItems.CONFIGURABLE_FROGLIGHT.get())) {
-            switch (crucible.insertCheck(stack)) {
-                case OK -> {
-                    if (!level.isClientSide()) {
-                        ItemStack one = stack.copyWithCount(1);
-                        if (crucible.acceptFroglight(one) && !player.getAbilities().instabuild) {
-                            stack.shrink(1);
-                        }
+        // Anything with a melt recipe -> queue as solids. This is a Configurable
+        // Froglight (the melt-and-cast lane) OR a raw block like cobblestone /
+        // stone / gravel / netherrack (the Ex-Deorum heated-crucible stone->lava
+        // lane). insertCheck resolves the recipe, so the gate is "has a recipe",
+        // not "is a froglight". Click semantics mirror Ex Deorum: OK consumes one
+        // (free in creative), FULL still consumes the CLICK (no awkward
+        // pass-through while holding a valid input), REJECT passes through.
+        switch (crucible.insertCheck(stack)) {
+            case OK -> {
+                if (!level.isClientSide()) {
+                    ItemStack one = stack.copyWithCount(1);
+                    if (crucible.acceptMelt(one) && !player.getAbilities().instabuild) {
+                        stack.shrink(1);
                     }
-                    return ItemInteractionResult.sidedSuccess(level.isClientSide());
                 }
-                case FULL -> {
-                    return ItemInteractionResult.sidedSuccess(level.isClientSide());
-                }
-                case REJECT -> {
-                    return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-                }
+                return ItemInteractionResult.sidedSuccess(level.isClientSide());
+            }
+            case FULL -> {
+                return ItemInteractionResult.sidedSuccess(level.isClientSide());
+            }
+            default -> {
+                return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
             }
         }
-        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
     @SuppressWarnings("unchecked")

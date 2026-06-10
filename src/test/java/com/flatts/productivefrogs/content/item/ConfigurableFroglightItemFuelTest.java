@@ -15,9 +15,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 /**
  * Pins the Froglight furnace-fuel contract: only the fuel-resource variants burn,
  * each for exactly as long as the vanilla item it is themed on - {@code coal} like
- * a coal item (1600t), {@code blaze} like a blaze rod (2400t). Every other variant
- * - including the cross-mod {@code blazing} Powah crystal - and an unstamped
- * Froglight is inert (0t = not fuel).
+ * a coal item (1600t), {@code blaze} like a blaze rod (2400t), {@code lava} like a
+ * lava bucket (20000t, #231). Every other variant - including the cross-mod
+ * {@code blazing} Powah crystal - and an unstamped Froglight is inert (0t = not fuel).
  *
  * <p>Asserts both the item-level hook ({@link ConfigurableFroglightItem#getBurnTime})
  * and the {@code ItemStack#getBurnTime} integration path NeoForge's furnace uses,
@@ -36,7 +36,7 @@ class ConfigurableFroglightItemFuelTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"coal,1600", "blaze,2400"})
+    @CsvSource({"coal,1600", "blaze,2400", "lava,20000"})
     void fuelVariantsBurnForTheirThemedTime(String variantName, int expectedTicks) {
         ItemStack stack = froglight(variantName);
         assertEquals(expectedTicks,

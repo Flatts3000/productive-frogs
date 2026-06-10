@@ -188,7 +188,7 @@ public class CrucibleBlockEntity extends BlockEntity {
             }
             ItemStack rest = stack.copy();
             ItemStack one = rest.split(1);
-            if (!acceptFroglight(one)) {
+            if (!acceptMelt(one)) {
                 return stack;
             }
             return rest;
@@ -290,11 +290,13 @@ public class CrucibleBlockEntity extends BlockEntity {
     }
 
     /**
-     * Consume one Froglight from the given single-item stack into the solids
-     * queue. Caller has already classified via {@link #insertCheck} and split
-     * off a single item; returns false only on a lost race.
+     * Consume one meltable item from the given single-item stack into the solids
+     * queue - a Configurable Froglight or a raw block (cobblestone / stone /
+     * gravel / netherrack, the Ex-Deorum heated-crucible inputs). Caller has
+     * already classified via {@link #insertCheck} and split off a single item;
+     * returns false only on a lost race.
      */
-    public boolean acceptFroglight(ItemStack one) {
+    public boolean acceptMelt(ItemStack one) {
         if (level == null || level.isClientSide() || insertCheck(one) != InsertCheck.OK) {
             return false;
         }
@@ -304,13 +306,13 @@ public class CrucibleBlockEntity extends BlockEntity {
         }
         solids += recipe.result().getAmount();
         pendingFluid = recipe.result().getFluid();
-        ResourceLocation variant = one.get(PFDataComponents.SLIME_VARIANT.get());
-        if (variant != null) {
-            lastVariant = variant;
-        }
+        // Drives the solids-surface tint. A Froglight carries its variant colour;
+        // a raw block (cobblestone, ...) has no variant, so clear it - the renderer
+        // falls back to a neutral tint rather than a stale previous variant's.
+        lastVariant = one.get(PFDataComponents.SLIME_VARIANT.get());
         level.playSound(null, worldPosition, SoundEvents.LAVA_AMBIENT, SoundSource.BLOCKS, 0.5F, 1.0F);
         PFDebug.log(PFDebug.Area.REGISTRY, () -> String.format(
-            "crucible @%s queued froglight -> %d mB solids of %s", worldPosition, solids, pendingFluid));
+            "crucible @%s queued melt -> %d mB solids of %s", worldPosition, solids, pendingFluid));
         onContentsChanged();
         return true;
     }

@@ -143,6 +143,34 @@ Non-metal, non-fluid variants (e.g. bone, string) simply ship no melt recipe -
 the Crucible rejects a Froglight with no mapping, same as the crush generator's
 curated metal list.
 
+## Heated-crucible stone melts (Ex Deorum parity)
+
+The Crucible also melts **raw blocks straight to lava**, mirroring Ex Deorum's
+heated (porcelain/fired) crucible - the same heat-from-below loop, no Froglight
+required. The roster + amounts are copied verbatim from Ex Deorum (same `c:`
+tags), so a player's Ex Deorum intuitions transfer 1:1:
+
+| Input (tag) | Output | Amount |
+|---|---|---|
+| `c:cobblestones` | `minecraft:lava` | 250 mB |
+| `c:stones` | `minecraft:lava` | 250 mB |
+| `c:gravels` | `minecraft:lava` | 250 mB |
+| `c:netherracks` | `minecraft:lava` | 500 mB |
+
+So four cobblestone (or stone, or gravel), or two netherrack, melt to one lava
+bucket. **Heat is required** (the same source ladder as every other melt) - PF
+has one heated crucible, so unlike Ex Deorum's heatless *wooden* water crucible,
+the stone-to-lava lane always needs a heat source below. (Ex Deorum's water
+crucible was intentionally not mirrored; renewable water already comes through
+the water Froglight melt.)
+
+These are plain `crucible_melting` recipes (`recipe/crucible_melt_{cobblestone,
+stone,gravel,netherrack}.json`) keyed on a tag ingredient, so a pack adds or
+retunes a stone melt the same way it adds any other - one JSON, no Java. The
+solids queue, single-fluid tank, melt rate, drain, and JEI melt category all
+work unchanged; the only code change was widening the right-click insert from
+"is a Froglight" to "has a melt recipe" (the hopper path was already general).
+
 ## Molten fluids (wave 2)
 
 **PF mints its own `molten_<variant>` fluids** through the same dynamic
