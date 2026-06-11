@@ -41,6 +41,14 @@ class ResourceTadpoleGrowthTest {
     }
 
     @Test
+    void minimumConfigTargetMaturesAlmostInstantly() {
+        // target = 1 (the config minimum): a fresh tadpole has ~1 tick (0:00) left -
+        // effectively instant, not a divide-by-something-wrong blow-up.
+        assertEquals(1, ResourceTadpole.correctedRemainingTicks(0, 1, VANILLA),
+            "target=1 at age 0 -> 1 tick remaining (matures next tick)");
+    }
+
+    @Test
     void neverNegativeAndZeroAtOrPastMaturity() {
         assertEquals(0, ResourceTadpole.correctedRemainingTicks(VANILLA, 3600, VANILLA),
             "matured tadpole has zero remaining");

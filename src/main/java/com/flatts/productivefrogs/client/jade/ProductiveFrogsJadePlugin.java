@@ -430,6 +430,12 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             data.getInt("Reach"), data.getInt("Cap"));
     }
 
+    /** Ticks -> {@code m:ss} (20 ticks per second). Shared by the egg hatch + tadpole growth countdowns. */
+    private static String formatTime(int ticks) {
+        int totalSeconds = ticks / 20;
+        return String.format("%d:%02d", totalSeconds / 60, totalSeconds % 60);
+    }
+
     /**
      * Look-at readout for a {@link ResourceFrog}: its three breeding stats
      * (Appetite / Bounty / Reach) as {@code value/cap} lines. Stats are synced
@@ -500,12 +506,6 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         public ResourceLocation getUid() {
             return PRIMED_EGG_STATS_UID;
         }
-
-        /** Ticks -> {@code m:ss} (20 ticks per second). */
-        private static String formatTime(int ticks) {
-            int totalSeconds = ticks / 20;
-            return String.format("%d:%02d", totalSeconds / 60, totalSeconds % 60);
-        }
     }
 
     /**
@@ -553,12 +553,6 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         @Override
         public ResourceLocation getUid() {
             return TADPOLE_STATS_UID;
-        }
-
-        /** Ticks -> {@code m:ss} (20 ticks per second). */
-        private static String formatTime(int ticks) {
-            int totalSeconds = ticks / 20;
-            return String.format("%d:%02d", totalSeconds / 60, totalSeconds % 60);
         }
     }
 }
