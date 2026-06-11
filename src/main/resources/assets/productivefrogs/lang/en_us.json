@@ -633,6 +633,7 @@
   "productivefrogs.jade.bounty": "Bounty: %1$s/%2$s",
   "productivefrogs.jade.reach": "Reach: %1$s/%2$s",
   "productivefrogs.jade.hatch_countdown": "Hatches in: %1$s",
+  "productivefrogs.jade.growing_time": "Growing time: %1$s",
   "config.jade.plugin_productivefrogs.appliances": "Productive Frogs Appliances",
   "config.jade.plugin_productivefrogs.milk_source": "Productive Frogs Slime Milk Source",
   "config.jade.plugin_productivefrogs.frog_stats": "Productive Frogs Frog Stats",

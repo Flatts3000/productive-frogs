@@ -121,6 +121,33 @@ public class ResourceTadpole extends Tadpole {
         }
     }
 
+    /**
+     * Real ticks remaining until this tadpole matures, accounting for the
+     * {@link #aiStep()} age acceleration (#238). The Jade tooltip reads this so its
+     * "Growing time" line matches the accelerated schedule instead of the vanilla
+     * 1-age/tick assumption. Computed where {@code age} is authoritative (server),
+     * since {@code age} is not reliably client-side.
+     */
+    public int remainingGrowthTicks() {
+        return correctedRemainingTicks(this.age, PFConfig.tadpoleGrowthTicks(), Tadpole.ticksToBeFrog);
+    }
+
+    /**
+     * Pure form of {@link #remainingGrowthTicks()} for unit tests. {@code aiStep}
+     * drives {@code age} to {@code vanillaTicks} in {@code targetTicks} real ticks,
+     * i.e. {@code vanillaTicks / targetTicks} age per tick, so the real ticks left
+     * is the vanilla-rate remainder {@code (vanillaTicks - age)} divided by that
+     * acceleration factor: {@code (vanillaTicks - age) * targetTicks / vanillaTicks}.
+     * {@code targetTicks} is clamped to {@code vanillaTicks} so a config value at or
+     * above the ceiling (no acceleration) yields the plain vanilla remainder. Never
+     * negative; zero once matured.
+     */
+    public static int correctedRemainingTicks(int age, int targetTicks, int vanillaTicks) {
+        int effectiveTarget = Math.min(targetTicks, vanillaTicks);
+        int ageTicksLeft = Math.max(0, vanillaTicks - age);
+        return (int) ((long) ageTicksLeft * effectiveTarget / vanillaTicks);
+    }
+
     public void setCategory(Category category) {
         this.entityData.set(DATA_CATEGORY, category.ordinal());
     }
