@@ -2,9 +2,17 @@
 
 ## [Unreleased]
 
+## v1.19.2 - 2026-06-10 - No More Spilled Milk
+
+### Added
+
+- **Advancements.** A curated `Productive Frogs` advancement tab for standalone play: an entry node (obtain a Slime Bucket or Frog Egg), one per species when you farm it (have that species' Froglight), one per boss catalyst altar built, and one for crafting the production machines. Milestone guidance, complementary to a pack's own quests. (#183)
+
 ### Fixed
 
+- **The Slime Bucket no longer dumps a water source when you release the slime.** Right-clicking a captured Slime Bucket onto a block placed a vanilla water source alongside the slime (a leak from the fish-bucket behavior it inherits), which could wash away nearby Slime Milk sources. It now releases the slime and returns an empty bucket, no water. (#234)
 - **Water, lava, and other fluids no longer wash away Slime Milk source blocks.** A milk source is a no-collision fluid block, so a neighbouring water/lava flow (or a foreign modded fluid) could flow straight in and overwrite it, destroying the production pool. The source now rejects every fluid except its own milk, so an adjacent fluid treats it as a wall - while the milk's own flow is unchanged. Complements the existing guard that stops milk from washing away water, frogspawn, and other milk sources. (#235)
+- **Jade's tadpole "Growing time" now reads correctly when a pack speeds up tadpole growth.** With `lifecycle.tadpoleGrowthTicks` lowered below vanilla's 24000, Jade's stock line showed a time several times too long, counting down faster than real time (the tadpole still matured on schedule - only the label was wrong). The look-at tooltip now shows the real remaining time. (#238)
 
 ## v1.19.1 - 2026-06-10 - Survival of the Fittest
 
