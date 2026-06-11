@@ -15,6 +15,7 @@ import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.animal.frog.Tadpole;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import snownee.jade.api.BlockAccessor;
@@ -26,6 +27,7 @@ import snownee.jade.api.ITooltip;
 import snownee.jade.api.IWailaClientRegistration;
 import snownee.jade.api.IWailaCommonRegistration;
 import snownee.jade.api.IWailaPlugin;
+import snownee.jade.api.JadeIds;
 import snownee.jade.api.WailaPlugin;
 import snownee.jade.api.config.IPluginConfig;
 
@@ -428,6 +430,12 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             data.getInt("Reach"), data.getInt("Cap"));
     }
 
+    /** Ticks -> {@code m:ss} (20 ticks per second). Shared by the egg hatch + tadpole growth countdowns. */
+    private static String formatTime(int ticks) {
+        int totalSeconds = ticks / 20;
+        return String.format("%d:%02d", totalSeconds / 60, totalSeconds % 60);
+    }
+
     /**
      * Look-at readout for a {@link ResourceFrog}: its three breeding stats
      * (Appetite / Bounty / Reach) as {@code value/cap} lines. Stats are synced
@@ -498,12 +506,6 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         public ResourceLocation getUid() {
             return PRIMED_EGG_STATS_UID;
         }
-
-        /** Ticks -> {@code m:ss} (20 ticks per second). */
-        private static String formatTime(int ticks) {
-            int totalSeconds = ticks / 20;
-            return String.format("%d:%02d", totalSeconds / 60, totalSeconds % 60);
-        }
     }
 
     /**
@@ -519,15 +521,33 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
 
         @Override
         public void appendServerData(CompoundTag data, EntityAccessor accessor) {
-            if (accessor.getEntity() instanceof ResourceTadpole tadpole && tadpole.hasPendingStats()) {
+            if (!(accessor.getEntity() instanceof ResourceTadpole tadpole)) {
+                return;
+            }
+            if (tadpole.hasPendingStats()) {
                 writePendingStats(data, tadpole.getPendingAppetite(), tadpole.getPendingBounty(),
                     tadpole.getPendingReach());
+            }
+            // Accelerated growth (#238): Jade's stock "Growing time" assumes the vanilla
+            // 1-age/tick rate, so it reads ~24000/target too long once tadpoleGrowthTicks
+            // is lowered. Ship the corrected remaining real-ticks (age is authoritative
+            // here on the server) so appendTooltip can replace that line. At the default
+            // (>= vanilla) there is no acceleration and Jade's own line is already right.
+            if (PFConfig.tadpoleGrowthTicks() < Tadpole.ticksToBeFrog) {
+                data.putInt("GrowingTicks", tadpole.remainingGrowthTicks());
             }
         }
 
         @Override
         public void appendTooltip(ITooltip tooltip, EntityAccessor accessor, IPluginConfig config) {
-            appendPendingStats(tooltip, accessor.getServerData());
+            CompoundTag data = accessor.getServerData();
+            appendPendingStats(tooltip, data);
+            if (data != null && data.contains("GrowingTicks")) {
+                // Drop Jade's vanilla-rate growth line and render the corrected one.
+                tooltip.remove(JadeIds.MC_MOB_GROWTH);
+                tooltip.add(Component.translatable(
+                    "productivefrogs.jade.growing_time", formatTime(data.getInt("GrowingTicks"))));
+            }
         }
 
         @Override
