@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## v1.20.0 - 2026-06-10 - Full Bloom
+
+### Changed
+
+- **Promoted to a stable release - out of beta.** Productive Frogs has been beta on CurseForge since v1.9.1; across the v1.9-v1.19 line the full V1 scope (six species, the data-driven variant roster, the hand-operated appliances, frog stat breeding, the boss/endgame tier, the Terrarium multiblock, and the cross-mod variant pools) has been built out and soaked in the Sky Frogs pack, and the pre-release config suite (#200/#202/#203/#204) shipped in v1.18. The CurseForge release channel is now **Release**. No gameplay changes since v1.19.2 - this is the stability milestone.
+
 ## v1.19.2 - 2026-06-10 - No More Spilled Milk
 
 ### Added
