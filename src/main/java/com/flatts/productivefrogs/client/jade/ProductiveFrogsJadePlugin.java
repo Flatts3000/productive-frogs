@@ -398,20 +398,27 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
 
     // ---- shared stat-readout helpers (used by all three stat providers) ----
 
-    /** Append the three breeding-stat lines as {@code value/cap} to a tooltip. */
-    private static void appendStatLines(ITooltip tooltip, int appetite, int bounty, int reach, int cap) {
-        // Stat layer off (#202): hide the readout entirely (frog, egg, and tadpole
-        // providers all route through here). Stored stats are untouched - this only
-        // suppresses the display - so re-enabling brings the lines back.
+    /**
+     * Frog readout: training level, each stat as {@code live/talent}, and the
+     * Training Focus (docs/frog_stats_redesign.md). Stat layer off (#202): hide the
+     * readout entirely. Stored stats are untouched - this only suppresses the
+     * display - so re-enabling brings the lines back.
+     */
+    private static void appendFrogStats(ITooltip tooltip, ResourceFrog frog) {
         if (!PFConfig.frogStatsEnabled()) {
             return;
         }
-        tooltip.add(Component.translatable("productivefrogs.jade.appetite", appetite, cap));
-        tooltip.add(Component.translatable("productivefrogs.jade.bounty", bounty, cap));
-        tooltip.add(Component.translatable("productivefrogs.jade.reach", reach, cap));
+        tooltip.add(Component.translatable("productivefrogs.jade.level", frog.getTrainingLevel()));
+        tooltip.add(Component.translatable("productivefrogs.jade.appetite", frog.getAppetite(), frog.getTalentAppetite()));
+        tooltip.add(Component.translatable("productivefrogs.jade.bounty", frog.getBounty(), frog.getTalentBounty()));
+        tooltip.add(Component.translatable("productivefrogs.jade.reach", frog.getReach(), frog.getTalentReach()));
+        if (PFConfig.trainingFocusEnabled()) {
+            tooltip.add(Component.translatable("productivefrogs.jade.focus",
+                Component.translatable("productivefrogs.frog.focus." + frog.getFocus().id())));
+        }
     }
 
-    /** Server-side: stamp pending offspring stats (+ the cap) into the look-at data tag. */
+    /** Server-side: stamp pending offspring TALENTS (+ the cap) into the look-at data tag. */
     private static void writePendingStats(CompoundTag data, int appetite, int bounty, int reach) {
         data.putBoolean("HasStats", true);
         data.putInt("Appetite", appetite);
@@ -421,13 +428,20 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         data.putInt("Cap", PFConfig.statCap());
     }
 
-    /** Client-side: render the pending stat lines from server data when present (egg + tadpole). */
+    /**
+     * Client-side (egg + tadpole): render the offspring's inherited TALENTS as a
+     * "potential" block - the ceiling the hatched frog can be trained up to (it
+     * matures at live baseline). Suppressed when the stat layer is off.
+     */
     private static void appendPendingStats(ITooltip tooltip, CompoundTag data) {
-        if (data == null || !data.getBoolean("HasStats")) {
+        if (data == null || !data.getBoolean("HasStats") || !PFConfig.frogStatsEnabled()) {
             return;
         }
-        appendStatLines(tooltip, data.getInt("Appetite"), data.getInt("Bounty"),
-            data.getInt("Reach"), data.getInt("Cap"));
+        int cap = data.getInt("Cap");
+        tooltip.add(Component.translatable("productivefrogs.jade.potential"));
+        tooltip.add(Component.translatable("productivefrogs.jade.appetite", data.getInt("Appetite"), cap));
+        tooltip.add(Component.translatable("productivefrogs.jade.bounty", data.getInt("Bounty"), cap));
+        tooltip.add(Component.translatable("productivefrogs.jade.reach", data.getInt("Reach"), cap));
     }
 
     /** Ticks -> {@code m:ss} (20 ticks per second). Shared by the egg hatch + tadpole growth countdowns. */
@@ -448,7 +462,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         @Override
         public void appendTooltip(ITooltip tooltip, EntityAccessor accessor, IPluginConfig config) {
             if (accessor.getEntity() instanceof ResourceFrog frog) {
-                appendStatLines(tooltip, frog.getAppetite(), frog.getBounty(), frog.getReach(), frog.getStatCap());
+                appendFrogStats(tooltip, frog);
             }
         }
 

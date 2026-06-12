@@ -61,13 +61,16 @@ public final class PFConfig {
     // Frog stat breeding (docs/frog_breeding.md).
     public static final ModConfigSpec.BooleanValue BREEDING_SAME_SPECIES_ONLY;
     public static final ModConfigSpec.DoubleValue BREEDING_IMPROVEMENT_CHANCE;
-    public static final ModConfigSpec.DoubleValue BREEDING_REGRESSION_CHANCE;
+    public static final ModConfigSpec.IntValue BREEDING_NON_BRED_TALENT_DEFAULT;
     public static final ModConfigSpec.IntValue BREEDING_STAT_CAP;
     public static final ModConfigSpec.IntValue STATS_APPETITE_COOLDOWN_MIN;
     public static final ModConfigSpec.IntValue STATS_APPETITE_COOLDOWN_MAX;
     public static final ModConfigSpec.IntValue STATS_BOUNTY_MAX_DROPS;
     public static final ModConfigSpec.IntValue STATS_REACH_RADIUS_MIN;
     public static final ModConfigSpec.IntValue STATS_REACH_RADIUS_MAX;
+    public static final ModConfigSpec.IntValue STATS_TRAINING_XP_PER_EAT;
+    public static final ModConfigSpec.IntValue STATS_TRAINING_XP_PER_LEVEL;
+    public static final ModConfigSpec.BooleanValue STATS_TRAINING_FOCUS_ENABLED;
     public static final ModConfigSpec.BooleanValue FROGS_PERSISTENT;
 
     // Master switch for the whole frog stat-breeding layer (#202). When off,
@@ -120,12 +123,21 @@ public final class PFConfig {
     // fallbacks, so the spec default and the fallback can never drift apart.
     public static final int DEFAULT_STAT_CAP = 10;
     public static final double DEFAULT_IMPROVEMENT_CHANCE = 0.40;
-    public static final double DEFAULT_REGRESSION_CHANCE = 0.30;
+    // Talent ceiling a non-bred frog (crafted / Spawnery / non-bred frogspawn)
+    // can be trained up to; breeding is the way to raise the ceiling further
+    // (R5, docs/frog_stats_redesign.md).
+    public static final int DEFAULT_NON_BRED_TALENT_DEFAULT = 3;
     public static final int DEFAULT_APPETITE_COOLDOWN_MIN = 30;
     public static final int DEFAULT_APPETITE_COOLDOWN_MAX = 100;
     public static final int DEFAULT_BOUNTY_MAX_DROPS = 3;
     public static final int DEFAULT_REACH_RADIUS_MIN = 8;
     public static final int DEFAULT_REACH_RADIUS_MAX = 16;
+    // Training: XP a frog earns per slime eaten, and XP per stat point (= level).
+    // At the defaults a point lands every 8 eats; fully training a 3/3/3 non-bred
+    // frog (6 points) is ~48 eats, a 10/10/10 talent (27 points) ~216 eats.
+    public static final int DEFAULT_TRAINING_XP_PER_EAT = 1;
+    public static final int DEFAULT_TRAINING_XP_PER_LEVEL = 8;
+    public static final boolean DEFAULT_TRAINING_FOCUS_ENABLED = true;
     public static final boolean DEFAULT_FROGS_PERSISTENT = true;
     // Lifecycle defaults chosen to preserve current playable feel: hatch fixed at
     // the low end of vanilla's old random window (3 min), tadpole growth at
@@ -501,23 +513,25 @@ public final class PFConfig {
 
         BREEDING_IMPROVEMENT_CHANCE = builder
             .comment(
-                "Per-stat chance the offspring rolls one above the better parent (min(cap, hi + 1)).",
-                "Default 0.40. Each of the three stats rolls independently, so a breed improves at",
-                "least one stat about 78% of the time (1 - (1 - 0.40)^3) - the floor a player feels.",
-                "Raising this makes the climb to a maxed frog brisker."
+                "Per-stat chance a bred TALENT (the ceiling a stat can be trained to) rolls one above",
+                "the better parent's talent (min(cap, hi + 1)); otherwise it holds at the better parent.",
+                "Default 0.40. There is no regression - a bred talent never drops below the better parent",
+                "(docs/frog_stats_redesign.md), so breeding only ever holds or raises a line's ceiling.",
+                "Raising this makes the talent climb to a maxed bloodline brisker."
             )
             .defineInRange("improvementChance", DEFAULT_IMPROVEMENT_CHANCE, 0.0, 1.0);
 
-        BREEDING_REGRESSION_CHANCE = builder
+        BREEDING_NON_BRED_TALENT_DEFAULT = builder
             .comment(
-                "Per-stat chance the offspring regresses to the parent average (round((hi + lo) / 2)).",
-                "Default 0.30. Sampled after improvementChance from the same draw, so",
-                "improvementChance + regressionChance must stay <= 1.0; the remainder is the 'hold at better parent' chance."
+                "Talent ceiling a non-bred frog (crafted, Spawnery, or non-bred frogspawn) can be trained",
+                "up to. Default 3. Such a frog starts at live stat 1 and trains toward this by eating slimes;",
+                "breeding is how you raise the ceiling above it. Set to statCap to let any frog train to max",
+                "without breeding, or to 1 to make breeding mandatory for any improvement."
             )
-            .defineInRange("regressionChance", DEFAULT_REGRESSION_CHANCE, 0.0, 1.0);
+            .defineInRange("nonBredTalentDefault", DEFAULT_NON_BRED_TALENT_DEFAULT, 1, 100);
 
         BREEDING_STAT_CAP = builder
-            .comment("Maximum value any single stat can reach. Default 10 (the 'maxed' cap).")
+            .comment("Maximum value any single stat (talent or trained) can reach. Default 10 (the 'maxed' cap).")
             .defineInRange("statCap", DEFAULT_STAT_CAP, 1, 100);
 
         builder.pop();
@@ -549,6 +563,30 @@ public final class PFConfig {
                 "Should be >= reachRadiusMin; the curve interpolates linearly between the two."
             )
             .defineInRange("reachRadiusMax", DEFAULT_REACH_RADIUS_MAX, 1, 64);
+
+        STATS_TRAINING_XP_PER_EAT = builder
+            .comment(
+                "Training XP a Resource Frog earns each time it eats a slime (the core loop).",
+                "Default 1. A frog levels up by working; each level grants one stat point that raises a",
+                "live stat toward its talent ceiling (docs/frog_stats_redesign.md)."
+            )
+            .defineInRange("trainingXpPerEat", DEFAULT_TRAINING_XP_PER_EAT, 1, 4096);
+
+        STATS_TRAINING_XP_PER_LEVEL = builder
+            .comment(
+                "Cumulative training XP per level (one stat point per level). Default 8, so a point lands",
+                "every 8 slimes eaten at the default trainingXpPerEat. Lower = faster training."
+            )
+            .defineInRange("trainingXpPerLevel", DEFAULT_TRAINING_XP_PER_LEVEL, 1, 1000000);
+
+        STATS_TRAINING_FOCUS_ENABLED = builder
+            .comment(
+                "Whether a frog's Training Focus is player-directed. Default true: sneak-right-click a frog",
+                "with an empty hand to cycle which stat its earned points pour into (Appetite -> Bounty ->",
+                "Reach -> Auto). When false, every frog trains on Auto (fills the lowest live stat first) and",
+                "the sneak-interact does nothing - pure idle-farm leveling."
+            )
+            .define("trainingFocusEnabled", DEFAULT_TRAINING_FOCUS_ENABLED);
 
         builder.pop();
 
@@ -782,9 +820,24 @@ public final class PFConfig {
         return SPEC.isLoaded() ? BREEDING_IMPROVEMENT_CHANCE.get() : DEFAULT_IMPROVEMENT_CHANCE;
     }
 
-    /** Per-stat regression chance ({@code breeding.regressionChance}); fallback {@value #DEFAULT_REGRESSION_CHANCE}. */
-    public static double regressionChance() {
-        return SPEC.isLoaded() ? BREEDING_REGRESSION_CHANCE.get() : DEFAULT_REGRESSION_CHANCE;
+    /** Non-bred talent ceiling ({@code breeding.nonBredTalentDefault}); fallback {@value #DEFAULT_NON_BRED_TALENT_DEFAULT}. */
+    public static int nonBredTalentDefault() {
+        return SPEC.isLoaded() ? BREEDING_NON_BRED_TALENT_DEFAULT.get() : DEFAULT_NON_BRED_TALENT_DEFAULT;
+    }
+
+    /** Training XP earned per slime eaten ({@code stats.trainingXpPerEat}); fallback {@value #DEFAULT_TRAINING_XP_PER_EAT}. */
+    public static int trainingXpPerEat() {
+        return SPEC.isLoaded() ? STATS_TRAINING_XP_PER_EAT.get() : DEFAULT_TRAINING_XP_PER_EAT;
+    }
+
+    /** Cumulative training XP per stat point/level ({@code stats.trainingXpPerLevel}); fallback {@value #DEFAULT_TRAINING_XP_PER_LEVEL}. */
+    public static int trainingXpPerLevel() {
+        return SPEC.isLoaded() ? STATS_TRAINING_XP_PER_LEVEL.get() : DEFAULT_TRAINING_XP_PER_LEVEL;
+    }
+
+    /** Whether Training Focus is player-directed ({@code stats.trainingFocusEnabled}); fallback true. */
+    public static boolean trainingFocusEnabled() {
+        return !SPEC.isLoaded() || STATS_TRAINING_FOCUS_ENABLED.get();
     }
 
     /** Eat cooldown (ticks) at max Appetite ({@code stats.appetiteCooldownMin}); fallback {@value #DEFAULT_APPETITE_COOLDOWN_MIN}. */

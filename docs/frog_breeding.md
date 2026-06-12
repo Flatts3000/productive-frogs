@@ -1,5 +1,13 @@
 # Frog Stat Breeding
 
+> **⚠ Superseded in part by [frog_stats_redesign.md](./frog_stats_redesign.md)
+> (Talent + Training).** That redesign keeps this doc's stat definitions, effect
+> curves, Sweetslime trigger, same-species gate, and the conception->egg->tadpole->frog
+> carry pipeline, but replaces the **mechanism** (D3) and **inheritance roll** (D7):
+> stats are now a bred *talent ceiling* filled by *training* (eating slimes), with no
+> regression. Read the redesign doc for the current model; the sections below remain
+> accurate for everything it didn't change.
+
 > **Status: IMPLEMENTED.** This is the design of record for the frog stat-upgrade
 > system. Captured 2026-05-26; built 2026-05-27 on `feat/frog-stat-breeding`.
 > Decisions are recorded in the Decisions section. The two former open questions

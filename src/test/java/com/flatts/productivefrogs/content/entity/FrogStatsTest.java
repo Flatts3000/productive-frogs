@@ -22,46 +22,58 @@ class FrogStatsTest {
     private static final int CAP = 10;
     private final RandomSource random = RandomSource.create(1234L);
 
-    // ---- inheritStat --------------------------------------------------
+    // ---- inheritTalent (no-regression) --------------------------------
 
     @Test
     void improvementRollsOneAboveTheBetterParent() {
         // improvementChance 1.0 -> always the improve branch: min(cap, hi + 1).
-        assertEquals(8, FrogStats.inheritStat(7, 5, 1.0, 0.0, CAP, random),
+        assertEquals(8, FrogStats.inheritTalent(7, 5, 1.0, CAP, random),
             "improve should be max(7,5)+1 = 8");
-        assertEquals(5, FrogStats.inheritStat(3, 4, 1.0, 0.0, CAP, random),
+        assertEquals(5, FrogStats.inheritTalent(3, 4, 1.0, CAP, random),
             "improve should be max(3,4)+1 = 5");
     }
 
     @Test
     void improvementIsCappedAtTheStatCap() {
-        assertEquals(CAP, FrogStats.inheritStat(10, 10, 1.0, 0.0, CAP, random),
+        assertEquals(CAP, FrogStats.inheritTalent(10, 10, 1.0, CAP, random),
             "improving a capped pair stays at the cap");
-        assertEquals(CAP, FrogStats.inheritStat(10, 8, 1.0, 0.0, CAP, random),
+        assertEquals(CAP, FrogStats.inheritTalent(10, 8, 1.0, CAP, random),
             "min(cap, 10+1) clamps to the cap");
     }
 
     @Test
-    void regressionRollsTheRoundedParentAverage() {
-        // improvementChance 0.0, regressionChance 1.0 -> always regress.
-        assertEquals(7, FrogStats.inheritStat(8, 5, 0.0, 1.0, CAP, random),
-            "round((8+5)/2) = round(6.5) = 7 (half-up)");
-        assertEquals(5, FrogStats.inheritStat(6, 4, 0.0, 1.0, CAP, random),
-            "(6+4)/2 = 5 exactly");
-    }
-
-    @Test
-    void regressionIsANoOpForEqualParents() {
-        // average == hi, so an equal pair never drops - the late-game grind.
-        assertEquals(9, FrogStats.inheritStat(9, 9, 0.0, 1.0, CAP, random),
-            "equal parents regress to themselves (no-op)");
-    }
-
-    @Test
-    void holdReturnsTheBetterParentWhenNeitherBranchFires() {
-        // Both chances 0.0 -> the else (hold) branch.
-        assertEquals(7, FrogStats.inheritStat(7, 3, 0.0, 0.0, CAP, random),
+    void holdReturnsTheBetterParentWhenImprovementDoesNotFire() {
+        // improvementChance 0.0 -> always the hold branch: hi. Never lower.
+        assertEquals(7, FrogStats.inheritTalent(7, 3, 0.0, CAP, random),
             "hold should be max(7,3) = 7");
+    }
+
+    @Test
+    void talentNeverRegressesBelowTheBetterParent() {
+        // The whole point of the redesign: across any draw, a bred talent is
+        // always >= the better parent (>= hi), with hi+1 only when improvement
+        // fires. So a champion x fresh pairing never produces a worse ceiling.
+        for (int i = 0; i < 1000; i++) {
+            int t = FrogStats.inheritTalent(10, 1, 0.5, CAP, random);
+            assertTrue(t >= 10, "talent must never drop below the better parent (got " + t + ")");
+            assertTrue(t <= CAP, "talent must respect the cap (got " + t + ")");
+        }
+    }
+
+    // ---- trainingLevel ------------------------------------------------
+
+    @Test
+    void trainingLevelIsOnePointPerXpPerLevel() {
+        assertEquals(0, FrogStats.trainingLevel(0, 8), "no XP -> level 0");
+        assertEquals(0, FrogStats.trainingLevel(7, 8), "below one level's XP -> level 0");
+        assertEquals(1, FrogStats.trainingLevel(8, 8), "exactly one level's XP -> level 1");
+        assertEquals(3, FrogStats.trainingLevel(25, 8), "25/8 = 3 levels (floor)");
+    }
+
+    @Test
+    void trainingLevelTreatsNonPositivePerLevelAsOne() {
+        assertEquals(5, FrogStats.trainingLevel(5, 0), "xpPerLevel<=0 falls back to 1 (no divide-by-zero)");
+        assertEquals(5, FrogStats.trainingLevel(5, -3), "negative xpPerLevel falls back to 1");
     }
 
     // ---- clamp --------------------------------------------------------

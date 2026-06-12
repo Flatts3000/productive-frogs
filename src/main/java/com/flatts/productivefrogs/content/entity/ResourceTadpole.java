@@ -306,12 +306,14 @@ public class ResourceTadpole extends Tadpole {
             MobSpawnType.CONVERSION,
             null
         );
-        // Apply inherited stats AFTER finalizeSpawn so they override the
-        // baseline stats finalizeSpawn would otherwise apply. A non-bred tadpole
-        // (no pending stats) keeps the baseline (1/1/1). This is the final hop of
-        // the conception->egg->tadpole->frog stat carry.
+        // Apply the inherited TALENTS AFTER finalizeSpawn so they override the
+        // non-bred default ceiling finalizeSpawn applied. The frog starts at live
+        // baseline (1/1/1) and trains up toward this ceiling by eating slimes. A
+        // non-bred tadpole (no pending talents) keeps the default ceiling. This is
+        // the final hop of the conception->egg->tadpole->frog talent carry
+        // (docs/frog_stats_redesign.md).
         if (hasPendingStats) {
-            frog.setStats(pendingAppetite, pendingBounty, pendingReach);
+            frog.setTalents(pendingAppetite, pendingBounty, pendingReach);
         }
         frog.setNoAi(this.isNoAi());
         if (this.hasCustomName()) {

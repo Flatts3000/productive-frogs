@@ -83,6 +83,9 @@ public final class FrogTongueDropHandler {
         // The kill IS the eat - start the Appetite-scaled hunting cooldown that
         // gates how soon the frog can target its next slime (docs/frog_breeding.md).
         frog.startEatCooldown();
+        // ...and it trains the frog: eating slimes is the core loop AND the way a
+        // frog levels its stats toward its talent ceiling (docs/frog_stats_redesign.md).
+        frog.addTrainingXp(PFConfig.trainingXpPerEat());
         // Brewed Froglights (#162): if the slime was carrying a potion effect
         // (splashed/lingered onto it before the frog ate it), capture the one
         // effect by the decided rule and stamp it on the drop. Gated by config

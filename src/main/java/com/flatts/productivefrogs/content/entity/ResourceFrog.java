@@ -61,14 +61,32 @@ public class ResourceFrog extends Frog {
     private static final EntityDataAccessor<Integer> DATA_CATEGORY =
         SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.INT);
 
-    // Breeding stats (docs/frog_breeding.md). Synced so the Jade tooltip and
-    // the cosmetic render tier can read them client-side. Persisted in NBT.
-    // Clamped to [STAT_MIN, statCap] on every read and write.
+    // Frog stats - the two-layer Talent + Training model (docs/frog_stats_redesign.md).
+    // LIVE trained stats: what all behavior reads (eat cadence, drop count, scan
+    // radius). Clamped to [STAT_MIN, talent] on every read/write. Synced for Jade
+    // + the cosmetic render tier; persisted in NBT.
     private static final EntityDataAccessor<Integer> DATA_APPETITE =
         SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_BOUNTY =
         SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_REACH =
+        SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.INT);
+
+    // TALENT ceilings: the max each live stat can be trained to. Set by breeding
+    // (inheritance) or the non-bred default; raised only by breeding a higher
+    // bloodline. Clamped to [STAT_MIN, statCap]. Synced so Jade shows live/talent.
+    private static final EntityDataAccessor<Integer> DATA_TALENT_APPETITE =
+        SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_TALENT_BOUNTY =
+        SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_TALENT_REACH =
+        SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.INT);
+
+    // Cumulative training XP (earned by eating slimes) and the Training Focus
+    // (which stat earned points pour into). Synced for the Jade level/focus lines.
+    private static final EntityDataAccessor<Integer> DATA_TRAINING_XP =
+        SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_FOCUS =
         SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.INT);
 
     // Set true once stats are established (baseline or inheritance) so a
@@ -101,45 +119,134 @@ public class ResourceFrog extends Frog {
         builder.define(DATA_APPETITE, FrogStats.STAT_MIN);
         builder.define(DATA_BOUNTY, FrogStats.STAT_MIN);
         builder.define(DATA_REACH, FrogStats.STAT_MIN);
+        builder.define(DATA_TALENT_APPETITE, FrogStats.STAT_MIN);
+        builder.define(DATA_TALENT_BOUNTY, FrogStats.STAT_MIN);
+        builder.define(DATA_TALENT_REACH, FrogStats.STAT_MIN);
+        builder.define(DATA_TRAINING_XP, 0);
+        builder.define(DATA_FOCUS, FrogFocus.AUTO.ordinal());
     }
 
     private static int statCap() {
         return PFConfig.statCap();
     }
 
+    // ---- talent ceilings (bred; clamped to [STAT_MIN, statCap]) ----
+
+    public int getTalentAppetite() {
+        return FrogStats.clamp(this.entityData.get(DATA_TALENT_APPETITE), statCap());
+    }
+
+    public int getTalentBounty() {
+        return FrogStats.clamp(this.entityData.get(DATA_TALENT_BOUNTY), statCap());
+    }
+
+    public int getTalentReach() {
+        return FrogStats.clamp(this.entityData.get(DATA_TALENT_REACH), statCap());
+    }
+
+    public void setTalentAppetite(int value) {
+        this.entityData.set(DATA_TALENT_APPETITE, FrogStats.clamp(value, statCap()));
+    }
+
+    public void setTalentBounty(int value) {
+        this.entityData.set(DATA_TALENT_BOUNTY, FrogStats.clamp(value, statCap()));
+    }
+
+    public void setTalentReach(int value) {
+        this.entityData.set(DATA_TALENT_REACH, FrogStats.clamp(value, statCap()));
+    }
+
+    // ---- live trained stats (behavior reads these; clamped to [STAT_MIN, talent]) ----
+
     public int getAppetite() {
-        return FrogStats.clamp(this.entityData.get(DATA_APPETITE), statCap());
+        return FrogStats.clamp(this.entityData.get(DATA_APPETITE), getTalentAppetite());
     }
 
     public int getBounty() {
-        return FrogStats.clamp(this.entityData.get(DATA_BOUNTY), statCap());
+        return FrogStats.clamp(this.entityData.get(DATA_BOUNTY), getTalentBounty());
     }
 
     public int getReach() {
-        return FrogStats.clamp(this.entityData.get(DATA_REACH), statCap());
+        return FrogStats.clamp(this.entityData.get(DATA_REACH), getTalentReach());
     }
 
     public void setAppetite(int value) {
-        this.entityData.set(DATA_APPETITE, FrogStats.clamp(value, statCap()));
+        this.entityData.set(DATA_APPETITE, FrogStats.clamp(value, getTalentAppetite()));
     }
 
     public void setBounty(int value) {
-        this.entityData.set(DATA_BOUNTY, FrogStats.clamp(value, statCap()));
+        this.entityData.set(DATA_BOUNTY, FrogStats.clamp(value, getTalentBounty()));
     }
 
     public void setReach(int value) {
-        this.entityData.set(DATA_REACH, FrogStats.clamp(value, statCap()));
+        this.entityData.set(DATA_REACH, FrogStats.clamp(value, getTalentReach()));
     }
 
-    /** Set all three stats at once and mark stats as established (no starter re-roll). */
-    public void setStats(int appetite, int bounty, int reach) {
-        setAppetite(appetite);
-        setBounty(bounty);
-        setReach(reach);
+    /**
+     * Set the three <b>talent</b> ceilings and mark stats as established. Live
+     * trained stats are left untouched (they stay clamped to the new talents on
+     * next read). Used by the bred-lineage maturation paths
+     * ({@link ResourceTadpole#ageUp()}, the Incubator) to give a freshly matured
+     * frog its inherited ceiling while it starts at live baseline.
+     */
+    public void setTalents(int appetite, int bounty, int reach) {
+        setTalentAppetite(appetite);
+        setTalentBounty(bounty);
+        setTalentReach(reach);
         this.statsInitialized = true;
     }
 
-    /** Sum of the three stats (range {@code 3 * STAT_MIN .. 3 * statCap}). Drives the cosmetic tier. */
+    /** Set the three live trained stats (each clamped to its talent). */
+    public void setLiveStats(int appetite, int bounty, int reach) {
+        setAppetite(appetite);
+        setBounty(bounty);
+        setReach(reach);
+    }
+
+    /**
+     * Convenience: a <b>fully-realized</b> frog at exactly these stats - talent
+     * AND live set to each value, so the frog behaves at them immediately. Used
+     * by tests, commands, and any path that wants a frog at known effective stats
+     * without running the training grind. (The breeding/training paths use
+     * {@link #setTalents} + training instead.)
+     */
+    public void setStats(int appetite, int bounty, int reach) {
+        setTalents(appetite, bounty, reach);
+        setLiveStats(appetite, bounty, reach);
+    }
+
+    // ---- training XP + level + focus ----
+
+    /** Cumulative training XP earned by eating slimes (never negative). */
+    public int getTrainingXp() {
+        return Math.max(0, this.entityData.get(DATA_TRAINING_XP));
+    }
+
+    public void setTrainingXp(int value) {
+        this.entityData.set(DATA_TRAINING_XP, Math.max(0, value));
+    }
+
+    /** Training level = total stat points earned (one per {@code trainingXpPerLevel}). Drives the Jade headline. */
+    public int getTrainingLevel() {
+        return FrogStats.trainingLevel(getTrainingXp(), PFConfig.trainingXpPerLevel());
+    }
+
+    public FrogFocus getFocus() {
+        return FrogFocus.byOrdinal(this.entityData.get(DATA_FOCUS));
+    }
+
+    public void setFocus(FrogFocus focus) {
+        this.entityData.set(DATA_FOCUS, focus.ordinal());
+    }
+
+    /** Cycle to the next Training Focus (sneak-interact). Returns the new focus. */
+    public FrogFocus cycleFocus() {
+        FrogFocus next = getFocus().next();
+        setFocus(next);
+        return next;
+    }
+
+    /** Sum of the three live trained stats (range {@code 3 * STAT_MIN .. 3 * statCap}). Drives the cosmetic tier. */
     public int statTotal() {
         return getAppetite() + getBounty() + getReach();
     }
@@ -182,9 +289,16 @@ public class ResourceFrog extends Frog {
     public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putString("Category", getCategory().name());
+        // Live trained stats.
         tag.putInt("Appetite", getAppetite());
         tag.putInt("Bounty", getBounty());
         tag.putInt("Reach", getReach());
+        // Talent ceilings (their presence is the migration marker on read).
+        tag.putInt("TalentAppetite", getTalentAppetite());
+        tag.putInt("TalentBounty", getTalentBounty());
+        tag.putInt("TalentReach", getTalentReach());
+        tag.putInt("TrainingXp", getTrainingXp());
+        tag.putInt("Focus", getFocus().ordinal());
         if (hasPendingOffspring) {
             tag.putBoolean("HasPendingOffspring", true);
             tag.putInt("PendingOffspringAppetite", pendingOffspringAppetite);
@@ -204,9 +318,33 @@ public class ResourceFrog extends Frog {
             }
         }
         if (tag.contains("Appetite", net.minecraft.nbt.Tag.TAG_INT)) {
-            // A frog persisted with stats is established - getters clamp, so a
-            // tampered save can't inject out-of-range values.
-            setStats(tag.getInt("Appetite"), tag.getInt("Bounty"), tag.getInt("Reach"));
+            // A frog persisted with stats is established. Read talents first so
+            // the live-stat setters clamp against the right ceiling. Getters clamp,
+            // so a tampered save can't inject out-of-range values.
+            if (tag.contains("TalentAppetite", net.minecraft.nbt.Tag.TAG_INT)) {
+                // Post-redesign save: talents and live stats are stored separately.
+                setTalents(tag.getInt("TalentAppetite"), tag.getInt("TalentBounty"), tag.getInt("TalentReach"));
+                setLiveStats(tag.getInt("Appetite"), tag.getInt("Bounty"), tag.getInt("Reach"));
+                setTrainingXp(tag.getInt("TrainingXp"));
+                setFocus(FrogFocus.byOrdinal(tag.getInt("Focus")));
+            } else {
+                // Migration (R7): a pre-redesign save holds only the old "final"
+                // stats. Keep the frog's earned power (live = stored), set its
+                // talent ceiling to where it already is (>= the non-bred default),
+                // and seed training XP so its level reads as fully-trained-for-talent
+                // rather than 0. Non-breaking: the frog plays exactly as before.
+                int default_ = PFConfig.nonBredTalentDefault();
+                int liveA = tag.getInt("Appetite");
+                int liveB = tag.getInt("Bounty");
+                int liveR = tag.getInt("Reach");
+                setTalents(Math.max(liveA, default_), Math.max(liveB, default_), Math.max(liveR, default_));
+                setLiveStats(liveA, liveB, liveR);
+                int points = (getAppetite() - FrogStats.STAT_MIN)
+                    + (getBounty() - FrogStats.STAT_MIN)
+                    + (getReach() - FrogStats.STAT_MIN);
+                setTrainingXp(points * PFConfig.trainingXpPerLevel());
+                setFocus(FrogFocus.AUTO);
+            }
         }
         hasPendingOffspring = tag.getBoolean("HasPendingOffspring");
         if (hasPendingOffspring) {
@@ -240,10 +378,15 @@ public class ResourceFrog extends Frog {
     }
 
     private void applyBaselineStats() {
-        setStats(FrogStats.STAT_MIN, FrogStats.STAT_MIN, FrogStats.STAT_MIN);
+        // A non-bred frog starts at live baseline (1/1/1) with the non-bred talent
+        // ceiling, trainable up to that ceiling by eating slimes; breeding raises
+        // the ceiling further (R5, docs/frog_stats_redesign.md).
+        int talent = PFConfig.nonBredTalentDefault();
+        setTalents(talent, talent, talent);
+        setLiveStats(FrogStats.STAT_MIN, FrogStats.STAT_MIN, FrogStats.STAT_MIN);
         PFDebug.log(PFDebug.Area.LIFECYCLE, () -> String.format(
-            "baseline stats: non-bred frog category=%s -> A%d/B%d/R%d",
-            getCategory(), getAppetite(), getBounty(), getReach()));
+            "baseline stats: non-bred frog category=%s -> live A%d/B%d/R%d talent %d",
+            getCategory(), getAppetite(), getBounty(), getReach(), talent));
     }
 
     /** Config-gated persistence (frogs.persistent, default true) so a bred line isn't lost to despawn. */
@@ -283,6 +426,21 @@ public class ResourceFrog extends Frog {
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+        // Training Focus cycle (R4): sneak + empty main hand cycles which stat this
+        // frog's earned training points pour into. Gated by the stat layer and the
+        // focus toggle; off -> falls through to vanilla (sneak-empty does nothing
+        // on a frog). Main hand only so it doesn't double-fire across both hands.
+        if (hand == InteractionHand.MAIN_HAND && player.isShiftKeyDown() && stack.isEmpty()
+                && PFConfig.frogStatsEnabled() && PFConfig.trainingFocusEnabled()) {
+            if (this.level().isClientSide()) {
+                return InteractionResult.SUCCESS;
+            }
+            FrogFocus focus = cycleFocus();
+            player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                "productivefrogs.frog.focus_set",
+                net.minecraft.network.chat.Component.translatable("productivefrogs.frog.focus." + focus.id())), true);
+            return InteractionResult.SUCCESS;
+        }
         if (!stack.is(PFItems.SLIME_BUCKET.get())) {
             return super.mobInteract(player, hand);
         }
@@ -311,6 +469,8 @@ public class ResourceFrog extends Frog {
         // tongue loop just by spamming buckets (they're also gated by needing
         // to re-bucket each slime).
         startEatCooldown();
+        // A direct-feed is an eat - it trains the frog exactly like a tongue kill.
+        addTrainingXp(PFConfig.trainingXpPerEat());
         if (!player.getAbilities().instabuild) {
             player.setItemInHand(hand, new ItemStack(Items.BUCKET));
         }
@@ -402,29 +562,33 @@ public class ResourceFrog extends Frog {
     }
 
     private void captureOffspringStats(ResourceFrog mate, RandomSource random) {
-        // Stat layer off (#202): stamp baseline so a frog bred by any path (another
-        // mod, a command) carries default stats rather than a hidden rolled value.
+        // The pendingOffspring* payload is the offspring's inherited TALENTS (the
+        // ceilings it can be trained to); it matures at live baseline and trains up.
+        // Stat layer off (#202): stamp the non-bred default talent so a frog bred by
+        // any path carries a usable ceiling rather than a hidden rolled value.
         if (!PFConfig.frogStatsEnabled()) {
-            this.pendingOffspringAppetite = FrogStats.STAT_MIN;
-            this.pendingOffspringBounty = FrogStats.STAT_MIN;
-            this.pendingOffspringReach = FrogStats.STAT_MIN;
+            int t = PFConfig.nonBredTalentDefault();
+            this.pendingOffspringAppetite = t;
+            this.pendingOffspringBounty = t;
+            this.pendingOffspringReach = t;
             this.hasPendingOffspring = true;
             return;
         }
         double improvement = PFConfig.improvementChance();
-        double regression = PFConfig.regressionChance();
         int cap = PFConfig.statCap();
+        // Inherit TALENTS from the parents' talents - no regression (R2): the
+        // offspring's ceiling is never below the better parent's.
         this.pendingOffspringAppetite =
-            FrogStats.inheritStat(getAppetite(), mate.getAppetite(), improvement, regression, cap, random);
+            FrogStats.inheritTalent(getTalentAppetite(), mate.getTalentAppetite(), improvement, cap, random);
         this.pendingOffspringBounty =
-            FrogStats.inheritStat(getBounty(), mate.getBounty(), improvement, regression, cap, random);
+            FrogStats.inheritTalent(getTalentBounty(), mate.getTalentBounty(), improvement, cap, random);
         this.pendingOffspringReach =
-            FrogStats.inheritStat(getReach(), mate.getReach(), improvement, regression, cap, random);
+            FrogStats.inheritTalent(getTalentReach(), mate.getTalentReach(), improvement, cap, random);
         this.hasPendingOffspring = true;
         PFDebug.log(PFDebug.Area.EGG, () -> String.format(
-            "conception: %s parents A(%d,%d) B(%d,%d) R(%d,%d) -> offspring A%d/B%d/R%d",
-            getCategory(), getAppetite(), mate.getAppetite(), getBounty(), mate.getBounty(),
-            getReach(), mate.getReach(),
+            "conception: %s parent talents A(%d,%d) B(%d,%d) R(%d,%d) -> offspring talent A%d/B%d/R%d",
+            getCategory(), getTalentAppetite(), mate.getTalentAppetite(),
+            getTalentBounty(), mate.getTalentBounty(), getTalentReach(), mate.getTalentReach(),
             pendingOffspringAppetite, pendingOffspringBounty, pendingOffspringReach));
     }
 
@@ -555,6 +719,75 @@ public class ResourceFrog extends Frog {
             .add(MemoryModuleType.HAS_HUNTING_COOLDOWN)
             .build();
         return Brain.provider(memories, sensors);
+    }
+
+    /**
+     * Award training XP (earned by eating a slime) and allocate any newly-earned
+     * stat points into live stats per the Training Focus, each climbing toward its
+     * talent ceiling (docs/frog_stats_redesign.md). No-op when the stat layer is
+     * off or {@code amount <= 0}. Called from {@link FrogTongueDropHandler} on a
+     * tongue kill and from {@link #mobInteract} on a direct-feed.
+     */
+    public void addTrainingXp(int amount) {
+        if (!PFConfig.frogStatsEnabled() || amount <= 0) {
+            return;
+        }
+        setTrainingXp(getTrainingXp() + amount);
+        allocateTrainingPoints();
+    }
+
+    /** Allocate every earned-but-unspent point (earned levels minus points already in live stats). */
+    private void allocateTrainingPoints() {
+        int earned = getTrainingLevel();
+        int allocated = (getAppetite() - FrogStats.STAT_MIN)
+            + (getBounty() - FrogStats.STAT_MIN)
+            + (getReach() - FrogStats.STAT_MIN);
+        int available = earned - allocated;
+        boolean grew = false;
+        while (available > 0 && allocateOnePoint()) {
+            available--;
+            grew = true;
+        }
+        if (grew && this.level() instanceof ServerLevel server) {
+            server.playSound(null, blockPosition(), net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP,
+                net.minecraft.sounds.SoundSource.NEUTRAL, 0.4F, 1.4F);
+            PFDebug.log(PFDebug.Area.LIFECYCLE, () -> String.format(
+                "training: %s -> live A%d/B%d/R%d (talent %d/%d/%d) lvl=%d",
+                getCategory(), getAppetite(), getBounty(), getReach(),
+                getTalentAppetite(), getTalentBounty(), getTalentReach(), getTrainingLevel()));
+        }
+    }
+
+    /**
+     * Raise one live stat by 1 toward its talent. Targets the Training Focus stat
+     * when it has headroom; otherwise (Auto, or a focused stat already at its
+     * talent) fills the stat with the most remaining headroom, so a point is never
+     * wasted while any stat can still grow. Returns false when every live stat is
+     * already at its talent (the frog is fully trained for its talent).
+     */
+    private boolean allocateOnePoint() {
+        int headroomA = getTalentAppetite() - getAppetite();
+        int headroomB = getTalentBounty() - getBounty();
+        int headroomR = getTalentReach() - getReach();
+        if (headroomA <= 0 && headroomB <= 0 && headroomR <= 0) {
+            return false;
+        }
+        FrogFocus focus = PFConfig.trainingFocusEnabled() ? getFocus() : FrogFocus.AUTO;
+        switch (focus) {
+            case APPETITE -> { if (headroomA > 0) { setAppetite(getAppetite() + 1); return true; } }
+            case BOUNTY -> { if (headroomB > 0) { setBounty(getBounty() + 1); return true; } }
+            case REACH -> { if (headroomR > 0) { setReach(getReach() + 1); return true; } }
+            default -> { }
+        }
+        // Auto, or the focused stat is already capped: fill the largest headroom.
+        if (headroomA > 0 && headroomA >= headroomB && headroomA >= headroomR) {
+            setAppetite(getAppetite() + 1);
+        } else if (headroomB > 0 && headroomB >= headroomR) {
+            setBounty(getBounty() + 1);
+        } else {
+            setReach(getReach() + 1);
+        }
+        return true;
     }
 
     /**

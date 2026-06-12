@@ -2362,6 +2362,92 @@ public final class PFGameTests {
         });
     }
 
+    /**
+     * Training (docs/frog_stats_redesign.md): a frog earns XP by eating slimes and
+     * spends the earned points on its Training Focus stat, climbing toward its
+     * talent ceiling. Here we drive XP directly and assert a focused frog pours
+     * every point into Appetite (not the others) up to its talent.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void trainingPoursPointsIntoFocusStat(GameTestHelper helper) {
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 2));
+        frog.setCategory(Category.CAVE);
+        frog.setTalents(8, 8, 8);      // high ceiling, room to train
+        frog.setFocus(com.flatts.productivefrogs.content.entity.FrogFocus.APPETITE);
+        // 5 levels' worth of XP (default 8 XP/level) = 5 points, all into Appetite.
+        frog.addTrainingXp(8 * 5);
+
+        helper.assertTrue(frog.getAppetite() == 6,
+            "focused Appetite should train 1 -> 6 (5 points), was " + frog.getAppetite());
+        helper.assertTrue(frog.getBounty() == 1 && frog.getReach() == 1,
+            "non-focused stats should stay at baseline 1, were B" + frog.getBounty() + "/R" + frog.getReach());
+        helper.assertTrue(frog.getTrainingLevel() == 5,
+            "training level should be 5, was " + frog.getTrainingLevel());
+        helper.succeed();
+    }
+
+    /**
+     * A non-bred frog (default talent ceiling) trains up to that ceiling by eating
+     * and then <b>stalls</b> - no live stat exceeds its talent however much XP it
+     * banks. Breeding is the only way to raise the ceiling (R5).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void nonBredFrogTrainsToDefaultTalentThenStalls(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos.below(), Blocks.WATER);
+        ResourceTadpole tadpole = helper.spawn(PFEntities.RESOURCE_TADPOLE.get(), pos);
+        tadpole.setCategory(Category.TIDE);
+        tadpole.ageUp(); // non-bred -> finalizeSpawn sets the default talent ceiling
+
+        helper.runAfterDelay(2, () -> {
+            List<ResourceFrog> frogs = helper.getEntities(PFEntities.RESOURCE_FROG.get());
+            helper.assertTrue(frogs.size() == 1, "expected 1 matured frog, got " + frogs.size());
+            ResourceFrog frog = frogs.get(0);
+            int talent = frog.getTalentAppetite(); // == nonBredTalentDefault (3 by default)
+            frog.addTrainingXp(8 * 50); // far more than enough to fill the ceiling
+            helper.assertTrue(
+                frog.getAppetite() == talent && frog.getBounty() == talent && frog.getReach() == talent,
+                "non-bred frog should train to its talent " + talent + " on every stat and stall, got "
+                    + frog.getAppetite() + "/" + frog.getBounty() + "/" + frog.getReach() + " (talent " + talent + ")");
+            helper.succeed();
+        });
+    }
+
+    /**
+     * Migration (R7, docs/frog_stats_redesign.md): loading a frog saved by a
+     * <b>pre-redesign</b> build (final stats under Appetite/Bounty/Reach, no Talent
+     * keys) must NOT clear its stats. The frog keeps its earned power (live = the
+     * saved stat) and gets a talent ceiling at least that high, so it plays exactly
+     * as it did before the update. We mimic an old save by stripping the redesign
+     * keys from a fresh frog's NBT, then read it back.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void migrationPreservesExistingFrogStats(GameTestHelper helper) {
+        ResourceFrog original = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(1, 2, 1));
+        original.setCategory(Category.GEODE);
+        original.setStats(9, 10, 8); // a valuable bred frog under the OLD model
+        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+        original.addAdditionalSaveData(tag);
+        // Strip the redesign-only keys so this looks like a pre-update save.
+        tag.remove("TalentAppetite");
+        tag.remove("TalentBounty");
+        tag.remove("TalentReach");
+        tag.remove("TrainingXp");
+        tag.remove("Focus");
+
+        ResourceFrog loaded = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(3, 2, 3));
+        loaded.readAdditionalSaveData(tag);
+
+        helper.assertTrue(loaded.getAppetite() == 9 && loaded.getBounty() == 10 && loaded.getReach() == 8,
+            "migrated frog must keep its live stats 9/10/8, got "
+                + loaded.getAppetite() + "/" + loaded.getBounty() + "/" + loaded.getReach());
+        helper.assertTrue(loaded.getTalentAppetite() >= 9 && loaded.getTalentBounty() >= 10
+                && loaded.getTalentReach() >= 8,
+            "migrated frog's talent ceiling must be at least its stats, got "
+                + loaded.getTalentAppetite() + "/" + loaded.getTalentBounty() + "/" + loaded.getTalentReach());
+        helper.succeed();
+    }
+
     // ---------------------------------------------------------------------
     // J4 — Slime Milk source-block spawning
     // ---------------------------------------------------------------------
@@ -5068,7 +5154,10 @@ public final class PFGameTests {
 
         ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
         frog.setCategory(Category.CAVE);
-        frog.setBounty(frog.getStatCap());
+        // setStats raises both the talent ceiling and the live trained value, so the
+        // frog actually behaves at max Bounty (a bare setBounty would clamp to the
+        // default talent of a directly-spawned, non-finalized frog).
+        frog.setStats(1, frog.getStatCap(), 1);
 
         ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
         slime.setSize(1, true);
@@ -5288,7 +5377,9 @@ public final class PFGameTests {
 
         ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), frogPos);
         frog.setCategory(Category.CAVE);
-        frog.setReach(frog.getStatCap()); // radius 16 at the cap
+        // setStats raises both talent and live so the frog behaves at max Reach (a
+        // bare setReach would clamp to a directly-spawned frog's default talent).
+        frog.setStats(1, 1, frog.getStatCap()); // radius 16 at the cap
 
         ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
         slime.setSize(1, true);
@@ -5759,10 +5850,12 @@ public final class PFGameTests {
                 helper.fail("Incubator released no frog");
                 return;
             }
+            // The bred values are the frog's inherited TALENT ceilings (it matures
+            // at live baseline and trains up) - docs/frog_stats_redesign.md.
             ResourceFrog f = frogs.get(0);
-            if (f.getAppetite() != 5 || f.getBounty() != 7 || f.getReach() != 3) {
-                helper.fail("stats not preserved: appetite=" + f.getAppetite()
-                    + " bounty=" + f.getBounty() + " reach=" + f.getReach());
+            if (f.getTalentAppetite() != 5 || f.getTalentBounty() != 7 || f.getTalentReach() != 3) {
+                helper.fail("inherited talents not preserved: talent appetite=" + f.getTalentAppetite()
+                    + " bounty=" + f.getTalentBounty() + " reach=" + f.getTalentReach());
                 return;
             }
             helper.succeed();

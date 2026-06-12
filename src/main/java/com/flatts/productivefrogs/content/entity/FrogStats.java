@@ -39,37 +39,40 @@ public final class FrogStats {
     }
 
     /**
-     * Roll one offspring stat from its two parent values per the inheritance
-     * rule (D7). With {@code hi = max(a, b)} and {@code lo = min(a, b)}:
+     * Roll one offspring <b>talent</b> (the ceiling a stat can be trained to)
+     * from its two parents' talents (R1/R2, docs/frog_stats_redesign.md). With
+     * {@code hi = max(a, b)}:
      *
      * <ul>
      *   <li>with probability {@code improvementChance}: {@code min(cap, hi + 1)} (the climb)</li>
-     *   <li>else with probability {@code regressionChance}: {@code round((hi + lo) / 2)} (regression to mean)</li>
      *   <li>else: {@code hi} (hold at the better parent)</li>
      * </ul>
      *
-     * The two chances are sampled from a single uniform draw so they partition
-     * the {@code [0, 1)} interval cleanly (improvement first, then regression,
-     * then hold). When both parents are equal, regression is a no-op
-     * ({@code average == hi}), so an equal pair only ever holds or ticks up -
-     * the intended late-game grind. The result is clamped defensively even
-     * though the formula already respects the cap.
+     * <b>There is no regression branch</b> - a bred talent never drops below the
+     * better parent. Earned progress (a high-talent bloodline) is never taken
+     * away, which is the core of the redesign's "no loss aversion" rule. So a
+     * single champion can uplift a line by breeding against fresh frogs: the
+     * offspring's ceiling is at least the champion's. The result is clamped
+     * defensively even though {@code min(cap, ...)} already respects the cap.
      */
-    public static int inheritStat(int parentA, int parentB, double improvementChance,
-                                  double regressionChance, int cap, RandomSource random) {
+    public static int inheritTalent(int parentA, int parentB, double improvementChance,
+                                    int cap, RandomSource random) {
         int hi = Math.max(parentA, parentB);
-        int lo = Math.min(parentA, parentB);
-        double roll = random.nextDouble();
-        int result;
-        if (roll < improvementChance) {
-            result = Math.min(cap, hi + 1);
-        } else if (roll < improvementChance + regressionChance) {
-            // Integer round-half-up of the parent average.
-            result = (hi + lo + 1) / 2;
-        } else {
-            result = hi;
-        }
+        int result = random.nextDouble() < improvementChance ? Math.min(cap, hi + 1) : hi;
         return clamp(result, cap);
+    }
+
+    /**
+     * The training level (= total stat points earned) a frog has accrued for a
+     * given cumulative training-XP total: one point per {@code xpPerLevel} XP.
+     * A point raises one live stat by 1 toward its talent ceiling
+     * (docs/frog_stats_redesign.md). Defensive against a zero/negative
+     * {@code xpPerLevel} (treats it as 1) so a misconfigured pack can't divide
+     * by zero. Never negative.
+     */
+    public static int trainingLevel(long totalXp, int xpPerLevel) {
+        long perLevel = Math.max(1, xpPerLevel);
+        return (int) Math.max(0, totalXp / perLevel);
     }
 
     /**

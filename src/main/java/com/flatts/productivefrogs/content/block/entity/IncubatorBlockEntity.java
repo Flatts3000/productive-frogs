@@ -232,10 +232,11 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
         BlockPos spawn = pos.relative(inward);
         frog.moveTo(spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5, 0.0F, 0.0F);
         frog.finalizeSpawn(level, level.getCurrentDifficultyAt(spawn), MobSpawnType.CONVERSION, null);
-        // Stats AFTER finalizeSpawn, so inherited values override the baseline -
-        // identical to ResourceTadpole.ageUp.
+        // Inherited TALENTS AFTER finalizeSpawn, so they override the non-bred
+        // default ceiling - identical to ResourceTadpole.ageUp. The frog starts at
+        // live baseline and trains up toward this ceiling (docs/frog_stats_redesign.md).
         if (hasStats) {
-            frog.setStats(appetite, bounty, reach);
+            frog.setTalents(appetite, bounty, reach);
         }
         frog.setPersistenceRequired();
         level.addFreshEntityWithPassengers(frog);

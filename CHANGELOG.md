@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **Frog stats are now a leveling system, not a one-shot breeding lottery.** Every Resource Frog has a **talent** ceiling per stat (set by breeding) and a **trained** value that climbs as the frog *works*: each slime it eats earns training XP, and earned points raise its live Appetite / Bounty / Reach toward its talent. A frog gets better by doing its job - with a visible level and a live/talent readout in Jade. Sneak-right-click a frog with an empty hand to set its **Training Focus** (the stat its points pour into, or Auto for balanced growth). Breeding no longer rolls a frog's final stats - it sets the offspring's talent ceiling, and **a bred talent never drops below the better parent**, so breeding your best frog against a fresh one can only ever raise the line (no more "I bred my best frog and got a worse one"). Crafted and Spawnery frogs train up to a modest default ceiling; breeding is how you raise it. **Existing frogs are preserved** - their stats are kept and their talent ceiling is set to match, so nothing is reset by the update. Everything is tunable under `breeding.*` / `stats.*`, and the whole layer still drops with `frog_stats.enabled = false`. (docs/frog_stats_redesign.md)
+
 ## v1.20.0 - 2026-06-10 - Full Bloom
 
 ### Changed
