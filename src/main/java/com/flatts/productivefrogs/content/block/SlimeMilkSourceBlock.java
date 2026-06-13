@@ -270,7 +270,15 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
             scheduleNextSpawnTick(level, pos, random, be.getSpeedLevel());
             return;
         }
-        spawnBatch(level, pos, random, variantId, be);
+        int spawned = spawnBatch(level, pos, random, variantId, be);
+        if (spawned == 0) {
+            // No slime could be placed - an altar-gated boss source whose neighbour
+            // cells are all blocked, where spawning into the source's own (sealed)
+            // cell is refused. Pause WITHOUT spending the budget (like the density
+            // cap) and retry on the next scheduled tick.
+            scheduleNextSpawnTick(level, pos, random, be.getSpeedLevel());
+            return;
+        }
         if (depleting) {
             be.decrementSpawns();
             // If that spawn was this source's last, drain in the SAME tick rather
@@ -369,12 +377,18 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * decremented once per event by the caller, so Quantity is strictly additive
      * to throughput and does not burn extra count.
      */
-    private void spawnBatch(ServerLevel level, BlockPos pos, RandomSource random,
-                            ResourceLocation variantId, SlimeMilkSourceBlockEntity be) {
+    private int spawnBatch(ServerLevel level, BlockPos pos, RandomSource random,
+                           ResourceLocation variantId, SlimeMilkSourceBlockEntity be) {
+        // An altar-gated boss source must never spawn into its own (sealed) cell.
+        boolean avoidSourceCell = variantRequiresCatalyst(level, variantId);
         int quantity = MilkSpawnEconomy.batchQuantity(be.getQuantityLevel());
+        int spawned = 0;
         for (int i = 0; i < quantity; i++) {
-            spawn(level, pos, random, variantId);
+            if (spawn(level, pos, random, variantId, avoidSourceCell)) {
+                spawned++;
+            }
         }
+        return spawned;
     }
 
     /**
@@ -388,13 +402,23 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
         level.scheduleTick(pos, level.getBlockState(pos).getBlock(), delay);
     }
 
-    private void spawn(ServerLevel level, BlockPos pos, RandomSource random, ResourceLocation variantId) {
-        BlockPos spawnPos = chooseSpawnPos(level, pos);
+    /** Spawn one slime; returns false (no spawn) when {@code avoidSourceCell} and no free neighbour exists. */
+    private boolean spawn(ServerLevel level, BlockPos pos, RandomSource random, ResourceLocation variantId,
+                          boolean avoidSourceCell) {
+        BlockPos spawnPos = chooseSpawnPos(level, pos, avoidSourceCell);
+        if (spawnPos == null) {
+            // Altar-gated boss source with no free neighbour cell: refuse to spawn
+            // inside the (enclosed) milk source block. The caller pauses without
+            // spending the spawn budget.
+            PFDebug.logOnce(PFDebug.Area.MILK_SOURCE, "noroom#" + pos, () -> String.format(
+                "source @%s: no free cell for %s, skipped (would spawn inside the milk source block)", pos, variantId));
+            return false;
+        }
         Slime slime = createSlimeForVariant(level, variantId);
         if (slime == null) {
             PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
                 "source @%s: slime create failed for variant=%s (skip)", pos, variantId));
-            return;
+            return false;
         }
         slime.setSize(1, true);
         slime.moveTo(spawnPos.getX() + 0.5,
@@ -406,6 +430,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
         PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
             "source @%s: spawned %s slime at %s (%s)", pos, variantId, spawnPos,
             spawnPos.equals(pos) ? "inside-fluid fallback" : "on neighbour"));
+        return true;
     }
 
     /**
@@ -596,18 +621,33 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
 
     /**
      * Pick spawn slot: first 3x3x3 neighbour whose top face is sturdy and whose
-     * block-above is non-motion-blocking; else fall back to the source's own
-     * position (milk has noCollision, so this always works).
+     * block-above is non-motion-blocking. Otherwise fall back to the source's own
+     * (no-collision milk) cell - <b>except</b> when {@code avoidSourceCell} is set,
+     * in which case return {@code null} to skip the spawn entirely.
+     *
+     * <p>{@code avoidSourceCell} is true for an altar-gated boss source: its milk
+     * source block is sealed inside the 6-face catalyst altar, so the source-cell
+     * fallback would spawn the slime <i>inside the milk source block</i>, trapping
+     * it in the altar. A normal open pool keeps the fallback (its own cell is open
+     * milk the slime can sit in). See docs/boss_catalyst_altar.md.
      */
-    private static BlockPos chooseSpawnPos(ServerLevel level, BlockPos source) {
+    @Nullable
+    private static BlockPos chooseSpawnPos(ServerLevel level, BlockPos source, boolean avoidSourceCell) {
         for (int[] off : NEIGHBOUR_OFFSETS) {
             BlockPos neighbour = source.offset(off[0], off[1], off[2]);
             BlockPos above = neighbour.above();
+            // For an altar-gated boss source, never land in the source's own cell.
+            // This guards not just the fallback below but the block directly beneath
+            // the source, whose .above() IS the source cell - otherwise the slime
+            // would still spawn inside the sealed milk source block via that neighbour.
+            if (avoidSourceCell && above.equals(source)) {
+                continue;
+            }
             if (level.getBlockState(neighbour).isFaceSturdy(level, neighbour, Direction.UP)
                 && !level.getBlockState(above).blocksMotion()) {
                 return above;
             }
         }
-        return source;
+        return avoidSourceCell ? null : source;
     }
 }
