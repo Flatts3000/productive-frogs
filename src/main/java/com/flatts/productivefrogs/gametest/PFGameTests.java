@@ -5092,11 +5092,11 @@ public final class PFGameTests {
 
     /**
      * Inheritance bound, in-world: two 1/1/1 parents can never produce an
-     * offspring stat above 2 (the better parent {@code hi=1}, plus at most the
-     * +1 improvement). Drives the real {@link ResourceFrog#spawnChildFromBreeding}
-     * capture on live entities, looped many times to exercise the RNG branches.
-     * Regression pin for "first breed jumped a stat from 1 to 3" reports - if the
-     * capture ever inflates a stat past hi+1, this fails.
+     * offspring stat above 2 ({@code blend(1,1)=1}, plus at most the +1 climb).
+     * Drives the real {@link ResourceFrog#spawnChildFromBreeding} capture on live
+     * entities, looped many times to exercise the RNG branches. Regression pin for
+     * "first breed jumped a stat from 1 to 3" reports - if the capture ever inflates
+     * a stat past blend+1, this fails.
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 40)
     public static void breedingOffspringNeverExceedsBetterParentPlusOne(GameTestHelper helper) {
@@ -5113,7 +5113,7 @@ public final class PFGameTests {
             int bou = a.getPendingOffspringBounty();
             int rea = a.getPendingOffspringReach();
             if (app > 2 || bou > 2 || rea > 2) {
-                helper.fail("offspring of two 1/1/1 parents exceeded hi+1: A" + app + "/B" + bou + "/R" + rea
+                helper.fail("offspring of two 1/1/1 parents exceeded blend+1: A" + app + "/B" + bou + "/R" + rea
                     + " (max possible is 2)");
                 return;
             }

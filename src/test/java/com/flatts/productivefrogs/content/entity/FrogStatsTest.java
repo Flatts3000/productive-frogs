@@ -98,6 +98,19 @@ class FrogStatsTest {
     }
 
     @Test
+    void guaranteedImprovementDoesNotDoubleBumpWhenAStatAlreadyClimbed() {
+        // improvementChance 1.0 -> every headroom stat climbs on its own, so the
+        // guarantee must NOT fire: each stat is exactly blend+1, never blend+2.
+        int[] parents = {5, 5, 5};
+        for (int i = 0; i < 50; i++) {
+            int[] out = FrogStats.inheritStats(parents, parents, 1.0, true, CAP, random); // blend 5 -> climb 6
+            assertEquals(6, out[0], "blend(5)+1, not double-bumped");
+            assertEquals(6, out[1], "blend(5)+1, not double-bumped");
+            assertEquals(6, out[2], "blend(5)+1, not double-bumped");
+        }
+    }
+
+    @Test
     void guaranteedImprovementCannotExceedTheCapWhenAllStatsAreMaxed() {
         int[] maxed = {CAP, CAP, CAP};
         int[] out = FrogStats.inheritStats(maxed, maxed, 0.0, true, CAP, random);
