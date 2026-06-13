@@ -636,6 +636,13 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
         for (int[] off : NEIGHBOUR_OFFSETS) {
             BlockPos neighbour = source.offset(off[0], off[1], off[2]);
             BlockPos above = neighbour.above();
+            // For an altar-gated boss source, never land in the source's own cell.
+            // This guards not just the fallback below but the block directly beneath
+            // the source, whose .above() IS the source cell - otherwise the slime
+            // would still spawn inside the sealed milk source block via that neighbour.
+            if (avoidSourceCell && above.equals(source)) {
+                continue;
+            }
             if (level.getBlockState(neighbour).isFaceSturdy(level, neighbour, Direction.UP)
                 && !level.getBlockState(above).blocksMotion()) {
                 return above;
