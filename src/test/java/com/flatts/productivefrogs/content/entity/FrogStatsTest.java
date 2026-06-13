@@ -130,6 +130,33 @@ class FrogStatsTest {
         assertEquals(4, out[2]);
     }
 
+    @Test
+    void inheritStatsDoesNotFavorAnySingleStat() {
+        // Symmetric parents, many breeds: each of the three stats should be improved
+        // (bumped above its blended base) about equally. Guards against positional
+        // bias from the climb loop order OR the guaranteed-improvement headroom pick -
+        // neither may favor a particular stat.
+        int[] parents = {5, 5, 5}; // blend = 5 on every stat, equal headroom
+        int trials = 30_000;
+        int[] bumped = new int[3];
+        for (int t = 0; t < trials; t++) {
+            int[] out = FrogStats.inheritStats(parents, parents, 0.40, true, CAP, random);
+            for (int s = 0; s < 3; s++) {
+                if (out[s] > 5) {
+                    bumped[s]++;
+                }
+            }
+        }
+        int mean = (bumped[0] + bumped[1] + bumped[2]) / 3;
+        int tolerance = mean / 20; // within 5% of the mean - far wider than RNG noise at 30k trials
+        for (int s = 0; s < 3; s++) {
+            assertTrue(Math.abs(bumped[s] - mean) <= tolerance,
+                "stat " + s + " improved " + bumped[s] + " times vs mean " + mean
+                    + " (tolerance " + tolerance + ") - inheritance must not favor a single stat: "
+                    + java.util.Arrays.toString(bumped));
+        }
+    }
+
     // ---- clamp --------------------------------------------------------
 
     @Test
