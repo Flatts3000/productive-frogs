@@ -22,46 +22,99 @@ class FrogStatsTest {
     private static final int CAP = 10;
     private final RandomSource random = RandomSource.create(1234L);
 
-    // ---- inheritStat --------------------------------------------------
+    // ---- blend (the parent-average base layer) ------------------------
 
     @Test
-    void improvementRollsOneAboveTheBetterParent() {
-        // improvementChance 1.0 -> always the improve branch: min(cap, hi + 1).
-        assertEquals(8, FrogStats.inheritStat(7, 5, 1.0, 0.0, CAP, random),
-            "improve should be max(7,5)+1 = 8");
-        assertEquals(5, FrogStats.inheritStat(3, 4, 1.0, 0.0, CAP, random),
-            "improve should be max(3,4)+1 = 5");
+    void blendIsTheRoundHalfUpParentAverage() {
+        assertEquals(6, FrogStats.blend(7, 5, CAP), "(7+5)/2 = 6 exactly");
+        assertEquals(9, FrogStats.blend(9, 8, CAP), "round((9+8)/2) = round(8.5) = 9 (half-up)");
+        assertEquals(5, FrogStats.blend(6, 4, CAP), "(6+4)/2 = 5 exactly");
+        assertEquals(9, FrogStats.blend(9, 9, CAP), "equal parents blend to themselves");
+        assertEquals(6, FrogStats.blend(10, 2, CAP), "round((10+2)/2) = 6 - mismatched pairing blends down");
     }
 
     @Test
-    void improvementIsCappedAtTheStatCap() {
-        assertEquals(CAP, FrogStats.inheritStat(10, 10, 1.0, 0.0, CAP, random),
-            "improving a capped pair stays at the cap");
-        assertEquals(CAP, FrogStats.inheritStat(10, 8, 1.0, 0.0, CAP, random),
-            "min(cap, 10+1) clamps to the cap");
+    void blendRoundHalfUpPreservesTheHigherParentOnAOnePointGap() {
+        // The 1-gap rounds UP, so a single improver bred back with a parent keeps
+        // the improvement (the climb propagates, doesn't stall).
+        assertEquals(10, FrogStats.blend(10, 9, CAP), "round((10+9)/2) = round(9.5) = 10");
+    }
+
+    // ---- inheritStat (blend then climb, no regression) ----------------
+
+    @Test
+    void climbRollsOneAboveTheBlend() {
+        // improvementChance 1.0 -> always climb: min(cap, blend + 1).
+        assertEquals(7, FrogStats.inheritStat(7, 5, 1.0, CAP, random),
+            "blend(7,5)=6, climb -> 7");
+        assertEquals(10, FrogStats.inheritStat(9, 9, 1.0, CAP, random),
+            "blend(9,9)=9, climb -> 10");
     }
 
     @Test
-    void regressionRollsTheRoundedParentAverage() {
-        // improvementChance 0.0, regressionChance 1.0 -> always regress.
-        assertEquals(7, FrogStats.inheritStat(8, 5, 0.0, 1.0, CAP, random),
-            "round((8+5)/2) = round(6.5) = 7 (half-up)");
-        assertEquals(5, FrogStats.inheritStat(6, 4, 0.0, 1.0, CAP, random),
-            "(6+4)/2 = 5 exactly");
+    void climbIsCappedAtTheStatCap() {
+        assertEquals(CAP, FrogStats.inheritStat(10, 10, 1.0, CAP, random),
+            "blend(10,10)=10, climb min(cap,11) stays at the cap");
     }
 
     @Test
-    void regressionIsANoOpForEqualParents() {
-        // average == hi, so an equal pair never drops - the late-game grind.
-        assertEquals(9, FrogStats.inheritStat(9, 9, 0.0, 1.0, CAP, random),
-            "equal parents regress to themselves (no-op)");
+    void holdReturnsTheBlendWhenClimbDoesNotFire() {
+        // improvementChance 0.0 -> never climbs: the stat sits at the blended average.
+        assertEquals(6, FrogStats.inheritStat(7, 5, 0.0, CAP, random), "holds at blend(7,5)=6");
+        assertEquals(9, FrogStats.inheritStat(9, 8, 0.0, CAP, random), "holds at blend(9,8)=9");
+    }
+
+    // ---- inheritStats (triple roll + guaranteed progress) -------------
+
+    @Test
+    void inheritStatsNeverFallsBelowTheBlendNorExceedsItByMoreThanOne() {
+        int[] a = {7, 4, 9};
+        int[] b = {5, 8, 2};
+        int[] base = {FrogStats.blend(7, 5, CAP), FrogStats.blend(4, 8, CAP), FrogStats.blend(9, 2, CAP)}; // 6/6/6
+        for (int i = 0; i < 500; i++) {
+            int[] out = FrogStats.inheritStats(a, b, 0.5, true, CAP, random);
+            for (int s = 0; s < 3; s++) {
+                assertTrue(out[s] >= base[s], "stat " + s + " must not fall below the blend " + base[s] + ", was " + out[s]);
+                assertTrue(out[s] <= base[s] + 1, "stat " + s + " must not exceed blend+1, was " + out[s]);
+            }
+        }
     }
 
     @Test
-    void holdReturnsTheBetterParentWhenNeitherBranchFires() {
-        // Both chances 0.0 -> the else (hold) branch.
-        assertEquals(7, FrogStats.inheritStat(7, 3, 0.0, 0.0, CAP, random),
-            "hold should be max(7,3) = 7");
+    void guaranteedImprovementBumpsExactlyOneStatWhenNoneClimbed() {
+        // improvementChance 0.0 -> no stat climbs on its own; the guarantee bumps one.
+        int[] parents = {5, 5, 5};
+        for (int i = 0; i < 50; i++) {
+            int[] out = FrogStats.inheritStats(parents, parents, 0.0, true, CAP, random);
+            int bumps = 0;
+            for (int s = 0; s < 3; s++) {
+                assertTrue(out[s] == 5 || out[s] == 6, "each stat is blend(5) or blend+1, was " + out[s]);
+                if (out[s] == 6) {
+                    bumps++;
+                }
+            }
+            assertEquals(1, bumps, "exactly one stat should be bumped by the guarantee");
+        }
+    }
+
+    @Test
+    void guaranteedImprovementCannotExceedTheCapWhenAllStatsAreMaxed() {
+        int[] maxed = {CAP, CAP, CAP};
+        int[] out = FrogStats.inheritStats(maxed, maxed, 0.0, true, CAP, random);
+        assertEquals(CAP, out[0]);
+        assertEquals(CAP, out[1]);
+        assertEquals(CAP, out[2]);
+    }
+
+    @Test
+    void withoutGuaranteeAStatlessClimbHoldsAtTheBlend() {
+        // guaranteeImprovement false + improvementChance 0.0 -> exactly the blend.
+        int[] a = {5, 5, 5};
+        int[] b = {3, 3, 3};
+        int[] out = FrogStats.inheritStats(a, b, 0.0, false, CAP, random); // blend = 4/4/4
+        assertEquals(4, out[0]);
+        assertEquals(4, out[1]);
+        assertEquals(4, out[2]);
     }
 
     // ---- clamp --------------------------------------------------------

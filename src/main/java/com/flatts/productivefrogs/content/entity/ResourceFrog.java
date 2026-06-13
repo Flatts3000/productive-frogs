@@ -411,15 +411,15 @@ public class ResourceFrog extends Frog {
             this.hasPendingOffspring = true;
             return;
         }
-        double improvement = PFConfig.improvementChance();
-        double regression = PFConfig.regressionChance();
-        int cap = PFConfig.statCap();
-        this.pendingOffspringAppetite =
-            FrogStats.inheritStat(getAppetite(), mate.getAppetite(), improvement, regression, cap, random);
-        this.pendingOffspringBounty =
-            FrogStats.inheritStat(getBounty(), mate.getBounty(), improvement, regression, cap, random);
-        this.pendingOffspringReach =
-            FrogStats.inheritStat(getReach(), mate.getReach(), improvement, regression, cap, random);
+        // Two-layer roll (docs/frog_breeding.md): blend (parent average) then climb,
+        // with a guaranteed +1 on at least one stat so a breed is never wasted.
+        int[] offspring = FrogStats.inheritStats(
+            new int[] { getAppetite(), getBounty(), getReach() },
+            new int[] { mate.getAppetite(), mate.getBounty(), mate.getReach() },
+            PFConfig.improvementChance(), PFConfig.guaranteedImprovement(), PFConfig.statCap(), random);
+        this.pendingOffspringAppetite = offspring[0];
+        this.pendingOffspringBounty = offspring[1];
+        this.pendingOffspringReach = offspring[2];
         this.hasPendingOffspring = true;
         PFDebug.log(PFDebug.Area.EGG, () -> String.format(
             "conception: %s parents A(%d,%d) B(%d,%d) R(%d,%d) -> offspring A%d/B%d/R%d",

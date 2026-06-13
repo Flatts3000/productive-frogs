@@ -78,23 +78,30 @@ consume one breeding item per parent.
 
 ### Inheritance and the climb
 
-When breeding produces an offspring, each of the three stats is rolled
-**independently** from the two parents. Let `hi = max(parentA, parentB)` and
-`lo = min(parentA, parentB)`:
+Inheritance is a **two-layer roll** per stat (the de-tedium model - see Decisions
+D7): a **blend** layer then a **climb** layer.
 
-- with probability `IMPROVEMENT_CHANCE` (default 0.40): offspring = `min(10, hi + 1)`
-- else with probability `REGRESSION_CHANCE` (default 0.30): offspring = `round((hi + lo) / 2)`
-- else: offspring = `hi`
+- **Blend (the parent average):** `base = round((parentA + parentB) / 2)` (round-half-up).
+  This is the deterministic floor the offspring starts from - there is **no random
+  regression**. Breeding two similar frogs holds their level (a one-point gap rounds
+  up to the higher parent), while mixing a strong frog with a weak one blends toward
+  the middle - a deliberate, player-controlled cost.
+- **Climb (the upgrade):** with probability `IMPROVEMENT_CHANCE` (default 0.40) the
+  stat ticks one above the blend, `min(10, base + 1)`; otherwise it holds at `base`.
 
-So per stat each offspring improves ~2 in 5 of the time, regresses toward the average
-~30%, and otherwise holds at the better parent. Because the three stats roll
-independently, a breed improves **at least one stat about 78% of the time**
-(`1 - 0.6^3`) - the practical floor a player feels, so a run of breeds with no gain is
-rare. The player keeps improvers, culls regressors, and re-breeds the best pair - the
-ladder to 10/10/10. When both parents are already equal on a stat, regression is a
-no-op (average == hi), so a maxed-leaning pair only ever holds or ticks up, which is
-the intended late-game grind (breeding two 9s for the occasional 10). All three
-probabilities are config-tunable; raising `IMPROVEMENT_CHANCE` makes the climb brisker.
+On top of that, **`GUARANTEED_IMPROVEMENT` (default true)** ensures every breed is
+progress: if no stat climbed on its own, one stat that still has headroom
+(`base < 10`, chosen at random) is bumped to `base + 1`. So a breed only fails to
+improve when the blended bases are already all at the cap. Each offspring stat lands
+in `[base, base + 1]` - never below the parent average, never more than one above it.
+
+Why this is less tedious than a regression model: you never wait a full generation
+only to get a *worse* frog, and every breed climbs at least one stat. The skill is in
+**which two frogs you pair** - breed your two best to hold a high blend and climb;
+mixing in a dud blends you down. Round-half-up means a single improver bred back with a
+parent keeps its gain (the climb propagates, it doesn't stall). The ladder to 10/10/10
+is "build and breed matched high pairs." Raising `IMPROVEMENT_CHANCE` makes it brisker;
+turning off `GUARANTEED_IMPROVEMENT` reverts to a slower, purer-RNG climb.
 
 **Carrying stats through the frogspawn intermediary** is the one non-trivial bit of
 plumbing: vanilla breeding lays a frogspawn *block*, which spawns tadpoles on its own
@@ -151,8 +158,8 @@ ship in a follow-up if art lags. Exact visuals are an art-pass decision.
 | Key | Default | Meaning |
 |---|---|---|
 | `breeding.sameSpeciesOnly` | true | enforce the same-species gate |
-| `breeding.improvementChance` | 0.40 | per-stat chance offspring rolls `hi + 1` (~78% of breeds improve at least one of the three stats) |
-| `breeding.regressionChance` | 0.30 | per-stat chance offspring rolls the average |
+| `breeding.improvementChance` | 0.40 | per-stat chance offspring climbs one above the blended parent average (`min(10, base + 1)`) |
+| `breeding.guaranteedImprovement` | true | every breed improves at least one stat over the blend (bumps a headroom stat if none climbed) |
 | `breeding.statCap` | 10 | maximum per-stat value |
 | `stats.appetiteCooldownMin` / `Max` | 30 / 100 | eat cooldown (ticks) at stat 10 / 1 |
 | `stats.bountyMaxDrops` | 3 | Froglights per slime at stat 10 |
@@ -182,8 +189,14 @@ ship in a follow-up if art lags. Exact visuals are an art-pass decision.
 - **D5 - Dedicated breeding item (Sweetslime), not the slime ball** - to prevent
   accidental breeding from loose slime balls in a farming pen.
 - **D6 - Sweetslime recipe:** shapeless slime ball + sugar, yields 2.
-- **D7 - Inheritance:** hi-biased with an improvement chance and a regression-to-mean
-  chance (the climb plus the culling), all config-tunable.
+- **D7 - Inheritance: blend then climb, no regression** (de-tedium revision). Each
+  offspring stat is the round-half-up parent **average** (the blend), then an
+  `improvementChance` to climb one above it; `guaranteedImprovement` (default on) bumps
+  one headroom stat when none climbed, so every breed is progress. There is **no
+  regression branch** - the old `regressionChance` (offspring randomly rolling toward
+  the mean) is removed: it punished correct play (breed two good frogs, randomly get a
+  worse one) and made the climb tedious. The blend keeps the strategy (pair your best;
+  mixing in a dud blends you down) without the random backslide. Config-tunable.
 - **D8 - Non-bred frogs start at baseline** (`1/1/1`); breeding is the only way to
   climb. (Superseded the original "starter roll `[1, 3]`" - see docs/known_issues.md.)
 - **D9 - Stat readout via Jade**, no new analyzer item.
