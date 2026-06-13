@@ -39,37 +39,85 @@ public final class FrogStats {
     }
 
     /**
-     * Roll one offspring stat from its two parent values per the inheritance
-     * rule (D7). With {@code hi = max(a, b)} and {@code lo = min(a, b)}:
-     *
-     * <ul>
-     *   <li>with probability {@code improvementChance}: {@code min(cap, hi + 1)} (the climb)</li>
-     *   <li>else with probability {@code regressionChance}: {@code round((hi + lo) / 2)} (regression to mean)</li>
-     *   <li>else: {@code hi} (hold at the better parent)</li>
-     * </ul>
-     *
-     * The two chances are sampled from a single uniform draw so they partition
-     * the {@code [0, 1)} interval cleanly (improvement first, then regression,
-     * then hold). When both parents are equal, regression is a no-op
-     * ({@code average == hi}), so an equal pair only ever holds or ticks up -
-     * the intended late-game grind. The result is clamped defensively even
-     * though the formula already respects the cap.
+     * The <b>blend</b> layer of inheritance (D7): an offspring stat's base value is
+     * the round-half-up average of its two parents' values, clamped to the cap.
+     * This is the deterministic floor every offspring starts from before the climb
+     * - so breeding two similar frogs holds their level (a 1-point gap rounds up to
+     * the higher parent), while mixing a strong frog with a weak one blends toward
+     * the middle. See docs/frog_breeding.md.
+     */
+    public static int blend(int parentA, int parentB, int cap) {
+        return clamp((parentA + parentB + 1) / 2, cap);
+    }
+
+    /**
+     * The <b>climb</b> layer applied on top of a blended base: with probability
+     * {@code improvementChance} the stat ticks up one ({@code min(cap, base + 1)}),
+     * otherwise it holds at the base. Never regresses below the base.
+     */
+    private static int climb(int base, double improvementChance, int cap, RandomSource random) {
+        int result = random.nextDouble() < improvementChance ? Math.min(cap, base + 1) : base;
+        return clamp(result, cap);
+    }
+
+    /**
+     * Roll one offspring stat: {@link #blend} the parents, then apply the
+     * {@link #climb} upgrade. There is no regression branch - the blended average
+     * is the floor and the climb only ever goes up, so a breed never produces a
+     * stat below the average of its parents.
      */
     public static int inheritStat(int parentA, int parentB, double improvementChance,
-                                  double regressionChance, int cap, RandomSource random) {
-        int hi = Math.max(parentA, parentB);
-        int lo = Math.min(parentA, parentB);
-        double roll = random.nextDouble();
-        int result;
-        if (roll < improvementChance) {
-            result = Math.min(cap, hi + 1);
-        } else if (roll < improvementChance + regressionChance) {
-            // Integer round-half-up of the parent average.
-            result = (hi + lo + 1) / 2;
-        } else {
-            result = hi;
+                                  int cap, RandomSource random) {
+        return climb(blend(parentA, parentB, cap), improvementChance, cap, random);
+    }
+
+    /**
+     * Roll all three offspring stats {@code {appetite, bounty, reach}} from the two
+     * parents' stat triples, applying the breeding model (D7, docs/frog_breeding.md):
+     *
+     * <ol>
+     *   <li><b>Blend</b> - each stat's base is the round-half-up parent average
+     *       ({@link #blend}); this is the deterministic floor (no random regression).</li>
+     *   <li><b>Climb</b> - each stat independently has an {@code improvementChance}
+     *       to tick one above its base.</li>
+     *   <li><b>Guaranteed progress</b> - when {@code guaranteeImprovement} is true and
+     *       no stat climbed above its base, one stat that still has headroom
+     *       ({@code base < cap}, chosen uniformly at random) is bumped to {@code base + 1},
+     *       so every breed improves at least one stat over the blend. The only breed
+     *       that can't is one whose blended bases are already all at the cap.</li>
+     * </ol>
+     *
+     * Each result lands in {@code [base, base + 1]} for its stat, so an offspring
+     * never falls below the parent average nor exceeds it by more than one.
+     */
+    public static int[] inheritStats(int[] parentA, int[] parentB, double improvementChance,
+                                     boolean guaranteeImprovement, int cap, RandomSource random) {
+        int[] base = new int[3];
+        int[] out = new int[3];
+        boolean improved = false;
+        for (int i = 0; i < 3; i++) {
+            base[i] = blend(parentA[i], parentB[i], cap);
+            out[i] = climb(base[i], improvementChance, cap, random);
+            if (out[i] > base[i]) {
+                improved = true;
+            }
         }
-        return clamp(result, cap);
+        if (guaranteeImprovement && !improved) {
+            // No stat happened to climb: bump one random stat that still has headroom
+            // (blended base below the cap), so a breed is never a wasted generation.
+            int[] headroom = new int[3];
+            int n = 0;
+            for (int i = 0; i < 3; i++) {
+                if (base[i] < cap) {
+                    headroom[n++] = i;
+                }
+            }
+            if (n > 0) {
+                int pick = headroom[random.nextInt(n)];
+                out[pick] = clamp(base[pick] + 1, cap);
+            }
+        }
+        return out;
     }
 
     /**

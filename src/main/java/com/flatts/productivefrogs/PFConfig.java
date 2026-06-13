@@ -61,7 +61,7 @@ public final class PFConfig {
     // Frog stat breeding (docs/frog_breeding.md).
     public static final ModConfigSpec.BooleanValue BREEDING_SAME_SPECIES_ONLY;
     public static final ModConfigSpec.DoubleValue BREEDING_IMPROVEMENT_CHANCE;
-    public static final ModConfigSpec.DoubleValue BREEDING_REGRESSION_CHANCE;
+    public static final ModConfigSpec.BooleanValue BREEDING_GUARANTEED_IMPROVEMENT;
     public static final ModConfigSpec.IntValue BREEDING_STAT_CAP;
     public static final ModConfigSpec.IntValue STATS_APPETITE_COOLDOWN_MIN;
     public static final ModConfigSpec.IntValue STATS_APPETITE_COOLDOWN_MAX;
@@ -120,7 +120,7 @@ public final class PFConfig {
     // fallbacks, so the spec default and the fallback can never drift apart.
     public static final int DEFAULT_STAT_CAP = 10;
     public static final double DEFAULT_IMPROVEMENT_CHANCE = 0.40;
-    public static final double DEFAULT_REGRESSION_CHANCE = 0.30;
+    public static final boolean DEFAULT_GUARANTEED_IMPROVEMENT = true;
     public static final int DEFAULT_APPETITE_COOLDOWN_MIN = 30;
     public static final int DEFAULT_APPETITE_COOLDOWN_MAX = 100;
     public static final int DEFAULT_BOUNTY_MAX_DROPS = 3;
@@ -501,20 +501,21 @@ public final class PFConfig {
 
         BREEDING_IMPROVEMENT_CHANCE = builder
             .comment(
-                "Per-stat chance the offspring rolls one above the better parent (min(cap, hi + 1)).",
-                "Default 0.40. Each of the three stats rolls independently, so a breed improves at",
-                "least one stat about 78% of the time (1 - (1 - 0.40)^3) - the floor a player feels.",
-                "Raising this makes the climb to a maxed frog brisker."
+                "Per-stat chance the offspring climbs one above the blended parent average (min(cap, base + 1)),",
+                "otherwise it holds at the average. Default 0.40. Inheritance is a two-layer roll: each stat is",
+                "first the round-half-up average of the two parents (the blend), then this is the chance it ticks",
+                "up by one on top. There is no regression below the average. Raising this makes the climb brisker."
             )
             .defineInRange("improvementChance", DEFAULT_IMPROVEMENT_CHANCE, 0.0, 1.0);
 
-        BREEDING_REGRESSION_CHANCE = builder
+        BREEDING_GUARANTEED_IMPROVEMENT = builder
             .comment(
-                "Per-stat chance the offspring regresses to the parent average (round((hi + lo) / 2)).",
-                "Default 0.30. Sampled after improvementChance from the same draw, so",
-                "improvementChance + regressionChance must stay <= 1.0; the remainder is the 'hold at better parent' chance."
+                "Whether every breed improves at least one stat over the blended average. Default true.",
+                "When true, if no stat happened to climb on its own, one stat that still has headroom (its blended",
+                "average is below the cap) is bumped by one - so a breed is never a wasted generation. When false,",
+                "a breed can come out exactly at the parent average (slower, purer-RNG climb)."
             )
-            .defineInRange("regressionChance", DEFAULT_REGRESSION_CHANCE, 0.0, 1.0);
+            .define("guaranteedImprovement", DEFAULT_GUARANTEED_IMPROVEMENT);
 
         BREEDING_STAT_CAP = builder
             .comment("Maximum value any single stat can reach. Default 10 (the 'maxed' cap).")
@@ -782,9 +783,9 @@ public final class PFConfig {
         return SPEC.isLoaded() ? BREEDING_IMPROVEMENT_CHANCE.get() : DEFAULT_IMPROVEMENT_CHANCE;
     }
 
-    /** Per-stat regression chance ({@code breeding.regressionChance}); fallback {@value #DEFAULT_REGRESSION_CHANCE}. */
-    public static double regressionChance() {
-        return SPEC.isLoaded() ? BREEDING_REGRESSION_CHANCE.get() : DEFAULT_REGRESSION_CHANCE;
+    /** Whether every breed improves at least one stat over the blend ({@code breeding.guaranteedImprovement}); fallback true. */
+    public static boolean guaranteedImprovement() {
+        return !SPEC.isLoaded() || BREEDING_GUARANTEED_IMPROVEMENT.get();
     }
 
     /** Eat cooldown (ticks) at max Appetite ({@code stats.appetiteCooldownMin}); fallback {@value #DEFAULT_APPETITE_COOLDOWN_MIN}. */

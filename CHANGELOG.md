@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **Breeding frogs is less tedious - no more breeding backwards.** The stat-inheritance roll is reworked into two layers: an offspring stat is the **average of its parents** (round-half-up), then a chance to **climb one above** that average. The old random regression is gone - a breed never drops a stat below the parent average, so you never wait a full generation only to get a *worse* frog. On top of that, **every breed now improves at least one stat** (a guaranteed bump when nothing climbed on its own), so a breeding cycle is never wasted. The skill is in which two frogs you pair: breed your two best to hold a high average and climb toward 10/10/10; mixing in a weak frog blends you down. A handy side effect of averaging - you can **merge two specialized frogs** (say a high-Appetite and a high-Bounty) into one balanced frog. Tunable via `breeding.improvementChance` and the new `breeding.guaranteedImprovement` (default on); `breeding.regressionChance` is removed. (docs/frog_breeding.md)
+
 ## v1.20.0 - 2026-06-10 - Full Bloom
 
 ### Changed
