@@ -865,6 +865,55 @@ public final class PFGameTests {
     }
 
     /**
+     * Boss altar spawn safety (docs/boss_catalyst_altar.md): a fully-sealed,
+     * altar-gated source must NOT spawn a slime inside its own (enclosed) milk
+     * source block. The altar is complete (6 matching catalyst faces, so the gate
+     * passes and the source would otherwise spawn) and the source is boxed in solid
+     * on every side - including the layer above the top shell - so chooseSpawnPos
+     * finds no free neighbour landing. The fix skips the spawn for an altar-gated
+     * source rather than falling back to the source cell (which would trap the slime
+     * inside the milk block). A non-altar source keeps that fallback - see
+     * {@link #slimeMilkSourceFallsBackToLiquidWhenNoSolidNeighbour}.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void bossAltarSourceDoesNotSpawnInsideTheSourceBlock(GameTestHelper helper) {
+        BlockPos center = new BlockPos(2, 2, 2);
+        ResourceLocation netherStar = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star");
+        // Seal the source in solid stone on every side, and cap the layer above the
+        // top shell (y up to 4), so no neighbour cell has an open block above it.
+        for (int x = 1; x <= 3; x++) {
+            for (int y = 1; y <= 4; y++) {
+                for (int z = 1; z <= 3; z++) {
+                    helper.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+                }
+            }
+        }
+        // The six faces must be the MATCHING catalyst so the altar gate (>=6) passes.
+        net.minecraft.world.level.block.Block starCat = PFBlocks.NETHER_STAR_CATALYST.get();
+        for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+            helper.setBlock(center.relative(dir), starCat);
+        }
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
+            placeMilkSource(helper, center, "nether_star");
+
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(center);
+        helper.assertTrue(com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock
+                .catalystFaceCount(level, abs, netherStar) == 6,
+            "test setup: a sealed altar should read 6 catalyst faces");
+        // Drive a spawn tick directly (the gate passes, so without the fix this would
+        // fall back to spawning a slime inside the source block).
+        block.tick(level.getBlockState(abs), level, abs, level.getRandom());
+
+        helper.runAfterDelay(3, () -> {
+            int slimes = helper.getEntities(PFEntities.RESOURCE_SLIME.get()).size();
+            helper.assertTrue(slimes == 0,
+                "a sealed boss altar must not spawn a slime inside the milk source block, found " + slimes);
+            helper.succeed();
+        });
+    }
+
+    /**
      * V1.5: force discovery chance to 100% and split a Cave Slime; assert
      * every offspring is a Resource Slime carrying a variant from the live CAVE
      * pool. Verifies {@link SlimeVariant#pickWeighted} integration in
