@@ -1,0 +1,13 @@
+{
+  "name": "Terrarium Controller",
+  "icon": "productivefrogs:terrarium_controller",
+  "category": "productivefrogs:terrarium",
+  "sortnum": 10,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:terrarium_controller",
+      "text": "The brain of the Terrarium. Set it on a wall facing into the cavity; it checks the shell and lights up when the structure is valid. Pipe Slime Milk into it and it feeds that milk to the Sprinklers. One per Terrarium."
+    }
+  ]
+}

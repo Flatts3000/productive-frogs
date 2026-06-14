@@ -1,0 +1,13 @@
+{
+  "name": "Dragon's Breath Catalyst",
+  "icon": "productivefrogs:dragon_breath_catalyst",
+  "category": "productivefrogs:advanced",
+  "sortnum": 40,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:dragon_breath_catalyst",
+      "text": "Arms a Dragon's Breath Slime Milk source. Surround the source on all six faces with these to switch it on; an incomplete altar leaves the source inert."
+    }
+  ]
+}

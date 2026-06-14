@@ -1,0 +1,13 @@
+{
+  "name": "Nether Star Catalyst",
+  "icon": "productivefrogs:nether_star_catalyst",
+  "category": "productivefrogs:advanced",
+  "sortnum": 20,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:nether_star_catalyst",
+      "text": "Arms a Nether Star Slime Milk source. Surround the source on all six faces with these to switch it on; an incomplete altar leaves the source inert."
+    }
+  ]
+}

@@ -43,7 +43,7 @@ to expand a topic, add a sibling entry in the same category.
 ## Maintenance notes
 
 - Keep the book id `productivefrogs:guide` and the category ids stable - packs key off them forever.
-- The Terrarium `multiblock` page mirrors `TerrariumValidator`: a 7x7x7 shell around a **5x5x4**
-  cavity (the old "5x5x5" string in some surfaces is stale). If the structure changes, update the
-  `pattern` in `entries/terrarium/terrarium.json` to match.
+- The Terrarium `multiblock` page mirrors `TerrariumValidator`: a 7-wide x 7-deep x 6-tall shell
+  around a **5x5x4** cavity (the old "5x5x5" string in some surfaces is stale; it is not a cube -
+  6 tall, not 7). If the structure changes, update the `pattern` in `entries/terrarium/terrarium.json`.
 - New content is en_us; other languages add `guide/<lang>/...`.

@@ -1,0 +1,13 @@
+{
+  "name": "Dragon Egg Catalyst",
+  "icon": "productivefrogs:dragon_egg_catalyst",
+  "category": "productivefrogs:advanced",
+  "sortnum": 30,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:dragon_egg_catalyst",
+      "text": "Arms a Dragon Egg Slime Milk source. Surround the source on all six faces with these to switch it on; an incomplete altar leaves the source inert."
+    }
+  ]
+}

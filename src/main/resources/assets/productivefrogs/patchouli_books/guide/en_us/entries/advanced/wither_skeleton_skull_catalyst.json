@@ -1,0 +1,13 @@
+{
+  "name": "Wither Skeleton Skull Catalyst",
+  "icon": "productivefrogs:wither_skeleton_skull_catalyst",
+  "category": "productivefrogs:advanced",
+  "sortnum": 10,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:wither_skeleton_skull_catalyst",
+      "text": "Arms a Wither Skeleton Skull Slime Milk source. Wall the source in on all six faces with these - until the altar is complete the source spawns nothing."
+    }
+  ]
+}
