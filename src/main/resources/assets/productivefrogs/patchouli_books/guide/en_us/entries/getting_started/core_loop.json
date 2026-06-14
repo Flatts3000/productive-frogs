@@ -16,7 +16,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "productivefrogs:configurable_froglight",
-      "text": "A Froglight is what a frog drops when it eats its matching slime. Smelt it for a copy of the resource.$(br2)To gather the drops on their own, pin the frog over a hopper with a Sweetslimed Lily Pad, or run the whole loop inside a Terrarium - both keep the frog in one spot so its Froglights land where you want them."
+      "text": "A Froglight is what a frog drops when it eats its matching slime. Smelt it for a copy of the resource.$(br2)To automate collection, run the whole loop inside a Terrarium - its Hatch gathers every Froglight. A Sweetslimed Lily Pad also pins a frog in one spot, so its drops always land in the same place."
     }
   ]
 }

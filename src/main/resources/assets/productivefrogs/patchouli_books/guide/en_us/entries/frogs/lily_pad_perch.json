@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "Want a frog to stay over one spot - say on a hopper next to a slime source - without leashing it? Right-click a placed lily pad with a Sweetslime to make a Sweetslimed Lily Pad."
+      "text": "Want a frog to stay in one spot without leashing it? Right-click a placed lily pad with a Sweetslime to make a Sweetslimed Lily Pad."
     },
     {
       "type": "patchouli:spotlight",
