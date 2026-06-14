@@ -2,9 +2,20 @@
 
 ## [Unreleased]
 
+## v1.21.0 - 2026-06-13 - By the Book
+
+### Added
+
+- **An in-game guide book.** Craft a vanilla book with a slime ball for an illustrated Productive Frogs field guide (requires Patchouli) that walks the whole mod start to finish - the core loop, every species, spawning slimes, Resource Slimes and Slime Milk, milk catalysts, Froglights and Brewed Froglights, the appliances, the Terrarium (with a build diagram), and the boss catalyst altars (each with its own altar diagram). Built to be extended: a modpack drops its own categories and entries into the book's namespace via a resource pack and they merge into the same book. Inert if Patchouli is absent. (#243)
+- **The Sweetslimed Lily Pad - a frog perch.** Right-click a placed lily pad with a Sweetslime to turn it into a perch: a Resource Frog within range walks over, claims it (one frog per pad), and holds position on top of the pad instead of wandering off, while still eating same-species slimes in reach and dropping Froglights in place. Pin a frog over a hopper beside a Slime Milk source for a hands-off collection point - the active counterpart to the Frog Net (move a frog) and the Terrarium (contain a loop). Config-gated (`lily_pad_perch.enabled`, default on) with a tunable `lily_pad_perch.range`. (#214)
+
 ### Changed
 
 - **Breeding frogs is less tedious - no more breeding backwards.** The stat-inheritance roll is reworked into two layers: an offspring stat is the **average of its parents** (round-half-up), then a chance to **climb one above** that average. The old random regression is gone - a breed never drops a stat below the parent average, so you never wait a full generation only to get a *worse* frog. On top of that, **every breed now improves at least one stat** (a guaranteed bump when nothing climbed on its own), so a breeding cycle is never wasted. The skill is in which two frogs you pair: breed your two best to hold a high average and climb toward 10/10/10; mixing in a weak frog blends you down. A handy side effect of averaging - you can **merge two specialized frogs** (say a high-Appetite and a high-Bounty) into one balanced frog. Tunable via `breeding.improvementChance` and the new `breeding.guaranteedImprovement` (default on); `breeding.regressionChance` is removed. (docs/frog_breeding.md)
+
+### Fixed
+
+- **Boss catalyst altars no longer spawn their slime inside the sealed source block.** A fully enclosed boss altar could pick the Slime Milk source's own cell as the slime spawn position, trapping the spawned slime inside the source block where it was stuck and unreachable. The source now excludes its own cell when choosing where to spawn, so the slime always lands in an open neighbouring space. (#242)
 
 ## v1.20.0 - 2026-06-10 - Full Bloom
 
