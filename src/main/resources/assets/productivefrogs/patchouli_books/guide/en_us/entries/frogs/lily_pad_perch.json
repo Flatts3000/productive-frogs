@@ -1,0 +1,17 @@
+{
+  "name": "Sweetslimed Lily Pad",
+  "icon": "productivefrogs:sweetslimed_lily_pad",
+  "category": "productivefrogs:frogs",
+  "sortnum": 300,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Want a frog to stay in one spot without leashing it? Right-click a placed lily pad with a Sweetslime to make a Sweetslimed Lily Pad."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:sweetslimed_lily_pad",
+      "text": "The nearest frog walks over and perches on the pad, then stays put - one frog per pad. It keeps eating slimes that come within range and dropping Froglights right where you want them. Break the pad to free the frog."
+    }
+  ]
+}

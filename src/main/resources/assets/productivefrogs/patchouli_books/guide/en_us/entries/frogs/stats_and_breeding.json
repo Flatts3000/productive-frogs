@@ -1,0 +1,21 @@
+{
+  "name": "Stats & Breeding",
+  "icon": "productivefrogs:sweetslime",
+  "category": "productivefrogs:frogs",
+  "sortnum": 100,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Every frog carries three stats - Appetite (how fast it eats), Bounty (how many Froglights it drops), and Reach (how far it spots prey). A fresh frog starts low; breeding is how you raise them. Look at a frog with Jade to read its stats."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:sweetslime",
+      "text": "Feed two same-species frogs a Sweetslime each (slime ball + sugar) and they breed. The baby's stats are the average of its parents, then a chance to climb one higher - and every breed improves at least one stat. Breed your two best together; mixing in a weak frog blends you down."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "There is no going backwards: a baby is never worse than the average of its parents. Keep the improvers, re-breed your best pair, and ladder a line toward a maxed 10/10/10 frog.$(br2)Bred frogs are valuable, so they never despawn."
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Slimes & Slime Milk",
+  "description": "Resource Slimes and their variants, capturing them, and the Slime Milk that automates the supply.",
+  "icon": "minecraft:slime_ball",
+  "sortnum": 200
+}

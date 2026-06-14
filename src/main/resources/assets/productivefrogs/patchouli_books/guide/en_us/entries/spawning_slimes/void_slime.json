@@ -1,0 +1,12 @@
+{
+  "name": "Void Slime",
+  "icon": "productivefrogs:void_slime_spawn_egg",
+  "category": "productivefrogs:spawning_slimes",
+  "sortnum": 50,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Void Slimes spawn in the End, out on the Small End Islands beyond the central island.$(br2)Prime one with a matching resource to make a Void Resource Slime for a Void Frog."
+    }
+  ]
+}

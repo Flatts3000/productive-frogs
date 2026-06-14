@@ -83,6 +83,10 @@ TARGETS = {
     # Brewed Froglight Curios slot (#169). compileOnly in build.gradle; this is
     # the runtime drop-in (Jade posture - NOT runtimeOnly, no double-load). modid `curios`.
     "curios": "Curios API (brewed Froglight charm slot)",
+    # Renders the in-game Patchouli guide book (#243). PF has NO Patchouli dependency
+    # (the book is pure data/assets, inert without it); this drop-in just lets the dev
+    # client show it. Official Vazkii Modrinth distribution, modid `patchouli`.
+    "patchouli": "Patchouli (renders the in-game guide book, #243)",
 }
 
 ROOT = Path(__file__).resolve().parent.parent

@@ -1,0 +1,22 @@
+{
+  "name": "The Core Loop",
+  "icon": "minecraft:slime_ball",
+  "category": "productivefrogs:getting_started",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Every resource in Productive Frogs comes from one loop. A Resource Slime of a given resource is eaten by its matching Frog, which drops a Froglight. Smelt that Froglight to get a copy of the resource.$(br2)Set the chain up once and it runs in the background while you do other things."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "minecraft:slime_ball",
+      "text": "Resource Slimes are the input. Each is tied to one resource - iron, copper, clay, and so on. You get them by priming slimes that spawn in the world, or by farming them with Slime Milk (see the Slimes & Slime Milk chapter)."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:configurable_froglight",
+      "text": "A Froglight is what a frog drops when it eats its matching slime. Smelt it for a copy of the resource.$(br2)To automate collection, run the whole loop inside a Terrarium - its Hatch gathers every Froglight. A Sweetslimed Lily Pad also pins a frog in one spot, so its drops always land in the same place."
+    }
+  ]
+}

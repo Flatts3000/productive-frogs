@@ -1,0 +1,18 @@
+{
+  "name": "Crucible & Mold",
+  "icon": "productivefrogs:crucible",
+  "category": "productivefrogs:appliances",
+  "sortnum": 200,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:crucible",
+      "text": "The Froglight Crucible melts a Froglight into molten fluid. It needs heat from the block below - put a heat source under it and drop Froglights in. It also melts cobblestone, stone, gravel, and netherrack straight to lava."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:casting_mold",
+      "text": "The Casting Mold sets molten metal into ingots or blocks. Stack a Mold on a Crucible to make a melt-and-cast tower, or feed it by pipe. Heat below, Crucible, Mold on top - that is the lane."
+    }
+  ]
+}
