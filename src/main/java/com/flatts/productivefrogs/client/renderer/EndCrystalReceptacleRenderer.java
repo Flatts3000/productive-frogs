@@ -35,6 +35,9 @@ public class EndCrystalReceptacleRenderer implements BlockEntityRenderer<EndCrys
     private static final RenderType RENDER_TYPE = RenderType.entityCutoutNoCull(TEXTURE);
     private static final float SIN_45 = (float) Math.sin(Math.PI / 4);
 
+    /** How high the crystal's pivot sits above the block origin (1.0 = the top face). Tunable. */
+    private static final float HOVER_Y = 1.35F;
+
     private final ModelPart cube;
     private final ModelPart glass;
 
@@ -59,7 +62,7 @@ public class EndCrystalReceptacleRenderer implements BlockEntityRenderer<EndCrys
         int overlay = OverlayTexture.NO_OVERLAY;
 
         pose.pushPose();
-        pose.translate(0.5F, 0.5F, 0.5F);   // block centre
+        pose.translate(0.5F, HOVER_Y, 0.5F);   // perch above the block top
         pose.scale(0.5F, 0.5F, 0.5F);        // perch-size (vs the 2x entity crystal)
         pose.mulPose(Axis.YP.rotationDegrees(spin));
         pose.translate(0.0F, 1.5F + bob / 2.0F, 0.0F);

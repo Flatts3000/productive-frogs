@@ -28,7 +28,7 @@ public final class DragonAltarValidator {
     // Offsets from the Hatch (dx, dy, dz).
     private static final int[][] EXIT_PORTAL = {{-1, -6, 0}, {1, -6, 0}, {0, -6, -1}, {0, -6, 1}};
     private static final int[][] RECEPTACLES = {{0, -5, -3}, {0, -5, 3}, {-3, -5, 0}, {3, -5, 0}};
-    private static final int[][] NETHER_STAR = {{-2, -4, -2}, {-2, -4, 2}, {2, -4, -2}, {2, -4, 2}};
+    private static final int[][] NETHER_STAR = {{-2, -2, -2}, {-2, -2, 2}, {2, -2, -2}, {2, -2, 2}};
     private static final int[][] WSS_CORNERS = {{-2, -5, -2}, {-2, -5, 2}, {2, -5, -2}, {2, -5, 2}};
 
     private DragonAltarValidator() {
