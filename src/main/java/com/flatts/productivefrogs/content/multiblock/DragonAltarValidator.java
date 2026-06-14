@@ -3,21 +3,22 @@ package com.flatts.productivefrogs.content.multiblock;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
 /**
  * Validates the End Dragon Altar (#249) by anchoring on its central Hatch. The
  * altar augments a vanilla End exit portal, so the bedrock / end_portal / dragon
- * egg are the vanilla structure already there; the player adds the crystal
- * receptacles and the reinforced froglight pillars on top.
+ * egg are the vanilla structure already there (the egg only after a real first
+ * kill); the player adds the crystal receptacles and the reinforced froglights.
  *
- * <p>Offsets are relative to the Hatch, derived from the captured structure
- * (Hatch at the centre column, y-top; see {@code docs} and the {@code dragon_altar}
- * structure capture). This checks the load-bearing skeleton - the dragon-egg gate
- * (which only exists after a real first kill), the four receptacles, the four
- * Nether Star froglights, the four corner Wither Skeleton Skull froglights, and a
- * live exit portal beneath - not every decorative cell. Reads only block identity,
- * so it runs client-side (Jade) and server-side (the summon) alike.
+ * <p><b>Strict:</b> every block of the canonical altar must be present at its
+ * exact offset from the Hatch - all 24 Wither Skeleton Skull froglights, all 4
+ * Nether Star froglights, all 4 receptacles, the dragon-egg capstone, and the
+ * complete exit portal (20 end_portal cells + the 41-cell bedrock fountain, which
+ * also carries the central plinth). Offsets are generated from the captured
+ * {@code dragon_altar} structure, not hand-typed. Reads only block identity, so
+ * it runs client-side (Jade) and server-side (the summon) alike.
  */
 public final class DragonAltarValidator {
 
@@ -25,11 +26,27 @@ public final class DragonAltarValidator {
     public record Result(boolean valid, String detail) {
     }
 
-    // Offsets from the Hatch (dx, dy, dz).
-    private static final int[][] EXIT_PORTAL = {{-1, -6, 0}, {1, -6, 0}, {0, -6, -1}, {0, -6, 1}};
-    private static final int[][] RECEPTACLES = {{0, -5, -3}, {0, -5, 3}, {-3, -5, 0}, {3, -5, 0}};
+    // Offsets from the Hatch (dx, dy, dz), generated from the canonical structure.
+    private static final int[][] BEDROCK = {
+        {-3, -6, -1}, {-3, -6, 0}, {-3, -6, 1}, {-2, -7, -1}, {-2, -7, 0}, {-2, -7, 1}, {-2, -6, -2}, {-2, -6, 2},
+        {-1, -7, -2}, {-1, -7, -1}, {-1, -7, 0}, {-1, -7, 1}, {-1, -7, 2}, {-1, -6, -3}, {-1, -6, 3},
+        {0, -7, -2}, {0, -7, -1}, {0, -7, 0}, {0, -7, 1}, {0, -7, 2}, {0, -6, -3}, {0, -6, 0}, {0, -6, 3},
+        {0, -5, 0}, {0, -4, 0}, {0, -3, 0},
+        {1, -7, -2}, {1, -7, -1}, {1, -7, 0}, {1, -7, 1}, {1, -7, 2}, {1, -6, -3}, {1, -6, 3},
+        {2, -7, -1}, {2, -7, 0}, {2, -7, 1}, {2, -6, -2}, {2, -6, 2}, {3, -6, -1}, {3, -6, 0}, {3, -6, 1}
+    };
+    private static final int[][] EXIT_PORTAL = {
+        {-2, -6, -1}, {-2, -6, 0}, {-2, -6, 1}, {-1, -6, -2}, {-1, -6, -1}, {-1, -6, 0}, {-1, -6, 1}, {-1, -6, 2},
+        {0, -6, -2}, {0, -6, -1}, {0, -6, 1}, {0, -6, 2}, {1, -6, -2}, {1, -6, -1}, {1, -6, 0}, {1, -6, 1}, {1, -6, 2},
+        {2, -6, -1}, {2, -6, 0}, {2, -6, 1}
+    };
+    private static final int[][] RECEPTACLES = {{-3, -5, 0}, {0, -5, -3}, {0, -5, 3}, {3, -5, 0}};
     private static final int[][] NETHER_STAR = {{-2, -2, -2}, {-2, -2, 2}, {2, -2, -2}, {2, -2, 2}};
-    private static final int[][] WSS_CORNERS = {{-2, -5, -2}, {-2, -5, 2}, {2, -5, -2}, {2, -5, 2}};
+    private static final int[][] WSS = {
+        {-3, -5, -1}, {-3, -5, 1}, {-2, -5, -2}, {-2, -5, 2}, {-2, -4, -2}, {-2, -4, 2}, {-2, -3, -2}, {-2, -3, 2},
+        {-1, -5, -3}, {-1, -5, 3}, {-1, -1, -1}, {-1, -1, 1}, {1, -5, -3}, {1, -5, 3}, {1, -1, -1}, {1, -1, 1},
+        {2, -5, -2}, {2, -5, 2}, {2, -4, -2}, {2, -4, 2}, {2, -3, -2}, {2, -3, 2}, {3, -5, -1}, {3, -5, 1}
+    };
 
     private DragonAltarValidator() {
     }
@@ -41,27 +58,28 @@ public final class DragonAltarValidator {
         if (!level.getBlockState(hatch.above()).is(Blocks.DRAGON_EGG)) {
             return new Result(false, "missing the Dragon Egg capstone (defeat the dragon first)");
         }
-        for (int[] o : EXIT_PORTAL) {
-            if (!level.getBlockState(hatch.offset(o[0], o[1], o[2])).is(Blocks.END_PORTAL)) {
-                return new Result(false, "not built over an End exit portal");
-            }
+        if (!allMatch(level, hatch, BEDROCK, Blocks.BEDROCK) || !allMatch(level, hatch, EXIT_PORTAL, Blocks.END_PORTAL)) {
+            return new Result(false, "not built on a complete End exit portal");
         }
-        for (int[] o : RECEPTACLES) {
-            if (!level.getBlockState(hatch.offset(o[0], o[1], o[2])).is(PFBlocks.END_CRYSTAL_RECEPTACLE.get())) {
-                return new Result(false, "missing an End Crystal Receptacle");
-            }
+        if (!allMatch(level, hatch, RECEPTACLES, PFBlocks.END_CRYSTAL_RECEPTACLE.get())) {
+            return new Result(false, "missing an End Crystal Receptacle");
         }
-        for (int[] o : NETHER_STAR) {
-            if (!level.getBlockState(hatch.offset(o[0], o[1], o[2])).is(PFBlocks.REINFORCED_NETHER_STAR_FROGLIGHT.get())) {
-                return new Result(false, "missing a Reinforced Nether Star Froglight");
-            }
+        if (!allMatch(level, hatch, NETHER_STAR, PFBlocks.REINFORCED_NETHER_STAR_FROGLIGHT.get())) {
+            return new Result(false, "missing a Reinforced Nether Star Froglight");
         }
-        for (int[] o : WSS_CORNERS) {
-            if (!level.getBlockState(hatch.offset(o[0], o[1], o[2])).is(PFBlocks.REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT.get())) {
-                return new Result(false, "missing a Reinforced Wither Skeleton Skull Froglight");
-            }
+        if (!allMatch(level, hatch, WSS, PFBlocks.REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT.get())) {
+            return new Result(false, "missing a Reinforced Wither Skeleton Skull Froglight");
         }
         return new Result(true, "ready");
+    }
+
+    private static boolean allMatch(LevelReader level, BlockPos hatch, int[][] offsets, Block block) {
+        for (int[] o : offsets) {
+            if (!level.getBlockState(hatch.offset(o[0], o[1], o[2])).is(block)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** The four receptacle positions for a Hatch at {@code hatch} (the summon reads these). */
