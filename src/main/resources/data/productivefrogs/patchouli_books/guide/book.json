@@ -1,0 +1,10 @@
+{
+  "name": "Productive Frogs",
+  "landing_text": "Raise frogs, farm slimes, and harvest Froglights into the resources you need. This guide walks the whole loop and every machine - flip through to see how it fits together.",
+  "use_resource_pack": true,
+  "i18n": false,
+  "model": "patchouli:book_brown",
+  "show_progress": false,
+  "creative_tab": "productivefrogs:productive_frogs",
+  "version": "1"
+}

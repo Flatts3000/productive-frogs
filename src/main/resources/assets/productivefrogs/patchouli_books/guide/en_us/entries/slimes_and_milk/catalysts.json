@@ -1,0 +1,17 @@
+{
+  "name": "Slime Milk Catalysts",
+  "icon": "productivefrogs:count_catalyst",
+  "category": "productivefrogs:slimes_and_milk",
+  "sortnum": 200,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Drop a catalyst item into a placed Slime Milk source to upgrade it:$(br2)Count adds more spawns before it drains. Speed shortens the wait between spawns. Quantity spawns more slimes at once. Endless makes the source never run dry."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:count_catalyst",
+      "text": "Stack them up to turn one source into a steady, hands-off supply. Look at a source with Jade to see its remaining spawns and which upgrades it carries."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Resource Slimes",
+  "icon": "minecraft:slime_ball",
+  "category": "productivefrogs:slimes_and_milk",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A Resource Slime is a slime tied to one resource. You make the first one by priming: hold a resource item (an iron ingot, say) and use it on a Productive Frogs slime of the right species - it becomes that resource's slime.$(br2)Once a slime line is going, splits can discover new resource slimes on their own."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:slime_bucket",
+      "text": "Catch a size-1 Resource Slime in a Slime Bucket (right-click it). The bucket remembers the variant, so you can carry it, release it elsewhere, or feed it into the Slime Milker. You can also right-click a frog with a matching variant bucket to feed it directly."
+    }
+  ]
+}

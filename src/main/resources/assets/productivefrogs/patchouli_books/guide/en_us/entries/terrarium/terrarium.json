@@ -1,0 +1,44 @@
+{
+  "name": "The Terrarium",
+  "icon": "productivefrogs:terrarium_controller",
+  "category": "productivefrogs:terrarium",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The Terrarium is a sealed multiblock that runs the whole frog loop on its own. Build the box, seal it, and pipe Slime Milk into the Controller: ceiling Sprinklers rain slimes down, frogs raised in the Incubators eat them, and the Froglights drop into the Hatch for piping out."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "It is a 7x7x7 shell of any block in the terrarium_shell tag, around a 5x5x4 cavity (5 wide, 5 deep, 4 tall).$(br2)On one wall: the Controller (the brain - pipe milk here). Opposite it: the Hatch (output). An Incubator goes on a wall facing inward (it grows frogs in place; it is optional - lead or net frogs in instead). Sprinklers line the ceiling, facing down."
+    },
+    {
+      "type": "patchouli:multiblock",
+      "name": "The Terrarium",
+      "text": "Seal the shell, place the Controller, then look at it - it lights up when the structure is valid.",
+      "multiblock": {
+        "mapping": {
+          "S": "minecraft:stone",
+          "A": "minecraft:air",
+          "0": "minecraft:air",
+          "P": "productivefrogs:sprinkler[facing=down]",
+          "C": "productivefrogs:terrarium_controller[facing=west]",
+          "H": "productivefrogs:hatch[facing=east]",
+          "I": "productivefrogs:incubator[facing=north]"
+        },
+        "pattern": [
+          ["SSSSSSS", "SPPPPPS", "SPPPPPS", "SPPPPPS", "SPPPPPS", "SPPPPPS", "SSSSSSS"],
+          ["SSSSSSS", "SAAAAAS", "SAAAAAS", "SAAAAAS", "SAAAAAS", "SAAAAAS", "SSSSSSS"],
+          ["SSSISSS", "SAAAAAS", "SAAAAAS", "CAAAAAH", "SAAAAAS", "SAAAAAS", "SSSSSSS"],
+          ["SSSSSSS", "SAAAAAS", "SAAAAAS", "SAA0AAS", "SAAAAAS", "SAAAAAS", "SSSSSSS"],
+          ["SSSSSSS", "SAAAAAS", "SAAAAAS", "SAAAAAS", "SAAAAAS", "SAAAAAS", "SSSSSSS"],
+          ["SSSSSSS", "SSSSSSS", "SSSSSSS", "SSSSSSS", "SSSSSSS", "SSSSSSS", "SSSSSSS"]
+        ]
+      }
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Drop a bottled Frog Egg into an Incubator to grow a frog inside the habitat, bred stats kept. Frogs bred inside lay back into an Incubator instead of seeking water, and the box enforces a frog cap so it never overflows. The Hatch opens like a chest and also vacuums up loose drops in the cavity."
+    }
+  ]
+}

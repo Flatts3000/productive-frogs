@@ -1,0 +1,12 @@
+{
+  "name": "The Spawnery",
+  "icon": "productivefrogs:spawnery",
+  "category": "productivefrogs:appliances",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The Spawnery turns glass bottles into bottled frogspawn (Frog Eggs), fueled by slime balls. Add a species primer in its slot and the eggs come out primed to that species; with no primer you get plain frogspawn.$(br2)It is a skyblock bootstrap for worlds with no swamp, and ships off by default - a pack turns it on."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "The Six Species",
+  "icon": "minecraft:frogspawn",
+  "category": "productivefrogs:frogs",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "There are six frog species - Cave, Geode, Bog, Tide, Infernal, and Void. Each species only eats slimes of its own kind, and each kind covers a family of resources.$(br2)So variety lives on the slime side: one species of frog handles many resources, as long as the slime matches."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "minecraft:frogspawn",
+      "text": "To get a frog of a species, prime vanilla frogspawn with that species' primer item, then let it hatch and grow. A bottled Frog Egg works the same way. The species is locked in for life."
+    }
+  ]
+}

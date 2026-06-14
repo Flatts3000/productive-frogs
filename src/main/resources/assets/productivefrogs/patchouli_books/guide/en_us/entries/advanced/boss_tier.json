@@ -1,0 +1,21 @@
+{
+  "name": "The Boss Tier",
+  "icon": "productivefrogs:nether_star_catalyst",
+  "category": "productivefrogs:advanced",
+  "sortnum": 100,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Four boss resources - Wither Skeleton Skull, Nether Star, Dragon Egg, and Dragon's Breath - sit at the top of the tree. Their slimes are prime-only: they never appear from ordinary splits, you must prime them deliberately."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:nether_star_catalyst",
+      "text": "A boss Slime Milk source spawns nothing until its matching catalyst block walls it in on all six faces - a catalyst altar. Build the altar to switch the source on."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Boss Slime Milk is toxic: standing in it inflicts Wither, which is why you seal it behind the altar. The slimes it spawns are unharmed, and creative players are immune.$(br2)Boss Froglights feed the endgame crafts, like the Froglight Cleaver."
+    }
+  ]
+}
