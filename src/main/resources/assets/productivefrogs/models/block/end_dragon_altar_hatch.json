@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "minecraft:block/end_stone_bricks"
+    "all": "productivefrogs:block/end_dragon_altar_hatch"
   }
 }
