@@ -142,6 +142,18 @@ Renewable lava, two ways. **Lava Froglights now burn as furnace fuel** worth one
 
 Breeding balance. The default frog-stat improvement chance rises from `0.20` to `0.40` per stat (#232), so a breed now improves at least one of the three stats about 78% of the time (up from ~49%) - a run of breeds with no gain becomes rare while a single breed still usually moves only one or two stats, not all three. Tuning only: the inheritance mechanic is unchanged and packs can still retune `breeding.improvementChance`.
 
+### v1.19.2 (shipped 2026-06-10): No More Spilled Milk
+
+Bug-fix and advancements release. A curated Productive Frogs advancement tab for standalone play - an entry node, one per species you farm, one per boss catalyst altar built, and one for crafting the production machines (#183). Three fixes: the Slime Bucket no longer dumps a vanilla water source when you release the slime (#234); water, lava, and foreign modded fluids no longer flow into and wash away Slime Milk source blocks (#235); and Jade's tadpole "Growing time" reads correctly when a pack speeds up tadpole growth (#238).
+
+### v1.20.0 (shipped 2026-06-10): Full Bloom
+
+The stability milestone - promoted out of beta to a stable Release on CurseForge. No gameplay changes since v1.19.2; across the v1.9-v1.19 line the full V1 scope (six species, the data-driven variant roster, the appliances, frog stat breeding, the boss/endgame tier, the Terrarium, the cross-mod variant pools) was built out and soaked in the Sky Frogs pack, and the pre-release config suite (#200/#202/#203/#204) shipped in v1.18. The CurseForge release channel is now Release.
+
+### v1.21.0 (shipped 2026-06-13): By the Book
+
+The in-game guide book and a new frog perch. A **Patchouli guide book** (#243) - craft a book with a slime ball - walks the whole mod start to finish (the core loop, every species, spawning slimes, Resource Slimes and Slime Milk, milk catalysts, Froglights and Brewed Froglights, the appliances, the Terrarium with a build diagram, and the four boss catalyst altars each with its own altar diagram) and is extensible by modpacks via resource packs; it is inert when Patchouli is absent. The **Sweetslimed Lily Pad** (#214) is a frog perch: right-click a placed lily pad with a Sweetslime and a Resource Frog within range claims it (one frog per pad) and holds position on top of the pad while still eating same-species slimes in reach - pin a frog over a hopper beside a Slime Milk source for a hands-off collection point, the active counterpart to the Frog Net and the Terrarium. This release also de-tediumed the breeding stat grind with a **blend-then-climb** inheritance (offspring stat is the parent average, then a chance to climb one above it; no regression, and at least one stat improves every breed - #241), and fixed a fully enclosed boss catalyst altar spawning its slime inside the sealed Slime Milk source block (#242).
+
 ---
 
 ## v2: automation

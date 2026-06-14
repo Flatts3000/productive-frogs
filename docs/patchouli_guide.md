@@ -10,11 +10,14 @@
   (`use_resource_pack: true`, so content is loaded from `assets/` and is
   resource-pack-mergeable).
 - **Content:** `assets/productivefrogs/patchouli_books/guide/en_us/{categories,entries}/...`
-  - Categories (spaced `sortnum`s, 100 apart, so new ones slot between): `getting_started` (0),
-    `frogs` (100), `slimes_and_milk` (200), `appliances` (300), `terrarium` (400), `advanced` (500).
-  - Entries cover the core loop, the six species + stats/breeding + Frog Net + lily pad perch,
-    Resource Slimes + Slime Milk + catalysts, the Spawnery / Milker+Churn / Crucible+Mold, the
-    Terrarium (with a `multiblock` page), and the Advanced tier (Brewed Froglights + the boss tier).
+  - Categories (spaced `sortnum`s, 50-100 apart, so new ones slot between): `getting_started` (0),
+    `frogs` (100), `spawning_slimes` (150), `slimes_and_milk` (200), `froglights` (250),
+    `appliances` (300), `terrarium` (400), `advanced` (500).
+  - Entries cover the core loop; the six species + stats/breeding + Frog Net + lily pad perch;
+    a per-species chapter for where each slime spawns; Resource Slimes + Slime Milk + catalysts;
+    Froglights + Brewed Froglights; the Spawnery / Milker+Churn / Crucible+Mold; the Terrarium
+    (with a `multiblock` page) and each of its blocks; and the boss tier - Brewed Froglights plus
+    a chapter per catalyst, each with its own `multiblock` altar page.
 - **Obtaining:** a craftable book (vanilla book + slime ball -> `patchouli:guide_book` stamped
   with the `productivefrogs:guide` component), recipe gated by `neoforge:conditions -> mod_loaded: patchouli`
   at `data/productivefrogs/recipe/guide_book.json`. Patchouli's `/patchouli` command also opens it.
