@@ -65,8 +65,9 @@ Full authoring guide: [docs on GitHub](https://github.com/Flatts3000/productive-
 
 * **[JEI](https://www.curseforge.com/minecraft/mc-mods/jei)**: Information pages on every Productive Frogs item explain the production role, who hunts what, what smelts to what. Hover an item, press **U** or **R**.
 * **[Jade](https://www.curseforge.com/minecraft/mc-mods/jade)**: shows the species and variant in the in-world tooltip.
+* **[Patchouli](https://www.curseforge.com/minecraft/mc-mods/patchouli)**: unlocks the in-game guide book. Craft a book with a slime ball for an illustrated walkthrough of the whole mod, from your first slime to the endgame, with build diagrams for the Terrarium and each boss altar. Modpack authors can extend it with their own pages.
 
-Both are optional. The mod works fine without them; you just lose the contextual UI.
+They're all optional. The mod works fine without them; you just lose the contextual UI and the in-game guide.
 
 ## Platform
 
@@ -136,6 +137,12 @@ The mod is fully playable today. Everything below is live on CurseForge. Targets
 **v1.19.0 (shipped): renewable lava, two ways.** Lava Froglights now burn as furnace fuel worth a full lava bucket, so the renewable-lava loop doubles as a renewable solid fuel with no empty bucket to juggle. And the Froglight Crucible now melts stone straight to lava - drop in cobblestone, stone, gravel, or netherrack over heat and it renders down to lava, no frog required (matching Ex Deorum's heated crucible).
 
 **v1.19.1 (shipped): Survival of the Fittest.** Frog stat breeding climbs faster. A breed now improves at least one of the three stats about three-quarters of the time (up from roughly half), so stat farming feels rewarding instead of grindy - while a single breed still usually nudges just one or two stats, not all three. Packs can still retune the rate in the config.
+
+**v1.19.2 (shipped): No More Spilled Milk.** Fixes and a milestone tracker. Water, lava, and modded fluids can no longer flow into and wash away a Slime Milk source block, and releasing a captured slime no longer leaves a stray water source behind. Jade's tadpole growth timer now reads correctly when a pack speeds up growth. Plus a built-in advancement set that guides standalone play from your first Slime Bucket through each species and the boss altars.
+
+**v1.20.0 (shipped): Full Bloom.** Out of beta. After a long beta soak in the Sky Frogs pack, the mod is promoted to a stable release on CurseForge - same content as v1.19.2, now marked stable.
+
+**v1.21.0 (shipped): By the Book.** An in-game guide and a new way to park a frog. Craft a guide book (a book plus a slime ball, with [Patchouli](https://www.curseforge.com/minecraft/mc-mods/patchouli) installed) for an illustrated walkthrough of the whole mod, including build diagrams for the Terrarium and each boss altar; modpacks can extend it with their own pages. The new Sweetslimed Lily Pad is a frog perch: right-click a lily pad with a Sweetslime and a frog claims it and settles on top, holding its spot over a collection point while it keeps eating nearby - handy for pinning a frog over a hopper. Breeding got friendlier too: a bred frog never comes out worse than its parents' average and at least one stat improves every time, so laddering up a line no longer stalls. And a fully walled boss altar no longer traps its slime inside the milk source.
 
 ### v2: automation
 
