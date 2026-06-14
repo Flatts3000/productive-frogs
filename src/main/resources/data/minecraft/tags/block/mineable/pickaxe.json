@@ -9,6 +9,8 @@
     "productivefrogs:terrarium_controller",
     "productivefrogs:sprinkler",
     "productivefrogs:incubator",
-    "productivefrogs:hatch"
+    "productivefrogs:hatch",
+    "productivefrogs:reinforced_wither_skeleton_skull_froglight",
+    "productivefrogs:reinforced_nether_star_froglight"
   ]
 }

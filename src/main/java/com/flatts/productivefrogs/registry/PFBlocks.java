@@ -243,6 +243,20 @@ public final class PFBlocks {
     public static final DeferredBlock<Block> WITHER_SKELETON_SKULL_CATALYST = registerCatalyst("wither_skeleton_skull_catalyst");
     public static final DeferredBlock<Block> DRAGON_BREATH_CATALYST = registerCatalyst("dragon_breath_catalyst");
 
+    /**
+     * Reinforced Froglights (#249) - the dragon altar's structural blocks, and the
+     * main reason they exist. Bespoke, decorative apart from that role; crafted from
+     * 4 obsidian + the matching boss Froglight (Wither Skeleton Skull / Nether Star).
+     * Full-cube, <b>non-directional</b> blocks (no axis state) with vanilla Froglight
+     * light (15) and obsidian-tier blast resistance so the altar reads as dragon-proof.
+     * No BlockEntity and no variant component - each is its own fixed block, unlike the
+     * data-driven {@link ConfigurableFroglightBlock}.
+     */
+    public static final DeferredBlock<Block> REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT =
+        BLOCKS.registerBlock("reinforced_wither_skeleton_skull_froglight", Block::new, reinforcedFroglightProperties());
+    public static final DeferredBlock<Block> REINFORCED_NETHER_STAR_FROGLIGHT =
+        BLOCKS.registerBlock("reinforced_nether_star_froglight", Block::new, reinforcedFroglightProperties());
+
     /** Memoized {@link #catalystForVariant()} - the blocks are stable post-registration. */
     private static Map<ResourceLocation, Block> catalystMap;
 
@@ -277,6 +291,15 @@ public final class PFBlocks {
                 .sound(SoundType.STONE)
                 .requiresCorrectToolForDrops()
         );
+    }
+
+    /** Shared properties for the two Reinforced Froglights (#249). */
+    private static BlockBehaviour.Properties reinforcedFroglightProperties() {
+        return BlockBehaviour.Properties.of()
+            .mapColor(MapColor.SAND)
+            .strength(3.0F, 1200.0F)   // obsidian-tier blast resistance (dragon-proof); moderate hardness
+            .lightLevel(state -> 15)
+            .sound(SoundType.FROGLIGHT);
     }
 
     private static Map<Category, DeferredBlock<PrimedFrogEggBlock>> buildPrimedEggs() {
