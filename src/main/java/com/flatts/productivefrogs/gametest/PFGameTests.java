@@ -5999,4 +5999,71 @@ public final class PFGameTests {
             helper.assertTrue(absPad.equals(frog.getActivePerch()),
                 "frog should be claimed by the pad at " + absPad + ", perch=" + frog.getActivePerch()));
     }
+
+    /**
+     * The pad teleport-pins the frog's centre to the pad centre, on top (not below /
+     * inside). The frog spawns on the pad so it intersects immediately; once claimed
+     * it is held at the exact centre + pad-top Y.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void sweetslimedLilyPadPinsFrogToCentreOnTop(GameTestHelper helper) {
+        BlockPos padPos = new BlockPos(2, 2, 2);
+        helper.setBlock(padPos.below(), Blocks.WATER);
+        helper.setBlock(padPos, PFBlocks.SWEETSLIMED_LILY_PAD.get());
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), padPos);
+        frog.setCategory(Category.CAVE);
+
+        BlockPos absPad = helper.absolutePos(padPos);
+        double cx = absPad.getX() + 0.5;
+        double cz = absPad.getZ() + 0.5;
+        double py = absPad.getY() + 0.09375; // pad top (matches PAD_TOP)
+        helper.succeedWhen(() -> {
+            helper.assertTrue(absPad.equals(frog.getActivePerch()), "frog not yet claimed");
+            helper.assertTrue(
+                Math.abs(frog.getX() - cx) < 0.2 && Math.abs(frog.getZ() - cz) < 0.2
+                    && Math.abs(frog.getY() - py) < 0.25,
+                "frog should be pinned to the pad centre/top (" + cx + ", " + py + ", " + cz
+                    + "), was " + frog.position());
+        });
+    }
+
+    /** One frog per pad: with two frogs near a single pad, exactly one is ever claimed. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void sweetslimedLilyPadClaimsOnlyOneFrog(GameTestHelper helper) {
+        BlockPos padPos = new BlockPos(2, 2, 2);
+        helper.setBlock(padPos.below(), Blocks.WATER);
+        helper.setBlock(padPos, PFBlocks.SWEETSLIMED_LILY_PAD.get());
+        helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(1, 2, 1)).setCategory(Category.CAVE);
+        helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(3, 2, 3)).setCategory(Category.CAVE);
+
+        BlockPos absPad = helper.absolutePos(padPos);
+        helper.succeedWhen(() -> {
+            long claimed = helper.getEntities(PFEntities.RESOURCE_FROG.get()).stream()
+                .filter(f -> absPad.equals(f.getActivePerch())).count();
+            helper.assertTrue(claimed == 1, "exactly one frog should be claimed by the pad, got " + claimed);
+        });
+    }
+
+    /** Breaking the pad releases the frog: with nothing re-asserting the claim, it lapses. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 160)
+    public static void sweetslimedLilyPadReleasesFrogWhenBroken(GameTestHelper helper) {
+        BlockPos padPos = new BlockPos(2, 2, 2);
+        helper.setBlock(padPos.below(), Blocks.WATER);
+        helper.setBlock(padPos, PFBlocks.SWEETSLIMED_LILY_PAD.get());
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), padPos);
+        frog.setCategory(Category.CAVE);
+
+        BlockPos absPad = helper.absolutePos(padPos);
+        // The frog is claimed within a scan interval; break the pad so nothing re-asserts.
+        helper.runAfterDelay(40, () -> {
+            helper.assertTrue(absPad.equals(frog.getActivePerch()), "frog should be claimed before the pad is broken");
+            helper.setBlock(padPos, Blocks.AIR);
+        });
+        // Claim TTL is 40 ticks; well after that with no pad, it must have lapsed.
+        helper.runAfterDelay(130, () -> {
+            helper.assertTrue(frog.getActivePerch() == null,
+                "frog claim should lapse after the pad is broken, perch=" + frog.getActivePerch());
+            helper.succeed();
+        });
+    }
 }

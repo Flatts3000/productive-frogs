@@ -51,8 +51,12 @@ public class SweetslimedLilyPadBlockEntity extends BlockEntity {
     private static final float PERCH_SPEED = 1.0F;
     /** Lily pad VoxelShape height (1.5/16): the frog rests on the pad's top surface. */
     private static final double PAD_TOP = 0.09375;
-    /** Leniency on the pad-intersection test so a frog stepping adjacent counts as "on the pad". */
-    private static final double PAD_TOUCH_SLACK = 0.3;
+    /** "On the pad" horizontal radius (squared): within ~1.5 blocks of the pad centre. */
+    private static final double ON_PAD_RADIUS_SQ = 2.25;
+    /** "On the pad" vertical band: within 3 blocks of the pad - catches a frog sunk into the water below it. */
+    private static final double ON_PAD_VERTICAL = 3.0;
+    /** Vertical half-extent of the claim scan box (frogs perch at water level; no need for a full cube). */
+    private static final int PERCH_VERTICAL = 6;
 
     /** The frog this pad holds (transient; re-claimed after a reload). */
     @Nullable
@@ -68,7 +72,11 @@ public class SweetslimedLilyPadBlockEntity extends BlockEntity {
         }
         int range = PFConfig.lilyPadPerchRange();
         ResourceFrog frog = be.resolveClaimant(server, pos, range);
-        if (frog == null && server.getGameTime() % SCAN_INTERVAL == 0L) {
+        // The only non-trivial cost is the unclaimed-pad entity scan. A claimed pad
+        // (the normal case) never reaches it - resolveClaimant is an O(1) UUID lookup.
+        // Stagger the scan by position so a field of idle pads doesn't all scan the
+        // same tick, and only scan when this pad has no frog.
+        if (frog == null && (server.getGameTime() + Math.floorMod(pos.asLong(), SCAN_INTERVAL)) % SCAN_INTERVAL == 0L) {
             frog = findUnclaimedFrog(server, pos, range);
             if (frog != null) {
                 be.claimant = frog.getUUID();
@@ -109,7 +117,9 @@ public class SweetslimedLilyPadBlockEntity extends BlockEntity {
     /** Nearest live, in-range Resource Frog with no active perch (one frog per pad), or null. */
     @Nullable
     private static ResourceFrog findUnclaimedFrog(ServerLevel level, BlockPos pos, int range) {
-        AABB box = new AABB(pos).inflate(range);
+        // Frogs perch at water level, so keep the scan box flat vertically - a full
+        // 2*range cube would scan several times the volume for no benefit.
+        AABB box = new AABB(pos).inflate(range, Math.min(range, PERCH_VERTICAL), range);
         double cx = pos.getX() + 0.5;
         double cy = pos.getY() + 0.5;
         double cz = pos.getZ() + 0.5;
@@ -140,8 +150,17 @@ public class SweetslimedLilyPadBlockEntity extends BlockEntity {
      */
     private static void holdOnPad(BlockPos pos, ResourceFrog frog) {
         Brain<?> brain = frog.getBrain();
-        // "Intersects the pad" with a little leniency, so stepping adjacent counts.
-        boolean onPad = frog.getBoundingBox().intersects(new AABB(pos).inflate(PAD_TOUCH_SLACK));
+        double cx = pos.getX() + 0.5;
+        double cz = pos.getZ() + 0.5;
+        double dx = cx - frog.getX();
+        double dz = cz - frog.getZ();
+        double horizSq = dx * dx + dz * dz;
+        double dy = Math.abs((pos.getY() + 0.5) - frog.getY());
+        // "On the pad" = horizontally over it and within a vertical band. Crucially NOT
+        // a strict bbox-intersect with the pad block: a frog approaching over open water
+        // sinks through the non-solid pad into the water below (bbox below the pad), and
+        // must still count so the teleport LIFTS it up onto the pad rather than missing.
+        boolean onPad = horizSq <= ON_PAD_RADIUS_SQ && dy <= ON_PAD_VERTICAL;
         if (!onPad) {
             // Still approaching - walk onto the pad. Don't override an active hunt;
             // let it reach an in-range slime first, it returns to the pad after.
@@ -152,8 +171,6 @@ public class SweetslimedLilyPadBlockEntity extends BlockEntity {
             return;
         }
         // On the pad: pin the frog's centre to the pad centre, on top, and freeze it.
-        double cx = pos.getX() + 0.5;
-        double cz = pos.getZ() + 0.5;
         double py = pos.getY() + PAD_TOP;
         brain.eraseMemory(MemoryModuleType.WALK_TARGET);
         // Keep the long jump on cooldown so it never launches off the pad.
