@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.CastingMoldBlock;
 import com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock;
 import com.flatts.productivefrogs.content.block.CrucibleBlock;
+import com.flatts.productivefrogs.content.block.EndCrystalReceptacleBlock;
 import com.flatts.productivefrogs.content.block.HatchBlock;
 import com.flatts.productivefrogs.content.block.IncubatorBlock;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
@@ -257,6 +258,15 @@ public final class PFBlocks {
     public static final DeferredBlock<Block> REINFORCED_NETHER_STAR_FROGLIGHT =
         BLOCKS.registerBlock("reinforced_nether_star_froglight", Block::new, reinforcedFroglightProperties());
 
+    /**
+     * End Crystal Receptacle (#249) - the dragon altar's four crystal sockets, at
+     * the exit-portal crystal positions. Holds one End Crystal; the {@code FILLED}
+     * blockstate flips the texture and drives the on-top crystal render. Obsidian-
+     * tier blast resistance, so it reads as part of the dragon-proof altar.
+     */
+    public static final DeferredBlock<EndCrystalReceptacleBlock> END_CRYSTAL_RECEPTACLE =
+        BLOCKS.registerBlock("end_crystal_receptacle", EndCrystalReceptacleBlock::new, receptacleProperties());
+
     /** Memoized {@link #catalystForVariant()} - the blocks are stable post-registration. */
     private static Map<ResourceLocation, Block> catalystMap;
 
@@ -300,6 +310,15 @@ public final class PFBlocks {
             .strength(3.0F, 1200.0F)   // obsidian-tier blast resistance (dragon-proof); moderate hardness
             .lightLevel(state -> 15)
             .sound(SoundType.FROGLIGHT);
+    }
+
+    /** Shared properties for the End Crystal Receptacle (#249). */
+    private static BlockBehaviour.Properties receptacleProperties() {
+        return BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_BLACK)
+            .strength(3.0F, 1200.0F)   // obsidian-tier blast resistance (dragon-proof altar)
+            .sound(SoundType.STONE)
+            .requiresCorrectToolForDrops();
     }
 
     private static Map<Category, DeferredBlock<PrimedFrogEggBlock>> buildPrimedEggs() {

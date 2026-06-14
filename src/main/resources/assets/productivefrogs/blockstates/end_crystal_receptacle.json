@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "filled=false": { "model": "productivefrogs:block/end_crystal_receptacle" },
+    "filled=true": { "model": "productivefrogs:block/end_crystal_receptacle_filled" }
+  }
+}

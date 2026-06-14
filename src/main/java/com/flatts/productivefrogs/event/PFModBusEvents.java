@@ -264,6 +264,15 @@ public final class PFModBusEvents {
             (be, side) -> be.inventory()
         );
 
+        // End Crystal Receptacle (#249): insert-only - hoppers/pipes feed End
+        // Crystals in; the dragon-altar summon spends them, so extraction is
+        // blocked (a hopper below can't steal a primed crystal).
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            PFBlockEntities.END_CRYSTAL_RECEPTACLE.get(),
+            (be, side) -> be.insertOnlyHandler()
+        );
+
         // Per-variant Slime Milk buckets (v1.8) are SlimeMilkBucketItem extends
         // BucketItem. NeoForge only auto-registers FluidHandler.ITEM for the exact
         // BucketItem class, not subclasses, so wire each up explicitly - this is

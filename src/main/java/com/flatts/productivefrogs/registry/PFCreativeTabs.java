@@ -94,6 +94,8 @@ public final class PFCreativeTabs {
                         // crafted from boss Froglights so they ride the same boss gate.
                         output.accept(PFItems.REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT.get());
                         output.accept(PFItems.REINFORCED_NETHER_STAR_FROGLIGHT.get());
+                        // End Crystal Receptacle (#249) - dragon-altar crystal socket.
+                        output.accept(PFItems.END_CRYSTAL_RECEPTACLE.get());
                     }
                     // Terrarium multiblock machines (#185).
                     output.accept(PFItems.TERRARIUM_CONTROLLER.get());
