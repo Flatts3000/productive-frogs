@@ -107,6 +107,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         registration.registerBlockComponent(provider,
             com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock.class);
         registration.registerBlockComponent(provider,
+            com.flatts.productivefrogs.content.block.EndDragonAltarHatchBlock.class);
+        registration.registerBlockComponent(provider,
             com.flatts.productivefrogs.content.block.TerrariumControllerBlock.class);
         registration.registerBlockComponent(provider,
             com.flatts.productivefrogs.content.block.SprinklerBlock.class);
@@ -172,6 +174,17 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
             BlockEntity be = accessor.getBlockEntity();
             if (be == null) {
+                return;
+            }
+            // End Dragon Altar Hatch (#249): show whether the surrounding altar
+            // validates. Reads only block identity, so it is a pure client check.
+            if (be instanceof com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity) {
+                com.flatts.productivefrogs.content.multiblock.DragonAltarValidator.Result r =
+                    com.flatts.productivefrogs.content.multiblock.DragonAltarValidator.validate(
+                        accessor.getLevel(), accessor.getPosition());
+                tooltip.add(Component.translatable(r.valid()
+                    ? "productivefrogs.jade.dragon_altar.ready"
+                    : "productivefrogs.jade.dragon_altar.incomplete", r.detail()));
                 return;
             }
             net.minecraft.nbt.CompoundTag data = accessor.getServerData();
