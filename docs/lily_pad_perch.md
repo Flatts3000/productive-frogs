@@ -1,9 +1,19 @@
 # Sweetslimed Lily Pad (frog perch)
 
-> **Status: PROPOSED** (issue #214, 2026-06-13). A perch that pins a working Resource
+> **Status: IMPLEMENTED** (issue #214, 2026-06-13). A perch that pins a working Resource
 > Frog over a spot without leashing it. Net = move a frog; Terrarium = contain a loop;
 > **lily pad = pin one frog over a collection point** (e.g. on/next to a hopper beside a
 > Slime Milk source) so it eats slimes and drops Froglights in place.
+>
+> **Implementation note (as-built):** the perch is driven by the pad's BlockEntity, not
+> by a frog-brain behavior as the AI section below originally sketched. The pad BE does a
+> cheap entity scan, claims the nearest free frog (one-per-pad), and nudges it back via
+> the vanilla `WALK_TARGET` memory when it strays and isn't hunting; the claim is a short
+> expiring link stored on the frog (`ResourceFrog#getActivePerch`), re-asserted each scan
+> and auto-lapsing when the pad is broken. This needs no new memory type, sensor, or
+> brain-priority surgery, is GameTest-verifiable, and yields the identical player-facing
+> behavior. The fine pinning feel (how tightly the frog holds) is the one piece that
+> still wants a `runClient` pass to tune (`STRAY_NUDGE_SQ` / nudge cadence).
 
 ## Decisions (locked with the maintainer)
 

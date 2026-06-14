@@ -5978,4 +5978,25 @@ public final class PFGameTests {
         }
         helper.succeed();
     }
+
+    /**
+     * Sweetslimed lily pad perch (#214, docs/lily_pad_perch.md): a placed pad claims
+     * the nearest Resource Frog and pins it (the frog's {@code getActivePerch()} points
+     * at the pad). The pad's BlockEntity ticker does the claiming on its scan interval,
+     * so we let the world tick and assert the claim lands.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void sweetslimedLilyPadClaimsNearbyFrog(GameTestHelper helper) {
+        BlockPos padPos = new BlockPos(2, 2, 2);
+        helper.setBlock(padPos.below(), Blocks.WATER); // WaterlilyBlock needs water below to survive
+        helper.setBlock(padPos, PFBlocks.SWEETSLIMED_LILY_PAD.get());
+
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(3, 2, 3));
+        frog.setCategory(Category.CAVE);
+
+        BlockPos absPad = helper.absolutePos(padPos);
+        helper.succeedWhen(() ->
+            helper.assertTrue(absPad.equals(frog.getActivePerch()),
+                "frog should be claimed by the pad at " + absPad + ", perch=" + frog.getActivePerch()));
+    }
 }

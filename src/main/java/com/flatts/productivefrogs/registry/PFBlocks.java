@@ -11,6 +11,7 @@ import com.flatts.productivefrogs.content.block.SlimeChurnBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
 import com.flatts.productivefrogs.content.block.SpawneryBlock;
 import com.flatts.productivefrogs.content.block.SprinklerBlock;
+import com.flatts.productivefrogs.content.block.SweetslimedLilyPadBlock;
 import com.flatts.productivefrogs.content.block.TerrariumControllerBlock;
 import com.flatts.productivefrogs.data.Category;
 import java.util.Collections;
@@ -209,6 +210,23 @@ public final class PFBlocks {
             .mapColor(MapColor.FIRE)
             .strength(2.0F)
             .sound(SoundType.METAL)
+    );
+
+    /**
+     * The Sweetslimed Lily Pad (#214, docs/lily_pad_perch.md) - a frog perch. A
+     * {@link WaterlilyBlock} (sits on water, instant break) with a BlockEntity ticker
+     * that pins the nearest Resource Frog to it. Lily-pad-like properties; instant
+     * break and DESTROY push-reaction match the vanilla pad.
+     */
+    public static final DeferredBlock<SweetslimedLilyPadBlock> SWEETSLIMED_LILY_PAD = BLOCKS.registerBlock(
+        "sweetslimed_lily_pad",
+        SweetslimedLilyPadBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.PLANT)
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .noOcclusion()
+            .pushReaction(PushReaction.DESTROY)
     );
 
     /**

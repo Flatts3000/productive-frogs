@@ -45,6 +45,8 @@ public final class PFConfig {
     public static final ModConfigSpec.BooleanValue HOPPING_ENABLED;
     public static final ModConfigSpec.BooleanValue FROGLIGHT_WEAPON_ENABLED;
     public static final ModConfigSpec.BooleanValue PRINCESS_KISS_ENABLED;
+    public static final ModConfigSpec.BooleanValue LILY_PAD_PERCH_ENABLED;
+    public static final ModConfigSpec.IntValue LILY_PAD_PERCH_RANGE;
     public static final ModConfigSpec.IntValue CATALYST_COUNT_PER;
     public static final ModConfigSpec.IntValue CATALYST_MAX_SPEED_LEVEL;
     public static final ModConfigSpec.IntValue CATALYST_MAX_QUANTITY_LEVEL;
@@ -127,6 +129,8 @@ public final class PFConfig {
     public static final int DEFAULT_REACH_RADIUS_MIN = 8;
     public static final int DEFAULT_REACH_RADIUS_MAX = 16;
     public static final boolean DEFAULT_FROGS_PERSISTENT = true;
+    // Sweetslimed lily pad perch (#214): how far a frog will travel to a pad.
+    public static final int DEFAULT_LILY_PAD_PERCH_RANGE = 16;
     // Lifecycle defaults chosen to preserve current playable feel: hatch fixed at
     // the low end of vanilla's old random window (3 min), tadpole growth at
     // vanilla's 24000-tick maturation, re-breed cooldown at vanilla's 6000.
@@ -399,6 +403,27 @@ public final class PFConfig {
                 "item does nothing if obtained another way."
             )
             .define("enabled", true);
+
+        builder.pop();
+
+        builder.push("lily_pad_perch");
+
+        LILY_PAD_PERCH_ENABLED = builder
+            .comment(
+                "Whether the Sweetslimed lily pad perch is enabled. Default true.",
+                "Right-click a placed lily pad with a Sweetslime to make a perch; the nearest Resource Frog",
+                "pins to it (one frog per pad) and stays put while still eating slimes and dropping Froglights -",
+                "a way to keep a working frog over a hopper without leashing it. When false the create",
+                "interaction is inert and the block/item is hidden from the creative tab. Resource Frogs only."
+            )
+            .define("enabled", true);
+
+        LILY_PAD_PERCH_RANGE = builder
+            .comment(
+                "How far (blocks) a Resource Frog will travel to reach a sweetslimed lily pad. Default 16,",
+                "matching the max prey-scan reach. Larger pulls frogs from farther at slightly more scan cost."
+            )
+            .defineInRange("range", DEFAULT_LILY_PAD_PERCH_RANGE, 1, 64);
 
         builder.pop();
 
@@ -985,6 +1010,16 @@ public final class PFConfig {
     /** Whether the Princess's Kiss is enabled ({@code princess_kiss.enabled}); fallback true. */
     public static boolean princessKissEnabled() {
         return !SPEC.isLoaded() || PRINCESS_KISS_ENABLED.get();
+    }
+
+    /** Whether the Sweetslimed lily pad perch is enabled ({@code lily_pad_perch.enabled}); fallback true. */
+    public static boolean lilyPadPerchEnabled() {
+        return !SPEC.isLoaded() || LILY_PAD_PERCH_ENABLED.get();
+    }
+
+    /** How far a frog travels to a sweetslimed lily pad ({@code lily_pad_perch.range}); fallback {@value #DEFAULT_LILY_PAD_PERCH_RANGE}. */
+    public static int lilyPadPerchRange() {
+        return SPEC.isLoaded() ? LILY_PAD_PERCH_RANGE.get() : DEFAULT_LILY_PAD_PERCH_RANGE;
     }
 
     /** Whether Slime Milk catalysts are enabled ({@code slime_milk_catalysts.enabled}); fallback true. */
