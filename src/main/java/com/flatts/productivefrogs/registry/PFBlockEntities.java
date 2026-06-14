@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.EndCrystalReceptacleBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.HatchBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
@@ -71,6 +72,13 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "end_crystal_receptacle",
             () -> BlockEntityType.Builder.of(EndCrystalReceptacleBlockEntity::new, PFBlocks.END_CRYSTAL_RECEPTACLE.get()).build(null)
+        );
+
+    /** BE type for the {@code end_dragon_altar_hatch} (#249) - the altar's chest-style output. */
+    public static final Supplier<BlockEntityType<EndDragonAltarHatchBlockEntity>> END_DRAGON_ALTAR_HATCH =
+        BLOCK_ENTITIES.register(
+            "end_dragon_altar_hatch",
+            () -> BlockEntityType.Builder.of(EndDragonAltarHatchBlockEntity::new, PFBlocks.END_DRAGON_ALTAR_HATCH.get()).build(null)
         );
 
     /**

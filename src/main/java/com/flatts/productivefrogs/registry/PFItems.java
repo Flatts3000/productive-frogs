@@ -447,6 +447,9 @@ public final class PFItems {
     // End Crystal Receptacle (#249) - the dragon altar's crystal sockets.
     public static final DeferredItem<BlockItem> END_CRYSTAL_RECEPTACLE =
         ITEMS.registerSimpleBlockItem("end_crystal_receptacle", PFBlocks.END_CRYSTAL_RECEPTACLE, new Item.Properties());
+    // End Dragon Altar Hatch (#249) - the dragon altar's output.
+    public static final DeferredItem<BlockItem> END_DRAGON_ALTAR_HATCH =
+        ITEMS.registerSimpleBlockItem("end_dragon_altar_hatch", PFBlocks.END_DRAGON_ALTAR_HATCH, new Item.Properties());
 
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);

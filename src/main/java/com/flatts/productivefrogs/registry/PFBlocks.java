@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.content.block.CastingMoldBlock;
 import com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock;
 import com.flatts.productivefrogs.content.block.CrucibleBlock;
 import com.flatts.productivefrogs.content.block.EndCrystalReceptacleBlock;
+import com.flatts.productivefrogs.content.block.EndDragonAltarHatchBlock;
 import com.flatts.productivefrogs.content.block.HatchBlock;
 import com.flatts.productivefrogs.content.block.IncubatorBlock;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
@@ -266,6 +267,14 @@ public final class PFBlocks {
      */
     public static final DeferredBlock<EndCrystalReceptacleBlock> END_CRYSTAL_RECEPTACLE =
         BLOCKS.registerBlock("end_crystal_receptacle", EndCrystalReceptacleBlock::new, receptacleProperties());
+
+    /**
+     * End Dragon Altar Hatch (#249) - the altar's output. Same function as the
+     * Terrarium Hatch (open like a chest, pipe items out) but a distinct,
+     * non-directional block; the summon deposits the dragon's drops here.
+     */
+    public static final DeferredBlock<EndDragonAltarHatchBlock> END_DRAGON_ALTAR_HATCH =
+        BLOCKS.registerBlock("end_dragon_altar_hatch", EndDragonAltarHatchBlock::new, receptacleProperties());
 
     /** Memoized {@link #catalystForVariant()} - the blocks are stable post-registration. */
     private static Map<ResourceLocation, Block> catalystMap;

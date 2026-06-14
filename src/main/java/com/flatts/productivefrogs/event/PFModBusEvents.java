@@ -273,6 +273,14 @@ public final class PFModBusEvents {
             (be, side) -> be.insertOnlyHandler()
         );
 
+        // End Dragon Altar Hatch (#249): the altar's output - pipes pull the
+        // dragon's drops from any face (chest-style inventory).
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            PFBlockEntities.END_DRAGON_ALTAR_HATCH.get(),
+            (be, side) -> be.itemHandler()
+        );
+
         // Per-variant Slime Milk buckets (v1.8) are SlimeMilkBucketItem extends
         // BucketItem. NeoForge only auto-registers FluidHandler.ITEM for the exact
         // BucketItem class, not subclasses, so wire each up explicitly - this is
