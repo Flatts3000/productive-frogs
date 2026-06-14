@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "Tide Slimes spawn out at sea - in Warm, Lukewarm, and Deep Ocean waters.$(br2)Prime one with a matching resource to make a Tide Resource Slime for a Tide Frog."
+      "text": "Tide Slimes spawn out at sea - in Warm, Lukewarm, Deep Ocean, and Deep Lukewarm Ocean waters.$(br2)Prime one with a matching resource to make a Tide Resource Slime for a Tide Frog."
     }
   ]
 }

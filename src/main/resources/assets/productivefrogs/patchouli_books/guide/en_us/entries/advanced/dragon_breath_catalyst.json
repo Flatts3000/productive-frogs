@@ -1,5 +1,5 @@
 {
-  "name": "Dragon's Breath Catalyst",
+  "name": "Dragon Breath Catalyst",
   "icon": "productivefrogs:dragon_breath_catalyst",
   "category": "productivefrogs:advanced",
   "sortnum": 40,
@@ -7,7 +7,24 @@
     {
       "type": "patchouli:spotlight",
       "item": "productivefrogs:dragon_breath_catalyst",
-      "text": "Arms a Dragon's Breath Slime Milk source. Surround the source on all six faces with these to switch it on; an incomplete altar leaves the source inert."
+      "text": "Arms a Dragon Breath Slime Milk source. Surround the source on all six faces with these to switch it on; an incomplete altar leaves the source inert."
+    },
+    {
+      "type": "patchouli:multiblock",
+      "name": "Dragon Breath Altar",
+      "text": "The Dragon Breath Slime Milk source (centre) walled in by catalyst blocks on all six faces.",
+      "multiblock": {
+        "mapping": {
+          "C": "productivefrogs:dragon_breath_catalyst",
+          "0": "productivefrogs:dragon_breath_slime_milk",
+          "A": "minecraft:air"
+        },
+        "pattern": [
+          ["AAA", "ACA", "AAA"],
+          ["ACA", "C0C", "ACA"],
+          ["AAA", "ACA", "AAA"]
+        ]
+      }
     }
   ]
 }

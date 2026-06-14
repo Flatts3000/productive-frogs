@@ -8,6 +8,23 @@
       "type": "patchouli:spotlight",
       "item": "productivefrogs:dragon_egg_catalyst",
       "text": "Arms a Dragon Egg Slime Milk source. Surround the source on all six faces with these to switch it on; an incomplete altar leaves the source inert."
+    },
+    {
+      "type": "patchouli:multiblock",
+      "name": "Dragon Egg Altar",
+      "text": "The Dragon Egg Slime Milk source (centre) walled in by catalyst blocks on all six faces.",
+      "multiblock": {
+        "mapping": {
+          "C": "productivefrogs:dragon_egg_catalyst",
+          "0": "productivefrogs:dragon_egg_slime_milk",
+          "A": "minecraft:air"
+        },
+        "pattern": [
+          ["AAA", "ACA", "AAA"],
+          ["ACA", "C0C", "ACA"],
+          ["AAA", "ACA", "AAA"]
+        ]
+      }
     }
   ]
 }
