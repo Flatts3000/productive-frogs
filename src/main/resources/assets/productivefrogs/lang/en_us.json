@@ -184,6 +184,7 @@
   "block.productivefrogs.sprinkler": "Sprinkler",
   "block.productivefrogs.incubator": "Incubator",
   "block.productivefrogs.hatch": "Hatch",
+  "block.productivefrogs.sweetslimed_lily_pad": "Sweetslimed Lily Pad",
   "message.productivefrogs.terrarium.formed": "Terrarium formed.",
   "message.productivefrogs.terrarium.problem_at": "%s (at %s, %s, %s)",
   "message.productivefrogs.terrarium.not_a_controller": "No Terrarium Controller here.",

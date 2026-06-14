@@ -12,6 +12,7 @@ import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntit
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SpawneryBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.SweetslimedLilyPadBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
@@ -155,6 +156,17 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "hatch",
             () -> BlockEntityType.Builder.of(HatchBlockEntity::new, PFBlocks.HATCH.get()).build(null)
+        );
+
+    /**
+     * BE type for the Sweetslimed Lily Pad (#214) - the perch driver. Stateless;
+     * its server ticker claims and holds a nearby frog (see
+     * {@link SweetslimedLilyPadBlockEntity}).
+     */
+    public static final Supplier<BlockEntityType<SweetslimedLilyPadBlockEntity>> SWEETSLIMED_LILY_PAD =
+        BLOCK_ENTITIES.register(
+            "sweetslimed_lily_pad",
+            () -> BlockEntityType.Builder.of(SweetslimedLilyPadBlockEntity::new, PFBlocks.SWEETSLIMED_LILY_PAD.get()).build(null)
         );
 
     private PFBlockEntities() {

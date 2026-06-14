@@ -134,6 +134,11 @@ public final class PFCreativeTabs {
                     if (PFConfig.princessKissEnabled()) {
                         output.accept(PFItems.PRINCESS_KISS.get());
                     }
+                    // Sweetslimed Lily Pad - the frog perch (#214); shown by default,
+                    // hidden when config-disabled.
+                    if (PFConfig.lilyPadPerchEnabled()) {
+                        output.accept(PFItems.SWEETSLIMED_LILY_PAD.get());
+                    }
                     // Slime Milk catalysts (drop into a source to buff it). Each
                     // shows only when its own per-catalyst flag - ANDed with the
                     // catalysts master inside the accessor - is on (#201); shown by

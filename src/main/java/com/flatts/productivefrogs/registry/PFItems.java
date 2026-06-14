@@ -108,6 +108,18 @@ public final class PFItems {
     );
 
     /**
+     * Sweetslimed Lily Pad (#214) - the perch block's item. A {@link PlaceOnWaterBlockItem}
+     * like the vanilla lily pad, so it can be placed onto water from the bank. Normally
+     * made by right-clicking a placed lily pad with a Sweetslime
+     * ({@link com.flatts.productivefrogs.event.LilyPadPerchHandler}); the item exists so
+     * the pad drops itself (reusable) and shows in the creative tab. See docs/lily_pad_perch.md.
+     */
+    public static final DeferredItem<PlaceOnWaterBlockItem> SWEETSLIMED_LILY_PAD = ITEMS.registerItem(
+        "sweetslimed_lily_pad",
+        props -> new PlaceOnWaterBlockItem(PFBlocks.SWEETSLIMED_LILY_PAD.get(), props)
+    );
+
+    /**
      * Princess's Kiss (#216) - a rare Ender Dragon drop. Right-click a frog to turn
      * it into a villager (the Frog Prince), a timed conversion like the zombie cure.
      * Behaviour lives in {@link com.flatts.productivefrogs.content.item.PrincessKissItem}

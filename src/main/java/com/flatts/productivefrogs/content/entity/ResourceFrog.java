@@ -86,6 +86,16 @@ public class ResourceFrog extends Frog {
     private int pendingOffspringBounty;
     private int pendingOffspringReach;
 
+    // Sweetslimed lily pad perch (#214, docs/lily_pad_perch.md). Server-only: the
+    // pad this frog is pinned to and the level game-time the claim lapses at. The
+    // pad's BlockEntity re-asserts this on a short interval; if the pad is broken it
+    // stops re-asserting and the claim expires, freeing the frog. Persisted so a
+    // relog keeps a pinned frog pinned until the (short) claim naturally lapses and
+    // the pad re-claims it. Not synced - perching has no client-visual in v1.
+    @Nullable
+    private net.minecraft.core.BlockPos perchPad;
+    private long perchValidUntil;
+
     @SuppressWarnings("unchecked")
     public ResourceFrog(EntityType<? extends ResourceFrog> type, Level level) {
         // Java generics can't see that EntityType<ResourceFrog extends Frog
@@ -191,6 +201,10 @@ public class ResourceFrog extends Frog {
             tag.putInt("PendingOffspringBounty", pendingOffspringBounty);
             tag.putInt("PendingOffspringReach", pendingOffspringReach);
         }
+        if (perchPad != null) {
+            tag.putLong("PerchPad", perchPad.asLong());
+            tag.putLong("PerchValidUntil", perchValidUntil);
+        }
     }
 
     @Override
@@ -214,6 +228,29 @@ public class ResourceFrog extends Frog {
             pendingOffspringBounty = tag.getInt("PendingOffspringBounty");
             pendingOffspringReach = tag.getInt("PendingOffspringReach");
         }
+        if (tag.contains("PerchPad", net.minecraft.nbt.Tag.TAG_LONG)) {
+            perchPad = net.minecraft.core.BlockPos.of(tag.getLong("PerchPad"));
+            perchValidUntil = tag.getLong("PerchValidUntil");
+        }
+    }
+
+    // ---- Sweetslimed lily pad perch (#214) ----
+
+    /** The pad this frog is currently pinned to, or null if unclaimed / the claim has lapsed. */
+    @Nullable
+    public net.minecraft.core.BlockPos getActivePerch() {
+        return perchPad != null && this.level().getGameTime() < perchValidUntil ? perchPad : null;
+    }
+
+    /** Whether this frog is currently held by a pad (its claim is still valid). */
+    public boolean hasActivePerch() {
+        return getActivePerch() != null;
+    }
+
+    /** Pin this frog to {@code pad} until {@code validUntil} (a level game-time); the pad BE re-asserts it. */
+    public void setPerch(net.minecraft.core.BlockPos pad, long validUntil) {
+        this.perchPad = pad;
+        this.perchValidUntil = validUntil;
     }
 
     /**

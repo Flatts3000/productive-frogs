@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "": [
+      {"model": "productivefrogs:block/sweetslimed_lily_pad"},
+      {"model": "productivefrogs:block/sweetslimed_lily_pad", "y": 90},
+      {"model": "productivefrogs:block/sweetslimed_lily_pad", "y": 180},
+      {"model": "productivefrogs:block/sweetslimed_lily_pad", "y": 270}
+    ]
+  }
+}
