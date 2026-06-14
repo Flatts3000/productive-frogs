@@ -1,4 +1,5 @@
 {
+  "render_type": "minecraft:cutout",
   "textures": {
     "particle": "productivefrogs:block/sweetslimed_lily_pad",
     "texture": "productivefrogs:block/sweetslimed_lily_pad"
