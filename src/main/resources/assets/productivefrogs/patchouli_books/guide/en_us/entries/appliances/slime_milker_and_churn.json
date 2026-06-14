@@ -12,7 +12,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "productivefrogs:slime_churn",
-      "text": "The Slime Churn is the Milker's inverse: pour Slime Milk and empty buckets in, get captured Slime Buckets out, on the same spawn economy a placed source uses. Together they let you store a slime supply as a fluid and pour it back out as slimes on demand."
+      "text": "The Slime Churn is the Milker's inverse: pour Slime Milk and empty buckets in, get captured Slime Buckets out, on the same spawn economy a placed source uses. Together they let you store a slime supply as a fluid and pour it out as slimes on demand."
     }
   ]
 }

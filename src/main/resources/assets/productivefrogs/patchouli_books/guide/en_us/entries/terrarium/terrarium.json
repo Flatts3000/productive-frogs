@@ -38,7 +38,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Drop a bottled Frog Egg into an Incubator to grow a frog inside the habitat, bred stats kept. Frogs bred inside lay back into an Incubator instead of seeking water, and the box enforces a frog cap so it never overflows. The Hatch opens like a chest and also vacuums up loose drops in the cavity."
+      "text": "Drop a bottled Frog Egg into an Incubator to grow a frog inside the habitat, bred stats kept. Frogs bred inside lay into an Incubator instead of seeking water, and the box enforces a frog cap so it never overflows. The Hatch opens like a chest and also vacuums up loose drops in the cavity."
     }
   ]
 }

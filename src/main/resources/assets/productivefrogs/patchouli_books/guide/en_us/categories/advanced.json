@@ -1,6 +1,6 @@
 {
-  "name": "Advanced",
-  "description": "Brewed Froglights that carry potion effects, and the boss tier - catalyst altars and their toxic milk.",
-  "icon": "productivefrogs:configurable_froglight",
+  "name": "The Boss Tier",
+  "description": "The endgame: prime-only boss resources, the catalyst altars that switch them on, and their toxic milk.",
+  "icon": "productivefrogs:nether_star_catalyst",
   "sortnum": 500
 }

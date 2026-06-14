@@ -1,8 +1,8 @@
 {
   "name": "Brewed Froglights",
   "icon": "productivefrogs:configurable_froglight",
-  "category": "productivefrogs:advanced",
-  "sortnum": 0,
+  "category": "productivefrogs:froglights",
+  "sortnum": 100,
   "pages": [
     {
       "type": "patchouli:text",
