@@ -49,6 +49,10 @@ public class SweetslimedLilyPadBlockEntity extends BlockEntity {
     /** WALK_TARGET expiry; re-issued every tick, long enough that a chunk unload clears it cleanly. */
     private static final int NUDGE_EXPIRY = 40;
     private static final float PERCH_SPEED = 1.0F;
+    /** Lily pad VoxelShape height (1.5/16): the frog rests on the pad's top surface. */
+    private static final double PAD_TOP = 0.09375;
+    /** Leniency on the pad-intersection test so a frog stepping adjacent counts as "on the pad". */
+    private static final double PAD_TOUCH_SLACK = 0.3;
 
     /** The frog this pad holds (transient; re-claimed after a reload). */
     @Nullable
@@ -74,10 +78,9 @@ public class SweetslimedLilyPadBlockEntity extends BlockEntity {
         if (frog == null) {
             return;
         }
-        // Re-assert the claim and pull the frog onto the pad - every tick, so the
-        // stroll never gets a gap and the frog settles at the centre.
+        // Re-assert the claim and hold the frog on the pad - every tick.
         frog.setPerch(pos, server.getGameTime() + CLAIM_TTL);
-        nudge(pos, frog);
+        holdOnPad(pos, frog);
     }
 
     /** The cached claimant if it is still a live, in-range frog claimed by this pad (or claimable); else null (and the cache is cleared). */
@@ -127,16 +130,39 @@ public class SweetslimedLilyPadBlockEntity extends BlockEntity {
         return best;
     }
 
-    private static void nudge(BlockPos pos, ResourceFrog frog) {
+    /**
+     * Approach, then teleport-and-pin. While the frog is away from the pad it gets a
+     * walk target toward it; the instant its bounding box intersects the pad it is
+     * teleported so its centre sits on the pad's centre, on top, and is held there
+     * each tick - navigation stopped, velocity zeroed, long jump suppressed - so it
+     * reliably stays put and never hops off. The brain keeps ticking, so the frog's
+     * tongue still eats slimes that come within range of the pad.
+     */
+    private static void holdOnPad(BlockPos pos, ResourceFrog frog) {
         Brain<?> brain = frog.getBrain();
-        // Don't fight hunting: while the frog has (or is approaching) prey, leave its
-        // walk target alone so it can reach and eat the slime; the perch re-pulls after.
-        if (brain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET)
-                || brain.hasMemoryValue(MemoryModuleType.NEAREST_ATTACKABLE)) {
+        // "Intersects the pad" with a little leniency, so stepping adjacent counts.
+        boolean onPad = frog.getBoundingBox().intersects(new AABB(pos).inflate(PAD_TOUCH_SLACK));
+        if (!onPad) {
+            // Still approaching - walk onto the pad. Don't override an active hunt;
+            // let it reach an in-range slime first, it returns to the pad after.
+            if (!brain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET)
+                    && !brain.hasMemoryValue(MemoryModuleType.NEAREST_ATTACKABLE)) {
+                brain.setMemoryWithExpiry(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, PERCH_SPEED, 0), NUDGE_EXPIRY);
+            }
             return;
         }
-        // closeEnough = 0: walk all the way onto the pad and hold the centre. Re-set
-        // every tick by serverTick, so once arrived the frog stays put (no stroll gap).
-        brain.setMemoryWithExpiry(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, PERCH_SPEED, 0), NUDGE_EXPIRY);
+        // On the pad: pin the frog's centre to the pad centre, on top, and freeze it.
+        double cx = pos.getX() + 0.5;
+        double cz = pos.getZ() + 0.5;
+        double py = pos.getY() + PAD_TOP;
+        brain.eraseMemory(MemoryModuleType.WALK_TARGET);
+        // Keep the long jump on cooldown so it never launches off the pad.
+        brain.setMemoryWithExpiry(MemoryModuleType.LONG_JUMP_COOLDOWN_TICKS, NUDGE_EXPIRY, NUDGE_EXPIRY);
+        frog.getNavigation().stop();
+        frog.setDeltaMovement(0.0, 0.0, 0.0);
+        // moveTo (not setPos) so the prev-position resets too - a clean instant
+        // teleport with no client-side glide. Keep its yaw so it can still face prey.
+        frog.moveTo(cx, py, cz, frog.getYRot(), frog.getXRot());
+        frog.setOnGround(true);
     }
 }
