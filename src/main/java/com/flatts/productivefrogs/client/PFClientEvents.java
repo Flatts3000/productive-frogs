@@ -100,6 +100,11 @@ public final class PFClientEvents {
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.CRUCIBLE.get(),
             com.flatts.productivefrogs.client.renderer.CrucibleRenderer::new);
+        // End Crystal Receptacle (#249): the floating vanilla end-crystal model on
+        // top when filled. See client/renderer/EndCrystalReceptacleRenderer.
+        event.registerBlockEntityRenderer(
+            com.flatts.productivefrogs.registry.PFBlockEntities.END_CRYSTAL_RECEPTACLE.get(),
+            com.flatts.productivefrogs.client.renderer.EndCrystalReceptacleRenderer::new);
     }
 
     private static ResourceLocation parentTexture(String name) {
