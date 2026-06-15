@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.content.block.entity;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.entity.PlinthFrog;
 import com.flatts.productivefrogs.content.multiblock.DragonAltarValidator;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
@@ -9,13 +10,20 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Containers;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -38,9 +46,20 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
     /** How often (ticks) the altar reconciles its plinth frog against structure validity. */
     private static final int RECONCILE_INTERVAL = 20;
 
+    /** Summon length - mirrors the feel of the vanilla respawn (~10s). */
+    private static final int SUMMON_TICKS = 200;
+    /** XP awarded per summon - the vanilla repeat-kill dragon value. */
+    private static final int XP_REWARD = 500;
+    /** Whether each summon also yields a dragon egg (off by default; egg stays a trophy). */
+    private static final boolean REPEATABLE_EGG = false;
+    private static final int LEVEL_EVENT_DRAGON_ROAR = 3001;   // ANIMATION_DRAGON_SUMMON_ROAR
+    private static final int LEVEL_EVENT_DRAGON_DEATH = 1028;  // SOUND_DRAGON_DEATH
+
     private NonNullList<ItemStack> items = NonNullList.withSize(SIZE, ItemStack.EMPTY);
     private final InvWrapper itemHandler = new InvWrapper(this);
     private int tickCounter;
+    /** 0 = idle; > 0 = a summon is in progress (ticks remaining). Synced for the client animation. */
+    private int summonTicks;
 
     public EndDragonAltarHatchBlockEntity(BlockPos pos, BlockState state) {
         super(PFBlockEntities.END_DRAGON_ALTAR_HATCH.get(), pos, state);
@@ -64,14 +83,13 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
         return hatchPos.offset(0, -3, 0);
     }
 
-    /**
-     * Reconcile the plinth display frog (#249) against structure validity: when the
-     * altar is valid keep exactly one {@link PlinthFrog} pinned on the plinth; when
-     * it is broken, remove it. Throttled - it does not need per-tick precision, and
-     * re-pinning each pass also corrects any drift.
-     */
+    /** Server ticker: drive the summon state machine, then (when idle) reconcile the plinth frog. */
     public static void serverTick(Level level, BlockPos pos, BlockState state, EndDragonAltarHatchBlockEntity be) {
         if (!(level instanceof ServerLevel server)) {
+            return;
+        }
+        if (be.summonTicks > 0) {
+            advanceSummon(server, pos, be);
             return;
         }
         if (++be.tickCounter < RECONCILE_INTERVAL) {
@@ -79,6 +97,70 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
         }
         be.tickCounter = 0;
         boolean valid = DragonAltarValidator.validate(server, pos).valid();
+        reconcileFrog(server, pos, valid);
+        // Start a summon once the altar is complete and all four crystals are loaded.
+        if (valid && PFConfig.bossEnabled() && allReceptaclesFilled(server, pos)) {
+            be.summonTicks = SUMMON_TICKS;
+            server.levelEvent(LEVEL_EVENT_DRAGON_ROAR, pos, 0);
+            be.syncToClient();
+        }
+    }
+
+    /** Advance an in-progress summon: roar at intervals, then pay out at the end. */
+    private static void advanceSummon(ServerLevel server, BlockPos pos, EndDragonAltarHatchBlockEntity be) {
+        be.summonTicks--;
+        int elapsed = SUMMON_TICKS - be.summonTicks;
+        if (elapsed == 60 || elapsed == 120 || elapsed == SUMMON_TICKS - 10) {
+            server.levelEvent(LEVEL_EVENT_DRAGON_ROAR, pos, 0);
+        }
+        be.setChanged();
+        if (be.summonTicks <= 0) {
+            completeSummon(server, pos, be);
+        }
+    }
+
+    /** Finish the summon: spend the crystals and pay out the reward (XP + breath + optional egg). */
+    private static void completeSummon(ServerLevel server, BlockPos pos, EndDragonAltarHatchBlockEntity be) {
+        be.summonTicks = 0;
+        be.syncToClient();
+        if (!DragonAltarValidator.validate(server, pos).valid()) {
+            return; // broken mid-summon - abort, crystals untouched
+        }
+        for (BlockPos rp : DragonAltarValidator.receptacles(pos)) {
+            if (server.getBlockEntity(rp) instanceof EndCrystalReceptacleBlockEntity r) {
+                r.consume();
+            }
+        }
+        // Reward: XP orbs at the hatch, one dragon's breath (and, if enabled, an egg)
+        // into the hatch inventory with overflow dropped above it.
+        ExperienceOrb.award(server, Vec3.atCenterOf(pos), XP_REWARD);
+        spill(server, pos, be.deposit(new ItemStack(Items.DRAGON_BREATH)));
+        if (REPEATABLE_EGG) {
+            spill(server, pos, be.deposit(new ItemStack(Items.DRAGON_EGG)));
+        }
+        server.levelEvent(LEVEL_EVENT_DRAGON_DEATH, pos, 0);
+    }
+
+    private static void spill(ServerLevel server, BlockPos pos, ItemStack overflow) {
+        if (!overflow.isEmpty()) {
+            Containers.dropItemStack(server, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, overflow);
+        }
+    }
+
+    private static boolean allReceptaclesFilled(ServerLevel server, BlockPos hatch) {
+        for (BlockPos rp : DragonAltarValidator.receptacles(hatch)) {
+            if (!(server.getBlockEntity(rp) instanceof EndCrystalReceptacleBlockEntity r) || !r.isFilled()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Keep exactly one plinth frog pinned when valid; remove it when broken. Re-pinning
+     * each pass also corrects any drift.
+     */
+    private static void reconcileFrog(ServerLevel server, BlockPos pos, boolean valid) {
         BlockPos plinth = plinthFrogPos(pos);
         List<PlinthFrog> frogs = server.getEntitiesOfClass(PlinthFrog.class, new AABB(plinth).inflate(0.5));
         if (!valid) {
@@ -99,7 +181,6 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
                 server.addFreshEntity(frog);
             }
         } else {
-            // Keep the first; re-pin it (correct any drift) and cull duplicates.
             PlinthFrog frog = frogs.get(0);
             frog.moveTo(cx, cy, cz, frog.getYRot(), 0.0F);
             frog.setDeltaMovement(Vec3.ZERO);
@@ -107,6 +188,17 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
                 frogs.get(i).discard();
             }
         }
+    }
+
+    private void syncToClient() {
+        if (level != null) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+    }
+
+    /** Summon progress for the client animation (0 = idle, else ticks remaining). */
+    public int summonTicks() {
+        return summonTicks;
     }
 
     @Override
@@ -139,11 +231,27 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
         super.loadAdditional(tag, registries);
         this.items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
         ContainerHelper.loadAllItems(tag, this.items, registries);
+        this.summonTicks = tag.getInt("SummonTicks");
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         ContainerHelper.saveAllItems(tag, this.items, registries);
+        tag.putInt("SummonTicks", summonTicks);
+    }
+
+    // Sync only the summon progress to the client (the chest contents ride the menu,
+    // not the BE update tag) so the summon animation can read it.
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag tag = super.getUpdateTag(registries);
+        tag.putInt("SummonTicks", summonTicks);
+        return tag;
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 }
