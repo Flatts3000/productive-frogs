@@ -73,7 +73,7 @@ public class WitherAltarHatchRenderer implements BlockEntityRenderer<WitherAltar
         // Hover in the cavity, in FRONT of the receptacle wall (offset z=3) so the frog at
         // z=0 sees it. Lifted clear of the floor froglights - the Wither floats in vanilla
         // and its model hangs below its position point, so feet-on-floor clips downward.
-        pose.translate(0.5F, 0.5F, 1.7F);
+        pose.translate(0.5F, 0.0F, 1.7F);
         dispatcher.setRenderShadow(false);
         dispatcher.render(phantom, 0.0, 0.0, 0.0, 180.0F, partialTick, pose, buffers, packedLight);
         dispatcher.setRenderShadow(true);
