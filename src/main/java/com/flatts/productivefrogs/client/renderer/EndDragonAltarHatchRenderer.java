@@ -13,6 +13,8 @@ import net.minecraft.client.renderer.entity.EnderDragonRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 
 /**
  * In-world animation for the End Dragon Altar (#249), driven by the synced summon
@@ -45,6 +47,8 @@ public class EndDragonAltarHatchRenderer implements BlockEntityRenderer<EndDrago
     private static final float DRAGON_MAX_SCALE = 0.18F;
 
     private final EnderDragonRenderer.DragonModel dragonModel;
+    /** A client-side phantom dragon fed to the model (the DragonModel reads its fields); never in the world. */
+    private EnderDragon phantom;
 
     public EndDragonAltarHatchRenderer(BlockEntityRendererProvider.Context ctx) {
         this.dragonModel = new EnderDragonRenderer.DragonModel(ctx.bakeLayer(ModelLayers.ENDER_DRAGON));
@@ -73,14 +77,23 @@ public class EndDragonAltarHatchRenderer implements BlockEntityRenderer<EndDrago
             pose.popPose();
         }
 
-        // Growing dragon model in the cell below the hatch.
-        pose.pushPose();
-        pose.translate(0.5F, -1.0F, 0.5F);
-        pose.mulPose(Axis.YP.rotationDegrees((time + partialTick) * 2.0F));
-        float scale = Mth.lerp(progress, 0.02F, DRAGON_MAX_SCALE);
-        pose.scale(-scale, -scale, scale); // entity models render flipped on X/Y
-        VertexConsumer vc = buffers.getBuffer(DRAGON_RT);
-        dragonModel.renderToBuffer(pose, vc, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF);
-        pose.popPose();
+        // Growing dragon model in the cell below the hatch. The model reads fields off
+        // an EnderDragon, so prep it with a cached client-side phantom (never spawned).
+        if (be.getLevel() != null) {
+            if (phantom == null) {
+                phantom = EntityType.ENDER_DRAGON.create(be.getLevel());
+            }
+            if (phantom != null) {
+                pose.pushPose();
+                pose.translate(0.5F, -1.0F, 0.5F);
+                pose.mulPose(Axis.YP.rotationDegrees((time + partialTick) * 2.0F));
+                float scale = Mth.lerp(progress, 0.02F, DRAGON_MAX_SCALE);
+                pose.scale(-scale, -scale, scale); // entity models render flipped on X/Y
+                dragonModel.prepareMobModel(phantom, 0.0F, 0.0F, partialTick);
+                VertexConsumer vc = buffers.getBuffer(DRAGON_RT);
+                dragonModel.renderToBuffer(pose, vc, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF);
+                pose.popPose();
+            }
+        }
     }
 }
