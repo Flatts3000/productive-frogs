@@ -771,9 +771,10 @@ public final class PFConfig {
 
         DRAGON_ALTAR_REPEATABLE_EGG = builder
             .comment(
-                "Whether each altar summon deposits a Dragon Egg into the Hatch. Default true (the altar is a",
-                "repeatable egg farm). When false the egg is granted only the way vanilla does it - never by the",
-                "altar - so the altar yields the rest of the dragon's drops but not a duplicate egg."
+                "Whether each altar summon deposits a Dragon Egg Froglight into the Hatch (it smelts back to a",
+                "Dragon Egg). Default true (the altar is a renewable-egg farm). When false the egg is granted only",
+                "the way vanilla does it - never by the altar - so the altar still pays out the Dragon Breath",
+                "Froglight and the dragon's drops, but no renewable egg."
             )
             .define("repeatableEgg", DEFAULT_DRAGON_ALTAR_REPEATABLE_EGG);
 
@@ -1013,7 +1014,7 @@ public final class PFConfig {
         return SPEC.isLoaded() ? DRAGON_ALTAR_XP_REWARD.get() : DEFAULT_DRAGON_ALTAR_XP_REWARD;
     }
 
-    /** Whether each altar summon deposits a Dragon Egg ({@code boss.dragon_altar.repeatableEgg}, #249); fallback {@value #DEFAULT_DRAGON_ALTAR_REPEATABLE_EGG}. */
+    /** Whether each altar summon deposits a Dragon Egg Froglight ({@code boss.dragon_altar.repeatableEgg}, #249); fallback {@value #DEFAULT_DRAGON_ALTAR_REPEATABLE_EGG}. */
     public static boolean dragonAltarRepeatableEgg() {
         return SPEC.isLoaded() ? DRAGON_ALTAR_REPEATABLE_EGG.get() : DEFAULT_DRAGON_ALTAR_REPEATABLE_EGG;
     }

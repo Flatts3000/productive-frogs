@@ -27,12 +27,32 @@ There is **no controller block** - the four loaded receptacles are the trigger -
 altar accepts **no bottle input**. The replica is never a real entity, so there is no
 boss bar, no portal regeneration, and no gateway spawn.
 
-## Rewards (data-driven)
+## Rewards
 
-The altar's item drops are defined by a **loot table**, not hardcoded Java:
+A completed summon pays out in three parts.
+
+### 1. Boss Froglights (the altar's signature output)
+
+Like the rest of the mod's frog loop, the altar yields **variant-stamped Froglights**
+(each smelts back to its resource), not the raw resource:
+
+- A **Dragon Breath Froglight** (the `productivefrogs:dragon_breath` boss variant) - always.
+- A **Dragon Egg Froglight** (the `productivefrogs:dragon_egg` boss variant) - when
+  `boss.dragon_altar.repeatableEgg` is on (the renewable-egg lever, delivered as the
+  froglight that smelts to a Dragon Egg).
+
+Both are minted through `FrogTongueDropHandler.buildFroglight`, the single
+froglight-construction point shared with the frog tongue drop and the Froglight weapon, so
+variant stamping lives in one place. The existing v1.14 smelt-backs
+(`configurable_froglight_dragon_egg_to_dragon_egg`, `..._dragon_breath_to_dragon_breath`)
+turn them into the resource.
+
+### 2. The dragon's own drops (data-driven)
+
+What the dragon *itself* drops is defined by a **loot table**, not hardcoded Java:
 
 - `data/productivefrogs/loot_table/dragon_altar.json` (type `minecraft:entity`).
-- Ships with two pools: one **Dragon's Breath** and one **Princess's Kiss** (#216).
+- Ships with one pool: the **Princess's Kiss** (#216).
 - Rolled with a never-spawned phantom Ender Dragon as the `this_entity` loot context, so
   pack/mod loot conditions can key off "the dragon" exactly as on a real kill.
 
@@ -43,13 +63,10 @@ table both restores the Kiss and lets a pack add or remove any other dragon drop
 overriding or extending `dragon_altar.json` - **one JSON, no Java**, matching the mod's
 cross-mod compat ethos.
 
-Two rewards stay outside the loot table:
+### 3. XP
 
-- **XP**: awarded as orbs at the hatch (`boss.dragon_altar.xpReward`, default 500 - one
-  vanilla repeat-kill's worth; vanilla respawns grant none).
-- **Dragon Egg**: a config toggle (`boss.dragon_altar.repeatableEgg`, default on), not a
-  loot entry, because it flips the altar between a renewable-egg farm and "everything but
-  a duplicate egg" - a balance lever rather than a question of which items drop.
+Awarded as orbs at the hatch (`boss.dragon_altar.xpReward`, default 500 - one vanilla
+repeat-kill's worth; vanilla respawns grant none).
 
 ## Config (`boss.dragon_altar`)
 
@@ -60,7 +77,7 @@ the boss tier is off, the altar blocks are uncraftable and the summon never star
 | --- | --- | --- |
 | `summonTicks` | 200 | Length of the summon show (beams + dragon growth) in ticks. Rewards land at the end regardless. |
 | `xpReward` | 500 | Experience granted per completed summon. 0 = none. |
-| `repeatableEgg` | true | Whether each summon deposits a Dragon Egg into the hatch. |
+| `repeatableEgg` | true | Whether each summon deposits a Dragon Egg Froglight (smelts back to a Dragon Egg). |
 
 `PFConfig` is `ModConfig.Type.COMMON`, so the client reads `summonTicks` too and the
 growth animation stays in sync with the server's summon length.
@@ -106,9 +123,9 @@ All boss-gated (`productivefrogs:config_enabled` -> `boss`):
 - `PFGameTests.dragonAltarRejectsMissingFroglight` - strictness: removing one froglight
   must fail validation.
 - `PFGameTests.dragonAltarSummonDepositsDrops` - end-to-end: prime the receptacles, run a
-  summon, and assert the hatch ends up holding Dragon's Breath, the Princess's Kiss, and
-  the Dragon Egg. Guards the data-driven drop path (a wrong loot-table id or param set
-  would empty the hatch).
+  summon, and assert the hatch ends up holding the Princess's Kiss plus the two
+  variant-stamped boss Froglights (Dragon Breath + Dragon Egg). Guards both the loot-table
+  path (a wrong id or param set would crash/empty it) and the froglight variant ids.
 
 The summon animation itself is GameTest-blind (client visuals) - verify scale, beam
 anchoring, and growth pacing with a manual `runClient` pass.

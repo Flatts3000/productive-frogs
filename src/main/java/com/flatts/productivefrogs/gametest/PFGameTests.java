@@ -6113,10 +6113,11 @@ public final class PFGameTests {
 
     /**
      * End-to-end: a built altar with all four receptacles primed must run a summon and
-     * deposit the data-driven drop set into the Hatch - dragon's breath + the Princess's
-     * Kiss from the {@code productivefrogs:dragon_altar} loot table, plus the renewable
-     * Dragon Egg. Guards the drop path: a wrong loot-table id or an incompatible loot
-     * param set would leave the hatch empty and fail this.
+     * deposit the reward into the Hatch - the boss Froglights (a Dragon Breath Froglight
+     * and a Dragon Egg Froglight, each variant-stamped) plus the dragon's own drop (the
+     * Princess's Kiss from the {@code productivefrogs:dragon_altar} loot table). Guards
+     * both the loot-table path (a wrong id or param set would crash/empty it) and the
+     * froglight payout (wrong variant id would mis-stamp).
      */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "dragon_altar", timeoutTicks = 320)
     public static void dragonAltarSummonDepositsDrops(GameTestHelper helper) {
@@ -6141,15 +6142,29 @@ public final class PFGameTests {
             helper.assertTrue(be instanceof com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity,
                 "hatch block entity missing");
             net.minecraft.world.Container c = (net.minecraft.world.Container) be;
-            helper.assertTrue(containerHas(c, Items.DRAGON_BREATH), "hatch missing dragon's breath after summon");
             helper.assertTrue(containerHas(c, PFItems.PRINCESS_KISS.get()), "hatch missing the Princess's Kiss after summon");
-            helper.assertTrue(containerHas(c, Items.DRAGON_EGG), "hatch missing the Dragon Egg after summon");
+            helper.assertTrue(containsFroglightVariant(c, "dragon_breath"), "hatch missing the Dragon Breath Froglight after summon");
+            helper.assertTrue(containsFroglightVariant(c, "dragon_egg"), "hatch missing the Dragon Egg Froglight after summon");
         });
     }
 
     private static boolean containerHas(net.minecraft.world.Container c, net.minecraft.world.item.Item item) {
         for (int i = 0; i < c.getContainerSize(); i++) {
             if (c.getItem(i).is(item)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** True if the container holds a configurable_froglight stamped with productivefrogs:&lt;variantPath&gt;. */
+    private static boolean containsFroglightVariant(net.minecraft.world.Container c, String variantPath) {
+        net.minecraft.resources.ResourceLocation want =
+            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantPath);
+        for (int i = 0; i < c.getContainerSize(); i++) {
+            ItemStack s = c.getItem(i);
+            if (s.is(PFItems.CONFIGURABLE_FROGLIGHT.get())
+                    && want.equals(s.get(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get()))) {
                 return true;
             }
         }

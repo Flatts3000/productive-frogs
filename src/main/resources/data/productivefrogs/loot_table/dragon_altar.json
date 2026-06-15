@@ -6,15 +6,6 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "minecraft:dragon_breath"
-        }
-      ]
-    },
-    {
-      "rolls": 1.0,
-      "entries": [
-        {
-          "type": "minecraft:item",
           "name": "productivefrogs:princess_kiss"
         }
       ]

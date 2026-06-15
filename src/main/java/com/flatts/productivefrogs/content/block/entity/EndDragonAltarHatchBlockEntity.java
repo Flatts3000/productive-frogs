@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.PlinthFrog;
 import com.flatts.productivefrogs.content.multiblock.DragonAltarValidator;
+import com.flatts.productivefrogs.event.FrogTongueDropHandler;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -27,7 +28,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.storage.loot.LootParams;
@@ -62,6 +62,12 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
     /** Data-driven drop list for the altar (pack-overridable); see {@code loot_table/dragon_altar.json}. */
     private static final ResourceKey<LootTable> DRAGON_ALTAR_LOOT_TABLE = ResourceKey.create(
         Registries.LOOT_TABLE, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_altar"));
+
+    /** Boss slime variants whose Froglights the altar pays out (each smelts back to the resource). */
+    private static final ResourceLocation DRAGON_BREATH_VARIANT =
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_breath");
+    private static final ResourceLocation DRAGON_EGG_VARIANT =
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_egg");
 
     private NonNullList<ItemStack> items = NonNullList.withSize(SIZE, ItemStack.EMPTY);
     private final InvWrapper itemHandler = new InvWrapper(this);
@@ -130,7 +136,7 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
         }
     }
 
-    /** Finish the summon: spend the crystals and pay out the reward (XP + breath + optional egg). */
+    /** Finish the summon: spend the crystals and pay out the reward (XP + boss froglights + the dragon's drops). */
     private static void completeSummon(ServerLevel server, BlockPos pos, EndDragonAltarHatchBlockEntity be) {
         be.summonTicks = 0;
         be.syncToClient();
@@ -146,28 +152,32 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
                 r.consume();
             }
         }
-        // Reward: XP orbs at the hatch, the data-driven drop set into the hatch, and
-        // (if enabled) the renewable Dragon Egg. The item drops are NOT hardcoded - they
-        // come from the productivefrogs:dragon_altar loot table (see rollDragonLoot), so
-        // a pack edits/extends what the altar yields without touching Java.
+        // Reward, in three parts:
+        // 1. XP orbs at the hatch.
         int xp = PFConfig.dragonAltarXpReward();
         if (xp > 0) {
             ExperienceOrb.award(server, Vec3.atCenterOf(pos), xp);
         }
-        rollDragonLoot(server, pos, be);
-        // The Dragon Egg stays a config toggle, not a loot entry: repeatableEgg flips the
-        // altar between a renewable-egg farm and "everything but a duplicate egg", which is
-        // a balance lever rather than a question of which items the dragon drops.
+        // 2. The boss Froglights - the altar's signature output. Like the rest of the
+        //    mod's frog loop it yields variant-stamped Froglights (smeltable back to the
+        //    resource), not the raw resource: a Dragon Breath Froglight always, and a
+        //    Dragon Egg Froglight when repeatableEgg is on (the renewable-egg lever, now
+        //    delivered as the froglight that smelts to an egg).
+        spill(server, pos, be.deposit(FrogTongueDropHandler.buildFroglight(DRAGON_BREATH_VARIANT, null)));
         if (PFConfig.dragonAltarRepeatableEgg()) {
-            spill(server, pos, be.deposit(new ItemStack(Items.DRAGON_EGG)));
+            spill(server, pos, be.deposit(FrogTongueDropHandler.buildFroglight(DRAGON_EGG_VARIANT, null)));
         }
+        // 3. Whatever the dragon itself drops - the data-driven productivefrogs:dragon_altar
+        //    loot table (default: the Princess's Kiss). Packs edit/extend it without Java.
+        rollDragonLoot(server, pos, be);
         server.levelEvent(LEVEL_EVENT_DRAGON_DEATH, pos, 0);
     }
 
     /**
      * Roll the {@code productivefrogs:dragon_altar} loot table into the hatch. That table
-     * is the data-driven definition of the altar's drops (default: dragon's breath + the
+     * is the data-driven definition of what the dragon itself drops (default: the
      * Princess's Kiss); packs/mods override or add pools to change what the altar yields.
+     * The boss Froglights are paid out separately (see {@link #completeSummon}).
      * A never-spawned phantom dragon supplies the {@code this_entity} loot context so pack
      * conditions can key off the dragon, mirroring a real kill - but no dragon ever enters
      * the world (no portal / boss bar / gateway).
