@@ -34,8 +34,8 @@ public class WitherAltarHatchRenderer implements BlockEntityRenderer<WitherAltar
         ResourceLocation.withDefaultNamespace("textures/entity/wither/wither_invulnerable.png");
     private static final RenderType WITHER_RT = RenderType.entityCutoutNoCull(WITHER_TEXTURE);
 
-    /** Wither-model scale at the end of the summon (its max - sized to sit over the ritual). */
-    private static final float WITHER_END_SCALE = 0.32F;
+    /** Wither-model scale at the end of the summon (its max - sized to fill the cavity). */
+    private static final float WITHER_END_SCALE = 0.5F;
     /** It starts a quarter of that and grows ~4x to the end size over the summon. */
     private static final float WITHER_START_SCALE = WITHER_END_SCALE / 4.0F;
 
@@ -69,14 +69,15 @@ public class WitherAltarHatchRenderer implements BlockEntityRenderer<WitherAltar
         if (phantom == null) {
             return;
         }
-        // Over the ritual T (the skull row centre is at hatch offset (0,2,3)), at
+        // In the cavity, in FRONT of the receptacle wall (which is at offset z=3) so the
+        // frog at z=0 sees it - not behind the wall. Centred in the 3-wide cavity at
         // Witherbane's level, facing back toward the frog (-Z).
         pose.pushPose();
-        pose.translate(0.5F, 1.5F, 3.5F);
+        pose.translate(0.5F, 1.0F, 1.7F);
         pose.mulPose(Axis.YP.rotationDegrees(180.0F));
         float scale = Mth.lerp(progress, WITHER_START_SCALE, WITHER_END_SCALE);
         pose.scale(-scale, -scale, scale); // entity models render flipped on X/Y
-        pose.translate(0.0F, -1.6F, 0.0F);  // lift so the model's feet sit near the ritual
+        witherModel.prepareMobModel(phantom, 0.0F, 0.0F, partialTick);
         witherModel.setupAnim(phantom, 0.0F, 0.0F, (float) time, 0.0F, 0.0F);
         VertexConsumer vc = buffers.getBuffer(WITHER_RT);
         witherModel.renderToBuffer(pose, vc, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF);

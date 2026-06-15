@@ -121,6 +121,11 @@ public final class PFClientEvents {
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.WITHER_ALTAR_HATCH.get(),
             com.flatts.productivefrogs.client.renderer.WitherAltarHatchRenderer::new);
+        // Wither summon receptacles (#247): the held item (soul sand / wither skull)
+        // rendered on the frog-facing face. See client/renderer/WitherSummonReceptacleRenderer.
+        event.registerBlockEntityRenderer(
+            com.flatts.productivefrogs.registry.PFBlockEntities.WITHER_SUMMON_RECEPTACLE.get(),
+            com.flatts.productivefrogs.client.renderer.WitherSummonReceptacleRenderer::new);
     }
 
     private static ResourceLocation parentTexture(String name) {
