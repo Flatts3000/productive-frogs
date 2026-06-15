@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.registry.PFEntities;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.animal.frog.Frog;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -23,6 +24,9 @@ import net.minecraft.world.level.Level;
  */
 public class PlinthFrog extends Frog {
 
+    /** Ticks remaining in the tongue/eat animation (server-driven; resets the pose at 0). */
+    private int eatTicks;
+
     @SuppressWarnings("unchecked")
     public PlinthFrog(EntityType<? extends PlinthFrog> type, Level level) {
         super((EntityType<? extends Frog>) (EntityType<?>) type, level);
@@ -31,6 +35,16 @@ public class PlinthFrog extends Frog {
         setSilent(true);
         setInvulnerable(true);
         setPersistenceRequired();
+    }
+
+    /**
+     * Lash the tongue (the dragon-eat). Setting the pose to {@link Pose#USING_TONGUE}
+     * makes vanilla {@link Frog} start its {@code tongueAnimationState} client-side;
+     * the pose resets after the animation window (see {@link #tick()}).
+     */
+    public void triggerEat() {
+        setPose(Pose.USING_TONGUE);
+        this.eatTicks = 12;
     }
 
     /** No brain tick - the display frog never hunts, jumps, or wanders. */
@@ -43,6 +57,9 @@ public class PlinthFrog extends Frog {
     @Override
     public void tick() {
         super.tick();
+        if (!level().isClientSide() && eatTicks > 0 && --eatTicks == 0) {
+            setPose(Pose.STANDING);
+        }
         if (level().isClientSide() && this.random.nextInt(3) == 0) {
             double px = getX() + (this.random.nextDouble() - 0.5) * 0.9;
             double py = getY() + 0.4 + this.random.nextDouble() * 0.7;

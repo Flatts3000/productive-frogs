@@ -108,6 +108,11 @@ public final class PFClientEvents {
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.END_CRYSTAL_RECEPTACLE.get(),
             com.flatts.productivefrogs.client.renderer.EndCrystalReceptacleRenderer::new);
+        // End Dragon Altar Hatch (#249): the summon animation - converging beams +
+        // the growing dragon model. See client/renderer/EndDragonAltarHatchRenderer.
+        event.registerBlockEntityRenderer(
+            com.flatts.productivefrogs.registry.PFBlockEntities.END_DRAGON_ALTAR_HATCH.get(),
+            com.flatts.productivefrogs.client.renderer.EndDragonAltarHatchRenderer::new);
     }
 
     private static ResourceLocation parentTexture(String name) {

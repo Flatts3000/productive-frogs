@@ -52,8 +52,8 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
     /** How often (ticks) the altar reconciles its plinth frog against structure validity. */
     private static final int RECONCILE_INTERVAL = 20;
 
-    /** Summon length - mirrors the feel of the vanilla respawn (~10s). */
-    private static final int SUMMON_TICKS = 200;
+    /** Summon length - mirrors the feel of the vanilla respawn (~10s). Public for the renderer's progress calc. */
+    public static final int SUMMON_TICKS = 200;
     /** XP awarded per summon - the vanilla repeat-kill dragon value. */
     private static final int XP_REWARD = 500;
     /** Whether each summon also yields a dragon egg (on - the altar makes the egg renewable). */
@@ -131,6 +131,10 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
         be.syncToClient();
         if (!DragonAltarValidator.validate(server, pos).valid()) {
             return; // broken mid-summon - abort, crystals untouched
+        }
+        // Dragonsbane eats the summoned dragon (tongue lash).
+        for (PlinthFrog frog : server.getEntitiesOfClass(PlinthFrog.class, new AABB(plinthFrogPos(pos)).inflate(0.5))) {
+            frog.triggerEat();
         }
         for (BlockPos rp : DragonAltarValidator.receptacles(pos)) {
             if (server.getBlockEntity(rp) instanceof EndCrystalReceptacleBlockEntity r) {
