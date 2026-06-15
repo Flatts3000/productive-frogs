@@ -57,13 +57,18 @@ public class EndDragonAltarHatchRenderer implements BlockEntityRenderer<EndDrago
     @Override
     public void render(EndDragonAltarHatchBlockEntity be, float partialTick, PoseStack pose,
             MultiBufferSource buffers, int packedLight, int packedOverlay) {
-        int remaining = be.summonTicks();
-        if (remaining <= 0) {
+        if (be.summonTicks() <= 0 || be.getLevel() == null) {
+            be.clientSummonStartGameTime = -1L;
             return;
         }
-        float elapsed = EndDragonAltarHatchBlockEntity.SUMMON_TICKS - remaining + partialTick;
+        // summonTicks is only synced at start/end (the on/off signal), so drive growth
+        // from the client's own elapsed time since the summon was first observed.
+        long time = be.getLevel().getGameTime();
+        if (be.clientSummonStartGameTime < 0L) {
+            be.clientSummonStartGameTime = time;
+        }
+        float elapsed = (time - be.clientSummonStartGameTime) + partialTick;
         float progress = Mth.clamp(elapsed / EndDragonAltarHatchBlockEntity.SUMMON_TICKS, 0.0F, 1.0F);
-        long time = be.getLevel() != null ? be.getLevel().getGameTime() : 0L;
 
         // Converging beams: from each receptacle (top face, where the crystal sits) to
         // the hatch centre (0.5, 0.5, 0.5).

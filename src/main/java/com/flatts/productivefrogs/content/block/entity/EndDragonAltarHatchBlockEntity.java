@@ -64,8 +64,10 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
     private NonNullList<ItemStack> items = NonNullList.withSize(SIZE, ItemStack.EMPTY);
     private final InvWrapper itemHandler = new InvWrapper(this);
     private int tickCounter;
-    /** 0 = idle; > 0 = a summon is in progress (ticks remaining). Synced for the client animation. */
+    /** 0 = idle; > 0 = a summon is in progress (ticks remaining). Synced (start/end) as the on/off signal. */
     private int summonTicks;
+    /** Client-only render state: game time when the renderer first saw this summon, for local growth animation. */
+    public long clientSummonStartGameTime = -1L;
 
     public EndDragonAltarHatchBlockEntity(BlockPos pos, BlockState state) {
         super(PFBlockEntities.END_DRAGON_ALTAR_HATCH.get(), pos, state);
