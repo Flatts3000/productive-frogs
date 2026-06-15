@@ -75,7 +75,19 @@ The hand-operated processing blocks - the **Slime Milker**, the **Slime Churn**,
 - `content/block/entity/<Name>Inventory` - the slot model behind a slot-bounded `ItemStackHandler`, exposing side-aware `inputView()` / `outputView()` slot views.
 - `content/menu/<Name>Menu` + `client/screen/<Name>Screen` - the container menu (registered via `PFMenuTypes`, screen bound in `PFClientEvents`) and its furnace-shaped GUI.
 
-**Hopper I/O is a capability, not a hook:** `PFModBusEvents.onRegisterCapabilities` registers `Capabilities.ItemHandler.BLOCK` (the **1.21.1** id - *not* the newer `Capabilities.Item.BLOCK` / `ResourceHandler<ItemResource>`) for each appliance BE, routing the down face to `outputView()` and other faces to `inputView()`. Mutate inventory through `extractItem` / `setStackInSlot` (never a raw shrink on a returned stack) so each change fires `onContentsChanged -> setChanged` independently. Appliances are **V1** (single-block); multiblocks/power are V2.
+**Hopper I/O is a capability, not a hook:** `PFModBusEvents.onRegisterCapabilities` registers `Capabilities.ItemHandler.BLOCK` (the **1.21.1** id - *not* the newer `Capabilities.Item.BLOCK` / `ResourceHandler<ItemResource>`) for each appliance BE, routing the down face to `outputView()` and other faces to `inputView()`. Mutate inventory through `extractItem` / `setStackInSlot` (never a raw shrink on a returned stack) so each change fires `onContentsChanged -> setChanged` independently. Appliances are single-block; the Terrarium is the multiblock counterpart (below).
+
+### Multiblocks - validator-driven, not a single BE (`content/multiblock/`)
+
+Multiblock structures use **validators** that scan the world for the expected block layout, anchored on one key block, rather than the single-BE-owns-everything appliance shape. `content/multiblock/` holds the **Terrarium** (`TerrariumValidator` + `TerrariumValidationResult` / `TerrariumManager` / `MilkCharge`, the flagship multiblock, `docs/terrarium.md`) and the **End Dragon Altar** (`DragonAltarValidator`, #249, `docs/dragon_altar.md` - anchored on the Hatch block; the summon state machine lives in `EndDragonAltarHatchBlockEntity.serverTick`). When adding a multiblock, validate-then-act through a validator here; don't model the whole structure as one oversized appliance BE.
+
+Two conventions when a multiblock has a fixed canonical shape: **lock it with a GameTest** - ship the layout as `data/<ns>/structure/<name>.nbt` and assert the validator passes on it (so a layout edit without re-syncing the offsets, or vice-versa, fails CI; see the `dragonAltar*` tests in `PFGameTests`), and **generate any Patchouli `multiblock` page's pattern from the validator's offsets** so the in-game guide diagram can't drift from the validator.
+
+The **v1.14 boss catalyst altar is a different mechanism** - *not* a validator class (don't go looking for a `CatalystAltarValidator`). It is variant-driven: a `spawn_catalyst` `SlimeVariant` whose `SlimeMilkSourceBlockEntity` stays inert until the matching catalyst block surrounds the source on all 6 faces (`docs/boss_catalyst_altar.md`).
+
+### Custom advancement triggers (`advancement/`)
+
+`advancement/FrogProducedTrigger` is a custom advancement criterion (the standalone Advancements tab, complementary to the modpack quest book). Fire it from the gameplay event where the milestone happens; the criterion JSONs live in datagen/datapack, not Java.
 
 ### Config-gated content - the `config_enabled` datapack condition
 
@@ -124,6 +136,10 @@ In-world tests live in `PFGameTests.java`, run via `./gradlew runGameTestServer`
 
 Use `helper.succeedWhen` / `runAfterDelay` / `onEachTick` rather than busy-waiting. **GameTest is blind to client visuals** (tints, render types, textures, lang fallbacks) - those need a manual `runClient` pass; see `docs/testing.md`.
 
+### In-game guide (Patchouli) - never build-validated
+
+The guide book (`productivefrogs:guide`). Its **definition** lives under `data/<ns>/patchouli_books/guide/book.json` (`use_resource_pack: true`, `i18n: false`), but its **content** - categories and entries - lives under `assets/<ns>/patchouli_books/guide/en_us/{categories,entries}/`. Patchouli is `compileOnly`, so guide content is **never build- or GameTest-validated**: a malformed entry, a bad category ref, or a broken `multiblock` page only surfaces on a `runClient` book reload (same posture as the texture baker and milk-asset scripts - see Project Conventions / the data-driven sections). Entry `name`s are inline strings, not lang keys (`i18n: false`). Every other multiblock has an entry with a `patchouli:multiblock` page; mirror that for new ones, and generate the page `pattern` from the validator's offsets (see Multiblocks above). Packs override or add content via resource packs.
+
 ### Item tinting on 1.21.1 - the non-obvious gotcha
 
 Per-item runtime tinting uses the **legacy `RegisterColorHandlersEvent.Item` event** with `ItemColor` lambdas, registered in `client/PFClientEvents.java` (`onRegisterItemColors`). The newer JSON-driven `ItemTintSource` pipeline (a `"tints"` array in the item model) **does not exist on 1.21.1** - do not reach for it, and there are no `ItemTintSource` classes in the tree. Block-item inventory icons tint via `BlockColor` (registered in the same class). Add a content-tinted item by adding an `ItemColor` lambda to that event.
@@ -134,7 +150,9 @@ Per-item runtime tinting uses the **legacy `RegisterColorHandlersEvent.Item` eve
 
 `AbstractContainerScreen#render` on **1.21.1 NeoForge does not call `renderTooltip`** - a screen that overrides only `renderBg` shows **no item tooltips** on slot hover. The fix lives in `client/screen/PFContainerScreen` (its `render` calls `super.render` then `renderTooltip`; no double-draw): **extend that base for any new container screen** instead of `AbstractContainerScreen` directly (see `SlimeMilkerScreen` / `SpawneryScreen` / `CastingMoldScreen`). Non-slot widgets (the Casting Mold's fluid gauge) still need their own hover hit-test on top.
 
-### Client integrations - JEI and Jade (both `compileOnly`)
+### Soft-dep integrations - where the Java glue lives (`client/` and `integration/`)
+
+The no-`compat/`-package rule has two real homes. **Client-only** plugin glue lives under `client/`; **common** soft-dep glue (loaded on both sides) lives under `integration/` (e.g. `integration/curios/CuriosCompat` - the Curios `productivefrogs:brewed` slot validator registered only when curios is loaded). `setup/VariantIntegrations` is the related boot-time hook that wires variant pools to integrations. None of these are `compat/`; the JSON-condition rule still governs *content* compat (cross-mod variants), while these handle *API* soft-deps that genuinely need Java.
 
 Two optional integrations live under `client/` (**not** `compat/` - the same no-`compat/`-package rule applies):
 - **JEI** (`client/jei/ProductiveFrogsJeiPlugin`, `@JeiPlugin`) - registers per-component **subtype interpreters** (so Slime Bucket / Slime Milk Bucket / Frog Egg / Configurable Froglight variants show as distinct entries instead of collapsing into one) and per-item **info pages** walked from the `SlimeVariant` registry. `compileOnly` API + `runtimeOnly` jar in dev.
@@ -151,7 +169,7 @@ A cross-cutting, opt-in debug logger (`PFDebug`) spans all layers (lifecycle, re
 - **Recipes never hardcode a wood species** - where a recipe wants planks, use the `#minecraft:planks` tag, not `oak_planks` (maintainer ruling 2026-06-07; the Milker/Spawnery/Churn all follow it). Same instinct for other material families when a vanilla tag exists.
 - **Docs filenames are snake_case** (`categories_and_tiers.md`). Design changes update the relevant `docs/*.md` in the same PR.
 - **Line endings:** `.gitattributes` forces LF for `.java`/`.gradle`/`.json`/`.md`/`.yml`, CRLF for `.bat`/`.cmd`. Don't fight it.
-- **No hard mod dependencies.** Cross-mod entries use `c:` common tags + `neoforge:conditions → mod_loaded`. No `compat/` Java package - if you reach for one, stop and use a JSON condition instead.
+- **No hard mod dependencies.** Cross-mod *content* (resource variants) uses `c:` common tags + `neoforge:conditions → mod_loaded` - no `compat/` Java package, use a JSON condition instead. API-level soft-deps that genuinely need Java (JEI, Jade, Curios) live under `client/` or `integration/` as `compileOnly` and load only when the mod is present (see "Soft-dep integrations" above).
 
 ## Scope Discipline (V1 vs V2)
 
