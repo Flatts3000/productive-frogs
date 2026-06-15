@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.content.entity;
 
 import com.flatts.productivefrogs.registry.PFEntities;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.frog.Frog;
@@ -36,6 +37,19 @@ public class PlinthFrog extends Frog {
     @Override
     protected void customServerAiStep() {
         // intentionally empty
+    }
+
+    /** Ambient ender aura - a few converging void particles so it reads as otherworldly. */
+    @Override
+    public void tick() {
+        super.tick();
+        if (level().isClientSide() && this.random.nextInt(3) == 0) {
+            double px = getX() + (this.random.nextDouble() - 0.5) * 0.9;
+            double py = getY() + 0.4 + this.random.nextDouble() * 0.7;
+            double pz = getZ() + (this.random.nextDouble() - 0.5) * 0.9;
+            level().addParticle(ParticleTypes.REVERSE_PORTAL, px, py, pz,
+                (this.random.nextDouble() - 0.5) * 0.02, 0.02, (this.random.nextDouble() - 0.5) * 0.02);
+        }
     }
 
     @Override

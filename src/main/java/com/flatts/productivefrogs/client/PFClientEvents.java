@@ -80,9 +80,9 @@ public final class PFClientEvents {
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(PFEntities.RESOURCE_TADPOLE.get(), ResourceTadpoleRenderer::new);
         event.registerEntityRenderer(PFEntities.RESOURCE_FROG.get(), ResourceFrogRenderer::new);
-        // Plinth display frog (#249): the stock vanilla frog look + tongue animation.
+        // Plinth display frog (#249) "Dragonsbane": oversized, ender-tinted apex frog.
         event.registerEntityRenderer(PFEntities.PLINTH_FROG.get(),
-            net.minecraft.client.renderer.entity.FrogRenderer::new);
+            com.flatts.productivefrogs.client.renderer.PlinthFrogRenderer::new);
         event.registerEntityRenderer(PFEntities.RESOURCE_SLIME.get(), ResourceSlimeRenderer::new);
         // Six parent species share one parameterized ParentSlimeRenderer, each
         // constructed with its species atlas + outer-shell tint.
