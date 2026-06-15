@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.content.entity.BogSlime;
 import com.flatts.productivefrogs.content.entity.CaveSlime;
 import com.flatts.productivefrogs.content.entity.GeodeSlime;
 import com.flatts.productivefrogs.content.entity.InfernalSlime;
+import com.flatts.productivefrogs.content.entity.PlinthFrog;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
@@ -50,6 +51,21 @@ public final class PFEntities {
                 .sized(0.5F, 0.5F)
                 .eyeHeight(0.4F)
                 .build(ProductiveFrogs.MOD_ID + ":resource_frog")
+        );
+
+    /**
+     * The dragon altar's plinth frog (#249) - a display-only frog the altar spawns
+     * when its structure is valid and removes when broken. {@code MISC} category so
+     * it never natural-spawns or counts toward mob caps. Frog-sized; reuses the
+     * vanilla frog renderer + attributes.
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<PlinthFrog>> PLINTH_FROG =
+        ENTITIES.register(
+            "plinth_frog",
+            () -> EntityType.Builder.<PlinthFrog>of(PlinthFrog::new, MobCategory.MISC)
+                .sized(0.5F, 0.5F)
+                .eyeHeight(0.4F)
+                .build(ProductiveFrogs.MOD_ID + ":plinth_frog")
         );
 
     /**
