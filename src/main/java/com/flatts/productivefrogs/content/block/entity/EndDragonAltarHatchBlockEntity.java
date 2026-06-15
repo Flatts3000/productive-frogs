@@ -56,8 +56,8 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
     private static final int SUMMON_TICKS = 200;
     /** XP awarded per summon - the vanilla repeat-kill dragon value. */
     private static final int XP_REWARD = 500;
-    /** Whether each summon also yields a dragon egg (off by default; egg stays a trophy). */
-    private static final boolean REPEATABLE_EGG = false;
+    /** Whether each summon also yields a dragon egg (on - the altar makes the egg renewable). */
+    private static final boolean REPEATABLE_EGG = true;
     private static final int LEVEL_EVENT_DRAGON_ROAR = 3001;   // ANIMATION_DRAGON_SUMMON_ROAR
     private static final int LEVEL_EVENT_DRAGON_DEATH = 1028;  // SOUND_DRAGON_DEATH
 
