@@ -16,7 +16,9 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ChestMenu;
@@ -24,6 +26,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -138,7 +144,29 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
         if (REPEATABLE_EGG) {
             spill(server, pos, be.deposit(new ItemStack(Items.DRAGON_EGG)));
         }
+        // Every other drop the dragon would yield. Vanilla's ender_dragon loot table
+        // is empty, but it is the hook drop-adding mods target via global loot
+        // modifiers - so rolling it here routes any modded dragon drops into the
+        // hatch too, with no real dragon (and no portal / boss bar / gateway).
+        rollDragonLoot(server, pos, be);
         server.levelEvent(LEVEL_EVENT_DRAGON_DEATH, pos, 0);
+    }
+
+    /** Roll the {@code minecraft:entities/ender_dragon} loot table into the hatch (mod-drop compat). */
+    private static void rollDragonLoot(ServerLevel server, BlockPos pos, EndDragonAltarHatchBlockEntity be) {
+        EnderDragon phantom = EntityType.ENDER_DRAGON.create(server);
+        if (phantom == null) {
+            return; // never added to the world; only the loot context needs it
+        }
+        phantom.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
+        LootParams params = new LootParams.Builder(server)
+            .withParameter(LootContextParams.THIS_ENTITY, phantom)
+            .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
+            .withParameter(LootContextParams.DAMAGE_SOURCE, server.damageSources().genericKill())
+            .create(LootContextParamSets.ENTITY);
+        LootTable table = server.getServer().reloadableRegistries().getLootTable(EntityType.ENDER_DRAGON.getDefaultLootTable());
+        table.getRandomItems(params, server.getRandom().nextLong(), stack -> spill(server, pos, be.deposit(stack)));
+        phantom.discard();
     }
 
     private static void spill(ServerLevel server, BlockPos pos, ItemStack overflow) {
