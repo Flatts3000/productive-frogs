@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.content.block.entity;
 
 import com.flatts.productivefrogs.PFConfig;
+import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.PlinthFrog;
 import com.flatts.productivefrogs.content.multiblock.DragonAltarValidator;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
@@ -8,11 +9,14 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
 import net.minecraft.world.ContainerHelper;
@@ -52,14 +56,12 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
     /** How often (ticks) the altar reconciles its plinth frog against structure validity. */
     private static final int RECONCILE_INTERVAL = 20;
 
-    /** Summon length - mirrors the feel of the vanilla respawn (~10s). Public for the renderer's progress calc. */
-    public static final int SUMMON_TICKS = 200;
-    /** XP awarded per summon - the vanilla repeat-kill dragon value. */
-    private static final int XP_REWARD = 500;
-    /** Whether each summon also yields a dragon egg (on - the altar makes the egg renewable). */
-    private static final boolean REPEATABLE_EGG = true;
     private static final int LEVEL_EVENT_DRAGON_ROAR = 3001;   // ANIMATION_DRAGON_SUMMON_ROAR
     private static final int LEVEL_EVENT_DRAGON_DEATH = 1028;  // SOUND_DRAGON_DEATH
+
+    /** Data-driven drop list for the altar (pack-overridable); see {@code loot_table/dragon_altar.json}. */
+    private static final ResourceKey<LootTable> DRAGON_ALTAR_LOOT_TABLE = ResourceKey.create(
+        Registries.LOOT_TABLE, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_altar"));
 
     private NonNullList<ItemStack> items = NonNullList.withSize(SIZE, ItemStack.EMPTY);
     private final InvWrapper itemHandler = new InvWrapper(this);
@@ -108,7 +110,7 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
         reconcileFrog(server, pos, valid);
         // Start a summon once the altar is complete and all four crystals are loaded.
         if (valid && PFConfig.bossEnabled() && allReceptaclesFilled(server, pos)) {
-            be.summonTicks = SUMMON_TICKS;
+            be.summonTicks = PFConfig.dragonAltarSummonTicks();
             server.levelEvent(LEVEL_EVENT_DRAGON_ROAR, pos, 0);
             be.syncToClient();
         }
@@ -117,8 +119,9 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
     /** Advance an in-progress summon: roar at intervals, then pay out at the end. */
     private static void advanceSummon(ServerLevel server, BlockPos pos, EndDragonAltarHatchBlockEntity be) {
         be.summonTicks--;
-        int elapsed = SUMMON_TICKS - be.summonTicks;
-        if (elapsed == 60 || elapsed == 120 || elapsed == SUMMON_TICKS - 10) {
+        int total = PFConfig.dragonAltarSummonTicks();
+        int elapsed = total - be.summonTicks;
+        if (elapsed == 60 || elapsed == 120 || elapsed == total - 10) {
             server.levelEvent(LEVEL_EVENT_DRAGON_ROAR, pos, 0);
         }
         be.setChanged();
@@ -143,22 +146,32 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
                 r.consume();
             }
         }
-        // Reward: XP orbs at the hatch, one dragon's breath (and, if enabled, an egg)
-        // into the hatch inventory with overflow dropped above it.
-        ExperienceOrb.award(server, Vec3.atCenterOf(pos), XP_REWARD);
-        spill(server, pos, be.deposit(new ItemStack(Items.DRAGON_BREATH)));
-        if (REPEATABLE_EGG) {
+        // Reward: XP orbs at the hatch, the data-driven drop set into the hatch, and
+        // (if enabled) the renewable Dragon Egg. The item drops are NOT hardcoded - they
+        // come from the productivefrogs:dragon_altar loot table (see rollDragonLoot), so
+        // a pack edits/extends what the altar yields without touching Java.
+        int xp = PFConfig.dragonAltarXpReward();
+        if (xp > 0) {
+            ExperienceOrb.award(server, Vec3.atCenterOf(pos), xp);
+        }
+        rollDragonLoot(server, pos, be);
+        // The Dragon Egg stays a config toggle, not a loot entry: repeatableEgg flips the
+        // altar between a renewable-egg farm and "everything but a duplicate egg", which is
+        // a balance lever rather than a question of which items the dragon drops.
+        if (PFConfig.dragonAltarRepeatableEgg()) {
             spill(server, pos, be.deposit(new ItemStack(Items.DRAGON_EGG)));
         }
-        // Every other drop the dragon would yield. Vanilla's ender_dragon loot table
-        // is empty, but it is the hook drop-adding mods target via global loot
-        // modifiers - so rolling it here routes any modded dragon drops into the
-        // hatch too, with no real dragon (and no portal / boss bar / gateway).
-        rollDragonLoot(server, pos, be);
         server.levelEvent(LEVEL_EVENT_DRAGON_DEATH, pos, 0);
     }
 
-    /** Roll the {@code minecraft:entities/ender_dragon} loot table into the hatch (mod-drop compat). */
+    /**
+     * Roll the {@code productivefrogs:dragon_altar} loot table into the hatch. That table
+     * is the data-driven definition of the altar's drops (default: dragon's breath + the
+     * Princess's Kiss); packs/mods override or add pools to change what the altar yields.
+     * A never-spawned phantom dragon supplies the {@code this_entity} loot context so pack
+     * conditions can key off the dragon, mirroring a real kill - but no dragon ever enters
+     * the world (no portal / boss bar / gateway).
+     */
     private static void rollDragonLoot(ServerLevel server, BlockPos pos, EndDragonAltarHatchBlockEntity be) {
         EnderDragon phantom = EntityType.ENDER_DRAGON.create(server);
         if (phantom == null) {
@@ -170,7 +183,7 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
             .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
             .withParameter(LootContextParams.DAMAGE_SOURCE, server.damageSources().genericKill())
             .create(LootContextParamSets.ENTITY);
-        LootTable table = server.getServer().reloadableRegistries().getLootTable(EntityType.ENDER_DRAGON.getDefaultLootTable());
+        LootTable table = server.getServer().reloadableRegistries().getLootTable(DRAGON_ALTAR_LOOT_TABLE);
         table.getRandomItems(params, server.getRandom().nextLong(), stack -> spill(server, pos, be.deposit(stack)));
         phantom.discard();
     }

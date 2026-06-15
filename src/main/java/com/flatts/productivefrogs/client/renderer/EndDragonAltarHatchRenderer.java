@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.client.renderer;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -68,7 +69,7 @@ public class EndDragonAltarHatchRenderer implements BlockEntityRenderer<EndDrago
             be.clientSummonStartGameTime = time;
         }
         float elapsed = (time - be.clientSummonStartGameTime) + partialTick;
-        float progress = Mth.clamp(elapsed / EndDragonAltarHatchBlockEntity.SUMMON_TICKS, 0.0F, 1.0F);
+        float progress = Mth.clamp(elapsed / PFConfig.dragonAltarSummonTicks(), 0.0F, 1.0F);
 
         // Converging beams: from each receptacle (top face, where the crystal sits) to
         // the hatch centre (0.5, 0.5, 0.5).

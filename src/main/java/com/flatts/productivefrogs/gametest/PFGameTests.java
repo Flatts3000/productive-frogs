@@ -6110,4 +6110,49 @@ public final class PFGameTests {
             "a dragon altar missing a froglight must not validate (strictness)");
         helper.succeed();
     }
+
+    /**
+     * End-to-end: a built altar with all four receptacles primed must run a summon and
+     * deposit the data-driven drop set into the Hatch - dragon's breath + the Princess's
+     * Kiss from the {@code productivefrogs:dragon_altar} loot table, plus the renewable
+     * Dragon Egg. Guards the drop path: a wrong loot-table id or an incompatible loot
+     * param set would leave the hatch empty and fail this.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "dragon_altar", timeoutTicks = 320)
+    public static void dragonAltarSummonDepositsDrops(GameTestHelper helper) {
+        BlockPos hatch = findAltarHatch(helper);
+        helper.assertTrue(hatch != null, "no End Dragon Altar Hatch in the loaded structure");
+        BlockPos absHatch = helper.absolutePos(hatch);
+        // Ensure all four receptacles are primed with an End Crystal - this triggers the
+        // summon. (The fixture may already ship armed; only fill the empty ones.)
+        for (BlockPos rp : com.flatts.productivefrogs.content.multiblock.DragonAltarValidator.receptacles(absHatch)) {
+            if (helper.getLevel().getBlockEntity(rp)
+                    instanceof com.flatts.productivefrogs.content.block.entity.EndCrystalReceptacleBlockEntity r) {
+                if (!r.isFilled()) {
+                    r.tryInsert(new ItemStack(Items.END_CRYSTAL));
+                }
+                helper.assertTrue(r.isFilled(), "receptacle at " + rp + " could not be primed");
+            } else {
+                helper.fail("no receptacle block entity at " + rp);
+            }
+        }
+        helper.succeedWhen(() -> {
+            net.minecraft.world.level.block.entity.BlockEntity be = helper.getLevel().getBlockEntity(absHatch);
+            helper.assertTrue(be instanceof com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity,
+                "hatch block entity missing");
+            net.minecraft.world.Container c = (net.minecraft.world.Container) be;
+            helper.assertTrue(containerHas(c, Items.DRAGON_BREATH), "hatch missing dragon's breath after summon");
+            helper.assertTrue(containerHas(c, PFItems.PRINCESS_KISS.get()), "hatch missing the Princess's Kiss after summon");
+            helper.assertTrue(containerHas(c, Items.DRAGON_EGG), "hatch missing the Dragon Egg after summon");
+        });
+    }
+
+    private static boolean containerHas(net.minecraft.world.Container c, net.minecraft.world.item.Item item) {
+        for (int i = 0; i < c.getContainerSize(); i++) {
+            if (c.getItem(i).is(item)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
