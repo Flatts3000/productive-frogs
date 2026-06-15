@@ -95,7 +95,7 @@ growth animation stays in sync with the server's summon length.
 - `content/block/entity/EndCrystalReceptacleBlockEntity` - holds one End Crystal via an
   insert-only `IItemHandler` (extraction blocked so a hopper cannot steal a primed
   crystal); the summon `consume()`s them.
-- `content/entity/PlinthFrog` ("Dragonsbane") - a neutered, pinned `Frog` reskin (NoAI,
+- `content/entity/DragonsbaneFrog` ("Dragonsbane") - a neutered, pinned `Frog` reskin (NoAI,
   invulnerable, persistent). `reconcileFrog` keeps exactly one pinned on the central
   bedrock plinth while the structure is valid and removes it when broken.
 - `content/multiblock/DragonAltarValidator` - strict, anchored on the hatch; offsets are

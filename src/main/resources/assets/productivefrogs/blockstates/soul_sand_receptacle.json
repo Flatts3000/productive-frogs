@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "filled=false": { "model": "productivefrogs:block/soul_sand_receptacle" },
+    "filled=true": { "model": "productivefrogs:block/soul_sand_receptacle" }
+  }
+}

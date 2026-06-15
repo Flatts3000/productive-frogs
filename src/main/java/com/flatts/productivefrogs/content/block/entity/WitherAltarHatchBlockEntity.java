@@ -2,32 +2,33 @@ package com.flatts.productivefrogs.content.block.entity;
 
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
-import com.flatts.productivefrogs.content.entity.DragonsbaneFrog;
-import com.flatts.productivefrogs.content.multiblock.DragonAltarValidator;
+import com.flatts.productivefrogs.content.entity.WitherbaneFrog;
+import com.flatts.productivefrogs.content.multiblock.WitherAltarValidator;
 import com.flatts.productivefrogs.event.FrogTongueDropHandler;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ExperienceOrb;
-import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.storage.loot.LootParams;
@@ -42,32 +43,24 @@ import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.wrapper.InvWrapper;
 
 /**
- * End Dragon Altar Hatch block entity (#249). Same role as the Terrarium Hatch -
- * an output inventory you open like a chest and pipe items out of - but a distinct
- * block (different recipe) and decoupled from the Terrarium: the dragon-altar
- * summon deposits the dragon's drops (one dragon's breath, the config egg) here,
- * and XP spawns as orbs at the hatch. Plain 27-slot chest GUI ({@link ChestMenu})
- * so no custom screen is needed; pipes pull via an {@link InvWrapper} item handler.
+ * Wither Altar Hatch block entity (#247) - the altar's output and summon brain.
+ * Mirrors {@link EndDragonAltarHatchBlockEntity}: a {@link BaseContainerBlockEntity}
+ * chest you open or pipe from, with a {@code static serverTick} running the summon
+ * state machine. When the structure validates, the boss tier is on, and all seven
+ * receptacles (4 Soul Sand + 3 Wither Skull) are filled, a summon runs; Witherbane
+ * (pinned on top) devours the Wither replica, the receptacles are spent, and the
+ * reward lands here - a Nether Star Froglight + XP + whatever else the Wither drops.
  */
-public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
+public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
 
     public static final int SIZE = 27;
 
-    /** How often (ticks) the altar reconciles its plinth frog against structure validity. */
+    /** How often (ticks) the altar reconciles Witherbane against structure validity. */
     private static final int RECONCILE_INTERVAL = 20;
 
-    private static final int LEVEL_EVENT_DRAGON_ROAR = 3001;   // ANIMATION_DRAGON_SUMMON_ROAR
-    private static final int LEVEL_EVENT_DRAGON_DEATH = 1028;  // SOUND_DRAGON_DEATH
-
-    /** Data-driven drop list for the altar (pack-overridable); see {@code loot_table/dragon_altar.json}. */
-    private static final ResourceKey<LootTable> DRAGON_ALTAR_LOOT_TABLE = ResourceKey.create(
-        Registries.LOOT_TABLE, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_altar"));
-
-    /** Boss slime variants whose Froglights the altar pays out (each smelts back to the resource). */
-    private static final ResourceLocation DRAGON_BREATH_VARIANT =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_breath");
-    private static final ResourceLocation DRAGON_EGG_VARIANT =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_egg");
+    /** Boss slime variant whose Froglight the altar pays out (smelts back to a Nether Star). */
+    private static final ResourceLocation NETHER_STAR_VARIANT =
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star");
 
     private NonNullList<ItemStack> items = NonNullList.withSize(SIZE, ItemStack.EMPTY);
     private final InvWrapper itemHandler = new InvWrapper(this);
@@ -77,8 +70,8 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
     /** Client-only render state: game time when the renderer first saw this summon, for local growth animation. */
     public long clientSummonStartGameTime = -1L;
 
-    public EndDragonAltarHatchBlockEntity(BlockPos pos, BlockState state) {
-        super(PFBlockEntities.END_DRAGON_ALTAR_HATCH.get(), pos, state);
+    public WitherAltarHatchBlockEntity(BlockPos pos, BlockState state) {
+        super(PFBlockEntities.WITHER_ALTAR_HATCH.get(), pos, state);
     }
 
     /** Pipe/hopper view over the chest inventory. */
@@ -87,20 +80,15 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
     }
 
     /**
-     * Deposit a dragon-altar drop, spilling any overflow as a returned leftover
-     * (the summon decides what to do with it). Used by the summon state machine.
+     * Deposit a reward item, spilling any overflow as a returned leftover (the summon
+     * decides what to do with it). Used by the summon state machine.
      */
     public ItemStack deposit(ItemStack stack) {
         return ItemHandlerHelper.insertItem(itemHandler, stack, false);
     }
 
-    /** The block the plinth frog stands in: on top of the central bedrock plinth (three below the hatch). */
-    public static BlockPos plinthFrogPos(BlockPos hatchPos) {
-        return hatchPos.offset(0, -3, 0);
-    }
-
-    /** Server ticker: drive the summon state machine, then (when idle) reconcile the plinth frog. */
-    public static void serverTick(Level level, BlockPos pos, BlockState state, EndDragonAltarHatchBlockEntity be) {
+    /** Server ticker: drive the summon state machine, then (when idle) reconcile Witherbane. */
+    public static void serverTick(Level level, BlockPos pos, BlockState state, WitherAltarHatchBlockEntity be) {
         if (!(level instanceof ServerLevel server)) {
             return;
         }
@@ -112,78 +100,62 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
             return;
         }
         be.tickCounter = 0;
-        boolean valid = DragonAltarValidator.validate(server, pos).valid();
+        boolean valid = WitherAltarValidator.validate(server, pos).valid();
         reconcileFrog(server, pos, valid);
-        // Start a summon once the altar is complete and all four crystals are loaded.
+        // Start a summon once the altar is complete and all seven receptacles are loaded.
         if (valid && PFConfig.bossEnabled() && allReceptaclesFilled(server, pos)) {
-            be.summonTicks = PFConfig.dragonAltarSummonTicks();
-            server.levelEvent(LEVEL_EVENT_DRAGON_ROAR, pos, 0);
+            be.summonTicks = PFConfig.witherAltarSummonTicks();
+            server.playSound(null, pos, SoundEvents.WITHER_SPAWN, SoundSource.HOSTILE, 1.0F, 1.0F);
             be.syncToClient();
         }
     }
 
-    /** Advance an in-progress summon: roar at intervals, then pay out at the end. */
-    private static void advanceSummon(ServerLevel server, BlockPos pos, EndDragonAltarHatchBlockEntity be) {
+    /** Advance an in-progress summon: pay out at the end. */
+    private static void advanceSummon(ServerLevel server, BlockPos pos, WitherAltarHatchBlockEntity be) {
         be.summonTicks--;
-        int total = PFConfig.dragonAltarSummonTicks();
-        int elapsed = total - be.summonTicks;
-        if (elapsed == 60 || elapsed == 120 || elapsed == total - 10) {
-            server.levelEvent(LEVEL_EVENT_DRAGON_ROAR, pos, 0);
-        }
         be.setChanged();
         if (be.summonTicks <= 0) {
             completeSummon(server, pos, be);
         }
     }
 
-    /** Finish the summon: spend the crystals and pay out the reward (XP + boss froglights + the dragon's drops). */
-    private static void completeSummon(ServerLevel server, BlockPos pos, EndDragonAltarHatchBlockEntity be) {
+    /** Finish the summon: spend the receptacles and pay out the reward. */
+    private static void completeSummon(ServerLevel server, BlockPos pos, WitherAltarHatchBlockEntity be) {
         be.summonTicks = 0;
         be.syncToClient();
-        if (!DragonAltarValidator.validate(server, pos).valid()) {
-            return; // broken mid-summon - abort, crystals untouched
+        if (!WitherAltarValidator.validate(server, pos).valid()) {
+            return; // broken mid-summon - abort, receptacles untouched
         }
-        // Dragonsbane eats the summoned dragon (tongue lash).
-        for (DragonsbaneFrog frog : server.getEntitiesOfClass(DragonsbaneFrog.class, new AABB(plinthFrogPos(pos)).inflate(0.5))) {
+        // Witherbane eats the summoned Wither (tongue lash).
+        for (WitherbaneFrog frog : server.getEntitiesOfClass(WitherbaneFrog.class,
+                new AABB(WitherAltarValidator.witherbanePos(pos)).inflate(0.5))) {
             frog.triggerEat();
         }
-        for (BlockPos rp : DragonAltarValidator.receptacles(pos)) {
-            if (server.getBlockEntity(rp) instanceof EndCrystalReceptacleBlockEntity r) {
+        // Spend all seven ritual receptacles (the full vanilla cost).
+        for (BlockPos rp : WitherAltarValidator.receptacles(pos)) {
+            if (server.getBlockEntity(rp) instanceof WitherSummonReceptacleBlockEntity r) {
                 r.consume();
             }
         }
-        // Reward, in three parts:
-        // 1. XP orbs at the hatch.
-        int xp = PFConfig.dragonAltarXpReward();
+        // Reward: XP at the hatch + the Nether Star Froglight (the boss-Froglight model)
+        // + whatever else the Wither is programmed to drop (its loot table, star stripped).
+        int xp = PFConfig.witherAltarXpReward();
         if (xp > 0) {
             ExperienceOrb.award(server, Vec3.atCenterOf(pos), xp);
         }
-        // 2. The boss Froglights - the altar's signature output. Like the rest of the
-        //    mod's frog loop it yields variant-stamped Froglights (smeltable back to the
-        //    resource), not the raw resource: a Dragon Breath Froglight always, and a
-        //    Dragon Egg Froglight when repeatableEgg is on (the renewable-egg lever, now
-        //    delivered as the froglight that smelts to an egg).
-        spill(server, pos, be.deposit(FrogTongueDropHandler.buildFroglight(DRAGON_BREATH_VARIANT, null)));
-        if (PFConfig.dragonAltarRepeatableEgg()) {
-            spill(server, pos, be.deposit(FrogTongueDropHandler.buildFroglight(DRAGON_EGG_VARIANT, null)));
-        }
-        // 3. Whatever the dragon itself drops - the data-driven productivefrogs:dragon_altar
-        //    loot table (default: the Princess's Kiss). Packs edit/extend it without Java.
-        rollDragonLoot(server, pos, be);
-        server.levelEvent(LEVEL_EVENT_DRAGON_DEATH, pos, 0);
+        spill(server, pos, be.deposit(FrogTongueDropHandler.buildFroglight(NETHER_STAR_VARIANT, null)));
+        rollWitherLoot(server, pos, be);
+        server.playSound(null, pos, SoundEvents.WITHER_DEATH, SoundSource.HOSTILE, 1.0F, 1.0F);
     }
 
     /**
-     * Roll the {@code productivefrogs:dragon_altar} loot table into the hatch. That table
-     * is the data-driven definition of what the dragon itself drops (default: the
-     * Princess's Kiss); packs/mods override or add pools to change what the altar yields.
-     * The boss Froglights are paid out separately (see {@link #completeSummon}).
-     * A never-spawned phantom dragon supplies the {@code this_entity} loot context so pack
-     * conditions can key off the dragon, mirroring a real kill - but no dragon ever enters
-     * the world (no portal / boss bar / gateway).
+     * Roll the vanilla {@code minecraft:entities/wither} loot table into the hatch with a
+     * never-spawned phantom Wither as the {@code this_entity} context - this is the
+     * "whatever else the Wither drops" bucket and catches mod GLM additions. The raw
+     * Nether Star is stripped, because the star is paid out as the Nether Star Froglight.
      */
-    private static void rollDragonLoot(ServerLevel server, BlockPos pos, EndDragonAltarHatchBlockEntity be) {
-        EnderDragon phantom = EntityType.ENDER_DRAGON.create(server);
+    private static void rollWitherLoot(ServerLevel server, BlockPos pos, WitherAltarHatchBlockEntity be) {
+        WitherBoss phantom = EntityType.WITHER.create(server);
         if (phantom == null) {
             return; // never added to the world; only the loot context needs it
         }
@@ -193,8 +165,12 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
             .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
             .withParameter(LootContextParams.DAMAGE_SOURCE, server.damageSources().genericKill())
             .create(LootContextParamSets.ENTITY);
-        LootTable table = server.getServer().reloadableRegistries().getLootTable(DRAGON_ALTAR_LOOT_TABLE);
-        table.getRandomItems(params, server.getRandom().nextLong(), stack -> spill(server, pos, be.deposit(stack)));
+        LootTable table = server.getServer().reloadableRegistries().getLootTable(EntityType.WITHER.getDefaultLootTable());
+        table.getRandomItems(params, server.getRandom().nextLong(), stack -> {
+            if (!stack.is(Items.NETHER_STAR)) { // the star only ever appears as the Froglight
+                spill(server, pos, be.deposit(stack));
+            }
+        });
         phantom.discard();
     }
 
@@ -205,8 +181,8 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
     }
 
     private static boolean allReceptaclesFilled(ServerLevel server, BlockPos hatch) {
-        for (BlockPos rp : DragonAltarValidator.receptacles(hatch)) {
-            if (!(server.getBlockEntity(rp) instanceof EndCrystalReceptacleBlockEntity r) || !r.isFilled()) {
+        for (BlockPos rp : WitherAltarValidator.receptacles(hatch)) {
+            if (!(server.getBlockEntity(rp) instanceof WitherSummonReceptacleBlockEntity r) || !r.isFilled()) {
                 return false;
             }
         }
@@ -214,31 +190,31 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
     }
 
     /**
-     * Keep exactly one plinth frog pinned when valid; remove it when broken. Re-pinning
-     * each pass also corrects any drift.
+     * Keep exactly one Witherbane pinned when valid; remove it when broken. Re-pinning
+     * each pass also corrects any drift. It faces the ritual (+Z, yaw 0).
      */
     private static void reconcileFrog(ServerLevel server, BlockPos pos, boolean valid) {
-        BlockPos plinth = plinthFrogPos(pos);
-        List<DragonsbaneFrog> frogs = server.getEntitiesOfClass(DragonsbaneFrog.class, new AABB(plinth).inflate(0.5));
+        BlockPos perch = WitherAltarValidator.witherbanePos(pos);
+        List<WitherbaneFrog> frogs = server.getEntitiesOfClass(WitherbaneFrog.class, new AABB(perch).inflate(0.5));
         if (!valid) {
-            for (DragonsbaneFrog f : frogs) {
+            for (WitherbaneFrog f : frogs) {
                 f.discard();
             }
             return;
         }
-        double cx = plinth.getX() + 0.5;
-        double cy = plinth.getY();
-        double cz = plinth.getZ() + 0.5;
+        double cx = perch.getX() + 0.5;
+        double cy = perch.getY();
+        double cz = perch.getZ() + 0.5;
         if (frogs.isEmpty()) {
-            DragonsbaneFrog frog = DragonsbaneFrog.type().create(server);
+            WitherbaneFrog frog = WitherbaneFrog.type().create(server);
             if (frog != null) {
-                frog.moveTo(cx, cy, cz, 180.0F, 0.0F);
-                frog.setYBodyRot(180.0F);
-                frog.setYHeadRot(180.0F);
+                frog.moveTo(cx, cy, cz, 0.0F, 0.0F);
+                frog.setYBodyRot(0.0F);
+                frog.setYHeadRot(0.0F);
                 server.addFreshEntity(frog);
             }
         } else {
-            DragonsbaneFrog frog = frogs.get(0);
+            WitherbaneFrog frog = frogs.get(0);
             frog.moveTo(cx, cy, cz, frog.getYRot(), 0.0F);
             frog.setDeltaMovement(Vec3.ZERO);
             for (int i = 1; i < frogs.size(); i++) {
@@ -275,7 +251,7 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
 
     @Override
     protected Component getDefaultName() {
-        return Component.translatable("block.productivefrogs.end_dragon_altar_hatch");
+        return Component.translatable("block.productivefrogs.wither_altar_hatch");
     }
 
     @Override

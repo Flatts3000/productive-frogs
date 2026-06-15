@@ -64,8 +64,10 @@ public final class PFModBusEvents {
         // ResourceTadpole reuses vanilla Tadpole's attribute table verbatim.
         event.put(PFEntities.RESOURCE_TADPOLE.get(), Tadpole.createAttributes().build());
         event.put(PFEntities.RESOURCE_FROG.get(), ResourceFrog.createAttributes().build());
-        // Plinth display frog (#249) reuses the vanilla Frog attribute table.
-        event.put(PFEntities.PLINTH_FROG.get(), net.minecraft.world.entity.animal.frog.Frog.createAttributes().build());
+        // Dragon altar display frog (#249) "Dragonsbane" reuses the vanilla Frog attribute table.
+        event.put(PFEntities.DRAGONSBANE.get(), net.minecraft.world.entity.animal.frog.Frog.createAttributes().build());
+        // Witherbane (#247), the Wither Altar's display frog, likewise.
+        event.put(PFEntities.WITHERBANE.get(), net.minecraft.world.entity.animal.frog.Frog.createAttributes().build());
         // ResourceSlime uses the standard Monster attribute table — same baseline
         // vanilla EntityType.SLIME uses (via Monster.createMonsterAttributes).
         // Per-size HP/movement scaling happens in Slime#setSize at runtime,
@@ -280,6 +282,22 @@ public final class PFModBusEvents {
         event.registerBlockEntity(
             Capabilities.ItemHandler.BLOCK,
             PFBlockEntities.END_DRAGON_ALTAR_HATCH.get(),
+            (be, side) -> be.itemHandler()
+        );
+
+        // Wither Altar summon receptacles (#247): insert-only, like the dragon altar's
+        // crystal sockets - pipes feed soul sand / skulls in; the summon spends them.
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            PFBlockEntities.WITHER_SUMMON_RECEPTACLE.get(),
+            (be, side) -> be.insertOnlyHandler()
+        );
+
+        // Wither Altar Hatch (#247): the altar's output - pipes pull the reward
+        // from any face (chest-style inventory).
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            PFBlockEntities.WITHER_ALTAR_HATCH.get(),
             (be, side) -> be.itemHandler()
         );
 

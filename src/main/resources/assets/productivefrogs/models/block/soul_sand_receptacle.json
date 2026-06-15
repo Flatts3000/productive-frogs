@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "productivefrogs:block/soul_sand_receptacle"
+  }
+}

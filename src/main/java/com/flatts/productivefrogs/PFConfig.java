@@ -117,6 +117,11 @@ public final class PFConfig {
     public static final ModConfigSpec.IntValue DRAGON_ALTAR_XP_REWARD;
     public static final ModConfigSpec.BooleanValue DRAGON_ALTAR_REPEATABLE_EGG;
 
+    // Wither Altar (#247) tunables, under the boss section. Summon length (the
+    // vanilla-spawn charge) and the XP reward per summon.
+    public static final ModConfigSpec.IntValue WITHER_ALTAR_SUMMON_TICKS;
+    public static final ModConfigSpec.IntValue WITHER_ALTAR_XP_REWARD;
+
     // Deterministic, config-exposed lifecycle timings (docs/known_issues.md).
     // These are fixed (non-random) delays for the MODDED frog lifecycle; vanilla
     // frogspawn/tadpoles/frogs keep their own stock pacing.
@@ -166,6 +171,9 @@ public final class PFConfig {
     public static final int DEFAULT_DRAGON_ALTAR_SUMMON_TICKS = 200;
     public static final int DEFAULT_DRAGON_ALTAR_XP_REWARD = 500;
     public static final boolean DEFAULT_DRAGON_ALTAR_REPEATABLE_EGG = true;
+    // Wither Altar defaults: 220 matches the vanilla invulnerable spawn; 50 XP a Wither's value.
+    public static final int DEFAULT_WITHER_ALTAR_SUMMON_TICKS = 220;
+    public static final int DEFAULT_WITHER_ALTAR_XP_REWARD = 50;
 
     public static final ModConfigSpec SPEC;
 
@@ -780,6 +788,25 @@ public final class PFConfig {
 
         builder.pop();
 
+        builder.push("wither_altar");
+
+        WITHER_ALTAR_SUMMON_TICKS = builder
+            .comment(
+                "Wither Altar (#247): length in ticks of the summon - the replica Wither's charging spawn",
+                "before Witherbane devours it. Default 220 (matches the vanilla invulnerable spawn). The",
+                "rewards land at the end regardless."
+            )
+            .defineInRange("summonTicks", DEFAULT_WITHER_ALTAR_SUMMON_TICKS, 1, 24000);
+
+        WITHER_ALTAR_XP_REWARD = builder
+            .comment(
+                "Experience granted per completed Wither Altar summon. Default 50 (a vanilla Wither's value).",
+                "Set 0 to grant no XP."
+            )
+            .defineInRange("xpReward", DEFAULT_WITHER_ALTAR_XP_REWARD, 0, 100000);
+
+        builder.pop();
+
         builder.pop();
 
         SPEC = builder.build();
@@ -1017,6 +1044,16 @@ public final class PFConfig {
     /** Whether each altar summon deposits a Dragon Egg Froglight ({@code boss.dragon_altar.repeatableEgg}, #249); fallback {@value #DEFAULT_DRAGON_ALTAR_REPEATABLE_EGG}. */
     public static boolean dragonAltarRepeatableEgg() {
         return SPEC.isLoaded() ? DRAGON_ALTAR_REPEATABLE_EGG.get() : DEFAULT_DRAGON_ALTAR_REPEATABLE_EGG;
+    }
+
+    /** Wither Altar summon length in ticks ({@code boss.wither_altar.summonTicks}, #247); fallback {@value #DEFAULT_WITHER_ALTAR_SUMMON_TICKS}. */
+    public static int witherAltarSummonTicks() {
+        return SPEC.isLoaded() ? WITHER_ALTAR_SUMMON_TICKS.get() : DEFAULT_WITHER_ALTAR_SUMMON_TICKS;
+    }
+
+    /** XP granted per completed Wither Altar summon ({@code boss.wither_altar.xpReward}, #247); fallback {@value #DEFAULT_WITHER_ALTAR_XP_REWARD}. */
+    public static int witherAltarXpReward() {
+        return SPEC.isLoaded() ? WITHER_ALTAR_XP_REWARD.get() : DEFAULT_WITHER_ALTAR_XP_REWARD;
     }
 
     /**

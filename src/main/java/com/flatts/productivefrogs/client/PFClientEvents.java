@@ -80,9 +80,12 @@ public final class PFClientEvents {
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(PFEntities.RESOURCE_TADPOLE.get(), ResourceTadpoleRenderer::new);
         event.registerEntityRenderer(PFEntities.RESOURCE_FROG.get(), ResourceFrogRenderer::new);
-        // Plinth display frog (#249) "Dragonsbane": oversized, ender-tinted apex frog.
-        event.registerEntityRenderer(PFEntities.PLINTH_FROG.get(),
-            com.flatts.productivefrogs.client.renderer.PlinthFrogRenderer::new);
+        // Dragon altar display frog (#249) "Dragonsbane": oversized, ender-tinted apex frog.
+        event.registerEntityRenderer(PFEntities.DRAGONSBANE.get(),
+            com.flatts.productivefrogs.client.renderer.DragonsbaneFrogRenderer::new);
+        // Witherbane (#247): the Wither Altar's oversized, infernal-tinted display frog.
+        event.registerEntityRenderer(PFEntities.WITHERBANE.get(),
+            com.flatts.productivefrogs.client.renderer.WitherbaneFrogRenderer::new);
         event.registerEntityRenderer(PFEntities.RESOURCE_SLIME.get(), ResourceSlimeRenderer::new);
         // Six parent species share one parameterized ParentSlimeRenderer, each
         // constructed with its species atlas + outer-shell tint.
@@ -113,6 +116,16 @@ public final class PFClientEvents {
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.END_DRAGON_ALTAR_HATCH.get(),
             com.flatts.productivefrogs.client.renderer.EndDragonAltarHatchRenderer::new);
+        // Wither Altar Hatch (#247): the summon animation - the charging Wither replica
+        // growing over the ritual. See client/renderer/WitherAltarHatchRenderer.
+        event.registerBlockEntityRenderer(
+            com.flatts.productivefrogs.registry.PFBlockEntities.WITHER_ALTAR_HATCH.get(),
+            com.flatts.productivefrogs.client.renderer.WitherAltarHatchRenderer::new);
+        // Wither summon receptacles (#247): the held item (soul sand / wither skull)
+        // rendered on the frog-facing face. See client/renderer/WitherSummonReceptacleRenderer.
+        event.registerBlockEntityRenderer(
+            com.flatts.productivefrogs.registry.PFBlockEntities.WITHER_SUMMON_RECEPTACLE.get(),
+            com.flatts.productivefrogs.client.renderer.WitherSummonReceptacleRenderer::new);
     }
 
     private static ResourceLocation parentTexture(String name) {

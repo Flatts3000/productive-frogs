@@ -16,6 +16,8 @@ import com.flatts.productivefrogs.content.block.entity.SpawneryBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SweetslimedLilyPadBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.WitherSummonReceptacleBlockEntity;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -79,6 +81,24 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "end_dragon_altar_hatch",
             () -> BlockEntityType.Builder.of(EndDragonAltarHatchBlockEntity::new, PFBlocks.END_DRAGON_ALTAR_HATCH.get()).build(null)
+        );
+
+    /**
+     * One BE type backing both Wither Altar (#247) summon receptacles (soul sand +
+     * wither skull) - each holds one item; the accepted item is read from the block.
+     */
+    public static final Supplier<BlockEntityType<WitherSummonReceptacleBlockEntity>> WITHER_SUMMON_RECEPTACLE =
+        BLOCK_ENTITIES.register(
+            "wither_summon_receptacle",
+            () -> BlockEntityType.Builder.of(WitherSummonReceptacleBlockEntity::new,
+                PFBlocks.SOUL_SAND_RECEPTACLE.get(), PFBlocks.WITHER_SKULL_RECEPTACLE.get()).build(null)
+        );
+
+    /** BE type for the {@code wither_altar_hatch} (#247) - the altar's output + summon brain. */
+    public static final Supplier<BlockEntityType<WitherAltarHatchBlockEntity>> WITHER_ALTAR_HATCH =
+        BLOCK_ENTITIES.register(
+            "wither_altar_hatch",
+            () -> BlockEntityType.Builder.of(WitherAltarHatchBlockEntity::new, PFBlocks.WITHER_ALTAR_HATCH.get()).build(null)
         );
 
     /**

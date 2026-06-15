@@ -1,0 +1,47 @@
+{
+  "name": "Wither Altar",
+  "icon": "productivefrogs:wither_altar_hatch",
+  "category": "productivefrogs:advanced",
+  "sortnum": 120,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The Wither Altar turns the Wither fight into a repeatable, contained farm. A harmless replica Wither is summoned inside a soul-forged arena and devoured by Witherbane before it can act - so there is no boss bar, no block-breaking, and no danger.$(br2)You must defeat a Wither the normal way first: the altar's Withered Star capstone is crafted from a Nether Star."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Build the arena from Reinforced Blaze Rod Froglights (the shell) and Reinforced Soul Sand Froglights (the floor), with the Wither Altar Hatch in the centre and the Withered Star tucked into the floor.$(br2)Witherbane perches on the Hatch facing the ritual wall: four Soul Sand Receptacles and three Wither Skull Receptacles arranged as the vanilla Wither summon T. Keep the interior clear - the replica needs the space."
+    },
+    {
+      "type": "patchouli:multiblock",
+      "name": "The Wither Altar",
+      "text": "Build it as shown, keep the interior air clear, then load the ritual to begin.",
+      "multiblock": {
+        "mapping": {
+          "A": "minecraft:air",
+          "0": "productivefrogs:wither_altar_hatch",
+          "W": "productivefrogs:withered_star",
+          "S": "productivefrogs:reinforced_soul_sand_froglight",
+          "B": "productivefrogs:reinforced_blaze_rod_froglight",
+          "U": "productivefrogs:soul_sand_receptacle",
+          "K": "productivefrogs:wither_skull_receptacle"
+        },
+        "pattern": [
+          ["BBBBB", "BAAAB", "BAAAB", "BAAAB", "BBBBB"],
+          ["BAAAB", "AAAAA", "AAAAA", "AAAAA", "BKKKB"],
+          ["BAAAB", "AAAAA", "AAAAA", "AAAAA", "BUUUB"],
+          ["BAAAB", "AA0AA", "AAAAA", "AAAAA", "BSUSB"],
+          ["BBBBB", "BSSSB", "BSSSB", "BSWSB", "BSSSB"]
+        ]
+      }
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Load the full vanilla summon into the receptacles: four Soul Sand and three Wither Skeleton Skulls (by hand or piped in). The receptacles show their contents on the face toward Witherbane.$(br2)With all seven loaded, a Wither replica charges in the arena - growing and roaring exactly like a real spawn - until Witherbane devours it. All seven items are spent each summon, the full vanilla cost."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Each summon deposits a Nether Star Froglight into the Hatch (it smelts back to a Nether Star), grants experience, and adds whatever else the Wither drops.$(br2)The whole thing is boss-tier content, gated behind the boss config toggle."
+    }
+  ]
+}

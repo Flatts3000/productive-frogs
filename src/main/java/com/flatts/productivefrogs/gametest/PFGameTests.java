@@ -6170,4 +6170,80 @@ public final class PFGameTests {
         }
         return false;
     }
+
+    // ---- Wither altar (#247): lock the validator to the shipped structure ----
+
+    /** Find the Wither Altar Hatch within the loaded 5x5x5 structure (relative pos), or null. */
+    private static BlockPos findWitherAltarHatch(GameTestHelper helper) {
+        for (BlockPos p : BlockPos.betweenClosed(new BlockPos(0, 0, 0), new BlockPos(4, 4, 4))) {
+            if (helper.getBlockState(p).is(PFBlocks.WITHER_ALTAR_HATCH.get())) {
+                return p.immutable();
+            }
+        }
+        return null;
+    }
+
+    /** The shipped {@code wither_altar} structure must validate as built (pins validator + structure). */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "wither_altar", timeoutTicks = 100)
+    public static void witherAltarValidatesWhenBuilt(GameTestHelper helper) {
+        helper.succeedWhen(() -> {
+            BlockPos hatch = findWitherAltarHatch(helper);
+            helper.assertTrue(hatch != null, "no Wither Altar Hatch in the loaded structure");
+            com.flatts.productivefrogs.content.multiblock.WitherAltarValidator.Result r =
+                com.flatts.productivefrogs.content.multiblock.WitherAltarValidator
+                    .validate(helper.getLevel(), helper.absolutePos(hatch));
+            helper.assertTrue(r.valid(), "wither_altar must validate at " + hatch + "; validator says: " + r.detail());
+        });
+    }
+
+    /** Strictness: knocking out one shell froglight must make the altar fail validation. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "wither_altar", timeoutTicks = 100)
+    public static void witherAltarRejectsMissingFroglight(GameTestHelper helper) {
+        BlockPos hatch = findWitherAltarHatch(helper);
+        helper.assertTrue(hatch != null, "no Wither Altar Hatch in the loaded structure");
+        // A blaze rod shell froglight sits at offset {0,3,3} from the hatch.
+        helper.setBlock(hatch.offset(0, 3, 3), Blocks.AIR);
+        helper.assertTrue(
+            !com.flatts.productivefrogs.content.multiblock.WitherAltarValidator
+                .validate(helper.getLevel(), helper.absolutePos(hatch)).valid(),
+            "a wither altar missing a shell froglight must not validate (strictness)");
+        helper.succeed();
+    }
+
+    /**
+     * End-to-end: a built altar with all seven receptacles primed (4 soul sand + 3 skulls)
+     * must run a summon and deposit the Nether Star Froglight into the Hatch. Guards the
+     * summon state machine + the boss-Froglight payout.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "wither_altar", timeoutTicks = 320)
+    public static void witherAltarSummonDepositsDrops(GameTestHelper helper) {
+        BlockPos hatch = findWitherAltarHatch(helper);
+        helper.assertTrue(hatch != null, "no Wither Altar Hatch in the loaded structure");
+        BlockPos absHatch = helper.absolutePos(hatch);
+        // Prime each receptacle with its accepted item (soul sand or a wither skeleton skull).
+        for (BlockPos rp : com.flatts.productivefrogs.content.multiblock.WitherAltarValidator.receptacles(absHatch)) {
+            if (helper.getLevel().getBlockState(rp).getBlock()
+                        instanceof com.flatts.productivefrogs.content.block.WitherSummonReceptacleBlock wb
+                    && helper.getLevel().getBlockEntity(rp)
+                        instanceof com.flatts.productivefrogs.content.block.entity.WitherSummonReceptacleBlockEntity r) {
+                if (!r.isFilled()) {
+                    r.tryInsert(new ItemStack(wb.accepted()));
+                }
+                helper.assertTrue(r.isFilled(), "receptacle at " + rp + " could not be primed");
+            } else {
+                helper.fail("no Wither summon receptacle at " + rp);
+            }
+        }
+        helper.succeedWhen(() -> {
+            net.minecraft.world.level.block.entity.BlockEntity be = helper.getLevel().getBlockEntity(absHatch);
+            helper.assertTrue(be instanceof com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity,
+                "hatch block entity missing");
+            net.minecraft.world.Container c = (net.minecraft.world.Container) be;
+            helper.assertTrue(containsFroglightVariant(c, "nether_star"),
+                "hatch missing the Nether Star Froglight after summon");
+            // The star is paid out only as the Froglight - a raw Nether Star must be stripped.
+            helper.assertTrue(!containerHas(c, Items.NETHER_STAR),
+                "raw Nether Star leaked into the hatch (should be stripped from the wither loot)");
+        });
+    }
 }
