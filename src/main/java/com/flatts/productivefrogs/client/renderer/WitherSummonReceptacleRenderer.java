@@ -3,7 +3,6 @@ package com.flatts.productivefrogs.client.renderer;
 import com.flatts.productivefrogs.content.block.WitherSummonReceptacleBlock;
 import com.flatts.productivefrogs.content.block.entity.WitherSummonReceptacleBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -42,9 +41,10 @@ public class WitherSummonReceptacleRenderer implements BlockEntityRenderer<Withe
             return;
         }
         pose.pushPose();
-        // Sit on the -Z face (toward the frog), facing -Z so the player at the Hatch sees it.
+        // Sit on the -Z face (toward the frog). The wither skull is a block-entity item
+        // whose FIXED orientation already faces -Z, so no Y-flip (a flip would turn the
+        // skull's face into the wall, away from the frog); soul sand is a symmetric cube.
         pose.translate(0.5F, 0.5F, 0.06F);
-        pose.mulPose(Axis.YP.rotationDegrees(180.0F));
         pose.scale(0.7F, 0.7F, 0.7F);
         itemRenderer.renderStatic(stack, ItemDisplayContext.FIXED, packedLight, OverlayTexture.NO_OVERLAY,
             pose, buffers, be.getLevel(), 0);

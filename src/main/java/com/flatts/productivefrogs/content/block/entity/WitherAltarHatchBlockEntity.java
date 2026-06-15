@@ -58,8 +58,8 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
     /** How often (ticks) the altar reconciles Witherbane against structure validity. */
     private static final int RECONCILE_INTERVAL = 20;
 
-    /** Summon length - mirrors the feel of a vanilla spawn (~10s). Public for the renderer's progress calc. */
-    public static final int SUMMON_TICKS = 200;
+    /** Summon length - matches the vanilla Wither's 220-tick invulnerable spawn. Public for the renderer. */
+    public static final int SUMMON_TICKS = 220;
     /** XP awarded per summon - a vanilla Wither's value. */
     private static final int XP_REWARD = 50;
 
