@@ -6066,4 +6066,48 @@ public final class PFGameTests {
             helper.succeed();
         });
     }
+
+    // ---- Dragon altar (#249): lock the validator to the shipped structure ----
+
+    /** Find the altar Hatch within the loaded structure (relative pos), or null. */
+    private static BlockPos findAltarHatch(GameTestHelper helper) {
+        for (BlockPos p : BlockPos.betweenClosed(new BlockPos(0, 0, 0), new BlockPos(6, 9, 6))) {
+            if (helper.getBlockState(p).is(PFBlocks.END_DRAGON_ALTAR_HATCH.get())) {
+                return p.immutable();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The shipped {@code dragon_altar} structure must validate as built. This pins
+     * {@link com.flatts.productivefrogs.content.multiblock.DragonAltarValidator} to the
+     * canonical structure: if either drifts (a layout edit without re-syncing the
+     * validator, or vice versa), this test fails.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "dragon_altar", timeoutTicks = 100)
+    public static void dragonAltarValidatesWhenBuilt(GameTestHelper helper) {
+        helper.succeedWhen(() -> {
+            BlockPos hatch = findAltarHatch(helper);
+            helper.assertTrue(hatch != null, "no End Dragon Altar Hatch in the loaded structure");
+            com.flatts.productivefrogs.content.multiblock.DragonAltarValidator.Result r =
+                com.flatts.productivefrogs.content.multiblock.DragonAltarValidator
+                    .validate(helper.getLevel(), helper.absolutePos(hatch));
+            helper.assertTrue(r.valid(), "dragon_altar must validate at " + hatch + "; validator says: " + r.detail());
+        });
+    }
+
+    /** Strictness: knocking out one froglight must make the altar fail validation. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "dragon_altar", timeoutTicks = 100)
+    public static void dragonAltarRejectsMissingFroglight(GameTestHelper helper) {
+        BlockPos hatch = findAltarHatch(helper);
+        helper.assertTrue(hatch != null, "no End Dragon Altar Hatch in the loaded structure");
+        // A WSS froglight sits at offset {-3,-6,-1} from the hatch.
+        helper.setBlock(hatch.offset(-3, -6, -1), Blocks.AIR);
+        helper.assertTrue(
+            !com.flatts.productivefrogs.content.multiblock.DragonAltarValidator
+                .validate(helper.getLevel(), helper.absolutePos(hatch)).valid(),
+            "a dragon altar missing a froglight must not validate (strictness)");
+        helper.succeed();
+    }
 }
