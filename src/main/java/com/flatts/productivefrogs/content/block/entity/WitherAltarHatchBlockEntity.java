@@ -58,11 +58,6 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
     /** How often (ticks) the altar reconciles Witherbane against structure validity. */
     private static final int RECONCILE_INTERVAL = 20;
 
-    /** Summon length - matches the vanilla Wither's 220-tick invulnerable spawn. Public for the renderer. */
-    public static final int SUMMON_TICKS = 220;
-    /** XP awarded per summon - a vanilla Wither's value. */
-    private static final int XP_REWARD = 50;
-
     /** Boss slime variant whose Froglight the altar pays out (smelts back to a Nether Star). */
     private static final ResourceLocation NETHER_STAR_VARIANT =
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star");
@@ -109,7 +104,7 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
         reconcileFrog(server, pos, valid);
         // Start a summon once the altar is complete and all seven receptacles are loaded.
         if (valid && PFConfig.bossEnabled() && allReceptaclesFilled(server, pos)) {
-            be.summonTicks = SUMMON_TICKS;
+            be.summonTicks = PFConfig.witherAltarSummonTicks();
             server.playSound(null, pos, SoundEvents.WITHER_SPAWN, SoundSource.HOSTILE, 1.0F, 1.0F);
             be.syncToClient();
         }
@@ -144,8 +139,9 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
         }
         // Reward: XP at the hatch + the Nether Star Froglight (the boss-Froglight model)
         // + whatever else the Wither is programmed to drop (its loot table, star stripped).
-        if (XP_REWARD > 0) {
-            ExperienceOrb.award(server, Vec3.atCenterOf(pos), XP_REWARD);
+        int xp = PFConfig.witherAltarXpReward();
+        if (xp > 0) {
+            ExperienceOrb.award(server, Vec3.atCenterOf(pos), xp);
         }
         spill(server, pos, be.deposit(FrogTongueDropHandler.buildFroglight(NETHER_STAR_VARIANT, null)));
         rollWitherLoot(server, pos, be);

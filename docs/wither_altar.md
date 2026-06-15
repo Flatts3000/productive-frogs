@@ -29,8 +29,19 @@ The replica is rendered through the vanilla `EntityRenderDispatcher` with a neve
 phantom Wither whose invulnerable-ticks count 220 -> 0 over the summon. The stock
 `WitherBossRenderer` then does everything vanilla does: grows the model 1.5x -> full 2.0x,
 shows the blue `wither_invulnerable` charging texture, and plays the spawn head animation.
-No boss bar appears (a phantom is never a server `BossEvent`). `SUMMON_TICKS` is 220 to
-match the vanilla invulnerable spawn length. The roar (`WITHER_SPAWN`) plays at spawn start.
+No boss bar appears (a phantom is never a server `BossEvent`). The summon length defaults
+to 220 ticks (the vanilla invulnerable spawn); the renderer drives the spawn scale/texture
+off a fixed 220-tick range so it stays correct even if the length is reconfigured. The roar
+(`WITHER_SPAWN`) plays at spawn start.
+
+## Config (`boss.wither_altar`)
+
+Under the boss-tier section (gated by `boss.enabled`):
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `summonTicks` | 220 | Summon length in ticks (the charge before Witherbane eats the replica). |
+| `xpReward` | 50 | Experience per completed summon (a vanilla Wither's value). 0 = none. |
 
 ## Reward
 

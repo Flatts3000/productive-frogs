@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.client.renderer;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -27,6 +28,9 @@ import net.minecraft.world.entity.boss.wither.WitherBoss;
  */
 public class WitherAltarHatchRenderer implements BlockEntityRenderer<WitherAltarHatchBlockEntity> {
 
+    /** Vanilla Wither invulnerable-spawn length; drives the stock spawn scale/texture formula. */
+    private static final int VANILLA_INVULNERABLE_TICKS = 220;
+
     /** A client-side phantom wither fed to the vanilla renderer; never in the world. */
     private WitherBoss phantom;
 
@@ -47,7 +51,7 @@ public class WitherAltarHatchRenderer implements BlockEntityRenderer<WitherAltar
             be.clientSummonStartGameTime = time;
         }
         float elapsed = (time - be.clientSummonStartGameTime) + partialTick;
-        float progress = Mth.clamp(elapsed / WitherAltarHatchBlockEntity.SUMMON_TICKS, 0.0F, 1.0F);
+        float progress = Mth.clamp(elapsed / PFConfig.witherAltarSummonTicks(), 0.0F, 1.0F);
 
         if (phantom == null) {
             phantom = EntityType.WITHER.create(be.getLevel());
@@ -58,7 +62,7 @@ public class WitherAltarHatchRenderer implements BlockEntityRenderer<WitherAltar
         // Invulnerable ticks count 220 -> 0: the stock WitherBossRenderer reads this to
         // grow the model (1.5x -> 2.0x) and pick the blue charging texture, so the
         // replica reaches full vanilla size right as the summon completes.
-        int inv = Math.round(Mth.lerp(progress, WitherAltarHatchBlockEntity.SUMMON_TICKS, 0.0F));
+        int inv = Math.round((1.0F - progress) * VANILLA_INVULNERABLE_TICKS);
         phantom.setInvulnerableTicks(inv);
         phantom.tickCount = (int) time;            // advance the idle head bob
         phantom.setYRot(180.0F);                   // face -Z, toward Witherbane / the player
