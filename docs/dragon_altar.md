@@ -129,3 +129,12 @@ All boss-gated (`productivefrogs:config_enabled` -> `boss`):
 
 The summon animation itself is GameTest-blind (client visuals) - verify scale, beam
 anchoring, and growth pacing with a manual `runClient` pass.
+
+## In-game guide
+
+A Patchouli entry ships at `assets/.../patchouli_books/guide/en_us/entries/advanced/end_dragon_altar.json`
+(the `advanced` category, after the boss-tier overview). It includes a
+`patchouli:multiblock` page whose pattern is generated from this validator's offsets, so
+the book diagram and the validator stay in sync (full structure: bedrock fountain, exit
+portal, receptacles, both froglight sets, hatch + egg). Like all guide content it is
+**not build-validated** - confirm it renders with a `runClient` pass.
