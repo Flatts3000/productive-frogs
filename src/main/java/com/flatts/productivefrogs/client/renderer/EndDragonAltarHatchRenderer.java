@@ -41,10 +41,10 @@ public class EndDragonAltarHatchRenderer implements BlockEntityRenderer<EndDrago
 
     /** Receptacle offsets from the hatch (the beam sources), matching the validator's RECEPTACLES. */
     private static final int[][] RECEPTACLES = {{-3, -6, 0}, {0, -6, -3}, {0, -6, 3}, {3, -6, 0}};
-    /** Dragon-model scale at the start of the summon. */
-    private static final float DRAGON_START_SCALE = 0.4F;
-    /** It grows to ~4x the starting size by the end of the summon. */
-    private static final float DRAGON_END_SCALE = DRAGON_START_SCALE * 4.0F;
+    /** Dragon-model scale at the end of the summon (its max - the size to fill the altar). */
+    private static final float DRAGON_END_SCALE = 0.4F;
+    /** It starts a quarter of that and grows ~4x to the end size over the summon. */
+    private static final float DRAGON_START_SCALE = DRAGON_END_SCALE / 4.0F;
 
     private final EnderDragonRenderer.DragonModel dragonModel;
     /** A client-side phantom dragon fed to the model (the DragonModel reads its fields); never in the world. */
