@@ -116,6 +116,11 @@ public final class PFClientEvents {
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.END_DRAGON_ALTAR_HATCH.get(),
             com.flatts.productivefrogs.client.renderer.EndDragonAltarHatchRenderer::new);
+        // Wither Altar Hatch (#247): the summon animation - the charging Wither replica
+        // growing over the ritual. See client/renderer/WitherAltarHatchRenderer.
+        event.registerBlockEntityRenderer(
+            com.flatts.productivefrogs.registry.PFBlockEntities.WITHER_ALTAR_HATCH.get(),
+            com.flatts.productivefrogs.client.renderer.WitherAltarHatchRenderer::new);
     }
 
     private static ResourceLocation parentTexture(String name) {
