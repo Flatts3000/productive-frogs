@@ -635,6 +635,8 @@
   "productivefrogs.jade.hatch_fill": "Froglights: %1$s / %2$s",
   "productivefrogs.jade.dragon_altar.ready": "Dragon Altar: ready",
   "productivefrogs.jade.dragon_altar.incomplete": "Dragon Altar: %s",
+  "productivefrogs.jade.wither_altar.ready": "Wither Altar: ready",
+  "productivefrogs.jade.wither_altar.incomplete": "Wither Altar: %s",
   "productivefrogs.jade.spawns_unlimited": "Slime spawns: unlimited",
   "productivefrogs.jade.catalyst_speed": "Speed catalyst: %1$s/%2$s",
   "productivefrogs.jade.catalyst_quantity": "Quantity catalyst: %1$s/%2$s",

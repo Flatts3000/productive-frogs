@@ -109,6 +109,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         registration.registerBlockComponent(provider,
             com.flatts.productivefrogs.content.block.EndDragonAltarHatchBlock.class);
         registration.registerBlockComponent(provider,
+            com.flatts.productivefrogs.content.block.WitherAltarHatchBlock.class);
+        registration.registerBlockComponent(provider,
             com.flatts.productivefrogs.content.block.TerrariumControllerBlock.class);
         registration.registerBlockComponent(provider,
             com.flatts.productivefrogs.content.block.SprinklerBlock.class);
@@ -185,6 +187,17 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 tooltip.add(Component.translatable(r.valid()
                     ? "productivefrogs.jade.dragon_altar.ready"
                     : "productivefrogs.jade.dragon_altar.incomplete", r.detail()));
+                return;
+            }
+            // Wither Altar Hatch (#247): same as the dragon altar - whether the
+            // surrounding altar validates. Pure client block-identity check.
+            if (be instanceof com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity) {
+                com.flatts.productivefrogs.content.multiblock.WitherAltarValidator.Result r =
+                    com.flatts.productivefrogs.content.multiblock.WitherAltarValidator.validate(
+                        accessor.getLevel(), accessor.getPosition());
+                tooltip.add(Component.translatable(r.valid()
+                    ? "productivefrogs.jade.wither_altar.ready"
+                    : "productivefrogs.jade.wither_altar.incomplete", r.detail()));
                 return;
             }
             net.minecraft.nbt.CompoundTag data = accessor.getServerData();
