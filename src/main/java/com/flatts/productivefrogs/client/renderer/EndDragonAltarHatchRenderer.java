@@ -41,10 +41,8 @@ public class EndDragonAltarHatchRenderer implements BlockEntityRenderer<EndDrago
 
     /** Receptacle offsets from the hatch (the beam sources), matching the validator's RECEPTACLES. */
     private static final int[][] RECEPTACLES = {{-3, -6, 0}, {0, -6, -3}, {0, -6, 3}, {3, -6, 0}};
-    /** Crystal hover above the receptacle block - matches EndCrystalReceptacleRenderer.HOVER_Y. */
-    private static final float CRYSTAL_HOVER = 1.35F;
     /** Capped dragon-model scale (kept small so it stays within the open altar). */
-    private static final float DRAGON_MAX_SCALE = 0.18F;
+    private static final float DRAGON_MAX_SCALE = 0.35F;
 
     private final EnderDragonRenderer.DragonModel dragonModel;
     /** A client-side phantom dragon fed to the model (the DragonModel reads its fields); never in the world. */
@@ -65,10 +63,11 @@ public class EndDragonAltarHatchRenderer implements BlockEntityRenderer<EndDrago
         float progress = Mth.clamp(elapsed / EndDragonAltarHatchBlockEntity.SUMMON_TICKS, 0.0F, 1.0F);
         long time = be.getLevel() != null ? be.getLevel().getGameTime() : 0L;
 
-        // Converging beams: from each crystal to the hatch centre (0.5, 0.5, 0.5).
+        // Converging beams: from each receptacle (top face, where the crystal sits) to
+        // the hatch centre (0.5, 0.5, 0.5).
         for (int[] ro : RECEPTACLES) {
             float cx = ro[0] + 0.5F;
-            float cy = ro[1] + 1.0F + CRYSTAL_HOVER;
+            float cy = ro[1] + 1.0F;
             float cz = ro[2] + 0.5F;
             pose.pushPose();
             pose.translate(cx, cy, cz);
