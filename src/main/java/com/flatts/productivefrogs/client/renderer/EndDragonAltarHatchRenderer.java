@@ -41,8 +41,10 @@ public class EndDragonAltarHatchRenderer implements BlockEntityRenderer<EndDrago
 
     /** Receptacle offsets from the hatch (the beam sources), matching the validator's RECEPTACLES. */
     private static final int[][] RECEPTACLES = {{-3, -6, 0}, {0, -6, -3}, {0, -6, 3}, {3, -6, 0}};
-    /** Capped dragon-model scale (kept small so it stays within the open altar). */
-    private static final float DRAGON_MAX_SCALE = 0.35F;
+    /** Dragon-model scale at the start of the summon. */
+    private static final float DRAGON_START_SCALE = 0.4F;
+    /** It grows to ~4x the starting size by the end of the summon. */
+    private static final float DRAGON_END_SCALE = DRAGON_START_SCALE * 4.0F;
 
     private final EnderDragonRenderer.DragonModel dragonModel;
     /** A client-side phantom dragon fed to the model (the DragonModel reads its fields); never in the world. */
@@ -86,7 +88,7 @@ public class EndDragonAltarHatchRenderer implements BlockEntityRenderer<EndDrago
                 pose.pushPose();
                 pose.translate(0.5F, -1.0F, 0.5F);
                 pose.mulPose(Axis.YP.rotationDegrees((time + partialTick) * 2.0F));
-                float scale = Mth.lerp(progress, 0.02F, DRAGON_MAX_SCALE);
+                float scale = Mth.lerp(progress, DRAGON_START_SCALE, DRAGON_END_SCALE);
                 pose.scale(-scale, -scale, scale); // entity models render flipped on X/Y
                 dragonModel.prepareMobModel(phantom, 0.0F, 0.0F, partialTick);
                 VertexConsumer vc = buffers.getBuffer(DRAGON_RT);
