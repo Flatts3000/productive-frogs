@@ -59,9 +59,9 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
         return ItemHandlerHelper.insertItem(itemHandler, stack, false);
     }
 
-    /** The block the plinth frog stands in: on top of the central bedrock plinth (two below the hatch). */
+    /** The block the plinth frog stands in: on top of the central bedrock plinth (three below the hatch). */
     public static BlockPos plinthFrogPos(BlockPos hatchPos) {
-        return hatchPos.offset(0, -2, 0);
+        return hatchPos.offset(0, -3, 0);
     }
 
     /**
