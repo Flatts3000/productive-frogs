@@ -27,26 +27,33 @@ public final class WitherAltarValidator {
     public record Result(boolean valid, String detail) {
     }
 
-    // Offsets from the Hatch (dx, dy, dz). The Hatch is the anchor at (0,0,0).
-    // Reinforced Soul Sand Froglight floor: a 3-wide strip y=-1, z=0..6, minus the capstone cell (0,-1,0).
+    // Offsets from the Hatch (dx, dy, dz), generated from the captured wither_altar
+    // structure (the Hatch is the anchor at (0,0,0); the altar faces +Z toward the ritual).
+    // Reinforced Soul Sand Froglight floor strip.
     private static final int[][] SOUL_SAND_FLOOR = {
-        {-1, -1, 0}, {1, -1, 0},
-        {-1, -1, 1}, {0, -1, 1}, {1, -1, 1},
-        {-1, -1, 2}, {0, -1, 2}, {1, -1, 2},
-        {-1, -1, 3}, {0, -1, 3}, {1, -1, 3},
-        {-1, -1, 4}, {0, -1, 4}, {1, -1, 4},
-        {-1, -1, 5}, {0, -1, 5}, {1, -1, 5},
-        {-1, -1, 6}, {0, -1, 6}, {1, -1, 6}
+        {-1, -1, 0}, {-1, -1, 1}, {-1, -1, 2}, {-1, -1, 3}, {-1, 0, 3},
+        {0, -1, 0}, {0, -1, 1}, {0, -1, 3},
+        {1, -1, 0}, {1, -1, 1}, {1, -1, 2}, {1, -1, 3}, {1, 0, 3}
     };
-    // Reinforced Blaze Rod Froglight pillars flanking the ritual end.
-    private static final int[][] BLAZE_ROD_PILLARS = {
-        {-2, 0, 5}, {-2, 1, 5}, {-2, 2, 5},
-        {2, 0, 5}, {2, 1, 5}, {2, 2, 5}
+    // Reinforced Blaze Rod Froglight shell (the arena frame).
+    private static final int[][] BLAZE_ROD_SHELL = {
+        {-2, -1, -1}, {-2, -1, 0}, {-2, -1, 1}, {-2, -1, 2}, {-2, -1, 3}, {-2, 0, -1}, {-2, 0, 3},
+        {-2, 1, -1}, {-2, 1, 3}, {-2, 2, -1}, {-2, 2, 3}, {-2, 3, -1}, {-2, 3, 0}, {-2, 3, 1}, {-2, 3, 2}, {-2, 3, 3},
+        {-1, -1, -1}, {-1, 3, -1}, {-1, 3, 3}, {0, -1, -1}, {0, 3, -1}, {0, 3, 3}, {1, -1, -1}, {1, 3, -1}, {1, 3, 3},
+        {2, -1, -1}, {2, -1, 0}, {2, -1, 1}, {2, -1, 2}, {2, -1, 3}, {2, 0, -1}, {2, 0, 3},
+        {2, 1, -1}, {2, 1, 3}, {2, 2, -1}, {2, 2, 3}, {2, 3, -1}, {2, 3, 0}, {2, 3, 1}, {2, 3, 2}, {2, 3, 3}
     };
-    // The vanilla Wither summon T (flat): 3 soul sand across + 1 stem, skulls on top of the 3.
-    private static final int[][] SOUL_SAND_RECEPTACLES = {{-1, 0, 5}, {0, 0, 5}, {1, 0, 5}, {0, 0, 4}};
-    private static final int[][] SKULL_RECEPTACLES = {{-1, 1, 5}, {0, 1, 5}, {1, 1, 5}};
-    private static final int[][] CAPSTONE = {{0, -1, 0}};
+    // The vanilla Wither summon T at the +Z wall: 3 soul sand across + 1 stem, skulls on top of the 3.
+    private static final int[][] SOUL_SAND_RECEPTACLES = {{-1, 1, 3}, {0, 0, 3}, {0, 1, 3}, {1, 1, 3}};
+    private static final int[][] SKULL_RECEPTACLES = {{-1, 2, 3}, {0, 2, 3}, {1, 2, 3}};
+    private static final int[][] CAPSTONE = {{0, -1, 2}};
+    // The interior cavity that must stay clear (where the replica forms + Witherbane perches).
+    // Marked with copper grates in the authoring structure; enforced as air here.
+    private static final int[][] AIR_REQUIRED = {
+        {-1, 0, 0}, {-1, 0, 1}, {-1, 0, 2}, {-1, 1, 0}, {-1, 1, 1}, {-1, 1, 2}, {-1, 2, 0}, {-1, 2, 1}, {-1, 2, 2},
+        {0, 0, 1}, {0, 0, 2}, {0, 1, 0}, {0, 1, 1}, {0, 1, 2}, {0, 2, 0}, {0, 2, 1}, {0, 2, 2},
+        {1, 0, 0}, {1, 0, 1}, {1, 0, 2}, {1, 1, 0}, {1, 1, 1}, {1, 1, 2}, {1, 2, 0}, {1, 2, 1}, {1, 2, 2}
+    };
 
     private WitherAltarValidator() {
     }
@@ -61,8 +68,8 @@ public final class WitherAltarValidator {
         if (!allMatch(level, hatch, SOUL_SAND_FLOOR, PFBlocks.REINFORCED_SOUL_SAND_FROGLIGHT.get())) {
             return new Result(false, "incomplete Reinforced Soul Sand Froglight floor");
         }
-        if (!allMatch(level, hatch, BLAZE_ROD_PILLARS, PFBlocks.REINFORCED_BLAZE_ROD_FROGLIGHT.get())) {
-            return new Result(false, "missing a Reinforced Blaze Rod Froglight pillar");
+        if (!allMatch(level, hatch, BLAZE_ROD_SHELL, PFBlocks.REINFORCED_BLAZE_ROD_FROGLIGHT.get())) {
+            return new Result(false, "incomplete Reinforced Blaze Rod Froglight shell");
         }
         if (!allMatch(level, hatch, SOUL_SAND_RECEPTACLES, PFBlocks.SOUL_SAND_RECEPTACLE.get())) {
             return new Result(false, "missing a Soul Sand Receptacle");
@@ -70,12 +77,24 @@ public final class WitherAltarValidator {
         if (!allMatch(level, hatch, SKULL_RECEPTACLES, PFBlocks.WITHER_SKULL_RECEPTACLE.get())) {
             return new Result(false, "missing a Wither Skull Receptacle");
         }
+        if (!allAir(level, hatch, AIR_REQUIRED)) {
+            return new Result(false, "the summon cavity must be clear (keep the interior air)");
+        }
         return new Result(true, "ready");
     }
 
     private static boolean allMatch(LevelReader level, BlockPos hatch, int[][] offsets, Block block) {
         for (int[] o : offsets) {
             if (!level.getBlockState(hatch.offset(o[0], o[1], o[2])).is(block)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean allAir(LevelReader level, BlockPos hatch, int[][] offsets) {
+        for (int[] o : offsets) {
+            if (!level.getBlockState(hatch.offset(o[0], o[1], o[2])).isAir()) {
                 return false;
             }
         }
