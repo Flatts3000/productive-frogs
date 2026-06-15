@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "productivefrogs:block/end_crystal_receptacle_filled"
+  }
+}

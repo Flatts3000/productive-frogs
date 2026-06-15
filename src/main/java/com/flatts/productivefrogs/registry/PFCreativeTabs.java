@@ -90,6 +90,14 @@ public final class PFCreativeTabs {
                         output.accept(PFItems.DRAGON_EGG_CATALYST.get());
                         output.accept(PFItems.WITHER_SKELETON_SKULL_CATALYST.get());
                         output.accept(PFItems.DRAGON_BREATH_CATALYST.get());
+                        // Reinforced Froglights (#249) - dragon-altar structural blocks,
+                        // crafted from boss Froglights so they ride the same boss gate.
+                        output.accept(PFItems.REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT.get());
+                        output.accept(PFItems.REINFORCED_NETHER_STAR_FROGLIGHT.get());
+                        // End Crystal Receptacle (#249) - dragon-altar crystal socket.
+                        output.accept(PFItems.END_CRYSTAL_RECEPTACLE.get());
+                        // End Dragon Altar Hatch (#249) - dragon-altar output.
+                        output.accept(PFItems.END_DRAGON_ALTAR_HATCH.get());
                     }
                     // Terrarium multiblock machines (#185).
                     output.accept(PFItems.TERRARIUM_CONTROLLER.get());

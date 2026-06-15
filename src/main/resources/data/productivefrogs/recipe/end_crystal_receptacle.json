@@ -1,0 +1,19 @@
+{
+  "neoforge:conditions": [
+    { "type": "productivefrogs:config_enabled", "config": "boss" }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "productivefrogs",
+  "pattern": [
+    "OEO",
+    "ERE",
+    "OEO"
+  ],
+  "key": {
+    "O": { "item": "minecraft:obsidian" },
+    "E": { "item": "minecraft:end_stone_bricks" },
+    "R": { "item": "minecraft:end_rod" }
+  },
+  "result": { "id": "productivefrogs:end_crystal_receptacle", "count": 1 }
+}

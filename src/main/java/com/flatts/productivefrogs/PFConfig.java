@@ -110,6 +110,13 @@ public final class PFConfig {
     // out transitively (no variant -> no source -> no milk). Default true.
     public static final ModConfigSpec.BooleanValue BOSS_ENABLED;
 
+    // End Dragon Altar (#249) tunables, under the boss section. Summon length (the
+    // beam-and-grow show), the XP reward per summon, and whether the Dragon Egg is
+    // re-deposited on every summon (vanilla only ever yields one).
+    public static final ModConfigSpec.IntValue DRAGON_ALTAR_SUMMON_TICKS;
+    public static final ModConfigSpec.IntValue DRAGON_ALTAR_XP_REWARD;
+    public static final ModConfigSpec.BooleanValue DRAGON_ALTAR_REPEATABLE_EGG;
+
     // Deterministic, config-exposed lifecycle timings (docs/known_issues.md).
     // These are fixed (non-random) delays for the MODDED frog lifecycle; vanilla
     // frogspawn/tadpoles/frogs keep their own stock pacing.
@@ -155,6 +162,10 @@ public final class PFConfig {
     public static final int DEFAULT_TERRARIUM_SPRINKLER_TOPUP_THRESHOLD = 4;
     public static final int DEFAULT_TERRARIUM_SWEETSLIME_ACCEL_PERCENT = 10;
     public static final int DEFAULT_TERRARIUM_HATCH_VACUUM_INTERVAL_TICKS = 8;
+    // End Dragon Altar defaults (single source of truth for spec + fallbacks).
+    public static final int DEFAULT_DRAGON_ALTAR_SUMMON_TICKS = 200;
+    public static final int DEFAULT_DRAGON_ALTAR_XP_REWARD = 500;
+    public static final boolean DEFAULT_DRAGON_ALTAR_REPEATABLE_EGG = true;
 
     public static final ModConfigSpec SPEC;
 
@@ -741,6 +752,34 @@ public final class PFConfig {
             )
             .define("enabled", true);
 
+        builder.push("dragon_altar");
+
+        DRAGON_ALTAR_SUMMON_TICKS = builder
+            .comment(
+                "End Dragon Altar (#249): length in ticks of the summon sequence - the converging crystal",
+                "beams and the dragon model growing from tiny to full before the plinth frog eats it.",
+                "Default 200 (10s). Purely the show length; the rewards land at the end regardless."
+            )
+            .defineInRange("summonTicks", DEFAULT_DRAGON_ALTAR_SUMMON_TICKS, 1, 24000);
+
+        DRAGON_ALTAR_XP_REWARD = builder
+            .comment(
+                "Experience granted per completed altar summon. Default 500 (one vanilla first-kill's worth;",
+                "vanilla respawns grant none). Set 0 to grant no XP."
+            )
+            .defineInRange("xpReward", DEFAULT_DRAGON_ALTAR_XP_REWARD, 0, 100000);
+
+        DRAGON_ALTAR_REPEATABLE_EGG = builder
+            .comment(
+                "Whether each altar summon deposits a Dragon Egg Froglight into the Hatch (it smelts back to a",
+                "Dragon Egg). Default true (the altar is a renewable-egg farm). When false the egg is granted only",
+                "the way vanilla does it - never by the altar - so the altar still pays out the Dragon Breath",
+                "Froglight and the dragon's drops, but no renewable egg."
+            )
+            .define("repeatableEgg", DEFAULT_DRAGON_ALTAR_REPEATABLE_EGG);
+
+        builder.pop();
+
         builder.pop();
 
         SPEC = builder.build();
@@ -963,6 +1002,21 @@ public final class PFConfig {
     /** Whether the boss tier master is on ({@code boss.enabled}, #200); fallback true. */
     public static boolean bossEnabled() {
         return !SPEC.isLoaded() || BOSS_ENABLED.get();
+    }
+
+    /** End Dragon Altar summon length in ticks ({@code boss.dragon_altar.summonTicks}, #249); fallback {@value #DEFAULT_DRAGON_ALTAR_SUMMON_TICKS}. */
+    public static int dragonAltarSummonTicks() {
+        return SPEC.isLoaded() ? DRAGON_ALTAR_SUMMON_TICKS.get() : DEFAULT_DRAGON_ALTAR_SUMMON_TICKS;
+    }
+
+    /** XP granted per completed altar summon ({@code boss.dragon_altar.xpReward}, #249); fallback {@value #DEFAULT_DRAGON_ALTAR_XP_REWARD}. */
+    public static int dragonAltarXpReward() {
+        return SPEC.isLoaded() ? DRAGON_ALTAR_XP_REWARD.get() : DEFAULT_DRAGON_ALTAR_XP_REWARD;
+    }
+
+    /** Whether each altar summon deposits a Dragon Egg Froglight ({@code boss.dragon_altar.repeatableEgg}, #249); fallback {@value #DEFAULT_DRAGON_ALTAR_REPEATABLE_EGG}. */
+    public static boolean dragonAltarRepeatableEgg() {
+        return SPEC.isLoaded() ? DRAGON_ALTAR_REPEATABLE_EGG.get() : DEFAULT_DRAGON_ALTAR_REPEATABLE_EGG;
     }
 
     /**

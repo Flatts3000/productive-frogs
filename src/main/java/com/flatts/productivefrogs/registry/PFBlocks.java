@@ -4,6 +4,8 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.CastingMoldBlock;
 import com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock;
 import com.flatts.productivefrogs.content.block.CrucibleBlock;
+import com.flatts.productivefrogs.content.block.EndCrystalReceptacleBlock;
+import com.flatts.productivefrogs.content.block.EndDragonAltarHatchBlock;
 import com.flatts.productivefrogs.content.block.HatchBlock;
 import com.flatts.productivefrogs.content.block.IncubatorBlock;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
@@ -243,6 +245,37 @@ public final class PFBlocks {
     public static final DeferredBlock<Block> WITHER_SKELETON_SKULL_CATALYST = registerCatalyst("wither_skeleton_skull_catalyst");
     public static final DeferredBlock<Block> DRAGON_BREATH_CATALYST = registerCatalyst("dragon_breath_catalyst");
 
+    /**
+     * Reinforced Froglights (#249) - the dragon altar's structural blocks, and the
+     * main reason they exist. Bespoke, decorative apart from that role; crafted from
+     * 4 obsidian + the matching boss Froglight (Wither Skeleton Skull / Nether Star).
+     * Full-cube, <b>non-directional</b> blocks (no axis state) with vanilla Froglight
+     * light (15) and obsidian-tier blast resistance so the altar reads as dragon-proof.
+     * No BlockEntity and no variant component - each is its own fixed block, unlike the
+     * data-driven {@link ConfigurableFroglightBlock}.
+     */
+    public static final DeferredBlock<Block> REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT =
+        BLOCKS.registerBlock("reinforced_wither_skeleton_skull_froglight", Block::new, reinforcedFroglightProperties());
+    public static final DeferredBlock<Block> REINFORCED_NETHER_STAR_FROGLIGHT =
+        BLOCKS.registerBlock("reinforced_nether_star_froglight", Block::new, reinforcedFroglightProperties());
+
+    /**
+     * End Crystal Receptacle (#249) - the dragon altar's four crystal sockets, at
+     * the exit-portal crystal positions. Holds one End Crystal; the {@code FILLED}
+     * blockstate flips the texture and drives the on-top crystal render. Obsidian-
+     * tier blast resistance, so it reads as part of the dragon-proof altar.
+     */
+    public static final DeferredBlock<EndCrystalReceptacleBlock> END_CRYSTAL_RECEPTACLE =
+        BLOCKS.registerBlock("end_crystal_receptacle", EndCrystalReceptacleBlock::new, receptacleProperties());
+
+    /**
+     * End Dragon Altar Hatch (#249) - the altar's output. Same function as the
+     * Terrarium Hatch (open like a chest, pipe items out) but a distinct,
+     * non-directional block; the summon deposits the dragon's drops here.
+     */
+    public static final DeferredBlock<EndDragonAltarHatchBlock> END_DRAGON_ALTAR_HATCH =
+        BLOCKS.registerBlock("end_dragon_altar_hatch", EndDragonAltarHatchBlock::new, receptacleProperties());
+
     /** Memoized {@link #catalystForVariant()} - the blocks are stable post-registration. */
     private static Map<ResourceLocation, Block> catalystMap;
 
@@ -277,6 +310,24 @@ public final class PFBlocks {
                 .sound(SoundType.STONE)
                 .requiresCorrectToolForDrops()
         );
+    }
+
+    /** Shared properties for the two Reinforced Froglights (#249). */
+    private static BlockBehaviour.Properties reinforcedFroglightProperties() {
+        return BlockBehaviour.Properties.of()
+            .mapColor(MapColor.SAND)
+            .strength(3.0F, 1200.0F)   // obsidian-tier blast resistance (dragon-proof); moderate hardness
+            .lightLevel(state -> 15)
+            .sound(SoundType.FROGLIGHT);
+    }
+
+    /** Shared properties for the End Crystal Receptacle (#249). */
+    private static BlockBehaviour.Properties receptacleProperties() {
+        return BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_BLACK)
+            .strength(3.0F, 1200.0F)   // obsidian-tier blast resistance (dragon-proof altar)
+            .sound(SoundType.STONE)
+            .requiresCorrectToolForDrops();
     }
 
     private static Map<Category, DeferredBlock<PrimedFrogEggBlock>> buildPrimedEggs() {

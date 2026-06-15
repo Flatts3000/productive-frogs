@@ -80,6 +80,9 @@ public final class PFClientEvents {
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(PFEntities.RESOURCE_TADPOLE.get(), ResourceTadpoleRenderer::new);
         event.registerEntityRenderer(PFEntities.RESOURCE_FROG.get(), ResourceFrogRenderer::new);
+        // Plinth display frog (#249) "Dragonsbane": oversized, ender-tinted apex frog.
+        event.registerEntityRenderer(PFEntities.PLINTH_FROG.get(),
+            com.flatts.productivefrogs.client.renderer.PlinthFrogRenderer::new);
         event.registerEntityRenderer(PFEntities.RESOURCE_SLIME.get(), ResourceSlimeRenderer::new);
         // Six parent species share one parameterized ParentSlimeRenderer, each
         // constructed with its species atlas + outer-shell tint.
@@ -100,6 +103,16 @@ public final class PFClientEvents {
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.CRUCIBLE.get(),
             com.flatts.productivefrogs.client.renderer.CrucibleRenderer::new);
+        // End Crystal Receptacle (#249): the floating vanilla end-crystal model on
+        // top when filled. See client/renderer/EndCrystalReceptacleRenderer.
+        event.registerBlockEntityRenderer(
+            com.flatts.productivefrogs.registry.PFBlockEntities.END_CRYSTAL_RECEPTACLE.get(),
+            com.flatts.productivefrogs.client.renderer.EndCrystalReceptacleRenderer::new);
+        // End Dragon Altar Hatch (#249): the summon animation - converging beams +
+        // the growing dragon model. See client/renderer/EndDragonAltarHatchRenderer.
+        event.registerBlockEntityRenderer(
+            com.flatts.productivefrogs.registry.PFBlockEntities.END_DRAGON_ALTAR_HATCH.get(),
+            com.flatts.productivefrogs.client.renderer.EndDragonAltarHatchRenderer::new);
     }
 
     private static ResourceLocation parentTexture(String name) {

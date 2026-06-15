@@ -6066,4 +6066,108 @@ public final class PFGameTests {
             helper.succeed();
         });
     }
+
+    // ---- Dragon altar (#249): lock the validator to the shipped structure ----
+
+    /** Find the altar Hatch within the loaded structure (relative pos), or null. */
+    private static BlockPos findAltarHatch(GameTestHelper helper) {
+        for (BlockPos p : BlockPos.betweenClosed(new BlockPos(0, 0, 0), new BlockPos(6, 9, 6))) {
+            if (helper.getBlockState(p).is(PFBlocks.END_DRAGON_ALTAR_HATCH.get())) {
+                return p.immutable();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The shipped {@code dragon_altar} structure must validate as built. This pins
+     * {@link com.flatts.productivefrogs.content.multiblock.DragonAltarValidator} to the
+     * canonical structure: if either drifts (a layout edit without re-syncing the
+     * validator, or vice versa), this test fails.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "dragon_altar", timeoutTicks = 100)
+    public static void dragonAltarValidatesWhenBuilt(GameTestHelper helper) {
+        helper.succeedWhen(() -> {
+            BlockPos hatch = findAltarHatch(helper);
+            helper.assertTrue(hatch != null, "no End Dragon Altar Hatch in the loaded structure");
+            com.flatts.productivefrogs.content.multiblock.DragonAltarValidator.Result r =
+                com.flatts.productivefrogs.content.multiblock.DragonAltarValidator
+                    .validate(helper.getLevel(), helper.absolutePos(hatch));
+            helper.assertTrue(r.valid(), "dragon_altar must validate at " + hatch + "; validator says: " + r.detail());
+        });
+    }
+
+    /** Strictness: knocking out one froglight must make the altar fail validation. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "dragon_altar", timeoutTicks = 100)
+    public static void dragonAltarRejectsMissingFroglight(GameTestHelper helper) {
+        BlockPos hatch = findAltarHatch(helper);
+        helper.assertTrue(hatch != null, "no End Dragon Altar Hatch in the loaded structure");
+        // A WSS froglight sits at offset {-3,-6,-1} from the hatch.
+        helper.setBlock(hatch.offset(-3, -6, -1), Blocks.AIR);
+        helper.assertTrue(
+            !com.flatts.productivefrogs.content.multiblock.DragonAltarValidator
+                .validate(helper.getLevel(), helper.absolutePos(hatch)).valid(),
+            "a dragon altar missing a froglight must not validate (strictness)");
+        helper.succeed();
+    }
+
+    /**
+     * End-to-end: a built altar with all four receptacles primed must run a summon and
+     * deposit the reward into the Hatch - the boss Froglights (a Dragon Breath Froglight
+     * and a Dragon Egg Froglight, each variant-stamped) plus the dragon's own drop (the
+     * Princess's Kiss from the {@code productivefrogs:dragon_altar} loot table). Guards
+     * both the loot-table path (a wrong id or param set would crash/empty it) and the
+     * froglight payout (wrong variant id would mis-stamp).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "dragon_altar", timeoutTicks = 320)
+    public static void dragonAltarSummonDepositsDrops(GameTestHelper helper) {
+        BlockPos hatch = findAltarHatch(helper);
+        helper.assertTrue(hatch != null, "no End Dragon Altar Hatch in the loaded structure");
+        BlockPos absHatch = helper.absolutePos(hatch);
+        // Ensure all four receptacles are primed with an End Crystal - this triggers the
+        // summon. (The fixture may already ship armed; only fill the empty ones.)
+        for (BlockPos rp : com.flatts.productivefrogs.content.multiblock.DragonAltarValidator.receptacles(absHatch)) {
+            if (helper.getLevel().getBlockEntity(rp)
+                    instanceof com.flatts.productivefrogs.content.block.entity.EndCrystalReceptacleBlockEntity r) {
+                if (!r.isFilled()) {
+                    r.tryInsert(new ItemStack(Items.END_CRYSTAL));
+                }
+                helper.assertTrue(r.isFilled(), "receptacle at " + rp + " could not be primed");
+            } else {
+                helper.fail("no receptacle block entity at " + rp);
+            }
+        }
+        helper.succeedWhen(() -> {
+            net.minecraft.world.level.block.entity.BlockEntity be = helper.getLevel().getBlockEntity(absHatch);
+            helper.assertTrue(be instanceof com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity,
+                "hatch block entity missing");
+            net.minecraft.world.Container c = (net.minecraft.world.Container) be;
+            helper.assertTrue(containerHas(c, PFItems.PRINCESS_KISS.get()), "hatch missing the Princess's Kiss after summon");
+            helper.assertTrue(containsFroglightVariant(c, "dragon_breath"), "hatch missing the Dragon Breath Froglight after summon");
+            helper.assertTrue(containsFroglightVariant(c, "dragon_egg"), "hatch missing the Dragon Egg Froglight after summon");
+        });
+    }
+
+    private static boolean containerHas(net.minecraft.world.Container c, net.minecraft.world.item.Item item) {
+        for (int i = 0; i < c.getContainerSize(); i++) {
+            if (c.getItem(i).is(item)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** True if the container holds a configurable_froglight stamped with productivefrogs:&lt;variantPath&gt;. */
+    private static boolean containsFroglightVariant(net.minecraft.world.Container c, String variantPath) {
+        net.minecraft.resources.ResourceLocation want =
+            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantPath);
+        for (int i = 0; i < c.getContainerSize(); i++) {
+            ItemStack s = c.getItem(i);
+            if (s.is(PFItems.CONFIGURABLE_FROGLIGHT.get())
+                    && want.equals(s.get(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get()))) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

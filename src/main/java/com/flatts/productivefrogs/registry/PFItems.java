@@ -438,6 +438,19 @@ public final class PFItems {
     public static final DeferredItem<BlockItem> DRAGON_BREATH_CATALYST =
         ITEMS.registerSimpleBlockItem("dragon_breath_catalyst", PFBlocks.DRAGON_BREATH_CATALYST, new Item.Properties());
 
+    // Reinforced Froglights (#249) - the dragon altar's structural blocks.
+    public static final DeferredItem<BlockItem> REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT =
+        ITEMS.registerSimpleBlockItem("reinforced_wither_skeleton_skull_froglight", PFBlocks.REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT, new Item.Properties());
+    public static final DeferredItem<BlockItem> REINFORCED_NETHER_STAR_FROGLIGHT =
+        ITEMS.registerSimpleBlockItem("reinforced_nether_star_froglight", PFBlocks.REINFORCED_NETHER_STAR_FROGLIGHT, new Item.Properties());
+
+    // End Crystal Receptacle (#249) - the dragon altar's crystal sockets.
+    public static final DeferredItem<BlockItem> END_CRYSTAL_RECEPTACLE =
+        ITEMS.registerSimpleBlockItem("end_crystal_receptacle", PFBlocks.END_CRYSTAL_RECEPTACLE, new Item.Properties());
+    // End Dragon Altar Hatch (#249) - the dragon altar's output.
+    public static final DeferredItem<BlockItem> END_DRAGON_ALTAR_HATCH =
+        ITEMS.registerSimpleBlockItem("end_dragon_altar_hatch", PFBlocks.END_DRAGON_ALTAR_HATCH, new Item.Properties());
+
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {

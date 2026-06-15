@@ -64,6 +64,8 @@ public final class PFModBusEvents {
         // ResourceTadpole reuses vanilla Tadpole's attribute table verbatim.
         event.put(PFEntities.RESOURCE_TADPOLE.get(), Tadpole.createAttributes().build());
         event.put(PFEntities.RESOURCE_FROG.get(), ResourceFrog.createAttributes().build());
+        // Plinth display frog (#249) reuses the vanilla Frog attribute table.
+        event.put(PFEntities.PLINTH_FROG.get(), net.minecraft.world.entity.animal.frog.Frog.createAttributes().build());
         // ResourceSlime uses the standard Monster attribute table — same baseline
         // vanilla EntityType.SLIME uses (via Monster.createMonsterAttributes).
         // Per-size HP/movement scaling happens in Slime#setSize at runtime,
@@ -262,6 +264,23 @@ public final class PFModBusEvents {
             Capabilities.ItemHandler.BLOCK,
             PFBlockEntities.HATCH.get(),
             (be, side) -> be.inventory()
+        );
+
+        // End Crystal Receptacle (#249): insert-only - hoppers/pipes feed End
+        // Crystals in; the dragon-altar summon spends them, so extraction is
+        // blocked (a hopper below can't steal a primed crystal).
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            PFBlockEntities.END_CRYSTAL_RECEPTACLE.get(),
+            (be, side) -> be.insertOnlyHandler()
+        );
+
+        // End Dragon Altar Hatch (#249): the altar's output - pipes pull the
+        // dragon's drops from any face (chest-style inventory).
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            PFBlockEntities.END_DRAGON_ALTAR_HATCH.get(),
+            (be, side) -> be.itemHandler()
         );
 
         // Per-variant Slime Milk buckets (v1.8) are SlimeMilkBucketItem extends
