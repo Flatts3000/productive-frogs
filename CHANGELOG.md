@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## v1.22.0 - 2026-06-15 - Apex Predators
+
+### Added
+
+- **The End Dragon Altar - a controllable, repeatable Ender Dragon farm.** Once you've beaten the dragon the normal way, build the altar right on the End exit portal: ring it with End Crystal Receptacles and reinforced froglights, with the Dragon Egg as the capstone. Drop an end crystal into each of the four receptacles and a replica dragon rises, charges, and is devoured by Dragonsbane - a special frog perched at the heart of the altar. The dragon's loot lands in the hatch: a Dragon Breath Froglight, a renewable Dragon Egg Froglight, the Princess's Kiss, and experience. No real dragon, no boss bar, no portal regrowth - just a hands-off dragon harvest you can pipe with hoppers. Boss-tier, gated behind the boss config; tunable via `boss.dragon_altar`. (#249)
+- **The Wither Altar - a contained, repeatable Wither farm.** After your first Wither kill (its Nether Star crafts the altar's Withered Star), build a soul-forged arena of Reinforced Soul Sand and Blaze Rod Froglights and load the full vanilla summon - four soul sand and three wither skeleton skulls - into the ritual receptacles. A replica Wither charges in the arena exactly like a real spawn, blue glow, roar and all, until Witherbane devours it. Out comes a Nether Star Froglight (smelts back to a star), experience, and whatever else the Wither drops - with no boss bar, no exploding blocks, and no danger. The old "how do you cage a Wither" problem solved by never spawning a real one. Boss-tier, gated behind the boss config; tunable via `boss.wither_altar`. (#247)
+
 ## v1.21.0 - 2026-06-13 - By the Book
 
 ### Added
