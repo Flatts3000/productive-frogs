@@ -250,19 +250,29 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                     tooltip.add(Component.translatable("productivefrogs.jade.progress",
                         percent(progress, com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity.CAST_TIME)));
                 }
-            } else if (be instanceof com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity froglight
-                    && froglight.getEffect() != null && PFConfig.brewedFroglightsEnabled()) {
-                // Brewed Froglight aura (#162): name the effect (with level) and
-                // its on/off state. Plain Froglights add no line.
-                com.flatts.productivefrogs.data.StoredEffect stored = froglight.getEffect();
-                net.minecraft.world.effect.MobEffect mobEffect = stored.effect().value();
-                Component effectName = stored.amplifier() > 0
-                    ? Component.translatable("potion.withAmplifier", mobEffect.getDisplayName(),
-                        Component.translatable("potion.potency." + stored.amplifier()))
-                    : mobEffect.getDisplayName();
-                tooltip.add(Component.translatable(
-                    stored.enabled() ? "productivefrogs.jade.aura_on" : "productivefrogs.jade.aura_off",
-                    effectName));
+            } else if (be instanceof com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity froglight) {
+                // #251: Jade's core object-name line is the generic block name
+                // ("Froglight"); replace it with the variant's name (the same name the
+                // item shows), read from the BE's variant. Plain/unvariant froglights
+                // keep the generic name.
+                ResourceLocation variantId = froglight.getVariantId();
+                if (variantId != null) {
+                    tooltip.replace(JadeIds.CORE_OBJECT_NAME,
+                        com.flatts.productivefrogs.event.FrogTongueDropHandler.buildFroglight(variantId, null).getHoverName());
+                }
+                // Brewed Froglight aura (#162): name the effect (with level) and its
+                // on/off state. Plain Froglights add no aura line.
+                if (froglight.getEffect() != null && PFConfig.brewedFroglightsEnabled()) {
+                    com.flatts.productivefrogs.data.StoredEffect stored = froglight.getEffect();
+                    net.minecraft.world.effect.MobEffect mobEffect = stored.effect().value();
+                    Component effectName = stored.amplifier() > 0
+                        ? Component.translatable("potion.withAmplifier", mobEffect.getDisplayName(),
+                            Component.translatable("potion.potency." + stored.amplifier()))
+                        : mobEffect.getDisplayName();
+                    tooltip.add(Component.translatable(
+                        stored.enabled() ? "productivefrogs.jade.aura_on" : "productivefrogs.jade.aura_off",
+                        effectName));
+                }
             } else if (be instanceof com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity) {
                 // Formed-state + milk buffer, read from authoritative server data.
                 boolean formed;
