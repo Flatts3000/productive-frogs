@@ -70,9 +70,10 @@ public class WitherAltarHatchRenderer implements BlockEntityRenderer<WitherAltar
 
         EntityRenderDispatcher dispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
         pose.pushPose();
-        // Feet near the cavity floor, in FRONT of the receptacle wall (offset z=3) so the
-        // frog at z=0 sees it; centred on the 3-wide cavity.
-        pose.translate(0.5F, -1.0F, 1.7F);
+        // Hover in the cavity, in FRONT of the receptacle wall (offset z=3) so the frog at
+        // z=0 sees it. Lifted clear of the floor froglights - the Wither floats in vanilla
+        // and its model hangs below its position point, so feet-on-floor clips downward.
+        pose.translate(0.5F, 0.5F, 1.7F);
         dispatcher.setRenderShadow(false);
         dispatcher.render(phantom, 0.0, 0.0, 0.0, 180.0F, partialTick, pose, buffers, packedLight);
         dispatcher.setRenderShadow(true);
