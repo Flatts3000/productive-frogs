@@ -1,0 +1,19 @@
+{
+  "neoforge:conditions": [
+    { "type": "productivefrogs:config_enabled", "config": "boss" }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "productivefrogs",
+  "pattern": [
+    "OSO",
+    "SUS",
+    "OSO"
+  ],
+  "key": {
+    "O": { "item": "minecraft:obsidian" },
+    "S": { "item": "minecraft:soul_soil" },
+    "U": { "item": "minecraft:soul_sand" }
+  },
+  "result": { "id": "productivefrogs:soul_sand_receptacle", "count": 1 }
+}

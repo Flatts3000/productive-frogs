@@ -2,7 +2,7 @@ package com.flatts.productivefrogs.content.block.entity;
 
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
-import com.flatts.productivefrogs.content.entity.PlinthFrog;
+import com.flatts.productivefrogs.content.entity.DragonsbaneFrog;
 import com.flatts.productivefrogs.content.multiblock.DragonAltarValidator;
 import com.flatts.productivefrogs.event.FrogTongueDropHandler;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
@@ -144,7 +144,7 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
             return; // broken mid-summon - abort, crystals untouched
         }
         // Dragonsbane eats the summoned dragon (tongue lash).
-        for (PlinthFrog frog : server.getEntitiesOfClass(PlinthFrog.class, new AABB(plinthFrogPos(pos)).inflate(0.5))) {
+        for (DragonsbaneFrog frog : server.getEntitiesOfClass(DragonsbaneFrog.class, new AABB(plinthFrogPos(pos)).inflate(0.5))) {
             frog.triggerEat();
         }
         for (BlockPos rp : DragonAltarValidator.receptacles(pos)) {
@@ -219,9 +219,9 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
      */
     private static void reconcileFrog(ServerLevel server, BlockPos pos, boolean valid) {
         BlockPos plinth = plinthFrogPos(pos);
-        List<PlinthFrog> frogs = server.getEntitiesOfClass(PlinthFrog.class, new AABB(plinth).inflate(0.5));
+        List<DragonsbaneFrog> frogs = server.getEntitiesOfClass(DragonsbaneFrog.class, new AABB(plinth).inflate(0.5));
         if (!valid) {
-            for (PlinthFrog f : frogs) {
+            for (DragonsbaneFrog f : frogs) {
                 f.discard();
             }
             return;
@@ -230,7 +230,7 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
         double cy = plinth.getY();
         double cz = plinth.getZ() + 0.5;
         if (frogs.isEmpty()) {
-            PlinthFrog frog = PlinthFrog.type().create(server);
+            DragonsbaneFrog frog = DragonsbaneFrog.type().create(server);
             if (frog != null) {
                 frog.moveTo(cx, cy, cz, 180.0F, 0.0F);
                 frog.setYBodyRot(180.0F);
@@ -238,7 +238,7 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
                 server.addFreshEntity(frog);
             }
         } else {
-            PlinthFrog frog = frogs.get(0);
+            DragonsbaneFrog frog = frogs.get(0);
             frog.moveTo(cx, cy, cz, frog.getYRot(), 0.0F);
             frog.setDeltaMovement(Vec3.ZERO);
             for (int i = 1; i < frogs.size(); i++) {

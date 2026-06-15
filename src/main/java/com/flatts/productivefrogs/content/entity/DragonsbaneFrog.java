@@ -10,25 +10,25 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 /**
- * The dragon altar's plinth frog (#249) - a display-only frog perched on the
- * bedrock plinth. NOT a real creature: it has no AI, no gravity, never moves, is
- * invulnerable and silent, and the altar (the Hatch ticker) spawns it when the
- * structure is valid and removes it when it is broken. It can be turned (yaw),
- * but it is pinned in place.
+ * The dragon altar's display frog (#249) - "Dragonsbane". A display-only frog perched
+ * on the bedrock plinth. NOT a real creature: it has no AI, no gravity, never moves,
+ * is invulnerable and silent, and the altar (the Hatch ticker) spawns it when the
+ * structure is valid and removes it when it is broken. It can be turned (yaw), but it
+ * is pinned in place. Identity-named to match its sibling {@link WitherbaneFrog}.
  *
  * <p>It extends vanilla {@link Frog} so it renders with the stock frog model +
  * texture (the vanilla {@code FrogRenderer} is registered for it) and so the
- * tongue/eat animation is available to the summon sequence later. The vanilla
- * brain never ticks ({@link #customServerAiStep} is a no-op and AI is off), so
- * none of the frog's behaviours run.
+ * tongue/eat animation is available to the summon sequence. The vanilla brain never
+ * ticks ({@link #customServerAiStep} is a no-op and AI is off), so none of the frog's
+ * behaviours run.
  */
-public class PlinthFrog extends Frog {
+public class DragonsbaneFrog extends Frog {
 
     /** Ticks remaining in the tongue/eat animation (server-driven; resets the pose at 0). */
     private int eatTicks;
 
     @SuppressWarnings("unchecked")
-    public PlinthFrog(EntityType<? extends PlinthFrog> type, Level level) {
+    public DragonsbaneFrog(EntityType<? extends DragonsbaneFrog> type, Level level) {
         super((EntityType<? extends Frog>) (EntityType<?>) type, level);
         setNoAi(true);
         setNoGravity(true);
@@ -105,7 +105,7 @@ public class PlinthFrog extends Frog {
     }
 
     /** The altar uses this type for spawn/lifecycle reconciliation. */
-    public static EntityType<PlinthFrog> type() {
-        return PFEntities.PLINTH_FROG.get();
+    public static EntityType<DragonsbaneFrog> type() {
+        return PFEntities.DRAGONSBANE.get();
     }
 }

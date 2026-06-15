@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "filled=false": { "model": "productivefrogs:block/wither_skull_receptacle" },
+    "filled=true": { "model": "productivefrogs:block/wither_skull_receptacle" }
+  }
+}

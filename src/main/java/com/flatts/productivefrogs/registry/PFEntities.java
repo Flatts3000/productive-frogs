@@ -3,14 +3,15 @@ package com.flatts.productivefrogs.registry;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.BogSlime;
 import com.flatts.productivefrogs.content.entity.CaveSlime;
+import com.flatts.productivefrogs.content.entity.DragonsbaneFrog;
 import com.flatts.productivefrogs.content.entity.GeodeSlime;
 import com.flatts.productivefrogs.content.entity.InfernalSlime;
-import com.flatts.productivefrogs.content.entity.PlinthFrog;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import com.flatts.productivefrogs.content.entity.TideSlime;
 import com.flatts.productivefrogs.content.entity.VoidSlime;
+import com.flatts.productivefrogs.content.entity.WitherbaneFrog;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -54,18 +55,32 @@ public final class PFEntities {
         );
 
     /**
-     * The dragon altar's plinth frog (#249) - a display-only frog the altar spawns
-     * when its structure is valid and removes when broken. {@code MISC} category so
-     * it never natural-spawns or counts toward mob caps. Frog-sized; reuses the
-     * vanilla frog renderer + attributes.
+     * The dragon altar's display frog (#249) - "Dragonsbane", a display-only frog the
+     * altar spawns when its structure is valid and removes when broken. {@code MISC}
+     * category so it never natural-spawns or counts toward mob caps. Frog-sized; reuses
+     * the vanilla frog renderer + attributes.
      */
-    public static final DeferredHolder<EntityType<?>, EntityType<PlinthFrog>> PLINTH_FROG =
+    public static final DeferredHolder<EntityType<?>, EntityType<DragonsbaneFrog>> DRAGONSBANE =
         ENTITIES.register(
-            "plinth_frog",
-            () -> EntityType.Builder.<PlinthFrog>of(PlinthFrog::new, MobCategory.MISC)
+            "dragonsbane",
+            () -> EntityType.Builder.<DragonsbaneFrog>of(DragonsbaneFrog::new, MobCategory.MISC)
                 .sized(0.5F, 0.5F)
                 .eyeHeight(0.4F)
-                .build(ProductiveFrogs.MOD_ID + ":plinth_frog")
+                .build(ProductiveFrogs.MOD_ID + ":dragonsbane")
+        );
+
+    /**
+     * The Wither Altar's display frog (#247) - "Witherbane". Same lifecycle role as
+     * {@link PlinthFrog}: a {@code MISC}-category display entity the altar spawns when
+     * valid and removes when broken. Frog-sized; reuses the vanilla frog attributes.
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<WitherbaneFrog>> WITHERBANE =
+        ENTITIES.register(
+            "witherbane",
+            () -> EntityType.Builder.<WitherbaneFrog>of(WitherbaneFrog::new, MobCategory.MISC)
+                .sized(0.5F, 0.5F)
+                .eyeHeight(0.4F)
+                .build(ProductiveFrogs.MOD_ID + ":witherbane")
         );
 
     /**

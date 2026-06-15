@@ -80,9 +80,12 @@ public final class PFClientEvents {
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(PFEntities.RESOURCE_TADPOLE.get(), ResourceTadpoleRenderer::new);
         event.registerEntityRenderer(PFEntities.RESOURCE_FROG.get(), ResourceFrogRenderer::new);
-        // Plinth display frog (#249) "Dragonsbane": oversized, ender-tinted apex frog.
-        event.registerEntityRenderer(PFEntities.PLINTH_FROG.get(),
-            com.flatts.productivefrogs.client.renderer.PlinthFrogRenderer::new);
+        // Dragon altar display frog (#249) "Dragonsbane": oversized, ender-tinted apex frog.
+        event.registerEntityRenderer(PFEntities.DRAGONSBANE.get(),
+            com.flatts.productivefrogs.client.renderer.DragonsbaneFrogRenderer::new);
+        // Witherbane (#247): the Wither Altar's oversized, infernal-tinted display frog.
+        event.registerEntityRenderer(PFEntities.WITHERBANE.get(),
+            com.flatts.productivefrogs.client.renderer.WitherbaneFrogRenderer::new);
         event.registerEntityRenderer(PFEntities.RESOURCE_SLIME.get(), ResourceSlimeRenderer::new);
         // Six parent species share one parameterized ParentSlimeRenderer, each
         // constructed with its species atlas + outer-shell tint.

@@ -451,6 +451,20 @@ public final class PFItems {
     public static final DeferredItem<BlockItem> END_DRAGON_ALTAR_HATCH =
         ITEMS.registerSimpleBlockItem("end_dragon_altar_hatch", PFBlocks.END_DRAGON_ALTAR_HATCH, new Item.Properties());
 
+    // Wither Altar (#247) - the Nether-themed reinforced froglights, receptacles, hatch, and capstone.
+    public static final DeferredItem<BlockItem> REINFORCED_SOUL_SAND_FROGLIGHT =
+        ITEMS.registerSimpleBlockItem("reinforced_soul_sand_froglight", PFBlocks.REINFORCED_SOUL_SAND_FROGLIGHT, new Item.Properties());
+    public static final DeferredItem<BlockItem> REINFORCED_BLAZE_ROD_FROGLIGHT =
+        ITEMS.registerSimpleBlockItem("reinforced_blaze_rod_froglight", PFBlocks.REINFORCED_BLAZE_ROD_FROGLIGHT, new Item.Properties());
+    public static final DeferredItem<BlockItem> SOUL_SAND_RECEPTACLE =
+        ITEMS.registerSimpleBlockItem("soul_sand_receptacle", PFBlocks.SOUL_SAND_RECEPTACLE, new Item.Properties());
+    public static final DeferredItem<BlockItem> WITHER_SKULL_RECEPTACLE =
+        ITEMS.registerSimpleBlockItem("wither_skull_receptacle", PFBlocks.WITHER_SKULL_RECEPTACLE, new Item.Properties());
+    public static final DeferredItem<BlockItem> WITHER_ALTAR_HATCH =
+        ITEMS.registerSimpleBlockItem("wither_altar_hatch", PFBlocks.WITHER_ALTAR_HATCH, new Item.Properties());
+    public static final DeferredItem<BlockItem> WITHERED_STAR =
+        ITEMS.registerSimpleBlockItem("withered_star", PFBlocks.WITHERED_STAR, new Item.Properties());
+
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {

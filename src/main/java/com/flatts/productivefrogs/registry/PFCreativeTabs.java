@@ -98,6 +98,14 @@ public final class PFCreativeTabs {
                         output.accept(PFItems.END_CRYSTAL_RECEPTACLE.get());
                         // End Dragon Altar Hatch (#249) - dragon-altar output.
                         output.accept(PFItems.END_DRAGON_ALTAR_HATCH.get());
+                        // Wither Altar (#247) - Nether-themed reinforced froglights, the
+                        // summon receptacles, the hatch, and the Withered Star capstone.
+                        output.accept(PFItems.REINFORCED_SOUL_SAND_FROGLIGHT.get());
+                        output.accept(PFItems.REINFORCED_BLAZE_ROD_FROGLIGHT.get());
+                        output.accept(PFItems.SOUL_SAND_RECEPTACLE.get());
+                        output.accept(PFItems.WITHER_SKULL_RECEPTACLE.get());
+                        output.accept(PFItems.WITHER_ALTAR_HATCH.get());
+                        output.accept(PFItems.WITHERED_STAR.get());
                     }
                     // Terrarium multiblock machines (#185).
                     output.accept(PFItems.TERRARIUM_CONTROLLER.get());

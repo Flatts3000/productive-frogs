@@ -15,12 +15,15 @@ import com.flatts.productivefrogs.content.block.SpawneryBlock;
 import com.flatts.productivefrogs.content.block.SprinklerBlock;
 import com.flatts.productivefrogs.content.block.SweetslimedLilyPadBlock;
 import com.flatts.productivefrogs.content.block.TerrariumControllerBlock;
+import com.flatts.productivefrogs.content.block.WitherAltarHatchBlock;
+import com.flatts.productivefrogs.content.block.WitherSummonReceptacleBlock;
 import com.flatts.productivefrogs.data.Category;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -275,6 +278,46 @@ public final class PFBlocks {
      */
     public static final DeferredBlock<EndDragonAltarHatchBlock> END_DRAGON_ALTAR_HATCH =
         BLOCKS.registerBlock("end_dragon_altar_hatch", EndDragonAltarHatchBlock::new, receptacleProperties());
+
+    /**
+     * Reinforced Froglights for the Wither Altar (#247) - the Nether-themed structural
+     * blocks, mirroring the dragon altar's pair. Crafted from 4 obsidian + the matching
+     * Froglight (Soul Sand / Blaze). Same shape as the dragon altar's reinforced
+     * froglights: full-cube, non-directional, light 15, obsidian-tier blast resistance.
+     */
+    public static final DeferredBlock<Block> REINFORCED_SOUL_SAND_FROGLIGHT =
+        BLOCKS.registerBlock("reinforced_soul_sand_froglight", Block::new, reinforcedFroglightProperties());
+    public static final DeferredBlock<Block> REINFORCED_BLAZE_ROD_FROGLIGHT =
+        BLOCKS.registerBlock("reinforced_blaze_rod_froglight", Block::new, reinforcedFroglightProperties());
+
+    /**
+     * The two Wither Altar summon receptacles (#247) - the vanilla summon T rendered as
+     * sockets. One parameterized {@link WitherSummonReceptacleBlock} backs both, each
+     * accepting its own item; a full T (4 soul sand + 3 skulls) fires the summon.
+     */
+    public static final DeferredBlock<WitherSummonReceptacleBlock> SOUL_SAND_RECEPTACLE =
+        BLOCKS.registerBlock("soul_sand_receptacle",
+            p -> new WitherSummonReceptacleBlock(p, Items.SOUL_SAND), receptacleProperties());
+    public static final DeferredBlock<WitherSummonReceptacleBlock> WITHER_SKULL_RECEPTACLE =
+        BLOCKS.registerBlock("wither_skull_receptacle",
+            p -> new WitherSummonReceptacleBlock(p, Items.WITHER_SKELETON_SKULL), receptacleProperties());
+
+    /** Wither Altar Hatch (#247) - the altar's output + summon brain. */
+    public static final DeferredBlock<WitherAltarHatchBlock> WITHER_ALTAR_HATCH =
+        BLOCKS.registerBlock("wither_altar_hatch", WitherAltarHatchBlock::new, receptacleProperties());
+
+    /**
+     * Withered Star (#247) - the Wither Altar's capstone, sitting beneath the Hatch.
+     * Crafted from a Nether Star, so building the altar proves a first Wither kill.
+     * A glowing, obsidian-tier placeable block.
+     */
+    public static final DeferredBlock<Block> WITHERED_STAR =
+        BLOCKS.registerBlock("withered_star", Block::new, BlockBehaviour.Properties.of()
+            .mapColor(MapColor.SNOW)
+            .strength(3.0F, 1200.0F)
+            .lightLevel(state -> 10)
+            .sound(SoundType.METAL)
+            .requiresCorrectToolForDrops());
 
     /** Memoized {@link #catalystForVariant()} - the blocks are stable post-registration. */
     private static Map<ResourceLocation, Block> catalystMap;
