@@ -47,7 +47,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Each summon fills the Hatch with a Dragon Breath Froglight and a Dragon Egg Froglight (both smelt back to the resource), plus the dragon's own drop, the Princess's Kiss, and it grants experience.$(br2)Put a hopper under the Hatch to pull the rewards into storage automatically."
+      "text": "Each summon fills the Hatch with a Dragon Breath Froglight and a Dragon Egg Froglight (both smelt back to the resource), plus the dragon's own drop, the Princess's Kiss, and it grants experience."
     }
   ]
 }
