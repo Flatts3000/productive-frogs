@@ -71,7 +71,7 @@ public final class PFEntities {
 
     /**
      * The Wither Altar's display frog (#247) - "Witherbane". Same lifecycle role as
-     * {@link PlinthFrog}: a {@code MISC}-category display entity the altar spawns when
+     * {@link DragonsbaneFrog}: a {@code MISC}-category display entity the altar spawns when
      * valid and removes when broken. Frog-sized; reuses the vanilla frog attributes.
      */
     public static final DeferredHolder<EntityType<?>, EntityType<WitherbaneFrog>> WITHERBANE =

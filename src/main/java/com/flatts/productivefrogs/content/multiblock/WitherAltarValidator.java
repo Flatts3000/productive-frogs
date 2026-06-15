@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.Block;
  * layout. Built to mirror the dragon altar's validator shape.
  *
  * <p><b>Strict:</b> every block of the canonical altar must be present at its exact
- * offset from the Hatch - the Withered Star capstone beneath it, the Reinforced Soul
+ * offset from the Hatch - the Withered Star capstone set into the floor, the Reinforced Soul
  * Sand Froglight floor, the Reinforced Blaze Rod Froglight pillars flanking the
  * ritual, and the vanilla Wither summon T rendered as receptacles (4 Soul Sand + 3
  * Wither Skull). Reads only block identity, so it runs client-side (Jade) and
@@ -63,7 +63,7 @@ public final class WitherAltarValidator {
             return new Result(false, "no hatch");
         }
         if (!allMatch(level, hatch, CAPSTONE, PFBlocks.WITHERED_STAR.get())) {
-            return new Result(false, "missing the Withered Star beneath the Hatch (defeat the Wither first)");
+            return new Result(false, "missing the Withered Star (defeat the Wither first)");
         }
         if (!allMatch(level, hatch, SOUL_SAND_FLOOR, PFBlocks.REINFORCED_SOUL_SAND_FROGLIGHT.get())) {
             return new Result(false, "incomplete Reinforced Soul Sand Froglight floor");

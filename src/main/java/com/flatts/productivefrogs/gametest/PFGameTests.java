@@ -6241,6 +6241,9 @@ public final class PFGameTests {
             net.minecraft.world.Container c = (net.minecraft.world.Container) be;
             helper.assertTrue(containsFroglightVariant(c, "nether_star"),
                 "hatch missing the Nether Star Froglight after summon");
+            // The star is paid out only as the Froglight - a raw Nether Star must be stripped.
+            helper.assertTrue(!containerHas(c, Items.NETHER_STAR),
+                "raw Nether Star leaked into the hatch (should be stripped from the wither loot)");
         });
     }
 }

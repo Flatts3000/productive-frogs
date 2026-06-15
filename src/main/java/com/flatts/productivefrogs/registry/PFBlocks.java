@@ -307,7 +307,7 @@ public final class PFBlocks {
         BLOCKS.registerBlock("wither_altar_hatch", WitherAltarHatchBlock::new, receptacleProperties());
 
     /**
-     * Withered Star (#247) - the Wither Altar's capstone, sitting beneath the Hatch.
+     * Withered Star (#247) - the Wither Altar's capstone, set into the arena floor.
      * Crafted from a Nether Star, so building the altar proves a first Wither kill.
      * A glowing, obsidian-tier placeable block.
      */
