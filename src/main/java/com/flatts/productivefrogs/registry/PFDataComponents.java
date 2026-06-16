@@ -62,6 +62,22 @@ public final class PFDataComponents {
     );
 
     /**
+     * Item id carried by the Equivalence lane's synthesized content (#253) - the Mimic
+     * Slime, its bucket/milk, and the Prismatic Froglight. Unlike {@link #SLIME_VARIANT}
+     * (a registered variant id), this stores an arbitrary item id with no variant; the
+     * lane's display name and runtime tint are derived from it. In practice mutually
+     * exclusive with SLIME_VARIANT (synthesized content carries this; variant content
+     * carries that).
+     */
+    public static final Supplier<DataComponentType<ResourceLocation>> SYNTHESIZED_ITEM = COMPONENTS.register(
+        "synthesized_item",
+        () -> DataComponentType.<ResourceLocation>builder()
+            .persistent(ResourceLocation.CODEC)
+            .networkSynchronized(ResourceLocation.STREAM_CODEC)
+            .build()
+    );
+
+    /**
      * Spawns-remaining counter carried by a Slime Milk bucket filled by
      * re-bucketing a placed source. Lets the depletion progress survive the
      * world -> bucket -> world round-trip: {@code SlimeMilkSourceBlock.pickupBlock}

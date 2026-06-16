@@ -138,6 +138,17 @@ public final class ConfigurableFroglightItem extends BlockItem {
      */
     @Override
     public Component getName(ItemStack stack) {
+        // Equivalence lane (#253): a synthesized Froglight names itself from its carried
+        // item id ("<item> Froglight"), independent of the variant path below.
+        ResourceLocation synthesizedItem = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+        if (synthesizedItem != null) {
+            net.minecraft.world.item.Item item =
+                net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(synthesizedItem).orElse(null);
+            Component itemName = item != null
+                ? Component.translatable(item.getDescriptionId())
+                : Component.literal(synthesizedItem.toString());
+            return Component.translatable("block.productivefrogs.configurable_froglight.synthesized", itemName);
+        }
         ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
         if (variantId != null) {
             // Built-in variants have explicit lang keys; a datapack-added variant

@@ -412,6 +412,16 @@ public final class PFItems {
     );
 
     /**
+     * Distiller BlockItem (#253) - places {@link PFBlocks#DISTILLER}, the
+     * Equivalence lane's RF-powered extractor (Prismatic Froglight -> item).
+     */
+    public static final DeferredItem<BlockItem> DISTILLER = ITEMS.registerSimpleBlockItem(
+        "distiller",
+        PFBlocks.DISTILLER,
+        new Item.Properties()
+    );
+
+    /**
      * Terrarium BlockItems (#185). The four machine blocks of the multiblock
      * habitat - Controller / Sprinkler / Incubator / Hatch.
      */

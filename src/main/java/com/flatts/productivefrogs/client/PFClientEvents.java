@@ -29,9 +29,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.component.CustomData;
@@ -306,6 +308,19 @@ public final class PFClientEvents {
         // Configurable Froglight item — tint from SLIME_VARIANT component
         event.register((stack, tintIndex) -> {
             if (tintIndex != 0) return -1;
+            // Equivalence lane (#253): a synthesized Froglight carries an arbitrary
+            // item id (not a registered variant). Its tint is sampled from that
+            // item's sprite at runtime - no primary_color to look up.
+            ResourceLocation synthesizedItem = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+            if (synthesizedItem != null) {
+                Item item = BuiltInRegistries.ITEM.getOptional(synthesizedItem).orElse(null);
+                final int sargb = item == null ? -1 : SynthesizedTint.colorFor(item);
+                if (PFDebug.on(PFDebug.Area.TINT)) {
+                    PFDebug.logOnce(PFDebug.Area.TINT, "froglight_item_synth/" + synthesizedItem,
+                        () -> String.format("configurable_froglight(item) synthesized=%s -> #%08X", synthesizedItem, sargb));
+                }
+                return sargb;
+            }
             ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
             if (variantId == null) return -1;
             Minecraft mc = Minecraft.getInstance();
@@ -403,6 +418,7 @@ public final class PFClientEvents {
         event.register(PFMenuTypes.SLIME_CHURN.get(), SlimeChurnScreen::new);
         event.register(PFMenuTypes.SPAWNERY.get(), SpawneryScreen::new);
         event.register(PFMenuTypes.CASTING_MOLD.get(), CastingMoldScreen::new);
+        event.register(PFMenuTypes.DISTILLER.get(), com.flatts.productivefrogs.client.screen.DistillerScreen::new);
         event.register(PFMenuTypes.HATCH.get(), com.flatts.productivefrogs.client.screen.HatchScreen::new);
         event.register(PFMenuTypes.INCUBATOR.get(), com.flatts.productivefrogs.client.screen.IncubatorScreen::new);
         event.register(PFMenuTypes.TERRARIUM_CONTROLLER.get(), com.flatts.productivefrogs.client.screen.TerrariumControllerScreen::new);

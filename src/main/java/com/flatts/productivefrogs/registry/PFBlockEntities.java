@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.DistillerBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.EndCrystalReceptacleBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.HatchBlockEntity;
@@ -134,6 +135,17 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "casting_mold",
             () -> BlockEntityType.Builder.of(CastingMoldBlockEntity::new, PFBlocks.CASTING_MOLD.get()).build(null)
+        );
+
+    /**
+     * BE type for the {@code distiller} block (#253) - owns the input/output
+     * slots, the RF buffer, and the distill timer. PF's first RF machine. See
+     * {@link DistillerBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<DistillerBlockEntity>> DISTILLER =
+        BLOCK_ENTITIES.register(
+            "distiller",
+            () -> BlockEntityType.Builder.of(DistillerBlockEntity::new, PFBlocks.DISTILLER.get()).build(null)
         );
 
     /** BE type for the {@code spawnery} block - holds the 4-slot inventory + cook/burn timers. */

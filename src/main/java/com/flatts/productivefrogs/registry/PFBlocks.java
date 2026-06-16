@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.CastingMoldBlock;
+import com.flatts.productivefrogs.content.block.DistillerBlock;
 import com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock;
 import com.flatts.productivefrogs.content.block.CrucibleBlock;
 import com.flatts.productivefrogs.content.block.EndCrystalReceptacleBlock;
@@ -160,6 +161,20 @@ public final class PFBlocks {
     public static final DeferredBlock<CastingMoldBlock> CASTING_MOLD = BLOCKS.registerBlock(
         "casting_mold",
         CastingMoldBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .strength(2.0F)
+            .sound(SoundType.METAL)
+    );
+
+    /**
+     * The Distiller (#253) - the Equivalence lane's extractor. RF-powered (PF's
+     * first energy machine); renders a Prismatic Froglight back to its carried
+     * item. Iron/glass alchemy identity; METAL sound.
+     */
+    public static final DeferredBlock<DistillerBlock> DISTILLER = BLOCKS.registerBlock(
+        "distiller",
+        DistillerBlock::new,
         BlockBehaviour.Properties.of()
             .mapColor(MapColor.METAL)
             .strength(2.0F)

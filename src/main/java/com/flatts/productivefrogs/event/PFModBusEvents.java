@@ -251,6 +251,21 @@ public final class PFModBusEvents {
             (be, side) -> be.outputView()
         );
 
+        // Distiller (#253): PF's first RF machine. A receive-only energy buffer
+        // for power cables (extraction blocked - the distill loop spends it
+        // internally), plus side-aware item views - the down face pulls the
+        // rendered item, every other face feeds Prismatic Froglights in.
+        event.registerBlockEntity(
+            Capabilities.EnergyStorage.BLOCK,
+            PFBlockEntities.DISTILLER.get(),
+            (be, side) -> be.energyStorage()
+        );
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            PFBlockEntities.DISTILLER.get(),
+            (be, side) -> side == Direction.DOWN ? be.outputView() : be.inputView()
+        );
+
         // Terrarium Controller (#185): fill-only fluid intake for piped milk. The
         // catalyst components ride the FluidStack (via MilkFluidBucketWrapper), so
         // the Controller reads them back into a MilkCharge. Drain is a no-op (the
