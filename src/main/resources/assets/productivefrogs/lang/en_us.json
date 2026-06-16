@@ -478,6 +478,8 @@
   "entity.productivefrogs.resource_frog.infernal": "Infernal Frog",
   "entity.productivefrogs.resource_frog.void": "Void Frog",
   "entity.productivefrogs.resource_slime": "Resource Slime",
+  "entity.productivefrogs.mimic_slime": "Mimic Slime",
+  "entity.productivefrogs.mimic_slime.item": "%s Mimic Slime",
   "entity.productivefrogs.resource_slime.bog": "Bog Slime",
   "entity.productivefrogs.resource_slime.cave": "Cave Slime",
   "entity.productivefrogs.resource_slime.geode": "Geode Slime",

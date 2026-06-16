@@ -6,6 +6,7 @@ import com.flatts.productivefrogs.content.entity.CaveSlime;
 import com.flatts.productivefrogs.content.entity.DragonsbaneFrog;
 import com.flatts.productivefrogs.content.entity.GeodeSlime;
 import com.flatts.productivefrogs.content.entity.InfernalSlime;
+import com.flatts.productivefrogs.content.entity.MimicSlime;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
@@ -214,6 +215,24 @@ public final class PFEntities {
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
                 .build(ProductiveFrogs.MOD_ID + ":infernal_slime")
+        );
+
+    /**
+     * The Mimic Slime (#253) - the Equivalence lane's synthesized slime. Carries
+     * an arbitrary item id as synced data (no category/variant); always size 1,
+     * never splits. A sibling of {@link ResourceSlime}, NOT a subclass, so the
+     * species-frog sensor/drop ({@code instanceof ResourceSlime}) ignore it - only
+     * Midas eats it. Vanilla slime sizing, like the other PF slimes.
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<MimicSlime>> MIMIC_SLIME =
+        ENTITIES.register(
+            "mimic_slime",
+            () -> EntityType.Builder.<MimicSlime>of(MimicSlime::new, MobCategory.MONSTER)
+                .sized(0.52F, 0.52F)
+                .eyeHeight(0.325F)
+                .spawnDimensionsScale(4.0F)
+                .clientTrackingRange(10)
+                .build(ProductiveFrogs.MOD_ID + ":mimic_slime")
         );
 
     private PFEntities() {

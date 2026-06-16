@@ -89,6 +89,9 @@ public final class PFClientEvents {
         event.registerEntityRenderer(PFEntities.WITHERBANE.get(),
             com.flatts.productivefrogs.client.renderer.WitherbaneFrogRenderer::new);
         event.registerEntityRenderer(PFEntities.RESOURCE_SLIME.get(), ResourceSlimeRenderer::new);
+        // Mimic Slime (#253): vanilla body + an item-tinted translucent shell.
+        event.registerEntityRenderer(PFEntities.MIMIC_SLIME.get(),
+            com.flatts.productivefrogs.client.renderer.MimicSlimeRenderer::new);
         // Six parent species share one parameterized ParentSlimeRenderer, each
         // constructed with its species atlas + outer-shell tint.
         event.registerEntityRenderer(PFEntities.BOG_SLIME.get(),
