@@ -134,6 +134,13 @@ public record ConfigEnabledCondition(Key config) implements ICondition {
                 return PFConfig.FROGLIGHT_WEAPON_ENABLED.get();
             }
         },
+        // Equivalence lane master (#253): gates the Alembic + Distiller recipes.
+        EQUIVALENCE("equivalence") {
+            @Override
+            boolean read() {
+                return PFConfig.EQUIVALENCE_ENABLED.get();
+            }
+        },
         // Boss-tier master (#200): gates the catalyst-altar block recipes and the
         // boss Froglight smelt-backs. The variant suppression half rides
         // PFConfig.variantEnabled, not a recipe condition.

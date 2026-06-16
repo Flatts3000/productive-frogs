@@ -1,4 +1,10 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "productivefrogs:config_enabled",
+      "config": "equivalence"
+    }
+  ],
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "group": "productivefrogs",
@@ -8,9 +14,18 @@
     "CGC"
   ],
   "key": {
-    "C": { "item": "minecraft:copper_ingot" },
-    "G": { "item": "minecraft:glass" },
-    "N": { "item": "minecraft:nether_star" }
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "N": {
+      "item": "minecraft:nether_star"
+    }
   },
-  "result": { "id": "productivefrogs:alembic", "count": 1 }
+  "result": {
+    "id": "productivefrogs:alembic",
+    "count": 1
+  }
 }

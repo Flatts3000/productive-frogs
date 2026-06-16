@@ -61,10 +61,12 @@ public final class PFCreativeTabs {
                     // writes when a player buckets a variant-locked slime
                     // (Category + Variant strings in BUCKET_ENTITY_DATA).
                     output.accept(PFItems.SLIME_BUCKET.get());
-                    // Mimic Slime Bucket + Mimic Milk Bucket (#253) - the EE lane.
-                    // (EE master-toggle gate lands with the config pass.)
-                    output.accept(PFItems.MIMIC_SLIME_BUCKET.get());
-                    output.accept(PFItems.MIMIC_MILK_BUCKET.get());
+                    // Mimic Slime Bucket + Mimic Milk Bucket (#253) - the EE lane,
+                    // hidden when the lane is disabled.
+                    if (PFConfig.equivalenceEnabled()) {
+                        output.accept(PFItems.MIMIC_SLIME_BUCKET.get());
+                        output.accept(PFItems.MIMIC_MILK_BUCKET.get());
+                    }
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
                         if (h.value().isEnabled(h.key().location())) {
                             output.accept(PFItems.variantSlimeBucket(h.key().location(), h.value().category()));
@@ -86,10 +88,12 @@ public final class PFCreativeTabs {
                     if (!PFConfig.SPEC.isLoaded() || PFConfig.CASTING_MOLD_ENABLED.get()) {
                         output.accept(PFItems.CASTING_MOLD.get());
                     }
-                    // Alembic + Distiller (#253) - the Equivalence lane's machines.
-                    // (EE master-toggle gate lands with the config pass.)
-                    output.accept(PFItems.ALEMBIC.get());
-                    output.accept(PFItems.DISTILLER.get());
+                    // Alembic + Distiller (#253) - the Equivalence lane's machines,
+                    // hidden when the lane is disabled.
+                    if (PFConfig.equivalenceEnabled()) {
+                        output.accept(PFItems.ALEMBIC.get());
+                        output.accept(PFItems.DISTILLER.get());
+                    }
                     // Boss-tier catalyst altar blocks (#184), hidden when the boss
                     // master is off (#200). The boss variants' own entries (buckets,
                     // froglights, eggs) hide via the per-variant isEnabled gate.

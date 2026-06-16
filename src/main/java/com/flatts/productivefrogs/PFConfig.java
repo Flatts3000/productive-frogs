@@ -44,6 +44,7 @@ public final class PFConfig {
     public static final ModConfigSpec.BooleanValue FROG_LEGS_ENABLED;
     public static final ModConfigSpec.BooleanValue HOPPING_ENABLED;
     public static final ModConfigSpec.BooleanValue FROGLIGHT_WEAPON_ENABLED;
+    public static final ModConfigSpec.BooleanValue EQUIVALENCE_ENABLED;
     public static final ModConfigSpec.BooleanValue PRINCESS_KISS_ENABLED;
     public static final ModConfigSpec.BooleanValue LILY_PAD_PERCH_ENABLED;
     public static final ModConfigSpec.IntValue LILY_PAD_PERCH_RANGE;
@@ -393,6 +394,21 @@ public final class PFConfig {
                 "and a brewed slime's effect carries onto the Froglight). Gated by boss Froglights in its",
                 "recipe, so it's pure endgame. When false the sword is uncraftable, hidden from JEI + the",
                 "creative tab, and harvests no Froglight if obtained another way. Recipe toggle needs a world reload."
+            )
+            .define("enabled", true);
+
+        builder.pop();
+
+        builder.push("equivalence");
+
+        EQUIVALENCE_ENABLED = builder
+            .comment(
+                "Whether the Equivalence lane is enabled. Default true.",
+                "The post-capstone, RF-powered transmutation lane for OFF-ROSTER items (#253):",
+                "Alembic (item -> Mimic Slime Bucket) -> Mimic Milk -> Mimic Slimes -> Midas",
+                "(Kiss-primed frog) -> Prismatic Froglight -> Distiller (-> the item). When false the",
+                "Alembic + Distiller are uncraftable, hidden from JEI + the creative tab, and the lane's",
+                "items don't show in creative; placed machines still function. Recipe toggle needs a world reload."
             )
             .define("enabled", true);
 
@@ -1091,6 +1107,11 @@ public final class PFConfig {
     /** Whether the Potion of Hopping is enabled ({@code hopping.enabled}); fallback true. */
     public static boolean hoppingEnabled() {
         return !SPEC.isLoaded() || HOPPING_ENABLED.get();
+    }
+
+    /** Whether the Equivalence lane is enabled ({@code equivalence.enabled}, #253); fallback true. */
+    public static boolean equivalenceEnabled() {
+        return !SPEC.isLoaded() || EQUIVALENCE_ENABLED.get();
     }
 
     /** Whether the Froglight Cleaver is enabled ({@code froglight_weapon.enabled}); fallback true. */
