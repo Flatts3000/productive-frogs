@@ -1,5 +1,6 @@
 package com.flatts.productivefrogs.client;
 
+import com.flatts.productivefrogs.util.PFDebug;
 import com.mojang.blaze3d.platform.NativeImage;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -7,21 +8,29 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 /**
  * Runtime tint resolver for the Equivalence lane (#253). Computes a representative
- * colour for an arbitrary item by averaging the opaque pixels of its model's particle
- * sprite, so a synthesized Mimic Slime / Mimic Milk / Prismatic Froglight all wear the
- * source item's colour with no pre-registered {@code primary_color}. The shared
- * single-source-of-truth for the synthesized lane's tints (the runtime counterpart to a
- * variant's {@code primaryColor}).
+ * colour for an arbitrary item, so a synthesized Mimic Slime / Mimic Milk /
+ * Prismatic Froglight all wear the source item's colour with no pre-registered
+ * {@code primary_color}. The runtime counterpart to a variant's {@code primaryColor}.
  *
- * <p>Client-only: it reads the texture atlas, so it is only ever called from
- * {@code ItemColor}/{@code BlockColor}/fluid-tint handlers. Cached per {@link Item}
- * (the atlas sprite is stable for a resource-pack session). Falls back to opaque white
- * if a sprite has no readable opaque pixels.
+ * <p>Resolution order:
+ * <ol>
+ *   <li>Average the opaque pixels of the item model's particle sprite (works for
+ *       flat item textures like redstone).</li>
+ *   <li>If that yields nothing readable AND the item is a {@link BlockItem}, fall
+ *       back to the block's <b>map colour</b> (block-atlas sprites don't always
+ *       expose a readable original image - this is why a birch-log mimic was
+ *       rendering white).</li>
+ * </ol>
+ *
+ * <p>Client-only (reads the texture atlas). Successful results are cached per
+ * {@link Item}; <b>failures are NOT cached</b>, so a sample that fails before the
+ * atlas is ready is retried next frame rather than poisoning the cache with white.
  */
 public final class SynthesizedTint {
 
@@ -32,9 +41,17 @@ public final class SynthesizedTint {
     private SynthesizedTint() {
     }
 
-    /** Opaque ARGB tint for {@code item}, computed once from its particle sprite and cached. */
+    /** Opaque ARGB tint for {@code item}. Cached once a real (non-fallback) colour resolves. */
     public static int colorFor(Item item) {
-        return CACHE.computeIfAbsent(item, SynthesizedTint::sample);
+        Integer cached = CACHE.get(item);
+        if (cached != null) {
+            return cached;
+        }
+        int colour = sample(item);
+        if (colour != FALLBACK_ARGB) {
+            CACHE.put(item, colour);
+        }
+        return colour;
     }
 
     /** Drop the cache (call on a resource reload so re-textured items re-sample). */
@@ -43,6 +60,28 @@ public final class SynthesizedTint {
     }
 
     private static int sample(Item item) {
+        int fromSprite = sampleSprite(item);
+        if (fromSprite != FALLBACK_ARGB) {
+            return fromSprite;
+        }
+        // Block-atlas sprites often don't expose a readable original image; use the
+        // block's map colour as a reliable representative tint instead.
+        if (item instanceof BlockItem blockItem) {
+            int col = blockItem.getBlock().defaultMapColor().col;
+            if (col != 0) {
+                final int result = 0xFF000000 | col;
+                PFDebug.logOnce(PFDebug.Area.TINT, "synth/" + item,
+                    () -> String.format("SynthesizedTint %s -> map-colour #%08X", item, result));
+                return result;
+            }
+        }
+        PFDebug.logOnce(PFDebug.Area.TINT, "synth/" + item,
+            () -> String.format("SynthesizedTint %s -> FALLBACK (no readable sprite, no map colour)", item));
+        return FALLBACK_ARGB;
+    }
+
+    /** Average the opaque pixels of the item's particle sprite, or FALLBACK if unreadable. */
+    private static int sampleSprite(Item item) {
         try {
             Minecraft mc = Minecraft.getInstance();
             ItemStack stack = new ItemStack(item);
@@ -50,6 +89,9 @@ public final class SynthesizedTint {
             TextureAtlasSprite sprite = model.getParticleIcon();
             SpriteContents contents = sprite.contents();
             NativeImage image = contents.getOriginalImage();
+            if (image == null) {
+                return FALLBACK_ARGB;
+            }
             int w = contents.width();
             int h = contents.height();
             long r = 0;
@@ -76,7 +118,10 @@ public final class SynthesizedTint {
             int ar = (int) (r / count);
             int ag = (int) (g / count);
             int ab = (int) (b / count);
-            return 0xFF000000 | (ar << 16) | (ag << 8) | ab;
+            final int result = 0xFF000000 | (ar << 16) | (ag << 8) | ab;
+            PFDebug.logOnce(PFDebug.Area.TINT, "synth/" + item,
+                () -> String.format("SynthesizedTint %s -> sprite-average #%08X", item, result));
+            return result;
         } catch (Exception e) {
             return FALLBACK_ARGB;
         }

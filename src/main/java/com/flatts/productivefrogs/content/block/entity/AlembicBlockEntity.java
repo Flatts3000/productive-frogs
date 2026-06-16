@@ -231,6 +231,16 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
                 || stack.has(DataComponents.CHARGED_PROJECTILES)) {
             return false;
         }
+        // Type-only lane: refuse any item carrying non-default component state - a
+        // Patchouli guide's book id, potion contents, enchantments, written-book
+        // pages, a custom name, damage, etc. The lane strips components, so such an
+        // item would come out meaningless or invalid (a guide book with no book id
+        // reads "Invalid book: no ID defined"). Plain resources have an empty patch.
+        // This also subsumes the container checks above and blocks component
+        // laundering generally. (#253)
+        if (!stack.getComponentsPatch().isEmpty()) {
+            return false;
+        }
         // Our own pipeline items - no recursion / self-dupe. The instanceof checks
         // catch every per-variant milk + slime bucket in one shot.
         Item item = stack.getItem();
