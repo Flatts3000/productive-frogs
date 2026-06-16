@@ -131,6 +131,8 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
         int appetite = carryStats ? eggBe.getAppetite() : 0;
         int bounty = carryStats ? eggBe.getBounty() : 0;
         int reach = carryStats ? eggBe.getReach() : 0;
+        // Midas egg (#253): hatches Midas tadpoles regardless of the carrier block's category.
+        boolean midas = eggBe != null && eggBe.isMidas();
 
         destroy(level, pos);
         level.playSound(null, pos, SoundEvents.FROGSPAWN_HATCH, SoundSource.BLOCKS, 1.0F, 1.0F);
@@ -142,6 +144,7 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
                 continue;
             }
             tadpole.setCategory(this.category);
+            tadpole.setMidas(midas);
             if (carryStats) {
                 tadpole.setPendingStats(appetite, bounty, reach);
             }

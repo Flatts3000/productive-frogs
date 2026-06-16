@@ -90,7 +90,10 @@ public final class LayCategoryFrogspawn {
                     // loose frogspawn in the cavity, and bred stats flow straight
                     // into the Incubator. Falls through to the water-lay below when
                     // there's no Incubator with room (or no Terrarium).
-                    if (tryLayIntoIncubator(level, resourceFrog)) {
+                    // Midas (#253) always water-lays a Midas egg; the Incubator
+                    // path seeds by Category and has no Midas carry yet, so skip it
+                    // for Midas (a documented gap, not a regression).
+                    if (!resourceFrog.isMidas() && tryLayIntoIncubator(level, resourceFrog)) {
                         isPregnant.erase();
                         return true;
                     }
@@ -141,14 +144,19 @@ public final class LayCategoryFrogspawn {
                         // pending roll) leaves the egg statless, and the hatchlings
                         // mature into baseline (1/1/1) frogs.
                         // See docs/frog_breeding.md.
-                        if (resourceFrog.hasPendingOffspring()
-                            && level.getBlockEntity(placePos) instanceof PrimedFrogEggBlockEntity eggBe) {
-                            eggBe.setPendingStats(
-                                resourceFrog.getPendingOffspringAppetite(),
-                                resourceFrog.getPendingOffspringBounty(),
-                                resourceFrog.getPendingOffspringReach()
-                            );
-                            resourceFrog.clearPendingOffspring();
+                        if (level.getBlockEntity(placePos) instanceof PrimedFrogEggBlockEntity eggBe) {
+                            if (resourceFrog.hasPendingOffspring()) {
+                                eggBe.setPendingStats(
+                                    resourceFrog.getPendingOffspringAppetite(),
+                                    resourceFrog.getPendingOffspringBounty(),
+                                    resourceFrog.getPendingOffspringReach()
+                                );
+                                resourceFrog.clearPendingOffspring();
+                            }
+                            // Midas (#253) breeds true: a Midas frog's egg hatches Midas.
+                            if (resourceFrog.isMidas()) {
+                                eggBe.setMidas(true);
+                            }
                         }
                         isPregnant.erase();
                         return true;

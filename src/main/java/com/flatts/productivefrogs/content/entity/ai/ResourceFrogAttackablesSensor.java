@@ -64,6 +64,14 @@ public class ResourceFrogAttackablesSensor extends FrogAttackablesSensor {
         if (!Sensor.isEntityAttackable(frog, target) || !Frog.canEat(target) || isUnreachable(frog, target)) {
             return false;
         }
+        // Midas (Equivalence lane, #253) eats ONLY Mimic Slimes - never the six
+        // species' Resource Slimes - and uses the same reach gate. MimicSlime is a
+        // sibling of ResourceSlime (extends vanilla Slime), so the species path
+        // below already excludes it; this is the symmetric inclusion for Midas.
+        if (frog.isMidas()) {
+            return target instanceof com.flatts.productivefrogs.content.entity.MimicSlime
+                && target.closerThan(frog, reachRadius(frog));
+        }
         // Only Resource Slimes of the matching category are eligible prey.
         // Vanilla slimes/magma cubes get filtered out — they must be infused
         // (right-click with a primer-tagged item) before any frog will eat them.

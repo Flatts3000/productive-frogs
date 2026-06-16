@@ -39,6 +39,12 @@ public class PrimedFrogEggBlockEntity extends BlockEntity {
     private int bounty;
     private int reach;
 
+    // Midas marker (Equivalence lane, #253). A Midas egg reuses a species egg
+    // block as its carrier (the VOID block) but carries this flag so it hatches
+    // Midas tadpoles instead of that species'. Set by the Kiss-priming handler
+    // or by a Midas frog's lay; read at hatch. Server-only state.
+    private boolean midas;
+
     // Absolute level game-time the egg is scheduled to hatch, stamped at
     // placement by PrimedFrogEggBlock#onPlace. Lets the Jade readout show a
     // live hatch countdown (the scheduled tick itself lives in the level's tick
@@ -54,6 +60,17 @@ public class PrimedFrogEggBlockEntity extends BlockEntity {
     /** Whether this egg carries bred offspring stats (vs. a non-bred placement). */
     public boolean hasStats() {
         return hasStats;
+    }
+
+    /** Whether this is a Midas egg (#253) - hatches Midas tadpoles regardless of the carrier block. */
+    public boolean isMidas() {
+        return midas;
+    }
+
+    /** Mark this egg as a Midas egg (server-side; persisted). */
+    public void setMidas(boolean midas) {
+        this.midas = midas;
+        setChanged();
     }
 
     /** Absolute level game-time the egg hatches, or 0 if unknown. Drives the Jade countdown. */
@@ -104,6 +121,9 @@ public class PrimedFrogEggBlockEntity extends BlockEntity {
         if (hatchGameTime > 0) {
             tag.putLong("HatchGameTime", hatchGameTime);
         }
+        if (midas) {
+            tag.putBoolean("Midas", true);
+        }
     }
 
     @Override
@@ -116,5 +136,6 @@ public class PrimedFrogEggBlockEntity extends BlockEntity {
             reach = tag.getInt("Reach");
         }
         hatchGameTime = tag.getLong("HatchGameTime");
+        midas = tag.getBoolean("Midas");
     }
 }

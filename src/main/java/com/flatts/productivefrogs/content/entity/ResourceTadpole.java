@@ -67,6 +67,11 @@ public class ResourceTadpole extends Tadpole {
     private int pendingBounty;
     private int pendingReach;
 
+    // Midas marker (Equivalence lane, #253), carried from the Midas egg to the
+    // matured Midas frog. Not synced (the tadpole has no Midas visual in v1);
+    // server-side payload consumed in ageUp().
+    private boolean midas;
+
     // Fractional carry for the config-tunable growth accelerator (see aiStep).
     // Transient: losing the sub-tick remainder across a reload is negligible.
     private double growthCarry;
@@ -169,6 +174,15 @@ public class ResourceTadpole extends Tadpole {
         return hasPendingStats;
     }
 
+    /** Whether this tadpole matures into a Midas frog (#253). */
+    public boolean isMidas() {
+        return midas;
+    }
+
+    public void setMidas(boolean midas) {
+        this.midas = midas;
+    }
+
     /**
      * The inherited stats this tadpole will mature into (only meaningful when
      * {@link #hasPendingStats()} is true). Server-side payload - exposed so the
@@ -210,6 +224,9 @@ public class ResourceTadpole extends Tadpole {
             tag.putInt("PendingBounty", pendingBounty);
             tag.putInt("PendingReach", pendingReach);
         }
+        if (midas) {
+            tag.putBoolean("Midas", true);
+        }
     }
 
     @Override
@@ -228,6 +245,7 @@ public class ResourceTadpole extends Tadpole {
             pendingBounty = tag.getInt("PendingBounty");
             pendingReach = tag.getInt("PendingReach");
         }
+        midas = tag.getBoolean("Midas");
     }
 
     @Override
@@ -253,6 +271,9 @@ public class ResourceTadpole extends Tadpole {
                 tag.putInt("PendingBounty", pendingBounty);
                 tag.putInt("PendingReach", pendingReach);
             }
+            if (midas) {
+                tag.putBoolean("Midas", true);
+            }
         });
     }
 
@@ -276,6 +297,7 @@ public class ResourceTadpole extends Tadpole {
             pendingBounty = tag.getInt("PendingBounty");
             pendingReach = tag.getInt("PendingReach");
         }
+        midas = tag.getBoolean("Midas");
     }
 
     /**
@@ -299,6 +321,7 @@ public class ResourceTadpole extends Tadpole {
         EventHooks.onLivingConvert(this, frog);
         Category category = getCategory();
         frog.setCategory(category);
+        frog.setMidas(midas);
         frog.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
         frog.finalizeSpawn(
             serverLevel,
