@@ -1,8 +1,8 @@
 {
   "parent": "minecraft:block/cube_bottom_top",
   "textures": {
-    "top": "productivefrogs:block/casting_mold_top",
-    "side": "productivefrogs:block/casting_mold_side",
-    "bottom": "productivefrogs:block/casting_mold_bottom"
+    "top": "productivefrogs:block/distiller_top",
+    "side": "productivefrogs:block/distiller_side",
+    "bottom": "productivefrogs:block/ee_machine_base"
   }
 }
