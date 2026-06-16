@@ -48,7 +48,10 @@ public class SlimeMilkerInventory extends ItemStackHandler {
         if (stack.isEmpty()) {
             return false;
         }
-        return slot == INPUT_SLOT && stack.is(PFItems.SLIME_BUCKET.get());
+        // Captured Slime Bucket, or (Equivalence lane, #253) a captured Mimic
+        // Slime Bucket - the Milker turns either into its milk.
+        return slot == INPUT_SLOT
+            && (stack.is(PFItems.SLIME_BUCKET.get()) || stack.is(PFItems.MIMIC_SLIME_BUCKET.get()));
     }
 
     @Override

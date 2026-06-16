@@ -112,28 +112,11 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, SlimeMilkerBlockEntity be) {
         ItemStack input = be.inventory.getStackInSlot(INPUT_SLOT);
-        if (input.isEmpty() || !input.is(PFItems.SLIME_BUCKET.get())) {
-            be.resetProgress();
-            setWorking(level, pos, state, false);
-            return;
-        }
-        ResourceLocation variantId = SlimeMilkerBlock.readBucketVariantId(input);
-        if (variantId == null) {
-            // Bucket has no Variant component (vanilla slime bucket / empty) —
-            // fail closed, just like the original right-click flow did.
-            PFDebug.logOnce(PFDebug.Area.MILKER, "failclosed#" + pos,
-                () -> String.format("milker @%s fail-closed: input bucket carries no variant", pos));
-            be.resetProgress();
-            setWorking(level, pos, state, false);
-            return;
-        }
-        // Per-variant milk (v1.8): the output is the variant's own milk bucket.
-        // A variant with no per-variant fluid (not declared at mod-init) gets no
-        // milk - fail closed rather than minting an inert generic bucket.
-        Item milkBucketItem = PFVariantMilk.bucket(variantId);
-        if (milkBucketItem == null) {
-            PFDebug.logOnce(PFDebug.Area.MILKER, "nomilk#" + pos,
-                () -> String.format("milker @%s fail-closed: no per-variant milk fluid for %s", pos, variantId));
+        // The output to produce: a variant Slime Milk bucket for a captured Slime
+        // Bucket, OR (Equivalence lane, #253) a Mimic Milk bucket for a captured
+        // Mimic Slime Bucket. Null = invalid/fail-closed input.
+        ItemStack milkResult = milkResultFor(pos, input);
+        if (milkResult == null) {
             be.resetProgress();
             setWorking(level, pos, state, false);
             return;
@@ -152,22 +135,20 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
         }
         if (be.cookProgress == 0) {
             PFDebug.log(PFDebug.Area.MILKER, () -> String.format(
-                "milker @%s: start cooking %s slime bucket", pos, variantId));
+                "milker @%s: start cooking %s", pos, input.getItem()));
         }
         be.cookProgress++;
         be.setChanged();
         if (be.cookProgress >= COOK_TIME_TOTAL) {
-            // SLIME_BUCKET stacksTo(1) so consuming one always empties the
-            // input slot. Output is the variant's own Slime Milk bucket - the
-            // item identity carries the variant (per-variant fluids, v1.8), so
-            // no SLIME_VARIANT component stamp is needed.
-            ItemStack milkBucket = new ItemStack(milkBucketItem);
+            // The input bucket is stacksTo(1), so consuming one always empties the
+            // input slot. The output is the milk bucket computed at the top (variant
+            // milk, or a component-carrying Mimic Milk bucket for the EE lane).
             be.inventory.setStackInSlot(INPUT_SLOT, ItemStack.EMPTY);
-            be.inventory.setStackInSlot(OUTPUT_SLOT, milkBucket);
+            be.inventory.setStackInSlot(OUTPUT_SLOT, milkResult);
             be.cookProgress = 0;
             setWorking(level, pos, state, false);
             PFDebug.log(PFDebug.Area.MILKER, () -> String.format(
-                "milker @%s: produced %s milk bucket", pos, variantId));
+                "milker @%s: produced %s", pos, milkResult.getItem()));
             level.playSound(
                 null, pos, SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS,
                 0.8F, 1.2F + level.getRandom().nextFloat() * 0.2F
@@ -178,6 +159,42 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
             // is already true, so this doesn't spam neighbor updates.
             setWorking(level, pos, state, true);
         }
+    }
+
+    /**
+     * The milk bucket a given input produces, or {@code null} for an invalid /
+     * fail-closed input. A captured Slime Bucket yields its variant's milk
+     * (v1.8 per-variant fluids); a captured Mimic Slime Bucket (Equivalence lane,
+     * #253) yields a Mimic Milk bucket carrying the same synthesized item.
+     */
+    private static ItemStack milkResultFor(BlockPos pos, ItemStack input) {
+        if (input.isEmpty()) {
+            return null;
+        }
+        if (input.is(PFItems.SLIME_BUCKET.get())) {
+            ResourceLocation variantId = SlimeMilkerBlock.readBucketVariantId(input);
+            if (variantId == null) {
+                PFDebug.logOnce(PFDebug.Area.MILKER, "failclosed#" + pos,
+                    () -> String.format("milker @%s fail-closed: input bucket carries no variant", pos));
+                return null;
+            }
+            Item milkBucketItem = PFVariantMilk.bucket(variantId);
+            if (milkBucketItem == null) {
+                PFDebug.logOnce(PFDebug.Area.MILKER, "nomilk#" + pos,
+                    () -> String.format("milker @%s fail-closed: no per-variant milk fluid for %s", pos, variantId));
+                return null;
+            }
+            return new ItemStack(milkBucketItem);
+        }
+        if (input.is(PFItems.MIMIC_SLIME_BUCKET.get())) {
+            ResourceLocation itemId = input.get(
+                com.flatts.productivefrogs.registry.PFDataComponents.SYNTHESIZED_ITEM.get());
+            if (itemId == null) {
+                return null;
+            }
+            return com.flatts.productivefrogs.content.item.MimicMilkBucketItem.forItem(itemId);
+        }
+        return null;
     }
 
     /**
