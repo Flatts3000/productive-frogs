@@ -255,8 +255,21 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 // ("Froglight"); replace it with the variant's name (the same name the
                 // item shows), read from the BE's variant. Plain/unvariant froglights
                 // keep the generic name.
+                // Equivalence lane (#253): a placed Prismatic Froglight carries a
+                // synthesized item, not a variant - name it "<item> Froglight" the
+                // same way the item does. Takes precedence over the variant path
+                // (the two are mutually exclusive).
+                ResourceLocation synthesizedItem = froglight.getSynthesizedItem();
                 ResourceLocation variantId = froglight.getVariantId();
-                if (variantId != null) {
+                if (synthesizedItem != null) {
+                    net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                        .getOptional(synthesizedItem).orElse(null);
+                    Component itemName = item != null
+                        ? Component.translatable(item.getDescriptionId())
+                        : Component.literal(synthesizedItem.toString());
+                    tooltip.replace(JadeIds.CORE_OBJECT_NAME,
+                        Component.translatable("block.productivefrogs.configurable_froglight.synthesized", itemName));
+                } else if (variantId != null) {
                     tooltip.replace(JadeIds.CORE_OBJECT_NAME,
                         com.flatts.productivefrogs.event.FrogTongueDropHandler.buildFroglight(variantId, null).getHoverName());
                 }
