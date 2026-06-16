@@ -86,8 +86,9 @@ public final class PFCreativeTabs {
                     if (!PFConfig.SPEC.isLoaded() || PFConfig.CASTING_MOLD_ENABLED.get()) {
                         output.accept(PFItems.CASTING_MOLD.get());
                     }
-                    // Distiller (#253) - the Equivalence lane's extractor. (EE
-                    // master-toggle gate lands with the config pass.)
+                    // Alembic + Distiller (#253) - the Equivalence lane's machines.
+                    // (EE master-toggle gate lands with the config pass.)
+                    output.accept(PFItems.ALEMBIC.get());
                     output.accept(PFItems.DISTILLER.get());
                     // Boss-tier catalyst altar blocks (#184), hidden when the boss
                     // master is off (#200). The boss variants' own entries (buckets,

@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.block.AlembicBlock;
 import com.flatts.productivefrogs.content.block.CastingMoldBlock;
 import com.flatts.productivefrogs.content.block.DistillerBlock;
 import com.flatts.productivefrogs.content.block.MimicMilkSourceBlock;
@@ -176,6 +177,20 @@ public final class PFBlocks {
     public static final DeferredBlock<DistillerBlock> DISTILLER = BLOCKS.registerBlock(
         "distiller",
         DistillerBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .strength(2.0F)
+            .sound(SoundType.METAL)
+    );
+
+    /**
+     * The Alembic (#253) - the Equivalence lane's RF-powered synthesizer (empty
+     * bucket + off-roster item -> Mimic Slime Bucket). Same alchemy identity as
+     * the Distiller; METAL sound.
+     */
+    public static final DeferredBlock<AlembicBlock> ALEMBIC = BLOCKS.registerBlock(
+        "alembic",
+        AlembicBlock::new,
         BlockBehaviour.Properties.of()
             .mapColor(MapColor.METAL)
             .strength(2.0F)

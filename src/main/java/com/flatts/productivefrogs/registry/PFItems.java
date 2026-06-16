@@ -453,6 +453,16 @@ public final class PFItems {
     );
 
     /**
+     * Alembic BlockItem (#253) - places {@link PFBlocks#ALEMBIC}, the Equivalence
+     * lane's RF-powered synthesizer (item -> Mimic Slime Bucket).
+     */
+    public static final DeferredItem<BlockItem> ALEMBIC = ITEMS.registerSimpleBlockItem(
+        "alembic",
+        PFBlocks.ALEMBIC,
+        new Item.Properties()
+    );
+
+    /**
      * Terrarium BlockItems (#185). The four machine blocks of the multiblock
      * habitat - Controller / Sprinkler / Incubator / Hatch.
      */

@@ -36,6 +36,17 @@ public final class PFItemTags {
     /** Per-species Spawnery primer tags, keyed by category. */
     public static final Map<Category, TagKey<Item>> SPAWNERY_PRIMER = buildSpawneryPrimers();
 
+    /**
+     * Items the Alembic (#253) refuses to synthesize, on top of its code-level
+     * hard exclusions (container-bearing items, our own pipeline items, anything
+     * already on a slime variant lane). Pack-overridable. Ships with the
+     * dupe-unsafe / would-trivialise set (command/structure blocks, bedrock,
+     * spawn eggs, shulker boxes, bundles, boss-tier resources, etc.).
+     */
+    public static final TagKey<Item> ALEMBIC_DENIED = TagKey.create(
+        Registries.ITEM,
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "alembic/denied"));
+
     private static Map<Category, TagKey<Item>> buildSpawneryPrimers() {
         EnumMap<Category, TagKey<Item>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {

@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.registry;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.DistillerBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.EndCrystalReceptacleBlockEntity;
@@ -157,6 +158,16 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "mimic_slime_milk_source",
             () -> BlockEntityType.Builder.of(MimicMilkSourceBlockEntity::new, PFBlocks.MIMIC_MILK.get()).build(null)
+        );
+
+    /**
+     * BE type for the {@code alembic} block (#253) - the lane's RF synthesizer
+     * (bucket + item slots, output, energy buffer). See {@link AlembicBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<AlembicBlockEntity>> ALEMBIC =
+        BLOCK_ENTITIES.register(
+            "alembic",
+            () -> BlockEntityType.Builder.of(AlembicBlockEntity::new, PFBlocks.ALEMBIC.get()).build(null)
         );
 
     /** BE type for the {@code spawnery} block - holds the 4-slot inventory + cook/burn timers. */

@@ -268,6 +268,19 @@ public final class PFModBusEvents {
             (be, side) -> side == Direction.DOWN ? be.outputView() : be.inputView()
         );
 
+        // Alembic (#253): the lane's other RF machine. Receive-only energy buffer;
+        // down face pulls the Mimic Slime Bucket, other faces feed bucket + item.
+        event.registerBlockEntity(
+            Capabilities.EnergyStorage.BLOCK,
+            PFBlockEntities.ALEMBIC.get(),
+            (be, side) -> be.energyStorage()
+        );
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            PFBlockEntities.ALEMBIC.get(),
+            (be, side) -> side == Direction.DOWN ? be.outputView() : be.inputView()
+        );
+
         // Terrarium Controller (#185): fill-only fluid intake for piped milk. The
         // catalyst components ride the FluidStack (via MilkFluidBucketWrapper), so
         // the Controller reads them back into a MilkCharge. Drain is a no-op (the
