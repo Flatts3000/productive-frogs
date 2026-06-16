@@ -6,6 +6,7 @@ import com.flatts.productivefrogs.content.item.FrogEggItem;
 import com.flatts.productivefrogs.content.item.FrogNetItem;
 import com.flatts.productivefrogs.content.item.MilkCatalyst;
 import com.flatts.productivefrogs.content.item.MilkCatalystItem;
+import com.flatts.productivefrogs.content.item.MimicMilkBucketItem;
 import com.flatts.productivefrogs.content.item.MimicSlimeBucketItem;
 import com.flatts.productivefrogs.content.item.ResourceSlimeSpawnEggItem;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
@@ -222,6 +223,19 @@ public final class PFItems {
             Fluids.WATER,
             SoundEvents.BUCKET_EMPTY_FISH,
             props.stacksTo(1).component(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY)
+        )
+    );
+
+    /**
+     * Mimic Milk Bucket (#253) - the EE lane's milk. A fluid bucket placing the
+     * single Mimic Milk source; carries the synthesized item id as a top-level
+     * component (tint + name) and writes it to the placed source's BE.
+     */
+    public static final DeferredItem<MimicMilkBucketItem> MIMIC_MILK_BUCKET = ITEMS.registerItem(
+        "mimic_slime_milk_bucket",
+        props -> new MimicMilkBucketItem(
+            PFFluids.MIMIC_MILK.get(),
+            props.stacksTo(1).craftRemainder(Items.BUCKET)
         )
     );
 

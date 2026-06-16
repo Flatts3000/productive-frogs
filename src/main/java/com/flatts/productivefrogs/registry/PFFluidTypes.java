@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.registry;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
@@ -30,6 +31,15 @@ public final class PFFluidTypes {
 
     public static final DeferredRegister<FluidType> TYPES =
         DeferredRegister.create(NeoForgeRegistries.Keys.FLUID_TYPES, ProductiveFrogs.MOD_ID);
+
+    /**
+     * The single Mimic Milk fluid type (Equivalence lane, #253). Unlike the
+     * per-variant milk types, there is ONE; its per-instance colour is resolved at
+     * render time from the source block's BE (see {@code PFClientEvents}). Shares
+     * the milk feel ({@link #milkProperties()}).
+     */
+    public static final DeferredHolder<FluidType, FluidType> MIMIC_MILK_TYPE =
+        TYPES.register("mimic_slime_milk", () -> new FluidType(milkProperties()));
 
     static FluidType.Properties milkProperties() {
         return FluidType.Properties.create()

@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.registry;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.CastingMoldBlock;
 import com.flatts.productivefrogs.content.block.DistillerBlock;
+import com.flatts.productivefrogs.content.block.MimicMilkSourceBlock;
 import com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock;
 import com.flatts.productivefrogs.content.block.CrucibleBlock;
 import com.flatts.productivefrogs.content.block.EndCrystalReceptacleBlock;
@@ -179,6 +180,17 @@ public final class PFBlocks {
             .mapColor(MapColor.METAL)
             .strength(2.0F)
             .sound(SoundType.METAL)
+    );
+
+    /**
+     * Mimic Milk source block (#253) - the EE lane's placeable, source-only milk.
+     * One block (the synthesized item rides on its BE); reuses the shared milk
+     * fluid render + block properties. Spawns Mimic Slimes via the milk economy.
+     */
+    public static final DeferredBlock<MimicMilkSourceBlock> MIMIC_MILK = BLOCKS.registerBlock(
+        "mimic_slime_milk",
+        p -> new MimicMilkSourceBlock(PFFluids.MIMIC_MILK.get(), p),
+        PFVariantMilk.milkBlockProperties()
     );
 
     /**

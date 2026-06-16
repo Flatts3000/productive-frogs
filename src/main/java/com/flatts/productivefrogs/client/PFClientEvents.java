@@ -18,6 +18,7 @@ import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
+import com.flatts.productivefrogs.registry.PFFluidTypes;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
 import com.flatts.productivefrogs.registry.PFParticles;
@@ -301,6 +302,16 @@ public final class PFClientEvents {
             return item == null ? opaque(0xC8C8D2) : SynthesizedTint.colorFor(item);
         }, PFItems.MIMIC_SLIME_BUCKET.get());
 
+        // Mimic Milk Bucket (#253) — milk layer (tintIndex 1) wears the carried
+        // item's colour off the top-level SYNTHESIZED_ITEM component.
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 1) return -1;
+            ResourceLocation itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+            if (itemId == null) return opaque(0xC8C8D2);
+            Item item = BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
+            return item == null ? opaque(0xC8C8D2) : SynthesizedTint.colorFor(item);
+        }, PFItems.MIMIC_MILK_BUCKET.get());
+
         // Slime Milk buckets — one item per variant (v1.8). Each tints its milk
         // layer (tintIndex 1) by its OWN variant's registry colour (the variant is
         // the item identity, no component lookup). Falls back to milky off-white
@@ -520,6 +531,40 @@ public final class PFClientEvents {
                 type
             );
         }
+
+        // Mimic Milk (#253): ONE fluid type, shared greyscale milk texture. Its
+        // per-instance colour comes from the source block's BE at the queried
+        // position (source-only, so every Mimic Milk block has a BE), resolved
+        // through the runtime item-sprite resolver. No-position fallback is a
+        // neutral prismatic grey (e.g. the held-bucket fluid render).
+        event.registerFluidType(
+            new IClientFluidTypeExtensions() {
+                @Override
+                public ResourceLocation getStillTexture() { return still; }
+
+                @Override
+                public ResourceLocation getFlowingTexture() { return flow; }
+
+                @Override
+                public int getTintColor() { return 0xFFC8C8D2; }
+
+                @Override
+                public int getTintColor(FluidState state, BlockAndTintGetter getter, BlockPos pos) {
+                    if (getter != null && pos != null
+                            && getter.getBlockEntity(pos) instanceof com.flatts.productivefrogs.content.block.entity.MimicMilkSourceBlockEntity be) {
+                        ResourceLocation itemId = be.getSynthesizedItem();
+                        if (itemId != null) {
+                            Item item = BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
+                            if (item != null) {
+                                return SynthesizedTint.colorFor(item);
+                            }
+                        }
+                    }
+                    return getTintColor();
+                }
+            },
+            PFFluidTypes.MIMIC_MILK_TYPE.get()
+        );
 
         // Molten metals (v1.12): same per-variant tint model over a shared
         // greyscale molten texture set (desaturated lava still/flow). The

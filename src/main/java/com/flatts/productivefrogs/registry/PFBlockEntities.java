@@ -9,6 +9,7 @@ import com.flatts.productivefrogs.content.block.entity.EndCrystalReceptacleBlock
 import com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.HatchBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.MimicMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeChurnBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
@@ -146,6 +147,16 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "distiller",
             () -> BlockEntityType.Builder.of(DistillerBlockEntity::new, PFBlocks.DISTILLER.get()).build(null)
+        );
+
+    /**
+     * BE type for the Mimic Milk source block (#253) - carries the synthesized
+     * item + the spawn budget. See {@link MimicMilkSourceBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<MimicMilkSourceBlockEntity>> MIMIC_MILK_SOURCE =
+        BLOCK_ENTITIES.register(
+            "mimic_slime_milk_source",
+            () -> BlockEntityType.Builder.of(MimicMilkSourceBlockEntity::new, PFBlocks.MIMIC_MILK.get()).build(null)
         );
 
     /** BE type for the {@code spawnery} block - holds the 4-slot inventory + cook/burn timers. */
