@@ -91,6 +91,7 @@
   "item.productivefrogs.slime_bucket.ender_pearl": "Bucket of Ender Pearl Slime",
   "item.productivefrogs.slime_bucket.clay_ball": "Bucket of Clay Slime",
   "item.productivefrogs.slime_bucket.leather": "Bucket of Leather Slime",
+  "item.productivefrogs.slime_bucket.experience": "Bucket of Experience Slime",
   "item.productivefrogs.slime_bucket.feather": "Bucket of Feather Slime",
   "item.productivefrogs.slime_bucket.glow_ink_sac": "Bucket of Glow Ink Sac Slime",
   "item.productivefrogs.slime_bucket.obsidian": "Bucket of Obsidian Slime",
@@ -240,6 +241,7 @@
   "block.productivefrogs.configurable_froglight.ender_pearl": "Ender Pearl Froglight",
   "block.productivefrogs.configurable_froglight.clay_ball": "Clay Froglight",
   "block.productivefrogs.configurable_froglight.leather": "Leather Froglight",
+  "block.productivefrogs.configurable_froglight.experience": "Experience Froglight",
   "block.productivefrogs.configurable_froglight.feather": "Feather Froglight",
   "block.productivefrogs.configurable_froglight.glow_ink_sac": "Glow Ink Sac Froglight",
   "block.productivefrogs.configurable_froglight.obsidian": "Obsidian Froglight",
@@ -354,6 +356,7 @@
   "item.productivefrogs.resource_slime_spawn_egg.ender_pearl": "Ender Pearl Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.clay_ball": "Clay Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.leather": "Leather Slime Spawn Egg",
+  "item.productivefrogs.resource_slime_spawn_egg.experience": "Experience Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.feather": "Feather Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.glow_ink_sac": "Glow Ink Sac Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.obsidian": "Obsidian Slime Spawn Egg",
@@ -496,6 +499,7 @@
   "entity.productivefrogs.resource_slime.ender_pearl": "Ender Pearl Slime",
   "entity.productivefrogs.resource_slime.clay_ball": "Clay Slime",
   "entity.productivefrogs.resource_slime.leather": "Leather Slime",
+  "entity.productivefrogs.resource_slime.experience": "Experience Slime",
   "entity.productivefrogs.resource_slime.feather": "Feather Slime",
   "entity.productivefrogs.resource_slime.glow_ink_sac": "Glow Ink Sac Slime",
   "entity.productivefrogs.resource_slime.obsidian": "Obsidian Slime",
@@ -960,5 +964,8 @@
   "fluid_type.productivefrogs.eclipse_ember_slime_milk": "Eclipse Ember Slime Milk",
   "item.productivefrogs.voidflame_slime_milk_bucket": "Bucket of Voidflame Slime Milk",
   "block.productivefrogs.voidflame_slime_milk": "Voidflame Slime Milk",
-  "fluid_type.productivefrogs.voidflame_slime_milk": "Voidflame Slime Milk"
+  "fluid_type.productivefrogs.voidflame_slime_milk": "Voidflame Slime Milk",
+  "item.productivefrogs.experience_slime_milk_bucket": "Bucket of Experience Slime Milk",
+  "block.productivefrogs.experience_slime_milk": "Experience Slime Milk",
+  "fluid_type.productivefrogs.experience_slime_milk": "Experience Slime Milk"
 }
