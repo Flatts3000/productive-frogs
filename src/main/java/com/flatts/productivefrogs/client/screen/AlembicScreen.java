@@ -1,12 +1,15 @@
 package com.flatts.productivefrogs.client.screen;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity;
 import com.flatts.productivefrogs.content.menu.AlembicMenu;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Client screen for the Alembic (#253): an RF energy bar, the synthesis-progress
@@ -94,6 +97,25 @@ public class AlembicScreen extends PFContainerScreen<AlembicMenu> {
                      ARROW_SRC_X, ARROW_SRC_Y,
                      arrow, ARROW_HEIGHT,
                      BG_TEX_WIDTH, BG_TEX_HEIGHT);
+        }
+
+        // Red X over the arrow when the item slot holds something the Alembic
+        // refuses to synthesize (deny-list, on-roster, component-bearing, or one
+        // of our own pipeline items) - clear "this won't work" feedback.
+        ItemStack input = this.menu.getSlot(AlembicBlockEntity.ITEM_SLOT).getItem();
+        if (!input.isEmpty()
+                && !AlembicBlockEntity.canSynthesize(Minecraft.getInstance().level, input)) {
+            drawDenyX(gui, x + ARROW_BG_X + ARROW_WIDTH / 2, y + ARROW_BG_Y + ARROW_HEIGHT / 2);
+        }
+    }
+
+    /** Two red diagonals forming an X centred at {@code (cx, cy)}. */
+    private static void drawDenyX(GuiGraphics gui, int cx, int cy) {
+        int colour = 0xFFFF3030;
+        int radius = 6;
+        for (int i = -radius; i <= radius; i++) {
+            gui.fill(cx + i, cy + i, cx + i + 2, cy + i + 2, colour);
+            gui.fill(cx + i, cy - i, cx + i + 2, cy - i + 2, colour);
         }
     }
 }
