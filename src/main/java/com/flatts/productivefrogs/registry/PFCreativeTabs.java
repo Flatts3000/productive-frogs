@@ -61,6 +61,9 @@ public final class PFCreativeTabs {
                     // writes when a player buckets a variant-locked slime
                     // (Category + Variant strings in BUCKET_ENTITY_DATA).
                     output.accept(PFItems.SLIME_BUCKET.get());
+                    // Mimic Slime Bucket (#253) - the EE lane's captured slime.
+                    // (EE master-toggle gate lands with the config pass.)
+                    output.accept(PFItems.MIMIC_SLIME_BUCKET.get());
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
                         if (h.value().isEnabled(h.key().location())) {
                             output.accept(PFItems.variantSlimeBucket(h.key().location(), h.value().category()));

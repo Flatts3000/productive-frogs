@@ -6,6 +6,7 @@ import com.flatts.productivefrogs.content.item.FrogEggItem;
 import com.flatts.productivefrogs.content.item.FrogNetItem;
 import com.flatts.productivefrogs.content.item.MilkCatalyst;
 import com.flatts.productivefrogs.content.item.MilkCatalystItem;
+import com.flatts.productivefrogs.content.item.MimicSlimeBucketItem;
 import com.flatts.productivefrogs.content.item.ResourceSlimeSpawnEggItem;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.content.item.SlimeBucketItem;
@@ -202,6 +203,22 @@ public final class PFItems {
         "slime_bucket",
         props -> new SlimeBucketItem(
             PFEntities.RESOURCE_SLIME.get(),
+            Fluids.WATER,
+            SoundEvents.BUCKET_EMPTY_FISH,
+            props.stacksTo(1).component(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY)
+        )
+    );
+
+    /**
+     * Mimic Slime Bucket (#253) - the Equivalence lane's captured synthesized
+     * slime. Same MobBucketItem round-trip as {@link #SLIME_BUCKET}; carries the
+     * synthesized item id as a top-level component (runtime tint + name) and in
+     * BUCKET_ENTITY_DATA (respawn). Produced by the Alembic; releasable by hand.
+     */
+    public static final DeferredItem<MimicSlimeBucketItem> MIMIC_SLIME_BUCKET = ITEMS.registerItem(
+        "mimic_slime_bucket",
+        props -> new MimicSlimeBucketItem(
+            PFEntities.MIMIC_SLIME.get(),
             Fluids.WATER,
             SoundEvents.BUCKET_EMPTY_FISH,
             props.stacksTo(1).component(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY)

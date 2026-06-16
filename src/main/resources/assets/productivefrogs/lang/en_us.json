@@ -68,6 +68,8 @@
   "item.productivefrogs.resource_tadpole_bucket.infernal": "Bucket of Infernal Tadpole",
   "item.productivefrogs.resource_tadpole_bucket.void": "Bucket of Void Tadpole",
   "item.productivefrogs.slime_bucket": "Bucket of Slime",
+  "item.productivefrogs.mimic_slime_bucket": "Bucket of Mimic Slime",
+  "item.productivefrogs.mimic_slime_bucket.item": "Bucket of %s Mimic Slime",
   "item.productivefrogs.slime_bucket.bog": "Bucket of Bog Slime",
   "item.productivefrogs.slime_bucket.cave": "Bucket of Cave Slime",
   "item.productivefrogs.slime_bucket.geode": "Bucket of Geode Slime",

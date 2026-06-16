@@ -289,6 +289,18 @@ public final class PFClientEvents {
             return opaque(0x5DDE36);
         }, PFItems.SLIME_BUCKET.get());
 
+        // Mimic Slime Bucket (#253) — the silhouette layer (tintIndex 1) wears
+        // the carried item's sprite-average colour, read off the top-level
+        // SYNTHESIZED_ITEM component. Falls back to a neutral prismatic grey
+        // when un-stamped so the silhouette stays visible.
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 1) return -1;
+            ResourceLocation itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+            if (itemId == null) return opaque(0xC8C8D2);
+            Item item = BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
+            return item == null ? opaque(0xC8C8D2) : SynthesizedTint.colorFor(item);
+        }, PFItems.MIMIC_SLIME_BUCKET.get());
+
         // Slime Milk buckets — one item per variant (v1.8). Each tints its milk
         // layer (tintIndex 1) by its OWN variant's registry colour (the variant is
         // the item identity, no component lookup). Falls back to milky off-white
