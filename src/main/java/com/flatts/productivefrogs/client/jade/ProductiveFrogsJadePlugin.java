@@ -83,6 +83,10 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         // blockstate so it updates live as the source depletes (the prior
         // client-blockstate read could show a stale full count).
         registration.registerBlockDataProvider(MILK_SOURCE, SlimeMilkSourceBlock.class);
+        // Mimic Milk source (#253) shares the MILK_SOURCE provider (same UID, so no
+        // extra config.jade.plugin lang key) - it branches on the block type.
+        registration.registerBlockDataProvider(MILK_SOURCE,
+            com.flatts.productivefrogs.content.block.MimicMilkSourceBlock.class);
         // The Terrarium machines change state fast; fetch their readouts from the
         // server BE each Jade refresh (see ApplianceProvider#appendServerData).
         registration.registerBlockDataProvider(APPLIANCES,
@@ -119,6 +123,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         registration.registerBlockComponent(provider,
             com.flatts.productivefrogs.content.block.HatchBlock.class);
         registration.registerBlockComponent(MILK_SOURCE, SlimeMilkSourceBlock.class);
+        registration.registerBlockComponent(MILK_SOURCE,
+            com.flatts.productivefrogs.content.block.MimicMilkSourceBlock.class);
         registration.registerEntityComponent(new FrogStatsProvider(), ResourceFrog.class);
         registration.registerBlockComponent(PRIMED_EGG_STATS, PrimedFrogEggBlock.class);
         registration.registerEntityComponent(TADPOLE_STATS, ResourceTadpole.class);
@@ -371,6 +377,25 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         @Override
         public void appendServerData(CompoundTag data, BlockAccessor accessor) {
             BlockState state = accessor.getBlockState();
+            // Mimic Milk source (Equivalence lane, #253): a different block + BE.
+            // Surface the carried item (for the name) + the spawns-left readout.
+            if (state.getBlock() instanceof com.flatts.productivefrogs.content.block.MimicMilkSourceBlock) {
+                if (state.getFluidState().isSource()
+                        && accessor.getBlockEntity()
+                            instanceof com.flatts.productivefrogs.content.block.entity.MimicMilkSourceBlockEntity mbe
+                        && mbe.getSynthesizedItem() != null) {
+                    data.putBoolean("MilkSource", true);
+                    data.putString("MimicItem", mbe.getSynthesizedItem().toString());
+                    if (PFConfig.SPEC.isLoaded() && !PFConfig.DEPLETION_ENABLED.get()) {
+                        data.putBoolean("Unlimited", true);
+                    } else {
+                        data.putInt("SpawnsRemaining", mbe.getSpawnsRemaining());
+                        data.putInt("SpawnsCap",
+                            com.flatts.productivefrogs.content.block.entity.MimicMilkSourceBlockEntity.defaultSpawns());
+                    }
+                }
+                return;
+            }
             if (!(state.getBlock() instanceof SlimeMilkSourceBlock)) {
                 return;
             }
@@ -419,6 +444,18 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             CompoundTag data = accessor.getServerData();
             if (data == null || !data.getBoolean("MilkSource")) {
                 return;
+            }
+            // Mimic Milk source (#253): name it "<item> Slime Milk" (the generic
+            // block name is "Mimic Slime Milk"); the spawns-left lines below apply.
+            if (data.contains("MimicItem")) {
+                ResourceLocation itemId = ResourceLocation.tryParse(data.getString("MimicItem"));
+                net.minecraft.world.item.Item item = itemId == null ? null
+                    : net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
+                Component itemName = item != null
+                    ? Component.translatable(item.getDescriptionId())
+                    : Component.literal(data.getString("MimicItem"));
+                tooltip.replace(JadeIds.CORE_OBJECT_NAME,
+                    Component.translatable("block.productivefrogs.mimic_slime_milk.item", itemName));
             }
             if (data.contains("AltarFaces")) {
                 tooltip.add(Component.translatable("productivefrogs.jade.altar", data.getInt("AltarFaces"), 6));

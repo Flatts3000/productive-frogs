@@ -100,7 +100,7 @@ public class SlimeMilkerMenu extends AbstractContainerMenu {
             addSlot(new Slot(dummy, SlimeMilkerBlockEntity.INPUT_SLOT, INPUT_SLOT_X, INPUT_SLOT_Y) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
-                    return stack.is(PFItems.SLIME_BUCKET.get());
+                    return stack.is(PFItems.SLIME_BUCKET.get()) || stack.is(PFItems.MIMIC_SLIME_BUCKET.get());
                 }
             });
             addSlot(new Slot(dummy, SlimeMilkerBlockEntity.OUTPUT_SLOT, OUTPUT_SLOT_X, OUTPUT_SLOT_Y) {
@@ -163,8 +163,9 @@ public class SlimeMilkerMenu extends AbstractContainerMenu {
                     return ItemStack.EMPTY;
                 }
             } else {
-                // Player inventory → container
-                if (stack.is(PFItems.SLIME_BUCKET.get())) {
+                // Player inventory → container. Both a captured Slime Bucket and a
+                // captured Mimic Slime Bucket (#253) shift-click into the input.
+                if (stack.is(PFItems.SLIME_BUCKET.get()) || stack.is(PFItems.MIMIC_SLIME_BUCKET.get())) {
                     if (!moveItemStackTo(stack, SlimeMilkerBlockEntity.INPUT_SLOT,
                                          SlimeMilkerBlockEntity.INPUT_SLOT + 1, false)) {
                         return ItemStack.EMPTY;
