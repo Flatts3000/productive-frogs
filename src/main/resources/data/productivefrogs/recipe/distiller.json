@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "productivefrogs",
+  "pattern": [
+    "GCG",
+    "CNC",
+    "GCG"
+  ],
+  "key": {
+    "C": { "item": "minecraft:copper_ingot" },
+    "G": { "item": "minecraft:glass" },
+    "N": { "item": "minecraft:nether_star" }
+  },
+  "result": { "id": "productivefrogs:distiller", "count": 1 }
+}

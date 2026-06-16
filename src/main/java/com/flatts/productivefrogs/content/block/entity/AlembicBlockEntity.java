@@ -85,7 +85,11 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
                 // Lenient at the slot (no level here for the registry gate); the
                 // authoritative synthesizability check runs in serverTick.
                 case ITEM_SLOT -> !stack.is(Items.BUCKET);
-                default -> false;
+                // OUTPUT_SLOT: must accept the synthesized result so the
+                // serverTick's internal insertItem succeeds (external insertion
+                // is blocked by the menu's mayPlace + the output-only capability
+                // view, so this never lets a hopper push into the output).
+                default -> true;
             };
         }
     };

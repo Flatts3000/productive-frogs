@@ -25,4 +25,19 @@ public abstract class PFContainerScreen<T extends AbstractContainerMenu> extends
         super.render(gui, mouseX, mouseY, partialTick);
         this.renderTooltip(gui, mouseX, mouseY);
     }
+
+    /**
+     * Draw a vanilla-style recessed slot frame so a slot reads as a slot even
+     * when the (placeholder) background texture has no frame baked at that
+     * position. {@code (x, y)} is the slot's item top-left (the 16x16 cell); the
+     * 18x18 bevel is drawn one pixel out. Beveled like a vanilla container slot:
+     * dark top/left, light bottom/right, mid-gray inner.
+     */
+    protected static void drawSlotFrame(GuiGraphics gui, int x, int y) {
+        int x0 = x - 1;
+        int y0 = y - 1;
+        gui.fill(x0, y0, x0 + 18, y0 + 18, 0xFF373737);
+        gui.fill(x0 + 1, y0 + 1, x0 + 18, y0 + 18, 0xFFFFFFFF);
+        gui.fill(x0 + 1, y0 + 1, x0 + 17, y0 + 17, 0xFF8B8B8B);
+    }
 }

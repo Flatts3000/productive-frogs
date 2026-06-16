@@ -31,10 +31,14 @@ public class AlembicMenu extends AbstractContainerMenu {
     public static final int INVENTORY_Y = 84;
     public static final int HOTBAR_Y = 142;
 
-    public static final int BUCKET_SLOT_X = 38;
-    public static final int ITEM_SLOT_X = 68;
-    public static final int SLOT_Y = 35;
+    // Inputs stacked vertically at x=56 (clear of the energy bar at x=26-42 and
+    // the arrow at x=79), merging via the arrow into the output at x=116.
+    public static final int BUCKET_SLOT_X = 56;
+    public static final int BUCKET_SLOT_Y = 17;
+    public static final int ITEM_SLOT_X = 56;
+    public static final int ITEM_SLOT_Y = 53;
     public static final int OUTPUT_SLOT_X = 116;
+    public static final int OUTPUT_SLOT_Y = 35;
 
     private final ContainerLevelAccess access;
     private final ContainerData dataAccess;
@@ -52,19 +56,19 @@ public class AlembicMenu extends AbstractContainerMenu {
         this.dataAccess = data;
 
         if (be != null) {
-            addSlot(new SlotItemHandler(be.items(), AlembicBlockEntity.BUCKET_SLOT, BUCKET_SLOT_X, SLOT_Y) {
+            addSlot(new SlotItemHandler(be.items(), AlembicBlockEntity.BUCKET_SLOT, BUCKET_SLOT_X, BUCKET_SLOT_Y) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return stack.is(Items.BUCKET);
                 }
             });
-            addSlot(new SlotItemHandler(be.items(), AlembicBlockEntity.ITEM_SLOT, ITEM_SLOT_X, SLOT_Y) {
+            addSlot(new SlotItemHandler(be.items(), AlembicBlockEntity.ITEM_SLOT, ITEM_SLOT_X, ITEM_SLOT_Y) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return !stack.is(Items.BUCKET);
                 }
             });
-            addSlot(new SlotItemHandler(be.items(), AlembicBlockEntity.OUTPUT_SLOT, OUTPUT_SLOT_X, SLOT_Y) {
+            addSlot(new SlotItemHandler(be.items(), AlembicBlockEntity.OUTPUT_SLOT, OUTPUT_SLOT_X, OUTPUT_SLOT_Y) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return false;
@@ -72,9 +76,9 @@ public class AlembicMenu extends AbstractContainerMenu {
             });
         } else {
             SimpleContainer dummy = new SimpleContainer(3);
-            addSlot(new Slot(dummy, 0, BUCKET_SLOT_X, SLOT_Y));
-            addSlot(new Slot(dummy, 1, ITEM_SLOT_X, SLOT_Y));
-            addSlot(new Slot(dummy, 2, OUTPUT_SLOT_X, SLOT_Y) {
+            addSlot(new Slot(dummy, 0, BUCKET_SLOT_X, BUCKET_SLOT_Y));
+            addSlot(new Slot(dummy, 1, ITEM_SLOT_X, ITEM_SLOT_Y));
+            addSlot(new Slot(dummy, 2, OUTPUT_SLOT_X, OUTPUT_SLOT_Y) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return false;

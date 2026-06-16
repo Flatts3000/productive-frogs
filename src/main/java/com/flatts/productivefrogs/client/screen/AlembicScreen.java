@@ -75,6 +75,15 @@ public class AlembicScreen extends PFContainerScreen<AlembicMenu> {
                      x + BAR_X + BAR_WIDTH, y + BAR_Y + BAR_HEIGHT, BAR_FILL);
         }
 
+        // Slot frames (the placeholder bg has none at these positions): bucket +
+        // item stacked vertically, output to the right.
+        drawSlotFrame(gui, x + com.flatts.productivefrogs.content.menu.AlembicMenu.BUCKET_SLOT_X,
+                           y + com.flatts.productivefrogs.content.menu.AlembicMenu.BUCKET_SLOT_Y);
+        drawSlotFrame(gui, x + com.flatts.productivefrogs.content.menu.AlembicMenu.ITEM_SLOT_X,
+                           y + com.flatts.productivefrogs.content.menu.AlembicMenu.ITEM_SLOT_Y);
+        drawSlotFrame(gui, x + com.flatts.productivefrogs.content.menu.AlembicMenu.OUTPUT_SLOT_X,
+                           y + com.flatts.productivefrogs.content.menu.AlembicMenu.OUTPUT_SLOT_Y);
+
         int progress = this.menu.getProgress();
         int total = this.menu.getProgressTotal();
         if (progress > 0 && total > 0) {
