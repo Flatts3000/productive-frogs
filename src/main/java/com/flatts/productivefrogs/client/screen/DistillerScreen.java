@@ -81,11 +81,10 @@ public class DistillerScreen extends PFContainerScreen<DistillerMenu> {
                      x + BAR_X + BAR_WIDTH, y + BAR_Y + BAR_HEIGHT, BAR_FILL);
         }
 
-        // Slot frames (the placeholder bg has none at these positions).
+        // Frame the INPUT only (the placeholder bg has no frame there); the
+        // OUTPUT keeps the bg's own baked frame to avoid a double frame.
         drawSlotFrame(gui, x + com.flatts.productivefrogs.content.menu.DistillerMenu.INPUT_SLOT_X,
                            y + com.flatts.productivefrogs.content.menu.DistillerMenu.INPUT_SLOT_Y);
-        drawSlotFrame(gui, x + com.flatts.productivefrogs.content.menu.DistillerMenu.OUTPUT_SLOT_X,
-                           y + com.flatts.productivefrogs.content.menu.DistillerMenu.OUTPUT_SLOT_Y);
 
         // Distill progress arrow.
         int progress = this.menu.getProgress();

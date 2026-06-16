@@ -18,7 +18,9 @@ public class AlembicScreen extends PFContainerScreen<AlembicMenu> {
     private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath(
         ProductiveFrogs.MOD_ID, "textures/gui/container/casting_mold.png");
 
-    private static final int ARROW_BG_X = 90;
+    // Align with the baked arrow outline in the placeholder background (x=79);
+    // a mismatched X drew the progress fill offset from the outline.
+    private static final int ARROW_BG_X = 79;
     private static final int ARROW_BG_Y = 34;
     private static final int ARROW_SRC_X = 176;
     private static final int ARROW_SRC_Y = 14;
@@ -75,14 +77,13 @@ public class AlembicScreen extends PFContainerScreen<AlembicMenu> {
                      x + BAR_X + BAR_WIDTH, y + BAR_Y + BAR_HEIGHT, BAR_FILL);
         }
 
-        // Slot frames (the placeholder bg has none at these positions): bucket +
-        // item stacked vertically, output to the right.
+        // Slot frames for the two inputs only - the placeholder bg has no frame at
+        // these vertical positions. The OUTPUT keeps the bg's own baked frame
+        // (drawing one there too double-framed it).
         drawSlotFrame(gui, x + com.flatts.productivefrogs.content.menu.AlembicMenu.BUCKET_SLOT_X,
                            y + com.flatts.productivefrogs.content.menu.AlembicMenu.BUCKET_SLOT_Y);
         drawSlotFrame(gui, x + com.flatts.productivefrogs.content.menu.AlembicMenu.ITEM_SLOT_X,
                            y + com.flatts.productivefrogs.content.menu.AlembicMenu.ITEM_SLOT_Y);
-        drawSlotFrame(gui, x + com.flatts.productivefrogs.content.menu.AlembicMenu.OUTPUT_SLOT_X,
-                           y + com.flatts.productivefrogs.content.menu.AlembicMenu.OUTPUT_SLOT_Y);
 
         int progress = this.menu.getProgress();
         int total = this.menu.getProgressTotal();
