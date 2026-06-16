@@ -159,6 +159,13 @@ public final class PFClientEvents {
                 if (!(be instanceof ConfigurableFroglightBlockEntity froglightBe)) {
                     return -1;
                 }
+                // Equivalence lane (#253): a placed Prismatic Froglight tints from
+                // its carried item's sprite-average colour (runtime resolver).
+                ResourceLocation synthBlockItem = froglightBe.getSynthesizedItem();
+                if (synthBlockItem != null) {
+                    Item item = BuiltInRegistries.ITEM.getOptional(synthBlockItem).orElse(null);
+                    return item == null ? -1 : SynthesizedTint.colorFor(item);
+                }
                 ResourceLocation variantId = froglightBe.getVariantId();
                 if (variantId == null) {
                     return -1;

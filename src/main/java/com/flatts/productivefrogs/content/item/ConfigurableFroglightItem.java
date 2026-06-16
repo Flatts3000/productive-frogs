@@ -110,14 +110,20 @@ public final class ConfigurableFroglightItem extends BlockItem {
     @Override
     protected boolean updateCustomBlockEntityTag(BlockPos pos, Level level, @Nullable Player player, ItemStack stack, BlockState state) {
         ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+        ResourceLocation synthesizedItem = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
         StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
-        if (variantId == null && stored == null) {
+        if (variantId == null && synthesizedItem == null && stored == null) {
             return false;
         }
         BlockEntity be = level.getBlockEntity(pos);
         if (be instanceof ConfigurableFroglightBlockEntity froglightBe) {
             if (variantId != null) {
                 froglightBe.setVariantId(variantId);
+            }
+            // Equivalence lane (#253): a placed Prismatic Froglight keeps its
+            // synthesized item so the block names + tints from it, not generically.
+            if (synthesizedItem != null) {
+                froglightBe.setSynthesizedItem(synthesizedItem);
             }
             // A placed brewed Froglight carries its aura (#162) - the effect +
             // on/off state ride into the BE so the placed block buffs in a radius.

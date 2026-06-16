@@ -58,6 +58,16 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
     private ResourceLocation variantId;
 
     /**
+     * Synthesized item id (Equivalence lane #253), or {@code null}. When set, this
+     * is a placed Prismatic Froglight: its name + tint derive from this item id
+     * (via {@code SynthesizedTint}), not from a {@link #variantId}. Mutually
+     * exclusive with {@link #variantId} in practice. Carried through placement,
+     * drops, save, and client sync exactly like the variant.
+     */
+    @Nullable
+    private ResourceLocation synthesizedItem;
+
+    /**
      * The captured potion effect (#162), or null for a plain Froglight. When
      * present and {@link StoredEffect#enabled()}, {@link #serverTick} applies it
      * to every living entity in {@link #AURA_RADIUS} on a {@link #AURA_PULSE_TICKS}
@@ -80,6 +90,24 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
     @Nullable
     public ResourceLocation getVariantId() {
         return variantId;
+    }
+
+    /** The synthesized item id (#253), or null for a variant/plain Froglight. */
+    @Nullable
+    public ResourceLocation getSynthesizedItem() {
+        return synthesizedItem;
+    }
+
+    /** Set/replace the synthesized item id (server-side; mirrors {@link #setVariantId}). */
+    public void setSynthesizedItem(@Nullable ResourceLocation synthesizedItem) {
+        if (java.util.Objects.equals(this.synthesizedItem, synthesizedItem)) {
+            return;
+        }
+        this.synthesizedItem = synthesizedItem;
+        setChanged();
+        if (this.level != null) {
+            this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);
+        }
     }
 
     /** The captured effect (client + Jade read this off the synced BE), or null. */
@@ -197,6 +225,9 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
         if (variantId != null) {
             builder.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
         }
+        if (synthesizedItem != null) {
+            builder.set(PFDataComponents.SYNTHESIZED_ITEM.get(), synthesizedItem);
+        }
         if (effect != null) {
             builder.set(PFDataComponents.STORED_EFFECT.get(), effect);
         }
@@ -223,6 +254,7 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
     protected void applyImplicitComponents(DataComponentInput components) {
         super.applyImplicitComponents(components);
         this.variantId = components.get(PFDataComponents.SLIME_VARIANT.get());
+        this.synthesizedItem = components.get(PFDataComponents.SYNTHESIZED_ITEM.get());
         this.effect = components.get(PFDataComponents.STORED_EFFECT.get());
     }
 
@@ -231,6 +263,9 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
         super.saveAdditional(tag, registries);
         if (variantId != null) {
             tag.putString("Variant", variantId.toString());
+        }
+        if (synthesizedItem != null) {
+            tag.putString("SynthesizedItem", synthesizedItem.toString());
         }
         writeEffect(tag);
     }
@@ -242,6 +277,11 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
             variantId = ResourceLocation.tryParse(tag.getString("Variant"));
         } else {
             variantId = null;
+        }
+        if (tag.contains("SynthesizedItem", Tag.TAG_STRING)) {
+            synthesizedItem = ResourceLocation.tryParse(tag.getString("SynthesizedItem"));
+        } else {
+            synthesizedItem = null;
         }
         readEffect(tag);
     }
@@ -279,6 +319,9 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
         CompoundTag tag = super.getUpdateTag(lookup);
         if (variantId != null) {
             tag.putString("Variant", variantId.toString());
+        }
+        if (synthesizedItem != null) {
+            tag.putString("SynthesizedItem", synthesizedItem.toString());
         }
         // Effect rides the initial chunk sync too, so the client can draw aura
         // particles and Jade can name the effect without a separate packet.

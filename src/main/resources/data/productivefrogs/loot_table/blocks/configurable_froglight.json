@@ -13,6 +13,7 @@
               "source": "block_entity",
               "include": [
                 "productivefrogs:slime_variant",
+                "productivefrogs:synthesized_item",
                 "productivefrogs:stored_effect"
               ]
             }
