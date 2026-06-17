@@ -1,0 +1,39 @@
+{
+  "name": "The Equivalence Lane",
+  "icon": "productivefrogs:alembic",
+  "category": "productivefrogs:advanced",
+  "sortnum": 600,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "An endgame lane that copies items the frogs never had a slime for - odd vanilla bits and modded resources alike. Feed one in, get many back. It only takes items with no slime of their own, so it never shortcuts the normal chains; it just fills the gaps, for fun, once you've won."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:alembic",
+      "text": "The $(l)Alembic$() takes an empty bucket and any off-roster item (plus power) and gives back a bucket holding a $(o)Mimic Slime$() that copies it. Plain items only - anything with special data (a named tool, a written book, a potion) is refused, shown by a red X over the arrow."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "productivefrogs:alembic"
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:mimic_slime_bucket",
+      "text": "Milk a Mimic Slime Bucket in a $(l)Slime Milker$() to get $(o)Mimic Milk$(). Pour it out and it spawns a crowd of Mimic Slimes - the same one-into-many trick the normal milk pools do. That is where the copies come from."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The slimes are eaten by $(l)Midas$(), a frog of legend. Kiss unhatched frogspawn with a $(o)Princess's Kiss$() to wake one (the Kiss drops from the dragon). Midas only eats Mimic Slimes, breeds true, and the more $(o)Bounty$() you breed into it, the more it drops per slime."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:distiller",
+      "text": "Midas drops a $(o)Prismatic Froglight$() for each slime it eats. Put it in the $(l)Distiller$() with power and it renders back the original item. One leftover item in, a steady stream of it out."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "productivefrogs:distiller"
+    }
+  ]
+}
