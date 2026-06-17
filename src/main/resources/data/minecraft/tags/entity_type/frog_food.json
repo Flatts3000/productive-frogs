@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "productivefrogs:resource_slime"
+    "productivefrogs:resource_slime",
+    "productivefrogs:mimic_slime"
   ]
 }
