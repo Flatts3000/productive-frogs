@@ -6246,4 +6246,151 @@ public final class PFGameTests {
                 "raw Nether Star leaked into the hatch (should be stripped from the wither loot)");
         });
     }
+
+    // -------------------------------------------------------------------
+    // Equivalence lane (#253)
+    // -------------------------------------------------------------------
+
+    /** Fill an Alembic/Distiller RF buffer to capacity (receiveEnergy is capped per call). */
+    private static void fillEnergy(net.neoforged.neoforge.energy.EnergyStorage energy) {
+        for (int i = 0; i < 200; i++) {
+            energy.receiveEnergy(Integer.MAX_VALUE, false);
+        }
+    }
+
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void alembicSynthesizesOffRosterItemIntoMimicSlimeBucket(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos, PFBlocks.ALEMBIC.get());
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(pos);
+        if (!(level.getBlockEntity(abs)
+                instanceof com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity alembic)) {
+            helper.fail("expected AlembicBlockEntity");
+            return;
+        }
+        fillEnergy(alembic.energyStorage());
+        alembic.items().setStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity.BUCKET_SLOT,
+            new ItemStack(Items.BUCKET));
+        // Flint: off-roster (no slime variant), plain (no component patch).
+        alembic.items().setStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity.ITEM_SLOT,
+            new ItemStack(Items.FLINT));
+        for (int i = 0; i < com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity.SYNTH_TIME; i++) {
+            com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity.serverTick(
+                level, abs, level.getBlockState(abs), alembic);
+        }
+        ItemStack out = alembic.items().getStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity.OUTPUT_SLOT);
+        if (!(out.getItem() instanceof com.flatts.productivefrogs.content.item.MimicSlimeBucketItem)
+                || !ResourceLocation.withDefaultNamespace("flint").equals(
+                    out.get(com.flatts.productivefrogs.registry.PFDataComponents.SYNTHESIZED_ITEM.get()))) {
+            helper.fail("expected a flint Mimic Slime Bucket, got "
+                + (out.isEmpty() ? "EMPTY" : BuiltInRegistries.ITEM.getKey(out.getItem())));
+            return;
+        }
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void alembicRefusesComponentBearingItem(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos, PFBlocks.ALEMBIC.get());
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(pos);
+        if (!(level.getBlockEntity(abs)
+                instanceof com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity alembic)) {
+            helper.fail("expected AlembicBlockEntity");
+            return;
+        }
+        fillEnergy(alembic.energyStorage());
+        alembic.items().setStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity.BUCKET_SLOT,
+            new ItemStack(Items.BUCKET));
+        // A renamed flint carries a CUSTOM_NAME component patch -> the type-only
+        // lane must refuse it (the guidebook-laundering guard).
+        ItemStack named = new ItemStack(Items.FLINT);
+        named.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME,
+            net.minecraft.network.chat.Component.literal("Fancy Flint"));
+        alembic.items().setStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity.ITEM_SLOT, named);
+        for (int i = 0; i < com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity.SYNTH_TIME; i++) {
+            com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity.serverTick(
+                level, abs, level.getBlockState(abs), alembic);
+        }
+        ItemStack out = alembic.items().getStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity.OUTPUT_SLOT);
+        if (!out.isEmpty()) {
+            helper.fail("component-bearing item should not synthesize, but got "
+                + BuiltInRegistries.ITEM.getKey(out.getItem()));
+            return;
+        }
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void alembicRefusesOnRosterItem(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos, PFBlocks.ALEMBIC.get());
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(pos);
+        if (!(level.getBlockEntity(abs)
+                instanceof com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity alembic)) {
+            helper.fail("expected AlembicBlockEntity");
+            return;
+        }
+        fillEnergy(alembic.energyStorage());
+        alembic.items().setStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity.BUCKET_SLOT,
+            new ItemStack(Items.BUCKET));
+        // Iron ingot primes the iron variant (findByPrimer != null) -> refused;
+        // it has an authored slime lane already.
+        alembic.items().setStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity.ITEM_SLOT,
+            new ItemStack(Items.IRON_INGOT));
+        for (int i = 0; i < com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity.SYNTH_TIME; i++) {
+            com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity.serverTick(
+                level, abs, level.getBlockState(abs), alembic);
+        }
+        ItemStack out = alembic.items().getStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity.OUTPUT_SLOT);
+        if (!out.isEmpty()) {
+            helper.fail("on-roster iron ingot should not synthesize, but got "
+                + BuiltInRegistries.ITEM.getKey(out.getItem()));
+            return;
+        }
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void distillerExtractsItemFromPrismaticFroglight(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos, PFBlocks.DISTILLER.get());
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(pos);
+        if (!(level.getBlockEntity(abs)
+                instanceof com.flatts.productivefrogs.content.block.entity.DistillerBlockEntity distiller)) {
+            helper.fail("expected DistillerBlockEntity");
+            return;
+        }
+        fillEnergy(distiller.energyStorage());
+        ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
+        froglight.set(com.flatts.productivefrogs.registry.PFDataComponents.SYNTHESIZED_ITEM.get(),
+            ResourceLocation.withDefaultNamespace("flint"));
+        distiller.items().setStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.DistillerBlockEntity.INPUT_SLOT, froglight);
+        for (int i = 0; i < com.flatts.productivefrogs.content.block.entity.DistillerBlockEntity.DISTILL_TIME; i++) {
+            com.flatts.productivefrogs.content.block.entity.DistillerBlockEntity.serverTick(
+                level, abs, level.getBlockState(abs), distiller);
+        }
+        ItemStack out = distiller.items().getStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.DistillerBlockEntity.OUTPUT_SLOT);
+        if (!out.is(Items.FLINT)) {
+            helper.fail("expected the Distiller to render a flint, got "
+                + (out.isEmpty() ? "EMPTY" : BuiltInRegistries.ITEM.getKey(out.getItem())));
+            return;
+        }
+        helper.succeed();
+    }
 }
