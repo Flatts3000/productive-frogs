@@ -1119,10 +1119,21 @@ public final class PFConfig {
     @org.jetbrains.annotations.Nullable
     public static Boolean equivalenceEnabledOverride;
 
+    /**
+     * Dev-only force-on for the EE lane: our interactive runs (build.gradle client/server)
+     * pass {@code -Dproductivefrogs.equivalence=true} so the lane is usable in the dev
+     * environment even though it ships default OFF. Read once at class load; no production
+     * JVM sets it, so shipped behaviour is unaffected.
+     */
+    private static final boolean DEV_FORCE_EQUIVALENCE = Boolean.getBoolean("productivefrogs.equivalence");
+
     /** Whether the Equivalence lane is enabled ({@code equivalence.enabled}, #253); fallback OFF. */
     public static boolean equivalenceEnabled() {
         if (equivalenceEnabledOverride != null) {
             return equivalenceEnabledOverride;
+        }
+        if (DEV_FORCE_EQUIVALENCE) {
+            return true;
         }
         return SPEC.isLoaded() && EQUIVALENCE_ENABLED.get();
     }

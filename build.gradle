@@ -28,9 +28,13 @@ neoForge {
     runs {
         client {
             client()
+            // Dev-only: force the EE lane on (it ships default OFF, #253). No
+            // production JVM sets this, so shipped behaviour is unaffected.
+            jvmArguments.add '-Dproductivefrogs.equivalence=true'
         }
         server {
             server()
+            jvmArguments.add '-Dproductivefrogs.equivalence=true'
         }
         // The moddev plugin (2.0+) split the old `data()` run type into
         // `clientData()` and `serverData()`. Available types in 2.0.141:

@@ -135,10 +135,12 @@ public record ConfigEnabledCondition(Key config) implements ICondition {
             }
         },
         // Equivalence lane master (#253): gates the Alembic + Distiller recipes.
+        // Routed through equivalenceEnabled() (not the raw flag) so the dev force-on
+        // (-Dproductivefrogs.equivalence) makes the machines craftable in dev too.
         EQUIVALENCE("equivalence") {
             @Override
             boolean read() {
-                return PFConfig.EQUIVALENCE_ENABLED.get();
+                return PFConfig.equivalenceEnabled();
             }
         },
         // Boss-tier master (#200): gates the catalyst-altar block recipes and the
