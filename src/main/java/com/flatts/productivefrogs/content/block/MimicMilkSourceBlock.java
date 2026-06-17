@@ -229,11 +229,31 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
 
     @Override
     public ItemStack pickupBlock(@Nullable Player player, LevelAccessor level, BlockPos pos, BlockState state) {
-        ResourceLocation itemId = level.getBlockEntity(pos) instanceof MimicMilkSourceBlockEntity be
-            ? be.getSynthesizedItem() : null;
+        // Read the item + the full budget/catalyst set BEFORE super removes the block,
+        // and stamp them onto the filled bucket so a buffed source survives the
+        // world -> bucket round-trip (mirrors SlimeMilkSourceBlock.pickupBlock). Without
+        // this, re-bucketing reset the source to the default budget and dropped Endless.
+        MimicMilkSourceBlockEntity be = level.getBlockEntity(pos) instanceof MimicMilkSourceBlockEntity b ? b : null;
+        ResourceLocation itemId = be != null ? be.getSynthesizedItem() : null;
+        int remaining = be != null ? be.getSpawnsRemaining() : 0;
+        int capacity = be != null ? be.getSpawnsCapacity() : 0;
+        int speed = be != null ? be.getSpeedLevel() : 0;
+        int quantity = be != null ? be.getQuantityLevel() : 0;
+        boolean infinite = be != null && be.isInfinite();
         ItemStack bucket = super.pickupBlock(player, level, pos, state);
         if (itemId != null && !bucket.isEmpty()) {
             bucket.set(com.flatts.productivefrogs.registry.PFDataComponents.SYNTHESIZED_ITEM.get(), itemId);
+            bucket.set(com.flatts.productivefrogs.registry.PFDataComponents.SPAWNS_REMAINING.get(), remaining);
+            bucket.set(com.flatts.productivefrogs.registry.PFDataComponents.MILK_CAPACITY.get(), capacity);
+            if (speed > 0) {
+                bucket.set(com.flatts.productivefrogs.registry.PFDataComponents.MILK_SPEED.get(), speed);
+            }
+            if (quantity > 0) {
+                bucket.set(com.flatts.productivefrogs.registry.PFDataComponents.MILK_QUANTITY.get(), quantity);
+            }
+            if (infinite) {
+                bucket.set(com.flatts.productivefrogs.registry.PFDataComponents.MILK_INFINITE.get(), true);
+            }
         }
         return bucket;
     }

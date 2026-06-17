@@ -40,7 +40,23 @@ public final class MimicMilkBucketItem extends BucketItem {
         super.checkExtraContent(player, level, stack, pos);
         ResourceLocation itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
         if (itemId != null && level.getBlockEntity(pos) instanceof MimicMilkSourceBlockEntity be) {
-            be.setSynthesizedItem(itemId);
+            be.setSynthesizedItem(itemId); // seeds the default budget on first placement
+            // Restore any stamped budget/catalyst upgrades over those defaults so a
+            // re-placed buffed source keeps its state (mirrors SlimeMilkBucketItem).
+            Integer remaining = stack.get(PFDataComponents.SPAWNS_REMAINING.get());
+            Integer capacity = stack.get(PFDataComponents.MILK_CAPACITY.get());
+            Integer speed = stack.get(PFDataComponents.MILK_SPEED.get());
+            Integer quantity = stack.get(PFDataComponents.MILK_QUANTITY.get());
+            Boolean infinite = stack.get(PFDataComponents.MILK_INFINITE.get());
+            if (remaining != null || capacity != null || speed != null || quantity != null
+                    || Boolean.TRUE.equals(infinite)) {
+                be.restoreUpgrades(
+                    remaining != null ? remaining : be.getSpawnsRemaining(),
+                    capacity != null ? capacity : be.getSpawnsCapacity(),
+                    speed != null ? speed : 0,
+                    quantity != null ? quantity : 0,
+                    Boolean.TRUE.equals(infinite));
+            }
         }
     }
 

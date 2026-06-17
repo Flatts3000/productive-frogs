@@ -96,6 +96,24 @@ public class MimicMilkSourceBlockEntity extends BlockEntity {
         return infinite;
     }
 
+    /**
+     * Restore the full budget + catalyst set from a re-placed bucket, clamped to
+     * config bounds. Mirrors {@link SlimeMilkSourceBlockEntity#restoreUpgrades} so a
+     * buffed Mimic source survives the world -> bucket -> world round-trip instead of
+     * resetting to the default budget (the pre-v1.7 re-bucket reset, avoided here).
+     */
+    public void restoreUpgrades(int remaining, int capacity, int speed, int quantity, boolean infinite) {
+        this.spawnsRemaining = Mth.clamp(remaining, 0, SlimeMilkSourceBlockEntity.MAX_STORED_SPAWNS);
+        this.spawnsCapacity = Mth.clamp(Math.max(capacity, this.spawnsRemaining), 0, SlimeMilkSourceBlockEntity.MAX_STORED_SPAWNS);
+        this.speedLevel = Mth.clamp(speed, 0, PFConfig.catalystMaxSpeedLevel());
+        this.quantityLevel = Mth.clamp(quantity, 0, PFConfig.catalystMaxQuantityLevel());
+        this.infinite = infinite;
+        setChanged();
+        if (this.level != null && !this.level.isClientSide()) {
+            this.level.sendBlockUpdated(this.worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+    }
+
     /** Spend one spawn from the budget. No-op when Endless. */
     public void decrementSpawns() {
         if (infinite) {
@@ -193,13 +211,11 @@ public class MimicMilkSourceBlockEntity extends BlockEntity {
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        // Full save so the Jade look-at tooltip reads the live budget + catalyst
+        // levels on the client (mirrors AlembicBlockEntity); a partial tag left the
+        // client reading server-side defaults for remaining/cap/speed/quantity.
         CompoundTag tag = super.getUpdateTag(registries);
-        if (synthesizedItem != null) {
-            tag.putString("SynthesizedItem", synthesizedItem.toString());
-        }
-        if (infinite) {
-            tag.putBoolean("Infinite", true);
-        }
+        saveAdditional(tag, registries);
         return tag;
     }
 

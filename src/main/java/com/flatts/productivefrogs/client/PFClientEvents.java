@@ -498,7 +498,12 @@ public final class PFClientEvents {
     @SubscribeEvent
     public static void onRegisterReloadListeners(RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(
-            (ResourceManagerReloadListener) rm -> ResourceSlimeRenderer.clearTextureCaches());
+            (ResourceManagerReloadListener) rm -> {
+                ResourceSlimeRenderer.clearTextureCaches();
+                // Drop the EE-lane sprite-average tint cache so a resource-pack swap /
+                // /reload re-samples re-textured items (Mimic Slime + Prismatic Froglight).
+                SynthesizedTint.clearCache();
+            });
     }
 
     /**
