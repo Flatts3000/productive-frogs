@@ -204,6 +204,12 @@ public final class PFCreativeTabs {
                     for (var entry : PFItems.PRIMED_FROG_EGG_ITEMS.values()) {
                         output.accept(entry.get());
                     }
+                    // Midas Frog Egg block (#253) groups with the species primed-egg
+                    // blocks (it's a frogspawn block, not a spawn egg); hidden when
+                    // the Equivalence lane is disabled.
+                    if (PFConfig.equivalenceEnabled()) {
+                        output.accept(PFItems.MIDAS_FROG_EGG.get());
+                    }
                     // V1.5: the 6 broad-strokes category Froglight BlockItems
                     // (bog_froglight, cave_froglight, …) were deleted entirely.
                     // ResourceSlimes always carry a variant, so the no-variant
@@ -226,11 +232,11 @@ public final class PFCreativeTabs {
                     for (var entry : PFItems.RESOURCE_FROG_SPAWN_EGGS.values()) {
                         output.accept(entry.get());
                     }
-                    // Midas spawn egg + egg block (#253) sit with the frog eggs;
-                    // hidden when the Equivalence lane is disabled.
+                    // Midas frog spawn egg (#253) sits with the other frog spawn
+                    // eggs; hidden when the Equivalence lane is disabled. (Its egg
+                    // block is grouped with the primed-egg blocks above.)
                     if (PFConfig.equivalenceEnabled()) {
                         output.accept(PFItems.MIDAS_FROG_SPAWN_EGG.get());
-                        output.accept(PFItems.MIDAS_FROG_EGG.get());
                     }
                     for (var entry : PFItems.RESOURCE_TADPOLE_SPAWN_EGGS.values()) {
                         output.accept(entry.get());
