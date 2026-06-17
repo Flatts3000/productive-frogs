@@ -77,8 +77,12 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
 
     /** Paid-for batch still to emit (Quantity catalyst > output stacksTo(1)). */
     private int pendingBatch = 0;
+    /** For a variant batch: the variant id. For a Mimic batch (#253): the synthesized item id. */
     @Nullable private ResourceLocation pendingVariant;
+    /** Variant batch only; null for a Mimic batch (signalled by {@link #pendingMimic}). */
     @Nullable private Category pendingCategory;
+    /** True when the pending batch is Mimic Slime Buckets (Equivalence lane, #253). */
+    private boolean pendingMimic = false;
 
     private final SlimeChurnInventory inventory = new SlimeChurnInventory(this::setChanged);
 
@@ -145,12 +149,24 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
         }
 
         ItemStack milk = be.inventory.getStackInSlot(SlimeChurnInventory.MILK_SLOT);
-        if (!(milk.getItem() instanceof SlimeMilkBucketItem milkItem)) {
+        // The key is the variant id for variant milk, or (Equivalence lane, #253)
+        // the synthesized item id for Mimic Milk. Both run the same spawn economy.
+        boolean mimic = milk.getItem() instanceof com.flatts.productivefrogs.content.item.MimicMilkBucketItem;
+        ResourceLocation variantId;
+        if (milk.getItem() instanceof SlimeMilkBucketItem milkItem) {
+            variantId = milkItem.variantId();
+        } else if (mimic) {
+            variantId = milk.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+            if (variantId == null) {
+                be.resetInterval();
+                setWorking(level, pos, state, false);
+                return;
+            }
+        } else {
             be.resetInterval();
             setWorking(level, pos, state, false);
             return;
         }
-        ResourceLocation variantId = milkItem.variantId();
 
         // 2. Seed the budget components on first processing so the bucket
         //    drains visibly and survives being pulled out half-spent
@@ -181,7 +197,9 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
         //    never on the mid-countdown ticks - matching the placed source,
         //    which only resolves on its scheduled ticks.
         if (be.intervalTotal <= 0) {
-            if (resolveVariant(level, variantId) == null) {
+            // Mimic Milk (#253) is keyed on an arbitrary item id, not a registry
+            // variant, so it skips the variant-resolution gate.
+            if (!mimic && resolveVariant(level, variantId) == null) {
                 failClosedUnknownVariant(level, pos, state, be, variantId);
                 return;
             }
@@ -197,14 +215,22 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
         // 5. Fire the spawn event: pay one budget, queue the batch, emit the
         //    first slime bucket this tick. Re-resolve for the category (the
         //    variant may have vanished in a datapack reload mid-interval).
-        SlimeVariant variant = resolveVariant(level, variantId);
-        if (variant == null) {
-            failClosedUnknownVariant(level, pos, state, be, variantId);
-            return;
+        if (mimic) {
+            be.pendingBatch = MilkSpawnEconomy.batchQuantity(quantityLevel(milk));
+            be.pendingVariant = variantId; // holds the synthesized item id
+            be.pendingCategory = null;
+            be.pendingMimic = true;
+        } else {
+            SlimeVariant variant = resolveVariant(level, variantId);
+            if (variant == null) {
+                failClosedUnknownVariant(level, pos, state, be, variantId);
+                return;
+            }
+            be.pendingBatch = MilkSpawnEconomy.batchQuantity(quantityLevel(milk));
+            be.pendingVariant = variantId;
+            be.pendingCategory = variant.category();
+            be.pendingMimic = false;
         }
-        be.pendingBatch = MilkSpawnEconomy.batchQuantity(quantityLevel(milk));
-        be.pendingVariant = variantId;
-        be.pendingCategory = variant.category();
         if (depleting) {
             int newRemaining = Math.max(0, remaining(milk) - 1);
             milk.set(PFDataComponents.SPAWNS_REMAINING.get(), newRemaining);
@@ -233,7 +259,9 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
         if (pendingBatch <= 0) {
             return false;
         }
-        if (pendingVariant == null || pendingCategory == null) {
+        // A variant batch needs both ids; a Mimic batch (#253) needs only the
+        // item id (pendingCategory is null by design there).
+        if (pendingVariant == null || (!pendingMimic && pendingCategory == null)) {
             // Unrecoverable pending state (corrupt save) - drop it rather than
             // stall the churn forever.
             PFDebug.logOnce(PFDebug.Area.CHURN, "badpending#" + pos,
@@ -246,12 +274,15 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
             return false;
         }
         inventory.extractItem(SlimeChurnInventory.BUCKET_SLOT, 1, false);
-        inventory.setStackInSlot(SlimeChurnInventory.SLIME_OUTPUT_SLOT,
-            SlimeBucketItem.forVariant(pendingCategory, pendingVariant));
+        ItemStack captured = pendingMimic
+            ? com.flatts.productivefrogs.content.item.MimicSlimeBucketItem.forItem(pendingVariant)
+            : SlimeBucketItem.forVariant(pendingCategory, pendingVariant);
+        inventory.setStackInSlot(SlimeChurnInventory.SLIME_OUTPUT_SLOT, captured);
         pendingBatch--;
         if (pendingBatch <= 0) {
             pendingVariant = null;
             pendingCategory = null;
+            pendingMimic = false;
         }
         setChanged();
         return true;
@@ -399,10 +430,16 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
         super.saveAdditional(tag, registries);
         tag.putInt("IntervalRemaining", intervalRemaining);
         tag.putInt("IntervalTotal", intervalTotal);
-        if (pendingBatch > 0 && pendingVariant != null && pendingCategory != null) {
+        // A variant batch needs both ids; a Mimic batch (#253) persists the item
+        // id + the mimic flag (no category).
+        if (pendingBatch > 0 && pendingVariant != null && (pendingMimic || pendingCategory != null)) {
             tag.putInt("PendingBatch", pendingBatch);
             tag.putString("PendingVariant", pendingVariant.toString());
-            tag.putString("PendingCategory", pendingCategory.name());
+            if (pendingMimic) {
+                tag.putBoolean("PendingMimic", true);
+            } else {
+                tag.putString("PendingCategory", pendingCategory.name());
+            }
         }
         net.minecraft.nbt.CompoundTag invTag = new net.minecraft.nbt.CompoundTag();
         inventory.serialize(invTag);
@@ -420,6 +457,7 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
         pendingBatch = Math.max(0, tag.getInt("PendingBatch"));
         pendingVariant = tag.contains("PendingVariant", net.minecraft.nbt.Tag.TAG_STRING)
             ? ResourceLocation.tryParse(tag.getString("PendingVariant")) : null;
+        pendingMimic = tag.getBoolean("PendingMimic");
         pendingCategory = null;
         if (tag.contains("PendingCategory", net.minecraft.nbt.Tag.TAG_STRING)) {
             try {
@@ -427,8 +465,11 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
             } catch (IllegalArgumentException ignored) {
             }
         }
-        if (pendingVariant == null || pendingCategory == null) {
+        // A variant batch requires its category; a Mimic batch requires only the
+        // item id + the flag. Anything else is corrupt - drop the batch.
+        if (pendingVariant == null || (!pendingMimic && pendingCategory == null)) {
             pendingBatch = 0;
+            pendingMimic = false;
         }
         if (tag.contains("Inventory", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
             inventory.deserialize(tag.getCompound("Inventory"));

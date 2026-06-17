@@ -58,10 +58,13 @@ public final class LayCategoryFrogspawn {
         }
         for (BlockPos incubatorPos : terrarium.incubators()) {
             if (level.getBlockEntity(incubatorPos) instanceof IncubatorBlockEntity incubator && incubator.hasRoom()) {
+                // Midas (#253) carries its marker into the Incubator so a bred Midas
+                // matures into a Midas (not a VOID frog). A bred pair always has
+                // pending stats, so the baseline path never carries Midas - fine.
                 boolean seeded = frog.hasPendingOffspring()
                     ? incubator.seedFromBreeding(frog.getCategory(),
                         frog.getPendingOffspringAppetite(), frog.getPendingOffspringBounty(),
-                        frog.getPendingOffspringReach())
+                        frog.getPendingOffspringReach(), frog.isMidas())
                     : incubator.seedBaseline(frog.getCategory());
                 if (seeded) {
                     frog.clearPendingOffspring();
@@ -90,6 +93,8 @@ public final class LayCategoryFrogspawn {
                     // loose frogspawn in the cavity, and bred stats flow straight
                     // into the Incubator. Falls through to the water-lay below when
                     // there's no Incubator with room (or no Terrarium).
+                    // Inside a formed Terrarium, lay into an Incubator - Midas carries
+                    // its marker through now (#253), so a bred Midas matures Midas.
                     if (tryLayIntoIncubator(level, resourceFrog)) {
                         isPregnant.erase();
                         return true;
@@ -118,7 +123,11 @@ public final class LayCategoryFrogspawn {
                             continue;
                         }
 
-                        BlockState placed = PFBlocks.primedEgg(resourceFrog.getCategory())
+                        // Midas (#253) lays its own egg block (named "Midas Egg",
+                        // hatches Midas); the six species lay their category egg.
+                        BlockState placed = (resourceFrog.isMidas()
+                            ? PFBlocks.MIDAS_FROG_EGG.get()
+                            : PFBlocks.primedEgg(resourceFrog.getCategory()))
                             .defaultBlockState();
                         level.setBlock(placePos, placed, 3);
                         level.gameEvent(
@@ -141,8 +150,10 @@ public final class LayCategoryFrogspawn {
                         // pending roll) leaves the egg statless, and the hatchlings
                         // mature into baseline (1/1/1) frogs.
                         // See docs/frog_breeding.md.
+                        // (The Midas egg block stamps its own midas marker in
+                        // onPlace, so a bred Midas egg hatches Midas - #253.)
                         if (resourceFrog.hasPendingOffspring()
-                            && level.getBlockEntity(placePos) instanceof PrimedFrogEggBlockEntity eggBe) {
+                                && level.getBlockEntity(placePos) instanceof PrimedFrogEggBlockEntity eggBe) {
                             eggBe.setPendingStats(
                                 resourceFrog.getPendingOffspringAppetite(),
                                 resourceFrog.getPendingOffspringBounty(),

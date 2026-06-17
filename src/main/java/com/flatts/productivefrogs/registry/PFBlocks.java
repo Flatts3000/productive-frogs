@@ -1,7 +1,10 @@
 package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.block.AlembicBlock;
 import com.flatts.productivefrogs.content.block.CastingMoldBlock;
+import com.flatts.productivefrogs.content.block.DistillerBlock;
+import com.flatts.productivefrogs.content.block.MimicMilkSourceBlock;
 import com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock;
 import com.flatts.productivefrogs.content.block.CrucibleBlock;
 import com.flatts.productivefrogs.content.block.EndCrystalReceptacleBlock;
@@ -52,6 +55,18 @@ public final class PFBlocks {
         DeferredRegister.createBlocks(ProductiveFrogs.MOD_ID);
 
     public static final Map<Category, DeferredBlock<PrimedFrogEggBlock>> PRIMED_FROG_EGGS = buildPrimedEggs();
+
+    /**
+     * The Midas frog egg (Equivalence lane, #253) - Midas's own frogspawn, made by
+     * Kiss-priming. A standalone PrimedFrogEggBlock (NOT a 7th Category): natively
+     * named "Midas Egg", carries the VOID sentinel category for its tadpoles, and
+     * the midas marker so it hatches Midas.
+     */
+    public static final DeferredBlock<PrimedFrogEggBlock> MIDAS_FROG_EGG = BLOCKS.registerBlock(
+        "midas_frog_egg",
+        props -> new PrimedFrogEggBlock(Category.VOID, true, props),
+        primedEggProperties(Category.VOID)
+    );
 
     /**
      * The variant-keyed configurable Froglight block. One block, datapack-driven
@@ -164,6 +179,45 @@ public final class PFBlocks {
             .mapColor(MapColor.METAL)
             .strength(2.0F)
             .sound(SoundType.METAL)
+    );
+
+    /**
+     * The Distiller (#253) - the Equivalence lane's extractor. RF-powered (PF's
+     * first energy machine); renders a Prismatic Froglight back to its carried
+     * item. Iron/glass alchemy identity; METAL sound.
+     */
+    public static final DeferredBlock<DistillerBlock> DISTILLER = BLOCKS.registerBlock(
+        "distiller",
+        DistillerBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .strength(2.0F)
+            .sound(SoundType.METAL)
+    );
+
+    /**
+     * The Alembic (#253) - the Equivalence lane's RF-powered synthesizer (empty
+     * bucket + off-roster item -> Mimic Slime Bucket). Same alchemy identity as
+     * the Distiller; METAL sound.
+     */
+    public static final DeferredBlock<AlembicBlock> ALEMBIC = BLOCKS.registerBlock(
+        "alembic",
+        AlembicBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .strength(2.0F)
+            .sound(SoundType.METAL)
+    );
+
+    /**
+     * Mimic Milk source block (#253) - the EE lane's placeable, source-only milk.
+     * One block (the synthesized item rides on its BE); reuses the shared milk
+     * fluid render + block properties. Spawns Mimic Slimes via the milk economy.
+     */
+    public static final DeferredBlock<MimicMilkSourceBlock> MIMIC_MILK = BLOCKS.registerBlock(
+        "mimic_slime_milk",
+        p -> new MimicMilkSourceBlock(PFFluids.MIMIC_MILK.get(), p),
+        PFVariantMilk.milkBlockProperties()
     );
 
     /**

@@ -44,6 +44,7 @@ public final class PFConfig {
     public static final ModConfigSpec.BooleanValue FROG_LEGS_ENABLED;
     public static final ModConfigSpec.BooleanValue HOPPING_ENABLED;
     public static final ModConfigSpec.BooleanValue FROGLIGHT_WEAPON_ENABLED;
+    public static final ModConfigSpec.BooleanValue EQUIVALENCE_ENABLED;
     public static final ModConfigSpec.BooleanValue PRINCESS_KISS_ENABLED;
     public static final ModConfigSpec.BooleanValue LILY_PAD_PERCH_ENABLED;
     public static final ModConfigSpec.IntValue LILY_PAD_PERCH_RANGE;
@@ -395,6 +396,23 @@ public final class PFConfig {
                 "creative tab, and harvests no Froglight if obtained another way. Recipe toggle needs a world reload."
             )
             .define("enabled", true);
+
+        builder.pop();
+
+        builder.push("equivalence");
+
+        EQUIVALENCE_ENABLED = builder
+            .comment(
+                "Whether the Equivalence lane is enabled. Default FALSE (opt-in).",
+                "The post-capstone, RF-powered transmutation lane for OFF-ROSTER items (#253):",
+                "Alembic (item -> Mimic Slime Bucket) -> Mimic Milk -> Mimic Slimes -> Midas",
+                "(Kiss-primed frog) -> Prismatic Froglight -> Distiller (-> the item). When false the",
+                "WHOLE lane is inert: Alembic + Distiller are uncraftable and don't process, the",
+                "Princess's Kiss won't prime a Midas egg, Midas frogs drop nothing, Mimic Milk sources",
+                "don't spawn, and the lane's items are hidden from JEI + the creative tab. Recipe toggle",
+                "needs a world reload."
+            )
+            .define("enabled", false);
 
         builder.pop();
 
@@ -1091,6 +1109,33 @@ public final class PFConfig {
     /** Whether the Potion of Hopping is enabled ({@code hopping.enabled}); fallback true. */
     public static boolean hoppingEnabled() {
         return !SPEC.isLoaded() || HOPPING_ENABLED.get();
+    }
+
+    /**
+     * Test-only override for {@link #equivalenceEnabled()}. The EE lane defaults OFF,
+     * so the GameTests that drive the Alembic/Distiller directly set this true (mirrors
+     * {@code SlimeMilkSourceBlock.depletionEnabledOverride}). Null in production.
+     */
+    @org.jetbrains.annotations.Nullable
+    public static Boolean equivalenceEnabledOverride;
+
+    /**
+     * Dev-only force-on for the EE lane: our interactive runs (build.gradle client/server)
+     * pass {@code -Dproductivefrogs.equivalence=true} so the lane is usable in the dev
+     * environment even though it ships default OFF. Read once at class load; no production
+     * JVM sets it, so shipped behaviour is unaffected.
+     */
+    private static final boolean DEV_FORCE_EQUIVALENCE = Boolean.getBoolean("productivefrogs.equivalence");
+
+    /** Whether the Equivalence lane is enabled ({@code equivalence.enabled}, #253); fallback OFF. */
+    public static boolean equivalenceEnabled() {
+        if (equivalenceEnabledOverride != null) {
+            return equivalenceEnabledOverride;
+        }
+        if (DEV_FORCE_EQUIVALENCE) {
+            return true;
+        }
+        return SPEC.isLoaded() && EQUIVALENCE_ENABLED.get();
     }
 
     /** Whether the Froglight Cleaver is enabled ({@code froglight_weapon.enabled}); fallback true. */

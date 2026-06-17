@@ -108,7 +108,7 @@ public final class PFVariantMilk {
     }
 
     /** Mirror of the single source block's properties (see {@link PFBlocks}). */
-    private static BlockBehaviour.Properties milkBlockProperties() {
+    static BlockBehaviour.Properties milkBlockProperties() {
         return BlockBehaviour.Properties.of()
             .mapColor(MapColor.METAL)
             .replaceable()

@@ -61,6 +61,30 @@ public final class EggPrimerHandler {
             return;
         }
 
+        // Equivalence lane (#253): a Princess's Kiss primes frogspawn into a Midas
+        // egg (the fairy-tale motif inverted - kissing the unhatched spawn awakens
+        // a frog of legend). The Kiss isn't a slime variant, so it's a dedicated
+        // case ahead of the variant lookup. MIDAS_FROG_EGG is its own block (named
+        // "Midas Egg"); its onPlace stamps the midas marker so it hatches Midas.
+        // The Kiss's existing frog->villager use (on a live frog) is unaffected.
+        // Gated on the EE lane (#253): with the lane off, the Kiss does NOT prime a
+        // Midas egg (falls through), so the whole lane is unreachable in survival.
+        if (held.is(com.flatts.productivefrogs.registry.PFItems.PRINCESS_KISS.get())
+                && com.flatts.productivefrogs.PFConfig.equivalenceEnabled()) {
+            event.setCancellationResult(InteractionResult.SUCCESS);
+            event.setCanceled(true);
+            if (level.isClientSide()) {
+                return;
+            }
+            level.setBlockAndUpdate(pos, PFBlocks.MIDAS_FROG_EGG.get().defaultBlockState());
+            PFDebug.log(PFDebug.Area.EGG, () -> String.format("prime: frogspawn at %s + Princess's Kiss -> Midas egg", pos));
+            if (!event.getEntity().getAbilities().instabuild) {
+                held.shrink(1);
+            }
+            level.playSound(null, pos, SoundEvents.BUBBLE_COLUMN_BUBBLE_POP, SoundSource.BLOCKS, 0.6F, 1.4F);
+            return;
+        }
+
         // Exact variant primer match required (Q4: Path A only).
         Map.Entry<ResourceLocation, SlimeVariant> variantEntry = findVariantForHeldItem(level, held);
         if (variantEntry == null) {

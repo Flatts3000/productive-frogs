@@ -73,6 +73,8 @@ public final class PFModBusEvents {
         // Per-size HP/movement scaling happens in Slime#setSize at runtime,
         // not via the attribute table itself.
         event.put(PFEntities.RESOURCE_SLIME.get(), Monster.createMonsterAttributes().build());
+        // Mimic Slime (#253) - same vanilla-Slime Monster baseline.
+        event.put(PFEntities.MIMIC_SLIME.get(), Monster.createMonsterAttributes().build());
         // Cave Slime and all future parent species (Geode/Tide/Void) reuse
         // the same Monster baseline — they're vanilla-shaped Slime subclasses.
         event.put(PFEntities.CAVE_SLIME.get(), Monster.createMonsterAttributes().build());
@@ -251,6 +253,34 @@ public final class PFModBusEvents {
             (be, side) -> be.outputView()
         );
 
+        // Distiller (#253): PF's first RF machine. A receive-only energy buffer
+        // for power cables (extraction blocked - the distill loop spends it
+        // internally), plus side-aware item views - the down face pulls the
+        // rendered item, every other face feeds Prismatic Froglights in.
+        event.registerBlockEntity(
+            Capabilities.EnergyStorage.BLOCK,
+            PFBlockEntities.DISTILLER.get(),
+            (be, side) -> be.energyStorage()
+        );
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            PFBlockEntities.DISTILLER.get(),
+            (be, side) -> side == Direction.DOWN ? be.outputView() : be.inputView()
+        );
+
+        // Alembic (#253): the lane's other RF machine. Receive-only energy buffer;
+        // down face pulls the Mimic Slime Bucket, other faces feed bucket + item.
+        event.registerBlockEntity(
+            Capabilities.EnergyStorage.BLOCK,
+            PFBlockEntities.ALEMBIC.get(),
+            (be, side) -> be.energyStorage()
+        );
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            PFBlockEntities.ALEMBIC.get(),
+            (be, side) -> side == Direction.DOWN ? be.outputView() : be.inputView()
+        );
+
         // Terrarium Controller (#185): fill-only fluid intake for piped milk. The
         // catalyst components ride the FluidStack (via MilkFluidBucketWrapper), so
         // the Controller reads them back into a MilkCharge. Drain is a no-op (the
@@ -319,6 +349,16 @@ public final class PFModBusEvents {
                 );
             }
         }
+
+        // Mimic Milk bucket (#253) is also a BucketItem subclass, so it needs the
+        // same explicit FluidHandler.ITEM registration. Its wrapper additionally
+        // preserves the synthesized item id onto the drained FluidStack so a
+        // bucket <-> tank round-trip keeps it (MimicMilkFluidBucketWrapper).
+        event.registerItem(
+            Capabilities.FluidHandler.ITEM,
+            (stack, ctx) -> new com.flatts.productivefrogs.content.fluid.MimicMilkFluidBucketWrapper(stack),
+            PFItems.MIMIC_MILK_BUCKET.get()
+        );
 
         // Brewed Froglight curio (#169) - register the Curios item capability
         // ONLY when curios is loaded. The call is behind the guard so

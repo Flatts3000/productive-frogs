@@ -1,0 +1,29 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:command_block",
+    "minecraft:chain_command_block",
+    "minecraft:repeating_command_block",
+    "minecraft:structure_block",
+    "minecraft:structure_void",
+    "minecraft:jigsaw",
+    "minecraft:barrier",
+    "minecraft:light",
+    "minecraft:debug_stick",
+    "minecraft:knowledge_book",
+    "minecraft:spawner",
+    "minecraft:trial_spawner",
+    "minecraft:vault",
+    "minecraft:bedrock",
+    "minecraft:end_portal_frame",
+    "minecraft:budding_amethyst",
+    "minecraft:bundle",
+    "minecraft:shulker_box",
+    "minecraft:dragon_egg",
+    "minecraft:nether_star",
+    "minecraft:wither_skeleton_skull",
+    "minecraft:dragon_breath",
+    "minecraft:elytra",
+    "minecraft:totem_of_undying"
+  ]
+}

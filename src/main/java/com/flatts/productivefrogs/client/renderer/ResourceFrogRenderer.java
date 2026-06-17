@@ -27,7 +27,8 @@ public class ResourceFrogRenderer extends FrogRenderer {
             this::getTextureLocation,
             entity -> {
                 if (entity instanceof ResourceFrog rf) {
-                    return 0xFF000000 | rf.getCategory().tintRgb();
+                    // Midas (#253) renders gold, overriding its sentinel category tint.
+                    return rf.isMidas() ? 0xFFFFD700 : (0xFF000000 | rf.getCategory().tintRgb());
                 }
                 return 0xFFFFFFFF;
             }

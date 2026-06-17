@@ -1,7 +1,9 @@
 package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.menu.AlembicMenu;
 import com.flatts.productivefrogs.content.menu.CastingMoldMenu;
+import com.flatts.productivefrogs.content.menu.DistillerMenu;
 import com.flatts.productivefrogs.content.menu.HatchMenu;
 import com.flatts.productivefrogs.content.menu.IncubatorMenu;
 import com.flatts.productivefrogs.content.menu.SlimeChurnMenu;
@@ -51,6 +53,18 @@ public final class PFMenuTypes {
         MENU_TYPES.register(
             "casting_mold",
             () -> IMenuTypeExtension.create(CastingMoldMenu::new)
+        );
+
+    public static final Supplier<MenuType<DistillerMenu>> DISTILLER =
+        MENU_TYPES.register(
+            "distiller",
+            () -> IMenuTypeExtension.create(DistillerMenu::new)
+        );
+
+    public static final Supplier<MenuType<AlembicMenu>> ALEMBIC =
+        MENU_TYPES.register(
+            "alembic",
+            () -> IMenuTypeExtension.create(AlembicMenu::new)
         );
 
     public static final Supplier<MenuType<HatchMenu>> HATCH =

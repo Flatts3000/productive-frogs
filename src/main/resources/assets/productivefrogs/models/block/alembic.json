@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "productivefrogs:block/alembic_top",
+    "side": "productivefrogs:block/alembic_side",
+    "bottom": "productivefrogs:block/ee_machine_base"
+  }
+}

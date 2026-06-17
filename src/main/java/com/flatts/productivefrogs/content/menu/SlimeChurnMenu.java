@@ -92,7 +92,8 @@ public class SlimeChurnMenu extends AbstractContainerMenu {
             addSlot(new Slot(dummy, SlimeChurnInventory.MILK_SLOT, MILK_SLOT_X, MILK_SLOT_Y) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
-                    return stack.getItem() instanceof SlimeMilkBucketItem;
+                    return stack.getItem() instanceof SlimeMilkBucketItem
+                        || stack.getItem() instanceof com.flatts.productivefrogs.content.item.MimicMilkBucketItem;
                 }
             });
             addSlot(new Slot(dummy, SlimeChurnInventory.BUCKET_SLOT, BUCKET_SLOT_X, BUCKET_SLOT_Y) {
@@ -170,7 +171,8 @@ public class SlimeChurnMenu extends AbstractContainerMenu {
                     return ItemStack.EMPTY;
                 }
             } else {
-                if (stack.getItem() instanceof SlimeMilkBucketItem) {
+                if (stack.getItem() instanceof SlimeMilkBucketItem
+                        || stack.getItem() instanceof com.flatts.productivefrogs.content.item.MimicMilkBucketItem) {
                     if (!moveItemStackTo(stack, SlimeChurnInventory.MILK_SLOT,
                                          SlimeChurnInventory.MILK_SLOT + 1, false)) {
                         return ItemStack.EMPTY;

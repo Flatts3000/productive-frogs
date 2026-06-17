@@ -6,6 +6,8 @@ import com.flatts.productivefrogs.content.item.FrogEggItem;
 import com.flatts.productivefrogs.content.item.FrogNetItem;
 import com.flatts.productivefrogs.content.item.MilkCatalyst;
 import com.flatts.productivefrogs.content.item.MilkCatalystItem;
+import com.flatts.productivefrogs.content.item.MimicMilkBucketItem;
+import com.flatts.productivefrogs.content.item.MimicSlimeBucketItem;
 import com.flatts.productivefrogs.content.item.ResourceSlimeSpawnEggItem;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.content.item.SlimeBucketItem;
@@ -209,6 +211,35 @@ public final class PFItems {
     );
 
     /**
+     * Mimic Slime Bucket (#253) - the Equivalence lane's captured synthesized
+     * slime. Same MobBucketItem round-trip as {@link #SLIME_BUCKET}; carries the
+     * synthesized item id as a top-level component (runtime tint + name) and in
+     * BUCKET_ENTITY_DATA (respawn). Produced by the Alembic; releasable by hand.
+     */
+    public static final DeferredItem<MimicSlimeBucketItem> MIMIC_SLIME_BUCKET = ITEMS.registerItem(
+        "mimic_slime_bucket",
+        props -> new MimicSlimeBucketItem(
+            PFEntities.MIMIC_SLIME.get(),
+            Fluids.WATER,
+            SoundEvents.BUCKET_EMPTY_FISH,
+            props.stacksTo(1).component(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY)
+        )
+    );
+
+    /**
+     * Mimic Milk Bucket (#253) - the EE lane's milk. A fluid bucket placing the
+     * single Mimic Milk source; carries the synthesized item id as a top-level
+     * component (tint + name) and writes it to the placed source's BE.
+     */
+    public static final DeferredItem<MimicMilkBucketItem> MIMIC_MILK_BUCKET = ITEMS.registerItem(
+        "mimic_slime_milk_bucket",
+        props -> new MimicMilkBucketItem(
+            PFFluids.MIMIC_MILK.get(),
+            props.stacksTo(1).craftRemainder(Items.BUCKET)
+        )
+    );
+
+    /**
      * Resource Tadpole bucket. Mirrors vanilla {@code tadpole_bucket} but
      * preserves the tadpole's category across bucket-and-release. Display
      * name varies by the stored category.
@@ -249,6 +280,44 @@ public final class PFItems {
     /** Per-category spawn eggs for Resource Tadpoles. Same shape as the frog eggs above. */
     public static final Map<Category, DeferredItem<SpawnEggItem>> RESOURCE_TADPOLE_SPAWN_EGGS = buildSpawnEggs(
         "tadpole", () -> PFEntities.RESOURCE_TADPOLE.get());
+
+    /**
+     * Midas spawn egg (Equivalence lane, #253). Midas is a {@code midas}-flagged
+     * ResourceFrog (not a Category), so it's outside {@link #buildSpawnEggs}; this
+     * one-off egg stamps {@code Midas:true} (and the VOID carrier category) into
+     * ENTITY_DATA, which {@code ResourceFrog.readAdditionalSaveData} reads on spawn.
+     * Gold colours. The normal acquisition is still Kiss-priming; this is the
+     * creative/testing counterpart, hidden when the lane is disabled.
+     */
+    public static final DeferredItem<SpawnEggItem> MIDAS_FROG_SPAWN_EGG = ITEMS.registerItem(
+        "midas_frog_spawn_egg",
+        props -> {
+            EntityType<?> type = PFEntities.RESOURCE_FROG.get();
+            CompoundTag nbt = new CompoundTag();
+            nbt.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
+            nbt.putString("Category", Category.VOID.name());
+            nbt.putBoolean("Midas", true);
+            return new SpawnEggItem((EntityType<? extends Mob>) type, 0xFFD700, 0xB8860B,
+                new Item.Properties().component(DataComponents.ENTITY_DATA, CustomData.of(nbt)));
+        });
+
+    /**
+     * Midas <i>tadpole</i> spawn egg (#253) - the tadpole counterpart of
+     * {@link #MIDAS_FROG_SPAWN_EGG}, for spawn-egg parity with the six species
+     * (each has a frog + tadpole egg). Stamps {@code Midas:true} into a Resource
+     * Tadpole's ENTITY_DATA; it matures into a Midas frog.
+     */
+    public static final DeferredItem<SpawnEggItem> MIDAS_TADPOLE_SPAWN_EGG = ITEMS.registerItem(
+        "midas_tadpole_spawn_egg",
+        props -> {
+            EntityType<?> type = PFEntities.RESOURCE_TADPOLE.get();
+            CompoundTag nbt = new CompoundTag();
+            nbt.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
+            nbt.putString("Category", Category.VOID.name());
+            nbt.putBoolean("Midas", true);
+            return new SpawnEggItem((EntityType<? extends Mob>) type, 0xFFD700, 0xB8860B,
+                new Item.Properties().component(DataComponents.ENTITY_DATA, CustomData.of(nbt)));
+        });
 
     /**
      * The single Resource Slime spawn egg. One registered item whose variant
@@ -408,6 +477,37 @@ public final class PFItems {
     public static final DeferredItem<BlockItem> CASTING_MOLD = ITEMS.registerSimpleBlockItem(
         "casting_mold",
         PFBlocks.CASTING_MOLD,
+        new Item.Properties()
+    );
+
+    /**
+     * Midas frog egg BlockItem (#253) - places {@link PFBlocks#MIDAS_FROG_EGG}.
+     * Uses {@link PlaceOnWaterBlockItem} exactly like the per-species primed-egg
+     * block items (see {@link #buildPrimedEggItems}): a plain BlockItem can't
+     * place frogspawn on a water source, so a simple block item is unplaceable.
+     */
+    public static final DeferredItem<BlockItem> MIDAS_FROG_EGG = ITEMS.registerItem(
+        "midas_frog_egg",
+        props -> new PlaceOnWaterBlockItem(PFBlocks.MIDAS_FROG_EGG.get(), props)
+    );
+
+    /**
+     * Distiller BlockItem (#253) - places {@link PFBlocks#DISTILLER}, the
+     * Equivalence lane's RF-powered extractor (Prismatic Froglight -> item).
+     */
+    public static final DeferredItem<BlockItem> DISTILLER = ITEMS.registerSimpleBlockItem(
+        "distiller",
+        PFBlocks.DISTILLER,
+        new Item.Properties()
+    );
+
+    /**
+     * Alembic BlockItem (#253) - places {@link PFBlocks#ALEMBIC}, the Equivalence
+     * lane's RF-powered synthesizer (item -> Mimic Slime Bucket).
+     */
+    public static final DeferredItem<BlockItem> ALEMBIC = ITEMS.registerSimpleBlockItem(
+        "alembic",
+        PFBlocks.ALEMBIC,
         new Item.Properties()
     );
 

@@ -42,6 +42,12 @@ public class ResourceTadpole extends Tadpole {
 
     private static final EntityDataAccessor<Integer> DATA_CATEGORY =
         SynchedEntityData.defineId(ResourceTadpole.class, EntityDataSerializers.INT);
+    // Midas marker (Equivalence lane, #253). Synced because getName() runs on the
+    // client (entity nameplate / F3 / Jade): a server-only flag would leave the
+    // client falling through to the category name ("Void Tadpole") instead of
+    // "Midas Tadpole". Mirrors ResourceFrog.DATA_MIDAS.
+    private static final EntityDataAccessor<Boolean> DATA_MIDAS =
+        SynchedEntityData.defineId(ResourceTadpole.class, EntityDataSerializers.BOOLEAN);
 
     @SuppressWarnings("unchecked")
     public ResourceTadpole(EntityType<? extends ResourceTadpole> type, Level level) {
@@ -55,6 +61,7 @@ public class ResourceTadpole extends Tadpole {
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(DATA_CATEGORY, Category.BOG.ordinal());
+        builder.define(DATA_MIDAS, false);
     }
 
     // Pending breeding stats inherited at conception, carried from the hatched
@@ -169,6 +176,15 @@ public class ResourceTadpole extends Tadpole {
         return hasPendingStats;
     }
 
+    /** Whether this tadpole matures into a Midas frog (#253). */
+    public boolean isMidas() {
+        return this.entityData.get(DATA_MIDAS);
+    }
+
+    public void setMidas(boolean midas) {
+        this.entityData.set(DATA_MIDAS, midas);
+    }
+
     /**
      * The inherited stats this tadpole will mature into (only meaningful when
      * {@link #hasPendingStats()} is true). Server-side payload - exposed so the
@@ -195,6 +211,9 @@ public class ResourceTadpole extends Tadpole {
         if (this.hasCustomName()) {
             return super.getName();
         }
+        if (isMidas()) {
+            return net.minecraft.network.chat.Component.translatable(getType().getDescriptionId() + ".midas");
+        }
         return net.minecraft.network.chat.Component.translatable(
             getType().getDescriptionId() + "." + getCategory().id()
         );
@@ -209,6 +228,9 @@ public class ResourceTadpole extends Tadpole {
             tag.putInt("PendingAppetite", pendingAppetite);
             tag.putInt("PendingBounty", pendingBounty);
             tag.putInt("PendingReach", pendingReach);
+        }
+        if (isMidas()) {
+            tag.putBoolean("Midas", true);
         }
     }
 
@@ -228,6 +250,7 @@ public class ResourceTadpole extends Tadpole {
             pendingBounty = tag.getInt("PendingBounty");
             pendingReach = tag.getInt("PendingReach");
         }
+        setMidas(tag.getBoolean("Midas"));
     }
 
     @Override
@@ -253,6 +276,9 @@ public class ResourceTadpole extends Tadpole {
                 tag.putInt("PendingBounty", pendingBounty);
                 tag.putInt("PendingReach", pendingReach);
             }
+            if (isMidas()) {
+                tag.putBoolean("Midas", true);
+            }
         });
     }
 
@@ -276,6 +302,7 @@ public class ResourceTadpole extends Tadpole {
             pendingBounty = tag.getInt("PendingBounty");
             pendingReach = tag.getInt("PendingReach");
         }
+        setMidas(tag.getBoolean("Midas"));
     }
 
     /**
@@ -299,6 +326,7 @@ public class ResourceTadpole extends Tadpole {
         EventHooks.onLivingConvert(this, frog);
         Category category = getCategory();
         frog.setCategory(category);
+        frog.setMidas(isMidas());
         frog.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
         frog.finalizeSpawn(
             serverLevel,

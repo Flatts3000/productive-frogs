@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.event;
 
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.entity.MimicSlime;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.data.StoredEffect;
 import com.flatts.productivefrogs.registry.PFItems;
@@ -10,6 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
@@ -35,36 +37,44 @@ public final class FroglightWeaponHandler {
 
     @SubscribeEvent
     public static void onSlimeKilled(LivingDeathEvent event) {
-        if (!PFConfig.froglightWeaponEnabled()) {
+        if (!PFConfig.froglightWeaponEnabled() || event.getEntity().level().isClientSide()) {
             return;
         }
-        if (!(event.getEntity() instanceof ResourceSlime slime) || slime.level().isClientSide()) {
-            return;
-        }
-        // Same size-1 "ripe slime" rule as the tongue drop: bigger slimes split
-        // into smaller ones rather than yielding a Froglight.
-        if (slime.getSize() != 1) {
+        // The Froglight to drop, by slime kind: a variant Resource Slime yields its
+        // variant Froglight; a Mimic Slime (Equivalence lane, #253) yields a
+        // Prismatic Froglight carrying the eaten item. Same size-1 "ripe slime"
+        // rule for both (bigger slimes split rather than yield).
+        ItemStack froglight;
+        LivingEntity slime;
+        if (event.getEntity() instanceof ResourceSlime resource) {
+            if (resource.getSize() != 1 || resource.getVariantId() == null) {
+                return;
+            }
+            StoredEffect captured = PFConfig.brewedFroglightsEnabled()
+                ? StoredEffect.pick(resource.getActiveEffects()) : null;
+            froglight = FrogTongueDropHandler.buildFroglight(resource.getVariantId(), captured);
+            slime = resource;
+        } else if (event.getEntity() instanceof MimicSlime mimic) {
+            if (mimic.getSize() != 1 || mimic.getSynthesizedItem() == null) {
+                return;
+            }
+            froglight = MidasTongueDropHandler.buildPrismaticFroglight(mimic.getSynthesizedItem());
+            slime = mimic;
+        } else {
             return;
         }
         if (!(event.getSource().getEntity() instanceof LivingEntity killer)
                 || !killer.getMainHandItem().is(PFItems.FROGLIGHT_CLEAVER.get())) {
             return;
         }
-        ResourceLocation variantId = slime.getVariantId();
-        if (variantId == null) {
-            return;
-        }
 
         Level level = slime.level();
-        StoredEffect captured = PFConfig.brewedFroglightsEnabled()
-            ? StoredEffect.pick(slime.getActiveEffects()) : null;
         int looting = lootingLevel(level, event.getSource());
         int count = 1 + level.getRandom().nextInt(looting + 1);
 
         Vec3 pos = slime.position();
         for (int i = 0; i < count; i++) {
-            ItemEntity drop = new ItemEntity(level, pos.x, pos.y, pos.z,
-                FrogTongueDropHandler.buildFroglight(variantId, captured));
+            ItemEntity drop = new ItemEntity(level, pos.x, pos.y, pos.z, froglight.copy());
             drop.setDefaultPickUpDelay();
             level.addFreshEntity(drop);
         }

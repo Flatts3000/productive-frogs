@@ -58,12 +58,42 @@ public class SweetslimedLilyPadBlockEntity extends BlockEntity {
     /** Vertical half-extent of the claim scan box (frogs perch at water level; no need for a full cube). */
     private static final int PERCH_VERTICAL = 6;
 
-    /** The frog this pad holds (transient; re-claimed after a reload). */
+    /**
+     * The frog this pad holds. Persisted (NBT "Claimant") so a server/world reload
+     * re-pins the same frog on the first tick via {@link #resolveClaimant} - an O(1)
+     * UUID lookup that tolerates re-adopting its own frog - instead of waiting on the
+     * throttled rescan. Without persistence the pad couldn't re-adopt its frog while
+     * that frog's still-valid {@link ResourceFrog#getActivePerch()} made the scan skip
+     * it, so the claim lapsed and the frog visibly wandered off before being walked
+     * back. The frog persists the matching link ({@link ResourceFrog} "PerchPad").
+     */
     @Nullable
     private UUID claimant;
 
     public SweetslimedLilyPadBlockEntity(BlockPos pos, BlockState state) {
         super(PFBlockEntities.SWEETSLIMED_LILY_PAD.get(), pos, state);
+    }
+
+    @Override
+    protected void saveAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        if (claimant != null) {
+            tag.putUUID("Claimant", claimant);
+        }
+    }
+
+    @Override
+    protected void loadAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        claimant = tag.hasUUID("Claimant") ? tag.getUUID("Claimant") : null;
+    }
+
+    /** Set the claimed frog (or null), marking the BE dirty so the claim persists across a reload. */
+    private void setClaimant(@Nullable UUID id) {
+        if (!java.util.Objects.equals(this.claimant, id)) {
+            this.claimant = id;
+            setChanged();
+        }
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, SweetslimedLilyPadBlockEntity be) {
@@ -79,7 +109,7 @@ public class SweetslimedLilyPadBlockEntity extends BlockEntity {
         if (frog == null && (server.getGameTime() + Math.floorMod(pos.asLong(), SCAN_INTERVAL)) % SCAN_INTERVAL == 0L) {
             frog = findUnclaimedFrog(server, pos, range);
             if (frog != null) {
-                be.claimant = frog.getUUID();
+                be.setClaimant(frog.getUUID());
                 PFDebug.log(PFDebug.Area.LIFECYCLE, () -> "perch @" + pos + ": claimed a frog");
             }
         }
@@ -99,16 +129,16 @@ public class SweetslimedLilyPadBlockEntity extends BlockEntity {
         }
         Entity entity = level.getEntity(claimant);
         if (!(entity instanceof ResourceFrog frog) || !frog.isAlive()) {
-            claimant = null;
+            setClaimant(null);
             return null;
         }
         BlockPos perch = frog.getActivePerch();
         if (perch != null && !perch.equals(pos)) {
-            claimant = null; // another pad took it
+            setClaimant(null); // another pad took it
             return null;
         }
         if (frog.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > (double) range * range) {
-            claimant = null; // wandered out of range
+            setClaimant(null); // wandered out of range
             return null;
         }
         return frog;

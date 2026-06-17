@@ -96,7 +96,21 @@ public class SprinklerBlock extends Block implements EntityBlock {
             return;
         }
         ResourceLocation variant = be.getVariantId();
-        int rgb = variant == null ? DEFAULT_MILK_RGB : variantColor(level, variant);
+        int rgb;
+        if (variant == null) {
+            rgb = DEFAULT_MILK_RGB;
+        } else if (be.isMimic()) {
+            // Mimic Milk (#253): the id is a synthesized item, not a registry variant,
+            // so the SlimeVariant lookup would miss and fall back to off-white. Tint
+            // from the item's sprite-average colour (client-side, like the slimes do).
+            net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                .getOptional(variant).orElse(null);
+            rgb = item == null
+                ? DEFAULT_MILK_RGB
+                : (com.flatts.productivefrogs.client.SynthesizedTint.colorFor(item) & 0xFFFFFF);
+        } else {
+            rgb = variantColor(level, variant);
+        }
         double x = pos.getX() + 0.25 + random.nextDouble() * 0.5;
         double y = pos.getY() - 0.05; // just under the down face
         double z = pos.getZ() + 0.25 + random.nextDouble() * 0.5;

@@ -83,6 +83,8 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
     private final Deque<MilkCharge> charges = new ArrayDeque<>();
     @Nullable
     private ResourceLocation tankVariant;
+    /** Equivalence lane (#253): true when {@link #tankVariant} is a synthesized item id (Mimic Milk). */
+    private boolean tankMimic;
     private int distributeCursor;
 
     private final ControllerFluidIntake fluidIntake = new ControllerFluidIntake();
@@ -235,6 +237,10 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
      */
     public boolean canAccept(ResourceLocation variant) {
         return charges.size() < PFConfig.terrariumControllerBufferDepth()
+            // A variant (Slime Milk) charge can't mix with a buffered mimic charge,
+            // even on an unlikely id collision (defense-in-depth; canAcceptBucket
+            // already enforces this single-kind rule for the bucket path).
+            && !tankMimic
             && (tankVariant == null || tankVariant.equals(variant))
             && !requiresCatalystAltar(variant);
     }
@@ -250,17 +256,44 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
      * is full / holds another variant.
      */
     public boolean pushChargeFromBucket(ItemStack milkBucket) {
-        if (!(milkBucket.getItem() instanceof SlimeMilkBucketItem milk)) {
+        if (!canAcceptBucket(milkBucket)) {
             return false;
         }
-        ResourceLocation variant = milk.variantId();
-        if (variant == null || !canAccept(variant)) {
-            return false;
+        // Equivalence lane (#253): a Mimic Milk bucket buffers under its synthesized
+        // item id with the mimic flag; a variant bucket under its variant id. The
+        // buffer is single-kind (one variant OR one mimic item at a time).
+        if (milkBucket.getItem() instanceof com.flatts.productivefrogs.content.item.MimicMilkBucketItem) {
+            tankVariant = milkBucket.get(
+                com.flatts.productivefrogs.registry.PFDataComponents.SYNTHESIZED_ITEM.get());
+            tankMimic = true;
+        } else {
+            tankVariant = ((SlimeMilkBucketItem) milkBucket.getItem()).variantId();
+            tankMimic = false;
         }
-        tankVariant = variant;
         charges.addLast(MilkCharge.fromBucket(milkBucket));
         syncToClients();
         return true;
+    }
+
+    /**
+     * Whether a right-clicked milk bucket would be buffered (no mutation) - the
+     * block uses this to decide whether to intercept the click or fall through to
+     * the GUI. Handles both a per-variant Slime Milk bucket and a Mimic Milk bucket
+     * (#253); the buffer is single-kind, so the two never mix.
+     */
+    public boolean canAcceptBucket(ItemStack bucket) {
+        if (bucket.getItem() instanceof com.flatts.productivefrogs.content.item.MimicMilkBucketItem) {
+            ResourceLocation item = bucket.get(
+                com.flatts.productivefrogs.registry.PFDataComponents.SYNTHESIZED_ITEM.get());
+            return item != null
+                && charges.size() < PFConfig.terrariumControllerBufferDepth()
+                && (tankVariant == null || (tankMimic && tankVariant.equals(item)));
+        }
+        if (bucket.getItem() instanceof SlimeMilkBucketItem milk) {
+            ResourceLocation variant = milk.variantId();
+            return variant != null && !tankMimic && canAccept(variant);
+        }
+        return false;
     }
 
     /** Mark dirty AND push a BE update so the GUI/Jade see the buffered variant (not just the int charge count). */
@@ -289,7 +322,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
             int idx = (distributeCursor + i) % n;
             if (level.getBlockEntity(sprinklers.get(idx)) instanceof SprinklerBlockEntity sprinkler
                     && sprinkler.acceptsFreshCharge()) {
-                sprinkler.loadCharge(tankVariant, charges.removeFirst());
+                sprinkler.loadCharge(tankVariant, tankMimic, charges.removeFirst());
                 distributeCursor = (idx + 1) % n;
                 onChargesChanged();
                 return;
@@ -299,7 +332,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
         int threshold = PFConfig.terrariumSprinklerTopUpThreshold();
         for (BlockPos sprinklerPos : sprinklers) {
             if (level.getBlockEntity(sprinklerPos) instanceof SprinklerBlockEntity sprinkler
-                    && sprinkler.wantsTopUp(tankVariant, threshold)) {
+                    && sprinkler.wantsTopUp(tankVariant, tankMimic, threshold)) {
                 sprinkler.mergeCharge(charges.removeFirst());
                 onChargesChanged();
                 return;
@@ -311,6 +344,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
     private void onChargesChanged() {
         if (charges.isEmpty()) {
             tankVariant = null;
+            tankMimic = false;
         }
         syncToClients();
     }
@@ -392,6 +426,9 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
         super.saveAdditional(tag, registries);
         if (tankVariant != null) {
             tag.putString("TankVariant", tankVariant.toString());
+            if (tankMimic) {
+                tag.putBoolean("TankMimic", true);
+            }
         }
         if (!charges.isEmpty()) {
             ListTag list = new ListTag();
@@ -409,6 +446,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
         super.loadAdditional(tag, registries);
         tankVariant = tag.contains("TankVariant", Tag.TAG_STRING)
             ? ResourceLocation.tryParse(tag.getString("TankVariant")) : null;
+        tankMimic = tag.getBoolean("TankMimic");
         charges.clear();
         if (tag.contains("Charges", Tag.TAG_LIST)) {
             ListTag list = tag.getList("Charges", Tag.TAG_COMPOUND);

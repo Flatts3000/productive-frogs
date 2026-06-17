@@ -58,7 +58,10 @@ public class SlimeChurnInventory extends ItemStackHandler {
             return false;
         }
         return switch (slot) {
-            case MILK_SLOT -> stack.getItem() instanceof SlimeMilkBucketItem;
+            // A per-variant Slime Milk bucket, or (Equivalence lane, #253) a Mimic
+            // Milk bucket - the Churn captures either back into slime buckets.
+            case MILK_SLOT -> stack.getItem() instanceof SlimeMilkBucketItem
+                || stack.getItem() instanceof com.flatts.productivefrogs.content.item.MimicMilkBucketItem;
             case BUCKET_SLOT -> stack.is(Items.BUCKET);
             default -> false; // output slots reject inserts
         };

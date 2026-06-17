@@ -71,6 +71,16 @@ public class ResourceFrog extends Frog {
     private static final EntityDataAccessor<Integer> DATA_REACH =
         SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.INT);
 
+    // Midas marker (Equivalence lane, #253). A Midas frog is a ResourceFrog whose
+    // ONLY divergences are diet (eats Mimic Slimes, not its category's Resource
+    // Slimes - branched in ResourceFrogAttackablesSensor) and drop (a Prismatic
+    // Froglight stamped with the eaten Mimic Slime's item - MidasTongueDropHandler).
+    // Threaded through the egg -> tadpole -> frog pipeline like the stats, and
+    // breeds true. A flag (not a 7th Category) so the six-species machinery and
+    // every Category.values() surface stay exactly as they are.
+    private static final EntityDataAccessor<Boolean> DATA_MIDAS =
+        SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.BOOLEAN);
+
     // Set true once stats are established (baseline or inheritance) so a
     // re-fired finalizeSpawn (vanilla can call it more than once) doesn't
     // re-apply baseline over an established frog. Transient: a loaded frog has
@@ -111,6 +121,16 @@ public class ResourceFrog extends Frog {
         builder.define(DATA_APPETITE, FrogStats.STAT_MIN);
         builder.define(DATA_BOUNTY, FrogStats.STAT_MIN);
         builder.define(DATA_REACH, FrogStats.STAT_MIN);
+        builder.define(DATA_MIDAS, false);
+    }
+
+    /** True if this is a Midas frog (Equivalence lane, #253). */
+    public boolean isMidas() {
+        return this.entityData.get(DATA_MIDAS);
+    }
+
+    public void setMidas(boolean midas) {
+        this.entityData.set(DATA_MIDAS, midas);
     }
 
     private static int statCap() {
@@ -183,6 +203,9 @@ public class ResourceFrog extends Frog {
         if (this.hasCustomName()) {
             return super.getName();
         }
+        if (isMidas()) {
+            return net.minecraft.network.chat.Component.translatable(getType().getDescriptionId() + ".midas");
+        }
         return net.minecraft.network.chat.Component.translatable(
             getType().getDescriptionId() + "." + getCategory().id()
         );
@@ -195,6 +218,9 @@ public class ResourceFrog extends Frog {
         tag.putInt("Appetite", getAppetite());
         tag.putInt("Bounty", getBounty());
         tag.putInt("Reach", getReach());
+        if (isMidas()) {
+            tag.putBoolean("Midas", true);
+        }
         if (hasPendingOffspring) {
             tag.putBoolean("HasPendingOffspring", true);
             tag.putInt("PendingOffspringAppetite", pendingOffspringAppetite);
@@ -222,6 +248,7 @@ public class ResourceFrog extends Frog {
             // tampered save can't inject out-of-range values.
             setStats(tag.getInt("Appetite"), tag.getInt("Bounty"), tag.getInt("Reach"));
         }
+        setMidas(tag.getBoolean("Midas"));
         hasPendingOffspring = tag.getBoolean("HasPendingOffspring");
         if (hasPendingOffspring) {
             pendingOffspringAppetite = tag.getInt("PendingOffspringAppetite");
@@ -406,9 +433,16 @@ public class ResourceFrog extends Frog {
         if (!super.canMate(other)) {
             return false;
         }
-        boolean sameSpeciesOnly = PFConfig.sameSpeciesOnly();
-        if (sameSpeciesOnly && other instanceof ResourceFrog partner) {
-            return this.getCategory() == partner.getCategory();
+        if (other instanceof ResourceFrog partner) {
+            // Midas (Equivalence lane, #253) is its own breeding line: Midas x
+            // Midas only, and never with a species frog (even one sharing Midas's
+            // fallback category). So the colony you grow from one Kiss stays Midas.
+            if (this.isMidas() || partner.isMidas()) {
+                return this.isMidas() && partner.isMidas();
+            }
+            if (PFConfig.sameSpeciesOnly()) {
+                return this.getCategory() == partner.getCategory();
+            }
         }
         return true;
     }

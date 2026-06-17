@@ -18,6 +18,7 @@ import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
+import com.flatts.productivefrogs.registry.PFFluidTypes;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
 import com.flatts.productivefrogs.registry.PFParticles;
@@ -29,9 +30,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.component.CustomData;
@@ -87,6 +90,9 @@ public final class PFClientEvents {
         event.registerEntityRenderer(PFEntities.WITHERBANE.get(),
             com.flatts.productivefrogs.client.renderer.WitherbaneFrogRenderer::new);
         event.registerEntityRenderer(PFEntities.RESOURCE_SLIME.get(), ResourceSlimeRenderer::new);
+        // Mimic Slime (#253): vanilla body + an item-tinted translucent shell.
+        event.registerEntityRenderer(PFEntities.MIMIC_SLIME.get(),
+            com.flatts.productivefrogs.client.renderer.MimicSlimeRenderer::new);
         // Six parent species share one parameterized ParentSlimeRenderer, each
         // constructed with its species atlas + outer-shell tint.
         event.registerEntityRenderer(PFEntities.BOG_SLIME.get(),
@@ -142,6 +148,11 @@ public final class PFClientEvents {
                 PFBlocks.primedEgg(cat)
             );
         }
+        // Midas egg (#253) - gold, its own block (not a tinted VOID egg).
+        event.register(
+            (state, level, pos, tintIndex) -> tintIndex == 0 ? 0xFFFFD700 : -1,
+            PFBlocks.MIDAS_FROG_EGG.get()
+        );
         // Variant-keyed configurable Froglight: BlockColor reads the variant
         // identifier from the BE, looks up the matching SlimeVariant in the
         // datapack registry, returns its primary_color.
@@ -153,6 +164,13 @@ public final class PFClientEvents {
                 var be = level.getBlockEntity(pos);
                 if (!(be instanceof ConfigurableFroglightBlockEntity froglightBe)) {
                     return -1;
+                }
+                // Equivalence lane (#253): a placed Prismatic Froglight tints from
+                // its carried item's sprite-average colour (runtime resolver).
+                ResourceLocation synthBlockItem = froglightBe.getSynthesizedItem();
+                if (synthBlockItem != null) {
+                    Item item = BuiltInRegistries.ITEM.getOptional(synthBlockItem).orElse(null);
+                    return item == null ? -1 : SynthesizedTint.colorFor(item);
                 }
                 ResourceLocation variantId = froglightBe.getVariantId();
                 if (variantId == null) {
@@ -277,6 +295,28 @@ public final class PFClientEvents {
             return opaque(0x5DDE36);
         }, PFItems.SLIME_BUCKET.get());
 
+        // Mimic Slime Bucket (#253) — the silhouette layer (tintIndex 1) wears
+        // the carried item's sprite-average colour, read off the top-level
+        // SYNTHESIZED_ITEM component. Falls back to a neutral prismatic grey
+        // when un-stamped so the silhouette stays visible.
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 1) return -1;
+            ResourceLocation itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+            if (itemId == null) return opaque(0xC8C8D2);
+            Item item = BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
+            return item == null ? opaque(0xC8C8D2) : SynthesizedTint.colorFor(item);
+        }, PFItems.MIMIC_SLIME_BUCKET.get());
+
+        // Mimic Milk Bucket (#253) — milk layer (tintIndex 1) wears the carried
+        // item's colour off the top-level SYNTHESIZED_ITEM component.
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 1) return -1;
+            ResourceLocation itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+            if (itemId == null) return opaque(0xC8C8D2);
+            Item item = BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
+            return item == null ? opaque(0xC8C8D2) : SynthesizedTint.colorFor(item);
+        }, PFItems.MIMIC_MILK_BUCKET.get());
+
         // Slime Milk buckets — one item per variant (v1.8). Each tints its milk
         // layer (tintIndex 1) by its OWN variant's registry colour (the variant is
         // the item identity, no component lookup). Falls back to milky off-white
@@ -302,10 +342,28 @@ public final class PFClientEvents {
                 PFItems.PRIMED_FROG_EGG_ITEMS.get(cat).get()
             );
         }
+        // Midas egg block item (#253) - gold in inventory, matching the placed block.
+        event.register(
+            (stack, tintIndex) -> tintIndex == 0 ? 0xFFFFD700 : -1,
+            PFItems.MIDAS_FROG_EGG.get()
+        );
 
         // Configurable Froglight item — tint from SLIME_VARIANT component
         event.register((stack, tintIndex) -> {
             if (tintIndex != 0) return -1;
+            // Equivalence lane (#253): a synthesized Froglight carries an arbitrary
+            // item id (not a registered variant). Its tint is sampled from that
+            // item's sprite at runtime - no primary_color to look up.
+            ResourceLocation synthesizedItem = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+            if (synthesizedItem != null) {
+                Item item = BuiltInRegistries.ITEM.getOptional(synthesizedItem).orElse(null);
+                final int sargb = item == null ? -1 : SynthesizedTint.colorFor(item);
+                if (PFDebug.on(PFDebug.Area.TINT)) {
+                    PFDebug.logOnce(PFDebug.Area.TINT, "froglight_item_synth/" + synthesizedItem,
+                        () -> String.format("configurable_froglight(item) synthesized=%s -> #%08X", synthesizedItem, sargb));
+                }
+                return sargb;
+            }
             ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
             if (variantId == null) return -1;
             Minecraft mc = Minecraft.getInstance();
@@ -403,6 +461,8 @@ public final class PFClientEvents {
         event.register(PFMenuTypes.SLIME_CHURN.get(), SlimeChurnScreen::new);
         event.register(PFMenuTypes.SPAWNERY.get(), SpawneryScreen::new);
         event.register(PFMenuTypes.CASTING_MOLD.get(), CastingMoldScreen::new);
+        event.register(PFMenuTypes.DISTILLER.get(), com.flatts.productivefrogs.client.screen.DistillerScreen::new);
+        event.register(PFMenuTypes.ALEMBIC.get(), com.flatts.productivefrogs.client.screen.AlembicScreen::new);
         event.register(PFMenuTypes.HATCH.get(), com.flatts.productivefrogs.client.screen.HatchScreen::new);
         event.register(PFMenuTypes.INCUBATOR.get(), com.flatts.productivefrogs.client.screen.IncubatorScreen::new);
         event.register(PFMenuTypes.TERRARIUM_CONTROLLER.get(), com.flatts.productivefrogs.client.screen.TerrariumControllerScreen::new);
@@ -438,7 +498,12 @@ public final class PFClientEvents {
     @SubscribeEvent
     public static void onRegisterReloadListeners(RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(
-            (ResourceManagerReloadListener) rm -> ResourceSlimeRenderer.clearTextureCaches());
+            (ResourceManagerReloadListener) rm -> {
+                ResourceSlimeRenderer.clearTextureCaches();
+                // Drop the EE-lane sprite-average tint cache so a resource-pack swap /
+                // /reload re-samples re-textured items (Mimic Slime + Prismatic Froglight).
+                SynthesizedTint.clearCache();
+            });
     }
 
     /**
@@ -482,6 +547,40 @@ public final class PFClientEvents {
                 type
             );
         }
+
+        // Mimic Milk (#253): ONE fluid type, shared greyscale milk texture. Its
+        // per-instance colour comes from the source block's BE at the queried
+        // position (source-only, so every Mimic Milk block has a BE), resolved
+        // through the runtime item-sprite resolver. No-position fallback is a
+        // neutral prismatic grey (e.g. the held-bucket fluid render).
+        event.registerFluidType(
+            new IClientFluidTypeExtensions() {
+                @Override
+                public ResourceLocation getStillTexture() { return still; }
+
+                @Override
+                public ResourceLocation getFlowingTexture() { return flow; }
+
+                @Override
+                public int getTintColor() { return 0xFFC8C8D2; }
+
+                @Override
+                public int getTintColor(FluidState state, BlockAndTintGetter getter, BlockPos pos) {
+                    if (getter != null && pos != null
+                            && getter.getBlockEntity(pos) instanceof com.flatts.productivefrogs.content.block.entity.MimicMilkSourceBlockEntity be) {
+                        ResourceLocation itemId = be.getSynthesizedItem();
+                        if (itemId != null) {
+                            Item item = BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
+                            if (item != null) {
+                                return SynthesizedTint.colorFor(item);
+                            }
+                        }
+                    }
+                    return getTintColor();
+                }
+            },
+            PFFluidTypes.MIMIC_MILK_TYPE.get()
+        );
 
         // Molten metals (v1.12): same per-variant tint model over a shared
         // greyscale molten texture set (desaturated lava still/flow). The

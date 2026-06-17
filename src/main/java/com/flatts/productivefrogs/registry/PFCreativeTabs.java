@@ -61,6 +61,12 @@ public final class PFCreativeTabs {
                     // writes when a player buckets a variant-locked slime
                     // (Category + Variant strings in BUCKET_ENTITY_DATA).
                     output.accept(PFItems.SLIME_BUCKET.get());
+                    // Mimic Slime Bucket + Mimic Milk Bucket (#253) - the EE lane,
+                    // hidden when the lane is disabled.
+                    if (PFConfig.equivalenceEnabled()) {
+                        output.accept(PFItems.MIMIC_SLIME_BUCKET.get());
+                        output.accept(PFItems.MIMIC_MILK_BUCKET.get());
+                    }
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
                         if (h.value().isEnabled(h.key().location())) {
                             output.accept(PFItems.variantSlimeBucket(h.key().location(), h.value().category()));
@@ -81,6 +87,12 @@ public final class PFCreativeTabs {
                     }
                     if (!PFConfig.SPEC.isLoaded() || PFConfig.CASTING_MOLD_ENABLED.get()) {
                         output.accept(PFItems.CASTING_MOLD.get());
+                    }
+                    // Alembic + Distiller (#253) - the Equivalence lane's machines,
+                    // hidden when the lane is disabled.
+                    if (PFConfig.equivalenceEnabled()) {
+                        output.accept(PFItems.ALEMBIC.get());
+                        output.accept(PFItems.DISTILLER.get());
                     }
                     // Boss-tier catalyst altar blocks (#184), hidden when the boss
                     // master is off (#200). The boss variants' own entries (buckets,
@@ -192,6 +204,12 @@ public final class PFCreativeTabs {
                     for (var entry : PFItems.PRIMED_FROG_EGG_ITEMS.values()) {
                         output.accept(entry.get());
                     }
+                    // Midas Frog Egg block (#253) groups with the species primed-egg
+                    // blocks (it's a frogspawn block, not a spawn egg); hidden when
+                    // the Equivalence lane is disabled.
+                    if (PFConfig.equivalenceEnabled()) {
+                        output.accept(PFItems.MIDAS_FROG_EGG.get());
+                    }
                     // V1.5: the 6 broad-strokes category Froglight BlockItems
                     // (bog_froglight, cave_froglight, …) were deleted entirely.
                     // ResourceSlimes always carry a variant, so the no-variant
@@ -214,8 +232,17 @@ public final class PFCreativeTabs {
                     for (var entry : PFItems.RESOURCE_FROG_SPAWN_EGGS.values()) {
                         output.accept(entry.get());
                     }
+                    // Midas frog spawn egg (#253) sits with the other frog spawn
+                    // eggs; hidden when the Equivalence lane is disabled. (Its egg
+                    // block is grouped with the primed-egg blocks above.)
+                    if (PFConfig.equivalenceEnabled()) {
+                        output.accept(PFItems.MIDAS_FROG_SPAWN_EGG.get());
+                    }
                     for (var entry : PFItems.RESOURCE_TADPOLE_SPAWN_EGGS.values()) {
                         output.accept(entry.get());
+                    }
+                    if (PFConfig.equivalenceEnabled()) {
+                        output.accept(PFItems.MIDAS_TADPOLE_SPAWN_EGG.get());
                     }
                     // One stamped stack per variant (no unstamped base egg — a
                     // variant-less Resource Slime egg isn't a meaningful creative

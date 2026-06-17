@@ -3,11 +3,14 @@ package com.flatts.productivefrogs.registry;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.DistillerBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.EndCrystalReceptacleBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.HatchBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.MimicMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeChurnBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
@@ -136,6 +139,37 @@ public final class PFBlockEntities {
             () -> BlockEntityType.Builder.of(CastingMoldBlockEntity::new, PFBlocks.CASTING_MOLD.get()).build(null)
         );
 
+    /**
+     * BE type for the {@code distiller} block (#253) - owns the input/output
+     * slots, the RF buffer, and the distill timer. PF's first RF machine. See
+     * {@link DistillerBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<DistillerBlockEntity>> DISTILLER =
+        BLOCK_ENTITIES.register(
+            "distiller",
+            () -> BlockEntityType.Builder.of(DistillerBlockEntity::new, PFBlocks.DISTILLER.get()).build(null)
+        );
+
+    /**
+     * BE type for the Mimic Milk source block (#253) - carries the synthesized
+     * item + the spawn budget. See {@link MimicMilkSourceBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<MimicMilkSourceBlockEntity>> MIMIC_MILK_SOURCE =
+        BLOCK_ENTITIES.register(
+            "mimic_slime_milk_source",
+            () -> BlockEntityType.Builder.of(MimicMilkSourceBlockEntity::new, PFBlocks.MIMIC_MILK.get()).build(null)
+        );
+
+    /**
+     * BE type for the {@code alembic} block (#253) - the lane's RF synthesizer
+     * (bucket + item slots, output, energy buffer). See {@link AlembicBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<AlembicBlockEntity>> ALEMBIC =
+        BLOCK_ENTITIES.register(
+            "alembic",
+            () -> BlockEntityType.Builder.of(AlembicBlockEntity::new, PFBlocks.ALEMBIC.get()).build(null)
+        );
+
     /** BE type for the {@code spawnery} block - holds the 4-slot inventory + cook/burn timers. */
     public static final Supplier<BlockEntityType<SpawneryBlockEntity>> SPAWNERY =
         BLOCK_ENTITIES.register(
@@ -156,8 +190,10 @@ public final class PFBlockEntities {
             "primed_frog_egg",
             () -> BlockEntityType.Builder.of(
                 PrimedFrogEggBlockEntity::new,
-                PFBlocks.PRIMED_FROG_EGGS.values().stream()
-                    .map(java.util.function.Supplier::get)
+                java.util.stream.Stream.concat(
+                        PFBlocks.PRIMED_FROG_EGGS.values().stream().map(java.util.function.Supplier::get),
+                        // The Midas egg (#253) shares this BE type.
+                        java.util.stream.Stream.of(PFBlocks.MIDAS_FROG_EGG.get()))
                     .toArray(net.minecraft.world.level.block.Block[]::new)
             ).build(null)
         );

@@ -104,10 +104,13 @@ public class TerrariumControllerBlock extends Block implements EntityBlock {
         // Only intercept when the buffer can actually take it (right variant, not full,
         // not boss-tier); otherwise fall through so the right-click opens the GUI and
         // the player can see why (instead of a dead swing with no feedback).
-        if (stack.getItem() instanceof SlimeMilkBucketItem milk
+        // A per-variant Slime Milk bucket OR (Equivalence lane, #253) a Mimic Milk
+        // bucket; the BE decides acceptance (variant/mimic single-kind + buffer +
+        // boss gate). When it can't accept, fall through so the click opens the GUI.
+        if ((stack.getItem() instanceof SlimeMilkBucketItem
+                || stack.getItem() instanceof com.flatts.productivefrogs.content.item.MimicMilkBucketItem)
                 && level.getBlockEntity(pos) instanceof TerrariumControllerBlockEntity be) {
-            var variant = milk.variantId();
-            if (variant != null && be.canAccept(variant)) {
+            if (be.canAcceptBucket(stack)) {
                 if (!level.isClientSide() && be.pushChargeFromBucket(stack)) {
                     if (!player.getAbilities().instabuild) {
                         stack.shrink(1);

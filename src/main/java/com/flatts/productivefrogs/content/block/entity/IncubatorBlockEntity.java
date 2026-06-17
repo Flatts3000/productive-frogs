@@ -53,6 +53,8 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
 
     @Nullable
     private Category category;
+    /** Equivalence lane (#253): the incubating seed matures into a Midas frog. */
+    private boolean midas;
     private boolean hasStats;
     private int appetite;
     private int bounty;
@@ -145,19 +147,25 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
 
     /** Seed from a frogspawn item (baseline stats - a plain egg carries none). */
     public boolean seedBaseline(Category category) {
-        return seed(category, false, 0, 0, 0);
+        return seed(category, false, 0, 0, 0, false);
     }
 
     /** Seed from the in-cavity breeding redirect: a bred frog's pending-offspring stats. */
     public boolean seedFromBreeding(Category category, int appetite, int bounty, int reach) {
-        return seed(category, true, appetite, bounty, reach);
+        return seed(category, true, appetite, bounty, reach, false);
     }
 
-    private boolean seed(Category category, boolean hasStats, int appetite, int bounty, int reach) {
+    /** Breeding redirect carrying the Midas marker (#253): matures into a Midas frog. */
+    public boolean seedFromBreeding(Category category, int appetite, int bounty, int reach, boolean midas) {
+        return seed(category, true, appetite, bounty, reach, midas);
+    }
+
+    private boolean seed(Category category, boolean hasStats, int appetite, int bounty, int reach, boolean midas) {
         if (this.category != null) {
             return false; // already incubating - one at a time
         }
         this.category = category;
+        this.midas = midas;
         this.hasStats = hasStats;
         this.appetite = appetite;
         this.bounty = bounty;
@@ -226,6 +234,7 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
             return;
         }
         frog.setCategory(category);
+        frog.setMidas(midas);
         // Spawn into the cavity cell the Incubator faces (inward = FACING.opposite()).
         Direction inward = state.hasProperty(BlockStateProperties.FACING)
             ? state.getValue(BlockStateProperties.FACING).getOpposite() : Direction.UP;
@@ -243,6 +252,7 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
 
     private void clear() {
         this.category = null;
+        this.midas = false;
         this.hasStats = false;
         this.appetite = 0;
         this.bounty = 0;
@@ -295,6 +305,9 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
         super.saveAdditional(tag, registries);
         if (category != null) {
             tag.putString("Category", category.name());
+            if (midas) {
+                tag.putBoolean("Midas", true);
+            }
             tag.putBoolean("HasStats", hasStats);
             tag.putInt("Appetite", appetite);
             tag.putInt("Bounty", bounty);
@@ -314,6 +327,7 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
             } catch (IllegalArgumentException e) {
                 category = null;
             }
+            midas = tag.getBoolean("Midas");
             hasStats = tag.getBoolean("HasStats");
             appetite = tag.getInt("Appetite");
             bounty = tag.getInt("Bounty");
@@ -323,6 +337,7 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
             pendingRelease = tag.getBoolean("PendingRelease");
         } else {
             category = null;
+            midas = false;
         }
     }
 
