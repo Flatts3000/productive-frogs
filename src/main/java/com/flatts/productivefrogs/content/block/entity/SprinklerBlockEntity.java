@@ -63,6 +63,8 @@ public class SprinklerBlockEntity extends BlockEntity {
 
     @Nullable
     private ResourceLocation variantId;
+    /** Equivalence lane (#253): true when {@link #variantId} is a synthesized item id, not a variant. */
+    private boolean mimic;
     private int spawnsRemaining = UNINITIALIZED;
     private int spawnsCapacity = UNINITIALIZED;
     private int speedLevel;
@@ -113,12 +115,23 @@ public class SprinklerBlockEntity extends BlockEntity {
 
     /** A candidate for top-up: holds {@code variant}, not infinite, and draining low. */
     public boolean wantsTopUp(ResourceLocation variant, int threshold) {
-        return variant.equals(variantId) && !infinite && spawnsRemaining <= threshold;
+        return wantsTopUp(variant, false, threshold);
     }
 
-    /** Stamp a fresh charge of {@code variant} (replaces whatever was here). */
+    /** Top-up candidate, mimic-aware (#253): the synthesized-vs-variant kind must also match. */
+    public boolean wantsTopUp(ResourceLocation variant, boolean mimic, int threshold) {
+        return variant.equals(variantId) && this.mimic == mimic && !infinite && spawnsRemaining <= threshold;
+    }
+
+    /** Stamp a fresh variant charge (replaces whatever was here). */
     public void loadCharge(ResourceLocation variant, MilkCharge charge) {
+        loadCharge(variant, false, charge);
+    }
+
+    /** Stamp a fresh charge; {@code mimic} marks {@code variant} as a synthesized item id (#253). */
+    public void loadCharge(ResourceLocation variant, boolean mimic, MilkCharge charge) {
         this.variantId = variant;
+        this.mimic = mimic;
         this.spawnsRemaining = clampSpawns(charge.spawnsRemaining());
         this.spawnsCapacity = clampSpawns(Math.max(charge.capacity(), this.spawnsRemaining));
         this.speedLevel = Mth.clamp(charge.speed(), 0, PFConfig.catalystMaxSpeedLevel());
@@ -302,7 +315,19 @@ public class SprinklerBlockEntity extends BlockEntity {
         // The cavity sits directly below a ceiling Sprinkler; drop into the cell
         // beneath it (slimes have no spawn-collision needs at size 1 and fall in).
         BlockPos target = pos.below();
-        Slime slime = SlimeMilkSourceBlock.createSlimeForVariant(level, variantId);
+        Slime slime;
+        if (mimic) {
+            // Equivalence lane (#253): spawn a Mimic Slime carrying the item, not a variant slime.
+            com.flatts.productivefrogs.content.entity.MimicSlime m =
+                com.flatts.productivefrogs.registry.PFEntities.MIMIC_SLIME.get().create(level);
+            if (m == null) {
+                return;
+            }
+            m.setSynthesizedItem(variantId);
+            slime = m;
+        } else {
+            slime = SlimeMilkSourceBlock.createSlimeForVariant(level, variantId);
+        }
         if (slime == null) {
             return;
         }
@@ -332,6 +357,7 @@ public class SprinklerBlockEntity extends BlockEntity {
     /** Empty the Sprinkler so it can take a fresh charge of any variant. */
     private void clear(Level level, BlockPos pos, BlockState state) {
         this.variantId = null;
+        this.mimic = false;
         this.spawnsRemaining = UNINITIALIZED;
         this.spawnsCapacity = UNINITIALIZED;
         this.speedLevel = 0;
@@ -369,7 +395,10 @@ public class SprinklerBlockEntity extends BlockEntity {
         if (variantId == null) {
             return ItemStack.EMPTY;
         }
-        ItemStack bucket = PFItems.slimeMilkBucket(variantId);
+        // Equivalence lane (#253): a mimic Sprinkler drains back to a Mimic Milk bucket.
+        ItemStack bucket = mimic
+            ? com.flatts.productivefrogs.content.item.MimicMilkBucketItem.forItem(variantId)
+            : PFItems.slimeMilkBucket(variantId);
         if (bucket.isEmpty()) {
             return ItemStack.EMPTY;
         }
@@ -407,6 +436,9 @@ public class SprinklerBlockEntity extends BlockEntity {
         super.saveAdditional(tag, registries);
         if (variantId != null) {
             tag.putString("Variant", variantId.toString());
+            if (mimic) {
+                tag.putBoolean("Mimic", true);
+            }
             tag.putInt("SpawnsRemaining", spawnsRemaining);
             tag.putInt("SpawnsCapacity", spawnsCapacity);
             tag.putInt("SpeedLevel", speedLevel);
@@ -422,6 +454,7 @@ public class SprinklerBlockEntity extends BlockEntity {
         super.loadAdditional(tag, registries);
         if (tag.contains("Variant", Tag.TAG_STRING)) {
             variantId = ResourceLocation.tryParse(tag.getString("Variant"));
+            mimic = tag.getBoolean("Mimic");
             spawnsRemaining = clampSpawns(tag.getInt("SpawnsRemaining"));
             spawnsCapacity = clampSpawns(Math.max(tag.getInt("SpawnsCapacity"), spawnsRemaining));
             speedLevel = Mth.clamp(tag.getInt("SpeedLevel"), 0, PFConfig.catalystMaxSpeedLevel());
@@ -431,6 +464,7 @@ public class SprinklerBlockEntity extends BlockEntity {
             intervalRemaining = Math.max(0, Math.min(tag.getInt("IntervalRemaining"), intervalTotal));
         } else {
             variantId = null;
+            mimic = false;
             spawnsRemaining = UNINITIALIZED;
             spawnsCapacity = UNINITIALIZED;
         }
