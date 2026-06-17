@@ -123,7 +123,11 @@ public final class LayCategoryFrogspawn {
                             continue;
                         }
 
-                        BlockState placed = PFBlocks.primedEgg(resourceFrog.getCategory())
+                        // Midas (#253) lays its own egg block (named "Midas Egg",
+                        // hatches Midas); the six species lay their category egg.
+                        BlockState placed = (resourceFrog.isMidas()
+                            ? PFBlocks.MIDAS_FROG_EGG.get()
+                            : PFBlocks.primedEgg(resourceFrog.getCategory()))
                             .defaultBlockState();
                         level.setBlock(placePos, placed, 3);
                         level.gameEvent(
@@ -146,19 +150,16 @@ public final class LayCategoryFrogspawn {
                         // pending roll) leaves the egg statless, and the hatchlings
                         // mature into baseline (1/1/1) frogs.
                         // See docs/frog_breeding.md.
-                        if (level.getBlockEntity(placePos) instanceof PrimedFrogEggBlockEntity eggBe) {
-                            if (resourceFrog.hasPendingOffspring()) {
-                                eggBe.setPendingStats(
-                                    resourceFrog.getPendingOffspringAppetite(),
-                                    resourceFrog.getPendingOffspringBounty(),
-                                    resourceFrog.getPendingOffspringReach()
-                                );
-                                resourceFrog.clearPendingOffspring();
-                            }
-                            // Midas (#253) breeds true: a Midas frog's egg hatches Midas.
-                            if (resourceFrog.isMidas()) {
-                                eggBe.setMidas(true);
-                            }
+                        // (The Midas egg block stamps its own midas marker in
+                        // onPlace, so a bred Midas egg hatches Midas - #253.)
+                        if (resourceFrog.hasPendingOffspring()
+                                && level.getBlockEntity(placePos) instanceof PrimedFrogEggBlockEntity eggBe) {
+                            eggBe.setPendingStats(
+                                resourceFrog.getPendingOffspringAppetite(),
+                                resourceFrog.getPendingOffspringBounty(),
+                                resourceFrog.getPendingOffspringReach()
+                            );
+                            resourceFrog.clearPendingOffspring();
                         }
                         isPregnant.erase();
                         return true;

@@ -148,6 +148,11 @@ public final class PFClientEvents {
                 PFBlocks.primedEgg(cat)
             );
         }
+        // Midas egg (#253) - gold, its own block (not a tinted VOID egg).
+        event.register(
+            (state, level, pos, tintIndex) -> tintIndex == 0 ? 0xFFFFD700 : -1,
+            PFBlocks.MIDAS_FROG_EGG.get()
+        );
         // Variant-keyed configurable Froglight: BlockColor reads the variant
         // identifier from the BE, looks up the matching SlimeVariant in the
         // datapack registry, returns its primary_color.
@@ -337,6 +342,11 @@ public final class PFClientEvents {
                 PFItems.PRIMED_FROG_EGG_ITEMS.get(cat).get()
             );
         }
+        // Midas egg block item (#253) - gold in inventory, matching the placed block.
+        event.register(
+            (stack, tintIndex) -> tintIndex == 0 ? 0xFFFFD700 : -1,
+            PFItems.MIDAS_FROG_EGG.get()
+        );
 
         // Configurable Froglight item — tint from SLIME_VARIANT component
         event.register((stack, tintIndex) -> {

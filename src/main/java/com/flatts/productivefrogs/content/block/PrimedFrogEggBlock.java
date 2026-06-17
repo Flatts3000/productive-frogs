@@ -55,14 +55,31 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
     private static final int MAX_TADPOLES_SPAWN = 3;
 
     private final Category category;
+    /**
+     * Equivalence lane (#253): a Midas egg. It still carries a {@link Category}
+     * (VOID, the sentinel its tadpoles + frog use), but is its OWN block - natively
+     * named "Midas Egg", not a VOID egg - and stamps the {@code midas} marker so it
+     * hatches Midas. A standalone block, NOT a 7th Category.
+     */
+    private final boolean midas;
 
     public PrimedFrogEggBlock(Category category, Properties properties) {
+        this(category, false, properties);
+    }
+
+    public PrimedFrogEggBlock(Category category, boolean midas, Properties properties) {
         super(properties);
         this.category = category;
+        this.midas = midas;
     }
 
     public Category getCategory() {
         return category;
+    }
+
+    /** Whether this is the Midas egg block (#253). */
+    public boolean isMidas() {
+        return midas;
     }
 
     @Override
@@ -93,6 +110,9 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
         // exposes no "ticks remaining"). The BE is created before onPlace runs.
         if (level.getBlockEntity(pos) instanceof PrimedFrogEggBlockEntity egg) {
             egg.setHatchGameTime(level.getGameTime() + delay);
+            if (midas) {
+                egg.setMidas(true);
+            }
         }
     }
 

@@ -61,24 +61,19 @@ public final class EggPrimerHandler {
             return;
         }
 
-        // Equivalence lane (#253): a Princess's Kiss primes frogspawn into a MIDAS
+        // Equivalence lane (#253): a Princess's Kiss primes frogspawn into a Midas
         // egg (the fairy-tale motif inverted - kissing the unhatched spawn awakens
         // a frog of legend). The Kiss isn't a slime variant, so it's a dedicated
-        // case ahead of the variant lookup. The egg reuses the VOID block as a
-        // carrier (arcane/end species, closest fit) but carries the Midas flag, so
-        // it hatches Midas tadpoles. The Kiss's existing frog->villager use
-        // (on a live frog) is unaffected - this is the block interaction.
+        // case ahead of the variant lookup. MIDAS_FROG_EGG is its own block (named
+        // "Midas Egg"); its onPlace stamps the midas marker so it hatches Midas.
+        // The Kiss's existing frog->villager use (on a live frog) is unaffected.
         if (held.is(com.flatts.productivefrogs.registry.PFItems.PRINCESS_KISS.get())) {
             event.setCancellationResult(InteractionResult.SUCCESS);
             event.setCanceled(true);
             if (level.isClientSide()) {
                 return;
             }
-            level.setBlockAndUpdate(pos, PFBlocks.primedEgg(Category.VOID).defaultBlockState());
-            if (level.getBlockEntity(pos)
-                    instanceof com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity eggBe) {
-                eggBe.setMidas(true);
-            }
+            level.setBlockAndUpdate(pos, PFBlocks.MIDAS_FROG_EGG.get().defaultBlockState());
             PFDebug.log(PFDebug.Area.EGG, () -> String.format("prime: frogspawn at %s + Princess's Kiss -> Midas egg", pos));
             if (!event.getEntity().getAbilities().instabuild) {
                 held.shrink(1);

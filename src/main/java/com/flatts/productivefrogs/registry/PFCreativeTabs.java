@@ -226,10 +226,11 @@ public final class PFCreativeTabs {
                     for (var entry : PFItems.RESOURCE_FROG_SPAWN_EGGS.values()) {
                         output.accept(entry.get());
                     }
-                    // Midas spawn egg (#253) sits with the frog eggs; hidden when
-                    // the Equivalence lane is disabled.
+                    // Midas spawn egg + egg block (#253) sit with the frog eggs;
+                    // hidden when the Equivalence lane is disabled.
                     if (PFConfig.equivalenceEnabled()) {
                         output.accept(PFItems.MIDAS_FROG_SPAWN_EGG.get());
+                        output.accept(PFItems.MIDAS_FROG_EGG.get());
                     }
                     for (var entry : PFItems.RESOURCE_TADPOLE_SPAWN_EGGS.values()) {
                         output.accept(entry.get());

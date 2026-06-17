@@ -481,6 +481,16 @@ public final class PFItems {
     );
 
     /**
+     * Midas frog egg BlockItem (#253) - places {@link PFBlocks#MIDAS_FROG_EGG}.
+     * The creative/JEI counterpart of the per-species primed-egg block items.
+     */
+    public static final DeferredItem<BlockItem> MIDAS_FROG_EGG = ITEMS.registerSimpleBlockItem(
+        "midas_frog_egg",
+        PFBlocks.MIDAS_FROG_EGG,
+        new Item.Properties()
+    );
+
+    /**
      * Distiller BlockItem (#253) - places {@link PFBlocks#DISTILLER}, the
      * Equivalence lane's RF-powered extractor (Prismatic Froglight -> item).
      */

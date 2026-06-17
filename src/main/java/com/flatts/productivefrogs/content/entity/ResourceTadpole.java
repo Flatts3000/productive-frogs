@@ -209,6 +209,9 @@ public class ResourceTadpole extends Tadpole {
         if (this.hasCustomName()) {
             return super.getName();
         }
+        if (midas) {
+            return net.minecraft.network.chat.Component.translatable(getType().getDescriptionId() + ".midas");
+        }
         return net.minecraft.network.chat.Component.translatable(
             getType().getDescriptionId() + "." + getCategory().id()
         );

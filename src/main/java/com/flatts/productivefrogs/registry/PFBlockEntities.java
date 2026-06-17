@@ -190,8 +190,10 @@ public final class PFBlockEntities {
             "primed_frog_egg",
             () -> BlockEntityType.Builder.of(
                 PrimedFrogEggBlockEntity::new,
-                PFBlocks.PRIMED_FROG_EGGS.values().stream()
-                    .map(java.util.function.Supplier::get)
+                java.util.stream.Stream.concat(
+                        PFBlocks.PRIMED_FROG_EGGS.values().stream().map(java.util.function.Supplier::get),
+                        // The Midas egg (#253) shares this BE type.
+                        java.util.stream.Stream.of(PFBlocks.MIDAS_FROG_EGG.get()))
                     .toArray(net.minecraft.world.level.block.Block[]::new)
             ).build(null)
         );

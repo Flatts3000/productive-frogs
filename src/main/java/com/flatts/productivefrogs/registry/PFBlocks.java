@@ -57,6 +57,18 @@ public final class PFBlocks {
     public static final Map<Category, DeferredBlock<PrimedFrogEggBlock>> PRIMED_FROG_EGGS = buildPrimedEggs();
 
     /**
+     * The Midas frog egg (Equivalence lane, #253) - Midas's own frogspawn, made by
+     * Kiss-priming. A standalone PrimedFrogEggBlock (NOT a 7th Category): natively
+     * named "Midas Egg", carries the VOID sentinel category for its tadpoles, and
+     * the midas marker so it hatches Midas.
+     */
+    public static final DeferredBlock<PrimedFrogEggBlock> MIDAS_FROG_EGG = BLOCKS.registerBlock(
+        "midas_frog_egg",
+        props -> new PrimedFrogEggBlock(Category.VOID, true, props),
+        primedEggProperties(Category.VOID)
+    );
+
+    /**
      * The variant-keyed configurable Froglight block. One block, datapack-driven
      * variant via a {@link com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity}
      * — placement copies the item's {@code SLIME_VARIANT} component into the BE,
