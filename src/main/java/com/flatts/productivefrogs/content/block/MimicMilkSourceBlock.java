@@ -142,6 +142,12 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
     @Override
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         super.tick(state, level, pos, random);
+        // Whole-lane gate (#253): a Mimic Milk source spawns nothing when the EE lane
+        // is disabled. Pause without rescheduling - a block update (or re-enable +
+        // reload) revives it; nothing drains in the meantime.
+        if (!com.flatts.productivefrogs.PFConfig.equivalenceEnabled()) {
+            return;
+        }
         if (!level.getFluidState(pos).isSource()
                 || !(level.getBlockEntity(pos) instanceof MimicMilkSourceBlockEntity be)) {
             return;

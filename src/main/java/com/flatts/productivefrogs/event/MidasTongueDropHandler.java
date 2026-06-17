@@ -40,6 +40,9 @@ public final class MidasTongueDropHandler {
 
     @SubscribeEvent
     public static void onMimicSlimeKilled(LivingDeathEvent event) {
+        if (!com.flatts.productivefrogs.PFConfig.equivalenceEnabled()) {
+            return;
+        }
         if (!(event.getEntity() instanceof MimicSlime slime)) {
             return;
         }

@@ -118,12 +118,18 @@ something `canSynthesize` refuses.
 
 ## Gating
 
-`equivalence.enabled` (default true) is the master toggle, via
-`ConfigEnabledCondition.Key.EQUIVALENCE`. The Alembic + Distiller recipes carry
-the `config_enabled` condition (uncraftable + JEI-hidden when off), and the
-creative-tab entries hide. Like the Spawnery, the gate covers crafting / JEI /
-creative visibility; a placed machine still functions. Access is also gated by
-Midas (the Kiss drops from the Dragon Altar) and throttled by RF.
+`equivalence.enabled` (**default FALSE - opt-in**) is the master toggle, via
+`ConfigEnabledCondition.Key.EQUIVALENCE` (recipes) and `PFConfig.equivalenceEnabled()`
+(behaviour). The gate is **whole-lane**, not just visibility: the Alembic + Distiller
+recipes carry the `config_enabled` condition (uncraftable + JEI-hidden when off), the
+creative-tab entries hide, AND every behavioural surface is inert when off - the
+Alembic/Distiller `serverTick` no-op, the Princess's Kiss won't prime a Midas egg
+(`EggPrimerHandler`), Midas frogs drop nothing (`MidasTongueDropHandler`), and Mimic
+Milk sources + Terrarium Sprinklers spawn no Mimic Slimes. (This is stricter than the
+Spawnery, whose placed block keeps working when its flag is off.) The EE GameTests set
+`PFConfig.equivalenceEnabledOverride = true` to drive the machines under the off
+default. Access is further gated by Midas (the Kiss drops from the Dragon Altar) and
+throttled by RF.
 
 Recipe materials: **copper + glass + a nether star** (the texture follows the
 recipe per PF convention - copper-framed glass apparatus with a glowing

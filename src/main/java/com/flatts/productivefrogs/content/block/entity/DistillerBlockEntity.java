@@ -243,6 +243,11 @@ public class DistillerBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, DistillerBlockEntity be) {
+        // Whole-lane gate (#253): a Distiller is inert when the EE lane is disabled.
+        if (!com.flatts.productivefrogs.PFConfig.equivalenceEnabled()) {
+            be.resetProgress();
+            return;
+        }
         ItemStack in = be.items.getStackInSlot(INPUT_SLOT);
         ResourceLocation itemId = DistillerBlockEntity.isPrismatic(in)
             ? in.get(PFDataComponents.SYNTHESIZED_ITEM.get())

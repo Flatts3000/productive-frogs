@@ -285,6 +285,11 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, AlembicBlockEntity be) {
+        // Whole-lane gate (#253): an Alembic is inert when the EE lane is disabled.
+        if (!com.flatts.productivefrogs.PFConfig.equivalenceEnabled()) {
+            be.resetProgress();
+            return;
+        }
         ItemStack bucket = be.items.getStackInSlot(BUCKET_SLOT);
         ItemStack input = be.items.getStackInSlot(ITEM_SLOT);
         if (!bucket.is(Items.BUCKET) || !canSynthesize(level, input)) {

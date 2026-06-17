@@ -6260,6 +6260,8 @@ public final class PFGameTests {
 
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
     public static void alembicSynthesizesOffRosterItemIntoMimicSlimeBucket(GameTestHelper helper) {
+        // EE lane defaults OFF; force it on so the machine ticks (no test asserts it off).
+        com.flatts.productivefrogs.PFConfig.equivalenceEnabledOverride = Boolean.TRUE;
         BlockPos pos = new BlockPos(2, 2, 2);
         helper.setBlock(pos, PFBlocks.ALEMBIC.get());
         ServerLevel level = helper.getLevel();
@@ -6295,6 +6297,7 @@ public final class PFGameTests {
 
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
     public static void alembicRefusesComponentBearingItem(GameTestHelper helper) {
+        com.flatts.productivefrogs.PFConfig.equivalenceEnabledOverride = Boolean.TRUE;
         BlockPos pos = new BlockPos(2, 2, 2);
         helper.setBlock(pos, PFBlocks.ALEMBIC.get());
         ServerLevel level = helper.getLevel();
@@ -6331,6 +6334,7 @@ public final class PFGameTests {
 
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
     public static void alembicRefusesOnRosterItem(GameTestHelper helper) {
+        com.flatts.productivefrogs.PFConfig.equivalenceEnabledOverride = Boolean.TRUE;
         BlockPos pos = new BlockPos(2, 2, 2);
         helper.setBlock(pos, PFBlocks.ALEMBIC.get());
         ServerLevel level = helper.getLevel();
@@ -6365,6 +6369,7 @@ public final class PFGameTests {
 
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
     public static void distillerExtractsItemFromPrismaticFroglight(GameTestHelper helper) {
+        com.flatts.productivefrogs.PFConfig.equivalenceEnabledOverride = Boolean.TRUE;
         BlockPos pos = new BlockPos(2, 2, 2);
         helper.setBlock(pos, PFBlocks.DISTILLER.get());
         ServerLevel level = helper.getLevel();

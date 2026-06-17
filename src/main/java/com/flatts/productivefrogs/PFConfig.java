@@ -403,14 +403,16 @@ public final class PFConfig {
 
         EQUIVALENCE_ENABLED = builder
             .comment(
-                "Whether the Equivalence lane is enabled. Default true.",
+                "Whether the Equivalence lane is enabled. Default FALSE (opt-in).",
                 "The post-capstone, RF-powered transmutation lane for OFF-ROSTER items (#253):",
                 "Alembic (item -> Mimic Slime Bucket) -> Mimic Milk -> Mimic Slimes -> Midas",
                 "(Kiss-primed frog) -> Prismatic Froglight -> Distiller (-> the item). When false the",
-                "Alembic + Distiller are uncraftable, hidden from JEI + the creative tab, and the lane's",
-                "items don't show in creative; placed machines still function. Recipe toggle needs a world reload."
+                "WHOLE lane is inert: Alembic + Distiller are uncraftable and don't process, the",
+                "Princess's Kiss won't prime a Midas egg, Midas frogs drop nothing, Mimic Milk sources",
+                "don't spawn, and the lane's items are hidden from JEI + the creative tab. Recipe toggle",
+                "needs a world reload."
             )
-            .define("enabled", true);
+            .define("enabled", false);
 
         builder.pop();
 
@@ -1109,9 +1111,20 @@ public final class PFConfig {
         return !SPEC.isLoaded() || HOPPING_ENABLED.get();
     }
 
-    /** Whether the Equivalence lane is enabled ({@code equivalence.enabled}, #253); fallback true. */
+    /**
+     * Test-only override for {@link #equivalenceEnabled()}. The EE lane defaults OFF,
+     * so the GameTests that drive the Alembic/Distiller directly set this true (mirrors
+     * {@code SlimeMilkSourceBlock.depletionEnabledOverride}). Null in production.
+     */
+    @org.jetbrains.annotations.Nullable
+    public static Boolean equivalenceEnabledOverride;
+
+    /** Whether the Equivalence lane is enabled ({@code equivalence.enabled}, #253); fallback OFF. */
     public static boolean equivalenceEnabled() {
-        return !SPEC.isLoaded() || EQUIVALENCE_ENABLED.get();
+        if (equivalenceEnabledOverride != null) {
+            return equivalenceEnabledOverride;
+        }
+        return SPEC.isLoaded() && EQUIVALENCE_ENABLED.get();
     }
 
     /** Whether the Froglight Cleaver is enabled ({@code froglight_weapon.enabled}); fallback true. */

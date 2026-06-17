@@ -322,6 +322,11 @@ public class SprinklerBlockEntity extends BlockEntity {
         BlockPos target = pos.below();
         Slime slime;
         if (mimic) {
+            // Whole-lane gate (#253): don't spawn Mimic Slimes when the EE lane is off
+            // (parity with the placed Mimic Milk source). The species path is untouched.
+            if (!PFConfig.equivalenceEnabled()) {
+                return;
+            }
             // Equivalence lane (#253): spawn a Mimic Slime carrying the item, not a variant slime.
             com.flatts.productivefrogs.content.entity.MimicSlime m =
                 com.flatts.productivefrogs.registry.PFEntities.MIMIC_SLIME.get().create(level);

@@ -67,7 +67,10 @@ public final class EggPrimerHandler {
         // case ahead of the variant lookup. MIDAS_FROG_EGG is its own block (named
         // "Midas Egg"); its onPlace stamps the midas marker so it hatches Midas.
         // The Kiss's existing frog->villager use (on a live frog) is unaffected.
-        if (held.is(com.flatts.productivefrogs.registry.PFItems.PRINCESS_KISS.get())) {
+        // Gated on the EE lane (#253): with the lane off, the Kiss does NOT prime a
+        // Midas egg (falls through), so the whole lane is unreachable in survival.
+        if (held.is(com.flatts.productivefrogs.registry.PFItems.PRINCESS_KISS.get())
+                && com.flatts.productivefrogs.PFConfig.equivalenceEnabled()) {
             event.setCancellationResult(InteractionResult.SUCCESS);
             event.setCanceled(true);
             if (level.isClientSide()) {
