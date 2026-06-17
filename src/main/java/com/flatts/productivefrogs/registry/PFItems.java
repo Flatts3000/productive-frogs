@@ -282,6 +282,26 @@ public final class PFItems {
         "tadpole", () -> PFEntities.RESOURCE_TADPOLE.get());
 
     /**
+     * Midas spawn egg (Equivalence lane, #253). Midas is a {@code midas}-flagged
+     * ResourceFrog (not a Category), so it's outside {@link #buildSpawnEggs}; this
+     * one-off egg stamps {@code Midas:true} (and the VOID carrier category) into
+     * ENTITY_DATA, which {@code ResourceFrog.readAdditionalSaveData} reads on spawn.
+     * Gold colours. The normal acquisition is still Kiss-priming; this is the
+     * creative/testing counterpart, hidden when the lane is disabled.
+     */
+    public static final DeferredItem<SpawnEggItem> MIDAS_FROG_SPAWN_EGG = ITEMS.registerItem(
+        "midas_frog_spawn_egg",
+        props -> {
+            EntityType<?> type = PFEntities.RESOURCE_FROG.get();
+            CompoundTag nbt = new CompoundTag();
+            nbt.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
+            nbt.putString("Category", Category.VOID.name());
+            nbt.putBoolean("Midas", true);
+            return new SpawnEggItem((EntityType<? extends Mob>) type, 0xFFD700, 0xB8860B,
+                new Item.Properties().component(DataComponents.ENTITY_DATA, CustomData.of(nbt)));
+        });
+
+    /**
      * The single Resource Slime spawn egg. One registered item whose variant
      * identity lives in the {@code SLIME_VARIANT} data component (see
      * {@link ResourceSlimeSpawnEggItem}). Per-variant stacks are built by
