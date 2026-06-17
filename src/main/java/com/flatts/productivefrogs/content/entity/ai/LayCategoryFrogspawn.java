@@ -58,10 +58,13 @@ public final class LayCategoryFrogspawn {
         }
         for (BlockPos incubatorPos : terrarium.incubators()) {
             if (level.getBlockEntity(incubatorPos) instanceof IncubatorBlockEntity incubator && incubator.hasRoom()) {
+                // Midas (#253) carries its marker into the Incubator so a bred Midas
+                // matures into a Midas (not a VOID frog). A bred pair always has
+                // pending stats, so the baseline path never carries Midas - fine.
                 boolean seeded = frog.hasPendingOffspring()
                     ? incubator.seedFromBreeding(frog.getCategory(),
                         frog.getPendingOffspringAppetite(), frog.getPendingOffspringBounty(),
-                        frog.getPendingOffspringReach())
+                        frog.getPendingOffspringReach(), frog.isMidas())
                     : incubator.seedBaseline(frog.getCategory());
                 if (seeded) {
                     frog.clearPendingOffspring();
@@ -90,10 +93,9 @@ public final class LayCategoryFrogspawn {
                     // loose frogspawn in the cavity, and bred stats flow straight
                     // into the Incubator. Falls through to the water-lay below when
                     // there's no Incubator with room (or no Terrarium).
-                    // Midas (#253) always water-lays a Midas egg; the Incubator
-                    // path seeds by Category and has no Midas carry yet, so skip it
-                    // for Midas (a documented gap, not a regression).
-                    if (!resourceFrog.isMidas() && tryLayIntoIncubator(level, resourceFrog)) {
+                    // Inside a formed Terrarium, lay into an Incubator - Midas carries
+                    // its marker through now (#253), so a bred Midas matures Midas.
+                    if (tryLayIntoIncubator(level, resourceFrog)) {
                         isPregnant.erase();
                         return true;
                     }
