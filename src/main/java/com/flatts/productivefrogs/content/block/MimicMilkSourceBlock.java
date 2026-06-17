@@ -3,13 +3,19 @@ package com.flatts.productivefrogs.content.block;
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.block.entity.MimicMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.entity.MimicSlime;
+import com.flatts.productivefrogs.content.item.MilkCatalyst;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -35,9 +41,10 @@ import org.jetbrains.annotations.Nullable;
  * source's item, on the shared {@code MilkSpawnEconomy} cadence, until its budget
  * drains - the EE lane's 1->N duplication step.
  *
- * <p>Leaner than {@link SlimeMilkSourceBlock}: the Mimic fluid never spreads
- * (every block is a source), so there is no inert-spread case; and there are no
- * catalysts / density cap / infinite flag (the lane's throttle is RF, upstream).
+ * <p>Leaner than {@link SlimeMilkSourceBlock} only in that the Mimic fluid never
+ * spreads (every block is a source), so there is no inert-spread case. It accepts
+ * the same Slime Milk catalysts (Count / Speed / Quantity / Endless) dropped into
+ * the pool via {@link #entityInside}, at parity with a species source.
  */
 public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, LiquidBlockContainer {
 
@@ -63,8 +70,59 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
         if (level instanceof ServerLevel serverLevel && level.getFluidState(pos).isSource()) {
             // The item is written by the bucket's checkExtraContent (runs right
             // after onPlace, well before this delayed tick fires).
-            scheduleNextSpawnTick(serverLevel, pos, level.getRandom());
+            scheduleNextSpawnTick(serverLevel, pos, level.getRandom(), 0);
         }
+    }
+
+    /**
+     * Consume a Slime Milk catalyst dropped into the pool, applying its upgrade to
+     * the BE - parity with {@link SlimeMilkSourceBlock#entityInside}. Gated: server
+     * only; catalysts enabled; an enabled catalyst {@link ItemEntity} over a real
+     * source with an assigned item; Count/Endless only when depletion is on (else
+     * a no-op). An already-maxed upgrade is left unconsumed for the player.
+     */
+    @Override
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        super.entityInside(state, level, pos, entity);
+        if (level.isClientSide || !PFConfig.milkCatalystsEnabled()) {
+            return;
+        }
+        if (!(entity instanceof ItemEntity itemEntity) || !state.getFluidState().isSource()) {
+            return;
+        }
+        ItemStack stack = itemEntity.getItem();
+        MilkCatalyst catalyst = MilkCatalyst.fromStack(stack);
+        if (catalyst == null || !catalyst.isEnabled()) {
+            return;
+        }
+        if (!(level.getBlockEntity(pos) instanceof MimicMilkSourceBlockEntity be) || be.getSynthesizedItem() == null) {
+            return;
+        }
+        boolean depleting = PFConfig.SPEC.isLoaded() && PFConfig.DEPLETION_ENABLED.get();
+        if ((catalyst == MilkCatalyst.COUNT || catalyst == MilkCatalyst.INFINITE) && !depleting) {
+            return;
+        }
+        if (!be.applyCatalyst(catalyst)) {
+            return;
+        }
+        stack.shrink(1);
+        if (stack.isEmpty()) {
+            itemEntity.discard();
+        } else {
+            itemEntity.setItem(stack);
+        }
+        if (catalyst == MilkCatalyst.INFINITE) {
+            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+        }
+        level.playSound(null, pos, SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS,
+            0.7F, 1.3F + level.getRandom().nextFloat() * 0.2F);
+        if (level instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER,
+                pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, 8, 0.3, 0.3, 0.3, 0.0);
+        }
+        PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
+            "mimic milk @%s: consumed %s catalyst (speed=%d quantity=%d infinite=%s remaining=%d)",
+            pos, catalyst, be.getSpeedLevel(), be.getQuantityLevel(), be.isInfinite(), be.getSpawnsRemaining()));
     }
 
     /** Reject foreign fluids so water/lava can't wash the source away (mirrors SlimeMilkSourceBlock). */
@@ -93,14 +151,15 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
             // Placed without an item (e.g. /setblock): inert, no reschedule.
             return;
         }
-        boolean depleting = PFConfig.SPEC.isLoaded() && PFConfig.DEPLETION_ENABLED.get();
+        // Endless (Infinite catalyst) never depletes, so it never drains.
+        boolean depleting = PFConfig.SPEC.isLoaded() && PFConfig.DEPLETION_ENABLED.get() && !be.isInfinite();
         if (depleting && be.getSpawnsRemaining() <= 0) {
             drainToAir(level, pos);
             return;
         }
-        boolean spawned = spawn(level, pos, random, itemId);
+        boolean spawned = spawn(level, pos, random, itemId, be);
         if (!spawned) {
-            scheduleNextSpawnTick(level, pos, random);
+            scheduleNextSpawnTick(level, pos, random, be.getSpeedLevel());
             return;
         }
         if (depleting) {
@@ -110,7 +169,7 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
                 return;
             }
         }
-        scheduleNextSpawnTick(level, pos, random);
+        scheduleNextSpawnTick(level, pos, random, be.getSpeedLevel());
     }
 
     private static void drainToAir(ServerLevel level, BlockPos pos) {
@@ -118,25 +177,36 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
         PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format("mimic milk @%s: depleted, drained", pos));
     }
 
-    private static void scheduleNextSpawnTick(ServerLevel level, BlockPos pos, RandomSource random) {
-        int delay = com.flatts.productivefrogs.content.block.MilkSpawnEconomy.intervalTicks(0, random);
+    private static void scheduleNextSpawnTick(ServerLevel level, BlockPos pos, RandomSource random, int speedLevel) {
+        int delay = MilkSpawnEconomy.intervalTicks(speedLevel, random);
         level.scheduleTick(pos, level.getBlockState(pos).getBlock(), delay);
     }
 
-    private boolean spawn(ServerLevel level, BlockPos pos, RandomSource random, ResourceLocation itemId) {
-        BlockPos spawnPos = chooseSpawnPos(level, pos);
-        MimicSlime slime = PFEntities.MIMIC_SLIME.get().create(level);
-        if (slime == null) {
-            return false;
+    /**
+     * Spawn {@code 1 + quantityLevel} Mimic Slimes (Quantity catalyst), each carrying
+     * the source's item. The budget is still spent once per event by the caller, so
+     * Quantity is strictly additive. Returns true if at least one slime spawned.
+     */
+    private boolean spawn(ServerLevel level, BlockPos pos, RandomSource random, ResourceLocation itemId,
+                          MimicMilkSourceBlockEntity be) {
+        int batch = MilkSpawnEconomy.batchQuantity(be.getQuantityLevel());
+        int spawned = 0;
+        for (int i = 0; i < batch; i++) {
+            BlockPos spawnPos = chooseSpawnPos(level, pos);
+            MimicSlime slime = PFEntities.MIMIC_SLIME.get().create(level);
+            if (slime == null) {
+                continue;
+            }
+            slime.setSize(1, true);
+            slime.setSynthesizedItem(itemId);
+            slime.moveTo(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5,
+                random.nextFloat() * 360F, 0F);
+            level.addFreshEntity(slime);
+            spawned++;
+            PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
+                "mimic milk @%s: spawned Mimic Slime (%s) at %s", pos, itemId, spawnPos));
         }
-        slime.setSize(1, true);
-        slime.setSynthesizedItem(itemId);
-        slime.moveTo(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5,
-            random.nextFloat() * 360F, 0F);
-        level.addFreshEntity(slime);
-        PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
-            "mimic milk @%s: spawned Mimic Slime (%s) at %s", pos, itemId, spawnPos));
-        return true;
+        return spawned > 0;
     }
 
     private static BlockPos chooseSpawnPos(ServerLevel level, BlockPos source) {

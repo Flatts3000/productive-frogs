@@ -1,11 +1,13 @@
 package com.flatts.productivefrogs.content.block.entity;
 
 import com.flatts.productivefrogs.PFConfig;
+import com.flatts.productivefrogs.content.item.MilkCatalyst;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.util.Mth;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -18,9 +20,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * BlockEntity for the Mimic Milk source block (#253). Carries the synthesized
  * item id (the slimes this source spawns wear it; the fluid tints from it) and a
- * remaining-spawn budget. Deliberately leaner than {@link SlimeMilkSourceBlockEntity}:
- * no catalyst upgrades / density cap / infinite flag (the EE lane's throttle is
- * RF at the Alembic, not catalysts) - those can be layered on later if wanted.
+ * remaining-spawn budget plus the catalyst upgrades (Count / Speed / Quantity /
+ * Endless), at parity with {@link SlimeMilkSourceBlockEntity} - players drop
+ * catalysts into the pool to buff a Mimic source exactly like a species source
+ * (the RF throttle at the Alembic still gates how much milk you can make upstream).
  */
 public class MimicMilkSourceBlockEntity extends BlockEntity {
 
@@ -32,6 +35,14 @@ public class MimicMilkSourceBlockEntity extends BlockEntity {
 
     /** Remaining slimes this source will spawn before draining; -1 = not yet seeded. */
     private int spawnsRemaining = -1;
+    /** Capacity high-water mark (the "N / cap" denominator); -1 = not yet seeded. Count raises it. */
+    private int spawnsCapacity = -1;
+    /** Speed catalyst level (faster spawn cadence). */
+    private int speedLevel = 0;
+    /** Quantity catalyst level (more slimes per spawn event). */
+    private int quantityLevel = 0;
+    /** Endless catalyst flag (never depletes). */
+    private boolean infinite = false;
 
     public MimicMilkSourceBlockEntity(BlockPos pos, BlockState state) {
         super(PFBlockEntities.MIMIC_MILK_SOURCE.get(), pos, state);
@@ -53,6 +64,7 @@ public class MimicMilkSourceBlockEntity extends BlockEntity {
         this.synthesizedItem = synthesizedItem;
         if (synthesizedItem != null && spawnsRemaining < 0) {
             spawnsRemaining = defaultSpawns();
+            spawnsCapacity = defaultSpawns();
         }
         if (changed) {
             setChanged();
@@ -66,8 +78,29 @@ public class MimicMilkSourceBlockEntity extends BlockEntity {
         return spawnsRemaining < 0 ? defaultSpawns() : spawnsRemaining;
     }
 
-    /** Spend one spawn from the budget. */
+    /** Total spawn budget (high-water mark); the "N / cap" denominator. Never below remaining. */
+    public int getSpawnsCapacity() {
+        int cap = spawnsCapacity < 0 ? defaultSpawns() : spawnsCapacity;
+        return Math.max(cap, getSpawnsRemaining());
+    }
+
+    public int getSpeedLevel() {
+        return speedLevel;
+    }
+
+    public int getQuantityLevel() {
+        return quantityLevel;
+    }
+
+    public boolean isInfinite() {
+        return infinite;
+    }
+
+    /** Spend one spawn from the budget. No-op when Endless. */
     public void decrementSpawns() {
+        if (infinite) {
+            return;
+        }
         if (spawnsRemaining < 0) {
             spawnsRemaining = defaultSpawns();
         }
@@ -77,6 +110,55 @@ public class MimicMilkSourceBlockEntity extends BlockEntity {
         }
     }
 
+    /**
+     * Apply one catalyst's effect, mirroring {@link SlimeMilkSourceBlockEntity#applyCatalyst}.
+     * Returns true if it changed anything (so the caller consumes one item); false when
+     * already maxed/redundant (the dropped item is left for the player). Bounds from
+     * {@link PFConfig}; the Count cap reuses the shared {@link SlimeMilkSourceBlockEntity#MAX_STORED_SPAWNS}.
+     */
+    public boolean applyCatalyst(MilkCatalyst catalyst) {
+        boolean applied = switch (catalyst) {
+            case COUNT -> {
+                if (spawnsRemaining < 0) {
+                    spawnsRemaining = defaultSpawns();
+                    spawnsCapacity = defaultSpawns();
+                }
+                if (spawnsRemaining >= SlimeMilkSourceBlockEntity.MAX_STORED_SPAWNS) {
+                    yield false;
+                }
+                int added = PFConfig.catalystCountPer();
+                spawnsRemaining = Mth.clamp(spawnsRemaining + added, 0, SlimeMilkSourceBlockEntity.MAX_STORED_SPAWNS);
+                spawnsCapacity = Mth.clamp(spawnsCapacity + added, 0, SlimeMilkSourceBlockEntity.MAX_STORED_SPAWNS);
+                yield true;
+            }
+            case SPEED -> {
+                if (speedLevel >= PFConfig.catalystMaxSpeedLevel()) {
+                    yield false;
+                }
+                speedLevel++;
+                yield true;
+            }
+            case QUANTITY -> {
+                if (quantityLevel >= PFConfig.catalystMaxQuantityLevel()) {
+                    yield false;
+                }
+                quantityLevel++;
+                yield true;
+            }
+            case INFINITE -> {
+                if (infinite) {
+                    yield false;
+                }
+                infinite = true;
+                yield true;
+            }
+        };
+        if (applied) {
+            setChanged();
+        }
+        return applied;
+    }
+
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
@@ -84,6 +166,16 @@ public class MimicMilkSourceBlockEntity extends BlockEntity {
             tag.putString("SynthesizedItem", synthesizedItem.toString());
         }
         tag.putInt("SpawnsRemaining", spawnsRemaining);
+        tag.putInt("SpawnsCapacity", spawnsCapacity);
+        if (speedLevel > 0) {
+            tag.putInt("SpeedLevel", speedLevel);
+        }
+        if (quantityLevel > 0) {
+            tag.putInt("QuantityLevel", quantityLevel);
+        }
+        if (infinite) {
+            tag.putBoolean("Infinite", true);
+        }
     }
 
     @Override
@@ -93,6 +185,10 @@ public class MimicMilkSourceBlockEntity extends BlockEntity {
             ? ResourceLocation.tryParse(tag.getString("SynthesizedItem"))
             : null;
         spawnsRemaining = tag.contains("SpawnsRemaining", Tag.TAG_INT) ? tag.getInt("SpawnsRemaining") : -1;
+        spawnsCapacity = tag.contains("SpawnsCapacity", Tag.TAG_INT) ? tag.getInt("SpawnsCapacity") : -1;
+        speedLevel = tag.contains("SpeedLevel", Tag.TAG_INT) ? Math.max(0, tag.getInt("SpeedLevel")) : 0;
+        quantityLevel = tag.contains("QuantityLevel", Tag.TAG_INT) ? Math.max(0, tag.getInt("QuantityLevel")) : 0;
+        infinite = tag.getBoolean("Infinite");
     }
 
     @Override
@@ -100,6 +196,9 @@ public class MimicMilkSourceBlockEntity extends BlockEntity {
         CompoundTag tag = super.getUpdateTag(registries);
         if (synthesizedItem != null) {
             tag.putString("SynthesizedItem", synthesizedItem.toString());
+        }
+        if (infinite) {
+            tag.putBoolean("Infinite", true);
         }
         return tag;
     }
