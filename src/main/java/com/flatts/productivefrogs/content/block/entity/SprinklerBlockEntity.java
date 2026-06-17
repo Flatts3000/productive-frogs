@@ -87,6 +87,11 @@ public class SprinklerBlockEntity extends BlockEntity {
         return variantId;
     }
 
+    /** Equivalence lane (#253): true when {@link #getVariantId()} is a synthesized item id (Mimic Milk), not a variant. */
+    public boolean isMimic() {
+        return mimic;
+    }
+
     public int getSpawnsRemaining() {
         return Math.max(0, spawnsRemaining);
     }
