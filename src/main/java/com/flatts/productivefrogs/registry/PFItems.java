@@ -302,6 +302,24 @@ public final class PFItems {
         });
 
     /**
+     * Midas <i>tadpole</i> spawn egg (#253) - the tadpole counterpart of
+     * {@link #MIDAS_FROG_SPAWN_EGG}, for spawn-egg parity with the six species
+     * (each has a frog + tadpole egg). Stamps {@code Midas:true} into a Resource
+     * Tadpole's ENTITY_DATA; it matures into a Midas frog.
+     */
+    public static final DeferredItem<SpawnEggItem> MIDAS_TADPOLE_SPAWN_EGG = ITEMS.registerItem(
+        "midas_tadpole_spawn_egg",
+        props -> {
+            EntityType<?> type = PFEntities.RESOURCE_TADPOLE.get();
+            CompoundTag nbt = new CompoundTag();
+            nbt.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
+            nbt.putString("Category", Category.VOID.name());
+            nbt.putBoolean("Midas", true);
+            return new SpawnEggItem((EntityType<? extends Mob>) type, 0xFFD700, 0xB8860B,
+                new Item.Properties().component(DataComponents.ENTITY_DATA, CustomData.of(nbt)));
+        });
+
+    /**
      * The single Resource Slime spawn egg. One registered item whose variant
      * identity lives in the {@code SLIME_VARIANT} data component (see
      * {@link ResourceSlimeSpawnEggItem}). Per-variant stacks are built by

@@ -573,6 +573,16 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
                 Component.translatable("productivefrogs.jei.primed_egg.info", frogName));
         }
 
+        // Midas (Equivalence lane, #253): a flag-frog, not a Category, so it's
+        // outside the loop. Its frog + tadpole spawn eggs get their own info pages
+        // (eats Mimic Slimes, drops Prismatic Froglights, Kiss-primed).
+        if (com.flatts.productivefrogs.PFConfig.equivalenceEnabled()) {
+            reg.addIngredientInfo(new ItemStack(PFItems.MIDAS_FROG_SPAWN_EGG.get()),
+                VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.midas_frog.info"));
+            reg.addIngredientInfo(new ItemStack(PFItems.MIDAS_TADPOLE_SPAWN_EGG.get()),
+                VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.midas_tadpole.info"));
+        }
+
         // Parent species spawn eggs — one fixed-text info per species (lang
         // entries enumerate the biomes).
         addSpawnEggInfo(reg, PFItems.BOG_SLIME_SPAWN_EGG.get(),      "bog");

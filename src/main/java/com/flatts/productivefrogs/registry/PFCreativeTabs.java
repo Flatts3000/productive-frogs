@@ -234,6 +234,9 @@ public final class PFCreativeTabs {
                     for (var entry : PFItems.RESOURCE_TADPOLE_SPAWN_EGGS.values()) {
                         output.accept(entry.get());
                     }
+                    if (PFConfig.equivalenceEnabled()) {
+                        output.accept(PFItems.MIDAS_TADPOLE_SPAWN_EGG.get());
+                    }
                     // One stamped stack per variant (no unstamped base egg — a
                     // variant-less Resource Slime egg isn't a meaningful creative
                     // entry; the item still counts as "in a tab" via these stacks).
