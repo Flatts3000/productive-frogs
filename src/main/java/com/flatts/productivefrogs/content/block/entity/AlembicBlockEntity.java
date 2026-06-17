@@ -85,11 +85,12 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
                 // Lenient at the slot (no level here for the registry gate); the
                 // authoritative synthesizability check runs in serverTick.
                 case ITEM_SLOT -> !stack.is(Items.BUCKET);
-                // OUTPUT_SLOT: must accept the synthesized result so the
-                // serverTick's internal insertItem succeeds (external insertion
-                // is blocked by the menu's mayPlace + the output-only capability
-                // view, so this never lets a hopper push into the output).
-                default -> true;
+                // OUTPUT_SLOT accepts ONLY the synthesized result type, so the
+                // serverTick's internal insertItem succeeds while a mod holding the
+                // raw handler can't shove an arbitrary item into the output (the
+                // menu's mayPlace + the output-only capability view already block
+                // GUI / hopper access; this hardens the raw-handler path too).
+                default -> stack.getItem() instanceof MimicSlimeBucketItem;
             };
         }
     };
@@ -107,7 +108,8 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
 
         @Override
         public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-            return slot == OUTPUT_SLOT ? stack : items.insertItem(slot, stack, simulate);
+            // inputView exposes only slots 0..1, so OUTPUT_SLOT (2) is unreachable here.
+            return items.insertItem(slot, stack, simulate);
         }
 
         @Override
@@ -122,7 +124,7 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
 
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            return slot != OUTPUT_SLOT && items.isItemValid(slot, stack);
+            return items.isItemValid(slot, stack);
         }
     };
 
@@ -308,13 +310,18 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
         be.progress++;
         be.setChanged();
         if (be.progress >= SYNTH_TIME) {
-            // Transactional: spend one bucket + one item, emit the Mimic Slime Bucket.
+            // Airtight transaction: insert the output FIRST and only consume the
+            // inputs if it fully landed. (The simulate above already guarantees this
+            // within a single-threaded tick; doing the real insert first removes any
+            // dependence on that and the silent-leftover-drop edge.)
+            if (!be.items.insertItem(OUTPUT_SLOT, result.copy(), false).isEmpty()) {
+                return;
+            }
             be.items.extractItem(BUCKET_SLOT, 1, false);
             be.items.extractItem(ITEM_SLOT, 1, false);
-            be.items.insertItem(OUTPUT_SLOT, result.copy(), false);
             be.progress = 0;
             level.playSound(null, pos, SoundEvents.BREWING_STAND_BREW, SoundSource.BLOCKS, 0.5F, 0.8F);
-            PFDebug.log(PFDebug.Area.REGISTRY, () -> String.format("alembic @%s synthesized %s", pos, itemId));
+            PFDebug.log(PFDebug.Area.ALEMBIC, () -> String.format("alembic @%s synthesized %s", pos, itemId));
             be.syncToClients();
         }
     }

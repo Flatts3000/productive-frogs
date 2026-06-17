@@ -6398,4 +6398,54 @@ public final class PFGameTests {
         }
         helper.succeed();
     }
+
+    /**
+     * The Midas identity must survive the whole egg -> tadpole -> frog chain (#253).
+     * A Midas Frog Egg block stamps the midas marker in onPlace; hatching it must
+     * yield Midas tadpoles, and maturing one must yield a Midas frog. This is the
+     * regression that the "Void leak" bugs kept reopening - lock it.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void midasEggHatchesMidasTadpolesThatMatureToMidasFrog(GameTestHelper helper) {
+        BlockPos eggPos = new BlockPos(2, 2, 2);
+        helper.setBlock(eggPos.below(), Blocks.WATER);
+
+        PrimedFrogEggBlock eggBlock = (PrimedFrogEggBlock) PFBlocks.MIDAS_FROG_EGG.get();
+        helper.setBlock(eggPos, eggBlock);
+
+        ServerLevel level = helper.getLevel();
+        BlockPos absEggPos = helper.absolutePos(eggPos);
+
+        // onPlace stamps the midas marker on the BE.
+        if (!(level.getBlockEntity(absEggPos)
+                instanceof com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity eggBe)
+                || !eggBe.isMidas()) {
+            helper.fail("placed Midas Frog Egg must stamp midas on its BlockEntity");
+            return;
+        }
+
+        // Hatch directly (bypass the scheduled delay), then every tadpole must be Midas.
+        eggBlock.tick(level.getBlockState(absEggPos), level, absEggPos, level.getRandom());
+        List<ResourceTadpole> tadpoles = helper.getEntities(PFEntities.RESOURCE_TADPOLE.get());
+        if (tadpoles.isEmpty()) {
+            helper.fail("expected 1-3 Midas tadpoles after hatch, got 0");
+            return;
+        }
+        for (ResourceTadpole tadpole : tadpoles) {
+            if (!tadpole.isMidas()) {
+                helper.fail("hatched tadpole is not Midas");
+                return;
+            }
+        }
+
+        // Maturing a Midas tadpole yields a Midas frog.
+        tadpoles.get(0).ageUp();
+        helper.succeedWhen(() -> {
+            List<ResourceFrog> midas = helper.getEntities(PFEntities.RESOURCE_FROG.get()).stream()
+                .filter(ResourceFrog::isMidas).toList();
+            if (midas.isEmpty()) {
+                helper.fail("matured Midas tadpole did not produce a Midas frog");
+            }
+        });
+    }
 }

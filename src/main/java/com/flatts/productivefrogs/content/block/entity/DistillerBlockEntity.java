@@ -276,12 +276,16 @@ public class DistillerBlockEntity extends BlockEntity implements MenuProvider {
         be.progress++;
         be.setChanged();
         if (be.progress >= DISTILL_TIME) {
-            // Transactional: consume the Froglight and emit the item on one tick.
+            // Airtight transaction: emit the item FIRST, consume the Froglight only if
+            // it fully landed (removes any dependence on the same-tick simulate above
+            // and the silent-leftover-drop edge).
+            if (!be.items.insertItem(OUTPUT_SLOT, result.copy(), false).isEmpty()) {
+                return;
+            }
             be.items.extractItem(INPUT_SLOT, 1, false);
-            be.items.insertItem(OUTPUT_SLOT, result.copy(), false);
             be.progress = 0;
             level.playSound(null, pos, SoundEvents.BREWING_STAND_BREW, SoundSource.BLOCKS, 0.4F, 1.2F);
-            PFDebug.log(PFDebug.Area.REGISTRY, () -> String.format(
+            PFDebug.log(PFDebug.Area.DISTILLER, () -> String.format(
                 "distiller @%s rendered %s", pos, item));
             be.syncToClients();
         }

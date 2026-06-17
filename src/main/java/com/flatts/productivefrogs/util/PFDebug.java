@@ -67,6 +67,8 @@ public final class PFDebug {
         MILKER("milker"),
         MILK_SOURCE("milk_source"),
         CHURN("churn"),
+        ALEMBIC("alembic"),
+        DISTILLER("distiller"),
         RENDER("render"),
         TINT("tint"),
         SPAWNERY("spawnery");

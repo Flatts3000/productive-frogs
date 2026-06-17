@@ -237,6 +237,10 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
      */
     public boolean canAccept(ResourceLocation variant) {
         return charges.size() < PFConfig.terrariumControllerBufferDepth()
+            // A variant (Slime Milk) charge can't mix with a buffered mimic charge,
+            // even on an unlikely id collision (defense-in-depth; canAcceptBucket
+            // already enforces this single-kind rule for the bucket path).
+            && !tankMimic
             && (tankVariant == null || tankVariant.equals(variant))
             && !requiresCatalystAltar(variant);
     }

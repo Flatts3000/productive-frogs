@@ -350,6 +350,16 @@ public final class PFModBusEvents {
             }
         }
 
+        // Mimic Milk bucket (#253) is also a BucketItem subclass, so it needs the
+        // same explicit FluidHandler.ITEM registration. Its wrapper additionally
+        // preserves the synthesized item id onto the drained FluidStack so a
+        // bucket <-> tank round-trip keeps it (MimicMilkFluidBucketWrapper).
+        event.registerItem(
+            Capabilities.FluidHandler.ITEM,
+            (stack, ctx) -> new com.flatts.productivefrogs.content.fluid.MimicMilkFluidBucketWrapper(stack),
+            PFItems.MIMIC_MILK_BUCKET.get()
+        );
+
         // Brewed Froglight curio (#169) - register the Curios item capability
         // ONLY when curios is loaded. The call is behind the guard so
         // CuriosCompat (and the Curios API types it references) never classload
