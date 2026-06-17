@@ -482,12 +482,13 @@ public final class PFItems {
 
     /**
      * Midas frog egg BlockItem (#253) - places {@link PFBlocks#MIDAS_FROG_EGG}.
-     * The creative/JEI counterpart of the per-species primed-egg block items.
+     * Uses {@link PlaceOnWaterBlockItem} exactly like the per-species primed-egg
+     * block items (see {@link #buildPrimedEggItems}): a plain BlockItem can't
+     * place frogspawn on a water source, so a simple block item is unplaceable.
      */
-    public static final DeferredItem<BlockItem> MIDAS_FROG_EGG = ITEMS.registerSimpleBlockItem(
+    public static final DeferredItem<BlockItem> MIDAS_FROG_EGG = ITEMS.registerItem(
         "midas_frog_egg",
-        PFBlocks.MIDAS_FROG_EGG,
-        new Item.Properties()
+        props -> new PlaceOnWaterBlockItem(PFBlocks.MIDAS_FROG_EGG.get(), props)
     );
 
     /**
