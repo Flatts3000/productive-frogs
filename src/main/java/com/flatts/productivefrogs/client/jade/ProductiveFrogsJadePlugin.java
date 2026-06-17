@@ -317,8 +317,14 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 if (data != null && data.contains("S_variant")) {
                     ResourceLocation variant = ResourceLocation.tryParse(data.getString("S_variant"));
                     if (variant != null) {
+                        // translatableWithFallback so a pack/datapack-added variant
+                        // (no shipped lang key) reads as a title-cased name instead
+                        // of the raw "block.productivefrogs.<v>_slime_milk" key - the
+                        // same fallback SlimeMilkBucketItem.getName uses.
                         tooltip.add(Component.translatable("productivefrogs.jade.sprinkler_milk",
-                            Component.translatable("block.productivefrogs." + variant.getPath() + "_slime_milk")));
+                            Component.translatableWithFallback(
+                                "block.productivefrogs." + variant.getPath() + "_slime_milk",
+                                com.flatts.productivefrogs.util.VariantNames.titleCase(variant) + " Slime Milk")));
                     }
                     if (data.getBoolean("S_infinite")) {
                         tooltip.add(Component.translatable("productivefrogs.jade.spawns_unlimited"));
