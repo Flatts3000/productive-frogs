@@ -113,8 +113,8 @@ dependencies {
     // items collapsing into one generic line.
     //
     // JEI for MC 1.21.1 lives on the 19.21.x line.
-    compileOnly "mezz.jei:jei-1.21.1-neoforge-api:19.27.0.340"
-    runtimeOnly "mezz.jei:jei-1.21.1-neoforge:19.27.0.340"
+    compileOnly "mezz.jei:jei-1.21.1-neoforge-api:19.27.0.343"
+    runtimeOnly "mezz.jei:jei-1.21.1-neoforge:19.27.0.343"
 
     // Jade (the WAILA fork) - compileOnly ONLY. Our @WailaPlugin
     // (client/jade/ProductiveFrogsJadePlugin) references the Jade API at build
