@@ -6196,6 +6196,25 @@ public final class PFGameTests {
         });
     }
 
+    /**
+     * Facing-aware: the shipped structure placed at a 90-degree rotation must still
+     * validate (the ritual wall now points a different world direction). Guards the
+     * build-orientation fix - previously the altar only validated in one world rotation.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "wither_altar", timeoutTicks = 100,
+        rotationSteps = 1)
+    public static void witherAltarValidatesWhenRotated(GameTestHelper helper) {
+        helper.succeedWhen(() -> {
+            BlockPos hatch = findWitherAltarHatch(helper);
+            helper.assertTrue(hatch != null, "no Wither Altar Hatch in the rotated structure");
+            com.flatts.productivefrogs.content.multiblock.WitherAltarValidator.Result r =
+                com.flatts.productivefrogs.content.multiblock.WitherAltarValidator
+                    .validate(helper.getLevel(), helper.absolutePos(hatch));
+            helper.assertTrue(r.valid(),
+                "a rotated wither_altar must still validate; validator says: " + r.detail());
+        });
+    }
+
     /** Strictness: knocking out one shell froglight must make the altar fail validation. */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "wither_altar", timeoutTicks = 100)
     public static void witherAltarRejectsMissingFroglight(GameTestHelper helper) {
