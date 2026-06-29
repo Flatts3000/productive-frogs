@@ -1,164 +1,141 @@
 # Forward Port to Minecraft 26.1 / NeoForge 26.1
 
-> **STATUS: PLANNED (not started).** This document scopes the forward port of Productive Frogs from MC 1.21.1 / NeoForge 21.1.x to **MC 26.1 / NeoForge 26.1.x**, and defines the GitHub branch + release model that lets the 1.21.1 line live on as a maintenance branch. Authored 2026-06-29. The companion historical doc is [`port_mc_1_21_1.md`](./port_mc_1_21_1.md) (the original 1.21.11 -> 1.21.1 backport), which this port partially **reverses**.
+> **STATUS: PLANNED (not started).** Forward port of Productive Frogs from MC 1.21.1 / NeoForge 21.1.x to **MC 26.1 / NeoForge 26.1.2.76** (ATM11's target), shipping as **PF 2.0.0**. This plan is grounded in the four-track research sweep recorded in [`port_mc_26_1_research.md`](./port_mc_26_1_research.md) - read that first; it is the authoritative API/ecosystem reference and this plan derives from it. Companion history: [`port_mc_1_21_1.md`](./port_mc_1_21_1.md) (the original 1.21.11 -> 1.21.1 backport, which this port partially reverses). Authored 2026-06-29, revised post-research.
 
 ## Why this is happening
 
-PF is feature-complete on the 1.21.1 line (v1.24.2, stable on CurseForge). Two decisions drive the move (2026-06-29):
+PF is feature-complete on 1.21.1 (v1.24.2, stable on CurseForge). Two decisions drive the move:
 
-1. **Decouple from Sky Frogs.** PF was on 1.21.1 *only* to anchor the Sky Frogs modpack, which was itself pinned there by Ex Deorum + Skyblock Builder having no 1.21.4+ builds. PF now becomes a **standalone** CurseForge content mod on the modern line. Sky Frogs stays on 1.21.1, pinned to the last-compatible PF jar (the `1.24.x` line) - no further PF action needed for the pack.
-2. **Target where the audience is heading.** The mod follows **All The Mods 11 (ATM11)**, the NeoForge kitchen-sink bellwether where every tech mod PF integrates with lives. ATM10 was 1.21.1; **ATM11 is MC 26.1.2 / NeoForge 26.1**.
+1. **Decouple from Sky Frogs.** PF was on 1.21.1 only to anchor that modpack. PF now becomes a **standalone** mod on the modern line; Sky Frogs stays on 1.21.1 pinned to the `1.24.x` jar.
+2. **Follow ATM11.** The mod targets where its audience is heading - **ATM11 = MC 26.1.2 / NeoForge 26.1**. NeoForge signals 26.1 is the next stable modding baseline. (As of mid-2026 ATM11 is alpha and the heavy tech mods are still mid-port; PF ships when the build is green, independent of partner timing - see scope below.)
 
-### Ecosystem reality (researched 2026-06-29)
+## 2.0 scope - standalone, JEI + Jade only
 
-- Minecraft dropped the `1.21.x` scheme in Dec 2025 for **year-based numbering**. There is **no 1.22**. The line reads `1.21.11 -> 26.1 (Mar 2026) -> 26.2 "Chaos Cubed" (Jun 2026)`.
-- **NeoForge signals 26.1 is the next stable modding baseline** (their 26.1 release notes), the explicit successor to 1.21.1.
-- As of late June 2026, **ATM11 is a "super-early alpha"** and the heavy tech mods (Mekanism, AE2, Create) are still mid-port - Mekanism was still shipping 1.21.1 builds in April 2026. Library soft-deps (JEI, Jade) port fast and lead; the big tech mods are the long pole.
-- **PF's integrations are all optional / JSON `mod_loaded`-gated,** so PF compiles and runs against bare NeoForge 26.1 today. Partner variants stay dormant and light up automatically as those mods arrive. Being early costs *integration test coverage*, not *shippability*.
+**PF 2.0 ships with no cross-mod integrations.** This sidesteps the research's biggest finding (Mekanism, Create, Industrial Foregoing, and Flux Networks aren't ported to 26.1, so their content is untestable) and sharply cuts port surface.
 
-**Strategic timing:** start the port now alongside ATM11's alpha; ship `2.0.0` as PF's primary release when ATM11 exits alpha and the partner ecosystem lands on 26.1. Go **straight to 26.1** - never stop at an intermediate 1.21.x (those are an ecosystem dead zone the packs skipped, and they cost the same API rewrites).
+**In 2.0:** the six species, the **vanilla** resource roster, all four appliances (Milker / Churn / Spawnery / Casting Mold), the Froglight Crucible + the melt-and-cast lane, the Terrarium multiblock, the boss/endgame tier + altars, the Equivalence (EE) lane, frog stat breeding, Frog Legs / fairy-tale content, the advancements tab. **Plus JEI** (recipe + info pages) and **Jade** (look-at tooltips) - both have 26.1 builds (JEI beta, Jade stable).
+
+**Dropped from 2.0 (return as additive 2.x minors as the ecosystem ports, mirroring the original v1.2-v1.15 layering):**
+- **All cross-mod content** - every partner-mod `slime_variant` + recipe (Mekanism, Create, AE2, AllTheOres, Mystical Agriculture, Powah, Industrial Foregoing, Refined Storage, Flux Networks, Just Dire Things), the 33 cross-mod crush recipes, the `c:`-tag primer variants, the `disabledIntegrations` config surface, and the `VariantIntegrations` boot hook.
+- **Curios** - the brewed-Froglight worn-charm slot + `integration/curios` glue + `curios/` slot JSON. Brewed Froglights keep their **placed-aura** and **held self-buff** forms; only the worn charm is gone until Curios is re-added.
+- **Patchouli** - the in-game guide book (`patchouli_books/` + assets). Returns when Patchouli ports to 26.1.
+
+**Note:** Flux Networks looks abandoned on the modern line (no update since Jan 2025) - a candidate to retire permanently rather than re-add.
 
 ## Target versions
 
-| Setting | Current (1.21.1) | Target (26.1) | Notes |
+| Setting | Current (1.21.1) | Target (26.1) | Source / note |
 |---|---|---|---|
-| Minecraft | 1.21.1 | **26.1** (match ATM11) | Verify against ATM11's exact pin (26.1.2 as of research). |
-| NeoForge | 21.1.230 | **26.1.x** | Pin the latest stable 26.1 build in Phase 0. |
-| Java | 21 | **21** (verify) | No known Java bump for 26.x; confirm in Phase 0. |
-| moddev plugin | 2.0.141 | **TBD** | Verify `net.neoforged.moddev` supports 26.1; bump if needed. |
-| `minecraft_version_range` | `[1.21.1,1.21.5)` | `[26.1,26.2)` (or per ATM11) | |
-| Distribution | CurseForge project 1552728 | **same project** | Multi-game-version on one project (see Release model). |
+| Minecraft | 1.21.1 | **26.1.2** | Matches ATM11. Pin exact: `minecraft_version_range=[26.1.2]`. |
+| NeoForge | 21.1.230 | **26.1.2.76** | Latest stable; 4-part scheme. Dep range `[26.1.2.76,)`. |
+| **Java** | 21 | **25** | The one environment prerequisite - install a JDK 25. |
+| moddev plugin | 2.0.141 | **2.0.141** | No bump; the official 26.1.2 MDK ships exactly this. |
+| Gradle | 9.5.1 | (min 9.1.0) | Already satisfied. |
+| `pack.mcmeta` | `pack_format` int | **`min_format`/`max_format`** | resource `84`, data `101` (diverged; reconfirm minors against the 26.1.2 client). |
+| CurseForgeGradle | 1.1.26 | 1.2.30 (advised) | Defensive bump for Gradle 9. |
+| `loaderVersion` | `[4,)` | likely **dropped** | 26.1.2 MDK omits it; verify against the template. |
 
 ## GitHub branch + release model
 
-The standard **moving-trunk + maintenance-branch** pattern (how Mekanism et al. run parallel MC lines).
+Standard moving-trunk + maintenance-branch pattern.
 
-| Branch | Role | MC / NeoForge | Version line |
+| Branch | Role | MC / NeoForge | Version |
 |---|---|---|---|
-| `main` | Active development; moves forward | 26.1 / 26.1.x (after the port merges) | **`2.x`** |
+| `main` | Active dev; moves forward | 26.1 / 26.1.x (after merge) | **`2.x`** (starts `2.0.0`) |
 | `mc-1.21.1` | Frozen 1.21.1, **hotfix-only** | 1.21.1 / 21.1.x | **`1.24.x`** |
-| `port/mc-26.1` | Where the port happens; merges to `main` when green | 26.1 | becomes `2.0.0` |
+| `port/mc-26.1` | Where the port runs; merges to `main` when green | 26.1 | becomes `2.0.0` |
 
-**Versioning:** the 26.1 line starts at **`2.0.0`** - a SemVer major bump that signals the platform break. Mental model: `1.x` = legacy 1.21.1 (hotfix-only), `2.x` = 26.1+ (active). The two never interleave.
-
-**One CurseForge project (1552728), two game versions.** CF lists multiple MC versions per project; players filter to theirs. Keeps downloads, comments, and follows consolidated. `build.gradle` currently **hardcodes** `addGameVersion('1.21.1')` - the port branch changes that single line to `'26.1'`. Nothing else in the publish path needs to know about the split.
-
-**No shared mutable state = no collisions.** `mod_version` (gradle.properties), `CHANGELOG.md`, the game-version line, and `ci.yml` all live *per branch*. A `1.24.3` hotfix and a `2.0.0` release are independent branch states.
-
-**MC-version in the artifact name** (Mekanism convention): `productivefrogs-1.21.1-1.24.3.jar` vs `productivefrogs-26.1-2.0.0.jar`. Currently jars are `productivefrogs-<version>.jar` with no MC tag - fix the `archivesName` as part of this so the two lines are unmistakable.
-
-**CI: no matrix.** Each branch's `ci.yml` builds its own target (maintenance = NeoForge 21.1, `main` = 26.1, both Java 21). Apply the same `build` + `gameTest` + resolved-conversations protection to **both** release branches.
-
-**Hotfix flow:** branch off `mc-1.21.1` -> fix -> PR into `mc-1.21.1` -> bump `1.24.x` -> tag -> `./gradlew publishCurseForge` (uploads under the 1.21.1 game tag). If the same bug exists in 26.1, **cherry-pick the fix forward to `main` as a separate PR** - fixes flow old -> new, never the reverse.
+- **`2.0.0` is a hard major bump** signalling the platform break. `1.x` = legacy 1.21.1 (hotfix-only), `2.x` = 26.1+ (active).
+- **One CurseForge project (1552728), two game versions.** `build.gradle` hardcodes `addGameVersion('1.21.1')` - the port branch changes that one line to `'26.1.2'`. **MC-version in the jar name** (`productivefrogs-1.21.1-1.24.3.jar` / `productivefrogs-26.1-2.0.0.jar`) via `archivesName`.
+- **No shared mutable state** (gradle.properties / CHANGELOG / ci.yml are per-branch) so the two lines never collide.
+- **CI: no matrix** - each branch builds its own target (both Java 21? no: maintenance Java 21, `main` Java 25). Same `build` + `gameTest` + resolved-conversations protection on both.
+- **Hotfix flow:** branch off `mc-1.21.1` -> fix -> bump `1.24.x` -> tag -> publish. If the bug exists in 26.1, **cherry-pick forward to `main`** (fixes flow old -> new only).
 
 ### Cut-over sequencing
 
-1. Cut `mc-1.21.1` off current `main` HEAD (`0daf00f`, the v1.24.2 release commit - note the `v1.24.2` *tag* sits one commit behind at `0d39998`, so freeze on HEAD not the tag). Push, apply branch protection. 1.21.1 now has a permanent home.
+1. Cut `mc-1.21.1` off current `main` HEAD (`0daf00f`, the v1.24.2 release commit; the `v1.24.2` *tag* sits one commit behind at `0d39998`, so freeze on HEAD). Push, protect.
 2. Cut `port/mc-26.1` off `main`. The phases below drive it.
-3. Merge `port/mc-26.1` -> `main` when fully green. `main` is now 26.1; the lines have diverged on purpose.
-
-## The forward-port asset
-
-PF was **originally built on 1.21.11 and backported down** to 1.21.1 (project scaffolded on 1.21.11 at commit `f225afd`; backport landed via PR #80 + #81). The modern API forms this port needs are forms this codebase **used to have**. Two reference sources:
-
-- **`port_mc_1_21_1.md` read in reverse** - its delta table is the canonical 1.21.1 <-> modern mapping for each API category.
-- **Pre-backport git history** - the actual modern-form code for the early (v1.0-era) features.
-
-**Caveat:** the git-history asset only covers features that existed *before* the backport (roughly v1.0). Everything from v1.1 through v1.24 (the full variant roster, all four appliances, the Crucible/Mold melt lane, the Churn, the Terrarium multiblock, the boss tier + altars, the Equivalence lane) was built **on the 1.21.1 codebase in 1.21.1-form** and never existed in modern form. So the asset gives the *pattern per API category*; we apply that pattern forward across a codebase several times larger than the one that was backported. The surface counts below quantify that growth.
-
-> **Important:** the API forms below are anchored to where each change landed in the 1.21.x line (1.21.4 / 1.21.5 / 1.21.6, per the NeoForge per-version primers). The deltas from 1.21.6 through 26.1 are **not yet fully enumerated** - Phase 0 must read every NeoForge primer from `docs.neoforged.net/primer/docs/1.21.2` up through the 26.1 primer and fold any further changes into the affected phase. Do not treat the phase list as exhaustive until that primer sweep is done.
+3. Merge `port/mc-26.1` -> `main` when green. `main` is now 26.1; the lines have diverged on purpose.
 
 ## Phase breakdown
 
-Sized against the **actual current codebase** (measured 2026-06-29), not the much smaller codebase the original port touched.
+Sized against the real codebase (measured 2026-06-29: 35 BlockEntities / ~20 save-load sites, 48 capability sites, 158 GameTest methods, 16 fluid classes, 10 screens, 18 tint sites) **minus the dropped cross-mod surface**. The original backport's 3-4 week estimate does **not** apply.
 
-### Phase 0 - Branch, gradle pins, primer sweep (1 PR)
+### Phase 0 - Branch, gradle pins, scope strip (1 PR)
 
-- Cut `mc-1.21.1` and `port/mc-26.1` per the sequencing above.
-- `gradle.properties`: `minecraft_version`, `neoforge_version`, version ranges to 26.1. Bump `mod_version` toward `2.0.0` (use a `2.0.0-alpha` style during the port).
-- Verify `net.neoforged.moddev` plugin supports 26.1; bump if needed. Confirm Java target.
-- `build.gradle`: `addGameVersion('1.21.1')` -> `'26.1'`; add MC version to `archivesName`/jar name.
-- **Read every NeoForge primer 1.21.2 -> 26.1** and append any deltas not already covered below to the relevant phase. The build will fail spectacularly from here; Phases 1+ fix it.
+- Cut the branches per the sequencing above. Install JDK 25.
+- `gradle.properties` + `build.gradle`: NeoForge `26.1.2.76`, MC `26.1.2`, Java 25, `addGameVersion('26.1.2')`, MC-version in `archivesName`, CurseForgeGradle `1.2.30`. `pack.mcmeta` -> `min_format`/`max_format` (84 / 101).
+- **Strip the dropped scope** (cross-mod content, Curios, Patchouli) so the port doesn't carry surface that isn't shipping: delete the partner `slime_variant`/recipe/crush JSONs, the `c:`-tag variants, `VariantIntegrations`, the `integration/curios` package + `curios/` data, the `patchouli_books/` data + guide assets, and the `disabledIntegrations` config. Keep the JEI + Jade `client/` plugins.
+- The build will fail spectacularly from here; the phases fix it.
 
-### Phase 1 - ResourceLocation / identifier check (small)
+### Phase 1 - Deobf + `Identifier` + package-reorg sweep (large, do FIRST)
 
-1.21.1 already uses `ResourceLocation` (the backport did the `Identifier` -> `ResourceLocation` sweep). Verify the modern line didn't reintroduce an `Identifier` alias that's now preferred; likely a near no-op, but confirm the static factory shapes (`ResourceLocation.fromNamespaceAndPath`) still hold.
+The single mechanical pass that lets the tree compile against 26.1 names before any semantic rework:
+- `ResourceLocation` -> **`Identifier`** everywhere; `fromNamespaceAndPath(...)` -> `Identifier.of(...)`; `ResourceKey#location()` -> `identifier()`.
+- Vanilla import moves: `Frog`/`Tadpole` -> `net.minecraft.world.entity.animal.frog.*`; `Slime`/`MagmaCube` -> `...monster.slime.*`; models likewise (`LavaSlimeModel` -> `MagmaCubeModel`). The `ResourceFrog`/`ResourceTadpole`/`ResourceSlime` subclasses + custom renderers ride these.
+- Drop Parchment from the build (official param names ship in 26.1); fix any code that leaned on Parchment param names; `getType()` -> `codec()`, `CODEC` -> `MAP_CODEC` where they appear.
 
-### Phase 2 - BlockEntity save/load -> ValueInput/ValueOutput (large)
+### Phase 2 - BlockEntity / Entity save-load -> ValueInput/ValueOutput (large)
 
-**35 BlockEntity classes, ~20 with save/load sites** (vs 5 in the original backport). Each `saveAdditional(CompoundTag)` / `loadAdditional(CompoundTag)` moves to `saveAdditional(ValueOutput)` / `loadAdditional(ValueInput)` (the 1.21.5 form). Covers the appliances (Milker, Churn, Spawnery, Casting Mold), the Crucible, the Terrarium blocks (Controller, Sprinkler, Incubator, Hatch), the altar hatches, the per-variant milk sources, the EE machines (Alembic, Distiller, Mimic source), and the Froglight/egg BEs. Lift the `ValueInput`/`ValueOutput` pattern from pre-backport history; apply to the full set.
+`saveAdditional(CompoundTag, Provider)` -> `saveAdditional(ValueOutput)`; `loadAdditional(ValueInput)` (landed 1.21.6). Same swap on the entities' `addAdditionalSaveData`/`readAdditionalSaveData` (frog/tadpole/slime + the bucket/egg capture path). Use `put*`/`getXOr`/`store(key, Codec, v)`/`read(key, Codec)`/`child(key)`. ~20 BE sites + the entity serializers.
 
-### Phase 3 - Capability + transfer API -> new resource-handler form (large)
+### Phase 3 - Transactional capabilities (largest behavioural surface)
 
-**48 capability-registration sites.** NeoForge 21.4+ replaced the legacy `IItemHandler`/`ItemStackHandler` transfer API with `ResourceHandler<ItemResource>`, and the capability ids changed (`Capabilities.ItemHandler.BLOCK` -> `Capabilities.Item.BLOCK`; `Capabilities.EnergyStorage.BLOCK` and fluid equivalents similarly). This touches every appliance's hopper I/O, the EE machines' RF `EnergyStorage`, and the per-variant milk fluid handlers. This is the single largest behavioural-surface phase - budget accordingly and re-verify side-aware input/output routing per machine.
+The Transfer Rework (NeoForge 21.9 / MC 1.21.9), ~48 sites. **No forward compat wrapper - assume the 21.9 shims are gone.**
+- Item: `IItemHandler`/`Capabilities.ItemHandler.BLOCK` -> `ResourceHandler<ItemResource>`/`Capabilities.Item.BLOCK`. Back each appliance BE with the new handler, expose `RangedResourceHandler` slices per face (DOWN -> output, others -> input). Mutation moves to `insert`/`extract` inside `try (var tx = Transaction.openRoot()) { ...; tx.commit(); }` - which gives the EE machines' all-or-nothing transaction for free. Fire `onContentsChanged -> setChanged` on commit.
+- Energy (EE Alembic/Distiller): `Capabilities.EnergyStorage.BLOCK`/`IEnergyStorage` -> `Capabilities.Energy.BLOCK`/`EnergyHandler` (long-backed). Receive-only = external `extract` returns 0 + internal `consume`.
+- Fluid (milk pipe/tank exposure): `Capabilities.FluidHandler.BLOCK` -> `Capabilities.Fluid.BLOCK`/`ResourceHandler<FluidResource>`. The per-variant milk `FluidType`/`BaseFlowingFluid.Properties` **identity** is unchanged; only the tank/pipe handler reworks.
 
-### Phase 4 - Item tint -> JSON ItemTintSource / Client Items (large)
+### Phase 4 - Item tint -> JSON ItemTintSource + completeness gate (large)
 
-**18 tint/color registration sites.** 1.21.4 moved per-item tinting from Java `RegisterColorHandlersEvent.Item` + `ItemColor` to the JSON `ItemTintSource` "Client Items" pipeline (`assets/<ns>/items/*.json` with a `tints` array). PF *had* this pre-backport (the `ContainedCategoryTint` / `BucketedCategoryTint` / `SlimeVariantTint` classes) - re-introduce it, but across the far larger current set: every variant Configurable Froglight, Slime/Milk buckets, tadpole bucket, Frog Egg bottle, all spawn eggs, plus the EE-lane `SynthesizedTint`/Mimic items. Re-create the `assets/productivefrogs/items/*.json` files (none exist today) and the `ItemTintSource` classes. Confirm per-variant **fluid** tint (`IClientFluidTypeExtensions.getTintColor`) still works as-is or moves with it.
+Tint pipeline moved to JSON at 1.21.4; `RegisterColorHandlersEvent.Item` and `ItemColors` are gone. PF's dynamic tints **port cleanly** (not a design blocker): register a custom `ItemTintSource` `MapCodec` via `RegisterColorHandlersEvent.ItemTintSources` whose `calculate(ItemStack, ClientLevel, LivingEntity)` reads the `SLIME_VARIANT` / `contained_category` / `stored_effect` component + the registry, returning `ARGB.opaque(...)`. Reference it from each tinted item's `assets/<ns>/items/*.json` `tints` array (ensure the model carries the matching `tintindex`). **Datagen these JSONs and add a completeness gate** (like the lang gate) - a missing entry renders silently greyscale (same trap as the texture-baker/milk-asset skips). Verify `BlockColor` block-icon tints separately. ~18 tint sites (minus the dropped synthesized/mimic ones? EE stays, so keep those).
 
-### Phase 5 - GameTest registration -> registry-driven TestData (large)
+### Phase 5 - GameTest registry migration (medium; gates CI)
 
-**158 `@GameTest` methods.** 1.21.5 replaced annotation-based `@GameTestHolder` / `@GameTest` with the registry-driven `TestData` / `GameTestInstance` form. The bodies stay ~95% the same; the registration shape changes for all 158. Lift the modern pattern from pre-backport history / vanilla, and confirm `./gradlew runGameTestServer` discovers and runs the full set. This is the highest method-count phase.
+`@GameTestHolder`/`@GameTest`/`RegisterGameTestsEvent` -> registry `TestData`/`GameTestInstance` + `minecraft:test_function` (1.21.5). The 158 method **bodies stay as-is** (already `Consumer<GameTestHelper>`). **Generate** the 3-line shim per test from a `(name, function, structure, timeout)` table. **Watch `manual_only=false`** or a required test silently skips (green CI testing nothing); prefer the JSON `test_instance/*.json` form (self-documenting vs the unlabeled `TestData` constructor args). Structure NBT stays at `data/<ns>/structure/<name>.nbt`.
 
-### Phase 6 - GUI rendering -> RenderPipelines (medium)
+### Phase 6 - GUI rendering -> RenderPipelines + two-phase render (medium/high)
 
-**10 screen classes.** 1.21.4+ moved GUI rendering to the pipeline-based `RenderPipelines.GUI_TEXTURED` form (from the older `RenderType` / `GuiGraphics.blit` overloads). Update `PFContainerScreen` (the shared base) and the 9 concrete screens (Milker, Spawnery, Churn, Casting Mold, Alembic, Distiller, Terrarium Controller, etc.). Re-verify the 1.21.1 `renderTooltip` gotcha against 26.1 behaviour - the base-class workaround may no longer be needed, or may need a different shape.
+`blit`/`RenderType` -> `RenderPipelines.GUI_TEXTURED` (1.21.4); two-phase `GuiRenderState` submit-don't-draw (1.21.6) across the 10 screens. **`renderTooltip` is now in the standard container-screen flow, so the `PFContainerScreen` workaround is OBSOLETE** - remove it and rebuild on the new flow rather than porting it. Rebuild the Casting Mold fluid-gauge hover hit-test and the Froglight Crucible BER on the new pipeline.
 
-### Phase 7 - Asset / data path conventions (medium)
+### Phase 7 - pack.mcmeta + mechanical tail (small)
 
-Current datapack dirs are **singular** (1.21.1 form): `recipe/`, `loot_table/`, `tags/item/`, `tags/entity_type/`, `structure/`, `advancement/`. Modern MC uses **plural** for several (`recipes/`, `loot_tables/`, `tags/items/`, etc.). Reverse the backport's path renames per the modern convention (verify exact set against the primers). Bump `pack.mcmeta` `pack_format` to the 26.1 value. The `assets/.../items/*.json` set returns here (tied to Phase 4). Also check `data_maps/`, `neoforge/biome_modifier/`, `curios/`, `patchouli_books/` for schema/path shifts.
+**Datapack dirs stay SINGULAR** (`recipe/`, `loot_table/`, `structure/`, `tags/item/`, `advancement/`) - no rename. Only `pack.mcmeta` changes (`pack_format` int -> `min_format`/`max_format`). The `assets/.../items/*.json` set is created in Phase 4. The `SlimeVariant`/`ParentSpecies` datapack registries + codecs, the `biome_modifier` JSON, DataComponents (`.persistent(CODEC)`), `Component.translatable`, and the brain/`Sensor`/`addActivityWithConditions` architecture are all **unchanged** - only the `Identifier` rename from Phase 1 touches them.
 
-### Phase 8 - Datapack registries + codecs (small/medium)
+### Phase 8 - Compile sweep + playtest + gametest green (large)
 
-`PFDataPackRegistryEvents` (`SlimeVariant`, `ParentSpecies` registries) - verify `DataPackRegistryEvent.NewRegistry` and the codec/`StreamCodec` APIs against 26.1. The codecs themselves are largely version-stable; the registration-event shape may differ.
+Whatever the phases didn't catch: `Item.Properties` now **requires `setId(...)`** (use `registerItem`/`registerSimpleItem`/`registerBlock` helpers - bare `new Item(props)` throws; landed 1.21.2), `BlockBehaviour.Properties` likewise, `EntityType.Builder` chain, menu registration. (`BlockEntityType.Builder.of` is unchanged.) Then the manual sweep (GameTest is blind to client visuals): creative-tab pass (every item, tint, name), the full milk pipeline per vanilla variant, tongue-kill -> Froglight -> smelt, the Crucible/Mold lane, the Terrarium loop, the boss altars, the EE lane (dev sysprop on). All 158 GameTests green.
 
-### Phase 9 - Fluids + biome modifiers (medium)
+### Phase 9 - Merge, docs, release (1 PR + release)
 
-**16 fluid/FluidType classes** (per-variant Slime Milk + Mimic Milk). Verify `BaseFlowingFluid.Properties`, `FluidType`, and the per-variant minting in `PFVariantMilk.bootstrap` against 26.1's fluid API. Verify the 4 parent-species `biome_modifier` JSONs (`add_spawns` schema) and the `data_maps` (Crucible heat ladder) against 26.1.
-
-### Phase 10 - Soft-dep integrations + version bumps (medium, ecosystem-gated)
-
-Bump and re-wire the library soft-deps to their 26.1 builds: **JEI, Jade, Patchouli, Curios.** Two real risks here:
-
-- **Curios may be Accessories** on the modern line (Curios' successor) - if so, the `productivefrogs:brewed` slot validator and the Curios `compileOnly` glue need migrating to the Accessories API. Confirm which exists on 26.1.
-- **Partner tech mods (Mekanism, AE2, Create, Powah, etc.) may not have 26.1 builds yet.** Their cross-mod variant JSONs are `mod_loaded`-gated and harmless when absent, so PF builds and ships without them - but the integrations can't be *tested* until those mods land. Track availability; this gates the `2.0.0` release timing, not the build.
-
-### Phase 11 - Compile sweep + manual playtest + gametest green (large)
-
-Whatever the primer sweep and earlier phases didn't catch: `Component` overloads, `BlockBehaviour.Properties` / `EntityType.Builder` / `BlockEntityType.Builder` shapes, sensor/brain API (`ResourceFrogAttackablesSensor`), vanilla `Frog`/`Tadpole`/`Slime` superclass deltas, menu registration. Then the full manual sweep (GameTest is blind to client visuals): creative-tab pass (every item, every tint, every display name), the full milk pipeline per variant, tongue-kill -> variant Froglight -> smelt, the Crucible/Mold lane, the Terrarium loop, the boss altars, the EE lane (dev sysprop on). All 158 GameTests green.
-
-### Phase 12 - Merge, docs, release (1 PR + release)
-
-- Squash-merge `port/mc-26.1` -> `main`. `main` is now 26.1.
-- Update `CLAUDE.md`, `ROADMAP.md`, `versioning.md` to reflect the 26.1 target + the 1.x/2.x line split. Mark this doc DONE.
-- Confirm `mc-1.21.1` branch protection is live.
-- Cut `2.0.0` when ATM11 / the partner ecosystem is ready (see timing above).
+- Squash-merge `port/mc-26.1` -> `main`. Update `CLAUDE.md`, `ROADMAP.md`, `versioning.md` for the 26.1 target + the 1.x/2.x split + the integrations-deferred scope. Mark this doc DONE.
+- Confirm `mc-1.21.1` protection is live.
+- Release `2.0.0` once the build is green and soaked - it does **not** wait on partner mods (no cross-mod content ships in 2.0).
 
 ## Risks
 
 | Risk | Severity | Mitigation |
 |---|---|---|
-| 1.21.6 -> 26.1 deltas not yet enumerated | High | Phase 0 primer sweep is mandatory before trusting the phase list. |
-| Codebase is far larger than the original port (158 tests, 48 cap sites, 35 BEs) | High | Phases 2/3/4/5 are each multi-day; do not batch. The original 3-4 week estimate does **not** apply - this is bigger. |
-| Curios -> Accessories migration on modern line | Medium | Confirm in Phase 10; isolate to the `integration/curios` glue + the brewed slot. |
-| Partner mods (Mekanism/AE2/Create) not on 26.1 yet | Medium | JSON-gating means PF still builds/ships; integrations untestable until they land - gates release timing only. |
-| Patchouli has no 26.1 build (guide content) | Medium | Guide is `compileOnly` + inert when absent (same as today); ship without it if needed, add when it lands. |
-| moddev plugin 2.0.141 doesn't support 26.1 | Low | Verify Phase 0; bump plugin. |
-| New-resource-handler transfer API semantics differ subtly from legacy | Medium | Phase 3 re-verifies side-aware I/O per machine via runClient + GameTest. |
+| Transactional capability rework (48 sites, no compat wrapper) is the largest surface | High | Phase 3 is multi-day; re-verify side-aware I/O per machine via runClient + GameTest. |
+| Tint JSON is unvalidated -> silently greyscale froglights | Medium | Datagen + completeness gate in Phase 4 (the one new safety net the port must add). |
+| `manual_only` misconfig -> required CI tests silently skip | Medium | Phase 5 prefers JSON test instances; assert the discovered-test count. |
+| Exact 26.1 entity-class packages / pack-format minors uncertain from docs | Low | The compile spike + a 26.1 source jar settle these empirically. |
+| Java 25 not on the dev machine | Low | Install JDK 25 in Phase 0 (environment prereq). |
+| Codebase far larger than the original port | Medium | Phases 1-4 each multi-day; don't batch. Dropping cross-mod scope offsets some of this. |
 
 ## Success criteria
 
-- [ ] `mc-1.21.1` cut, pushed, protected; 1.21.1 hotfixes can ship independently.
-- [ ] `./gradlew build` green on `port/mc-26.1` (NeoForge 26.1).
-- [ ] `./gradlew runGameTestServer` green - all 158 GameTests pass.
-- [ ] Manual creative-tab sweep: every item with correct tint + display name.
-- [ ] Full milk pipeline, Crucible/Mold lane, Terrarium loop, boss altars, and EE lane verified by hand.
-- [ ] Jar names carry the MC version; CF upload tags `26.1` on project 1552728.
-- [ ] `port/mc-26.1` merged to `main`; load-bearing docs updated.
-- [ ] `2.0.0` released when ATM11 / partner ecosystem is ready.
+- [ ] `mc-1.21.1` cut, pushed, protected; 1.21.1 hotfixes ship independently.
+- [ ] `./gradlew build` green on `port/mc-26.1` (NeoForge 26.1.2.76, Java 25).
+- [ ] `./gradlew runGameTestServer` green - all 158 GameTests pass (and the discovered-test count is asserted).
+- [ ] Manual creative-tab sweep: every item with correct tint + name (tint completeness gate passes).
+- [ ] Full milk pipeline, Crucible/Mold lane, Terrarium loop, boss altars, EE lane verified by hand.
+- [ ] JEI + Jade load and work; no cross-mod / Curios / Patchouli references remain in the 2.0 tree.
+- [ ] Jar names carry the MC version; CF upload tags `26.1.2` on project 1552728.
+- [ ] `port/mc-26.1` merged to `main`; load-bearing docs updated; `2.0.0` released.
 
 ## Backwards compatibility
 
-- **1.21.1 worlds** stay on the `mc-1.21.1` line + 1.24.x jars (Sky Frogs and any standalone 1.21.1 player). Untouched by this port.
-- **26.1 is a fresh save target** - 2.0.0 is a new major on a new MC version; no cross-version world migration is promised or expected.
-- **Cross-mod compat datapacks** are version-neutral JSON; only the codebase that consumes them moves.
+- **1.21.1 worlds** stay on `mc-1.21.1` + 1.24.x (Sky Frogs + any standalone 1.21.1 player). Untouched.
+- **26.1 is a fresh save target** - 2.0.0 is a new major on a new MC version; no cross-version world migration is promised.
+- **Integrations are additive** - re-adding cross-mod content / Curios / Patchouli in a 2.x minor won't break a 2.0 world.
