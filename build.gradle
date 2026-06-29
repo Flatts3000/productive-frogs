@@ -114,11 +114,10 @@ dependencies {
     // so each variant/category shows as a distinct JEI entry rather than the
     // items collapsing into one generic line.
     //
-    // PORT-TODO(26.1): JEI on 26.1 is the 29.6.x line (build 29.6.2.38, beta).
-    // Parked during the compile spike until the exact 26.1 maven coordinate is
-    // confirmed; the client/jei plugin classes won't compile until this is back.
-    // compileOnly "mezz.jei:jei-26.1-neoforge-api:29.6.2.38"
-    // runtimeOnly "mezz.jei:jei-26.1-neoforge:29.6.2.38"
+    // JEI on 26.1 (NeoForge): the 29.6.x line. compileOnly api for the
+    // @JeiPlugin classes; runtimeOnly full jar so dev sessions show the sidebar.
+    compileOnly "mezz.jei:jei-26.1.2-neoforge-api:29.6.2.38"
+    runtimeOnly "mezz.jei:jei-26.1.2-neoforge:29.6.2.38"
 
     // Jade (the WAILA fork) - compileOnly ONLY. Our @WailaPlugin
     // (client/jade/ProductiveFrogsJadePlugin) references the Jade API at build
@@ -127,9 +126,9 @@ dependencies {
     // NeoForge's duplicate-modid check. When Jade is present at runtime it discovers
     // and runs our plugin; when it's absent (e.g. the CI gameTest job) the plugin
     // class is simply never loaded. Modrinth yd8FKCmx = Jade 15.10.5+neoforge (1.21.1).
-    // PORT-TODO(26.1): Jade on 26.1 is 26.1.8+neoforge (stable). Parked during
-    // the compile spike until the 26.1 Modrinth version id is confirmed.
-    // compileOnly "maven.modrinth:jade:<26.1-version-id>"
+    // Jade on 26.1 (NeoForge) - compileOnly only (run/mods drop-in at runtime,
+    // same posture as 1.21.1). Modrinth gWlwZzoj = Jade 26.1.8+neoforge.
+    compileOnly "maven.modrinth:jade:gWlwZzoj"
 
     // Curios API (modid `curios`) - compileOnly ONLY, same posture as Jade.
     // Brewed Froglights (#162/#169) self-buff while worn in a Curios slot; the
@@ -208,6 +207,9 @@ tasks.processResources {
 
 tasks.withType(JavaCompile).configureEach {
     options.release = 25
+    // PORT: raise javac's 100-error cap so the full 26.1 delta surface is visible
+    // during the port (revert before merge to main).
+    options.compilerArgs += ['-Xmaxerrs', '2000', '-Xmaxwarns', '0']
 }
 
 jar {
