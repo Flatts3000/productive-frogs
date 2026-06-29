@@ -249,6 +249,15 @@ public final class PFBlocks {
             .mapColor(MapColor.FIRE)
             .strength(1.0F)
             .sound(SoundType.METAL)
+            // Sprinklers cluster in adjacent ceiling cells, and the redstone gate
+            // (#263) pauses any Sprinkler reading hasNeighborSignal. A full-cube
+            // conductor RE-EMITS strong power (a lever attached to it, dust on top)
+            // to its face neighbours, so one lever would pause a whole adjacent
+            // cluster. Marking the block a non-conductor stops that bleed - each
+            // Sprinkler still pauses on redstone applied directly to it, but a
+            // signal on one no longer leaks into the Sprinkler next to it. (Full
+            // solid cube otherwise: collision / occlusion / validator unchanged.)
+            .isRedstoneConductor((state, level, pos) -> false)
     );
 
     /** The Incubator (#185) - grows frogspawn/tadpoles into stat-preserving frogs (phase 4). */

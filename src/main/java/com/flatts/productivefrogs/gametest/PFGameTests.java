@@ -5726,6 +5726,60 @@ public final class PFGameTests {
         }
     }
 
+    /**
+     * Redstone on one Sprinkler must NOT pause the Sprinkler next to it (#264 follow-up):
+     * a lever attached to a Sprinkler strong-powers it, and a full-cube conductor would
+     * re-emit that to its face neighbours, pausing a whole adjacent cluster off one lever.
+     * The Sprinkler is registered as a non-redstone-conductor so the signal stays local.
+     * Two adjacent Sprinklers: a powered lever sits on top of A only; A pauses, B keeps spawning.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumRedstoneDoesNotBleedToAdjacentSprinkler(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 2);
+        ServerLevel level = helper.getLevel();
+        ((com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity)
+            helper.getBlockEntity(controller)).forceValidate(level, helper.absolutePos(controller));
+        // buildValidTerrarium lays Sprinklers in a contiguous row: A=(2,6,2), B=(2,6,3) share a face.
+        BlockPos aRel = new BlockPos(2, 6, 2);
+        BlockPos bRel = new BlockPos(2, 6, 3);
+        com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity a =
+            (com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity) helper.getBlockEntity(aRel);
+        com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity b =
+            (com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity) helper.getBlockEntity(bRel);
+        ResourceLocation ironId = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = Boolean.TRUE;
+        com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity.cavitySlimeCapOverride = 64;
+        try {
+            // A FLOOR lever standing on top of A strong-powers A (direction UP). It is
+            // diagonal to B, so the only path to B is conductor re-emission through A -
+            // exactly the bleed the non-conductor fix removes.
+            helper.setBlock(new BlockPos(2, 7, 2), Blocks.LEVER.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.ATTACH_FACE,
+                    net.minecraft.world.level.block.state.properties.AttachFace.FLOOR)
+                .setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.POWERED, Boolean.TRUE));
+            for (com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity s : java.util.List.of(a, b)) {
+                s.loadCharge(ironId, new com.flatts.productivefrogs.content.multiblock.MilkCharge(8, 8, 0, 0, false));
+                s.primeForImmediateSpawn();
+            }
+            com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity.serverTick(
+                level, helper.absolutePos(aRel), level.getBlockState(helper.absolutePos(aRel)), a);
+            com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity.serverTick(
+                level, helper.absolutePos(bRel), level.getBlockState(helper.absolutePos(bRel)), b);
+            if (a.getSpawnsRemaining() != 8) {
+                helper.fail("Sprinkler A (powered by the lever) must be paused; remaining=" + a.getSpawnsRemaining());
+                return;
+            }
+            if (b.getSpawnsRemaining() == 8) {
+                helper.fail("Sprinkler B (adjacent, unpowered) was paused by A's redstone - power bled across the cluster");
+                return;
+            }
+            helper.succeed();
+        } finally {
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = null;
+            com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity.cavitySlimeCapOverride = null;
+        }
+    }
+
     /** Inside a formed Terrarium the frog-eat drop lands in the Hatch with no item entity. */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
     public static void terrariumHatchReceivesFroglightDirectly(GameTestHelper helper) {
