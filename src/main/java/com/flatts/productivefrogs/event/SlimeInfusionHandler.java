@@ -12,7 +12,7 @@ import java.util.Map;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -79,7 +79,7 @@ public final class SlimeInfusionHandler {
         }
 
         // Exact variant primer match required (Q4: Path A only — no category-tag fallback).
-        Map.Entry<ResourceLocation, SlimeVariant> variantEntry = findVariantForHeldItem(event.getLevel(), held);
+        Map.Entry<Identifier, SlimeVariant> variantEntry = findVariantForHeldItem(event.getLevel(), held);
         if (variantEntry == null) {
             return;  // no primer match — fall through to vanilla interaction (no feedback)
         }
@@ -140,7 +140,7 @@ public final class SlimeInfusionHandler {
         if (registry == null) {
             return null;
         }
-        ResourceLocation typeId = BuiltInRegistries.ENTITY_TYPE.getKey(slime.getType());
+        Identifier typeId = BuiltInRegistries.ENTITY_TYPE.getKey(slime.getType());
         return ParentSpeciesEntry.categoryFor(registry, typeId);
     }
 
@@ -194,7 +194,7 @@ public final class SlimeInfusionHandler {
      * item. Returns the (id, variant) entry on hit, {@code null} on miss
      * (including registry-not-loaded).
      */
-    private static Map.Entry<ResourceLocation, SlimeVariant> findVariantForHeldItem(
+    private static Map.Entry<Identifier, SlimeVariant> findVariantForHeldItem(
             net.minecraft.world.level.Level level, ItemStack stack) {
         Registry<SlimeVariant> registry = level.registryAccess()
             .registry(PFRegistries.SLIME_VARIANT).orElse(null);

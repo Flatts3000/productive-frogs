@@ -7,7 +7,7 @@ import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFVariantMilk;
 import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -172,7 +172,7 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
             return null;
         }
         if (input.is(PFItems.SLIME_BUCKET.get())) {
-            ResourceLocation variantId = SlimeMilkerBlock.readBucketVariantId(input);
+            Identifier variantId = SlimeMilkerBlock.readBucketVariantId(input);
             if (variantId == null) {
                 PFDebug.logOnce(PFDebug.Area.MILKER, "failclosed#" + pos,
                     () -> String.format("milker @%s fail-closed: input bucket carries no variant", pos));
@@ -187,7 +187,7 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
             return new ItemStack(milkBucketItem);
         }
         if (input.is(PFItems.MIMIC_SLIME_BUCKET.get())) {
-            ResourceLocation itemId = input.get(
+            Identifier itemId = input.get(
                 com.flatts.productivefrogs.registry.PFDataComponents.SYNTHESIZED_ITEM.get());
             if (itemId == null) {
                 return null;

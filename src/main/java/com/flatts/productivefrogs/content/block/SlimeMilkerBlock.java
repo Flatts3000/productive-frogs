@@ -5,7 +5,7 @@ import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
@@ -198,7 +198,7 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
      */
     @Nullable
     public static String readBucketVariant(ItemStack stack) {
-        ResourceLocation id = readBucketVariantId(stack);
+        Identifier id = readBucketVariantId(stack);
         return id == null ? null : id.getPath();
     }
 
@@ -212,7 +212,7 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
      * namespace so cross-namespace datapack variants survive the conversion.
      */
     @Nullable
-    public static ResourceLocation readBucketVariantId(ItemStack stack) {
+    public static Identifier readBucketVariantId(ItemStack stack) {
         return ResourceTadpoleBucketItem.readVariant(stack);
     }
 

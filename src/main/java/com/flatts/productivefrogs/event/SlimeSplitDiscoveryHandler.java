@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.level.Level;
@@ -131,7 +131,7 @@ public final class SlimeSplitDiscoveryHandler {
             // registry so the two stay consistent when a variant is picked.
             resource.setCategory(category);
             if (variantRegistry != null) {
-                Map.Entry<ResourceLocation, SlimeVariant> picked =
+                Map.Entry<Identifier, SlimeVariant> picked =
                     SlimeVariant.pickWeighted(variantRegistry, category, parent.getRandom());
                 if (picked != null) {
                     resource.setVariant(picked.getKey());
@@ -170,7 +170,7 @@ public final class SlimeSplitDiscoveryHandler {
      */
     @Nullable
     private static Category categoryForParent(Mob parent, Level level) {
-        ResourceLocation parentTypeId = BuiltInRegistries.ENTITY_TYPE.getKey(parent.getType());
+        Identifier parentTypeId = BuiltInRegistries.ENTITY_TYPE.getKey(parent.getType());
         if (parentTypeId == null) {
             return null;
         }

@@ -16,7 +16,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
@@ -111,7 +111,7 @@ public class CrucibleBlockEntity extends BlockEntity {
      * surface doesn't flicker grey on reload.
      */
     @Nullable
-    private ResourceLocation lastVariant = null;
+    private Identifier lastVariant = null;
 
     /** Extract-only view handed to pipes and FluidUtil bucket interactions. */
     private final IFluidHandler extractOnlyTank = new IFluidHandler() {
@@ -242,7 +242,7 @@ public class CrucibleBlockEntity extends BlockEntity {
 
     /** Variant of the most recent Froglight, for the solids-surface tint. */
     @Nullable
-    public ResourceLocation lastVariant() {
+    public Identifier lastVariant() {
         return lastVariant;
     }
 
@@ -469,13 +469,13 @@ public class CrucibleBlockEntity extends BlockEntity {
         solids = Math.max(0, Math.min(
             tag.contains("Solids", Tag.TAG_INT) ? tag.getInt("Solids") : 0, MAX_SOLIDS));
         pendingFluid = tag.contains("PendingFluid", Tag.TAG_STRING)
-            ? BuiltInRegistries.FLUID.get(ResourceLocation.parse(tag.getString("PendingFluid")))
+            ? BuiltInRegistries.FLUID.get(Identifier.parse(tag.getString("PendingFluid")))
             : null;
         if (pendingFluid == Fluids.EMPTY) {
             pendingFluid = null;
         }
         lastVariant = tag.contains("LastVariant", Tag.TAG_STRING)
-            ? ResourceLocation.tryParse(tag.getString("LastVariant"))
+            ? Identifier.tryParse(tag.getString("LastVariant"))
             : null;
         updateFluidLight();
     }

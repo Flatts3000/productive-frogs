@@ -16,7 +16,7 @@ import com.mojang.serialization.Dynamic;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
@@ -360,7 +360,7 @@ public class ResourceFrog extends Frog {
         // V1.5: direct-feed requires a variant-stamped bucket. Category-only
         // buckets (a Bucket of <Species> Slime with no variant) are
         // intermediates — frogs only "produce" from variant slimes.
-        ResourceLocation variantId = ResourceTadpoleBucketItem.readVariant(stack);
+        Identifier variantId = ResourceTadpoleBucketItem.readVariant(stack);
         if (variantId == null) {
             return super.mobInteract(player, hand);
         }

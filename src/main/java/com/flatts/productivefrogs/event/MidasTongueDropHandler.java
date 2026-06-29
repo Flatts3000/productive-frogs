@@ -8,7 +8,7 @@ import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.util.PFDebug;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
@@ -53,7 +53,7 @@ public final class MidasTongueDropHandler {
         if (slime.getSize() != 1 || frog.level().isClientSide()) {
             return;
         }
-        ResourceLocation itemId = slime.getSynthesizedItem();
+        Identifier itemId = slime.getSynthesizedItem();
         if (itemId == null) {
             return;
         }
@@ -61,7 +61,7 @@ public final class MidasTongueDropHandler {
         dropPrismaticFroglight(frog, itemId);
     }
 
-    private static void dropPrismaticFroglight(ResourceFrog frog, ResourceLocation itemId) {
+    private static void dropPrismaticFroglight(ResourceFrog frog, Identifier itemId) {
         Level level = frog.level();
         // Bounty multiplies yield exactly like the species drop (the EE printer
         // compounds: milk 1->N Mimic Slimes x Bounty Froglights per slime).
@@ -97,7 +97,7 @@ public final class MidasTongueDropHandler {
     }
 
     /** A Prismatic Froglight: a configurable Froglight carrying the synthesized item id. */
-    public static ItemStack buildPrismaticFroglight(ResourceLocation itemId) {
+    public static ItemStack buildPrismaticFroglight(Identifier itemId) {
         ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
         froglight.set(PFDataComponents.SYNTHESIZED_ITEM.get(), itemId);
         return froglight;

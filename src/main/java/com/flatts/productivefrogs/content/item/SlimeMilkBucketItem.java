@@ -8,7 +8,7 @@ import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
@@ -35,9 +35,9 @@ import org.jetbrains.annotations.Nullable;
 public final class SlimeMilkBucketItem extends BucketItem {
 
     /** The variant this bucket belongs to - drives the fallback display name. */
-    private final ResourceLocation variant;
+    private final Identifier variant;
 
-    public SlimeMilkBucketItem(Fluid content, ResourceLocation variant, Properties properties) {
+    public SlimeMilkBucketItem(Fluid content, Identifier variant, Properties properties) {
         super(content, properties);
         this.variant = variant;
     }
@@ -47,7 +47,7 @@ public final class SlimeMilkBucketItem extends BucketItem {
      * per-variant items) - this accessor is how appliances that consume milk
      * buckets (the Slime Churn) resolve the variant without NBT.
      */
-    public ResourceLocation variantId() {
+    public Identifier variantId() {
         return variant;
     }
 

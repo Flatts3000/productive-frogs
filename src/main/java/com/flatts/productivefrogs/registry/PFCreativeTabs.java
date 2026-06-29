@@ -68,8 +68,8 @@ public final class PFCreativeTabs {
                         output.accept(PFItems.MIMIC_MILK_BUCKET.get());
                     }
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
-                        if (h.value().isEnabled(h.key().location())) {
-                            output.accept(PFItems.variantSlimeBucket(h.key().location(), h.value().category()));
+                        if (h.value().isEnabled(h.key().identifier())) {
+                            output.accept(PFItems.variantSlimeBucket(h.key().identifier(), h.value().category()));
                         }
                     }));
                     // Milker / Churn appear only when enabled (config-gated, #196).
@@ -193,10 +193,10 @@ public final class PFCreativeTabs {
                     // (The vanilla/magma sentinels likewise have no bucket now.)
                     // Empty at the title screen until a world's datapacks load.
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
-                        if (!h.value().isEnabled(h.key().location())) {
+                        if (!h.value().isEnabled(h.key().identifier())) {
                             return;
                         }
-                        ItemStack milk = PFItems.slimeMilkBucket(h.key().location());
+                        ItemStack milk = PFItems.slimeMilkBucket(h.key().identifier());
                         if (!milk.isEmpty()) {
                             output.accept(milk);
                         }
@@ -220,11 +220,11 @@ public final class PFCreativeTabs {
                     // carries its variant id in the SLIME_VARIANT data component so
                     // creative testers can see what the production loop produces.
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
-                        if (!h.value().isEnabled(h.key().location())) {
+                        if (!h.value().isEnabled(h.key().identifier())) {
                             return;
                         }
                         ItemStack stack = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
-                        stack.set(PFDataComponents.SLIME_VARIANT.get(), h.key().location());
+                        stack.set(PFDataComponents.SLIME_VARIANT.get(), h.key().identifier());
                         output.accept(stack);
                     }));
                     // Spawn eggs grouped at the end so they read as a single block
@@ -248,8 +248,8 @@ public final class PFCreativeTabs {
                     // variant-less Resource Slime egg isn't a meaningful creative
                     // entry; the item still counts as "in a tab" via these stacks).
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
-                        if (h.value().isEnabled(h.key().location())) {
-                            output.accept(PFItems.resourceSlimeSpawnEgg(h.key().location()));
+                        if (h.value().isEnabled(h.key().identifier())) {
+                            output.accept(PFItems.resourceSlimeSpawnEgg(h.key().identifier()));
                         }
                     }));
                     // Parent species spawn eggs (Cave / Geode / Tide / Void) —

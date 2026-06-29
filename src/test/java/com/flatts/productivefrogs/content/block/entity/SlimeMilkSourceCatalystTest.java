@@ -9,7 +9,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.item.MilkCatalyst;
 import com.flatts.productivefrogs.registry.PFVariantMilk;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -30,7 +30,7 @@ class SlimeMilkSourceCatalystTest {
         // variant-agnostic. Use iron (a first-party variant, always registered).
         return new SlimeMilkSourceBlockEntity(
             BlockPos.ZERO,
-            PFVariantMilk.block(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"))
+            PFVariantMilk.block(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"))
                 .defaultBlockState());
     }
 

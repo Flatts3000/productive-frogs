@@ -12,7 +12,7 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
@@ -33,12 +33,12 @@ import net.minecraft.world.entity.LivingEntity;
  */
 public class CategoryTintLayer<T extends LivingEntity, M extends EntityModel<T>> extends RenderLayer<T, M> {
 
-    private final Function<T, ResourceLocation> textureGetter;
+    private final Function<T, Identifier> textureGetter;
     private final ToIntFunction<T> tintGetter;
 
     public CategoryTintLayer(
         RenderLayerParent<T, M> parent,
-        Function<T, ResourceLocation> textureGetter,
+        Function<T, Identifier> textureGetter,
         ToIntFunction<T> tintGetter
     ) {
         super(parent);
@@ -53,7 +53,7 @@ public class CategoryTintLayer<T extends LivingEntity, M extends EntityModel<T>>
         float ageInTicks, float netHeadYaw, float headPitch
     ) {
         int tint = tintGetter.applyAsInt(entity);
-        ResourceLocation texture = textureGetter.apply(entity);
+        Identifier texture = textureGetter.apply(entity);
         if (PFDebug.on(PFDebug.Area.RENDER)) {
             PFDebug.logOnce(PFDebug.Area.RENDER, "tintlayer#" + entity.getId() + "/" + tint,
                 () -> String.format("%s id=%d categoryTint=#%08X texture=%s",

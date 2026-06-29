@@ -17,7 +17,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
 import net.minecraft.world.ContainerHelper;
@@ -61,13 +61,13 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
 
     /** Data-driven drop list for the altar (pack-overridable); see {@code loot_table/dragon_altar.json}. */
     private static final ResourceKey<LootTable> DRAGON_ALTAR_LOOT_TABLE = ResourceKey.create(
-        Registries.LOOT_TABLE, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_altar"));
+        Registries.LOOT_TABLE, Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_altar"));
 
     /** Boss slime variants whose Froglights the altar pays out (each smelts back to the resource). */
-    private static final ResourceLocation DRAGON_BREATH_VARIANT =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_breath");
-    private static final ResourceLocation DRAGON_EGG_VARIANT =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_egg");
+    private static final Identifier DRAGON_BREATH_VARIANT =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_breath");
+    private static final Identifier DRAGON_EGG_VARIANT =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_egg");
 
     private NonNullList<ItemStack> items = NonNullList.withSize(SIZE, ItemStack.EMPTY);
     private final InvWrapper itemHandler = new InvWrapper(this);

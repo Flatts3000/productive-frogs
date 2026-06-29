@@ -11,7 +11,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.level.Level;
@@ -38,8 +38,8 @@ public class CrucibleRenderer implements BlockEntityRenderer<CrucibleBlockEntity
     private static final float RIM_Y = 15.0F / 16.0F;
 
     /** The shared froglight texture every Configurable Froglight tints. */
-    private static final ResourceLocation FROGLIGHT_TOP =
-        ResourceLocation.withDefaultNamespace("block/ochre_froglight_top");
+    private static final Identifier FROGLIGHT_TOP =
+        Identifier.withDefaultNamespace("block/ochre_froglight_top");
 
     public CrucibleRenderer(net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider.Context context) {
         // no model parts; pure quad rendering
@@ -90,7 +90,7 @@ public class CrucibleRenderer implements BlockEntityRenderer<CrucibleBlockEntity
 
     /** Primary color of the most recent variant, or white when unknown. */
     private static int variantTint(CrucibleBlockEntity crucible, Level level) {
-        ResourceLocation variantId = crucible.lastVariant();
+        Identifier variantId = crucible.lastVariant();
         if (variantId == null) {
             return 0xFFFFFF;
         }

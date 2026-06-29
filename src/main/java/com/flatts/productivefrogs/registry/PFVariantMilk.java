@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -48,11 +48,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class PFVariantMilk {
 
-    private static final Map<ResourceLocation, DeferredHolder<FluidType, FluidType>> TYPES = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, DeferredHolder<Fluid, SlimeMilkFluid.Source>> SOURCES = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, DeferredHolder<Fluid, SlimeMilkFluid.Flowing>> FLOWINGS = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, DeferredBlock<SlimeMilkSourceBlock>> BLOCKS = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, DeferredItem<SlimeMilkBucketItem>> BUCKETS = new LinkedHashMap<>();
+    private static final Map<Identifier, DeferredHolder<FluidType, FluidType>> TYPES = new LinkedHashMap<>();
+    private static final Map<Identifier, DeferredHolder<Fluid, SlimeMilkFluid.Source>> SOURCES = new LinkedHashMap<>();
+    private static final Map<Identifier, DeferredHolder<Fluid, SlimeMilkFluid.Flowing>> FLOWINGS = new LinkedHashMap<>();
+    private static final Map<Identifier, DeferredBlock<SlimeMilkSourceBlock>> BLOCKS = new LinkedHashMap<>();
+    private static final Map<Identifier, DeferredItem<SlimeMilkBucketItem>> BUCKETS = new LinkedHashMap<>();
 
     private static boolean bootstrapped = false;
 
@@ -65,18 +65,18 @@ public final class PFVariantMilk {
      * second call is a no-op (guards against double-registration if the constructor
      * is somehow re-entered).
      */
-    public static void bootstrap(Set<ResourceLocation> variantIds) {
+    public static void bootstrap(Set<Identifier> variantIds) {
         if (bootstrapped) {
             return;
         }
         bootstrapped = true;
-        for (ResourceLocation id : variantIds) {
+        for (Identifier id : variantIds) {
             registerVariant(id);
         }
         PFDebug.log(PFDebug.Area.REGISTRY, () -> "PFVariantMilk: registered " + SOURCES.size() + " per-variant milk fluids");
     }
 
-    private static void registerVariant(ResourceLocation vid) {
+    private static void registerVariant(Identifier vid) {
         String base = vid.getPath() + "_slime_milk";
 
         DeferredHolder<FluidType, FluidType> type =
@@ -122,15 +122,15 @@ public final class PFVariantMilk {
 
     // ---- accessors (null when the variant has no registered milk fluid) ----
 
-    public static boolean isRegistered(ResourceLocation variantId) {
+    public static boolean isRegistered(Identifier variantId) {
         return SOURCES.containsKey(variantId);
     }
 
-    public static Set<ResourceLocation> registeredVariants() {
+    public static Set<Identifier> registeredVariants() {
         return Collections.unmodifiableSet(SOURCES.keySet());
     }
 
-    public static SlimeMilkFluid.Source sourceFluid(ResourceLocation variantId) {
+    public static SlimeMilkFluid.Source sourceFluid(Identifier variantId) {
         DeferredHolder<Fluid, SlimeMilkFluid.Source> h = SOURCES.get(variantId);
         return h == null ? null : h.get();
     }
@@ -142,8 +142,8 @@ public final class PFVariantMilk {
      * so it survives even a non-PF pipe that strips catalyst components).
      */
     @Nullable
-    public static ResourceLocation variantOf(Fluid fluid) {
-        for (Map.Entry<ResourceLocation, DeferredHolder<Fluid, SlimeMilkFluid.Source>> e : SOURCES.entrySet()) {
+    public static Identifier variantOf(Fluid fluid) {
+        for (Map.Entry<Identifier, DeferredHolder<Fluid, SlimeMilkFluid.Source>> e : SOURCES.entrySet()) {
             if (e.getValue().get() == fluid) {
                 return e.getKey();
             }
@@ -151,12 +151,12 @@ public final class PFVariantMilk {
         return null;
     }
 
-    public static FluidType fluidType(ResourceLocation variantId) {
+    public static FluidType fluidType(Identifier variantId) {
         DeferredHolder<FluidType, FluidType> h = TYPES.get(variantId);
         return h == null ? null : h.get();
     }
 
-    public static SlimeMilkSourceBlock block(ResourceLocation variantId) {
+    public static SlimeMilkSourceBlock block(Identifier variantId) {
         DeferredBlock<SlimeMilkSourceBlock> h = BLOCKS.get(variantId);
         return h == null ? null : h.get();
     }
@@ -172,7 +172,7 @@ public final class PFVariantMilk {
     }
 
     /** The per-variant Slime Milk bucket item, or null if the variant has no milk fluid. */
-    public static Item bucket(ResourceLocation variantId) {
+    public static Item bucket(Identifier variantId) {
         DeferredItem<SlimeMilkBucketItem> h = BUCKETS.get(variantId);
         return h == null ? null : h.get();
     }

@@ -3,7 +3,7 @@ package com.flatts.productivefrogs.event;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFVariantMilk;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
@@ -51,7 +51,7 @@ public final class ToxicMilkHandler {
         if (player.tickCount % CHECK_INTERVAL != 0) {
             return;
         }
-        for (ResourceLocation bossVariant : PFBlocks.catalystForVariant().keySet()) {
+        for (Identifier bossVariant : PFBlocks.catalystForVariant().keySet()) {
             FluidType type = PFVariantMilk.fluidType(bossVariant);
             if (type != null && player.isInFluidType(type)) {
                 player.addEffect(new MobEffectInstance(MobEffects.WITHER, WITHER_DURATION, WITHER_AMPLIFIER));

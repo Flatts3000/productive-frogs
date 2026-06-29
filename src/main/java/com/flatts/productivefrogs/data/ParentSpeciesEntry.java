@@ -4,7 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.Optional;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -49,9 +49,9 @@ import org.jetbrains.annotations.Nullable;
  * entries, materialize a cache rather than scanning on a hot path.
  */
 public record ParentSpeciesEntry(
-    ResourceLocation entityType,
+    Identifier entityType,
     Category category,
-    Optional<ResourceLocation> innerBlock
+    Optional<Identifier> innerBlock
 ) {
 
     /**
@@ -67,9 +67,9 @@ public record ParentSpeciesEntry(
      */
     public static final Codec<ParentSpeciesEntry> CODEC = RecordCodecBuilder.create(
         instance -> instance.group(
-            ResourceLocation.CODEC.fieldOf("entity_type").forGetter(ParentSpeciesEntry::entityType),
+            Identifier.CODEC.fieldOf("entity_type").forGetter(ParentSpeciesEntry::entityType),
             Category.CODEC.fieldOf("category").forGetter(ParentSpeciesEntry::category),
-            ResourceLocation.CODEC.optionalFieldOf("inner_block").forGetter(ParentSpeciesEntry::innerBlock)
+            Identifier.CODEC.optionalFieldOf("inner_block").forGetter(ParentSpeciesEntry::innerBlock)
         ).apply(instance, ParentSpeciesEntry::new)
     );
 
@@ -80,7 +80,7 @@ public record ParentSpeciesEntry(
      * paths consistently. Linear scan; see the class javadoc on scale.
      */
     @Nullable
-    public static Category categoryFor(Registry<ParentSpeciesEntry> registry, ResourceLocation entityTypeId) {
+    public static Category categoryFor(Registry<ParentSpeciesEntry> registry, Identifier entityTypeId) {
         for (ParentSpeciesEntry entry : registry) {
             if (entry.entityType().equals(entityTypeId)) {
                 return entry.category();

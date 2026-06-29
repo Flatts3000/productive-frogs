@@ -11,7 +11,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.client.renderer.entity.layers.SlimeOuterLayer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.monster.Slime;
 
 /**
@@ -36,16 +36,16 @@ import net.minecraft.world.entity.monster.Slime;
  */
 public class ResourceSlimeRenderer extends SlimeRenderer {
 
-    private static final Map<Category, ResourceLocation> TEXTURES = buildTextureMap();
+    private static final Map<Category, Identifier> TEXTURES = buildTextureMap();
 
     // Per-variant texture paths, resolved lazily and cached. Render-thread only,
     // so a plain HashMap is fine.
-    private static final Map<String, ResourceLocation> VARIANT_TEXTURES = new HashMap<>();
+    private static final Map<String, Identifier> VARIANT_TEXTURES = new HashMap<>();
 
-    private static Map<Category, ResourceLocation> buildTextureMap() {
-        EnumMap<Category, ResourceLocation> map = new EnumMap<>(Category.class);
+    private static Map<Category, Identifier> buildTextureMap() {
+        EnumMap<Category, Identifier> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {
-            map.put(cat, ResourceLocation.fromNamespaceAndPath(
+            map.put(cat, Identifier.fromNamespaceAndPath(
                 ProductiveFrogs.MOD_ID,
                 "textures/entity/slime/" + cat.id() + "_resource_slime.png"
             ));
@@ -63,10 +63,10 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
     }
 
     @Override
-    public ResourceLocation getTextureLocation(Slime entity) {
-        ResourceLocation texture = resolveTexture(entity);
+    public Identifier getTextureLocation(Slime entity) {
+        Identifier texture = resolveTexture(entity);
         if (PFDebug.on(PFDebug.Area.RENDER) && entity instanceof ResourceSlime resource) {
-            ResourceLocation variantId = resource.getVariantId();
+            Identifier variantId = resource.getVariantId();
             Category cat = resource.getCategory();
             boolean fallback = variantId == null;
             PFDebug.logOnce(PFDebug.Area.RENDER, "slime#" + entity.getId() + "/" + variantId,
@@ -77,13 +77,13 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
         return texture;
     }
 
-    private ResourceLocation resolveTexture(Slime entity) {
+    private Identifier resolveTexture(Slime entity) {
         if (entity instanceof ResourceSlime resource) {
-            ResourceLocation variantId = resource.getVariantId();
+            Identifier variantId = resource.getVariantId();
             Category cat = resource.getCategory();
             if (variantId != null) {
-                ResourceLocation variantTex = VARIANT_TEXTURES.computeIfAbsent(variantId.getPath(), path ->
-                    ResourceLocation.fromNamespaceAndPath(
+                Identifier variantTex = VARIANT_TEXTURES.computeIfAbsent(variantId.getPath(), path ->
+                    Identifier.fromNamespaceAndPath(
                         ProductiveFrogs.MOD_ID,
                         "textures/entity/slime/" + path + "_resource_slime.png"));
                 // A built-in variant ships this texture; a datapack-added variant
@@ -104,9 +104,9 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
 
     // Cached resource-existence check (one lookup per variant texture). Render
     // thread only, so a plain HashMap is fine.
-    private static final Map<ResourceLocation, Boolean> TEXTURE_EXISTS = new HashMap<>();
+    private static final Map<Identifier, Boolean> TEXTURE_EXISTS = new HashMap<>();
 
-    private static boolean textureExists(ResourceLocation texture) {
+    private static boolean textureExists(Identifier texture) {
         return TEXTURE_EXISTS.computeIfAbsent(texture,
             t -> Minecraft.getInstance().getResourceManager().getResource(t).isPresent());
     }

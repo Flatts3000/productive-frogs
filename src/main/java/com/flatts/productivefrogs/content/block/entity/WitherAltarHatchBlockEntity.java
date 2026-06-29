@@ -16,7 +16,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -60,8 +60,8 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
     private static final int RECONCILE_INTERVAL = 20;
 
     /** Boss slime variant whose Froglight the altar pays out (smelts back to a Nether Star). */
-    private static final ResourceLocation NETHER_STAR_VARIANT =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star");
+    private static final Identifier NETHER_STAR_VARIANT =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star");
 
     private NonNullList<ItemStack> items = NonNullList.withSize(SIZE, ItemStack.EMPTY);
     private final InvWrapper itemHandler = new InvWrapper(this);

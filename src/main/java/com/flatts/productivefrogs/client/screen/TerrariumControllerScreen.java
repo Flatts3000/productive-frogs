@@ -9,7 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
@@ -67,7 +67,7 @@ public class TerrariumControllerScreen extends PFContainerScreen<TerrariumContro
         gui.fill(dx, dy, dx + DOT, dy + DOT, formed ? OK_GREEN : BAD_RED);
 
         // Milk swatch - only when milk is actually buffered (no empty placeholder).
-        ResourceLocation variant = this.menu.tankVariant();
+        Identifier variant = this.menu.tankVariant();
         int milkColor = variant == null ? DEFAULT_MILK : variantColor(variant);
         if (variant != null) {
             int sx = x + SWATCH_X;
@@ -109,7 +109,7 @@ public class TerrariumControllerScreen extends PFContainerScreen<TerrariumContro
         gui.drawString(this.font, structure, DOT_X + DOT + 4, DOT_Y, TEXT, false);
 
         // Milk name beside the swatch - only when milk is buffered.
-        ResourceLocation variant = this.menu.tankVariant();
+        Identifier variant = this.menu.tankVariant();
         if (variant != null) {
             gui.drawString(this.font,
                 Component.translatable("block.productivefrogs." + variant.getPath() + "_slime_milk"),
@@ -140,7 +140,7 @@ public class TerrariumControllerScreen extends PFContainerScreen<TerrariumContro
     }
 
     /** Opaque ARGB primary colour for a milk variant, or the milky default when unresolved. */
-    private static int variantColor(ResourceLocation variant) {
+    private static int variantColor(Identifier variant) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) {
             return DEFAULT_MILK;

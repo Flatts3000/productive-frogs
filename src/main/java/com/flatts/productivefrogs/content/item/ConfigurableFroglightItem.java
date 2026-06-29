@@ -10,7 +10,7 @@ import java.util.Map;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -70,10 +70,10 @@ public final class ConfigurableFroglightItem extends BlockItem {
      * variant absent from this map stays inert decoration. Add an entry to make a
      * new variant fuel.
      */
-    private static final Map<ResourceLocation, Integer> FUEL_BURN_TICKS = Map.of(
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "coal"), 1600,
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "blaze"), 2400,
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "lava"), 20000
+    private static final Map<Identifier, Integer> FUEL_BURN_TICKS = Map.of(
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "coal"), 1600,
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "blaze"), 2400,
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "lava"), 20000
     );
 
     public ConfigurableFroglightItem(Block block, Properties properties) {
@@ -92,7 +92,7 @@ public final class ConfigurableFroglightItem extends BlockItem {
      */
     @Override
     public int getBurnTime(ItemStack stack, @Nullable RecipeType<?> recipeType) {
-        ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+        Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
         Integer ticks = variantId == null ? null : FUEL_BURN_TICKS.get(variantId);
         return ticks != null ? ticks : super.getBurnTime(stack, recipeType);
     }
@@ -109,8 +109,8 @@ public final class ConfigurableFroglightItem extends BlockItem {
      */
     @Override
     protected boolean updateCustomBlockEntityTag(BlockPos pos, Level level, @Nullable Player player, ItemStack stack, BlockState state) {
-        ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
-        ResourceLocation synthesizedItem = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+        Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+        Identifier synthesizedItem = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
         StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
         if (variantId == null && synthesizedItem == null && stored == null) {
             return false;
@@ -146,7 +146,7 @@ public final class ConfigurableFroglightItem extends BlockItem {
     public Component getName(ItemStack stack) {
         // Equivalence lane (#253): a synthesized Froglight names itself from its carried
         // item id ("<item> Froglight"), independent of the variant path below.
-        ResourceLocation synthesizedItem = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+        Identifier synthesizedItem = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
         if (synthesizedItem != null) {
             net.minecraft.world.item.Item item =
                 net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(synthesizedItem).orElse(null);
@@ -155,7 +155,7 @@ public final class ConfigurableFroglightItem extends BlockItem {
                 : Component.literal(synthesizedItem.toString());
             return Component.translatable("block.productivefrogs.configurable_froglight.synthesized", itemName);
         }
-        ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+        Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
         if (variantId != null) {
             // Built-in variants have explicit lang keys; a datapack-added variant
             // (no lang) falls back to a title-cased name so it still reads cleanly.

@@ -20,7 +20,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -82,7 +82,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
     /** FIFO buffer of milk charges; all share {@link #tankVariant}. */
     private final Deque<MilkCharge> charges = new ArrayDeque<>();
     @Nullable
-    private ResourceLocation tankVariant;
+    private Identifier tankVariant;
     /** Equivalence lane (#253): true when {@link #tankVariant} is a synthesized item id (Mimic Milk). */
     private boolean tankMimic;
     private int distributeCursor;
@@ -235,7 +235,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
      * altar bypass (issue #184). All intake paths (bucket, pipe fill, isFluidValid)
      * funnel through here.
      */
-    public boolean canAccept(ResourceLocation variant) {
+    public boolean canAccept(Identifier variant) {
         return charges.size() < PFConfig.terrariumControllerBufferDepth()
             // A variant (Slime Milk) charge can't mix with a buffered mimic charge,
             // even on an unlikely id collision (defense-in-depth; canAcceptBucket
@@ -246,7 +246,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
     }
 
     /** Boss-tier variants ({@code spawn_catalyst}) are altar-gated; the Controller refuses them. */
-    private boolean requiresCatalystAltar(ResourceLocation variant) {
+    private boolean requiresCatalystAltar(Identifier variant) {
         return level != null && SlimeMilkSourceBlock.variantRequiresCatalyst(level, variant);
     }
 
@@ -283,14 +283,14 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
      */
     public boolean canAcceptBucket(ItemStack bucket) {
         if (bucket.getItem() instanceof com.flatts.productivefrogs.content.item.MimicMilkBucketItem) {
-            ResourceLocation item = bucket.get(
+            Identifier item = bucket.get(
                 com.flatts.productivefrogs.registry.PFDataComponents.SYNTHESIZED_ITEM.get());
             return item != null
                 && charges.size() < PFConfig.terrariumControllerBufferDepth()
                 && (tankVariant == null || (tankMimic && tankVariant.equals(item)));
         }
         if (bucket.getItem() instanceof SlimeMilkBucketItem milk) {
-            ResourceLocation variant = milk.variantId();
+            Identifier variant = milk.variantId();
             return variant != null && !tankMimic && canAccept(variant);
         }
         return false;
@@ -361,7 +361,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
 
     /** Test seam: the variant the buffer currently holds, or null. */
     @Nullable
-    public ResourceLocation tankVariant() {
+    public Identifier tankVariant() {
         return tankVariant;
     }
 
@@ -383,13 +383,13 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
 
         @Override
         public boolean isFluidValid(int tank, FluidStack stack) {
-            ResourceLocation variant = PFVariantMilk.variantOf(stack.getFluid());
+            Identifier variant = PFVariantMilk.variantOf(stack.getFluid());
             return variant != null && canAccept(variant);
         }
 
         @Override
         public int fill(FluidStack resource, FluidAction action) {
-            ResourceLocation variant = PFVariantMilk.variantOf(resource.getFluid());
+            Identifier variant = PFVariantMilk.variantOf(resource.getFluid());
             if (variant == null || !canAccept(variant)) {
                 return 0;
             }
@@ -445,7 +445,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         tankVariant = tag.contains("TankVariant", Tag.TAG_STRING)
-            ? ResourceLocation.tryParse(tag.getString("TankVariant")) : null;
+            ? Identifier.tryParse(tag.getString("TankVariant")) : null;
         tankMimic = tag.getBoolean("TankMimic");
         charges.clear();
         if (tag.contains("Charges", Tag.TAG_LIST)) {

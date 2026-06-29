@@ -12,7 +12,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.EnderDragonRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
@@ -36,8 +36,8 @@ import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
  */
 public class EndDragonAltarHatchRenderer implements BlockEntityRenderer<EndDragonAltarHatchBlockEntity> {
 
-    private static final ResourceLocation DRAGON_TEXTURE =
-        ResourceLocation.withDefaultNamespace("textures/entity/enderdragon/dragon.png");
+    private static final Identifier DRAGON_TEXTURE =
+        Identifier.withDefaultNamespace("textures/entity/enderdragon/dragon.png");
     private static final RenderType DRAGON_RT = RenderType.entityCutoutNoCull(DRAGON_TEXTURE);
 
     /** Receptacle offsets from the hatch (the beam sources), matching the validator's RECEPTACLES. */

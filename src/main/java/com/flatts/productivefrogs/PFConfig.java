@@ -2,7 +2,7 @@ package com.flatts.productivefrogs;
 
 import com.flatts.productivefrogs.data.Category;
 import java.util.List;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
@@ -839,7 +839,7 @@ public final class PFConfig {
      * name a pack/datapack variant not present this launch.
      */
     private static boolean isValidVariantId(Object o) {
-        return o instanceof String s && ResourceLocation.tryParse(s) != null;
+        return o instanceof String s && Identifier.tryParse(s) != null;
     }
 
     /** True if {@code o} is one of the six lowercase {@link Category} names. */
@@ -1020,7 +1020,7 @@ public final class PFConfig {
      * {@code variant.isEnabled(id)}, so a clause added there is picked up by all of
      * them with no call-site changes.
      */
-    public static boolean variantEnabled(ResourceLocation id, Category category, int weight) {
+    public static boolean variantEnabled(Identifier id, Category category, int weight) {
         if (!SPEC.isLoaded()) {
             return true;
         }
@@ -1080,7 +1080,7 @@ public final class PFConfig {
      * variant whose every provider mod is listed; fails closed (not disabled) before
      * the config loads. Consulted by {@link com.flatts.productivefrogs.data.SlimeVariant#isEnabled}.
      */
-    public static boolean integrationDisabled(ResourceLocation id) {
+    public static boolean integrationDisabled(Identifier id) {
         return SPEC.isLoaded()
             && com.flatts.productivefrogs.setup.VariantIntegrations.allProvidersDisabled(id, DISABLED_INTEGRATIONS.get());
     }

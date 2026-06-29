@@ -14,7 +14,7 @@ import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import com.flatts.productivefrogs.content.entity.TideSlime;
 import com.flatts.productivefrogs.content.entity.VoidSlime;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacementType;
@@ -38,7 +38,7 @@ class PFEntitiesTest {
 
     @Test
     void resourceTadpoleIsRegistered() {
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_tadpole");
+        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_tadpole");
         EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
         assertNotNull(type, id + " must be registered");
         assertSame(PFEntities.RESOURCE_TADPOLE.get(), type, "DeferredHolder must resolve to the registered type");
@@ -46,7 +46,7 @@ class PFEntitiesTest {
 
     @Test
     void resourceFrogIsRegistered() {
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_frog");
+        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_frog");
         EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
         assertNotNull(type, id + " must be registered");
         assertSame(PFEntities.RESOURCE_FROG.get(), type, "DeferredHolder must resolve to the registered type");
@@ -81,7 +81,7 @@ class PFEntitiesTest {
 
     @Test
     void resourceSlimeIsRegistered() {
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_slime");
+        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_slime");
         EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
         assertNotNull(type, id + " must be registered");
         assertSame(PFEntities.RESOURCE_SLIME.get(), type, "DeferredHolder must resolve to the registered type");
@@ -105,7 +105,7 @@ class PFEntitiesTest {
 
     @Test
     void caveSlimeIsRegistered() {
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "cave_slime");
+        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "cave_slime");
         EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
         assertNotNull(type, id + " must be registered");
         assertSame(PFEntities.CAVE_SLIME.get(), type, "DeferredHolder must resolve to the registered type");
@@ -128,7 +128,7 @@ class PFEntitiesTest {
 
     @Test
     void geodeSlimeIsRegistered() {
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "geode_slime");
+        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "geode_slime");
         EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
         assertNotNull(type, id + " must be registered");
         assertSame(PFEntities.GEODE_SLIME.get(), type, "DeferredHolder must resolve to the registered type");
@@ -149,7 +149,7 @@ class PFEntitiesTest {
 
     @Test
     void tideSlimeIsRegistered() {
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tide_slime");
+        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tide_slime");
         EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
         assertNotNull(type, id + " must be registered");
         assertSame(PFEntities.TIDE_SLIME.get(), type, "DeferredHolder must resolve to the registered type");
@@ -170,7 +170,7 @@ class PFEntitiesTest {
 
     @Test
     void voidSlimeIsRegistered() {
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "void_slime");
+        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "void_slime");
         EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
         assertNotNull(type, id + " must be registered");
         assertSame(PFEntities.VOID_SLIME.get(), type, "DeferredHolder must resolve to the registered type");

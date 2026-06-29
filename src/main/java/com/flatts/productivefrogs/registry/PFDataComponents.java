@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -53,11 +53,11 @@ public final class PFDataComponents {
      * data lives in the datapack registry; this component stores the lookup
      * key only.
      */
-    public static final Supplier<DataComponentType<ResourceLocation>> SLIME_VARIANT = COMPONENTS.register(
+    public static final Supplier<DataComponentType<Identifier>> SLIME_VARIANT = COMPONENTS.register(
         "slime_variant",
-        () -> DataComponentType.<ResourceLocation>builder()
-            .persistent(ResourceLocation.CODEC)
-            .networkSynchronized(ResourceLocation.STREAM_CODEC)
+        () -> DataComponentType.<Identifier>builder()
+            .persistent(Identifier.CODEC)
+            .networkSynchronized(Identifier.STREAM_CODEC)
             .build()
     );
 
@@ -69,11 +69,11 @@ public final class PFDataComponents {
      * exclusive with SLIME_VARIANT (synthesized content carries this; variant content
      * carries that).
      */
-    public static final Supplier<DataComponentType<ResourceLocation>> SYNTHESIZED_ITEM = COMPONENTS.register(
+    public static final Supplier<DataComponentType<Identifier>> SYNTHESIZED_ITEM = COMPONENTS.register(
         "synthesized_item",
-        () -> DataComponentType.<ResourceLocation>builder()
-            .persistent(ResourceLocation.CODEC)
-            .networkSynchronized(ResourceLocation.STREAM_CODEC)
+        () -> DataComponentType.<Identifier>builder()
+            .persistent(Identifier.CODEC)
+            .networkSynchronized(Identifier.STREAM_CODEC)
             .build()
     );
 

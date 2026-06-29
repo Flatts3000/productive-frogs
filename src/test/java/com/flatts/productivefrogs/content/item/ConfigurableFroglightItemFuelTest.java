@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFItems;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,7 +30,7 @@ class ConfigurableFroglightItemFuelTest {
         ItemStack stack = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
         if (variantName != null) {
             stack.set(PFDataComponents.SLIME_VARIANT.get(),
-                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName));
+                Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName));
         }
         return stack;
     }

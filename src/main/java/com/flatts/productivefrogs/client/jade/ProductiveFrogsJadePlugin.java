@@ -14,7 +14,7 @@ import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.animal.frog.Tadpole;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -52,16 +52,16 @@ import snownee.jade.api.config.IPluginConfig;
 @WailaPlugin
 public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
 
-    private static final ResourceLocation UID =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "appliances");
-    private static final ResourceLocation FROG_STATS_UID =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "frog_stats");
-    private static final ResourceLocation PRIMED_EGG_STATS_UID =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "primed_egg_stats");
-    private static final ResourceLocation TADPOLE_STATS_UID =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tadpole_stats");
-    private static final ResourceLocation MILK_SOURCE_UID =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "milk_source");
+    private static final Identifier UID =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "appliances");
+    private static final Identifier FROG_STATS_UID =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "frog_stats");
+    private static final Identifier PRIMED_EGG_STATS_UID =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "primed_egg_stats");
+    private static final Identifier TADPOLE_STATS_UID =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tadpole_stats");
+    private static final Identifier MILK_SOURCE_UID =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "milk_source");
 
     /** Shared instances: each is both the client tooltip and the server-data fetcher. */
     private static final PrimedEggStatsProvider PRIMED_EGG_STATS = new PrimedEggStatsProvider();
@@ -174,7 +174,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         }
 
         @Override
-        public ResourceLocation getUid() {
+        public Identifier getUid() {
             return UID;
         }
 
@@ -265,8 +265,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 // synthesized item, not a variant - name it "<item> Froglight" the
                 // same way the item does. Takes precedence over the variant path
                 // (the two are mutually exclusive).
-                ResourceLocation synthesizedItem = froglight.getSynthesizedItem();
-                ResourceLocation variantId = froglight.getVariantId();
+                Identifier synthesizedItem = froglight.getSynthesizedItem();
+                Identifier variantId = froglight.getVariantId();
                 if (synthesizedItem != null) {
                     net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM
                         .getOptional(synthesizedItem).orElse(null);
@@ -315,7 +315,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 // from server data (re-fetched each Jade refresh) so the count never
                 // sticks on a stale value.
                 if (data != null && data.contains("S_variant")) {
-                    ResourceLocation variant = ResourceLocation.tryParse(data.getString("S_variant"));
+                    Identifier variant = Identifier.tryParse(data.getString("S_variant"));
                     if (variant != null) {
                         // translatableWithFallback so a pack/datapack-added variant
                         // (no shipped lang key) reads as a title-cased name instead
@@ -414,7 +414,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             // Boss-tier altar (#184): N/6 catalyst faces, so an incomplete shell
             // is debuggable. Written before the Unlimited early-return below so it
             // shows even on an infinite (Endless-catalyst) boss source.
-            ResourceLocation variant = be.getVariantId();
+            Identifier variant = be.getVariantId();
             if (SlimeMilkSourceBlock.variantRequiresCatalyst(accessor.getLevel(), variant)) {
                 data.putInt("AltarFaces",
                     SlimeMilkSourceBlock.catalystFaceCount(accessor.getLevel(), accessor.getPosition(), variant));
@@ -454,7 +454,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             // Mimic Milk source (#253): name it "<item> Slime Milk" (the generic
             // block name is "Mimic Slime Milk"); the spawns-left lines below apply.
             if (data.contains("MimicItem")) {
-                ResourceLocation itemId = ResourceLocation.tryParse(data.getString("MimicItem"));
+                Identifier itemId = Identifier.tryParse(data.getString("MimicItem"));
                 net.minecraft.world.item.Item item = itemId == null ? null
                     : net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
                 Component itemName = item != null
@@ -483,7 +483,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         }
 
         @Override
-        public ResourceLocation getUid() {
+        public Identifier getUid() {
             return MILK_SOURCE_UID;
         }
     }
@@ -545,7 +545,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         }
 
         @Override
-        public ResourceLocation getUid() {
+        public Identifier getUid() {
             return FROG_STATS_UID;
         }
     }
@@ -595,7 +595,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         }
 
         @Override
-        public ResourceLocation getUid() {
+        public Identifier getUid() {
             return PRIMED_EGG_STATS_UID;
         }
     }
@@ -643,7 +643,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         }
 
         @Override
-        public ResourceLocation getUid() {
+        public Identifier getUid() {
             return TADPOLE_STATS_UID;
         }
     }

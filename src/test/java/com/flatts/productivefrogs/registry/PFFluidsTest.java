@@ -9,7 +9,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock;
 import com.flatts.productivefrogs.content.item.SlimeMilkBucketItem;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.material.FlowingFluid;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidType;
@@ -26,13 +26,13 @@ import org.junit.jupiter.api.Test;
  */
 class PFFluidsTest {
 
-    private static final ResourceLocation IRON =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+    private static final Identifier IRON =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
 
     @Test
     void perVariantFluidTypeIsRegistered() {
         FluidType type = NeoForgeRegistries.FLUID_TYPES.get(
-            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk"));
+            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk"));
         assertNotNull(type, "iron_slime_milk FluidType must be registered");
         assertSame(PFVariantMilk.fluidType(IRON), type, "accessor and registry must agree");
     }
@@ -50,7 +50,7 @@ class PFFluidsTest {
 
     @Test
     void sourceBlockIsRegisteredAndCarriesVariant() {
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk");
+        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk");
         SlimeMilkSourceBlock block = PFVariantMilk.block(IRON);
         assertSame(block, BuiltInRegistries.BLOCK.get(id), "iron_slime_milk block must resolve to the PFVariantMilk holder");
         assertEquals(IRON, block.blockVariant(), "block must carry its variant baked in at registration");
@@ -58,7 +58,7 @@ class PFFluidsTest {
 
     @Test
     void bucketItemIsRegistered() {
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk_bucket");
+        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk_bucket");
         assertSame(PFVariantMilk.bucket(IRON), BuiltInRegistries.ITEM.get(id),
             "iron_slime_milk_bucket must resolve to the PFVariantMilk holder");
         assertTrue(PFVariantMilk.bucket(IRON) instanceof SlimeMilkBucketItem,

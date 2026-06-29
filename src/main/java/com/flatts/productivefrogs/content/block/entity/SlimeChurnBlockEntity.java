@@ -14,7 +14,7 @@ import com.flatts.productivefrogs.registry.PFRegistries;
 import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
@@ -78,7 +78,7 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
     /** Paid-for batch still to emit (Quantity catalyst > output stacksTo(1)). */
     private int pendingBatch = 0;
     /** For a variant batch: the variant id. For a Mimic batch (#253): the synthesized item id. */
-    @Nullable private ResourceLocation pendingVariant;
+    @Nullable private Identifier pendingVariant;
     /** Variant batch only; null for a Mimic batch (signalled by {@link #pendingMimic}). */
     @Nullable private Category pendingCategory;
     /** True when the pending batch is Mimic Slime Buckets (Equivalence lane, #253). */
@@ -152,7 +152,7 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
         // The key is the variant id for variant milk, or (Equivalence lane, #253)
         // the synthesized item id for Mimic Milk. Both run the same spawn economy.
         boolean mimic = milk.getItem() instanceof com.flatts.productivefrogs.content.item.MimicMilkBucketItem;
-        ResourceLocation variantId;
+        Identifier variantId;
         if (milk.getItem() instanceof SlimeMilkBucketItem milkItem) {
             variantId = milkItem.variantId();
         } else if (mimic) {
@@ -322,7 +322,7 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
 
     /** Resolve a variant from the datapack registry, or null when unknown. */
     @Nullable
-    private static SlimeVariant resolveVariant(Level level, ResourceLocation variantId) {
+    private static SlimeVariant resolveVariant(Level level, Identifier variantId) {
         return level.registryAccess()
             .registry(PFRegistries.SLIME_VARIANT).map(r -> r.get(variantId)).orElse(null);
     }
@@ -333,7 +333,7 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
      * budget spend, logged once.
      */
     private static void failClosedUnknownVariant(Level level, BlockPos pos, BlockState state,
-            SlimeChurnBlockEntity be, ResourceLocation variantId) {
+            SlimeChurnBlockEntity be, Identifier variantId) {
         PFDebug.logOnce(PFDebug.Area.CHURN, "novariant#" + pos,
             () -> String.format("churn @%s fail-closed: unknown variant %s", pos, variantId));
         be.resetInterval();
@@ -456,7 +456,7 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
         intervalRemaining = Math.max(0, Math.min(tag.getInt("IntervalRemaining"), intervalTotal));
         pendingBatch = Math.max(0, tag.getInt("PendingBatch"));
         pendingVariant = tag.contains("PendingVariant", net.minecraft.nbt.Tag.TAG_STRING)
-            ? ResourceLocation.tryParse(tag.getString("PendingVariant")) : null;
+            ? Identifier.tryParse(tag.getString("PendingVariant")) : null;
         pendingMimic = tag.getBoolean("PendingMimic");
         pendingCategory = null;
         if (tag.contains("PendingCategory", net.minecraft.nbt.Tag.TAG_STRING)) {

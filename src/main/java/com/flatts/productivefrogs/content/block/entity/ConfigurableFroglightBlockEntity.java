@@ -15,7 +15,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -55,7 +55,7 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * configurable-froglight model + the default tint.
      */
     @Nullable
-    private ResourceLocation variantId;
+    private Identifier variantId;
 
     /**
      * Synthesized item id (Equivalence lane #253), or {@code null}. When set, this
@@ -65,7 +65,7 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * drops, save, and client sync exactly like the variant.
      */
     @Nullable
-    private ResourceLocation synthesizedItem;
+    private Identifier synthesizedItem;
 
     /**
      * The captured potion effect (#162), or null for a plain Froglight. When
@@ -88,18 +88,18 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
     }
 
     @Nullable
-    public ResourceLocation getVariantId() {
+    public Identifier getVariantId() {
         return variantId;
     }
 
     /** The synthesized item id (#253), or null for a variant/plain Froglight. */
     @Nullable
-    public ResourceLocation getSynthesizedItem() {
+    public Identifier getSynthesizedItem() {
         return synthesizedItem;
     }
 
     /** Set/replace the synthesized item id (server-side; mirrors {@link #setVariantId}). */
-    public void setSynthesizedItem(@Nullable ResourceLocation synthesizedItem) {
+    public void setSynthesizedItem(@Nullable Identifier synthesizedItem) {
         if (java.util.Objects.equals(this.synthesizedItem, synthesizedItem)) {
             return;
         }
@@ -198,7 +198,7 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * be on the server — client-side mutations would be overwritten by the
      * next sync.
      */
-    public void setVariantId(@Nullable ResourceLocation variantId) {
+    public void setVariantId(@Nullable Identifier variantId) {
         if (java.util.Objects.equals(this.variantId, variantId)) {
             return;
         }
@@ -274,12 +274,12 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         if (tag.contains("Variant", Tag.TAG_STRING)) {
-            variantId = ResourceLocation.tryParse(tag.getString("Variant"));
+            variantId = Identifier.tryParse(tag.getString("Variant"));
         } else {
             variantId = null;
         }
         if (tag.contains("SynthesizedItem", Tag.TAG_STRING)) {
-            synthesizedItem = ResourceLocation.tryParse(tag.getString("SynthesizedItem"));
+            synthesizedItem = Identifier.tryParse(tag.getString("SynthesizedItem"));
         } else {
             synthesizedItem = null;
         }

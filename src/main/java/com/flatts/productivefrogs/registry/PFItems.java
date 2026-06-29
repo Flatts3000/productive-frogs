@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -323,7 +323,7 @@ public final class PFItems {
      * The single Resource Slime spawn egg. One registered item whose variant
      * identity lives in the {@code SLIME_VARIANT} data component (see
      * {@link ResourceSlimeSpawnEggItem}). Per-variant stacks are built by
-     * {@link #resourceSlimeSpawnEgg(ResourceLocation)}; the creative tab + JEI
+     * {@link #resourceSlimeSpawnEgg(Identifier)}; the creative tab + JEI
      * enumerate variants from the {@code SLIME_VARIANT} datapack registry, so
      * adding a variant needs no spawn-egg Java edit (CR-9).
      *
@@ -629,7 +629,7 @@ public final class PFItems {
      * resolves its category from the variant registry on spawn). The entity
      * type id is embedded so vanilla {@code SpawnEggItem} semantics resolve.
      */
-    public static ItemStack resourceSlimeSpawnEgg(ResourceLocation variantId) {
+    public static ItemStack resourceSlimeSpawnEgg(Identifier variantId) {
         ItemStack stack = new ItemStack(RESOURCE_SLIME_SPAWN_EGG.get());
         CompoundTag nbt = new CompoundTag();
         nbt.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(PFEntities.RESOURCE_SLIME.get()).toString());
@@ -647,7 +647,7 @@ public final class PFItems {
      * names; shared by the creative tab and the JEI plugin so all display stacks
      * stay consistent with real captured buckets.
      */
-    public static ItemStack variantSlimeBucket(ResourceLocation variantId, Category category) {
+    public static ItemStack variantSlimeBucket(Identifier variantId, Category category) {
         ItemStack stack = new ItemStack(SLIME_BUCKET.get());
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
             tag.putString("Category", category.name());
@@ -662,7 +662,7 @@ public final class PFItems {
      * {@link ItemStack#EMPTY} for a variant with no per-variant fluid (one not
      * declared at mod-init) - such variants get no milk.
      */
-    public static ItemStack slimeMilkBucket(ResourceLocation variantId) {
+    public static ItemStack slimeMilkBucket(Identifier variantId) {
         net.minecraft.world.item.Item bucket = PFVariantMilk.bucket(variantId);
         return bucket == null ? ItemStack.EMPTY : new ItemStack(bucket);
     }

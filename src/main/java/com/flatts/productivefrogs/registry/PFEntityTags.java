@@ -2,7 +2,7 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -21,7 +21,7 @@ import net.minecraft.world.entity.animal.frog.Frog;
 public final class PFEntityTags {
 
     public static final TagKey<EntityType<?>> FROGS = TagKey.create(
-        Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "frogs"));
+        Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "frogs"));
 
     private PFEntityTags() {
         // constants holder

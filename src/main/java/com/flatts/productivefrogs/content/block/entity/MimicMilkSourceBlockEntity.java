@@ -11,7 +11,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -31,7 +31,7 @@ public class MimicMilkSourceBlockEntity extends BlockEntity {
     public static final int DEFAULT_SPAWNS = 16;
 
     @Nullable
-    private ResourceLocation synthesizedItem;
+    private Identifier synthesizedItem;
 
     /** Remaining slimes this source will spawn before draining; -1 = not yet seeded. */
     private int spawnsRemaining = -1;
@@ -54,12 +54,12 @@ public class MimicMilkSourceBlockEntity extends BlockEntity {
     }
 
     @Nullable
-    public ResourceLocation getSynthesizedItem() {
+    public Identifier getSynthesizedItem() {
         return synthesizedItem;
     }
 
     /** Set the item this source spawns; seeds the spawn budget on first assignment. */
-    public void setSynthesizedItem(@Nullable ResourceLocation synthesizedItem) {
+    public void setSynthesizedItem(@Nullable Identifier synthesizedItem) {
         boolean changed = !java.util.Objects.equals(this.synthesizedItem, synthesizedItem);
         this.synthesizedItem = synthesizedItem;
         if (synthesizedItem != null && spawnsRemaining < 0) {
@@ -200,7 +200,7 @@ public class MimicMilkSourceBlockEntity extends BlockEntity {
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         synthesizedItem = tag.contains("SynthesizedItem", Tag.TAG_STRING)
-            ? ResourceLocation.tryParse(tag.getString("SynthesizedItem"))
+            ? Identifier.tryParse(tag.getString("SynthesizedItem"))
             : null;
         spawnsRemaining = tag.contains("SpawnsRemaining", Tag.TAG_INT) ? tag.getInt("SpawnsRemaining") : -1;
         spawnsCapacity = tag.contains("SpawnsCapacity", Tag.TAG_INT) ? tag.getInt("SpawnsCapacity") : -1;

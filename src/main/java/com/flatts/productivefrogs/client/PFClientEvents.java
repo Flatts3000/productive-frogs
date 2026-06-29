@@ -32,7 +32,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -134,8 +134,8 @@ public final class PFClientEvents {
             com.flatts.productivefrogs.client.renderer.WitherSummonReceptacleRenderer::new);
     }
 
-    private static ResourceLocation parentTexture(String name) {
-        return ResourceLocation.fromNamespaceAndPath(
+    private static Identifier parentTexture(String name) {
+        return Identifier.fromNamespaceAndPath(
             ProductiveFrogs.MOD_ID, "textures/entity/slime/" + name + ".png");
     }
 
@@ -167,12 +167,12 @@ public final class PFClientEvents {
                 }
                 // Equivalence lane (#253): a placed Prismatic Froglight tints from
                 // its carried item's sprite-average colour (runtime resolver).
-                ResourceLocation synthBlockItem = froglightBe.getSynthesizedItem();
+                Identifier synthBlockItem = froglightBe.getSynthesizedItem();
                 if (synthBlockItem != null) {
                     Item item = BuiltInRegistries.ITEM.getOptional(synthBlockItem).orElse(null);
                     return item == null ? -1 : SynthesizedTint.colorFor(item);
                 }
-                ResourceLocation variantId = froglightBe.getVariantId();
+                Identifier variantId = froglightBe.getVariantId();
                 if (variantId == null) {
                     return -1;
                 }
@@ -210,7 +210,7 @@ public final class PFClientEvents {
                         || sprinkler.isEmpty()) {
                     return -1;
                 }
-                ResourceLocation variantId = sprinkler.getVariantId();
+                Identifier variantId = sprinkler.getVariantId();
                 if (variantId == null) {
                     return -1;
                 }
@@ -262,7 +262,7 @@ public final class PFClientEvents {
             if (data != null) {
                 CompoundTag tag = data.copyTag();
                 if (tag.contains("Variant")) {
-                    ResourceLocation variantId = ResourceLocation.tryParse(tag.getString("Variant"));
+                    Identifier variantId = Identifier.tryParse(tag.getString("Variant"));
                     if (variantId != null) {
                         Minecraft mc = Minecraft.getInstance();
                         if (mc.level != null) {
@@ -301,7 +301,7 @@ public final class PFClientEvents {
         // when un-stamped so the silhouette stays visible.
         event.register((stack, tintIndex) -> {
             if (tintIndex != 1) return -1;
-            ResourceLocation itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+            Identifier itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
             if (itemId == null) return opaque(0xC8C8D2);
             Item item = BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
             return item == null ? opaque(0xC8C8D2) : SynthesizedTint.colorFor(item);
@@ -311,7 +311,7 @@ public final class PFClientEvents {
         // item's colour off the top-level SYNTHESIZED_ITEM component.
         event.register((stack, tintIndex) -> {
             if (tintIndex != 1) return -1;
-            ResourceLocation itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+            Identifier itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
             if (itemId == null) return opaque(0xC8C8D2);
             Item item = BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
             return item == null ? opaque(0xC8C8D2) : SynthesizedTint.colorFor(item);
@@ -321,8 +321,8 @@ public final class PFClientEvents {
         // layer (tintIndex 1) by its OWN variant's registry colour (the variant is
         // the item identity, no component lookup). Falls back to milky off-white
         // before the registry is available so the item stays visible.
-        for (ResourceLocation variantId : PFVariantMilk.registeredVariants()) {
-            final ResourceLocation vid = variantId;
+        for (Identifier variantId : PFVariantMilk.registeredVariants()) {
+            final Identifier vid = variantId;
             event.register((stack, tintIndex) -> {
                 if (tintIndex != 1) {
                     return -1;
@@ -354,7 +354,7 @@ public final class PFClientEvents {
             // Equivalence lane (#253): a synthesized Froglight carries an arbitrary
             // item id (not a registered variant). Its tint is sampled from that
             // item's sprite at runtime - no primary_color to look up.
-            ResourceLocation synthesizedItem = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+            Identifier synthesizedItem = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
             if (synthesizedItem != null) {
                 Item item = BuiltInRegistries.ITEM.getOptional(synthesizedItem).orElse(null);
                 final int sargb = item == null ? -1 : SynthesizedTint.colorFor(item);
@@ -364,7 +364,7 @@ public final class PFClientEvents {
                 }
                 return sargb;
             }
-            ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+            Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
             if (variantId == null) return -1;
             Minecraft mc = Minecraft.getInstance();
             if (mc.level == null) return -1;
@@ -394,7 +394,7 @@ public final class PFClientEvents {
         // ctor colours (BOG) when no variant is set or the registry isn't loaded
         // yet (title-screen creative preview before world load).
         event.register((stack, tintIndex) -> {
-            ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+            Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
             if (variantId != null) {
                 Minecraft mc = Minecraft.getInstance();
                 if (mc.level != null) {
@@ -478,7 +478,7 @@ public final class PFClientEvents {
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> ItemProperties.register(
             PFItems.FROG_NET.get(),
-            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "filled"),
+            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "filled"),
             (stack, level, entity, seed) -> FrogNetItem.isFilled(stack) ? 1.0F : 0.0F));
     }
 
@@ -515,12 +515,12 @@ public final class PFClientEvents {
      */
     @SubscribeEvent
     public static void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
-        ResourceLocation still = ResourceLocation.fromNamespaceAndPath(
+        Identifier still = Identifier.fromNamespaceAndPath(
             ProductiveFrogs.MOD_ID, "block/slime_milk_still");
-        ResourceLocation flow = ResourceLocation.fromNamespaceAndPath(
+        Identifier flow = Identifier.fromNamespaceAndPath(
             ProductiveFrogs.MOD_ID, "block/slime_milk_flow");
-        for (ResourceLocation variantId : PFVariantMilk.registeredVariants()) {
-            final ResourceLocation vid = variantId;
+        for (Identifier variantId : PFVariantMilk.registeredVariants()) {
+            final Identifier vid = variantId;
             FluidType type = PFVariantMilk.fluidType(vid);
             if (type == null) {
                 continue;
@@ -528,10 +528,10 @@ public final class PFClientEvents {
             event.registerFluidType(
                 new IClientFluidTypeExtensions() {
                     @Override
-                    public ResourceLocation getStillTexture() { return still; }
+                    public Identifier getStillTexture() { return still; }
 
                     @Override
-                    public ResourceLocation getFlowingTexture() { return flow; }
+                    public Identifier getFlowingTexture() { return flow; }
 
                     @Override
                     public int getTintColor() {
@@ -556,10 +556,10 @@ public final class PFClientEvents {
         event.registerFluidType(
             new IClientFluidTypeExtensions() {
                 @Override
-                public ResourceLocation getStillTexture() { return still; }
+                public Identifier getStillTexture() { return still; }
 
                 @Override
-                public ResourceLocation getFlowingTexture() { return flow; }
+                public Identifier getFlowingTexture() { return flow; }
 
                 @Override
                 public int getTintColor() { return 0xFFC8C8D2; }
@@ -568,7 +568,7 @@ public final class PFClientEvents {
                 public int getTintColor(FluidState state, BlockAndTintGetter getter, BlockPos pos) {
                     if (getter != null && pos != null
                             && getter.getBlockEntity(pos) instanceof com.flatts.productivefrogs.content.block.entity.MimicMilkSourceBlockEntity be) {
-                        ResourceLocation itemId = be.getSynthesizedItem();
+                        Identifier itemId = be.getSynthesizedItem();
                         if (itemId != null) {
                             Item item = BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
                             if (item != null) {
@@ -585,12 +585,12 @@ public final class PFClientEvents {
         // Molten metals (v1.12): same per-variant tint model over a shared
         // greyscale molten texture set (desaturated lava still/flow). The
         // metal id IS the variant id, so the colour lookup is identical.
-        ResourceLocation moltenStill = ResourceLocation.fromNamespaceAndPath(
+        Identifier moltenStill = Identifier.fromNamespaceAndPath(
             ProductiveFrogs.MOD_ID, "block/molten_still");
-        ResourceLocation moltenFlow = ResourceLocation.fromNamespaceAndPath(
+        Identifier moltenFlow = Identifier.fromNamespaceAndPath(
             ProductiveFrogs.MOD_ID, "block/molten_flow");
-        for (ResourceLocation metalId : com.flatts.productivefrogs.registry.PFMoltenFluids.registeredMetals()) {
-            final ResourceLocation vid = metalId;
+        for (Identifier metalId : com.flatts.productivefrogs.registry.PFMoltenFluids.registeredMetals()) {
+            final Identifier vid = metalId;
             FluidType type = com.flatts.productivefrogs.registry.PFMoltenFluids.fluidType(vid);
             if (type == null) {
                 continue;
@@ -598,10 +598,10 @@ public final class PFClientEvents {
             event.registerFluidType(
                 new IClientFluidTypeExtensions() {
                     @Override
-                    public ResourceLocation getStillTexture() { return moltenStill; }
+                    public Identifier getStillTexture() { return moltenStill; }
 
                     @Override
-                    public ResourceLocation getFlowingTexture() { return moltenFlow; }
+                    public Identifier getFlowingTexture() { return moltenFlow; }
 
                     @Override
                     public int getTintColor() {
@@ -625,7 +625,7 @@ public final class PFClientEvents {
      * a fallback). Shared by the per-variant milk bucket item tint and per-variant
      * fluid tint.
      */
-    private static int variantTint(ResourceLocation variantId) {
+    private static int variantTint(Identifier variantId) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) {
             return -1;

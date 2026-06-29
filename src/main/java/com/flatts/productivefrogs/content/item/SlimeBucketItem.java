@@ -6,7 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.dispenser.BlockSource;
 import net.minecraft.core.dispenser.DefaultDispenseItemBehavior;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
@@ -133,13 +133,13 @@ public final class SlimeBucketItem extends MobBucketItem {
      * deliberately absent - {@code Bucketable.loadDefaultDataFromBucketTag}
      * treats each as optional.
      */
-    public static ItemStack forVariant(Category category, ResourceLocation variantId) {
+    public static ItemStack forVariant(Category category, Identifier variantId) {
         return PFItems.variantSlimeBucket(variantId, category);
     }
 
     @Override
     public Component getName(ItemStack stack) {
-        ResourceLocation variantId = ResourceTadpoleBucketItem.readVariant(stack);
+        Identifier variantId = ResourceTadpoleBucketItem.readVariant(stack);
         if (variantId != null) {
             // Built-in variants ship an explicit key; a datapack-added variant
             // (no lang) falls back to a title-cased name, so it reads cleanly

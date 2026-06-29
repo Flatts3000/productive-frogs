@@ -14,7 +14,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -54,7 +54,7 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
     public static final int MAX_STORED_SPAWNS = 1_000_000;
 
     @Nullable
-    private ResourceLocation variantId;
+    private Identifier variantId;
 
     private int spawnsRemaining = UNINITIALIZED;
     private int spawnsCapacity = UNINITIALIZED;
@@ -67,7 +67,7 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
     }
 
     @Nullable
-    public ResourceLocation getVariantId() {
+    public Identifier getVariantId() {
         return variantId;
     }
 
@@ -77,7 +77,7 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
      * default the first time a real variant is attached, so a freshly-placed
      * source starts with a full budget without needing a carried component.
      */
-    public void setVariantId(@Nullable ResourceLocation variantId) {
+    public void setVariantId(@Nullable Identifier variantId) {
         boolean changed = !Objects.equals(this.variantId, variantId);
         this.variantId = variantId;
         if (variantId != null) {
@@ -296,7 +296,7 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         variantId = tag.contains("Variant", Tag.TAG_STRING)
-            ? ResourceLocation.tryParse(tag.getString("Variant")) : null;
+            ? Identifier.tryParse(tag.getString("Variant")) : null;
         spawnsRemaining = tag.contains("SpawnsRemaining", Tag.TAG_INT)
             ? Mth.clamp(tag.getInt("SpawnsRemaining"), 0, MAX_STORED_SPAWNS) : UNINITIALIZED;
         spawnsCapacity = tag.contains("SpawnsCapacity", Tag.TAG_INT)

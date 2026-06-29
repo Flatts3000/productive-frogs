@@ -6,7 +6,7 @@ import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
@@ -47,7 +47,7 @@ public final class MimicSlimeBucketItem extends MobBucketItem {
      * Alembic produces these. Stamps the top-level component (tint/name) and the
      * {@code BUCKET_ENTITY_DATA} key (so release spawns a Mimic Slime carrying it).
      */
-    public static ItemStack forItem(ResourceLocation itemId) {
+    public static ItemStack forItem(Identifier itemId) {
         ItemStack stack = new ItemStack(PFItems.MIMIC_SLIME_BUCKET.get());
         stack.set(PFDataComponents.SYNTHESIZED_ITEM.get(), itemId);
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack,
@@ -57,7 +57,7 @@ public final class MimicSlimeBucketItem extends MobBucketItem {
 
     @Override
     public Component getName(ItemStack stack) {
-        ResourceLocation itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+        Identifier itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
         if (itemId != null) {
             net.minecraft.world.item.Item item =
                 net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
@@ -71,7 +71,7 @@ public final class MimicSlimeBucketItem extends MobBucketItem {
 
     /** Convenience: the captured item id (for the Milker/Churn branches + JEI). */
     @Nullable
-    public static ResourceLocation readItem(ItemStack stack) {
+    public static Identifier readItem(ItemStack stack) {
         return stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
     }
 

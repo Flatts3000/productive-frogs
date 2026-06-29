@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
@@ -73,9 +73,9 @@ public final class PFMoltenFluids {
 
     private static final String ATO_MODID = "alltheores";
 
-    private static final Map<ResourceLocation, DeferredHolder<FluidType, FluidType>> TYPES = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, DeferredHolder<Fluid, BaseFlowingFluid.Source>> SOURCES = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, DeferredHolder<Fluid, BaseFlowingFluid.Flowing>> FLOWINGS = new LinkedHashMap<>();
+    private static final Map<Identifier, DeferredHolder<FluidType, FluidType>> TYPES = new LinkedHashMap<>();
+    private static final Map<Identifier, DeferredHolder<Fluid, BaseFlowingFluid.Source>> SOURCES = new LinkedHashMap<>();
+    private static final Map<Identifier, DeferredHolder<Fluid, BaseFlowingFluid.Flowing>> FLOWINGS = new LinkedHashMap<>();
 
     private static boolean bootstrapped = false;
 
@@ -108,7 +108,7 @@ public final class PFMoltenFluids {
     }
 
     private static void registerMetal(String metal) {
-        ResourceLocation vid = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, metal);
+        Identifier vid = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, metal);
         String base = "molten_" + metal;
 
         DeferredHolder<FluidType, FluidType> type =
@@ -138,18 +138,18 @@ public final class PFMoltenFluids {
     // ---- accessors (variant-id keyed, like PFVariantMilk) ----
 
     /** Variant ids that received a PF molten fluid this launch. */
-    public static Set<ResourceLocation> registeredMetals() {
+    public static Set<Identifier> registeredMetals() {
         return Collections.unmodifiableSet(SOURCES.keySet());
     }
 
     @Nullable
-    public static Fluid sourceFluid(ResourceLocation variantId) {
+    public static Fluid sourceFluid(Identifier variantId) {
         DeferredHolder<Fluid, BaseFlowingFluid.Source> h = SOURCES.get(variantId);
         return h == null ? null : h.get();
     }
 
     @Nullable
-    public static FluidType fluidType(ResourceLocation variantId) {
+    public static FluidType fluidType(Identifier variantId) {
         DeferredHolder<FluidType, FluidType> h = TYPES.get(variantId);
         return h == null ? null : h.get();
     }

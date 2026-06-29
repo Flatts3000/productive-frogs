@@ -11,7 +11,7 @@ import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import org.junit.jupiter.api.Test;
 
@@ -23,17 +23,17 @@ import org.junit.jupiter.api.Test;
  */
 class TerrariumControllerBufferTest {
 
-    private static final ResourceLocation IRON =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
-    private static final ResourceLocation COPPER =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
+    private static final Identifier IRON =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+    private static final Identifier COPPER =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
 
     private static TerrariumControllerBlockEntity newController() {
         return new TerrariumControllerBlockEntity(BlockPos.ZERO,
             PFBlocks.TERRARIUM_CONTROLLER.get().defaultBlockState());
     }
 
-    private static ItemStack milk(ResourceLocation variant) {
+    private static ItemStack milk(Identifier variant) {
         return PFItems.slimeMilkBucket(variant);
     }
 

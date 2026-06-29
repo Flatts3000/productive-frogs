@@ -7,7 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.level.material.Fluid;
@@ -27,7 +27,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
  */
 public class CastingMoldScreen extends PFContainerScreen<CastingMoldMenu> {
 
-    private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath(
+    private static final Identifier BACKGROUND = Identifier.fromNamespaceAndPath(
         ProductiveFrogs.MOD_ID, "textures/gui/container/casting_mold.png");
 
     // Same composited sheet conventions as the Milker GUI (see

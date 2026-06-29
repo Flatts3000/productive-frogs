@@ -4,7 +4,7 @@ import com.flatts.productivefrogs.data.Category;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -82,7 +82,7 @@ public final class ResourceTadpoleBucketItem extends MobBucketItem {
      * color over the broader category tint when both are present.
      */
     @Nullable
-    public static ResourceLocation readVariant(ItemStack stack) {
+    public static Identifier readVariant(ItemStack stack) {
         CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
         if (data == null) {
             return null;
@@ -95,6 +95,6 @@ public final class ResourceTadpoleBucketItem extends MobBucketItem {
         if (raw == null || raw.isEmpty()) {
             return null;
         }
-        return ResourceLocation.tryParse(raw);
+        return Identifier.tryParse(raw);
     }
 }

@@ -9,7 +9,7 @@ import com.flatts.productivefrogs.data.StoredEffect;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.util.PFDebug;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
@@ -105,7 +105,7 @@ public final class FrogTongueDropHandler {
      * <p>No category-match check here — callers verify that. This method just
      * emits the drop.
      */
-    public static void dropFroglightAtFrog(ResourceFrog frog, @Nullable ResourceLocation variantId) {
+    public static void dropFroglightAtFrog(ResourceFrog frog, @Nullable Identifier variantId) {
         dropFroglightAtFrog(frog, variantId, null);
     }
 
@@ -116,7 +116,7 @@ public final class FrogTongueDropHandler {
      * the same captured effect. The player direct-feed path passes null (a
      * bucketed slime carries no live effects).
      */
-    public static void dropFroglightAtFrog(ResourceFrog frog, @Nullable ResourceLocation variantId,
+    public static void dropFroglightAtFrog(ResourceFrog frog, @Nullable Identifier variantId,
             @Nullable StoredEffect captured) {
         Level level = frog.level();
         if (level.isClientSide()) {
@@ -163,7 +163,7 @@ public final class FrogTongueDropHandler {
         PFDebug.log(PFDebug.Area.TONGUE, () -> String.format(
             "drop: frog category=%s bounty=%d -> %d x configurable_froglight variant=%s effect=%s at %s",
             frog.getCategory(), frog.getBounty(), count, variantId,
-            captured == null ? "none" : captured.effect().unwrapKey().map(k -> k.location().toString()).orElse("?"),
+            captured == null ? "none" : captured.effect().unwrapKey().map(k -> k.identifier().toString()).orElse("?"),
             frog.blockPosition()));
     }
 
@@ -173,7 +173,7 @@ public final class FrogTongueDropHandler {
      * drop here and the Froglight weapon (#212), so variant + effect stamping lives
      * in one place.
      */
-    public static ItemStack buildFroglight(ResourceLocation variantId, @Nullable StoredEffect captured) {
+    public static ItemStack buildFroglight(Identifier variantId, @Nullable StoredEffect captured) {
         ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
         froglight.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
         if (captured != null) {

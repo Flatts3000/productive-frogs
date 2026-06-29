@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
@@ -383,7 +383,7 @@ public final class PFBlocks {
             .requiresCorrectToolForDrops());
 
     /** Memoized {@link #catalystForVariant()} - the blocks are stable post-registration. */
-    private static Map<ResourceLocation, Block> catalystMap;
+    private static Map<Identifier, Block> catalystMap;
 
     /**
      * Single source of truth wiring each boss variant id to the catalyst block
@@ -392,14 +392,14 @@ public final class PFBlocks {
      * resolve only after registration), then memoized: the gate runs per
      * milk-source tick, so rebuilding a 4-entry map each call was needless churn.
      */
-    public static Map<ResourceLocation, Block> catalystForVariant() {
-        Map<ResourceLocation, Block> map = catalystMap;
+    public static Map<Identifier, Block> catalystForVariant() {
+        Map<Identifier, Block> map = catalystMap;
         if (map == null) {
             map = Map.of(
-                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star"), NETHER_STAR_CATALYST.get(),
-                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_egg"), DRAGON_EGG_CATALYST.get(),
-                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "wither_skeleton_skull"), WITHER_SKELETON_SKULL_CATALYST.get(),
-                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_breath"), DRAGON_BREATH_CATALYST.get()
+                Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star"), NETHER_STAR_CATALYST.get(),
+                Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_egg"), DRAGON_EGG_CATALYST.get(),
+                Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "wither_skeleton_skull"), WITHER_SKELETON_SKULL_CATALYST.get(),
+                Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_breath"), DRAGON_BREATH_CATALYST.get()
             );
             catalystMap = map;
         }

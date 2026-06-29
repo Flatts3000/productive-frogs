@@ -19,7 +19,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -62,7 +62,7 @@ public class SprinklerBlockEntity extends BlockEntity {
     public static volatile Integer cavitySlimeCapOverride = null;
 
     @Nullable
-    private ResourceLocation variantId;
+    private Identifier variantId;
     /** Equivalence lane (#253): true when {@link #variantId} is a synthesized item id, not a variant. */
     private boolean mimic;
     private int spawnsRemaining = UNINITIALIZED;
@@ -83,7 +83,7 @@ public class SprinklerBlockEntity extends BlockEntity {
     }
 
     @Nullable
-    public ResourceLocation getVariantId() {
+    public Identifier getVariantId() {
         return variantId;
     }
 
@@ -119,22 +119,22 @@ public class SprinklerBlockEntity extends BlockEntity {
     }
 
     /** A candidate for top-up: holds {@code variant}, not infinite, and draining low. */
-    public boolean wantsTopUp(ResourceLocation variant, int threshold) {
+    public boolean wantsTopUp(Identifier variant, int threshold) {
         return wantsTopUp(variant, false, threshold);
     }
 
     /** Top-up candidate, mimic-aware (#253): the synthesized-vs-variant kind must also match. */
-    public boolean wantsTopUp(ResourceLocation variant, boolean mimic, int threshold) {
+    public boolean wantsTopUp(Identifier variant, boolean mimic, int threshold) {
         return variant.equals(variantId) && this.mimic == mimic && !infinite && spawnsRemaining <= threshold;
     }
 
     /** Stamp a fresh variant charge (replaces whatever was here). */
-    public void loadCharge(ResourceLocation variant, MilkCharge charge) {
+    public void loadCharge(Identifier variant, MilkCharge charge) {
         loadCharge(variant, false, charge);
     }
 
     /** Stamp a fresh charge; {@code mimic} marks {@code variant} as a synthesized item id (#253). */
-    public void loadCharge(ResourceLocation variant, boolean mimic, MilkCharge charge) {
+    public void loadCharge(Identifier variant, boolean mimic, MilkCharge charge) {
         this.variantId = variant;
         this.mimic = mimic;
         this.spawnsRemaining = clampSpawns(charge.spawnsRemaining());
@@ -474,7 +474,7 @@ public class SprinklerBlockEntity extends BlockEntity {
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         if (tag.contains("Variant", Tag.TAG_STRING)) {
-            variantId = ResourceLocation.tryParse(tag.getString("Variant"));
+            variantId = Identifier.tryParse(tag.getString("Variant"));
             mimic = tag.getBoolean("Mimic");
             spawnsRemaining = clampSpawns(tag.getInt("SpawnsRemaining"));
             spawnsCapacity = clampSpawns(Math.max(tag.getInt("SpawnsCapacity"), spawnsRemaining));

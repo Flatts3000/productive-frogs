@@ -3,7 +3,7 @@ package com.flatts.productivefrogs.client.screen;
 import com.flatts.productivefrogs.content.menu.HatchMenu;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
@@ -15,8 +15,8 @@ import net.minecraft.world.entity.player.Inventory;
  */
 public class HatchScreen extends PFContainerScreen<HatchMenu> {
 
-    private static final ResourceLocation CONTAINER =
-        ResourceLocation.withDefaultNamespace("textures/gui/container/generic_54.png");
+    private static final Identifier CONTAINER =
+        Identifier.withDefaultNamespace("textures/gui/container/generic_54.png");
     private static final int ROWS = 2;
 
     public HatchScreen(HatchMenu menu, Inventory playerInv, Component title) {

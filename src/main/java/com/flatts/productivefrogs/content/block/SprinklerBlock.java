@@ -10,7 +10,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
@@ -95,7 +95,7 @@ public class SprinklerBlock extends Block implements EntityBlock {
         if (!(level.getBlockEntity(pos) instanceof SprinklerBlockEntity be) || be.isEmpty()) {
             return;
         }
-        ResourceLocation variant = be.getVariantId();
+        Identifier variant = be.getVariantId();
         int rgb;
         if (variant == null) {
             rgb = DEFAULT_MILK_RGB;
@@ -131,7 +131,7 @@ public class SprinklerBlock extends Block implements EntityBlock {
     /** Milky off-white fallback before the variant registry is available. */
     private static final int DEFAULT_MILK_RGB = 0xF0F0E0;
 
-    private static int variantColor(Level level, ResourceLocation variant) {
+    private static int variantColor(Level level, Identifier variant) {
         Registry<SlimeVariant> registry = level.registryAccess()
             .registry(PFRegistries.SLIME_VARIANT).orElse(null);
         if (registry == null) {

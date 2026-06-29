@@ -29,7 +29,7 @@ class SlimeMilkerBlockTest {
     @Test
     void readsVariantPathFromBucketEntityData() {
         // Mirrors what ResourceSlime.saveToBucketTag writes when the captured
-        // slime carries a registered SlimeVariant: a full ResourceLocation string
+        // slime carries a registered SlimeVariant: a full Identifier string
         // under the "Variant" key inside BUCKET_ENTITY_DATA. The milker pulls
         // just the path back out because PFFluidTypes.VARIANTS is keyed by
         // bare variant names (e.g. "iron", not "productivefrogs:iron").
@@ -68,7 +68,7 @@ class SlimeMilkerBlockTest {
     @Test
     void returnsNullWhenVariantTagIsEmptyString() {
         // Defensive: empty-string Variant should be treated identically to
-        // absent. ResourceLocation.tryParse would barf on an empty string, but the
+        // absent. Identifier.tryParse would barf on an empty string, but the
         // explicit isEmpty() check in readBucketVariant short-circuits before
         // that — pin the behavior so the short-circuit isn't dropped in a
         // future refactor.
@@ -81,7 +81,7 @@ class SlimeMilkerBlockTest {
 
     @Test
     void returnsNullWhenVariantIdIsMalformed() {
-        // "::" is unparseable as an ResourceLocation (too many colons). ResourceLocation
+        // "::" is unparseable as an Identifier (too many colons). Identifier
         // .tryParse returns null on malformed input; the milker must propagate
         // that as null, not throw.
         ItemStack bucket = new ItemStack(PFItems.SLIME_BUCKET.get());
@@ -114,7 +114,7 @@ class SlimeMilkerBlockTest {
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, bucket,
             tag -> tag.putString("Variant", "mymod:adamantite"));
 
-        assertEquals(net.minecraft.resources.ResourceLocation.parse("mymod:adamantite"),
+        assertEquals(net.minecraft.resources.Identifier.parse("mymod:adamantite"),
             SlimeMilkerBlock.readBucketVariantId(bucket));
         assertNull(SlimeMilkerBlock.readBucketVariantId(new ItemStack(PFItems.SLIME_BUCKET.get())),
             "an empty Slime Bucket has no variant id");

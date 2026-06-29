@@ -12,7 +12,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.item.Item;
 
@@ -43,7 +43,7 @@ public class MimicSlimeOuterLayer extends RenderLayer<Slime, SlimeModel<Slime>> 
             return;
         }
 
-        ResourceLocation texture = parentRenderer.getTextureLocation(entity);
+        Identifier texture = parentRenderer.getTextureLocation(entity);
         VertexConsumer consumer = glowingOutline
             ? buffer.getBuffer(RenderType.outline(texture))
             : buffer.getBuffer(RenderType.entityTranslucent(texture));

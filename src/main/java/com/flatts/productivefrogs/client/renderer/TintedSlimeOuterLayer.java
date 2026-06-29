@@ -11,7 +11,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.monster.Slime;
 
 /**
@@ -38,10 +38,10 @@ public class TintedSlimeOuterLayer extends RenderLayer<Slime, SlimeModel<Slime>>
 
     private final SlimeModel<Slime> model;
     private final int tintArgb;
-    private final ResourceLocation outerTexture;
+    private final Identifier outerTexture;
 
     public TintedSlimeOuterLayer(SlimeRenderer renderer, EntityModelSet modelSet, int tintArgb,
-                                 ResourceLocation outerTexture) {
+                                 Identifier outerTexture) {
         super(renderer);
         this.model = new SlimeModel<>(modelSet.bakeLayer(ModelLayers.SLIME_OUTER));
         this.tintArgb = tintArgb;

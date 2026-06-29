@@ -9,7 +9,7 @@ import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -152,7 +152,7 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
                 || !(level.getBlockEntity(pos) instanceof MimicMilkSourceBlockEntity be)) {
             return;
         }
-        ResourceLocation itemId = be.getSynthesizedItem();
+        Identifier itemId = be.getSynthesizedItem();
         if (itemId == null) {
             // Placed without an item (e.g. /setblock): inert, no reschedule.
             return;
@@ -193,7 +193,7 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * the source's item. The budget is still spent once per event by the caller, so
      * Quantity is strictly additive. Returns true if at least one slime spawned.
      */
-    private boolean spawn(ServerLevel level, BlockPos pos, RandomSource random, ResourceLocation itemId,
+    private boolean spawn(ServerLevel level, BlockPos pos, RandomSource random, Identifier itemId,
                           MimicMilkSourceBlockEntity be) {
         int batch = MilkSpawnEconomy.batchQuantity(be.getQuantityLevel());
         int spawned = 0;
@@ -234,7 +234,7 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
         // world -> bucket round-trip (mirrors SlimeMilkSourceBlock.pickupBlock). Without
         // this, re-bucketing reset the source to the default budget and dropped Endless.
         MimicMilkSourceBlockEntity be = level.getBlockEntity(pos) instanceof MimicMilkSourceBlockEntity b ? b : null;
-        ResourceLocation itemId = be != null ? be.getSynthesizedItem() : null;
+        Identifier itemId = be != null ? be.getSynthesizedItem() : null;
         int remaining = be != null ? be.getSpawnsRemaining() : 0;
         int capacity = be != null ? be.getSpawnsCapacity() : 0;
         int speed = be != null ? be.getSpeedLevel() : 0;

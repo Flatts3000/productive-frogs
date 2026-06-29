@@ -4,7 +4,7 @@ import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.client.renderer.entity.layers.SlimeOuterLayer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.monster.Slime;
 
 /**
@@ -18,9 +18,9 @@ import net.minecraft.world.entity.monster.Slime;
  */
 public class ParentSlimeRenderer extends SlimeRenderer {
 
-    private final ResourceLocation texture;
+    private final Identifier texture;
 
-    public ParentSlimeRenderer(EntityRendererProvider.Context ctx, ResourceLocation texture, int outerTintArgb) {
+    public ParentSlimeRenderer(EntityRendererProvider.Context ctx, Identifier texture, int outerTintArgb) {
         super(ctx);
         this.texture = texture;
         this.layers.removeIf(l -> l instanceof SlimeOuterLayer);
@@ -30,7 +30,7 @@ public class ParentSlimeRenderer extends SlimeRenderer {
     }
 
     @Override
-    public ResourceLocation getTextureLocation(Slime entity) {
+    public Identifier getTextureLocation(Slime entity) {
         return texture;
     }
 }

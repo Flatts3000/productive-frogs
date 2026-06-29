@@ -4,7 +4,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.menu.SlimeChurnMenu;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
@@ -21,7 +21,7 @@ import net.minecraft.world.entity.player.Inventory;
  */
 public class SlimeChurnScreen extends PFContainerScreen<SlimeChurnMenu> {
 
-    private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath(
+    private static final Identifier BACKGROUND = Identifier.fromNamespaceAndPath(
         ProductiveFrogs.MOD_ID, "textures/gui/container/slime_churn.png");
 
     private static final int ARROW_BG_X = 79;

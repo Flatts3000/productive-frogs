@@ -17,7 +17,7 @@ import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -133,11 +133,11 @@ public final class SpawneryRecipeCategory implements IRecipeCategory<SpawneryRec
     }
 
     @Override
-    public ResourceLocation getRegistryName(Recipe recipe) {
+    public Identifier getRegistryName(Recipe recipe) {
         // Stable per-recipe id: the output's contained category (one per species),
         // or "vanilla" for the plain-frogspawn case.
         Category cat = recipe.output().get(PFDataComponents.CONTAINED_CATEGORY.get());
-        return ResourceLocation.fromNamespaceAndPath(
+        return Identifier.fromNamespaceAndPath(
             ProductiveFrogs.MOD_ID, "spawnery/" + (cat == null ? "vanilla" : cat.id()));
     }
 }

@@ -9,7 +9,7 @@ import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFRegistries;
 import java.util.EnumSet;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -65,7 +65,7 @@ public final class FroglightProductionTracker {
             if (!stack.is(PFItems.CONFIGURABLE_FROGLIGHT.get())) {
                 continue;
             }
-            ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+            Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
             if (variantId == null) {
                 continue;
             }

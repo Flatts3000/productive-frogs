@@ -16,7 +16,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -81,10 +81,10 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * so a datapack variant that happens to use the path {@code vanilla} or
      * {@code magma} in its own namespace is NOT mistaken for these.
      */
-    private static final ResourceLocation VANILLA_SENTINEL =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "vanilla");
-    private static final ResourceLocation MAGMA_SENTINEL =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "magma");
+    private static final Identifier VANILLA_SENTINEL =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "vanilla");
+    private static final Identifier MAGMA_SENTINEL =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "magma");
 
     /**
      * Offsets to the 26 neighbours, ordered to prefer natural "rim" spawn spots:
@@ -123,20 +123,20 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * still spawns the right variant. Null for the legacy single source block.
      */
     @Nullable
-    private final ResourceLocation blockVariant;
+    private final Identifier blockVariant;
 
     public SlimeMilkSourceBlock(FlowingFluid fluid, Properties properties) {
         this(fluid, null, properties);
     }
 
-    public SlimeMilkSourceBlock(FlowingFluid fluid, @Nullable ResourceLocation variant, Properties properties) {
+    public SlimeMilkSourceBlock(FlowingFluid fluid, @Nullable Identifier variant, Properties properties) {
         super(fluid, properties);
         this.blockVariant = variant;
     }
 
     /** The variant baked into this block at registration, or null for the legacy block. */
     @Nullable
-    public ResourceLocation blockVariant() {
+    public Identifier blockVariant() {
         return blockVariant;
     }
 
@@ -219,7 +219,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * re-bucket round-trip). Null = inert spread milk.
      */
     @Nullable
-    private ResourceLocation effectiveVariant(@Nullable SlimeMilkSourceBlockEntity be) {
+    private Identifier effectiveVariant(@Nullable SlimeMilkSourceBlockEntity be) {
         if (blockVariant != null) {
             return blockVariant;
         }
@@ -236,7 +236,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
         // bucket-placed source has no BE variant and just sits as decoration:
         // no spawn, no depletion, no reschedule.
         SlimeMilkSourceBlockEntity be = getSourceBE(level, pos);
-        ResourceLocation variantId = effectiveVariant(be);
+        Identifier variantId = effectiveVariant(be);
         if (variantId == null || be == null) {
             return;
         }
@@ -299,7 +299,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * block round-trips the fluid back to a default-state source, so the drain must
      * set {@link Blocks#AIR} explicitly.
      */
-    private static void drainToAir(ServerLevel level, BlockPos pos, ResourceLocation variantId) {
+    private static void drainToAir(ServerLevel level, BlockPos pos, Identifier variantId) {
         level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
             "source @%s: depleted, drained to air (variant=%s)", pos, variantId));
@@ -312,7 +312,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * (vanilla slimes don't count); if the variant's category can't be resolved
      * (e.g. a sentinel source), counts any ResourceSlime so the cap still bounds it.
      */
-    private static boolean isAreaCrowded(ServerLevel level, BlockPos pos, ResourceLocation variantId) {
+    private static boolean isAreaCrowded(ServerLevel level, BlockPos pos, Identifier variantId) {
         Category category = categoryForVariant(level, variantId);
         net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(pos).inflate(PFConfig.spawnCapRadius());
         java.util.List<ResourceSlime> nearby = level.getEntitiesOfClass(
@@ -325,13 +325,13 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
 
     /** Resolve a variant from the registry, or null (registry absent / unknown id). */
     @Nullable
-    private static SlimeVariant variantFor(net.minecraft.world.level.Level level, ResourceLocation variantId) {
+    private static SlimeVariant variantFor(net.minecraft.world.level.Level level, Identifier variantId) {
         var registry = level.registryAccess().registry(PFRegistries.SLIME_VARIANT).orElse(null);
         return registry == null ? null : registry.get(variantId);
     }
 
     @Nullable
-    private static Category categoryForVariant(ServerLevel level, ResourceLocation variantId) {
+    private static Category categoryForVariant(ServerLevel level, Identifier variantId) {
         SlimeVariant variant = variantFor(level, variantId);
         return variant == null ? null : variant.category();
     }
@@ -340,7 +340,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * Whether this variant is altar-gated ({@code spawn_catalyst}, #184). The
      * server gate (tick) and the Jade readout share this one lookup.
      */
-    public static boolean variantRequiresCatalyst(net.minecraft.world.level.Level level, ResourceLocation variantId) {
+    public static boolean variantRequiresCatalyst(net.minecraft.world.level.Level level, Identifier variantId) {
         SlimeVariant variant = variantFor(level, variantId);
         return variant != null && variant.spawnCatalyst();
     }
@@ -352,7 +352,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * shipped boss variant) reads 0 - the gate fails closed, the source stays
      * paused rather than spawning ungated.
      */
-    public static int catalystFaceCount(net.minecraft.world.level.Level level, BlockPos pos, ResourceLocation variantId) {
+    public static int catalystFaceCount(net.minecraft.world.level.Level level, BlockPos pos, Identifier variantId) {
         Block catalyst = PFBlocks.catalystForVariant().get(variantId);
         if (catalyst == null) {
             return 0;
@@ -378,7 +378,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * to throughput and does not burn extra count.
      */
     private int spawnBatch(ServerLevel level, BlockPos pos, RandomSource random,
-                           ResourceLocation variantId, SlimeMilkSourceBlockEntity be) {
+                           Identifier variantId, SlimeMilkSourceBlockEntity be) {
         // An altar-gated boss source must never spawn into its own (sealed) cell.
         boolean avoidSourceCell = variantRequiresCatalyst(level, variantId);
         int quantity = MilkSpawnEconomy.batchQuantity(be.getQuantityLevel());
@@ -403,7 +403,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
     }
 
     /** Spawn one slime; returns false (no spawn) when {@code avoidSourceCell} and no free neighbour exists. */
-    private boolean spawn(ServerLevel level, BlockPos pos, RandomSource random, ResourceLocation variantId,
+    private boolean spawn(ServerLevel level, BlockPos pos, RandomSource random, Identifier variantId,
                           boolean avoidSourceCell) {
         BlockPos spawnPos = chooseSpawnPos(level, pos, avoidSourceCell);
         if (spawnPos == null) {
@@ -534,7 +534,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * resolves its category from the {@code slime_variant} registry on setVariant).
      */
     @Nullable
-    public static Slime createSlimeForVariant(ServerLevel level, ResourceLocation variantId) {
+    public static Slime createSlimeForVariant(ServerLevel level, Identifier variantId) {
         // The two built-in specials are NOT registry variants (no primer, no
         // froglight, no spawn egg), so they are matched by sentinel id here
         // rather than via the registry - a deliberate, contained seam.
@@ -565,7 +565,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * variants whose parent is a modded slime.
      */
     @Nullable
-    private static Slime createCustomSpawnEntity(ServerLevel level, ResourceLocation variantId) {
+    private static Slime createCustomSpawnEntity(ServerLevel level, Identifier variantId) {
         var registry = level.registryAccess().registry(PFRegistries.SLIME_VARIANT).orElse(null);
         if (registry == null) {
             return null;
@@ -591,7 +591,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
     @Override
     public ItemStack pickupBlock(@Nullable Player player, LevelAccessor level, BlockPos pos, BlockState state) {
         SlimeMilkSourceBlockEntity be = getSourceBE(level, pos);
-        ResourceLocation variantId = effectiveVariant(be);
+        Identifier variantId = effectiveVariant(be);
         int remaining = be != null ? be.getSpawnsRemaining() : 0;
         int capacity = be != null ? be.getSpawnsCapacity() : 0;
         int speed = be != null ? be.getSpeedLevel() : 0;

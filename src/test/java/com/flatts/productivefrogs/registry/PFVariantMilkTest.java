@@ -9,7 +9,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock;
 import com.flatts.productivefrogs.content.fluid.SlimeMilkFluid;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluid;
@@ -25,15 +25,15 @@ import org.junit.jupiter.api.Test;
  */
 class PFVariantMilkTest {
 
-    private static final ResourceLocation IRON =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+    private static final Identifier IRON =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
 
     @Test
     void ironVariantMilkFluidIsDynamicallyRegistered() {
         assertTrue(PFVariantMilk.isRegistered(IRON),
             "iron must be discovered + registered as a per-variant milk fluid");
         Fluid source = BuiltInRegistries.FLUID.get(
-            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk"));
+            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk"));
         assertTrue(source instanceof SlimeMilkFluid.Source,
             "iron_slime_milk must be a SlimeMilkFluid.Source in BuiltInRegistries.FLUID");
         assertSame(PFVariantMilk.sourceFluid(IRON), source, "accessor and registry must agree");
@@ -42,7 +42,7 @@ class PFVariantMilkTest {
     @Test
     void ironVariantMilkBlockCarriesItsVariant() {
         Block block = BuiltInRegistries.BLOCK.get(
-            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk"));
+            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk"));
         assertTrue(block instanceof SlimeMilkSourceBlock, "iron_slime_milk block must be a SlimeMilkSourceBlock");
         assertEquals(IRON, ((SlimeMilkSourceBlock) block).blockVariant(),
             "block must know its variant from registration (so JDT-placed sources spawn correctly)");
@@ -51,7 +51,7 @@ class PFVariantMilkTest {
     @Test
     void ironVariantMilkBucketIsRegistered() {
         Item bucket = BuiltInRegistries.ITEM.get(
-            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk_bucket"));
+            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk_bucket"));
         assertNotNull(bucket, "iron_slime_milk_bucket must be registered");
         assertTrue(bucket instanceof BucketItem, "per-variant bucket must be a vanilla BucketItem");
         assertSame(PFVariantMilk.bucket(IRON), bucket, "accessor and registry must agree");

@@ -12,7 +12,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import org.joml.Quaternionf;
 
@@ -30,8 +30,8 @@ import org.joml.Quaternionf;
  */
 public class EndCrystalReceptacleRenderer implements BlockEntityRenderer<EndCrystalReceptacleBlockEntity> {
 
-    private static final ResourceLocation TEXTURE =
-        ResourceLocation.withDefaultNamespace("textures/entity/end_crystal/end_crystal.png");
+    private static final Identifier TEXTURE =
+        Identifier.withDefaultNamespace("textures/entity/end_crystal/end_crystal.png");
     private static final RenderType RENDER_TYPE = RenderType.entityCutoutNoCull(TEXTURE);
     private static final float SIN_45 = (float) Math.sin(Math.PI / 4);
 

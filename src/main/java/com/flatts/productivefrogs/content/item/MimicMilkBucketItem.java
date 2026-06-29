@@ -5,7 +5,7 @@ import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
@@ -29,7 +29,7 @@ public final class MimicMilkBucketItem extends BucketItem {
     }
 
     /** Mint a Mimic Milk bucket carrying {@code itemId} (the Milker / re-bucket writer). */
-    public static ItemStack forItem(ResourceLocation itemId) {
+    public static ItemStack forItem(Identifier itemId) {
         ItemStack stack = new ItemStack(PFItems.MIMIC_MILK_BUCKET.get());
         stack.set(PFDataComponents.SYNTHESIZED_ITEM.get(), itemId);
         return stack;
@@ -38,7 +38,7 @@ public final class MimicMilkBucketItem extends BucketItem {
     @Override
     public void checkExtraContent(@Nullable Player player, Level level, ItemStack stack, BlockPos pos) {
         super.checkExtraContent(player, level, stack, pos);
-        ResourceLocation itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+        Identifier itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
         if (itemId != null && level.getBlockEntity(pos) instanceof MimicMilkSourceBlockEntity be) {
             be.setSynthesizedItem(itemId); // seeds the default budget on first placement
             // Restore any stamped budget/catalyst upgrades over those defaults so a
@@ -62,7 +62,7 @@ public final class MimicMilkBucketItem extends BucketItem {
 
     @Override
     public Component getName(ItemStack stack) {
-        ResourceLocation itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+        Identifier itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
         if (itemId != null) {
             net.minecraft.world.item.Item item =
                 net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);

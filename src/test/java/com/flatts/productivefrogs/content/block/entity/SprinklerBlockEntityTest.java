@@ -11,7 +11,7 @@ import com.flatts.productivefrogs.content.multiblock.MilkCharge;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import org.junit.jupiter.api.Test;
 
@@ -22,10 +22,10 @@ import org.junit.jupiter.api.Test;
  */
 class SprinklerBlockEntityTest {
 
-    private static final ResourceLocation IRON =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
-    private static final ResourceLocation COPPER =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
+    private static final Identifier IRON =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+    private static final Identifier COPPER =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
 
     private static SprinklerBlockEntity newSprinkler() {
         return new SprinklerBlockEntity(BlockPos.ZERO, PFBlocks.SPRINKLER.get().defaultBlockState());

@@ -4,7 +4,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.client.renderer.entity.layers.SlimeOuterLayer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.monster.Slime;
 
 /**
@@ -20,8 +20,8 @@ import net.minecraft.world.entity.monster.Slime;
  */
 public class MimicSlimeRenderer extends SlimeRenderer {
 
-    static final ResourceLocation BODY_TEXTURE =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "textures/entity/slime/mimic_slime.png");
+    static final Identifier BODY_TEXTURE =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "textures/entity/slime/mimic_slime.png");
 
     public MimicSlimeRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
@@ -30,7 +30,7 @@ public class MimicSlimeRenderer extends SlimeRenderer {
     }
 
     @Override
-    public ResourceLocation getTextureLocation(Slime entity) {
+    public Identifier getTextureLocation(Slime entity) {
         return BODY_TEXTURE;
     }
 }

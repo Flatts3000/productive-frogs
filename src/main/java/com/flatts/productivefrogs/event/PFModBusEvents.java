@@ -9,7 +9,7 @@ import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFPotions;
 import com.flatts.productivefrogs.registry.PFVariantMilk;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
@@ -339,7 +339,7 @@ public final class PFModBusEvents {
         // catalyst components onto the drained FluidStack (#185), so piped milk
         // keeps Count/Speed/Quantity/Infinite end to end; the variant rides the
         // fluid identity regardless.
-        for (ResourceLocation variantId : PFVariantMilk.registeredVariants()) {
+        for (Identifier variantId : PFVariantMilk.registeredVariants()) {
             net.minecraft.world.item.Item bucket = PFVariantMilk.bucket(variantId);
             if (bucket != null) {
                 event.registerItem(

@@ -13,7 +13,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.MenuProvider;
@@ -49,7 +49,7 @@ public class HatchBlockEntity extends BlockEntity implements MenuProvider {
      * {@code data/productivefrogs/tags/item/hatch_collectible.json}.
      */
     public static final TagKey<Item> HATCH_COLLECTIBLE =
-        TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "hatch_collectible"));
+        TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "hatch_collectible"));
 
     private int tickCounter;
 

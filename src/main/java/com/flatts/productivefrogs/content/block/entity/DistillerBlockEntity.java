@@ -14,7 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
@@ -249,7 +249,7 @@ public class DistillerBlockEntity extends BlockEntity implements MenuProvider {
             return;
         }
         ItemStack in = be.items.getStackInSlot(INPUT_SLOT);
-        ResourceLocation itemId = DistillerBlockEntity.isPrismatic(in)
+        Identifier itemId = DistillerBlockEntity.isPrismatic(in)
             ? in.get(PFDataComponents.SYNTHESIZED_ITEM.get())
             : null;
         if (itemId == null) {
