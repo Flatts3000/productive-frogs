@@ -1,9 +1,0 @@
-{
-  "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "mythicmetals" }
-  ],
-  "primer_tag": "c:ingots/mythril",
-  "category": "void",
-  "primary_color": 10473696,
-  "secondary_color": 7384772
-}

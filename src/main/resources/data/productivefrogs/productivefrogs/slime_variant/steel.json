@@ -1,9 +1,0 @@
-{
-  "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "mekanism" }
-  ],
-  "primer_tag": "c:ingots/steel",
-  "category": "cave",
-  "primary_color": 9346218,
-  "secondary_color": 6187896
-}

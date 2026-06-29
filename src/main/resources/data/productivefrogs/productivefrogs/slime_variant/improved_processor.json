@@ -1,9 +1,0 @@
-{
-  "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "refinedstorage" }
-  ],
-  "primer_item": "refinedstorage:improved_processor",
-  "category": "geode",
-  "primary_color": 14266959,
-  "secondary_color": 11569711
-}

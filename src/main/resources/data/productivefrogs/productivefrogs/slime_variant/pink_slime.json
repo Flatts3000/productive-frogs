@@ -1,9 +1,0 @@
-{
-  "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "industrialforegoing" }
-  ],
-  "primer_item": "industrialforegoing:pink_slime",
-  "category": "bog",
-  "primary_color": 15235760,
-  "secondary_color": 12603274
-}

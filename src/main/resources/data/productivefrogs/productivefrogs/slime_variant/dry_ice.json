@@ -1,9 +1,0 @@
-{
-  "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "powah" }
-  ],
-  "primer_item": "powah:dry_ice",
-  "category": "tide",
-  "primary_color": 14281457,
-  "secondary_color": 10003625
-}

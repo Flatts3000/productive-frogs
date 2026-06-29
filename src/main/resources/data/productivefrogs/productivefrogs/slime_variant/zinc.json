@@ -1,9 +1,0 @@
-{
-  "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "alltheores" }
-  ],
-  "primer_tag": "c:ingots/zinc",
-  "category": "cave",
-  "primary_color": 13026484,
-  "secondary_color": 10526350
-}

@@ -1,9 +1,0 @@
-{
-  "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "alltheores" }
-  ],
-  "primer_tag": "c:ingots/lead",
-  "category": "cave",
-  "primary_color": 5398638,
-  "secondary_color": 3819090
-}
