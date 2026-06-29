@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## v1.24.2 - 2026-06-29 - Name Tags
+
 ### Changed
 
 - **The Terrarium's "Hatch" is now called the "Terrarium Hatch".** Its old bare name collided with the Wither Altar Hatch and End Dragon Altar Hatch in the creative menu, JEI, and search, making it easy to grab the wrong block. It now reads as plainly as its neighbour the Terrarium Controller, with all three hatches distinct. Same block, same recipe - only the name changed, so existing worlds and setups are unaffected.
