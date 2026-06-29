@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **A redstone signal on one Sprinkler no longer pauses the Sprinklers next to it.** Sprinklers pack tightly into a Terrarium ceiling, and the new redstone switch-off (v1.24.0) leaked across them: flipping a lever on one Sprinkler, or running power into it, also paused every Sprinkler touching it - so you couldn't stage which resources ran without isolating each block. A Sprinkler no longer passes a redstone signal through to its neighbours, so a lever or comparator now controls exactly the one Sprinkler it's wired to. (#264)
+
 ## v1.24.0 - 2026-06-29 - Flip the Switch
 
 ### Added
