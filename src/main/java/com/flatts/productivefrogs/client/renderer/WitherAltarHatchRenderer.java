@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.client.renderer;
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.core.Direction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -65,22 +66,44 @@ public class WitherAltarHatchRenderer implements BlockEntityRenderer<WitherAltar
         int inv = Math.round((1.0F - progress) * VANILLA_INVULNERABLE_TICKS);
         phantom.setInvulnerableTicks(inv);
         phantom.tickCount = (int) time;            // advance the idle head bob
-        phantom.setYRot(180.0F);                   // face -Z, toward Witherbane / the player
-        phantom.yRotO = 180.0F;
-        phantom.yBodyRot = 180.0F;
-        phantom.yBodyRotO = 180.0F;
-        phantom.yHeadRot = 180.0F;
-        phantom.yHeadRotO = 180.0F;
+        // Face back toward the Hatch / Witherbane: that is the ritual's opposite (canonical
+        // ritual SOUTH -> face NORTH, yaw 180 - the old fixed value).
+        Direction ritual = be.ritual();
+        float yaw = ritual.getOpposite().toYRot();
+        phantom.setYRot(yaw);
+        phantom.yRotO = yaw;
+        phantom.yBodyRot = yaw;
+        phantom.yBodyRotO = yaw;
+        phantom.yHeadRot = yaw;
+        phantom.yHeadRotO = yaw;
 
         EntityRenderDispatcher dispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
         pose.pushPose();
-        // Hover in the cavity, in FRONT of the receptacle wall (offset z=3) so the frog at
-        // z=0 sees it. Lifted clear of the floor froglights - the Wither floats in vanilla
-        // and its model hangs below its position point, so feet-on-floor clips downward.
-        pose.translate(0.5F, 0.0F, 1.7F);
+        // Hover in the cavity, in FRONT of the receptacle wall so the frog at the Hatch end
+        // sees it. The canonical offset is +Z 1.2 from the Hatch centre; rotate it by the
+        // resolved ritual so the replica forms on the correct side for any build orientation.
+        // Lifted clear of the floor froglights - the Wither floats in vanilla and its model
+        // hangs below its position point, so feet-on-floor clips downward.
+        double[] off = horizontalOffset(0.0, 1.2, ritual);
+        pose.translate(0.5F + (float) off[0], 0.0F, 0.5F + (float) off[1]);
         dispatcher.setRenderShadow(false);
-        dispatcher.render(phantom, 0.0, 0.0, 0.0, 180.0F, partialTick, pose, buffers, packedLight);
+        dispatcher.render(phantom, 0.0, 0.0, 0.0, yaw, partialTick, pose, buffers, packedLight);
         dispatcher.setRenderShadow(true);
         pose.popPose();
+    }
+
+    /**
+     * Rotate a canonical horizontal offset (frame: ritual = +Z / SOUTH) about the vertical
+     * axis so the ritual points {@code ritual}. Mirrors
+     * {@code WitherAltarValidator.rotateOffset} for the float render offsets.
+     */
+    private static double[] horizontalOffset(double x, double z, Direction ritual) {
+        return switch (ritual) {
+            case SOUTH -> new double[] {x, z};
+            case WEST -> new double[] {-z, x};
+            case NORTH -> new double[] {-x, -z};
+            case EAST -> new double[] {z, -x};
+            default -> new double[] {x, z};
+        };
     }
 }

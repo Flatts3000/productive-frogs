@@ -2,8 +2,10 @@ package com.flatts.productivefrogs.content.multiblock;
 
 import com.flatts.productivefrogs.registry.PFBlocks;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Validates the Wither Altar (#247) by anchoring on its central Hatch. Unlike the
@@ -18,17 +20,26 @@ import net.minecraft.world.level.block.Block;
  * Wither Skull). Reads only block identity, so it runs client-side (Jade) and
  * server-side (the summon) alike.
  *
- * <p>Frame: the Hatch faces +Z toward the ritual; Witherbane pins on top of the Hatch
- * (at {@code hatch.above()}) and the replica forms over the skull receptacles.
+ * <p><b>Facing-aware (#263-sibling fix).</b> The offset tables are authored in a
+ * canonical frame where the ritual wall points <b>+Z (SOUTH)</b>. The Hatch is a
+ * non-directional block, so the altar may be built facing any of the four horizontal
+ * directions; {@link #validate} tries each rotation of the frame and returns the
+ * <b>resolved ritual direction</b> in its {@link Result}. The Witherbane perch
+ * orientation, the receptacle item render, and the summon replica all read that
+ * direction so the altar works in any orientation (previously it only validated when
+ * built in the one canonical world rotation - the build-orientation bug Gargish hit).
+ * SOUTH is the identity rotation, so altars built before this change validate
+ * unchanged.
  */
 public final class WitherAltarValidator {
 
-    /** Outcome: valid, plus a short reason when not (for the Jade readout). */
-    public record Result(boolean valid, String detail) {
+    /** Outcome: valid, plus a short reason when not (for the Jade readout) and the resolved ritual direction. */
+    public record Result(boolean valid, String detail, @Nullable Direction ritual) {
     }
 
     // Offsets from the Hatch (dx, dy, dz), generated from the captured wither_altar
-    // structure (the Hatch is the anchor at (0,0,0); the altar faces +Z toward the ritual).
+    // structure (the Hatch is the anchor at (0,0,0); the canonical frame faces +Z / SOUTH
+    // toward the ritual). validate() rotates these about the vertical axis per candidate.
     // Reinforced Soul Sand Froglight floor strip.
     private static final int[][] SOUL_SAND_FLOOR = {
         {-1, -1, 0}, {-1, -1, 1}, {-1, -1, 2}, {-1, -1, 3}, {-1, 0, 3},
@@ -55,66 +66,115 @@ public final class WitherAltarValidator {
         {1, 0, 0}, {1, 0, 1}, {1, 0, 2}, {1, 1, 0}, {1, 1, 1}, {1, 1, 2}, {1, 2, 0}, {1, 2, 1}, {1, 2, 2}
     };
 
+    /** The canonical authoring frame: the ritual wall points this way. SOUTH is the identity rotation. */
+    public static final Direction CANONICAL_RITUAL = Direction.SOUTH;
+
     private WitherAltarValidator() {
     }
 
     public static Result validate(LevelReader level, BlockPos hatch) {
         if (!level.getBlockState(hatch).is(PFBlocks.WITHER_ALTAR_HATCH.get())) {
-            return new Result(false, "no hatch");
+            return new Result(false, "no hatch", null);
         }
-        if (!allMatch(level, hatch, CAPSTONE, PFBlocks.WITHERED_STAR.get())) {
-            return new Result(false, "missing the Withered Star (defeat the Wither first)");
+        // Try each horizontal orientation; accept the first that fully matches. On
+        // failure, report the orientation that got furthest (the player-facing problem).
+        Oriented best = null;
+        for (Direction ritual : Direction.Plane.HORIZONTAL) {
+            Oriented o = validateOriented(level, hatch, ritual);
+            if (o.valid()) {
+                return new Result(true, "ready", ritual);
+            }
+            if (best == null || o.stage() > best.stage()) {
+                best = o;
+            }
         }
-        if (!allMatch(level, hatch, SOUL_SAND_FLOOR, PFBlocks.REINFORCED_SOUL_SAND_FROGLIGHT.get())) {
-            return new Result(false, "incomplete Reinforced Soul Sand Froglight floor");
-        }
-        if (!allMatch(level, hatch, BLAZE_ROD_SHELL, PFBlocks.REINFORCED_BLAZE_ROD_FROGLIGHT.get())) {
-            return new Result(false, "incomplete Reinforced Blaze Rod Froglight shell");
-        }
-        if (!allMatch(level, hatch, SOUL_SAND_RECEPTACLES, PFBlocks.SOUL_SAND_RECEPTACLE.get())) {
-            return new Result(false, "missing a Soul Sand Receptacle");
-        }
-        if (!allMatch(level, hatch, SKULL_RECEPTACLES, PFBlocks.WITHER_SKULL_RECEPTACLE.get())) {
-            return new Result(false, "missing a Wither Skull Receptacle");
-        }
-        if (!allAir(level, hatch, AIR_REQUIRED)) {
-            return new Result(false, "the summon cavity must be clear (keep the interior air)");
-        }
-        return new Result(true, "ready");
+        return new Result(false, best.detail(), null);
     }
 
-    private static boolean allMatch(LevelReader level, BlockPos hatch, int[][] offsets, Block block) {
+    /** A single-orientation pass: {@code stage} = how many checks passed (6 = valid). */
+    private record Oriented(int stage, String detail, Direction ritual) {
+        boolean valid() {
+            return stage == 6;
+        }
+    }
+
+    private static Oriented validateOriented(LevelReader level, BlockPos hatch, Direction ritual) {
+        if (!allMatch(level, hatch, CAPSTONE, ritual, PFBlocks.WITHERED_STAR.get())) {
+            return new Oriented(0, "missing the Withered Star (defeat the Wither first)", ritual);
+        }
+        if (!allMatch(level, hatch, SOUL_SAND_FLOOR, ritual, PFBlocks.REINFORCED_SOUL_SAND_FROGLIGHT.get())) {
+            return new Oriented(1, "incomplete Reinforced Soul Sand Froglight floor", ritual);
+        }
+        if (!allMatch(level, hatch, BLAZE_ROD_SHELL, ritual, PFBlocks.REINFORCED_BLAZE_ROD_FROGLIGHT.get())) {
+            return new Oriented(2, "incomplete Reinforced Blaze Rod Froglight shell", ritual);
+        }
+        if (!allMatch(level, hatch, SOUL_SAND_RECEPTACLES, ritual, PFBlocks.SOUL_SAND_RECEPTACLE.get())) {
+            return new Oriented(3, "missing a Soul Sand Receptacle", ritual);
+        }
+        if (!allMatch(level, hatch, SKULL_RECEPTACLES, ritual, PFBlocks.WITHER_SKULL_RECEPTACLE.get())) {
+            return new Oriented(4, "missing a Wither Skull Receptacle", ritual);
+        }
+        if (!allAir(level, hatch, AIR_REQUIRED, ritual)) {
+            return new Oriented(5, "the summon cavity must be clear (keep the interior air)", ritual);
+        }
+        return new Oriented(6, "ready", ritual);
+    }
+
+    private static boolean allMatch(LevelReader level, BlockPos hatch, int[][] offsets, Direction ritual, Block block) {
         for (int[] o : offsets) {
-            if (!level.getBlockState(hatch.offset(o[0], o[1], o[2])).is(block)) {
+            if (!level.getBlockState(hatch.offset(rotateOffset(o[0], o[1], o[2], ritual))).is(block)) {
                 return false;
             }
         }
         return true;
     }
 
-    private static boolean allAir(LevelReader level, BlockPos hatch, int[][] offsets) {
+    private static boolean allAir(LevelReader level, BlockPos hatch, int[][] offsets, Direction ritual) {
         for (int[] o : offsets) {
-            if (!level.getBlockState(hatch.offset(o[0], o[1], o[2])).isAir()) {
+            if (!level.getBlockState(hatch.offset(rotateOffset(o[0], o[1], o[2], ritual))).isAir()) {
                 return false;
             }
         }
         return true;
     }
 
-    /** All seven summon receptacle positions (4 soul sand + 3 skull) for a Hatch at {@code hatch}. */
-    public static BlockPos[] receptacles(BlockPos hatch) {
+    /**
+     * Rotate an authored offset (canonical frame: ritual points +Z / SOUTH) about the
+     * vertical axis so the ritual instead points along {@code ritual}. Horizontal only;
+     * {@code dy} is unchanged. SOUTH is the identity. Package-visible for geometry tests.
+     */
+    static BlockPos rotateOffset(int dx, int dy, int dz, Direction ritual) {
+        return switch (ritual) {
+            case SOUTH -> new BlockPos(dx, dy, dz);
+            case WEST -> new BlockPos(-dz, dy, dx);
+            case NORTH -> new BlockPos(-dx, dy, -dz);
+            case EAST -> new BlockPos(dz, dy, -dx);
+            default -> new BlockPos(dx, dy, dz); // UP/DOWN never passed (HORIZONTAL plane only)
+        };
+    }
+
+    /**
+     * All seven summon receptacle positions (4 soul sand + 3 skull) for a Hatch at
+     * {@code hatch}, with the ritual wall pointing {@code ritual}.
+     */
+    public static BlockPos[] receptacles(BlockPos hatch, Direction ritual) {
         BlockPos[] out = new BlockPos[SOUL_SAND_RECEPTACLES.length + SKULL_RECEPTACLES.length];
         int i = 0;
         for (int[] o : SOUL_SAND_RECEPTACLES) {
-            out[i++] = hatch.offset(o[0], o[1], o[2]);
+            out[i++] = hatch.offset(rotateOffset(o[0], o[1], o[2], ritual));
         }
         for (int[] o : SKULL_RECEPTACLES) {
-            out[i++] = hatch.offset(o[0], o[1], o[2]);
+            out[i++] = hatch.offset(rotateOffset(o[0], o[1], o[2], ritual));
         }
         return out;
     }
 
-    /** Where Witherbane pins: on top of the Hatch, facing the ritual (+Z). */
+    /** Back-compat: receptacles in the canonical (SOUTH) orientation. */
+    public static BlockPos[] receptacles(BlockPos hatch) {
+        return receptacles(hatch, CANONICAL_RITUAL);
+    }
+
+    /** Where Witherbane pins: on top of the Hatch (rotation-independent). It faces the ritual. */
     public static BlockPos witherbanePos(BlockPos hatch) {
         return hatch.above();
     }
