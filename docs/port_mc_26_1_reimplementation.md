@@ -45,10 +45,9 @@ Per-variant fluids gave **flowing milk** (vanilla fluid spread, no BE at the flo
 
 - **Bucket / tank / GUI milk** tints correctly: the `FluidStack`/`FluidResource` overload of `getTintColor` reads the variant component -> color. Clean.
 - **Placed source block** tints via its BE (BER or block tint). Clean.
-- **Free-flowing milk spread across the world** has no BE and no per-pos component -> can't resolve its variant at the flowing pos. Options:
-  1. **Recommended:** reconsider whether milk needs to be a freely-spreading world fluid at all. Its roles are bucket-transport, piped-automation, and placed-source-spawning - none require vanilla-style spreading pools. Modeling milk as a `FluidResource` (automation) + the custom source block (spawning), with minimal/no world spread, **removes the wrinkle entirely**. (Gameplay decision: does milk still pool? Flag for maintainer.)
-  2. Accept base-hue flowing milk (minor cosmetic regression; flowing milk is transient).
-  3. Client walk-back from the flowing pos to the nearest source BE (the pre-v1.8 approach) - works, but reintroduces the walk-back per-variant fluids removed.
+- **Free-flowing milk spread across the world** has no BE and no per-pos component -> can't resolve its variant at the flowing pos.
+
+**DECIDED (maintainer, 2026-06-29): milk does NOT spread as a world fluid in 2.0.** Milk exists only as a `FluidResource` (buckets, tanks, pipes) and the placed `SlimeMilkSourceBlock` + BE (which spawns slimes and carries the variant). No vanilla-style spreading pools. This removes the flowing-tint wrinkle entirely and is the cleanest fit for the single-fluid design - milk's real roles (transport, automation, source-spawning) never needed spreading. Implementation: the `slime_milk` fluid still exists as the bucket/tank content type, but its `Flowing` form is effectively unused (or the source block is not a `LiquidBlock` at all - decide during R-1 implementation whether to keep a non-spreading `FlowingFluid` or model the source purely as a custom block whose only fluid face is the bucket/pipe capability).
 
 ### 2.0 vs 2.x note
 
@@ -56,12 +55,45 @@ For **2.0 (standalone, no cross-mod fluid mods in scope)** the collapse is unamb
 
 ---
 
-## R-2..R-n: queued reconsiderations (not yet investigated)
+## R-3: Capability / inventory model - adopt the transactional transfer API natively
+
+**Status: DECIDED - native adoption. ~25 files, clean analogues (not a redesign).**
+
+### The 1.21.1 assumption
+
+Appliances back a slot-bounded `ItemStackHandler`, register `Capabilities.ItemHandler.BLOCK` (returns `IItemHandler`), expose side-aware `inputView()` / `outputView()` slices, and mutate via `extractItem` / `setStackInSlot`. Menus use `SlotItemHandler`. The EE machines use a receive-only `EnergyStorage(cap, maxReceive, 0)` + `Capabilities.EnergyStorage.BLOCK`. CLAUDE.md pins the **1.21.1** capability ids explicitly ("not the newer `Capabilities.Item.BLOCK`").
+
+### What 26.1 actually enables (verified from source)
+
+The old `Capabilities.ItemHandler`/`EnergyStorage` holders are **gone**; `Capabilities.Item.BLOCK` is `BlockCapability<ResourceHandler<ItemResource>, Direction>` and `Capabilities.Energy.BLOCK` is `EnergyHandler`. But the new transfer API ships **direct, idiomatic analogues** for every PF pattern:
+
+| 1.21.1 | 26.1 (verified source) |
+|---|---|
+| `ItemStackHandler(size)` | `ItemStacksResourceHandler(size)` (extends `StacksResourceHandler<ItemStack, ItemResource>`; override `onContentsChanged` -> `setChanged`) |
+| side-aware `inputView()`/`outputView()` | `RangedResourceHandler.of(handler, start, end)` / `.ofSingleIndex(handler, i)` |
+| `SlotItemHandler` (menu) | `ResourceHandlerSlot(handler, modifier, slot, x, y)` (extends `StackCopySlot`) |
+| `Capabilities.ItemHandler.BLOCK` -> `IItemHandler` | `Capabilities.Item.BLOCK` -> `ResourceHandler<ItemResource>` |
+| `extractItem` / `setStackInSlot` | `insert(i, res, n, tx)` / `extract(i, res, n, tx)` inside `try (var tx = Transaction.openRoot()) { ...; tx.commit(); }` |
+| `ItemStack` <-> handler | `ItemResource.of(stack)` / `resource.toStack(n)`; `ItemResource` is item+components |
+| `EnergyStorage(cap, maxReceive, 0)` | `SimpleEnergyHandler(cap, maxInsert, maxExtract, energy)` (also `implements ValueIOSerializable` -> plugs into R-7's BE I/O; `onEnergyChanged` hook) |
+| `Capabilities.EnergyStorage.BLOCK` | `Capabilities.Energy.BLOCK` -> `EnergyHandler` |
+
+### Decision
+
+Adopt the transactional API natively across the ~25 sites (appliance inventories + blocks + menus: Milker / Churn / Spawnery / Casting Mold / Crucible / Hatch; EE Alembic / Distiller; the altar receptacles; `PFModBusEvents` capability registration). Two real wins, not just compile-fixing:
+
+1. **Transactions give the EE machines' airtight "insert output, then consume inputs, all-or-nothing" for free** - the manual transaction guard in the Alembic/Distiller becomes `Transaction.openRoot()` + `commit()`. Fire `onContentsChanged -> setChanged` on commit, not mid-transaction.
+2. **`ItemResource` (item+components) makes the slot model component-aware by construction** - variant-stamped Slime Buckets / Froglights are first-class resources, not ItemStacks PF has to component-check by hand. Consistent with R-1's component-carrying milk.
+
+Do **not** lean on the legacy `IItemHandler.of(...)` adapter shims (still present but a backport crutch) - the directive is to build the new era, and the native handlers are a clean fit. The side-aware routing shape (DOWN -> output slice, others -> input slice) is unchanged; only the slice type changes (`RangedResourceHandler`).
+
+---
+
+## R-2, R-4..R-n: queued reconsiderations (not yet investigated)
 
 Each gets the same treatment (assumption -> verified 26.1 capability -> decision) as its phase is reached:
 
 - **R-2 Item tints** - legacy `RegisterColorHandlersEvent.Item` -> declarative JSON `ItemTintSource` (+ datagen + completeness gate). Dynamic component-read confirmed first-class.
-- **R-3 Capability / inventory model** - `Capabilities.Item.BLOCK` is `ResourceHandler<ItemResource>` (verified). Adopt the transactional model natively; question whether `ItemResource` (item+components) simplifies how variant-stamped items sit in appliance slots.
 - **R-4 GUI** - delete the `PFContainerScreen` `renderTooltip` workaround (new flow handles tooltips); adopt `RenderPipelines` + two-phase `GuiRenderState`.
 - **R-5 Slime interior render** - 1.21.1 baked the inner cube as a texture because the translucent shell depth-culled a live block render (a recurring manual-baker pain point). **Re-test whether 26.1's render pipeline makes a live inner-block render viable** - if so, the baker script dies.
 - **R-6 GameTest** - registry `GameTestInstance`/`TestData` + self-documenting JSON `test_instance`, not an annotation-mimicking shim.
