@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.client.renderer;
 import com.flatts.productivefrogs.content.block.WitherSummonReceptacleBlock;
 import com.flatts.productivefrogs.content.block.entity.WitherSummonReceptacleBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -41,10 +42,16 @@ public class WitherSummonReceptacleRenderer implements BlockEntityRenderer<Withe
             return;
         }
         pose.pushPose();
-        // Sit on the -Z face (toward the frog). The wither skull is a block-entity item
-        // whose FIXED orientation already faces -Z, so no Y-flip (a flip would turn the
-        // skull's face into the wall, away from the frog); soul sand is a symmetric cube.
-        pose.translate(0.5F, 0.5F, 0.06F);
+        // The held item sits on the receptacle face that points back toward the Hatch/arena,
+        // so the loaded ritual reads at a glance. In the canonical (SOUTH ritual) frame that
+        // is the -Z face and the wither skull's FIXED orientation already faces -Z. For any
+        // other build orientation, apply the same structure rotation the validator used
+        // (SOUTH -> ritual is a +Y rotation of -ritual.toYRot()), so the item swings onto the
+        // correct face and keeps facing inward. Soul sand is a symmetric cube; the skull is a
+        // block-entity item whose face turns with the rotation.
+        pose.translate(0.5F, 0.5F, 0.5F);
+        pose.mulPose(Axis.YP.rotationDegrees(-be.ritual().toYRot()));
+        pose.translate(0.0F, 0.0F, -0.44F);
         pose.scale(0.7F, 0.7F, 0.7F);
         itemRenderer.renderStatic(stack, ItemDisplayContext.FIXED, packedLight, OverlayTexture.NO_OVERLAY,
             pose, buffers, be.getLevel(), 0);

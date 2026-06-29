@@ -1,8 +1,10 @@
 package com.flatts.productivefrogs.content.block.entity;
 
 import com.flatts.productivefrogs.content.block.WitherSummonReceptacleBlock;
+import com.flatts.productivefrogs.content.multiblock.WitherAltarValidator;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -29,6 +31,14 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 public class WitherSummonReceptacleBlockEntity extends BlockEntity {
 
     private final Item accepted;
+
+    /**
+     * The altar's ritual direction (way the receptacle wall faces), stamped by the Hatch
+     * on validate and synced so the BER orients the held item back toward the arena. Defaults
+     * to canonical (the pre-facing-aware orientation) so an un-stamped receptacle still renders
+     * sensibly until the altar validates.
+     */
+    private Direction ritual = WitherAltarValidator.CANONICAL_RITUAL;
 
     private final ItemStackHandler held = new ItemStackHandler(1) {
         @Override
@@ -95,6 +105,19 @@ public class WitherSummonReceptacleBlockEntity extends BlockEntity {
         return !held.getStackInSlot(0).isEmpty();
     }
 
+    /** The altar's ritual direction (read by the renderer to orient the held item). */
+    public Direction ritual() {
+        return ritual;
+    }
+
+    /** Stamp the altar's ritual direction; sync to clients only on change. */
+    public void setRitual(Direction dir) {
+        if (this.ritual != dir && dir != null) {
+            this.ritual = dir;
+            onChanged();
+        }
+    }
+
     /** Place one of the accepted item if empty. Returns true if it took one. */
     public boolean tryInsert(ItemStack stack) {
         if (isFilled() || !stack.is(accepted)) {
@@ -139,6 +162,7 @@ public class WitherSummonReceptacleBlockEntity extends BlockEntity {
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.put("Held", held.serializeNBT(registries));
+        tag.putString("Ritual", ritual.getName());
     }
 
     @Override
@@ -147,6 +171,8 @@ public class WitherSummonReceptacleBlockEntity extends BlockEntity {
         if (tag.contains("Held", Tag.TAG_COMPOUND)) {
             held.deserializeNBT(registries, tag.getCompound("Held"));
         }
+        Direction d = tag.contains("Ritual") ? Direction.byName(tag.getString("Ritual")) : null;
+        this.ritual = d != null && d.getAxis().isHorizontal() ? d : WitherAltarValidator.CANONICAL_RITUAL;
     }
 
     @Override

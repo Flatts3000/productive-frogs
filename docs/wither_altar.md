@@ -75,6 +75,20 @@ Nether Star).
   `WitherSummonReceptacleRenderer` (the held item on the frog-facing face) +
   `WitherbaneFrogRenderer`.
 
+### Facing-aware (build-orientation fix, #263-sibling)
+
+The Hatch is non-directional, so the altar can be built facing any horizontal direction.
+The validator authors its offsets in a **canonical frame (ritual wall = +Z / SOUTH)** and
+`validate` **tries all four horizontal rotations**, returning the resolved ritual `Direction`
+in its `Result` (SOUTH is the identity, so altars built before this change validate
+unchanged). That direction threads through everything that was previously hardcoded to +Z:
+the Hatch BE caches and syncs it, Witherbane is perched facing the ritual (`ritual.toYRot()`),
+each receptacle is **stamped** with it so `WitherSummonReceptacleRenderer` swings the held
+item onto the inward face (`-ritual.toYRot()` about Y), and `WitherAltarHatchRenderer` rotates
+the replica's hover position + facing to match. Without this the altar only validated in one
+world rotation and the loaded skulls/soul-sand rendered on the outside of the cube when built
+any other way (the bug a player hit in-pack).
+
 ## Recipes (boss-gated, `config_enabled` -> `boss`)
 
 - Reinforced Soul Sand / Blaze Rod Froglight: ` O / OFO / O ` (O obsidian, F the matching
@@ -87,11 +101,14 @@ Nether Star).
 ## Tests
 
 - `WitherAltarValidator` is locked to the shipped structure by `witherAltarValidatesWhenBuilt`;
-  `witherAltarRejectsMissingFroglight` checks strictness; `witherAltarSummonDepositsDrops`
-  runs a full summon and asserts the Nether Star Froglight lands in the Hatch.
+  `witherAltarValidatesWhenRotated` (`rotationSteps = 1`) proves the facing-aware validator
+  accepts a 90-degree-rotated build; `witherAltarRejectsMissingFroglight` checks strictness;
+  `witherAltarSummonDepositsDrops` runs a full summon and asserts the Nether Star Froglight
+  lands in the Hatch. The rotation math is unit-locked by `WitherAltarValidatorGeometryTest`.
 
-The summon animation + receptacle render are GameTest-blind (client visuals) - verified via
-a manual `runClient` pass.
+The summon animation + receptacle render are GameTest-blind (client visuals) - the canonical
+(SOUTH) orientation is unchanged by the facing-aware fix, so existing altars look identical;
+the rotated-orientation render math needs a manual `runClient` confirmation pass.
 
 ## In-game guide
 

@@ -8,6 +8,7 @@ import com.flatts.productivefrogs.event.FrogTongueDropHandler;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -67,6 +68,12 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
     private int tickCounter;
     /** 0 = idle; > 0 = a summon is in progress (ticks remaining). Synced (start/end) as the on/off signal. */
     private int summonTicks;
+    /**
+     * The resolved ritual direction (the way the receptacle wall faces), cached from the
+     * last successful validate and synced to the client so the summon replica forms on the
+     * correct side. Defaults to the canonical {@link WitherAltarValidator#CANONICAL_RITUAL}.
+     */
+    private Direction ritual = WitherAltarValidator.CANONICAL_RITUAL;
     /** Client-only render state: game time when the renderer first saw this summon, for local growth animation. */
     public long clientSummonStartGameTime = -1L;
 
@@ -100,14 +107,31 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
             return;
         }
         be.tickCounter = 0;
-        boolean valid = WitherAltarValidator.validate(server, pos).valid();
-        reconcileFrog(server, pos, valid);
+        WitherAltarValidator.Result result = WitherAltarValidator.validate(server, pos);
+        if (result.valid() && result.ritual() != null) {
+            be.setRitual(result.ritual());
+        }
+        reconcileFrog(server, pos, result);
         // Start a summon once the altar is complete and all seven receptacles are loaded.
-        if (valid && PFConfig.bossEnabled() && allReceptaclesFilled(server, pos)) {
+        if (result.valid() && PFConfig.bossEnabled() && allReceptaclesFilled(server, pos, be.ritual)) {
             be.summonTicks = PFConfig.witherAltarSummonTicks();
             server.playSound(null, pos, SoundEvents.WITHER_SPAWN, SoundSource.HOSTILE, 1.0F, 1.0F);
             be.syncToClient();
         }
+    }
+
+    /** Cache the resolved ritual direction; sync to the client (for the replica) only on change. */
+    private void setRitual(Direction dir) {
+        if (this.ritual != dir) {
+            this.ritual = dir;
+            setChanged();
+            syncToClient();
+        }
+    }
+
+    /** The resolved ritual direction (way the receptacle wall faces); read by the replica renderer. */
+    public Direction ritual() {
+        return ritual;
     }
 
     /** Advance an in-progress summon: pay out at the end. */
@@ -123,16 +147,18 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
     private static void completeSummon(ServerLevel server, BlockPos pos, WitherAltarHatchBlockEntity be) {
         be.summonTicks = 0;
         be.syncToClient();
-        if (!WitherAltarValidator.validate(server, pos).valid()) {
+        WitherAltarValidator.Result result = WitherAltarValidator.validate(server, pos);
+        if (!result.valid()) {
             return; // broken mid-summon - abort, receptacles untouched
         }
+        Direction ritual = result.ritual();
         // Witherbane eats the summoned Wither (tongue lash).
         for (WitherbaneFrog frog : server.getEntitiesOfClass(WitherbaneFrog.class,
                 new AABB(WitherAltarValidator.witherbanePos(pos)).inflate(0.5))) {
             frog.triggerEat();
         }
         // Spend all seven ritual receptacles (the full vanilla cost).
-        for (BlockPos rp : WitherAltarValidator.receptacles(pos)) {
+        for (BlockPos rp : WitherAltarValidator.receptacles(pos, ritual)) {
             if (server.getBlockEntity(rp) instanceof WitherSummonReceptacleBlockEntity r) {
                 r.consume();
             }
@@ -180,8 +206,8 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
         }
     }
 
-    private static boolean allReceptaclesFilled(ServerLevel server, BlockPos hatch) {
-        for (BlockPos rp : WitherAltarValidator.receptacles(hatch)) {
+    private static boolean allReceptaclesFilled(ServerLevel server, BlockPos hatch, Direction ritual) {
+        for (BlockPos rp : WitherAltarValidator.receptacles(hatch, ritual)) {
             if (!(server.getBlockEntity(rp) instanceof WitherSummonReceptacleBlockEntity r) || !r.isFilled()) {
                 return false;
             }
@@ -191,31 +217,43 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
 
     /**
      * Keep exactly one Witherbane pinned when valid; remove it when broken. Re-pinning
-     * each pass also corrects any drift. It faces the ritual (+Z, yaw 0).
+     * each pass also corrects any drift. Witherbane faces the resolved ritual direction,
+     * and each receptacle is stamped with that direction so its held item renders facing
+     * back into the arena regardless of which way the altar was built.
      */
-    private static void reconcileFrog(ServerLevel server, BlockPos pos, boolean valid) {
+    private static void reconcileFrog(ServerLevel server, BlockPos pos, WitherAltarValidator.Result result) {
         BlockPos perch = WitherAltarValidator.witherbanePos(pos);
         List<WitherbaneFrog> frogs = server.getEntitiesOfClass(WitherbaneFrog.class, new AABB(perch).inflate(0.5));
-        if (!valid) {
+        if (!result.valid()) {
             for (WitherbaneFrog f : frogs) {
                 f.discard();
             }
             return;
         }
+        Direction ritual = result.ritual();
+        // Stamp the receptacles so the BER orients each held item toward the arena/Hatch.
+        for (BlockPos rp : WitherAltarValidator.receptacles(pos, ritual)) {
+            if (server.getBlockEntity(rp) instanceof WitherSummonReceptacleBlockEntity r) {
+                r.setRitual(ritual);
+            }
+        }
+        float yaw = ritual.toYRot();
         double cx = perch.getX() + 0.5;
         double cy = perch.getY();
         double cz = perch.getZ() + 0.5;
         if (frogs.isEmpty()) {
             WitherbaneFrog frog = WitherbaneFrog.type().create(server);
             if (frog != null) {
-                frog.moveTo(cx, cy, cz, 0.0F, 0.0F);
-                frog.setYBodyRot(0.0F);
-                frog.setYHeadRot(0.0F);
+                frog.moveTo(cx, cy, cz, yaw, 0.0F);
+                frog.setYBodyRot(yaw);
+                frog.setYHeadRot(yaw);
                 server.addFreshEntity(frog);
             }
         } else {
             WitherbaneFrog frog = frogs.get(0);
-            frog.moveTo(cx, cy, cz, frog.getYRot(), 0.0F);
+            frog.moveTo(cx, cy, cz, yaw, 0.0F);
+            frog.setYBodyRot(yaw);
+            frog.setYHeadRot(yaw);
             frog.setDeltaMovement(Vec3.ZERO);
             for (int i = 1; i < frogs.size(); i++) {
                 frogs.get(i).discard();
@@ -265,6 +303,13 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
         this.items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
         ContainerHelper.loadAllItems(tag, this.items, registries);
         this.summonTicks = tag.getInt("SummonTicks");
+        this.ritual = readRitual(tag);
+    }
+
+    /** Read the cached ritual direction, defaulting to canonical (back-compat for pre-fix altars). */
+    private static Direction readRitual(CompoundTag tag) {
+        Direction d = tag.contains("Ritual") ? Direction.byName(tag.getString("Ritual")) : null;
+        return d != null && d.getAxis().isHorizontal() ? d : WitherAltarValidator.CANONICAL_RITUAL;
     }
 
     @Override
@@ -272,14 +317,16 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
         super.saveAdditional(tag, registries);
         ContainerHelper.saveAllItems(tag, this.items, registries);
         tag.putInt("SummonTicks", summonTicks);
+        tag.putString("Ritual", ritual.getName());
     }
 
-    // Sync only the summon progress to the client (the chest contents ride the menu,
-    // not the BE update tag) so the summon animation can read it.
+    // Sync the summon progress AND the resolved ritual to the client (the chest contents
+    // ride the menu, not the BE update tag) so the summon animation reads both.
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = super.getUpdateTag(registries);
         tag.putInt("SummonTicks", summonTicks);
+        tag.putString("Ritual", ritual.getName());
         return tag;
     }
 
