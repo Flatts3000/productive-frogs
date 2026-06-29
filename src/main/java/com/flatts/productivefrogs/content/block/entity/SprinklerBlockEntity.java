@@ -274,6 +274,17 @@ public class SprinklerBlockEntity extends BlockEntity {
         setFilled(server, pos, state, true);
         be.absorbCatalystsFromAbove(server, pos);
 
+        // Redstone gate (#263): a powered Sprinkler pauses spawning
+        // entirely (hopper convention - a signal switches it OFF), keeping its milk,
+        // catalysts, and spawn budget frozen so it resumes the instant the signal
+        // drops. Lets a comparator / storage-full line throttle resource output.
+        // Same "pause without spending" shape as the cavity-full and blocked-target
+        // checks below; placed before the interval countdown so a paused Sprinkler is
+        // truly frozen rather than draining its timer.
+        if (server.hasNeighborSignal(pos)) {
+            return;
+        }
+
         boolean depleting = depletionEnabled() && !be.infinite;
         if (depleting && be.spawnsRemaining <= 0) {
             be.clear(server, pos, state);

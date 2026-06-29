@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Switch Terrarium Sprinklers on and off with redstone.** A Sprinkler now pauses while it's getting a redstone signal - power it off to stop production, cut the signal to start it again. The held milk and its remaining spawns just freeze in place and pick up right where they left off. Wire a comparator off a full chest so a Terrarium throttles itself when storage backs up, or flip a lever to pause a box by hand. Each Sprinkler is controlled on its own, so you can stage which resources run. (#263)
+
 ## v1.23.0 - 2026-06-29 - The Midas Touch
 
 ### Added

@@ -5686,6 +5686,46 @@ public final class PFGameTests {
         }
     }
 
+    /** A redstone-powered Sprinkler pauses spawning (hopper convention) without spending budget. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
+    public static void terrariumRedstonePausesSprinkler(GameTestHelper helper) {
+        BlockPos controller = buildValidTerrarium(helper, 1);
+        ServerLevel level = helper.getLevel();
+        ((com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity)
+            helper.getBlockEntity(controller)).forceValidate(level, helper.absolutePos(controller));
+        BlockPos sprinklerRel = new BlockPos(2, 6, 2);
+        com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity sprinkler =
+            (com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity) helper.getBlockEntity(sprinklerRel);
+        ResourceLocation ironId = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = Boolean.TRUE;
+        com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity.cavitySlimeCapOverride = 64;
+        try {
+            // Power the Sprinkler from above the roof (outside the shell, so the
+            // structure stays formed and the cavity spawn target stays clear).
+            helper.setBlock(new BlockPos(2, 7, 2), Blocks.REDSTONE_BLOCK);
+            sprinkler.loadCharge(ironId, new com.flatts.productivefrogs.content.multiblock.MilkCharge(8, 8, 0, 0, false));
+            sprinkler.primeForImmediateSpawn();
+            BlockState sState = level.getBlockState(helper.absolutePos(sprinklerRel));
+            com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity.serverTick(
+                level, helper.absolutePos(sprinklerRel), sState, sprinkler);
+            if (sprinkler.getSpawnsRemaining() != 8) {
+                helper.fail("powered Sprinkler must not spend budget; remaining=" + sprinkler.getSpawnsRemaining());
+                return;
+            }
+            java.util.List<ResourceSlime> slimes = level.getEntitiesOfClass(ResourceSlime.class,
+                net.minecraft.world.phys.AABB.encapsulatingFullBlocks(
+                    helper.absolutePos(new BlockPos(2, 2, 2)), helper.absolutePos(new BlockPos(6, 6, 6))));
+            if (!slimes.isEmpty()) {
+                helper.fail("powered Sprinkler spawned " + slimes.size() + " slime(s); it should be paused");
+                return;
+            }
+            helper.succeed();
+        } finally {
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = null;
+            com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity.cavitySlimeCapOverride = null;
+        }
+    }
+
     /** Inside a formed Terrarium the frog-eat drop lands in the Hatch with no item entity. */
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_9x9x9", timeoutTicks = 100)
     public static void terrariumHatchReceivesFroglightDirectly(GameTestHelper helper) {
