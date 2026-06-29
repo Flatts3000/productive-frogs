@@ -192,7 +192,7 @@
   "block.productivefrogs.terrarium_controller": "Terrarium Controller",
   "block.productivefrogs.sprinkler": "Sprinkler",
   "block.productivefrogs.incubator": "Incubator",
-  "block.productivefrogs.hatch": "Hatch",
+  "block.productivefrogs.hatch": "Terrarium Hatch",
   "block.productivefrogs.sweetslimed_lily_pad": "Sweetslimed Lily Pad",
   "message.productivefrogs.terrarium.formed": "Terrarium formed.",
   "message.productivefrogs.terrarium.problem_at": "%s (at %s, %s, %s)",
