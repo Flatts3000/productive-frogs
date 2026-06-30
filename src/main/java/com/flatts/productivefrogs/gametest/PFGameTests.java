@@ -299,6 +299,64 @@ public final class PFGameTests {
     }
 
     /**
+     * Resource Tadpoles accept Sweetslime (not just slimeballs) to speed growth
+     * (#277). Feeding one a Sweetslime advances its maturation, so the remaining
+     * growth time drops.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void tadpoleAcceptsSweetslimeToSpeedGrowth(GameTestHelper helper) {
+        ResourceTadpole tadpole = helper.spawn(PFEntities.RESOURCE_TADPOLE.get(), new BlockPos(2, 2, 2));
+        int before = tadpole.remainingGrowthTicks();
+
+        // makeMockPlayer (not makeMockServerPlayerInLevel) - the latter trips
+        // Curios' clientbound sync in dev; the existing frog-bucket tests use this.
+        net.minecraft.world.entity.player.Player player =
+            helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(PFItems.SWEETSLIME.get()));
+        tadpole.mobInteract(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+
+        int after = tadpole.remainingGrowthTicks();
+        if (after >= before) {
+            helper.fail("feeding Sweetslime should advance growth: remaining before=" + before + " after=" + after);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * A tadpole maturing too close to a block must not spawn a frog stuck in that
+     * block (#276). Vanilla {@code Tadpole.ageUp} drops the frog at the tadpole's
+     * exact (fractional) position with no space check; we push the tadpole high in
+     * its water cell under a stone ceiling - where that fractional frog box would
+     * clip the stone - and assert the matured frog ends up collision-free (the fix
+     * anchors the spawn to a block-aligned, fitting position).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void tadpoleMaturesWithoutSuffocatingNearABlock(GameTestHelper helper) {
+        BlockPos tadPos = new BlockPos(2, 2, 2);
+        helper.setBlock(tadPos, Blocks.WATER);
+        helper.setBlock(tadPos.above(), Blocks.STONE);
+
+        ResourceTadpole tadpole = helper.spawn(PFEntities.RESOURCE_TADPOLE.get(), tadPos);
+        BlockPos abs = helper.absolutePos(tadPos);
+        // Sit high in the cell so the vanilla (fractional) frog box would clip the
+        // stone above; the fix anchors the spawn to the block instead.
+        tadpole.setPos(abs.getX() + 0.5, abs.getY() + 0.7, abs.getZ() + 0.5);
+        tadpole.ageUp();
+
+        helper.runAfterDelay(2, () -> {
+            List<ResourceFrog> frogs = helper.getEntities(PFEntities.RESOURCE_FROG.get());
+            if (frogs.isEmpty()) {
+                helper.fail("tadpole should have matured into a frog");
+                return;
+            }
+            if (!helper.getLevel().noCollision(frogs.get(0))) {
+                helper.fail("matured frog is suffocating in a block at " + frogs.get(0).position());
+            }
+            helper.succeed();
+        });
+    }
+
+    /**
      * Verify the full bucket round-trip preserves category: spawn a tadpole,
      * write its state into a bucket via {@code saveToBucketTag}, read the
      * category back from the NBT, then spawn a fresh tadpole of a different
