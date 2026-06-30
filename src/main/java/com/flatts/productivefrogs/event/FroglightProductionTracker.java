@@ -53,11 +53,7 @@ public final class FroglightProductionTracker {
         if (player.tickCount % SCAN_INTERVAL_TICKS != 0) {
             return;
         }
-        Registry<SlimeVariant> registry = player.level().registryAccess()
-            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
-        if (registry == null) {
-            return;
-        }
+        var variants = PFRegistries.variants(player.level().registryAccess());
         EnumSet<Category> produced = EnumSet.noneOf(Category.class);
         Inventory inventory = player.getInventory();
         for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
@@ -69,7 +65,7 @@ public final class FroglightProductionTracker {
             if (variantId == null) {
                 continue;
             }
-            SlimeVariant variant = registry.get(variantId);
+            SlimeVariant variant = PFRegistries.variant(variants, variantId);
             if (variant != null) {
                 produced.add(variant.category());
             }

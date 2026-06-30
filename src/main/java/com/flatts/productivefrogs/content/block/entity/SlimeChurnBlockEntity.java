@@ -323,8 +323,7 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
     /** Resolve a variant from the datapack registry, or null when unknown. */
     @Nullable
     private static SlimeVariant resolveVariant(Level level, Identifier variantId) {
-        return level.registryAccess()
-            .registry(PFRegistries.SLIME_VARIANT).map(r -> r.get(variantId)).orElse(null);
+        return PFRegistries.variant(level.registryAccess(), variantId);
     }
 
     /**

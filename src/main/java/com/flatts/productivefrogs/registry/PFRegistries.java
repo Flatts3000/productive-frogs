@@ -59,10 +59,18 @@ public final class PFRegistries {
     /** Resolve a Slime Variant by id, or {@code null} if absent. */
     @Nullable
     public static SlimeVariant variant(HolderLookup.Provider registries, Identifier id) {
-        return registries.lookupOrThrow(SLIME_VARIANT)
-            .get(ResourceKey.create(SLIME_VARIANT, id))
-            .map(Holder::value)
-            .orElse(null);
+        return variant(registries.lookupOrThrow(SLIME_VARIANT), id);
+    }
+
+    /** Resolve a Slime Variant by id from an already-obtained lookup, or {@code null}. */
+    @Nullable
+    public static SlimeVariant variant(HolderLookup.RegistryLookup<SlimeVariant> lookup, Identifier id) {
+        return lookup.get(ResourceKey.create(SLIME_VARIANT, id)).map(Holder::value).orElse(null);
+    }
+
+    /** The Parent Species registry lookup, for iteration/streaming. */
+    public static HolderLookup.RegistryLookup<ParentSpeciesEntry> parentSpeciesLookup(HolderLookup.Provider registries) {
+        return registries.lookupOrThrow(PARENT_SPECIES);
     }
 
     /** Resolve a Parent Species entry by id, or {@code null} if absent. */

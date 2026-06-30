@@ -145,12 +145,7 @@ public class TerrariumControllerScreen extends PFContainerScreen<TerrariumContro
         if (mc.level == null) {
             return DEFAULT_MILK;
         }
-        Registry<SlimeVariant> registry = mc.level.registryAccess()
-            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
-        if (registry == null) {
-            return DEFAULT_MILK;
-        }
-        SlimeVariant v = registry.get(variant);
+        SlimeVariant v = PFRegistries.variant(mc.level.registryAccess(), variant);
         return v == null ? DEFAULT_MILK : (0xFF000000 | v.primaryColor());
     }
 }

@@ -135,13 +135,9 @@ public final class SlimeInfusionHandler {
      */
     @Nullable
     public static Category resolveParentSpecies(Slime slime) {
-        Registry<ParentSpeciesEntry> registry = slime.level().registryAccess()
-            .registry(PFRegistries.PARENT_SPECIES).orElse(null);
-        if (registry == null) {
-            return null;
-        }
         Identifier typeId = BuiltInRegistries.ENTITY_TYPE.getKey(slime.getType());
-        return ParentSpeciesEntry.categoryFor(registry, typeId);
+        return ParentSpeciesEntry.categoryFor(
+            PFRegistries.parentSpeciesLookup(slime.level().registryAccess()), typeId);
     }
 
     /**
@@ -196,9 +192,6 @@ public final class SlimeInfusionHandler {
      */
     private static Map.Entry<Identifier, SlimeVariant> findVariantForHeldItem(
             net.minecraft.world.level.Level level, ItemStack stack) {
-        Registry<SlimeVariant> registry = level.registryAccess()
-            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
-        if (registry == null) return null;
-        return SlimeVariant.findByPrimer(registry, stack);
+        return SlimeVariant.findByPrimer(PFRegistries.variants(level.registryAccess()), stack);
     }
 }

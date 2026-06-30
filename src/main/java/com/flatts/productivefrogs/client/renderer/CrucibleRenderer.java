@@ -94,10 +94,8 @@ public class CrucibleRenderer implements BlockEntityRenderer<CrucibleBlockEntity
         if (variantId == null) {
             return 0xFFFFFF;
         }
-        return level.registryAccess().registry(PFRegistries.SLIME_VARIANT)
-            .map(reg -> reg.get(variantId))
-            .map(SlimeVariant::primaryColor)
-            .orElse(0xFFFFFF);
+        SlimeVariant v = PFRegistries.variant(level.registryAccess(), variantId);
+        return v == null ? 0xFFFFFF : v.primaryColor();
     }
 
     /** One upward-facing quad spanning the basin interior at height {@code y}. */

@@ -180,12 +180,11 @@ public final class PFClientEvents {
                 if (beLevel == null) {
                     return -1;
                 }
-                Registry<SlimeVariant> registry = beLevel.registryAccess()
-                    .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+                var registry = PFRegistries.variants(beLevel.registryAccess());
                 if (registry == null) {
                     return -1;
                 }
-                SlimeVariant variant = registry.get(variantId);
+                SlimeVariant variant = PFRegistries.variant(registry, variantId);
                 final int argb = variant == null ? -1 : opaque(variant.primaryColor());
                 if (PFDebug.on(PFDebug.Area.TINT)) {
                     PFDebug.logOnce(PFDebug.Area.TINT, "froglight_block/" + variantId,
@@ -266,10 +265,9 @@ public final class PFClientEvents {
                     if (variantId != null) {
                         Minecraft mc = Minecraft.getInstance();
                         if (mc.level != null) {
-                            Registry<SlimeVariant> registry = mc.level.registryAccess()
-                                .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+                            var registry = PFRegistries.variants(mc.level.registryAccess());
                             if (registry != null) {
-                                SlimeVariant variant = registry.get(variantId);
+                                SlimeVariant variant = PFRegistries.variant(registry, variantId);
                                 if (variant != null) {
                                     final int argb = opaque(variant.primaryColor());
                                     if (PFDebug.on(PFDebug.Area.TINT)) {
@@ -368,10 +366,8 @@ public final class PFClientEvents {
             if (variantId == null) return -1;
             Minecraft mc = Minecraft.getInstance();
             if (mc.level == null) return -1;
-            Registry<SlimeVariant> registry = mc.level.registryAccess()
-                .registry(PFRegistries.SLIME_VARIANT).orElse(null);
-            if (registry == null) return -1;
-            SlimeVariant variant = registry.get(variantId);
+            var registry = PFRegistries.variants(mc.level.registryAccess());
+            SlimeVariant variant = PFRegistries.variant(registry, variantId);
             final int argb = variant == null ? -1 : opaque(variant.primaryColor());
             if (PFDebug.on(PFDebug.Area.TINT)) {
                 PFDebug.logOnce(PFDebug.Area.TINT, "froglight_item/" + variantId,
@@ -398,10 +394,9 @@ public final class PFClientEvents {
             if (variantId != null) {
                 Minecraft mc = Minecraft.getInstance();
                 if (mc.level != null) {
-                    Registry<SlimeVariant> registry = mc.level.registryAccess()
-                        .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+                    var registry = PFRegistries.variants(mc.level.registryAccess());
                     if (registry != null) {
-                        SlimeVariant variant = registry.get(variantId);
+                        SlimeVariant variant = PFRegistries.variant(registry, variantId);
                         if (variant != null) {
                             final int argb = opaque(tintIndex == 0 ? variant.primaryColor() : variant.secondaryColor());
                             if (PFDebug.on(PFDebug.Area.TINT)) {
@@ -630,12 +625,8 @@ public final class PFClientEvents {
         if (mc.level == null) {
             return -1;
         }
-        Registry<SlimeVariant> registry = mc.level.registryAccess()
-            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
-        if (registry == null) {
-            return -1;
-        }
-        SlimeVariant variant = registry.get(variantId);
+        var registry = PFRegistries.variants(mc.level.registryAccess());
+        SlimeVariant variant = PFRegistries.variant(registry, variantId);
         return variant == null ? -1 : opaque(variant.primaryColor());
     }
 }

@@ -55,23 +55,21 @@ public final class PFDataPackRegistryEvents {
             return;
         }
         var access = event.getServer().registryAccess();
-        access.registry(PFRegistries.SLIME_VARIANT).ifPresent(registry -> {
-            PFDebug.log(PFDebug.Area.REGISTRY, "slime_variant: {} entries loaded", registry.size());
-            registry.entrySet().forEach(entry -> {
-                var v = entry.getValue();
-                String primer = v.primerItem().map(Identifier::toString)
-                    .or(() -> v.primerTag().map(t -> "#" + t.identifier()))
-                    .orElse("(none)");
-                PFDebug.log(PFDebug.Area.REGISTRY,
-                    "  slime_variant {} -> category={} primer={}",
-                    entry.getKey().identifier(), v.category(), primer);
-            });
+        var variants = PFRegistries.variants(access);
+        PFDebug.log(PFDebug.Area.REGISTRY, "slime_variant: {} entries loaded", variants.listElements().count());
+        variants.listElements().forEach(ref -> {
+            var v = ref.value();
+            String primer = v.primerItem().map(Identifier::toString)
+                .or(() -> v.primerTag().map(t -> "#" + t.location()))
+                .orElse("(none)");
+            PFDebug.log(PFDebug.Area.REGISTRY,
+                "  slime_variant {} -> category={} primer={}",
+                ref.key().identifier(), v.category(), primer);
         });
-        access.registry(PFRegistries.PARENT_SPECIES).ifPresent(registry -> {
-            PFDebug.log(PFDebug.Area.REGISTRY, "parent_species: {} entries loaded", registry.size());
-            registry.entrySet().forEach(entry -> PFDebug.log(PFDebug.Area.REGISTRY,
-                "  parent_species {} -> entity_type={} category={}",
-                entry.getKey().identifier(), entry.getValue().entityType(), entry.getValue().category()));
-        });
+        var parents = PFRegistries.parentSpeciesLookup(access);
+        PFDebug.log(PFDebug.Area.REGISTRY, "parent_species: {} entries loaded", parents.listElements().count());
+        parents.listElements().forEach(ref -> PFDebug.log(PFDebug.Area.REGISTRY,
+            "  parent_species {} -> entity_type={} category={}",
+            ref.key().identifier(), ref.value().entityType(), ref.value().category()));
     }
 }

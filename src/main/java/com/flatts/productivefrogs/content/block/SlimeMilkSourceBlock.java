@@ -565,11 +565,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      */
     @Nullable
     private static Slime createCustomSpawnEntity(ServerLevel level, Identifier variantId) {
-        var registry = level.registryAccess().registry(PFRegistries.SLIME_VARIANT).orElse(null);
-        if (registry == null) {
-            return null;
-        }
-        SlimeVariant variant = registry.get(variantId);
+        SlimeVariant variant = PFRegistries.variant(level.registryAccess(), variantId);
         if (variant == null || variant.spawnEntity().isEmpty()) {
             return null;
         }

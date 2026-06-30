@@ -107,8 +107,7 @@ public final class SlimeSplitDiscoveryHandler {
             return;
         }
 
-        Registry<SlimeVariant> variantRegistry = level.registryAccess()
-            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+        var variantRegistry = PFRegistries.variants(level.registryAccess());
 
         float chance = discoveryChancePerOffspring();
         List<Mob> children = event.getChildren();
@@ -174,11 +173,7 @@ public final class SlimeSplitDiscoveryHandler {
         if (parentTypeId == null) {
             return null;
         }
-        Registry<ParentSpeciesEntry> registry = level.registryAccess()
-            .registry(PFRegistries.PARENT_SPECIES).orElse(null);
-        if (registry == null) {
-            return null;
-        }
-        return ParentSpeciesEntry.categoryFor(registry, parentTypeId);
+        return ParentSpeciesEntry.categoryFor(
+            PFRegistries.parentSpeciesLookup(level.registryAccess()), parentTypeId);
     }
 }

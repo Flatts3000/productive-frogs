@@ -257,9 +257,7 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
         // Roster gate: anything that already primes a slime variant (including the
         // weight-0 boss primers) has its own authored lane - refuse it here.
         if (level != null) {
-            Registry<SlimeVariant> registry = level.registryAccess()
-                .registry(PFRegistries.SLIME_VARIANT).orElse(null);
-            if (registry != null && SlimeVariant.findByPrimer(registry, stack) != null) {
+            if (SlimeVariant.findByPrimer(PFRegistries.variants(level.registryAccess()), stack) != null) {
                 return false;
             }
         }

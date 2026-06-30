@@ -3,7 +3,8 @@ package com.flatts.productivefrogs.data;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.Optional;
-import net.minecraft.core.Registry;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,10 +81,10 @@ public record ParentSpeciesEntry(
      * paths consistently. Linear scan; see the class javadoc on scale.
      */
     @Nullable
-    public static Category categoryFor(Registry<ParentSpeciesEntry> registry, Identifier entityTypeId) {
-        for (ParentSpeciesEntry entry : registry) {
-            if (entry.entityType().equals(entityTypeId)) {
-                return entry.category();
+    public static Category categoryFor(HolderLookup.RegistryLookup<ParentSpeciesEntry> registry, Identifier entityTypeId) {
+        for (Holder.Reference<ParentSpeciesEntry> entry : registry.listElements().toList()) {
+            if (entry.value().entityType().equals(entityTypeId)) {
+                return entry.value().category();
             }
         }
         return null;
