@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.content.block.entity;
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
+import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.util.PFDebug;
 import java.util.List;
 import java.util.UUID;
@@ -97,8 +98,39 @@ public class SweetslimedLilyPadBlockEntity extends BlockEntity {
         }
     }
 
+    /** Release our claimed frog (clear its perch) and forget the claimant. */
+    private void releaseClaim(ServerLevel server) {
+        if (claimant != null) {
+            if (server.getEntity(claimant) instanceof ResourceFrog frog) {
+                frog.releasePerch();
+            }
+            setClaimant(null);
+        }
+    }
+
+    /**
+     * Pad broken: release our claimed frog's perch immediately. 26.1 fires
+     * {@code preRemoveSideEffects} while the BE still exists, so we can resolve the
+     * claimant here. Belt-and-suspenders with the serverTick guard below.
+     */
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (getLevel() instanceof ServerLevel server) {
+            releaseClaim(server);
+        }
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, SweetslimedLilyPadBlockEntity be) {
         if (!(level instanceof ServerLevel server) || !PFConfig.lilyPadPerchEnabled()) {
+            return;
+        }
+        // The pad BE's ticker can fire one or more times AFTER the block is removed
+        // (deregistration lag). Never operate - or re-assert a claim - without our block
+        // present: if it is gone, release the claim and stop. This is the deterministic
+        // release; the BE-stops-ticking + claim-TTL decay is only a backstop.
+        if (!server.getBlockState(pos).is(PFBlocks.SWEETSLIMED_LILY_PAD.get())) {
+            be.releaseClaim(server);
             return;
         }
         int range = PFConfig.lilyPadPerchRange();

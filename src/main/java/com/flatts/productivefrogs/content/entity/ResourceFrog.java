@@ -281,6 +281,12 @@ public class ResourceFrog extends Frog {
         this.perchValidUntil = validUntil;
     }
 
+    /** Release any active perch immediately (the holding pad calls this when it is broken). */
+    public void releasePerch() {
+        this.perchPad = null;
+        this.perchValidUntil = 0L;
+    }
+
     /**
      * Apply <b>baseline</b> stats to a non-bred frog and config-gated persistence.
      * A non-bred frog - one matured from crafted / Spawnery / non-bred frogspawn -
