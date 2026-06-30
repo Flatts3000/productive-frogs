@@ -2,7 +2,7 @@ package com.flatts.productivefrogs.content.item;
 
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.registry.PFEntityTags;
-import java.util.List;
+import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -18,6 +18,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
@@ -199,10 +200,10 @@ public class FrogNetItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, context, tooltip, flag);
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay, Consumer<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltipDisplay, tooltip, flag);
         if (!isFilled(stack)) {
-            tooltip.add(Component.translatable("productivefrogs.frog_net.empty")
+            tooltip.accept(Component.translatable("productivefrogs.frog_net.empty")
                 .withStyle(ChatFormatting.GRAY));
             return;
         }
@@ -214,11 +215,11 @@ public class FrogNetItem extends Item {
         // Bred stats live on the frog NBT (ResourceFrog.addAdditionalSaveData);
         // surface them so the player can read a caught frog without releasing it.
         if (tag.contains("Appetite") || tag.contains("Bounty") || tag.contains("Reach")) {
-            tooltip.add(Component.translatable("productivefrogs.frog_net.stats",
+            tooltip.accept(Component.translatable("productivefrogs.frog_net.stats",
                     tag.getInt("Appetite"), tag.getInt("Bounty"), tag.getInt("Reach"))
                 .withStyle(ChatFormatting.GRAY));
         }
-        tooltip.add(Component.translatable("productivefrogs.frog_net.release")
+        tooltip.accept(Component.translatable("productivefrogs.frog_net.release")
             .withStyle(ChatFormatting.DARK_GRAY));
     }
 }

@@ -5,7 +5,7 @@ import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.WaterlilyBlock;
+import net.minecraft.world.level.block.LilyPadBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -17,12 +17,12 @@ import org.jetbrains.annotations.Nullable;
  * (#214, docs/lily_pad_perch.md). Made by right-clicking a vanilla lily pad with a
  * Sweetslime ({@link com.flatts.productivefrogs.event.LilyPadPerchHandler}).
  *
- * <p>It is a vanilla {@link WaterlilyBlock} (sits on water, same placement/break,
+ * <p>It is a vanilla {@link LilyPadBlock} (sits on water, same placement/break,
  * boats still snap it) plus a {@link SweetslimedLilyPadBlockEntity} ticker that does
  * the perching: claim the nearest frog and hold it near the pad. All the perch logic
  * lives in the BlockEntity; the block just wires the server ticker.
  */
-public class SweetslimedLilyPadBlock extends WaterlilyBlock implements EntityBlock {
+public class SweetslimedLilyPadBlock extends LilyPadBlock implements EntityBlock {
 
     public SweetslimedLilyPadBlock(Properties properties) {
         super(properties);

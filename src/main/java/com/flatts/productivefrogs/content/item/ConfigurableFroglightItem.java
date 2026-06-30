@@ -5,8 +5,8 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
 import com.flatts.productivefrogs.data.StoredEffect;
 import com.flatts.productivefrogs.registry.PFDataComponents;
-import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -21,6 +21,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -229,8 +230,8 @@ public final class ConfigurableFroglightItem extends BlockItem {
      * plain Froglights are unchanged.
      */
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, context, tooltip, flag);
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay, Consumer<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltipDisplay, tooltip, flag);
         StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
         if (stored == null || !PFConfig.brewedFroglightsEnabled()) {
             return; // feature off -> a brewed Froglight reads as plain
@@ -243,9 +244,9 @@ public final class ConfigurableFroglightItem extends BlockItem {
             ? Component.translatable("potion.withAmplifier", effect.getDisplayName(),
                 Component.translatable("potion.potency." + stored.amplifier()))
             : effect.getDisplayName();
-        tooltip.add(Component.translatable("productivefrogs.tooltip.brewed_aura", name)
+        tooltip.accept(Component.translatable("productivefrogs.tooltip.brewed_aura", name)
             .withStyle(effect.getCategory().getTooltipFormatting()));
-        tooltip.add(Component.translatable(stored.enabled()
+        tooltip.accept(Component.translatable(stored.enabled()
                 ? "productivefrogs.tooltip.aura_enabled"
                 : "productivefrogs.tooltip.aura_disabled")
             .withStyle(ChatFormatting.GRAY));

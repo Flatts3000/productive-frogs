@@ -33,8 +33,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MobBucketItem;
 import net.minecraft.world.item.PlaceOnWaterBlockItem;
 import net.minecraft.world.item.SpawnEggItem;
-import net.minecraft.world.item.SwordItem;
-import net.minecraft.world.item.Tiers;
+import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.TypedEntityData;
 import net.minecraft.world.level.block.Block;
@@ -84,16 +83,15 @@ public final class PFItems {
     /**
      * Froglight Cleaver (#212) - a late-game sword that drops a slime's Froglight
      * when it kills it (handled by {@code FroglightWeaponHandler}), the active-play
-     * counterpart to the passive frog loop. Netherite-tier {@link SwordItem} but
+     * counterpart to the passive frog loop. A netherite-tier weapon {@link Item} but
      * clearly stronger: +7 attack-damage bonus (12 displayed, vs netherite's 8) and
      * fire-resistant (it's forged from boss froglights + dragon's breath). The
      * harvest behaviour is event-driven. Gated by boss Froglights in its recipe
      * (`froglight_weapon`), so it's pure endgame and the extra power is earned.
      */
-    public static final DeferredItem<SwordItem> FROGLIGHT_CLEAVER = ITEMS.registerItem(
+    public static final DeferredItem<Item> FROGLIGHT_CLEAVER = ITEMS.registerItem(
         "froglight_cleaver",
-        props -> new SwordItem(Tiers.NETHERITE,
-            props.fireResistant().attributes(SwordItem.createAttributes(Tiers.NETHERITE, 7, -2.4F)))
+        props -> new Item(props.fireResistant().sword(ToolMaterial.NETHERITE, 7, -2.4F))
     );
 
     /**

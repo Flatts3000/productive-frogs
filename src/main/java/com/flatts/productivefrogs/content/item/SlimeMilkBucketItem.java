@@ -4,7 +4,7 @@ import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.util.VariantNames;
-import java.util.List;
+import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -13,6 +13,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
@@ -98,29 +99,29 @@ public final class SlimeMilkBucketItem extends BucketItem {
      * Reuses the Jade format keys so the bucket and the look-at readout match.
      */
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, context, tooltip, flag);
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay, Consumer<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltipDisplay, tooltip, flag);
         boolean infinite = Boolean.TRUE.equals(stack.get(PFDataComponents.MILK_INFINITE.get()));
         boolean depletionOff = PFConfig.SPEC.isLoaded() && !PFConfig.DEPLETION_ENABLED.get();
         if (infinite || depletionOff) {
-            tooltip.add(Component.translatable("productivefrogs.jade.spawns_unlimited")
+            tooltip.accept(Component.translatable("productivefrogs.jade.spawns_unlimited")
                 .withStyle(ChatFormatting.GRAY));
         } else {
             Integer remaining = stack.get(PFDataComponents.SPAWNS_REMAINING.get());
             Integer capacity = stack.get(PFDataComponents.MILK_CAPACITY.get());
             int rem = remaining != null ? remaining : defaultSpawnCount();
             int cap = Math.max(capacity != null ? capacity : defaultSpawnCount(), rem);
-            tooltip.add(Component.translatable("productivefrogs.jade.spawns_left", rem, cap)
+            tooltip.accept(Component.translatable("productivefrogs.jade.spawns_left", rem, cap)
                 .withStyle(ChatFormatting.GRAY));
         }
         Integer speed = stack.get(PFDataComponents.MILK_SPEED.get());
         if (speed != null && speed > 0) {
-            tooltip.add(Component.translatable("productivefrogs.jade.catalyst_speed",
+            tooltip.accept(Component.translatable("productivefrogs.jade.catalyst_speed",
                 speed, PFConfig.catalystMaxSpeedLevel()).withStyle(ChatFormatting.GRAY));
         }
         Integer quantity = stack.get(PFDataComponents.MILK_QUANTITY.get());
         if (quantity != null && quantity > 0) {
-            tooltip.add(Component.translatable("productivefrogs.jade.catalyst_quantity",
+            tooltip.accept(Component.translatable("productivefrogs.jade.catalyst_quantity",
                 quantity, PFConfig.catalystMaxQuantityLevel()).withStyle(ChatFormatting.GRAY));
         }
     }
