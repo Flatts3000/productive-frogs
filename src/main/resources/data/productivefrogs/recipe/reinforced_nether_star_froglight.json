@@ -1,6 +1,9 @@
 {
   "neoforge:conditions": [
-    { "type": "productivefrogs:config_enabled", "config": "boss" }
+    {
+      "type": "productivefrogs:config_enabled",
+      "config": "boss"
+    }
   ],
   "type": "minecraft:crafting_shaped",
   "category": "building",
@@ -11,12 +14,19 @@
     " O "
   ],
   "key": {
-    "O": { "item": "minecraft:obsidian" },
+    "O": "minecraft:obsidian",
     "F": {
-      "type": "neoforge:components",
-      "items": [ "productivefrogs:configurable_froglight" ],
-      "components": { "productivefrogs:slime_variant": "productivefrogs:nether_star" }
+      "neoforge:ingredient_type": "neoforge:components",
+      "items": [
+        "productivefrogs:configurable_froglight"
+      ],
+      "components": {
+        "productivefrogs:slime_variant": "productivefrogs:nether_star"
+      }
     }
   },
-  "result": { "id": "productivefrogs:reinforced_nether_star_froglight", "count": 1 }
+  "result": {
+    "id": "productivefrogs:reinforced_nether_star_froglight",
+    "count": 1
+  }
 }

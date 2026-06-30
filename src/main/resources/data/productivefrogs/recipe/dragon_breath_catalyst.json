@@ -1,11 +1,23 @@
 {
   "neoforge:conditions": [
-    { "type": "productivefrogs:config_enabled", "config": "boss" }
+    {
+      "type": "productivefrogs:config_enabled",
+      "config": "boss"
+    }
   ],
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "group": "productivefrogs_catalyst",
-  "pattern": [ "PPP", "PBP", "PPP" ],
-  "key": { "P": { "item": "minecraft:purpur_block" }, "B": { "item": "minecraft:dragon_breath" } },
-  "result": { "id": "productivefrogs:dragon_breath_catalyst" }
+  "pattern": [
+    "PPP",
+    "PBP",
+    "PPP"
+  ],
+  "key": {
+    "P": "minecraft:purpur_block",
+    "B": "minecraft:dragon_breath"
+  },
+  "result": {
+    "id": "productivefrogs:dragon_breath_catalyst"
+  }
 }

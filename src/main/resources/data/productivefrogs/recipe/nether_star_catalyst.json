@@ -1,11 +1,23 @@
 {
   "neoforge:conditions": [
-    { "type": "productivefrogs:config_enabled", "config": "boss" }
+    {
+      "type": "productivefrogs:config_enabled",
+      "config": "boss"
+    }
   ],
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "group": "productivefrogs_catalyst",
-  "pattern": [ "OOO", "OSO", "OOO" ],
-  "key": { "O": { "item": "minecraft:obsidian" }, "S": { "item": "minecraft:nether_star" } },
-  "result": { "id": "productivefrogs:nether_star_catalyst" }
+  "pattern": [
+    "OOO",
+    "OSO",
+    "OOO"
+  ],
+  "key": {
+    "O": "minecraft:obsidian",
+    "S": "minecraft:nether_star"
+  },
+  "result": {
+    "id": "productivefrogs:nether_star_catalyst"
+  }
 }

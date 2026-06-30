@@ -1,14 +1,23 @@
 {
   "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "alltheores" }
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "alltheores"
+    }
   ],
   "type": "minecraft:smelting",
   "ingredient": {
-    "type": "neoforge:components",
-    "items": [ "productivefrogs:configurable_froglight" ],
-    "components": { "productivefrogs:slime_variant": "productivefrogs:zinc" }
+    "neoforge:ingredient_type": "neoforge:components",
+    "items": [
+      "productivefrogs:configurable_froglight"
+    ],
+    "components": {
+      "productivefrogs:slime_variant": "productivefrogs:zinc"
+    }
   },
-  "result": { "id": "alltheores:zinc_ingot" },
+  "result": {
+    "id": "alltheores:zinc_ingot"
+  },
   "experience": 0.7,
   "cookingtime": 200,
   "category": "misc",

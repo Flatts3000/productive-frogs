@@ -1,8 +1,16 @@
 {
   "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "mekanism" }
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
   ],
   "type": "productivefrogs:mold_casting",
-  "fluid": { "tag": "c:molten_steel", "amount": 90 },
-  "result": { "id": "mekanism:ingot_steel" }
+  "fluid": {
+    "ingredient": "#c:molten_steel",
+    "amount": 90
+  },
+  "result": {
+    "id": "mekanism:ingot_steel"
+  }
 }

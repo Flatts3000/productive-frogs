@@ -1,14 +1,23 @@
 {
   "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "powah" }
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "powah"
+    }
   ],
   "type": "minecraft:smelting",
   "ingredient": {
-    "type": "neoforge:components",
-    "items": [ "productivefrogs:configurable_froglight" ],
-    "components": { "productivefrogs:slime_variant": "productivefrogs:blazing" }
+    "neoforge:ingredient_type": "neoforge:components",
+    "items": [
+      "productivefrogs:configurable_froglight"
+    ],
+    "components": {
+      "productivefrogs:slime_variant": "productivefrogs:blazing"
+    }
   },
-  "result": { "id": "powah:crystal_blazing" },
+  "result": {
+    "id": "powah:crystal_blazing"
+  },
   "experience": 0.7,
   "cookingtime": 200,
   "category": "misc",

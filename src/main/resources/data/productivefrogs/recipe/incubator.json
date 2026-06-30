@@ -8,9 +8,12 @@
     "NGN"
   ],
   "key": {
-    "N": { "item": "minecraft:nether_bricks" },
-    "G": { "item": "minecraft:glowstone" },
-    "S": { "item": "productivefrogs:sweetslime" }
+    "N": "minecraft:nether_bricks",
+    "G": "minecraft:glowstone",
+    "S": "productivefrogs:sweetslime"
   },
-  "result": { "id": "productivefrogs:incubator", "count": 1 }
+  "result": {
+    "id": "productivefrogs:incubator",
+    "count": 1
+  }
 }
