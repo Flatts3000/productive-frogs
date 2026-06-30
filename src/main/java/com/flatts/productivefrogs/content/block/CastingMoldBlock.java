@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.content.block;
 import com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -15,7 +16,6 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,8 +54,9 @@ public class CastingMoldBlock extends Block implements EntityBlock {
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
             Player player, InteractionHand hand, BlockHitResult hit) {
-        if (stack.getCapability(Capabilities.FluidHandler.ITEM) != null
-                && FluidUtil.interactWithFluidHandler(player, hand, level, pos, hit.getDirection())) {
+        // FluidUtil resolves the held item's fluid handler internally and returns false for a
+        // non-fluid item, so it doubles as the "is this fluid-capable" guard.
+        if (FluidUtil.interactWithFluidHandler(player, hand, level, pos, hit.getDirection())) {
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.TRY_WITH_EMPTY_HAND;
@@ -70,16 +71,18 @@ public class CastingMoldBlock extends Block implements EntityBlock {
         return InteractionResult.SUCCESS;
     }
 
+    // NOTE (26.1 port): the BlockEntity is removed before affectNeighborsAfterRemoval runs, so the
+    // output drop below can no longer read the BE here. The drop must move to
+    // CastingMoldBlockEntity#preRemoveSideEffects (BlockEntity-owned). Kept as a (currently no-op)
+    // guard so the intent stays visible until that relocation lands.
     @Override
-    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock())
-                && level.getBlockEntity(pos) instanceof CastingMoldBlockEntity mold) {
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
+        if (level.getBlockEntity(pos) instanceof CastingMoldBlockEntity mold) {
             ItemStack out = mold.output().getStackInSlot(CastingMoldBlockEntity.OUTPUT_SLOT);
             if (!out.isEmpty()) {
                 Block.popResource(level, pos, out);
             }
         }
-        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     @SuppressWarnings("unchecked")

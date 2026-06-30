@@ -100,7 +100,7 @@ public final class PFVariantMilk {
         BLOCKS.put(vid, PFBlocks.BLOCKS.registerBlock(
             base,
             p -> new SlimeMilkSourceBlock(SOURCES.get(vid).get(), vid, p),
-            milkBlockProperties()));
+            () -> milkBlockProperties()));
 
         BUCKETS.put(vid, PFItems.ITEMS.registerItem(
             base + "_bucket",
@@ -112,7 +112,7 @@ public final class PFVariantMilk {
         return BlockBehaviour.Properties.of()
             .mapColor(MapColor.METAL)
             .replaceable()
-            .noCollission()
+            .noCollision()
             .strength(100.0F)
             .pushReaction(PushReaction.DESTROY)
             .noLootTable()

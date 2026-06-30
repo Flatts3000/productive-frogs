@@ -23,6 +23,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.InsideBlockEffectApplier;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.player.Player;
@@ -185,7 +187,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * {@code canSpreadTo} guard.
      */
     @Override
-    public boolean canPlaceLiquid(@Nullable Player player, BlockGetter level, BlockPos pos,
+    public boolean canPlaceLiquid(@Nullable LivingEntity user, BlockGetter level, BlockPos pos,
                                   BlockState state, Fluid fluid) {
         return fluid.getFluidType() == this.fluid.getFluidType();
     }
@@ -445,8 +447,9 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * item floats for the player to retrieve rather than being silently eaten.
      */
     @Override
-    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
-        super.entityInside(state, level, pos, entity);
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity,
+                                InsideBlockEffectApplier effectApplier, boolean isPrecise) {
+        super.entityInside(state, level, pos, entity, effectApplier, isPrecise);
         if (level.isClientSide() || !PFConfig.milkCatalystsEnabled()) {
             return;
         }
@@ -584,7 +587,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * by re-bucketing it.
      */
     @Override
-    public ItemStack pickupBlock(@Nullable Player player, LevelAccessor level, BlockPos pos, BlockState state) {
+    public ItemStack pickupBlock(@Nullable LivingEntity player, LevelAccessor level, BlockPos pos, BlockState state) {
         SlimeMilkSourceBlockEntity be = getSourceBE(level, pos);
         Identifier variantId = effectiveVariant(be);
         int remaining = be != null ? be.getSpawnsRemaining() : 0;

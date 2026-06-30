@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.content.block;
 import com.flatts.productivefrogs.content.block.entity.DistillerBlockEntity;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -52,10 +53,13 @@ public class DistillerBlock extends Block implements EntityBlock {
         return InteractionResult.SUCCESS;
     }
 
+    // NOTE (26.1 port): the BlockEntity is removed before affectNeighborsAfterRemoval runs, so the
+    // inventory drop below can no longer read the BE here. The drop must move to
+    // DistillerBlockEntity#preRemoveSideEffects (BlockEntity-owned). Kept as a (currently no-op)
+    // guard so the intent stays visible until that relocation lands.
     @Override
-    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock())
-                && level.getBlockEntity(pos) instanceof DistillerBlockEntity distiller) {
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
+        if (level.getBlockEntity(pos) instanceof DistillerBlockEntity distiller) {
             ItemStack in = distiller.items().getStackInSlot(DistillerBlockEntity.INPUT_SLOT);
             if (!in.isEmpty()) {
                 Block.popResource(level, pos, in);
@@ -65,7 +69,6 @@ public class DistillerBlock extends Block implements EntityBlock {
                 Block.popResource(level, pos, out);
             }
         }
-        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     @SuppressWarnings("unchecked")

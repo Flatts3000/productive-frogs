@@ -8,6 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -21,6 +22,8 @@ import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -71,7 +74,7 @@ public class FrogNetItem extends Item {
             return false;
         }
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        return data != null && data.getUnsafe().contains(TAG_ENTITY);
+        return data != null && data.contains(TAG_ENTITY);
     }
 
     /**
@@ -81,8 +84,9 @@ public class FrogNetItem extends Item {
      * (no duplicate-UUID risk if a filled net is creative-copied).
      */
     public static void captureEntity(Entity target, ItemStack netStack) {
-        CompoundTag nbt = new CompoundTag();
-        target.saveWithoutId(nbt);
+        TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, target.registryAccess());
+        target.saveWithoutId(output);
+        CompoundTag nbt = output.buildResult();
         nbt.remove("UUID");
         nbt.putString(TAG_ENTITY, EntityType.getKey(target.getType()).toString());
         nbt.putString(TAG_NAME, target.getName().getString());
@@ -102,7 +106,7 @@ public class FrogNetItem extends Item {
             return null;
         }
         CompoundTag tag = data.copyTag();
-        EntityType<?> type = EntityType.byString(tag.getString(TAG_ENTITY)).orElse(null);
+        EntityType<?> type = EntityType.byString(tag.getStringOr(TAG_ENTITY, "")).orElse(null);
         if (type == null) {
             return null;
         }
@@ -121,7 +125,7 @@ public class FrogNetItem extends Item {
         // Drop any serialized passengers - they weren't part of the catch, and a
         // crafted Passengers tree could drive deep recursion in load().
         tag.remove("Passengers");
-        entity.load(tag);
+        entity.load(TagValueInput.create(ProblemReporter.DISCARDING, level.registryAccess(), tag));
         return entity;
     }
 
@@ -194,7 +198,7 @@ public class FrogNetItem extends Item {
             return Component.translatable(this.getDescriptionId());
         }
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        String name = data == null ? "" : data.copyTag().getString(TAG_NAME);
+        String name = data == null ? "" : data.copyTag().getStringOr(TAG_NAME, "");
         return Component.translatable(this.getDescriptionId())
             .append(Component.literal(" (" + name + ")"));
     }
@@ -216,7 +220,7 @@ public class FrogNetItem extends Item {
         // surface them so the player can read a caught frog without releasing it.
         if (tag.contains("Appetite") || tag.contains("Bounty") || tag.contains("Reach")) {
             tooltip.accept(Component.translatable("productivefrogs.frog_net.stats",
-                    tag.getInt("Appetite"), tag.getInt("Bounty"), tag.getInt("Reach"))
+                    tag.getIntOr("Appetite", 0), tag.getIntOr("Bounty", 0), tag.getIntOr("Reach", 0))
                 .withStyle(ChatFormatting.GRAY));
         }
         tooltip.accept(Component.translatable("productivefrogs.frog_net.release")

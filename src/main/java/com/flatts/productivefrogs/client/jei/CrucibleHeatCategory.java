@@ -11,7 +11,7 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
@@ -90,8 +90,8 @@ public final class CrucibleHeatCategory implements IRecipeCategory<CrucibleHeatC
 
     @Override
     public void draw(Entry entry, IRecipeSlotsView slotsView,
-                     GuiGraphics gui, double mouseX, double mouseY) {
-        gui.drawString(Minecraft.getInstance().font,
+                     GuiGraphicsExtractor gui, double mouseX, double mouseY) {
+        gui.text(Minecraft.getInstance().font,
             Component.translatable("productivefrogs.jei.crucible_heat_value", entry.heat()),
             TEXT_X, TEXT_Y, 0xFF404040, false);
     }

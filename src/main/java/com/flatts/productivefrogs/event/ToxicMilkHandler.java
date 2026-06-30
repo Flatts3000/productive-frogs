@@ -51,9 +51,13 @@ public final class ToxicMilkHandler {
         if (player.tickCount % CHECK_INTERVAL != 0) {
             return;
         }
+        // NeoForge 26.1 removed Entity#isInFluidType; read the FluidState the player
+        // is standing in directly and match its per-variant FluidType (source and
+        // flowing of a variant share one type) against the boss set.
+        FluidType feetType = player.level().getFluidState(player.blockPosition()).getFluidType();
         for (Identifier bossVariant : PFBlocks.catalystForVariant().keySet()) {
             FluidType type = PFVariantMilk.fluidType(bossVariant);
-            if (type != null && player.isInFluidType(type)) {
+            if (type != null && feetType == type) {
                 player.addEffect(new MobEffectInstance(MobEffects.WITHER, WITHER_DURATION, WITHER_AMPLIFIER));
                 return;
             }

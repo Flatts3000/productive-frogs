@@ -20,6 +20,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -370,9 +371,8 @@ public class CrucibleBlockEntity extends BlockEntity {
         if (level.getBlockEntity(worldPosition.below()) instanceof ConfigurableFroglightBlockEntity froglight
                 && froglight.getVariantId() != null) {
             Integer heat = level.registryAccess()
-                .registry(com.flatts.productivefrogs.registry.PFRegistries.SLIME_VARIANT)
-                .flatMap(reg -> reg.getHolder(net.minecraft.resources.ResourceKey.create(
-                    com.flatts.productivefrogs.registry.PFRegistries.SLIME_VARIANT, froglight.getVariantId())))
+                .lookup(com.flatts.productivefrogs.registry.PFRegistries.SLIME_VARIANT)
+                .flatMap(reg -> reg.get(froglight.getVariantId()))
                 .map(holder -> holder.getData(PFDataMaps.FROGLIGHT_HEAT))
                 .orElse(null);
             if (heat != null) {
@@ -395,10 +395,10 @@ public class CrucibleBlockEntity extends BlockEntity {
 
     @Nullable
     private CrucibleMeltRecipe recipeFor(ItemStack stack) {
-        if (level == null) {
+        if (level == null || !(level.recipeAccess() instanceof RecipeManager manager)) {
             return null;
         }
-        Optional<RecipeHolder<CrucibleMeltRecipe>> match = level.getRecipeManager()
+        Optional<RecipeHolder<CrucibleMeltRecipe>> match = manager
             .getRecipeFor(PFRecipeTypes.CRUCIBLE_MELTING.get(), new SingleRecipeInput(stack), level);
         return match.map(RecipeHolder::value).orElse(null);
     }
@@ -469,7 +469,7 @@ public class CrucibleBlockEntity extends BlockEntity {
         String pendingKey = input.getStringOr("PendingFluid", "");
         pendingFluid = pendingKey.isEmpty()
             ? null
-            : BuiltInRegistries.FLUID.get(Identifier.parse(pendingKey));
+            : BuiltInRegistries.FLUID.getValue(Identifier.parse(pendingKey));
         if (pendingFluid == Fluids.EMPTY) {
             pendingFluid = null;
         }

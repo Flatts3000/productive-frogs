@@ -5,8 +5,10 @@ import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFRegistries;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.block.FluidModel;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
@@ -16,13 +18,12 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.sprite.SpriteGetter;
 import net.minecraft.client.resources.model.sprite.SpriteId;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.neoforged.neoforge.client.fluid.FluidTintSource;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 /**
@@ -81,7 +82,6 @@ public class CrucibleRenderer implements BlockEntityRenderer<CrucibleBlockEntity
         if (fluidFrac <= 0.0F && solidsFrac <= 0.0F) {
             return;
         }
-        BlockPos pos = crucible.getBlockPos();
 
         if (solidsFrac > 0.0F) {
             state.hasSolids = true;
@@ -92,10 +92,17 @@ public class CrucibleRenderer implements BlockEntityRenderer<CrucibleBlockEntity
 
         if (fluidFrac > 0.0F) {
             Fluid fluid = fluidStack.getFluid();
-            IClientFluidTypeExtensions ext = IClientFluidTypeExtensions.of(fluid);
+            // 26.1: the fluid still sprite + tint moved off IClientFluidTypeExtensions
+            // onto the baked FluidModel - the sprite is the still material's sprite and
+            // the tint resolves through the model's FluidTintSource (null for fluids
+            // with no registered tint, in which case we render untinted/white).
+            FluidModel fluidModel = Minecraft.getInstance().getModelManager()
+                .getFluidStateModelSet().get(fluid.defaultFluidState());
+            FluidTintSource tint = fluidModel.fluidTintSource();
+            int rawTint = tint == null ? 0xFFFFFF : tint.colorAsStack(fluidStack);
             state.hasFluid = true;
-            state.fluidSprite = sprites.get(new SpriteId(TextureAtlas.LOCATION_BLOCKS, ext.getStillTexture(fluidStack)));
-            state.fluidColor = 0xFF000000 | (ext.getTintColor(fluid.defaultFluidState(), level, pos) & 0xFFFFFF);
+            state.fluidSprite = fluidModel.stillMaterial().sprite();
+            state.fluidColor = 0xFF000000 | (rawTint & 0xFFFFFF);
             state.fluidY = Mth.lerp(fluidFrac, FLOOR_Y, RIM_Y);
         }
     }

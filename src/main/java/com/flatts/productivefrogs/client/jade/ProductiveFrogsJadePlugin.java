@@ -295,13 +295,13 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             } else if (be instanceof com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity) {
                 // Formed-state + milk buffer, read from authoritative server data.
                 boolean formed;
-                if (data != null && data.getBoolean("C_present")) {
-                    formed = data.getBoolean("C_formed");
+                if (data != null && data.getBooleanOr("C_present", false)) {
+                    formed = data.getBooleanOr("C_formed", false);
                     tooltip.add(Component.translatable(formed
                         ? "productivefrogs.jade.terrarium_formed" : "productivefrogs.jade.terrarium_unformed"));
                     if (data.contains("C_variant")) {
                         tooltip.add(Component.translatable("productivefrogs.jade.controller_buffer",
-                            data.getInt("C_charges"), data.getInt("C_depth")));
+                            data.getIntOr("C_charges", 0), data.getIntOr("C_depth", 0)));
                     }
                 } else {
                     BlockState state = accessor.getBlockState();
@@ -315,7 +315,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 // from server data (re-fetched each Jade refresh) so the count never
                 // sticks on a stale value.
                 if (data != null && data.contains("S_variant")) {
-                    Identifier variant = Identifier.tryParse(data.getString("S_variant"));
+                    Identifier variant = Identifier.tryParse(data.getStringOr("S_variant", ""));
                     if (variant != null) {
                         // translatableWithFallback so a pack/datapack-added variant
                         // (no shipped lang key) reads as a title-cased name instead
@@ -326,34 +326,34 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                                 "block.productivefrogs." + variant.getPath() + "_slime_milk",
                                 com.flatts.productivefrogs.util.VariantNames.titleCase(variant) + " Slime Milk")));
                     }
-                    if (data.getBoolean("S_infinite")) {
+                    if (data.getBooleanOr("S_infinite", false)) {
                         tooltip.add(Component.translatable("productivefrogs.jade.spawns_unlimited"));
                     } else {
                         tooltip.add(Component.translatable("productivefrogs.jade.spawns_left",
-                            data.getInt("S_remaining"), data.getInt("S_cap")));
+                            data.getIntOr("S_remaining", 0), data.getIntOr("S_cap", 0)));
                     }
-                    if (data.getInt("S_speed") > 0) {
+                    if (data.getIntOr("S_speed", 0) > 0) {
                         tooltip.add(Component.translatable("productivefrogs.jade.catalyst_speed",
-                            data.getInt("S_speed"), data.getInt("S_speedMax")));
+                            data.getIntOr("S_speed", 0), data.getIntOr("S_speedMax", 0)));
                     }
-                    if (data.getInt("S_quantity") > 0) {
+                    if (data.getIntOr("S_quantity", 0) > 0) {
                         tooltip.add(Component.translatable("productivefrogs.jade.catalyst_quantity",
-                            data.getInt("S_quantity"), data.getInt("S_quantityMax")));
+                            data.getIntOr("S_quantity", 0), data.getIntOr("S_quantityMax", 0)));
                     }
                 }
             } else if (be instanceof com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity) {
-                if (data != null && data.getBoolean("I_present")) {
-                    if (data.getBoolean("I_waiting")) {
+                if (data != null && data.getBooleanOr("I_present", false)) {
+                    if (data.getBooleanOr("I_waiting", false)) {
                         tooltip.add(Component.translatable("productivefrogs.gui.incubator.waiting"));
                     } else {
                         tooltip.add(Component.translatable("productivefrogs.jade.incubator_growing",
-                            percent(data.getInt("I_total") - data.getInt("I_remaining"), data.getInt("I_total"))));
+                            percent(data.getIntOr("I_total", 0) - data.getIntOr("I_remaining", 0), data.getIntOr("I_total", 0))));
                     }
                 }
             } else if (be instanceof com.flatts.productivefrogs.content.block.entity.HatchBlockEntity) {
-                if (data != null && data.getBoolean("H_present")) {
+                if (data != null && data.getBooleanOr("H_present", false)) {
                     tooltip.add(Component.translatable("productivefrogs.jade.hatch_fill",
-                        data.getInt("H_fill"), com.flatts.productivefrogs.content.block.entity.HatchBlockEntity.SLOTS));
+                        data.getIntOr("H_fill", 0), com.flatts.productivefrogs.content.block.entity.HatchBlockEntity.SLOTS));
                 }
             }
         }
@@ -448,37 +448,37 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         @Override
         public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
             CompoundTag data = accessor.getServerData();
-            if (data == null || !data.getBoolean("MilkSource")) {
+            if (data == null || !data.getBooleanOr("MilkSource", false)) {
                 return;
             }
             // Mimic Milk source (#253): name it "<item> Slime Milk" (the generic
             // block name is "Mimic Slime Milk"); the spawns-left lines below apply.
             if (data.contains("MimicItem")) {
-                Identifier itemId = Identifier.tryParse(data.getString("MimicItem"));
+                Identifier itemId = Identifier.tryParse(data.getStringOr("MimicItem", ""));
                 net.minecraft.world.item.Item item = itemId == null ? null
                     : net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
                 Component itemName = item != null
                     ? Component.translatable(item.getDescriptionId())
-                    : Component.literal(data.getString("MimicItem"));
+                    : Component.literal(data.getStringOr("MimicItem", ""));
                 tooltip.replace(JadeIds.CORE_OBJECT_NAME,
                     Component.translatable("block.productivefrogs.mimic_slime_milk.item", itemName));
             }
             if (data.contains("AltarFaces")) {
-                tooltip.add(Component.translatable("productivefrogs.jade.altar", data.getInt("AltarFaces"), 6));
+                tooltip.add(Component.translatable("productivefrogs.jade.altar", data.getIntOr("AltarFaces", 0), 6));
             }
-            if (data.getBoolean("Unlimited")) {
+            if (data.getBooleanOr("Unlimited", false)) {
                 tooltip.add(Component.translatable("productivefrogs.jade.spawns_unlimited"));
             } else {
                 tooltip.add(Component.translatable("productivefrogs.jade.spawns_left",
-                    data.getInt("SpawnsRemaining"), data.getInt("SpawnsCap")));
+                    data.getIntOr("SpawnsRemaining", 0), data.getIntOr("SpawnsCap", 0)));
             }
             if (data.contains("Speed")) {
                 tooltip.add(Component.translatable("productivefrogs.jade.catalyst_speed",
-                    data.getInt("Speed"), data.getInt("SpeedMax")));
+                    data.getIntOr("Speed", 0), data.getIntOr("SpeedMax", 0)));
             }
             if (data.contains("Quantity")) {
                 tooltip.add(Component.translatable("productivefrogs.jade.catalyst_quantity",
-                    data.getInt("Quantity"), data.getInt("QuantityMax")));
+                    data.getIntOr("Quantity", 0), data.getIntOr("QuantityMax", 0)));
             }
         }
 
@@ -515,11 +515,11 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
 
     /** Client-side: render the pending stat lines from server data when present (egg + tadpole). */
     private static void appendPendingStats(ITooltip tooltip, CompoundTag data) {
-        if (data == null || !data.getBoolean("HasStats")) {
+        if (data == null || !data.getBooleanOr("HasStats", false)) {
             return;
         }
-        appendStatLines(tooltip, data.getInt("Appetite"), data.getInt("Bounty"),
-            data.getInt("Reach"), data.getInt("Cap"));
+        appendStatLines(tooltip, data.getIntOr("Appetite", 0), data.getIntOr("Bounty", 0),
+            data.getIntOr("Reach", 0), data.getIntOr("Cap", 0));
     }
 
     /** Ticks -> {@code m:ss} (20 ticks per second). Shared by the egg hatch + tadpole growth countdowns. */
@@ -590,7 +590,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             appendPendingStats(tooltip, data);
             if (data.contains("HatchTicks")) {
                 tooltip.add(Component.translatable(
-                    "productivefrogs.jade.hatch_countdown", formatTime(data.getInt("HatchTicks"))));
+                    "productivefrogs.jade.hatch_countdown", formatTime(data.getIntOr("HatchTicks", 0))));
             }
         }
 
@@ -638,7 +638,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 // Drop Jade's vanilla-rate growth line and render the corrected one.
                 tooltip.remove(JadeIds.MC_MOB_GROWTH);
                 tooltip.add(Component.translatable(
-                    "productivefrogs.jade.growing_time", formatTime(data.getInt("GrowingTicks"))));
+                    "productivefrogs.jade.growing_time", formatTime(data.getIntOr("GrowingTicks", 0))));
             }
         }
 

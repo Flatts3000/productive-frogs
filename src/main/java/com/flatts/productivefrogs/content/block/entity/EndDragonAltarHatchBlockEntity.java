@@ -21,6 +21,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
@@ -185,7 +186,7 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
      * the world (no portal / boss bar / gateway).
      */
     private static void rollDragonLoot(ServerLevel server, BlockPos pos, EndDragonAltarHatchBlockEntity be) {
-        EnderDragon phantom = EntityType.ENDER_DRAGON.create(server);
+        EnderDragon phantom = EntityType.ENDER_DRAGON.create(server, EntitySpawnReason.MOB_SUMMONED);
         if (phantom == null) {
             return; // never added to the world; only the loot context needs it
         }
@@ -232,7 +233,7 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
         double cy = plinth.getY();
         double cz = plinth.getZ() + 0.5;
         if (frogs.isEmpty()) {
-            DragonsbaneFrog frog = DragonsbaneFrog.type().create(server);
+            DragonsbaneFrog frog = DragonsbaneFrog.type().create(server, EntitySpawnReason.MOB_SUMMONED);
             if (frog != null) {
                 frog.snapTo(cx, cy, cz, 180.0F, 0.0F);
                 frog.setYBodyRot(180.0F);

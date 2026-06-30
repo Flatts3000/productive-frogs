@@ -41,7 +41,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
 public class CrucibleMeltRecipe implements Recipe<SingleRecipeInput> {
 
     public static final MapCodec<CrucibleMeltRecipe> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-        Ingredient.CODEC_NONEMPTY.fieldOf("ingredient").forGetter(CrucibleMeltRecipe::ingredient),
+        Ingredient.CODEC.fieldOf("ingredient").forGetter(CrucibleMeltRecipe::ingredient),
         FluidStack.CODEC.fieldOf("result").forGetter(CrucibleMeltRecipe::result)
     ).apply(instance, CrucibleMeltRecipe::new));
 

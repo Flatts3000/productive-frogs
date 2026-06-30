@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.content.block;
 
 import com.flatts.productivefrogs.content.block.entity.EndCrystalReceptacleBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
@@ -82,14 +83,17 @@ public class EndCrystalReceptacleBlock extends Block implements EntityBlock {
         return InteractionResult.SUCCESS;
     }
 
+    // NOTE (26.1 port): the BlockEntity is removed before affectNeighborsAfterRemoval runs, so the
+    // contents drop below can no longer read the BE here. The drop must move to
+    // EndCrystalReceptacleBlockEntity#preRemoveSideEffects (BlockEntity-owned). Kept as a
+    // (currently no-op) guard so the intent stays visible until that relocation lands.
     @Override
-    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof EndCrystalReceptacleBlockEntity be) {
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
+        if (level.getBlockEntity(pos) instanceof EndCrystalReceptacleBlockEntity be) {
             ItemStack held = be.contents();
             if (!held.isEmpty()) {
                 Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, held);
             }
         }
-        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 }

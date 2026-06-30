@@ -22,6 +22,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
@@ -183,7 +184,7 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
      * Nether Star is stripped, because the star is paid out as the Nether Star Froglight.
      */
     private static void rollWitherLoot(ServerLevel server, BlockPos pos, WitherAltarHatchBlockEntity be) {
-        WitherBoss phantom = EntityType.WITHER.create(server);
+        WitherBoss phantom = EntityType.WITHER.create(server, EntitySpawnReason.MOB_SUMMONED);
         if (phantom == null) {
             return; // never added to the world; only the loot context needs it
         }
@@ -193,7 +194,7 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
             .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
             .withParameter(LootContextParams.DAMAGE_SOURCE, server.damageSources().genericKill())
             .create(LootContextParamSets.ENTITY);
-        LootTable table = server.getServer().reloadableRegistries().getLootTable(EntityType.WITHER.getDefaultLootTable());
+        LootTable table = server.getServer().reloadableRegistries().getLootTable(EntityType.WITHER.getDefaultLootTable().orElseThrow());
         table.getRandomItems(params, server.getRandom().nextLong(), stack -> {
             if (!stack.is(Items.NETHER_STAR)) { // the star only ever appears as the Froglight
                 spill(server, pos, be.deposit(stack));
@@ -244,7 +245,7 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
         double cy = perch.getY();
         double cz = perch.getZ() + 0.5;
         if (frogs.isEmpty()) {
-            WitherbaneFrog frog = WitherbaneFrog.type().create(server);
+            WitherbaneFrog frog = WitherbaneFrog.type().create(server, EntitySpawnReason.MOB_SUMMONED);
             if (frog != null) {
                 frog.snapTo(cx, cy, cz, yaw, 0.0F);
                 frog.setYBodyRot(yaw);

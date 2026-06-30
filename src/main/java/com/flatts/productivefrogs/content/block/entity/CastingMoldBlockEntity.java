@@ -260,13 +260,16 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
      */
     @Nullable
     private MoldCastingRecipe recipeForType(FluidStack stack) {
-        RecipeManager manager = level.getRecipeManager();
+        RecipeManager manager = level.recipeAccess() instanceof RecipeManager rm ? rm : null;
+        if (manager == null) {
+            return null;
+        }
         if (manager == cachedRecipeManager && cachedRecipe != null
                 && cachedRecipe.fluid().ingredient().test(stack)) {
             return cachedRecipe;
         }
         cachedRecipeManager = manager;
-        cachedRecipe = manager.getAllRecipesFor(PFRecipeTypes.MOLD_CASTING.get()).stream()
+        cachedRecipe = manager.recipeMap().byType(PFRecipeTypes.MOLD_CASTING.get()).stream()
             .map(RecipeHolder::value)
             .filter(recipe -> recipe.fluid().ingredient().test(stack))
             .findFirst()

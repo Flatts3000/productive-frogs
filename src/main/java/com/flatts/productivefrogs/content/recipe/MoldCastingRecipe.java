@@ -40,7 +40,7 @@ import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 public class MoldCastingRecipe implements Recipe<SingleRecipeInput> {
 
     public static final MapCodec<MoldCastingRecipe> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-        SizedFluidIngredient.FLAT_CODEC.fieldOf("fluid").forGetter(MoldCastingRecipe::fluid),
+        SizedFluidIngredient.CODEC.fieldOf("fluid").forGetter(MoldCastingRecipe::fluid),
         ItemStack.CODEC.fieldOf("result").forGetter(MoldCastingRecipe::result)
     ).apply(instance, MoldCastingRecipe::new));
 

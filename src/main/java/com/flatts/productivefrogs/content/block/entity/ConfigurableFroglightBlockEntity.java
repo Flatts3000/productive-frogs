@@ -6,6 +6,7 @@ import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -17,8 +18,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-// Note: BlockEntity.DataComponentInput is protected so cannot be imported;
-// the applyImplicitComponents override uses it via parent-class scoping.
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -186,9 +185,9 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
         ColorParticleOption particle = ColorParticleOption.create(
             ParticleTypes.ENTITY_EFFECT, 0xFF000000 | e.effect().value().getColor());
         // One gentle wisp per burst, drifting up slowly.
-        double x = pos.getX() + 0.5 + (level.random.nextDouble() - 0.5) * 1.0;
-        double y = pos.getY() + 0.9 + level.random.nextDouble() * 0.3;
-        double z = pos.getZ() + 0.5 + (level.random.nextDouble() - 0.5) * 1.0;
+        double x = pos.getX() + 0.5 + (level.getRandom().nextDouble() - 0.5) * 1.0;
+        double y = pos.getY() + 0.9 + level.getRandom().nextDouble() * 0.3;
+        double z = pos.getZ() + 0.5 + (level.getRandom().nextDouble() - 0.5) * 1.0;
         level.addParticle(particle, x, y, z, 0.0, 0.01, 0.0);
     }
 
@@ -251,7 +250,7 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * clone to win.
      */
     @Override
-    protected void applyImplicitComponents(DataComponentInput components) {
+    protected void applyImplicitComponents(DataComponentGetter components) {
         super.applyImplicitComponents(components);
         this.variantId = components.get(PFDataComponents.SLIME_VARIANT.get());
         this.synthesizedItem = components.get(PFDataComponents.SYNTHESIZED_ITEM.get());

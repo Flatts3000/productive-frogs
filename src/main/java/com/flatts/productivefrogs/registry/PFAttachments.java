@@ -27,7 +27,7 @@ public final class PFAttachments {
     public static final Supplier<AttachmentType<Integer>> PRINCESS_CONVERTING =
         ATTACHMENT_TYPES.register(
             "princess_converting_ticks",
-            () -> AttachmentType.builder(() -> 0).serialize(Codec.INT).build());
+            () -> AttachmentType.builder(() -> 0).serialize(Codec.INT.fieldOf("value")).build());
 
     private PFAttachments() {
         // registry holder

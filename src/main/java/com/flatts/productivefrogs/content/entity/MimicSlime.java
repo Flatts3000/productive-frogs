@@ -8,7 +8,6 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -205,8 +204,8 @@ public class MimicSlime extends Slime implements Bucketable {
     @SuppressWarnings("deprecation")
     public void loadFromBucketTag(CompoundTag tag) {
         Bucketable.loadDefaultDataFromBucketTag(this, tag);
-        if (tag.contains("SynthesizedItem", Tag.TAG_STRING)) {
-            setSynthesizedItem(Identifier.tryParse(tag.getString("SynthesizedItem")));
+        if (tag.contains("SynthesizedItem")) {
+            setSynthesizedItem(Identifier.tryParse(tag.getStringOr("SynthesizedItem", "")));
         }
         setSize(1, true);
         setFromBucket(true);

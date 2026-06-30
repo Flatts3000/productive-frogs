@@ -15,6 +15,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.InsideBlockEffectApplier;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -82,8 +84,9 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * a no-op). An already-maxed upgrade is left unconsumed for the player.
      */
     @Override
-    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
-        super.entityInside(state, level, pos, entity);
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity,
+                                InsideBlockEffectApplier effectApplier, boolean isPrecise) {
+        super.entityInside(state, level, pos, entity, effectApplier, isPrecise);
         if (level.isClientSide() || !PFConfig.milkCatalystsEnabled()) {
             return;
         }
@@ -127,7 +130,7 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
 
     /** Reject foreign fluids so water/lava can't wash the source away (mirrors SlimeMilkSourceBlock). */
     @Override
-    public boolean canPlaceLiquid(@Nullable Player player, BlockGetter level, BlockPos pos,
+    public boolean canPlaceLiquid(@Nullable LivingEntity user, BlockGetter level, BlockPos pos,
                                   BlockState state, Fluid fluid) {
         return fluid.getFluidType() == this.fluid.getFluidType();
     }
@@ -228,7 +231,7 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
     }
 
     @Override
-    public ItemStack pickupBlock(@Nullable Player player, LevelAccessor level, BlockPos pos, BlockState state) {
+    public ItemStack pickupBlock(@Nullable LivingEntity player, LevelAccessor level, BlockPos pos, BlockState state) {
         // Read the item + the full budget/catalyst set BEFORE super removes the block,
         // and stamp them onto the filled bucket so a buffed source survives the
         // world -> bucket round-trip (mirrors SlimeMilkSourceBlock.pickupBlock). Without

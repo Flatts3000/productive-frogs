@@ -101,8 +101,8 @@ public class ConfigurableFroglightBlock extends RotatedPillarBlock implements En
      * (untinted, effectless) Froglight.
      */
     @Override
-    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
-        ItemStack stack = super.getCloneItemStack(level, pos, state);
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData) {
+        ItemStack stack = super.getCloneItemStack(level, pos, state, includeData);
         if (level.getBlockEntity(pos) instanceof ConfigurableFroglightBlockEntity froglight) {
             if (froglight.getVariantId() != null) {
                 stack.set(PFDataComponents.SLIME_VARIANT.get(), froglight.getVariantId());

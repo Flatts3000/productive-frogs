@@ -11,11 +11,14 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -26,6 +29,7 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.FuelValues;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,10 +95,10 @@ public final class ConfigurableFroglightItem extends BlockItem {
      * {@code ItemStack#getBurnTime} throws on a negative burn time.
      */
     @Override
-    public int getBurnTime(ItemStack stack, @Nullable RecipeType<?> recipeType) {
+    public int getBurnTime(ItemStack stack, @Nullable RecipeType<?> recipeType, FuelValues fuelValues) {
         Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
         Integer ticks = variantId == null ? null : FUEL_BURN_TICKS.get(variantId);
-        return ticks != null ? ticks : super.getBurnTime(stack, recipeType);
+        return ticks != null ? ticks : super.getBurnTime(stack, recipeType, fuelValues);
     }
 
     /**
@@ -198,8 +202,8 @@ public final class ConfigurableFroglightItem extends BlockItem {
      * nothing (the decided main/offhand-only rule). Self-buff only; no radius.
      */
     @Override
-    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
-        if (level.isClientSide() || !(entity instanceof LivingEntity living)) {
+    public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, @Nullable EquipmentSlot slot) {
+        if (!(entity instanceof LivingEntity living)) {
             return;
         }
         StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());

@@ -12,8 +12,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.npc.Villager;
-import net.minecraft.world.entity.npc.VillagerType;
+import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.villager.VillagerType;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -78,7 +78,7 @@ public final class PrincessKissHandler {
         // CONVERSION spawns don't pick a biome villager type, so it would default
         // to PLAINS everywhere; set it from the conversion biome explicitly.
         villager.setVillagerData(villager.getVillagerData()
-            .setType(VillagerType.byBiome(level.getBiome(frog.blockPosition()))));
+            .withType(level.registryAccess(), VillagerType.byBiome(level.getBiome(frog.blockPosition()))));
         if (frog.hasCustomName()) {
             villager.setCustomName(frog.getCustomName());
         }

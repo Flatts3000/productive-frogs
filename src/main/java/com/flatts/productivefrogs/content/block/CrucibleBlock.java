@@ -123,7 +123,8 @@ public class CrucibleBlock extends Block implements EntityBlock {
         // Anything fluid-capable (buckets) -> direct tank interaction. The
         // handler is extract-only, so this fills empty buckets and no-ops on
         // full ones.
-        if (stack.getCapability(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.ITEM) != null) {
+        if (stack.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.ITEM,
+                net.neoforged.neoforge.transfer.access.ItemAccess.forStack(stack)) != null) {
             return FluidUtil.interactWithFluidHandler(player, hand, crucible.fluidHandler())
                 ? InteractionResult.SUCCESS
                 : InteractionResult.TRY_WITH_EMPTY_HAND;

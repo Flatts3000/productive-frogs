@@ -6,7 +6,7 @@ import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -36,8 +36,8 @@ public final class MimicMilkBucketItem extends BucketItem {
     }
 
     @Override
-    public void checkExtraContent(@Nullable Player player, Level level, ItemStack stack, BlockPos pos) {
-        super.checkExtraContent(player, level, stack, pos);
+    public void checkExtraContent(@Nullable LivingEntity user, Level level, ItemStack stack, BlockPos pos) {
+        super.checkExtraContent(user, level, stack, pos);
         Identifier itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
         if (itemId != null && level.getBlockEntity(pos) instanceof MimicMilkSourceBlockEntity be) {
             be.setSynthesizedItem(itemId); // seeds the default budget on first placement

@@ -465,7 +465,7 @@ public final class PFBlocks {
         return BlockBehaviour.Properties.of()
             .mapColor(mapColorFor(cat))
             .replaceable()
-            .noCollission()
+            .noCollision()
             .instabreak()
             .sound(SoundType.FROGSPAWN)
             .noOcclusion()

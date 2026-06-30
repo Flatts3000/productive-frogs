@@ -4,7 +4,6 @@ import com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockE
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -62,11 +61,7 @@ public class EndDragonAltarHatchBlock extends Block implements EntityBlock {
         return InteractionResult.SUCCESS;
     }
 
-    @Override
-    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof EndDragonAltarHatchBlockEntity be) {
-            Containers.dropContents(level, pos, be);
-        }
-        super.onRemove(state, level, pos, newState, movedByPiston);
-    }
+    // 26.1 port: contents drop on break is now handled automatically by
+    // BaseContainerBlockEntity#preRemoveSideEffects (the BE implements Container), which runs
+    // before the BE is removed - so the old onRemove override is gone.
 }

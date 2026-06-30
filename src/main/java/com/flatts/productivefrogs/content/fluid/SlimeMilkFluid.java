@@ -3,10 +3,9 @@ package com.flatts.productivefrogs.content.fluid;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
@@ -19,9 +18,10 @@ import net.neoforged.neoforge.fluids.BaseFlowingFluid;
  * production pools milk is meant to fill (docs/known_issues.md).
  *
  * <p>Both the {@link Source} and {@link Flowing} forms override
- * {@link net.minecraft.world.level.material.FlowingFluid#canSpreadTo} - the
- * single choke point vanilla checks before {@code spreadTo} replaces (and so
- * destroys) the block already at a target position - and refuse to spread into:
+ * {@link net.minecraft.world.level.material.FlowingFluid#spreadTo} - the single
+ * choke point that replaces (and so destroys) the block already at a target
+ * position, the path both downward and sideways spread funnel through - and
+ * refuse to spread into:
  * <ul>
  *   <li><b>frogspawn / Primed Frog Eggs</b> - so a running milk pool can't wash
  *       away spawn before it hatches;</li>
@@ -67,12 +67,11 @@ public final class SlimeMilkFluid {
         }
 
         @Override
-        protected boolean canSpreadTo(BlockGetter level, BlockPos pos, BlockState state, Direction direction,
-                                      BlockPos spreadPos, BlockState spreadState, FluidState fluidState, Fluid fluid) {
-            if (isProtected(spreadState, fluidState)) {
-                return false;
+        protected void spreadTo(LevelAccessor level, BlockPos pos, BlockState state, Direction direction, FluidState target) {
+            if (isProtected(state, state.getFluidState())) {
+                return;
             }
-            return super.canSpreadTo(level, pos, state, direction, spreadPos, spreadState, fluidState, fluid);
+            super.spreadTo(level, pos, state, direction, target);
         }
     }
 
@@ -83,12 +82,11 @@ public final class SlimeMilkFluid {
         }
 
         @Override
-        protected boolean canSpreadTo(BlockGetter level, BlockPos pos, BlockState state, Direction direction,
-                                      BlockPos spreadPos, BlockState spreadState, FluidState fluidState, Fluid fluid) {
-            if (isProtected(spreadState, fluidState)) {
-                return false;
+        protected void spreadTo(LevelAccessor level, BlockPos pos, BlockState state, Direction direction, FluidState target) {
+            if (isProtected(state, state.getFluidState())) {
+                return;
             }
-            return super.canSpreadTo(level, pos, state, direction, spreadPos, spreadState, fluidState, fluid);
+            super.spreadTo(level, pos, state, direction, target);
         }
     }
 }

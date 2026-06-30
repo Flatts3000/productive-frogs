@@ -33,6 +33,6 @@ public final class PFEntityTags {
      * pack has added to the {@link #FROGS} tag. Resource Tadpoles are not frogs.
      */
     public static boolean isFrog(Entity entity) {
-        return entity instanceof Frog || entity.getType().is(FROGS);
+        return entity instanceof Frog || entity.getType().builtInRegistryHolder().is(FROGS);
     }
 }

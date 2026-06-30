@@ -57,11 +57,11 @@ public final class ResourceTadpoleBucketItem extends MobBucketItem {
             return null;
         }
         CompoundTag tag = data.copyTag();
-        if (!tag.contains("Category", net.minecraft.nbt.Tag.TAG_STRING)) {
+        if (!tag.contains("Category")) {
             return null;
         }
-        String name = tag.getString("Category");
-        if (name == null || name.isEmpty()) {
+        String name = tag.getStringOr("Category", "");
+        if (name.isEmpty()) {
             return null;
         }
         try {
@@ -88,11 +88,11 @@ public final class ResourceTadpoleBucketItem extends MobBucketItem {
             return null;
         }
         CompoundTag tag = data.copyTag();
-        if (!tag.contains("Variant", net.minecraft.nbt.Tag.TAG_STRING)) {
+        if (!tag.contains("Variant")) {
             return null;
         }
-        String raw = tag.getString("Variant");
-        if (raw == null || raw.isEmpty()) {
+        String raw = tag.getStringOr("Variant", "");
+        if (raw.isEmpty()) {
             return null;
         }
         return Identifier.tryParse(raw);

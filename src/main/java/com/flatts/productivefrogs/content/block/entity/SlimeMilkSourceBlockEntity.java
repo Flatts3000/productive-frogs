@@ -8,6 +8,7 @@ import com.flatts.productivefrogs.registry.PFDataComponents;
 import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -251,7 +252,7 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void applyImplicitComponents(DataComponentInput components) {
+    protected void applyImplicitComponents(DataComponentGetter components) {
         super.applyImplicitComponents(components);
         this.variantId = components.get(PFDataComponents.SLIME_VARIANT.get());
         Integer remaining = components.get(PFDataComponents.SPAWNS_REMAINING.get());

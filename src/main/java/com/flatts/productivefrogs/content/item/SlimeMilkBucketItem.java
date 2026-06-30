@@ -9,7 +9,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -72,7 +72,7 @@ public final class SlimeMilkBucketItem extends BucketItem {
      * carries none of these components and keeps the seeded full default.
      */
     @Override
-    public void checkExtraContent(@Nullable Player player, Level level, ItemStack stack, BlockPos pos) {
+    public void checkExtraContent(@Nullable LivingEntity user, Level level, ItemStack stack, BlockPos pos) {
         if (!(level.getBlockEntity(pos) instanceof SlimeMilkSourceBlockEntity milkBe)) {
             return;
         }

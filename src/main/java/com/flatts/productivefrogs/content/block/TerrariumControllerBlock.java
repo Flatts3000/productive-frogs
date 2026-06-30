@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockE
 import com.flatts.productivefrogs.content.item.SlimeMilkBucketItem;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -25,7 +26,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
 public class TerrariumControllerBlock extends Block implements EntityBlock {
 
     /** Outward-pointing face (front to the player who placed it from outside). */
-    public static final DirectionProperty FACING = BlockStateProperties.FACING;
+    public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
 
     /** True while the structure validates - drives the glow (see PFBlocks lightLevel). */
     public static final BooleanProperty FORMED = BooleanProperty.create("formed");
@@ -143,13 +144,15 @@ public class TerrariumControllerBlock extends Block implements EntityBlock {
         return InteractionResult.SUCCESS;
     }
 
+    // NOTE (26.1 port): the BlockEntity is removed BEFORE affectNeighborsAfterRemoval runs,
+    // so the multiblock teardown below can no longer read the BE here. The teardown must move
+    // to TerrariumControllerBlockEntity#preRemoveSideEffects (BlockEntity-owned). Kept here as
+    // a (currently no-op) guard so the intent stays visible until that relocation lands.
     @Override
-    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel
-                && level.getBlockEntity(pos) instanceof TerrariumControllerBlockEntity be) {
-            be.onBroken(serverLevel, pos);
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
+        if (level.getBlockEntity(pos) instanceof TerrariumControllerBlockEntity be) {
+            be.onBroken(level, pos);
         }
-        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     @SuppressWarnings("unchecked")

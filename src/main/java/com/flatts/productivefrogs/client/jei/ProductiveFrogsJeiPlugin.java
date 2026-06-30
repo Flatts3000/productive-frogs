@@ -33,7 +33,12 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.crafting.RecipeMap;
 import net.minecraft.world.level.Level;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RecipesReceivedEvent;
 
 /**
  * JEI plugin for Productive Frogs. Surfaces three things:
@@ -212,10 +217,6 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             public Object getSubtypeData(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
                 return bucketSubtypeKey(stack);
             }
-            @Override
-            public String getLegacyStringSubtypeInfo(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
-                return bucketSubtypeKey(stack);
-            }
         };
         registration.registerSubtypeInterpreter(PFItems.SLIME_BUCKET.get(), bucketInterp);
         registration.registerSubtypeInterpreter(PFItems.RESOURCE_TADPOLE_BUCKET.get(), bucketInterp);
@@ -228,10 +229,6 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             public Object getSubtypeData(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
                 Identifier v = stack.get(PFDataComponents.SLIME_VARIANT.get());
                 return v == null ? "" : v.toString();
-            }
-            @Override
-            public String getLegacyStringSubtypeInfo(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
-                return (String) getSubtypeData(stack, ctx);
             }
         };
         registration.registerSubtypeInterpreter(PFItems.CONFIGURABLE_FROGLIGHT.get(), slimeVariantInterp);
@@ -246,10 +243,6 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             public Object getSubtypeData(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
                 Category c = stack.get(PFDataComponents.CONTAINED_CATEGORY.get());
                 return c == null ? "" : c.name();
-            }
-            @Override
-            public String getLegacyStringSubtypeInfo(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
-                return (String) getSubtypeData(stack, ctx);
             }
         });
     }
@@ -279,7 +272,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             return;
         }
         Registry<SlimeVariant> variants = level.registryAccess()
-            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+            .lookup(PFRegistries.SLIME_VARIANT).orElse(null);
         if (variants == null) {
             return;
         }
@@ -298,14 +291,18 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         // Melt + cast recipes ride their real recipe types, so datapack additions
         // (molten metals, nugget/block casts) surface with no code change. Gated by
         // the Crucible/Mold toggles (#196) so a disabled lane leaves no JEI category.
+        // 26.1: the client no longer holds a full RecipeManager - vanilla syncs
+        // only recipe-book displays. NeoForge re-syncs the full recipe content and
+        // fires RecipesReceivedEvent, which ClientRecipes caches into a RecipeMap.
+        RecipeMap recipeMap = ClientRecipes.recipeMap();
         if (crucibleEnabled()) {
             addCrucibleHeatEntries(reg, variants);
-            reg.addRecipes(CrucibleMeltCategory.TYPE, level.getRecipeManager()
-                .getAllRecipesFor(com.flatts.productivefrogs.registry.PFRecipeTypes.CRUCIBLE_MELTING.get()));
+            reg.addRecipes(CrucibleMeltCategory.TYPE, List.copyOf(recipeMap.byType(
+                com.flatts.productivefrogs.registry.PFRecipeTypes.CRUCIBLE_MELTING.get())));
         }
         if (castingMoldEnabled()) {
-            reg.addRecipes(MoldCastingCategory.TYPE, level.getRecipeManager()
-                .getAllRecipesFor(com.flatts.productivefrogs.registry.PFRecipeTypes.MOLD_CASTING.get()));
+            reg.addRecipes(MoldCastingCategory.TYPE, List.copyOf(recipeMap.byType(
+                com.flatts.productivefrogs.registry.PFRecipeTypes.MOLD_CASTING.get())));
         }
     }
 
@@ -324,7 +321,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         java.util.Set<net.minecraft.world.item.Item> seen = new java.util.HashSet<>();
         for (var e : blockRegistry.getDataMap(
                 com.flatts.productivefrogs.registry.PFDataMaps.CRUCIBLE_HEAT).entrySet()) {
-            net.minecraft.world.level.block.Block block = blockRegistry.get(e.getKey());
+            net.minecraft.world.level.block.Block block = blockRegistry.getValue(e.getKey());
             if (block == null) {
                 continue;
             }
@@ -340,7 +337,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         // variant, not item, so they bypass the `seen` set.
         for (var e : variants.getDataMap(
                 com.flatts.productivefrogs.registry.PFDataMaps.FROGLIGHT_HEAT).entrySet()) {
-            SlimeVariant sv = variants.get(e.getKey());
+            SlimeVariant sv = variants.getValue(e.getKey());
             // Skip a config-disabled variant (#203); also skip a null lookup
             // defensively - a froglight-heat data-map key should always back a
             // registry entry, but an orphan key shouldn't mint a variant-less entry.
@@ -477,7 +474,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
     /** Every item in a species' {@code spawnery_primer/<species>} tag, as stacks. */
     private static List<ItemStack> primerStacks(Category cat) {
         TagKey<Item> tag = PFItemTags.spawneryPrimer(cat);
-        return BuiltInRegistries.ITEM.getTag(tag)
+        return BuiltInRegistries.ITEM.get(tag)
             .map(set -> set.stream().map(h -> new ItemStack(h.value())).toList())
             .orElse(List.of());
     }
@@ -678,6 +675,33 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         if (PFConfig.catalystInfiniteEnabled()) {
             reg.addIngredientInfo(new ItemStack(PFItems.INFINITE_CATALYST.get()),
                 VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.infinite_catalyst.info"));
+        }
+    }
+
+    /**
+     * Client-side cache of the synced recipe content (26.1). Vanilla no longer
+     * ships the full recipe list to the client - only recipe-book displays - so
+     * {@code level.getRecipeManager()} is gone client-side. NeoForge re-syncs the
+     * full recipe content and fires {@link RecipesReceivedEvent}; we cache its
+     * {@link RecipeMap} so {@link #registerRecipes} can enumerate PF's custom
+     * Crucible-melt and Mold-cast recipe types. The payload arrives during login,
+     * before world join, so the map is populated by the time JEI registers.
+     */
+    @EventBusSubscriber(modid = ProductiveFrogs.MOD_ID, value = Dist.CLIENT)
+    public static final class ClientRecipes {
+
+        private static volatile RecipeMap recipeMap = RecipeMap.EMPTY;
+
+        private ClientRecipes() {
+        }
+
+        static RecipeMap recipeMap() {
+            return recipeMap;
+        }
+
+        @SubscribeEvent
+        static void onRecipesReceived(RecipesReceivedEvent event) {
+            recipeMap = event.getRecipeMap();
         }
     }
 }

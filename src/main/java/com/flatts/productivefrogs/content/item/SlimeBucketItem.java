@@ -10,8 +10,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DispensibleContainerItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -87,9 +87,9 @@ public final class SlimeBucketItem extends MobBucketItem {
      * behaviour) still flow through this override via vanilla's delegation.
      */
     @Override
-    public boolean emptyContents(@Nullable Player player, Level level, BlockPos pos,
+    public boolean emptyContents(@Nullable LivingEntity user, Level level, BlockPos pos,
                                  @Nullable BlockHitResult result, @Nullable ItemStack container) {
-        this.playEmptySound(player, level, pos);
+        this.playEmptySound(user, level, pos);
         return true;
     }
 
