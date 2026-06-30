@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## v1.24.4 - 2026-06-30 - Growing Pains
+
+### Fixed
+
+- **Tadpoles no longer suffocate when they grow up in a tight spot.** A tadpole that matured right against a block - under a low ceiling, in a one-block pool, wedged in a corner - could turn into a frog stuck inside the wall and immediately take suffocation damage. Frogs now appear in the nearest spot they actually fit, and if there is genuinely no room yet the tadpole simply waits and grows up the moment space opens, instead of dying. (#276)
+
+### Changed
+
+- **Tadpoles can be fed Sweetslime to grow faster, not just slime balls.** Sweetslime is the treat your frogs already love, so it now speeds a tadpole's growth the same way a slime ball does. Handy when you are raising a tadpole and have Sweetslime on hand. (#277)
+
 ## v1.24.3 - 2026-06-30 - Muddy Waters
 
 ### Fixed
