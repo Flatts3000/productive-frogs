@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## v1.24.3 - 2026-06-30 - Muddy Waters
+
+### Fixed
+
+- **Frogs lay their eggs reliably from a mud bank again.** A pregnant frog standing on mud - or a slab, or snow layers - beside its pool would walk to the water and then never lay, because those soft, sink-in blocks shifted where the game looked for the water surface. Frogs now lay on contact with the water itself, so a mud-floored breeding pen (the setup the modpack recommends) works as intended, deep pools and pool edges are handled, and a frog will even lay while sitting in the water. (#270)
+
 ## v1.24.2 - 2026-06-29 - Name Tags
 
 ### Changed
