@@ -12,7 +12,7 @@ import com.flatts.productivefrogs.util.PFDebug;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.Dynamic;
+import java.util.List;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -26,14 +26,17 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.ActivityData;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.behavior.AnimalMakeLove;
+import net.minecraft.world.entity.ai.behavior.BehaviorControl;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.sensing.Sensor;
 import net.minecraft.world.entity.ai.sensing.SensorType;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.frog.Frog;
+import net.minecraft.world.entity.animal.frog.FrogAi;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.item.ItemStack;
@@ -520,111 +523,100 @@ public class ResourceFrog extends Frog {
         hasPendingOffspring = false;
     }
 
-    /**
-     * Override the brain setup to add (1) a same-species {@code AnimalMakeLove}
-     * keyed to the Resource Frog EntityType - vanilla's is keyed to
-     * {@code EntityType.FROG} and would never pair two Resource Frogs - and
-     * (2) a category-aware lay-spawn behavior at priority 2 of the LAY_SPAWN
-     * activity (vanilla's lay behavior runs at priority 3). When a Resource Frog
-     * completes love-mode, our lay behavior fires first, places a Primed Frog Egg
-     * block of the matching category (stamping the captured offspring stats),
-     * and erases IS_PREGNANT - preventing vanilla's behavior from placing a
-     * second (vanilla) frogspawn.
-     */
+    // Lazily-built brain provider (26.1). Vanilla Frog now declares a static
+    // Brain.Provider with an inline sensor list + a Brain.ActivitySupplier
+    // (FrogAi.getActivities()); the old overridable brainProvider() / mutate-
+    // after-super makeBrain(Dynamic) hooks are gone. We build our own provider
+    // with the two swapped sensors + the extra HAS_HUNTING_COOLDOWN memory, and
+    // an activity supplier that augments vanilla's activity list. Lazy because
+    // the sensor list resolves PFSensors DeferredHolders via get(): deferring to
+    // the first makeBrain (entity construction) keeps it well after registration
+    // rather than at class-init.
+    @Nullable
+    private static Brain.Provider<Frog> resourceBrainProvider;
+
+    private static Brain.Provider<Frog> resourceBrainProvider() {
+        Brain.Provider<Frog> provider = resourceBrainProvider;
+        if (provider == null) {
+            // Vanilla's frog sensor list with two swaps: FROG_ATTACKABLES -> our
+            // category-filtering prey sensor (Q8 prey eligibility), FROG_TEMPTATIONS
+            // -> our Sweetslime temptation sensor (frogs follow the item they breed
+            // on, not loose slime balls).
+            List<SensorType<? extends Sensor<? super Frog>>> sensors = List.of(
+                SensorType.NEAREST_LIVING_ENTITIES,
+                SensorType.HURT_BY,
+                PFSensors.RESOURCE_FROG_ATTACKABLES.get(),
+                PFSensors.RESOURCE_FROG_TEMPTATIONS.get(),
+                SensorType.IS_IN_WATER
+            );
+            // HAS_HUNTING_COOLDOWN is not required by any vanilla frog behavior, so
+            // the auto-memory-registration the 2-arg provider relies on never adds
+            // it. Inject it explicitly (the deprecated 3-arg provider form) so it
+            // becomes our Appetite-scaled eat cooldown (set in startEatCooldown);
+            // ResourceFrogAttackablesSensor refuses to surface prey while present.
+            provider = Brain.<Frog>provider(
+                List.of(MemoryModuleType.HAS_HUNTING_COOLDOWN),
+                sensors,
+                body -> resourceActivities()
+            );
+            resourceBrainProvider = provider;
+        }
+        return provider;
+    }
+
     @Override
-    @SuppressWarnings("unchecked")
-    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
-        Brain<Frog> brain = (Brain<Frog>) super.makeBrain(dynamic);
-        // Pair Resource Frogs with each other. Vanilla FrogAi installs
-        // AnimalMakeLove(EntityType.FROG) in IDLE/SWIM at priority 0; that
-        // partnerType never matches a ResourceFrog, so without this a pair of
-        // Resource Frogs in love would never produce a child. Added at the same
-        // priority in both activities so it runs alongside the vanilla pacing.
-        AnimalMakeLove resourceMakeLove =
-            new AnimalMakeLove((EntityType<? extends Animal>) (EntityType<?>) PFEntities.RESOURCE_FROG.get());
-        // Re-add IDLE/SWIM via addActivityWithConditions, NOT addActivity. In
-        // 1.21.1 Brain#addActivity(activity, list) routes to
-        // addActivityAndRemoveMemoriesWhenStopped with an EMPTY condition set,
-        // and that does activityRequirements.put(activity, conditions) - a PUT
-        // that would WIPE the land/water gating FrogAi already installed (IDLE
-        // requires IS_IN_WATER absent, SWIM requires it present). With SWIM's
-        // requirements wiped to "always met" and FrogAi.updateActivity checking
-        // SWIM before IDLE, a frog on land gets stuck in SWIM. Re-supplying
-        // vanilla's exact requirement sets adds resourceMakeLove while keeping
-        // the gating intact (the behavior list is merged, not replaced).
-        brain.addActivityWithConditions(
-            Activity.IDLE,
-            ImmutableList.of(Pair.of(0, resourceMakeLove)),
-            ImmutableSet.of(
-                Pair.of(MemoryModuleType.LONG_JUMP_MID_JUMP, MemoryStatus.VALUE_ABSENT),
-                Pair.of(MemoryModuleType.IS_IN_WATER, MemoryStatus.VALUE_ABSENT)
-            )
-        );
-        brain.addActivityWithConditions(
-            Activity.SWIM,
-            ImmutableList.of(Pair.of(0, resourceMakeLove)),
-            ImmutableSet.of(
-                Pair.of(MemoryModuleType.LONG_JUMP_MID_JUMP, MemoryStatus.VALUE_ABSENT),
-                Pair.of(MemoryModuleType.IS_IN_WATER, MemoryStatus.VALUE_PRESENT)
-            )
-        );
-        // LAY_SPAWN: include LONG_JUMP_MID_JUMP-absent too (vanilla's full set),
-        // so a pregnant frog doesn't try to lay mid-jump.
-        brain.addActivityWithConditions(
-            Activity.LAY_SPAWN,
-            ImmutableList.of(Pair.of(2, LayCategoryFrogspawn.create())),
-            ImmutableSet.of(
-                Pair.of(MemoryModuleType.LONG_JUMP_MID_JUMP, MemoryStatus.VALUE_ABSENT),
-                Pair.of(MemoryModuleType.IS_PREGNANT, MemoryStatus.VALUE_PRESENT)
-            )
-        );
-        return brain;
+    protected Brain<Frog> makeBrain(Brain.Packed packed) {
+        return resourceBrainProvider().makeBrain(this, packed);
     }
 
     /**
-     * Override the brain provider to make three targeted changes to vanilla
-     * {@link Frog}'s sensor and memory lists, leaving everything else intact:
+     * Augment vanilla's frog activity list with our two additions, preserving
+     * every other activity (and every vanilla condition / erase-set) intact:
      * <ul>
-     *   <li>swap {@code FROG_ATTACKABLES} for our category-filtering prey sensor;</li>
-     *   <li>swap {@code FROG_TEMPTATIONS} (slime-ball / {@code FROG_FOOD}) for the
-     *       Sweetslime temptation sensor, so frogs are lured by the item they
-     *       actually breed on;</li>
-     *   <li>register {@code HAS_HUNTING_COOLDOWN} (absent from vanilla
-     *       {@code Frog.MEMORY_TYPES}) so it becomes our Appetite eat-cooldown.</li>
+     *   <li>IDLE / SWIM gain a same-species {@code AnimalMakeLove} keyed to the
+     *       Resource Frog EntityType - vanilla's is keyed to {@code EntityType.FROG}
+     *       and would never pair two Resource Frogs - at priority 0, alongside the
+     *       vanilla pacing.</li>
+     *   <li>LAY_SPAWN gains our category-aware lay behavior at priority 2 (vanilla's
+     *       runs at priority 3). When love-mode completes our behavior fires first,
+     *       places a Primed Frog Egg block of the matching category (stamping the
+     *       captured offspring stats), and erases IS_PREGNANT - preventing vanilla's
+     *       behavior from placing a second (vanilla) frogspawn.</li>
      * </ul>
-     * The first two keep the Q8 "vanilla AI except for prey eligibility + the
-     * breeding-item swap" constraint.
-     *
-     * <p>Both source lists are made directly readable via the access transformer
-     * (see {@code META-INF/accesstransformer.cfg}). Starting from vanilla's lists
-     * means a new sensor Mojang adds to the frog brain is inherited automatically.
+     * Rebuilding the matching {@link ActivityData} (rather than appending a second
+     * ActivityData for the same activity) keeps vanilla's gating conditions: a bare
+     * extra IDLE/SWIM/LAY_SPAWN entry would overwrite the land/water requirements
+     * and strand a frog in the wrong activity. {@code FrogAi.getActivities()} is
+     * exposed via the access transformer.
      */
-    @Override
-    public Brain.Provider<Frog> brainProvider() {
-        ImmutableList<SensorType<? extends Sensor<? super Frog>>> sensors = SENSOR_TYPES.stream()
-            .<SensorType<? extends Sensor<? super Frog>>>map(t -> {
-                if (t == SensorType.FROG_ATTACKABLES) {
-                    return PFSensors.RESOURCE_FROG_ATTACKABLES.get();
-                }
-                // Swap the slime-ball temptation for our Sweetslime one so frogs
-                // follow the item they actually breed on, not loose slime balls.
-                if (t == SensorType.FROG_TEMPTATIONS) {
-                    return PFSensors.RESOURCE_FROG_TEMPTATIONS.get();
-                }
-                return t;
-            })
-            .collect(ImmutableList.toImmutableList());
-        // Register HAS_HUNTING_COOLDOWN, which vanilla Frog.MEMORY_TYPES omits.
-        // FrogAttackablesSensor already refuses to surface prey while this
-        // memory is present, but a Frog brain never registers it, so
-        // setMemoryWithExpiry on it is a no-op on a vanilla frog. Registering
-        // it here turns it into our Appetite-scaled eat cooldown (set in
-        // startEatCooldown after every eat). See docs/frog_breeding.md.
-        ImmutableList<MemoryModuleType<?>> memories = ImmutableList.<MemoryModuleType<?>>builder()
-            .addAll(MEMORY_TYPES)
-            .add(MemoryModuleType.HAS_HUNTING_COOLDOWN)
-            .build();
-        return Brain.provider(memories, sensors);
+    @SuppressWarnings("unchecked")
+    private static List<ActivityData<Frog>> resourceActivities() {
+        AnimalMakeLove resourceMakeLove =
+            new AnimalMakeLove((EntityType<? extends Animal>) (EntityType<?>) PFEntities.RESOURCE_FROG.get());
+        List<ActivityData<Frog>> out = new java.util.ArrayList<>();
+        for (ActivityData<Frog> data : FrogAi.getActivities()) {
+            Activity activity = data.activityType();
+            if (activity == Activity.IDLE || activity == Activity.SWIM) {
+                out.add(withExtraBehavior(data, 0, resourceMakeLove));
+            } else if (activity == Activity.LAY_SPAWN) {
+                out.add(withExtraBehavior(data, 2, LayCategoryFrogspawn.create()));
+            } else {
+                out.add(data);
+            }
+        }
+        return out;
+    }
+
+    /** Copy {@code data} with one extra prioritized behavior merged into its list. */
+    private static ActivityData<Frog> withExtraBehavior(
+            ActivityData<Frog> data, int priority, BehaviorControl<? super Frog> behavior) {
+        ImmutableList<Pair<Integer, ? extends BehaviorControl<? super Frog>>> merged =
+            ImmutableList.<Pair<Integer, ? extends BehaviorControl<? super Frog>>>builder()
+                .addAll(data.behaviorPriorityPairs())
+                .add(Pair.of(priority, behavior))
+                .build();
+        return ActivityData.create(
+            data.activityType(), merged, data.conditions(), data.memoriesToEraseWhenStopped());
     }
 
     /**

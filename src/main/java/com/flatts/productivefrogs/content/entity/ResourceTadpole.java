@@ -13,7 +13,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.animal.AbstractFish;
+import net.minecraft.world.entity.animal.fish.AbstractFish;
 import net.minecraft.world.entity.animal.frog.Tadpole;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
@@ -285,24 +285,26 @@ public class ResourceTadpole extends Tadpole {
     @Override
     public void loadFromBucketTag(CompoundTag tag) {
         super.loadFromBucketTag(tag);
-        if (tag.contains("Category", net.minecraft.nbt.Tag.TAG_STRING)) {
+        // 26.1: CompoundTag string/int/boolean accessors return Optional; getStringOr
+        // and friends give the old "value or default" semantics back.
+        tag.getString("Category").ifPresent(name -> {
             try {
-                setCategory(Category.valueOf(tag.getString("Category")));
+                setCategory(Category.valueOf(name));
             } catch (IllegalArgumentException ignored) {
                 // Unknown category in bucket NBT — leave default.
             }
-        }
+        });
         // Assign the flag unconditionally (mirrors readAdditionalSaveData exactly,
         // not via setPendingStats) so an old/category-only bucket explicitly clears
         // it to false rather than leaving a prior value - keeps the two load paths
         // mechanically interchangeable.
-        hasPendingStats = tag.getBoolean("HasPendingStats");
+        hasPendingStats = tag.getBooleanOr("HasPendingStats", false);
         if (hasPendingStats) {
-            pendingAppetite = tag.getInt("PendingAppetite");
-            pendingBounty = tag.getInt("PendingBounty");
-            pendingReach = tag.getInt("PendingReach");
+            pendingAppetite = tag.getIntOr("PendingAppetite", 0);
+            pendingBounty = tag.getIntOr("PendingBounty", 0);
+            pendingReach = tag.getIntOr("PendingReach", 0);
         }
-        setMidas(tag.getBoolean("Midas"));
+        setMidas(tag.getBooleanOr("Midas", false));
     }
 
     /**

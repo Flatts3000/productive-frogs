@@ -378,11 +378,11 @@ public class ResourceSlime extends Slime implements Bucketable {
     public void loadFromBucketTag(CompoundTag tag) {
         // See saveToBucketTag — same deprecation rationale.
         Bucketable.loadDefaultDataFromBucketTag(this, tag);
-        if (tag.contains("Category", net.minecraft.nbt.Tag.TAG_STRING)) { try { setCategory(Category.valueOf(tag.getString("Category"))); } catch (IllegalArgumentException ignored) {} }
+        tag.getString("Category").ifPresent(name -> { try { setCategory(Category.valueOf(name)); } catch (IllegalArgumentException ignored) {} });
         // Read Variant AFTER Category so setVariant's category sync wins when
         // the variant resolves in the registry, but the category fallback
         // remains correct if the variant id is unknown.
-        if (tag.contains("Variant", net.minecraft.nbt.Tag.TAG_STRING)) { Identifier id = Identifier.tryParse(tag.getString("Variant")); if (id != null) setVariant(id); }
+        tag.getString("Variant").ifPresent(raw -> { Identifier id = Identifier.tryParse(raw); if (id != null) setVariant(id); });
         // Force size 1. Capture is gated to size-1 slimes (mobInteract), but
         // MobBucketItem#spawn routes release through Slime#finalizeSpawn, which
         // assigns a RANDOM size (1/2/4). loadFromBucketTag runs after that, so
