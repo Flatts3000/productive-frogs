@@ -420,8 +420,12 @@ public class ResourceTadpole extends Tadpole {
         if (stack.is(PFItems.SWEETSLIME.get())) {
             if (this.level() instanceof ServerLevel serverLevel) {
                 stack.consume(1, player);
-                int boost = AgeableMob.getSpeedUpSecondsWhenFeeding(Tadpole.ticksToBeFrog - this.age);
-                this.age = Math.min(Tadpole.ticksToBeFrog, this.age + boost);
+                // Match vanilla Tadpole.feed exactly: getSpeedUpSecondsWhenFeeding
+                // returns seconds, and vanilla's private ageUp(int) multiplies by 20
+                // to reach ticks. Omitting the * 20 makes the feed 20x too weak.
+                int boostTicks = AgeableMob.getSpeedUpSecondsWhenFeeding(
+                    Math.max(0, Tadpole.ticksToBeFrog - this.age)) * 20;
+                this.age = Math.min(Tadpole.ticksToBeFrog, this.age + boostTicks);
                 if (this.age >= Tadpole.ticksToBeFrog) {
                     this.ageUp();
                 }

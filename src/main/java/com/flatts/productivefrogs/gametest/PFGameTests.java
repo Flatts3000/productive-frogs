@@ -319,6 +319,18 @@ public final class PFGameTests {
         if (after >= before) {
             helper.fail("feeding Sweetslime should advance growth: remaining before=" + before + " after=" + after);
         }
+        // Assert the exact magnitude, not just "some decrease": a fresh tadpole (age 0,
+        // fed same tick before any aiStep) advances by the vanilla feed amount
+        // (seconds * 20 ticks), so a missing seconds->ticks conversion is caught.
+        int boostTicks = net.minecraft.world.entity.AgeableMob.getSpeedUpSecondsWhenFeeding(
+            net.minecraft.world.entity.animal.frog.Tadpole.ticksToBeFrog) * 20;
+        int expectedAfter = ResourceTadpole.correctedRemainingTicks(
+            boostTicks, com.flatts.productivefrogs.PFConfig.tadpoleGrowthTicks(),
+            net.minecraft.world.entity.animal.frog.Tadpole.ticksToBeFrog);
+        if (after != expectedAfter) {
+            helper.fail("Sweetslime feed should advance growth by " + boostTicks + " ticks: remaining after="
+                + after + " expected=" + expectedAfter + " (before=" + before + ")");
+        }
         helper.succeed();
     }
 
