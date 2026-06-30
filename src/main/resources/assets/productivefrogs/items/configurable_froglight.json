@@ -1,0 +1,11 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "productivefrogs:item/configurable_froglight",
+    "tints": [
+      {
+        "type": "productivefrogs:configurable_froglight"
+      }
+    ]
+  }
+}

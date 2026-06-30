@@ -1,0 +1,16 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "productivefrogs:item/quartz_enriched_iron_slime_milk_bucket",
+    "tints": [
+      {
+        "type": "minecraft:constant",
+        "value": -1
+      },
+      {
+        "type": "productivefrogs:variant_color",
+        "variant": "productivefrogs:quartz_enriched_iron"
+      }
+    ]
+  }
+}
