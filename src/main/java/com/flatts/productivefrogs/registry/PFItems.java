@@ -23,7 +23,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.BucketItem;
@@ -161,12 +160,13 @@ public final class PFItems {
      * {@code frog_legs} config gate.
      */
     public static final FoodProperties FROG_LEGS_SOUP_FOOD =
-        new FoodProperties.Builder().nutrition(10).saturationModifier(0.6F)
-            .usingConvertsTo(Items.BOWL).build();
+        new FoodProperties.Builder().nutrition(10).saturationModifier(0.6F).build();
 
+    // 26.1: the bowl "converts to" remainder moved off FoodProperties.Builder onto
+    // Item.Properties.usingConvertsTo(Item).
     public static final DeferredItem<Item> FROG_LEGS_SOUP = ITEMS.registerItem(
         "frog_legs_soup",
-        props -> new Item(props.stacksTo(1).food(FROG_LEGS_SOUP_FOOD))
+        props -> new Item(props.stacksTo(1).food(FROG_LEGS_SOUP_FOOD).usingConvertsTo(Items.BOWL))
     );
 
     /**
@@ -581,8 +581,6 @@ public final class PFItems {
         EnumMap<Category, DeferredItem<SpawnEggItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {
             String name = cat.id() + "_" + entitySuffix + "_spawn_egg";
-            int primary = cat.tintRgb();
-            int secondary = darker(primary);
             // 1.21.1 NeoForge has no Supplier<Properties> registerItem overload —
             // do the EntityType.get() lookup inside the Function lambda, which runs
             // at registry-build time (post-PFEntities binding).
@@ -590,22 +588,23 @@ public final class PFItems {
                 name,
                 props -> {
                     EntityType<?> type = entityTypeSupplier.get();
-                    return new SpawnEggItem(
-                        (EntityType<? extends Mob>) type,
-                        primary, secondary,
-                        applySpawnEggProps(props, type, cat));
+                    return new SpawnEggItem(applySpawnEggProps(props, type, cat));
                 }
             ));
         }
         return map;
     }
 
+    // NOTE (26.1 port): the per-species spawn-egg primary/secondary tint (cat.tintRgb()
+    // + darker()) no longer rides the SpawnEggItem constructor - 26.1 moved spawn-egg
+    // colour off the item. Re-wire the category tint through the item-colour handler in
+    // PFClientEvents (RegisterColorHandlersEvent) when that file lands.
     private static Item.Properties applySpawnEggProps(Item.Properties props, EntityType<?> type, Category category) {
         CompoundTag nbt = new CompoundTag();
-        nbt.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
         nbt.putString("Category", category.name());
         return props
-            .component(DataComponents.ENTITY_DATA, CustomData.of(nbt))
+            .component(DataComponents.ENTITY_DATA, TypedEntityData.of(type, nbt))
+            .requiredFeatures(type.requiredFeatures())
             .component(PFDataComponents.CONTAINED_CATEGORY.get(), category);
     }
 
@@ -621,9 +620,8 @@ public final class PFItems {
     public static ItemStack resourceSlimeSpawnEgg(Identifier variantId) {
         ItemStack stack = new ItemStack(RESOURCE_SLIME_SPAWN_EGG.get());
         CompoundTag nbt = new CompoundTag();
-        nbt.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(PFEntities.RESOURCE_SLIME.get()).toString());
         nbt.putString("Variant", variantId.toString());
-        stack.set(DataComponents.ENTITY_DATA, CustomData.of(nbt));
+        stack.set(DataComponents.ENTITY_DATA, TypedEntityData.of(PFEntities.RESOURCE_SLIME.get(), nbt));
         stack.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
         return stack;
     }
