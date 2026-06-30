@@ -41,11 +41,10 @@ public final class PFGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS =
         DeferredRegister.create(Registries.TEST_FUNCTION, ProductiveFrogs.MOD_ID);
 
-    /** The shared empty plot every test runs on. */
-    static final Identifier STRUCTURE =
-        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "empty_5x5x5");
+    /** The default plot most tests run on. */
+    private static final String DEFAULT_STRUCTURE = "empty_5x5x5";
 
-    private record Spec(ResourceKey<Consumer<GameTestHelper>> fn, int maxTicks) {}
+    private record Spec(ResourceKey<Consumer<GameTestHelper>> fn, Identifier structure, Rotation rotation, int maxTicks) {}
 
     private static final List<Spec> SPECS = new ArrayList<>();
 
@@ -53,14 +52,25 @@ public final class PFGameTests {
     }
 
     /**
-     * Register one test. Its body is added to {@link Registries#TEST_FUNCTION} and
-     * paired with a {@link FunctionGameTestInstance} at {@link RegisterGameTestsEvent}
-     * time. {@code name} must be a valid (lower_snake_case) registry path.
+     * Register one test on the default {@code empty_5x5x5} plot. Its body is added to
+     * {@link Registries#TEST_FUNCTION} and paired with a {@link FunctionGameTestInstance}
+     * at {@link RegisterGameTestsEvent} time. {@code name} must be lower_snake_case.
      */
     static void test(String name, int maxTicks, Consumer<GameTestHelper> body) {
+        test(name, DEFAULT_STRUCTURE, Rotation.NONE, maxTicks, body);
+    }
+
+    /** Register a test on a specific structure (e.g. {@code empty_9x9x9}, {@code dragon_altar}). */
+    static void test(String name, String structure, int maxTicks, Consumer<GameTestHelper> body) {
+        test(name, structure, Rotation.NONE, maxTicks, body);
+    }
+
+    /** Register a test on a specific structure with a structure rotation (legacy {@code rotationSteps}). */
+    static void test(String name, String structure, Rotation rotation, int maxTicks, Consumer<GameTestHelper> body) {
         DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> holder =
             FUNCTIONS.register(name, () -> body);
-        SPECS.add(new Spec(holder.getKey(), maxTicks));
+        SPECS.add(new Spec(holder.getKey(),
+            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, structure), rotation, maxTicks));
     }
 
     /** Wire up from the {@code ProductiveFrogs} constructor. */
@@ -68,6 +78,18 @@ public final class PFGameTests {
         // Each domain class contributes its tests via PFGameTests.test(...). Add a
         // line here when introducing a new domain file.
         SpeciesCategoryTests.register();
+        InfusionDiscoveryTests.register();
+        ConfigSuiteTests.register();
+        EggTadpoleFrogTests.register();
+        TongueDropsFroglightTests.register();
+        SlimeBucketTests.register();
+        MilkSourceTests.register();
+        ApplianceTests.register();
+        CrucibleMoldTests.register();
+        BossAltarTests.register();
+        BreedingFrogAiTests.register();
+        TerrariumTests.register();
+        EquivalenceLaneTests.register();
 
         FUNCTIONS.register(modEventBus);
         modEventBus.addListener(PFGameTests::onRegisterGameTests);
@@ -79,10 +101,10 @@ public final class PFGameTests {
             Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "default"));
         for (Spec spec : SPECS) {
             TestData<Holder<TestEnvironmentDefinition<?>>> data = new TestData<>(
-                env, STRUCTURE, spec.maxTicks(),
+                env, spec.structure(), spec.maxTicks(),
                 0,            // setupTicks
                 true,         // required (run in CI)
-                Rotation.NONE,
+                spec.rotation(),
                 false,        // manualOnly (false -> auto CI batch)
                 1,            // maxAttempts
                 1,            // requiredSuccesses
