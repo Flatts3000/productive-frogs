@@ -317,16 +317,11 @@ public final class PFClientEvents {
         event.register(PFMenuTypes.TERRARIUM_CONTROLLER.get(), com.flatts.productivefrogs.client.screen.TerrariumControllerScreen::new);
     }
 
-    // NOTE (26.1 port, onClientSetup removed): net.minecraft.client.renderer.item.ItemProperties
-    // is gone - item-model predicates moved to data-driven item model JSON
-    // (select / condition / range_dispatch). The Frog Net's
-    // productivefrogs:filled empty/loaded override (formerly an ItemProperties
-    // predicate driven by FrogNetItem.isFilled) must move into the Frog Net item
-    // model: re-home the existing "overrides" block in
-    // assets/productivefrogs/models/item/frog_net.json as a 1.21.4+ "condition"
-    // model on a boolean item-model property keyed to a "filled" state
-    // (frog_net_filled when true, frog_net when false). runClient-verified; not a
-    // compile blocker.
+    // Frog Net filled/empty switch (26.1 port): the old ItemProperties predicate
+    // (productivefrogs:filled) is gone - it now lives data-driven in
+    // assets/productivefrogs/items/frog_net.json as a minecraft:condition on
+    // has_component(minecraft:custom_data) (a captured frog stamps CUSTOM_DATA),
+    // selecting frog_net_filled when present, frog_net otherwise.
 
     /** Bind the tintable Sprinkler-drip particle to its sprite set. */
     @SubscribeEvent

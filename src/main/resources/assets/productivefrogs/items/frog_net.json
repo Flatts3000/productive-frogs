@@ -1,6 +1,15 @@
 {
   "model": {
-    "type": "minecraft:model",
-    "model": "productivefrogs:item/frog_net"
+    "type": "minecraft:condition",
+    "property": "minecraft:has_component",
+    "component": "minecraft:custom_data",
+    "on_true": {
+      "type": "minecraft:model",
+      "model": "productivefrogs:item/frog_net_filled"
+    },
+    "on_false": {
+      "type": "minecraft:model",
+      "model": "productivefrogs:item/frog_net"
+    }
   }
 }
