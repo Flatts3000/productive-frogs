@@ -176,12 +176,9 @@ sourceSets {
         resources {
             srcDir 'src/generated/resources'
         }
-        // PORT-TEMP: exclude the GameTest holder while the main code is ported;
-        // it's the registry-rewrite phase (R-6) and ~900 errors of its own. Drop
-        // this exclude when PFGameTests is rewritten to the 26.1 registry form.
-        java {
-            exclude 'com/flatts/productivefrogs/gametest/**'
-        }
+        // R-6 (26.1 port): the GameTest suite is re-included - migrated to the 26.1
+        // registry form (TEST_FUNCTION + FunctionGameTestInstance) and split across
+        // per-domain files under gametest/.
     }
 }
 

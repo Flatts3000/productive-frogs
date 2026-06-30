@@ -1,9 +1,6 @@
 package com.flatts.productivefrogs;
 
-// NOTE (26.1 port, R-6): the gametest source set is excluded from the main compile
-// until PFGameTests is migrated to the 26.1 GameTest registry API. Restore this import
-// and the PFGameTests.register(modEventBus) call below when GameTest is re-included.
-// import com.flatts.productivefrogs.gametest.PFGameTests;
+import com.flatts.productivefrogs.gametest.PFGameTests;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFAttachments;
 import com.flatts.productivefrogs.registry.PFBlocks;
@@ -89,7 +86,7 @@ public final class ProductiveFrogs {
         PFParticles.register(modEventBus);
         PFSensors.register(modEventBus);
         PFCreativeTabs.register(modEventBus);
-        // PFGameTests.register(modEventBus); // R-6: re-enable when gametest is re-included
+        PFGameTests.register(modEventBus);
         // Custom datapack condition codecs (e.g. config_enabled, gating the
         // Spawnery recipe). No ordering dependency on the registers above.
         PFConditions.register(modEventBus);
