@@ -37,6 +37,7 @@ final class EggTadpoleFrogTests {
         PFGameTests.test("primed_egg_hatches_into_matching_category_tadpoles", 100, EggTadpoleFrogTests::primedEggHatchesIntoMatchingCategoryTadpoles);
         PFGameTests.test("tadpole_ages_up_into_resource_frog_of_same_category", 100, EggTadpoleFrogTests::tadpoleAgesUpIntoResourceFrogOfSameCategory);
         PFGameTests.test("tadpole_accepts_sweetslime_to_speed_growth", 100, EggTadpoleFrogTests::tadpoleAcceptsSweetslimeToSpeedGrowth);
+        PFGameTests.test("tadpole_matures_without_suffocating_near_a_block", 100, EggTadpoleFrogTests::tadpoleMaturesWithoutSuffocatingNearABlock);
         PFGameTests.test("tadpole_bucket_round_trip_preserves_category", 100, EggTadpoleFrogTests::tadpoleBucketRoundTripPreservesCategory);
         PFGameTests.test("tadpole_bucket_round_trip_preserves_pending_stats", 100, EggTadpoleFrogTests::tadpoleBucketRoundTripPreservesPendingStats);
         PFGameTests.test("primed_egg_schedules_deterministic_hatch_delay", 20, EggTadpoleFrogTests::primedEggSchedulesDeterministicHatchDelay);
@@ -164,6 +165,38 @@ final class EggTadpoleFrogTests {
                 + after + " expected=" + expectedAfter + " (before=" + before + ")");
         }
         helper.succeed();
+    }
+
+    /**
+     * A tadpole maturing too close to a block must not spawn a frog stuck in that
+     * block (#276). PF's ageUp re-implements maturation manually (it does not go
+     * through vanilla's convertTo path), so it must call vanilla's own
+     * fudgePositionAfterSizeChange to nudge the larger frog out of blocks. We push
+     * the tadpole high in its water cell under a stone ceiling - where the
+     * un-fudged frog box would clip the stone - and assert the matured frog ends up
+     * collision-free.
+     */
+    private static void tadpoleMaturesWithoutSuffocatingNearABlock(GameTestHelper helper) {
+        BlockPos tadPos = new BlockPos(2, 2, 2);
+        helper.setBlock(tadPos, Blocks.WATER);
+        helper.setBlock(tadPos.above(), Blocks.STONE);
+
+        ResourceTadpole tadpole = helper.spawn(PFEntities.RESOURCE_TADPOLE.get(), tadPos);
+        BlockPos abs = helper.absolutePos(tadPos);
+        // Sit high in the cell so the un-fudged frog box would clip the stone above.
+        tadpole.snapTo(abs.getX() + 0.5, abs.getY() + 0.7, abs.getZ() + 0.5,
+            tadpole.getYRot(), tadpole.getXRot());
+        tadpole.ageUp();
+
+        helper.succeedWhen(() -> {
+            List<ResourceFrog> frogs = helper.getEntities(PFEntities.RESOURCE_FROG.get());
+            if (frogs.isEmpty()) {
+                helper.fail("tadpole should have matured into a frog");
+            }
+            if (!helper.getLevel().noCollision(frogs.get(0))) {
+                helper.fail("matured frog is suffocating in a block at " + frogs.get(0).position());
+            }
+        });
     }
 
     /**

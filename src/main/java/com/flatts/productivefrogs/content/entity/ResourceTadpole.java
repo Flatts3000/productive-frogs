@@ -354,6 +354,13 @@ public class ResourceTadpole extends Tadpole {
             frog.setCustomNameVisible(this.isCustomNameVisible());
         }
         frog.setPersistenceRequired();
+        // PF re-implements maturation manually (create + snapTo) instead of going
+        // through vanilla Tadpole.ageUp's convertTo path, so we must call vanilla's
+        // own size-change reposition ourselves (#276) - otherwise the larger frog
+        // can spawn embedded in a block and suffocate. fudgePositionAfterSizeChange
+        // runs a findFreePosition voxel search and nudges the frog to where it fits;
+        // mirrors the call vanilla makes at the tail of its own Tadpole.ageUp.
+        frog.fudgePositionAfterSizeChange(this.getDimensions(this.getPose()));
         this.playSound(SoundEvents.TADPOLE_GROW_UP, 0.15F, 1.0F);
         serverLevel.addFreshEntityWithPassengers(frog);
         this.discard();
