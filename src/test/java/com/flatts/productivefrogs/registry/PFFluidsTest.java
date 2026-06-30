@@ -31,7 +31,7 @@ class PFFluidsTest {
 
     @Test
     void perVariantFluidTypeIsRegistered() {
-        FluidType type = NeoForgeRegistries.FLUID_TYPES.get(
+        FluidType type = NeoForgeRegistries.FLUID_TYPES.getValue(
             Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk"));
         assertNotNull(type, "iron_slime_milk FluidType must be registered");
         assertSame(PFVariantMilk.fluidType(IRON), type, "accessor and registry must agree");
@@ -52,14 +52,14 @@ class PFFluidsTest {
     void sourceBlockIsRegisteredAndCarriesVariant() {
         Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk");
         SlimeMilkSourceBlock block = PFVariantMilk.block(IRON);
-        assertSame(block, BuiltInRegistries.BLOCK.get(id), "iron_slime_milk block must resolve to the PFVariantMilk holder");
+        assertSame(block, BuiltInRegistries.BLOCK.getValue(id), "iron_slime_milk block must resolve to the PFVariantMilk holder");
         assertEquals(IRON, block.blockVariant(), "block must carry its variant baked in at registration");
     }
 
     @Test
     void bucketItemIsRegistered() {
         Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk_bucket");
-        assertSame(PFVariantMilk.bucket(IRON), BuiltInRegistries.ITEM.get(id),
+        assertSame(PFVariantMilk.bucket(IRON), BuiltInRegistries.ITEM.getValue(id),
             "iron_slime_milk_bucket must resolve to the PFVariantMilk holder");
         assertTrue(PFVariantMilk.bucket(IRON) instanceof SlimeMilkBucketItem,
             "per-variant milk bucket must be a SlimeMilkBucketItem");

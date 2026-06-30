@@ -3,11 +3,13 @@ package com.flatts.productivefrogs.content.block;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import com.flatts.productivefrogs.TestRegistryUtil;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -25,6 +27,11 @@ import org.junit.jupiter.api.Test;
  * the data-shape contract.
  */
 class SlimeMilkerBlockTest {
+
+    @BeforeAll
+    static void bindComponents() {
+        TestRegistryUtil.bindComponents();
+    }
 
     @Test
     void readsVariantPathFromBucketEntityData() {

@@ -7,12 +7,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.TestRegistryUtil;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -22,6 +28,11 @@ import org.junit.jupiter.api.Test;
  * ItemStack and never touches the world.
  */
 class TerrariumControllerBufferTest {
+
+    @BeforeAll
+    static void bindComponents() {
+        TestRegistryUtil.bindComponents();
+    }
 
     private static final Identifier IRON =
         Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
@@ -79,11 +90,12 @@ class TerrariumControllerBufferTest {
         TerrariumControllerBlockEntity c = newController();
         c.pushChargeFromBucket(milk(IRON));
         c.pushChargeFromBucket(milk(IRON));
-        CompoundTag tag = new CompoundTag();
-        c.saveAdditional(tag, null);
+        TagValueOutput out = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, RegistryAccess.EMPTY);
+        c.saveAdditional(out);
+        CompoundTag tag = out.buildResult();
 
         TerrariumControllerBlockEntity reloaded = newController();
-        reloaded.loadAdditional(tag, null);
+        reloaded.loadAdditional(TagValueInput.create(ProblemReporter.DISCARDING, RegistryAccess.EMPTY, tag));
         assertEquals(2, reloaded.bufferedCharges());
         assertEquals(IRON, reloaded.tankVariant());
     }

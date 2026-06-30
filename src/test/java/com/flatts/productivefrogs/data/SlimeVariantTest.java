@@ -62,7 +62,7 @@ class SlimeVariantTest {
         SlimeVariant decoded = decode(WITH_PRIMER_TAG);
         assertTrue(decoded.primerItem().isEmpty(), "primer_item is optional, absent for a tag-driven variant");
         assertTrue(decoded.primerTag().isPresent(), "primer_tag must decode");
-        assertEquals("c:ingots/tin", decoded.primerTag().get().identifier().toString());
+        assertEquals("c:ingots/tin", decoded.primerTag().get().location().toString());
         assertEquals(Category.CAVE, decoded.category());
     }
 

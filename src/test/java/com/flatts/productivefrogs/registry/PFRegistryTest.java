@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.TestRegistryUtil;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
 import com.flatts.productivefrogs.data.Category;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -12,6 +13,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -28,9 +30,14 @@ import org.junit.jupiter.params.provider.EnumSource;
  */
 class PFRegistryTest {
 
+    @BeforeAll
+    static void bindComponents() {
+        TestRegistryUtil.bindComponents();
+    }
+
     @Test
     void frogEggItemIsRegistered() {
-        Item item = BuiltInRegistries.ITEM.get(
+        Item item = BuiltInRegistries.ITEM.getValue(
             Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "frog_egg")
         );
         assertNotNull(item, "productivefrogs:frog_egg must be registered");
@@ -39,7 +46,7 @@ class PFRegistryTest {
 
     @Test
     void resourceTadpoleBucketIsRegistered() {
-        Item item = BuiltInRegistries.ITEM.get(
+        Item item = BuiltInRegistries.ITEM.getValue(
             Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_tadpole_bucket")
         );
         assertNotNull(item, "productivefrogs:resource_tadpole_bucket must be registered");
@@ -50,7 +57,7 @@ class PFRegistryTest {
     @EnumSource(Category.class)
     void primedFrogEggBlockRegisteredForEachCategory(Category cat) {
         Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, cat.primedEggItemName());
-        Block block = BuiltInRegistries.BLOCK.get(id);
+        Block block = BuiltInRegistries.BLOCK.getValue(id);
         assertNotNull(block, id + " must be registered");
         assertTrue(block instanceof PrimedFrogEggBlock, id + " must be a PrimedFrogEggBlock");
         assertEquals(cat, ((PrimedFrogEggBlock) block).getCategory());
@@ -60,7 +67,7 @@ class PFRegistryTest {
     @EnumSource(Category.class)
     void primedFrogEggBlockItemRegisteredForEachCategory(Category cat) {
         Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, cat.primedEggItemName());
-        Item item = BuiltInRegistries.ITEM.get(id);
+        Item item = BuiltInRegistries.ITEM.getValue(id);
         assertNotNull(item, id + " item form must be registered");
         assertTrue(item instanceof BlockItem, id + " must be a BlockItem");
     }

@@ -39,7 +39,7 @@ class PFEntitiesTest {
     @Test
     void resourceTadpoleIsRegistered() {
         Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_tadpole");
-        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
+        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getValue(id);
         assertNotNull(type, id + " must be registered");
         assertSame(PFEntities.RESOURCE_TADPOLE.get(), type, "DeferredHolder must resolve to the registered type");
     }
@@ -47,7 +47,7 @@ class PFEntitiesTest {
     @Test
     void resourceFrogIsRegistered() {
         Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_frog");
-        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
+        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getValue(id);
         assertNotNull(type, id + " must be registered");
         assertSame(PFEntities.RESOURCE_FROG.get(), type, "DeferredHolder must resolve to the registered type");
     }
@@ -82,7 +82,7 @@ class PFEntitiesTest {
     @Test
     void resourceSlimeIsRegistered() {
         Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "resource_slime");
-        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
+        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getValue(id);
         assertNotNull(type, id + " must be registered");
         assertSame(PFEntities.RESOURCE_SLIME.get(), type, "DeferredHolder must resolve to the registered type");
     }
@@ -106,7 +106,7 @@ class PFEntitiesTest {
     @Test
     void caveSlimeIsRegistered() {
         Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "cave_slime");
-        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
+        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getValue(id);
         assertNotNull(type, id + " must be registered");
         assertSame(PFEntities.CAVE_SLIME.get(), type, "DeferredHolder must resolve to the registered type");
     }
@@ -129,7 +129,7 @@ class PFEntitiesTest {
     @Test
     void geodeSlimeIsRegistered() {
         Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "geode_slime");
-        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
+        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getValue(id);
         assertNotNull(type, id + " must be registered");
         assertSame(PFEntities.GEODE_SLIME.get(), type, "DeferredHolder must resolve to the registered type");
     }
@@ -150,7 +150,7 @@ class PFEntitiesTest {
     @Test
     void tideSlimeIsRegistered() {
         Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tide_slime");
-        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
+        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getValue(id);
         assertNotNull(type, id + " must be registered");
         assertSame(PFEntities.TIDE_SLIME.get(), type, "DeferredHolder must resolve to the registered type");
     }
@@ -171,7 +171,7 @@ class PFEntitiesTest {
     @Test
     void voidSlimeIsRegistered() {
         Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "void_slime");
-        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
+        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getValue(id);
         assertNotNull(type, id + " must be registered");
         assertSame(PFEntities.VOID_SLIME.get(), type, "DeferredHolder must resolve to the registered type");
     }

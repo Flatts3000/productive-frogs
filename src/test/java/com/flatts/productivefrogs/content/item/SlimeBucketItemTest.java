@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.content.item;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.TestRegistryUtil;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.component.DataComponents;
@@ -12,6 +13,7 @@ import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -28,6 +30,11 @@ import org.junit.jupiter.params.provider.ValueSource;
  * Java-side resolution chain.
  */
 class SlimeBucketItemTest {
+
+    @BeforeAll
+    static void bindComponents() {
+        TestRegistryUtil.bindComponents();
+    }
 
     @Test
     void emptyBucketUsesBaseDescriptionId() {

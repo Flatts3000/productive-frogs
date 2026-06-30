@@ -32,7 +32,7 @@ class PFVariantMilkTest {
     void ironVariantMilkFluidIsDynamicallyRegistered() {
         assertTrue(PFVariantMilk.isRegistered(IRON),
             "iron must be discovered + registered as a per-variant milk fluid");
-        Fluid source = BuiltInRegistries.FLUID.get(
+        Fluid source = BuiltInRegistries.FLUID.getValue(
             Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk"));
         assertTrue(source instanceof SlimeMilkFluid.Source,
             "iron_slime_milk must be a SlimeMilkFluid.Source in BuiltInRegistries.FLUID");
@@ -41,7 +41,7 @@ class PFVariantMilkTest {
 
     @Test
     void ironVariantMilkBlockCarriesItsVariant() {
-        Block block = BuiltInRegistries.BLOCK.get(
+        Block block = BuiltInRegistries.BLOCK.getValue(
             Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk"));
         assertTrue(block instanceof SlimeMilkSourceBlock, "iron_slime_milk block must be a SlimeMilkSourceBlock");
         assertEquals(IRON, ((SlimeMilkSourceBlock) block).blockVariant(),
@@ -50,7 +50,7 @@ class PFVariantMilkTest {
 
     @Test
     void ironVariantMilkBucketIsRegistered() {
-        Item bucket = BuiltInRegistries.ITEM.get(
+        Item bucket = BuiltInRegistries.ITEM.getValue(
             Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron_slime_milk_bucket"));
         assertNotNull(bucket, "iron_slime_milk_bucket must be registered");
         assertTrue(bucket instanceof BucketItem, "per-variant bucket must be a vanilla BucketItem");
