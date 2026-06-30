@@ -356,6 +356,102 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
         return fluidIntake;
     }
 
+    /**
+     * The 26.1 {@code Capabilities.Fluid.BLOCK} view: a fill-only milk funnel (drain
+     * is a no-op; contents live as {@link MilkCharge}s, not a reservoir). It has no
+     * tank, so the journal snapshots the charge buffer + tank variant directly to
+     * stay transaction-correct; the sync is deferred to commit.
+     */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> fluidResource() {
+        return new ControllerFluidResource();
+    }
+
+    /** Snapshot of the funnel state the fluid intake mutates, for transaction rollback. */
+    private record FunnelSnapshot(java.util.ArrayDeque<MilkCharge> charges, Identifier tankVariant) {}
+
+    private final class ControllerFluidResource
+            implements net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> {
+
+        private final FunnelJournal journal = new FunnelJournal();
+
+        @Override
+        public int size() {
+            return 1;
+        }
+
+        @Override
+        public net.neoforged.neoforge.transfer.fluid.FluidResource getResource(int index) {
+            return net.neoforged.neoforge.transfer.fluid.FluidResource.EMPTY;
+        }
+
+        @Override
+        public long getAmountAsLong(int index) {
+            return 0L;
+        }
+
+        @Override
+        public long getCapacityAsLong(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+            return (long) PFConfig.terrariumControllerBufferDepth() * 1000L;
+        }
+
+        @Override
+        public boolean isValid(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+            Identifier variant = PFVariantMilk.variantOf(resource.getFluid());
+            return variant != null && canAccept(variant);
+        }
+
+        @Override
+        public int insert(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount,
+                net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+            if (amount <= 0) {
+                return 0;
+            }
+            Identifier variant = PFVariantMilk.variantOf(resource.getFluid());
+            if (variant == null || !canAccept(variant)) {
+                return 0;
+            }
+            int room = PFConfig.terrariumControllerBufferDepth() - charges.size();
+            int chargesToFill = Math.min(room, amount / 1000);
+            if (chargesToFill <= 0) {
+                return 0;
+            }
+            journal.updateSnapshots(transaction);
+            tankVariant = variant;
+            net.neoforged.neoforge.fluids.FluidStack stack = resource.toStack(amount);
+            for (int i = 0; i < chargesToFill; i++) {
+                charges.addLast(MilkCharge.fromFluid(stack));
+            }
+            return chargesToFill * 1000;
+        }
+
+        @Override
+        public int extract(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount,
+                net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+            return 0;
+        }
+
+        private final class FunnelJournal
+                extends net.neoforged.neoforge.transfer.transaction.SnapshotJournal<FunnelSnapshot> {
+
+            @Override
+            protected FunnelSnapshot createSnapshot() {
+                return new FunnelSnapshot(new java.util.ArrayDeque<>(charges), tankVariant);
+            }
+
+            @Override
+            protected void revertToSnapshot(FunnelSnapshot snapshot) {
+                charges.clear();
+                charges.addAll(snapshot.charges());
+                tankVariant = snapshot.tankVariant();
+            }
+
+            @Override
+            protected void onRootCommit(FunnelSnapshot originalState) {
+                syncToClients();
+            }
+        }
+    }
+
     /** Test seam: current buffered charge count. */
     public int bufferedCharges() {
         return charges.size();

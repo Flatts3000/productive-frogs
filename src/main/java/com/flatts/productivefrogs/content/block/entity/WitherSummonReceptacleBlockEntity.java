@@ -101,6 +101,11 @@ public class WitherSummonReceptacleBlockEntity extends BlockEntity {
         return insertOnly;
     }
 
+    /** The 26.1 {@code Capabilities.Item.BLOCK} view: insert-only over the single held slot. */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> heldResource() {
+        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(held, new int[] {0}, true, false);
+    }
+
     /** True when the receptacle holds its item. */
     public boolean isFilled() {
         return !held.getStackInSlot(0).isEmpty();

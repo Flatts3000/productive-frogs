@@ -80,6 +80,18 @@ public class SlimeChurnInventory extends ItemStackHandler {
         return outputView;
     }
 
+    /** 26.1 {@code Capabilities.Item.BLOCK} input view: insert-only over both input slots (per-slot validity routes each item). */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResource() {
+        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
+            this, new int[] {MILK_SLOT, BUCKET_SLOT}, true, false);
+    }
+
+    /** 26.1 {@code Capabilities.Item.BLOCK} output view: extract-only over both output slots. */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResource() {
+        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
+            this, new int[] {SLIME_OUTPUT_SLOT, EMPTY_OUTPUT_SLOT}, false, true);
+    }
+
     // 26.1: ItemStackHandler implements ValueIOSerializable; the BE hands us the
     // ValueOutput/ValueInput child (legacy serializeNBT(RegistryAccess) is gone).
     public void serialize(ValueOutput output) {

@@ -79,6 +79,11 @@ public class HatchBlockEntity extends BlockEntity implements MenuProvider {
         return inventory;
     }
 
+    /** The 26.1 {@code Capabilities.Item.BLOCK} view over the full chest inventory (read/insert/extract). */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inventoryResource() {
+        return com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler.ofAll(inventory, true, true);
+    }
+
     /** Insert a froglight; returns true only if it fully fit (the caller drops nothing otherwise). */
     public boolean insert(ItemStack froglight) {
         return ItemHandlerHelper.insertItem(inventory, froglight, false).isEmpty();

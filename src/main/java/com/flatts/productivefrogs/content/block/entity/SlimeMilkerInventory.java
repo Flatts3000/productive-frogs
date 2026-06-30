@@ -67,6 +67,16 @@ public class SlimeMilkerInventory extends ItemStackHandler {
         return outputView;
     }
 
+    /** 26.1 {@code Capabilities.Item.BLOCK} input view: insert-only over the slime-bucket slot. */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResource() {
+        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(this, new int[] {INPUT_SLOT}, true, false);
+    }
+
+    /** 26.1 {@code Capabilities.Item.BLOCK} output view: extract-only over the milk-bucket slot. */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResource() {
+        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(this, new int[] {OUTPUT_SLOT}, false, true);
+    }
+
     /**
      * Write our handler's slots into the BE-owned {@code "Inventory"} child.
      * 26.1: ItemStackHandler implements ValueIOSerializable, so the BE hands us a

@@ -90,6 +90,11 @@ public class EndCrystalReceptacleBlockEntity extends BlockEntity {
         return insertOnly;
     }
 
+    /** The 26.1 {@code Capabilities.Item.BLOCK} view: insert-only over the single crystal slot. */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> crystalResource() {
+        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(crystal, new int[] {0}, true, false);
+    }
+
     /** True when a crystal is held. */
     public boolean isFilled() {
         return !crystal.getStackInSlot(0).isEmpty();

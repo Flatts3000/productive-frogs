@@ -87,6 +87,18 @@ public class SpawneryInventory extends ItemStackHandler {
         return outputView;
     }
 
+    /** 26.1 {@code Capabilities.Item.BLOCK} input view: insert-only over the three input slots (per-slot validity routes each item). */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResource() {
+        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
+            this, new int[] {BOTTLE_SLOT, FUEL_SLOT, PRIMER_SLOT}, true, false);
+    }
+
+    /** 26.1 {@code Capabilities.Item.BLOCK} output view: extract-only over the output slot. */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResource() {
+        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
+            this, new int[] {OUTPUT_SLOT}, false, true);
+    }
+
     // 26.1: ItemStackHandler implements ValueIOSerializable; the BE hands us the
     // ValueOutput/ValueInput child (legacy serializeNBT(RegistryAccess) is gone).
     public void serialize(ValueOutput output) {

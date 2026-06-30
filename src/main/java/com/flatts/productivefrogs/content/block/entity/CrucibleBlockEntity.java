@@ -221,9 +221,117 @@ public class CrucibleBlockEntity extends BlockEntity {
         return extractOnlyTank;
     }
 
+    /**
+     * The 26.1 {@code Capabilities.Fluid.BLOCK} view: extract-only (drain only;
+     * fill is a no-op by design). Wraps {@link #tank} with the snapshot transaction
+     * discipline; commit fires the contents-changed sync.
+     */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> fluidResource() {
+        return new com.flatts.productivefrogs.content.transfer.FluidTankResourceHandler(
+            tank, null, false, true, this::onContentsChanged);
+    }
+
     /** The hopper-facing insert-only item handler. */
     public IItemHandler itemHandler() {
         return insertOnlyItems;
+    }
+
+    /**
+     * The 26.1 {@code Capabilities.Item.BLOCK} view: insert-only, immediate-convert
+     * (a Froglight or meltable block is consumed straight into the solids queue, no
+     * internal slot - the Ex Deorum shape). The melt mutates {@link #solids} /
+     * {@link #pendingFluid} / {@link #lastVariant}, so the journal snapshots exactly
+     * those three; the irreversible side effects (sound + sync) are deferred to
+     * commit so an aborted hopper probe stays silent and changes nothing.
+     */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> itemResource() {
+        return new CrucibleItemIntake();
+    }
+
+    /** Snapshot of the melt state the item funnel mutates, for transaction rollback. */
+    private record MeltSnapshot(int solids, Fluid pendingFluid, Identifier lastVariant) {}
+
+    private final class CrucibleItemIntake
+            implements net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> {
+
+        private final IntakeJournal journal = new IntakeJournal();
+
+        @Override
+        public int size() {
+            return 1;
+        }
+
+        @Override
+        public net.neoforged.neoforge.transfer.item.ItemResource getResource(int index) {
+            return net.neoforged.neoforge.transfer.item.ItemResource.EMPTY;
+        }
+
+        @Override
+        public long getAmountAsLong(int index) {
+            return 0L;
+        }
+
+        @Override
+        public long getCapacityAsLong(int index, net.neoforged.neoforge.transfer.item.ItemResource resource) {
+            return 1L;
+        }
+
+        @Override
+        public boolean isValid(int index, net.neoforged.neoforge.transfer.item.ItemResource resource) {
+            return insertCheck(resource.toStack(1)) == InsertCheck.OK;
+        }
+
+        @Override
+        public int insert(int index, net.neoforged.neoforge.transfer.item.ItemResource resource, int amount,
+                net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+            if (amount <= 0 || level == null || level.isClientSide()) {
+                return 0;
+            }
+            net.minecraft.world.item.ItemStack one = resource.toStack(1);
+            if (insertCheck(one) != InsertCheck.OK) {
+                return 0;
+            }
+            CrucibleMeltRecipe recipe = recipeFor(one);
+            if (recipe == null) {
+                return 0;
+            }
+            journal.updateSnapshots(transaction);
+            solids += recipe.result().getAmount();
+            pendingFluid = recipe.result().getFluid();
+            // A Froglight carries its variant colour; a raw block has none, so clear it.
+            lastVariant = one.get(PFDataComponents.SLIME_VARIANT.get());
+            return 1;
+        }
+
+        @Override
+        public int extract(int index, net.neoforged.neoforge.transfer.item.ItemResource resource, int amount,
+                net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+            return 0;
+        }
+
+        private final class IntakeJournal
+                extends net.neoforged.neoforge.transfer.transaction.SnapshotJournal<MeltSnapshot> {
+
+            @Override
+            protected MeltSnapshot createSnapshot() {
+                return new MeltSnapshot(solids, pendingFluid, lastVariant);
+            }
+
+            @Override
+            protected void revertToSnapshot(MeltSnapshot snapshot) {
+                solids = snapshot.solids();
+                pendingFluid = snapshot.pendingFluid();
+                lastVariant = snapshot.lastVariant();
+            }
+
+            @Override
+            protected void onRootCommit(MeltSnapshot originalState) {
+                if (level != null && !level.isClientSide()) {
+                    level.playSound(null, worldPosition, SoundEvents.LAVA_AMBIENT, SoundSource.BLOCKS, 0.5F, 1.0F);
+                }
+                onContentsChanged();
+            }
+        }
     }
 
     /** Tank contents, for the renderer/Jade/GameTests. Do not mutate. */

@@ -161,9 +161,39 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
         }
     };
 
-    private final class ReceiveOnlyEnergy extends EnergyStorage {
+    private final class ReceiveOnlyEnergy extends EnergyStorage
+            implements com.flatts.productivefrogs.content.transfer.ReceiveOnlyEnergyHandler.Source {
         ReceiveOnlyEnergy() {
             super(ENERGY_CAPACITY, ENERGY_MAX_RECEIVE, 0);
+        }
+
+        // 26.1 EnergyHandler journal window (see ReceiveOnlyEnergyHandler): the
+        // adapter reads + writes the stored energy directly to support
+        // read-your-writes plus abort-rollback, which the receive-only public
+        // API cannot do. setEnergy fires no callback; the commit one does.
+        @Override
+        public int currentEnergy() {
+            return this.energy;
+        }
+
+        @Override
+        public void setEnergy(int amount) {
+            this.energy = Math.max(0, Math.min(this.capacity, amount));
+        }
+
+        @Override
+        public int energyCapacity() {
+            return this.capacity;
+        }
+
+        @Override
+        public int maxInsertPerOp() {
+            return this.maxReceive;
+        }
+
+        @Override
+        public void onEnergyCommitted() {
+            setChanged();
         }
 
         @Override
@@ -277,8 +307,24 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
         return outputView;
     }
 
+    /** 26.1 {@code Capabilities.Item.BLOCK} input view: insert-only over the bucket + item slots (per-slot validity routes each). */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResource() {
+        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
+            items, new int[] {BUCKET_SLOT, ITEM_SLOT}, true, false);
+    }
+
+    /** 26.1 {@code Capabilities.Item.BLOCK} output view: extract-only over the Mimic Slime Bucket slot. */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResource() {
+        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(items, new int[] {OUTPUT_SLOT}, false, true);
+    }
+
     public EnergyStorage energyStorage() {
         return energy;
+    }
+
+    /** The 26.1 {@code Capabilities.Energy.BLOCK} view (receive-only); wraps {@link #energy}. */
+    public net.neoforged.neoforge.transfer.energy.EnergyHandler energyHandler() {
+        return new com.flatts.productivefrogs.content.transfer.ReceiveOnlyEnergyHandler(energy);
     }
 
     public int progress() {

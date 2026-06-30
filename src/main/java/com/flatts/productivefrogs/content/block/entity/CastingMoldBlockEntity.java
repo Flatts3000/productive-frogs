@@ -207,8 +207,26 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
         return fluidHandler;
     }
 
+    /**
+     * The 26.1 {@code Capabilities.Fluid.BLOCK} view: fill-only (molten in, never
+     * back out), recipe-gated by {@link #acceptsFluid}. Wraps {@link #tank} with the
+     * snapshot transaction discipline; commit fires setChanged + sync.
+     */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> fluidResource() {
+        return new com.flatts.productivefrogs.content.transfer.FluidTankResourceHandler(
+            tank, this::acceptsFluid, true, false, () -> {
+                setChanged();
+                syncToClients();
+            });
+    }
+
     public IItemHandler outputView() {
         return outputView;
+    }
+
+    /** 26.1 {@code Capabilities.Item.BLOCK} view: extract-only over the cast-item output slot. */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResource() {
+        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(output, new int[] {OUTPUT_SLOT}, false, true);
     }
 
     public ItemStackHandler output() {
