@@ -21,6 +21,7 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 /**
  * Brain behavior that lays a Primed Frog Egg block of the parent's category
@@ -142,8 +143,12 @@ public final class LayCategoryFrogspawn {
      * Place the frog's egg on the surface of a water source it is in contact
      * with. Returns false (keep looking) when the frog is mid-air or no valid
      * surface source sits within reach.
+     *
+     * <p>Exposed as the end-to-end {@code PFGameTests} seam (#270): it covers the
+     * footing gate, the surface search, and the actual egg placement together.
      */
-    private static boolean tryLayOnWaterSurface(ServerLevel level, ResourceFrog frog) {
+    @VisibleForTesting
+    public static boolean tryLayOnWaterSurface(ServerLevel level, ResourceFrog frog) {
         // Lay while planted on the bank or while standing in the water (a
         // submerged frog lays at the surface above it); never mid-jump. The
         // surface search is the real gate - it only succeeds beside/over water.
@@ -199,6 +204,7 @@ public final class LayCategoryFrogspawn {
      * geometry is asserted directly.
      */
     @Nullable
+    @VisibleForTesting
     public static BlockPos findLaySurface(ServerLevel level, Frog frog) {
         BlockPos frogPos = frog.blockPosition();
         // Footing block, mud/slab/snow-aware (getBlockPosBelowThatAffectsMyMovement

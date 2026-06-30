@@ -5308,7 +5308,11 @@ public final class PFGameTests {
         BlockPos got = com.flatts.productivefrogs.content.entity.ai.LayCategoryFrogspawn
             .findLaySurface(helper.getLevel(), frog);
         BlockPos expected = helper.absolutePos(water.above());
-        if (!expected.equals(got)) {
+        if (got == null) {
+            helper.fail("no lay target found from a full-block bank (control should always work)");
+            return;
+        }
+        if (!got.equals(expected)) {
             helper.fail("full-block-bank lay target " + got + " != expected surface " + expected);
             return;
         }
@@ -5344,6 +5348,43 @@ public final class PFGameTests {
         }
         if (!got.equals(expected)) {
             helper.fail("submerged lay target " + got + " != expected surface " + expected);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * End-to-end (#270): the full lay path - footing gate, surface search, and
+     * the actual egg placement - drops a Primed Frog Egg on the pool surface for
+     * a frog standing on a mud bank. Complements the geometry-seam tests above by
+     * exercising {@code tryLayOnWaterSurface} (the gate + {@code level.setBlock})
+     * rather than just the search, so a regression in the {@code onGround} gate or
+     * the placement is caught too.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 40)
+    public static void frogLaysEggOnMudBankEndToEnd(GameTestHelper helper) {
+        BlockPos mud = new BlockPos(2, 1, 2);
+        BlockPos water = new BlockPos(3, 1, 2);
+        helper.setBlock(mud, Blocks.MUD);
+        helper.setBlock(water, Blocks.WATER);
+
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 2));
+        frog.setCategory(Category.CAVE);
+        seatFrogOn(helper, frog, mud, 0.875);
+        // setPos alone leaves onGround false; the lay gate needs it true (physics
+        // would set it once settled), so assert it for this in-place geometry.
+        frog.setOnGround(true);
+
+        boolean laid = com.flatts.productivefrogs.content.entity.ai.LayCategoryFrogspawn
+            .tryLayOnWaterSurface(helper.getLevel(), frog);
+        if (!laid) {
+            helper.fail("frog on a mud bank did not lay (end-to-end, issue #270)");
+            return;
+        }
+        BlockPos eggPos = helper.absolutePos(water.above());
+        if (!(helper.getLevel().getBlockState(eggPos).getBlock()
+                instanceof com.flatts.productivefrogs.content.block.PrimedFrogEggBlock)) {
+            helper.fail("no Primed Frog Egg placed on the pool surface at " + water.above());
             return;
         }
         helper.succeed();
