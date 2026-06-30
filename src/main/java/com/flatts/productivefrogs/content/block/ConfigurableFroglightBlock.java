@@ -91,7 +91,7 @@ public class ConfigurableFroglightBlock extends RotatedPillarBlock implements En
                 nowOn ? SoundEvents.BEACON_ACTIVATE : SoundEvents.BEACON_DEACTIVATE,
                 SoundSource.BLOCKS, 0.4F, 1.5F);
         }
-        return InteractionResult.sidedSuccess(level.isClientSide());
+        return InteractionResult.SUCCESS;
     }
 
     /**

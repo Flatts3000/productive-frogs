@@ -184,7 +184,7 @@ public class MimicSlime extends Slime implements Bucketable {
             CriteriaTriggers.FILLED_BUCKET.trigger(serverPlayer, filled);
         }
         this.discard();
-        return InteractionResult.sidedSuccess(level.isClientSide());
+        return InteractionResult.SUCCESS;
     }
 
     @Override

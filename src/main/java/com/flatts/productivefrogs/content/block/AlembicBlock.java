@@ -47,7 +47,7 @@ public class AlembicBlock extends Block implements EntityBlock {
                 && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
             serverPlayer.openMenu(alembic, pos);
         }
-        return InteractionResult.sidedSuccess(level.isClientSide());
+        return InteractionResult.SUCCESS;
     }
 
     @Override

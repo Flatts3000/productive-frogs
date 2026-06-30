@@ -9,7 +9,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -64,32 +63,32 @@ public final class FrogEggItem extends Item {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
         BlockHitResult hit = getPlayerPOVHitResult(level, player, ClipContext.Fluid.SOURCE_ONLY);
 
         if (hit.getType() != HitResult.Type.BLOCK) {
-            return InteractionResultHolder.pass(held);
+            return InteractionResult.PASS;
         }
 
         BlockPos waterPos = hit.getBlockPos();
         if (!level.mayInteract(player, waterPos)) {
-            return InteractionResultHolder.pass(held);
+            return InteractionResult.PASS;
         }
 
         FluidState fluid = level.getFluidState(waterPos);
         if (!fluid.is(Fluids.WATER) || !fluid.isSource()) {
-            return InteractionResultHolder.pass(held);
+            return InteractionResult.PASS;
         }
 
         BlockPos placePos = waterPos.above();
         if (!player.mayUseItemAt(placePos, hit.getDirection(), held)) {
-            return InteractionResultHolder.pass(held);
+            return InteractionResult.PASS;
         }
 
         BlockState target = level.getBlockState(placePos);
         if (!target.isAir() && !target.canBeReplaced()) {
-            return InteractionResultHolder.pass(held);
+            return InteractionResult.PASS;
         }
 
         if (!level.isClientSide()) {
@@ -100,7 +99,7 @@ public final class FrogEggItem extends Item {
                 : PFBlocks.primedEgg(contained);
 
             if (!level.setBlockAndUpdate(placePos, placeBlock.defaultBlockState())) {
-                return InteractionResultHolder.pass(held);
+                return InteractionResult.PASS;
             }
 
             // Bottle-empty sound: the player is tipping frogspawn out of the
@@ -110,10 +109,10 @@ public final class FrogEggItem extends Item {
 
             ItemStack result = ItemUtils.createFilledResult(held, player, new ItemStack(Items.GLASS_BOTTLE));
             player.setItemInHand(hand, result);
-            return InteractionResultHolder.success(result);
+            return InteractionResult.SUCCESS;
         }
 
-        return InteractionResultHolder.success(held);
+        return InteractionResult.SUCCESS;
     }
 
     @Override

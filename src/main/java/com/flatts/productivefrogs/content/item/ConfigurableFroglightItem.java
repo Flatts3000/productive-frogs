@@ -14,7 +14,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -173,11 +172,11 @@ public final class ConfigurableFroglightItem extends BlockItem {
      * still works because that goes through {@code useOn} when aiming at a block.
      */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
         if (stored == null || !PFConfig.brewedFroglightsEnabled()) {
-            return InteractionResultHolder.pass(stack);
+            return InteractionResult.PASS;
         }
         if (!level.isClientSide()) {
             StoredEffect toggled = stored.withEnabled(!stored.enabled());
@@ -186,7 +185,7 @@ public final class ConfigurableFroglightItem extends BlockItem {
                 toggled.enabled() ? SoundEvents.BEACON_ACTIVATE : SoundEvents.BEACON_DEACTIVATE,
                 SoundSource.PLAYERS, 0.4F, 1.5F);
         }
-        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+        return InteractionResult.SUCCESS;
     }
 
     /**

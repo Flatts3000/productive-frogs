@@ -123,7 +123,7 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected net.minecraft.world.ItemInteractionResult useItemOn(
+    protected net.minecraft.world.InteractionResult useItemOn(
         ItemStack stack,
         BlockState state,
         Level level,
@@ -133,12 +133,12 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
         BlockHitResult hit
     ) {
         // Open the GUI regardless of held item. 1.21.1 useItemOn returns
-        // ItemInteractionResult (not InteractionResult); SUCCESS / PASS_TO_DEFAULT_BLOCK_INTERACTION
+        // InteractionResult (not InteractionResult); SUCCESS / PASS_TO_DEFAULT_BLOCK_INTERACTION
         // are the relevant return values.
         InteractionResult openResult = openMilkerMenu(state, level, pos, player);
         return openResult == InteractionResult.SUCCESS
-            ? net.minecraft.world.ItemInteractionResult.SUCCESS
-            : net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            ? net.minecraft.world.InteractionResult.SUCCESS
+            : net.minecraft.world.InteractionResult.TRY_WITH_EMPTY_HAND;
     }
 
     private InteractionResult openMilkerMenu(BlockState state, Level level, BlockPos pos, Player player) {

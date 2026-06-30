@@ -103,7 +103,7 @@ public class SlimeChurnBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected net.minecraft.world.ItemInteractionResult useItemOn(
+    protected net.minecraft.world.InteractionResult useItemOn(
         ItemStack stack,
         BlockState state,
         Level level,
@@ -114,8 +114,8 @@ public class SlimeChurnBlock extends Block implements EntityBlock {
     ) {
         InteractionResult openResult = openChurnMenu(level, pos, player);
         return openResult == InteractionResult.SUCCESS
-            ? net.minecraft.world.ItemInteractionResult.SUCCESS
-            : net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            ? net.minecraft.world.InteractionResult.SUCCESS
+            : net.minecraft.world.InteractionResult.TRY_WITH_EMPTY_HAND;
     }
 
     private InteractionResult openChurnMenu(Level level, BlockPos pos, Player player) {

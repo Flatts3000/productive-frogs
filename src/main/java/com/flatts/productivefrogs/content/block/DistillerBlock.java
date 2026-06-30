@@ -49,7 +49,7 @@ public class DistillerBlock extends Block implements EntityBlock {
                 && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
             serverPlayer.openMenu(distiller, pos);
         }
-        return InteractionResult.sidedSuccess(level.isClientSide());
+        return InteractionResult.SUCCESS;
     }
 
     @Override
