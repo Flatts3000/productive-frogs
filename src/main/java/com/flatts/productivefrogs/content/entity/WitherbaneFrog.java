@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.content.entity;
 
 import com.flatts.productivefrogs.registry.PFEntities;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Pose;
@@ -47,7 +48,7 @@ public class WitherbaneFrog extends Frog {
 
     /** No brain tick - the display frog never hunts, jumps, or wanders. */
     @Override
-    protected void customServerAiStep() {
+    protected void customServerAiStep(ServerLevel level) {
         // intentionally empty
     }
 
@@ -98,7 +99,7 @@ public class WitherbaneFrog extends Frog {
     }
 
     @Override
-    public boolean hurt(DamageSource source, float amount) {
+    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
         return false; // invulnerable display entity
     }
 

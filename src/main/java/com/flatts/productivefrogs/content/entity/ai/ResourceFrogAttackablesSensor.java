@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.content.entity.FrogStats;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.util.PFDebug;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.sensing.FrogAttackablesSensor;
@@ -43,12 +44,12 @@ import net.minecraft.world.entity.animal.frog.Frog;
 public class ResourceFrogAttackablesSensor extends FrogAttackablesSensor {
 
     @Override
-    protected boolean isMatchingEntity(LivingEntity attacker, LivingEntity target) {
+    protected boolean isMatchingEntity(ServerLevel level, LivingEntity attacker, LivingEntity target) {
         if (!(attacker instanceof ResourceFrog frog)) {
             // Defensive: this sensor is only attached to ResourceFrog brains, so
             // a non-ResourceFrog attacker would mean misconfigured wiring. Defer
             // to vanilla rather than silently dropping prey.
-            return super.isMatchingEntity(attacker, target);
+            return super.isMatchingEntity(level, attacker, target);
         }
         // Honour the Appetite eat cooldown exactly as vanilla does.
         if (frog.getBrain().hasMemoryValue(MemoryModuleType.HAS_HUNTING_COOLDOWN)) {
@@ -61,7 +62,7 @@ public class ResourceFrogAttackablesSensor extends FrogAttackablesSensor {
         if (isOwningHatchFull(frog)) {
             return false;
         }
-        if (!Sensor.isEntityAttackable(frog, target) || !Frog.canEat(target) || isUnreachable(frog, target)) {
+        if (!Sensor.isEntityAttackable(level, frog, target) || !Frog.canEat(target) || isUnreachable(frog, target)) {
             return false;
         }
         // Midas (Equivalence lane, #253) eats ONLY Mimic Slimes - never the six
