@@ -5240,6 +5240,116 @@ public final class PFGameTests {
     }
 
     // =================================================================
+    // Frogspawn lay geometry (issue #270) - LayCategoryFrogspawn.findLaySurface.
+    // The lay target must resolve the adjacent/own water surface regardless of
+    // sub-full footing (mud/slab/snow) or submersion, where vanilla's
+    // blockPosition().below() math fails. Asserted on the lay-geometry seam
+    // rather than by driving the full brain (which is fragile in-world).
+    // =================================================================
+
+    /**
+     * The block position just above {@code support}'s collision top, in absolute
+     * coords - where a frog resting on {@code support} actually sits. For mud
+     * (collision top 0.875) this is below the next whole block, which is exactly
+     * the sub-full footing that broke vanilla's lay search (#270).
+     */
+    private static void seatFrogOn(GameTestHelper helper, ResourceFrog frog, BlockPos supportRel, double collisionTop) {
+        BlockPos support = helper.absolutePos(supportRel);
+        frog.setPos(support.getX() + 0.5, support.getY() + collisionTop, support.getZ() + 0.5);
+    }
+
+    /**
+     * #270: a frog on a MUD bank beside a pool must still find the water surface.
+     * Mud's 0.875 collision top sinks the frog so {@code blockPosition()} floors a
+     * whole block low; the footing-aware search must compensate and resolve the
+     * adjacent source's surface.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 40)
+    public static void frogLaySurfaceResolvesFromMudBank(GameTestHelper helper) {
+        BlockPos mud = new BlockPos(2, 1, 2);
+        BlockPos water = new BlockPos(3, 1, 2);   // beside the mud, same level
+        helper.setBlock(mud, Blocks.MUD);
+        helper.setBlock(water, Blocks.WATER);     // source
+
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 2));
+        frog.setCategory(Category.CAVE);
+        seatFrogOn(helper, frog, mud, 0.875);     // mud collision top
+
+        BlockPos got = com.flatts.productivefrogs.content.entity.ai.LayCategoryFrogspawn
+            .findLaySurface(helper.getLevel(), frog);
+        BlockPos expected = helper.absolutePos(water.above());
+        if (got == null) {
+            helper.fail("no lay target found from a mud bank (issue #270 regression)");
+            return;
+        }
+        if (!got.equals(expected)) {
+            helper.fail("mud-bank lay target " + got + " != expected surface " + expected);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Control for #270: a frog on a full solid block beside a pool resolves the
+     * adjacent surface (the case that always worked). Guards against the footing
+     * rewrite breaking the common bank lay.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 40)
+    public static void frogLaySurfaceResolvesFromFullBlockBank(GameTestHelper helper) {
+        BlockPos bank = new BlockPos(2, 1, 2);
+        BlockPos water = new BlockPos(3, 1, 2);
+        helper.setBlock(bank, Blocks.STONE);
+        helper.setBlock(water, Blocks.WATER);
+
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 2));
+        frog.setCategory(Category.CAVE);
+        seatFrogOn(helper, frog, bank, 1.0);      // full block top
+
+        BlockPos got = com.flatts.productivefrogs.content.entity.ai.LayCategoryFrogspawn
+            .findLaySurface(helper.getLevel(), frog);
+        BlockPos expected = helper.absolutePos(water.above());
+        if (!expected.equals(got)) {
+            helper.fail("full-block-bank lay target " + got + " != expected surface " + expected);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Beyond vanilla (#270): a SUBMERGED frog lays at the surface of its own
+     * column. Vanilla bails on {@code isInWater()}; PF climbs to the source whose
+     * block above is air. Two-deep pool, frog in the lower water block.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 40)
+    public static void frogLaySurfaceResolvesWhenSubmerged(GameTestHelper helper) {
+        BlockPos floor = new BlockPos(2, 1, 2);
+        BlockPos lower = new BlockPos(2, 2, 2);   // lower water block
+        BlockPos upper = new BlockPos(2, 3, 2);   // surface source
+        helper.setBlock(floor, Blocks.STONE);
+        helper.setBlock(lower, Blocks.WATER);
+        helper.setBlock(upper, Blocks.WATER);     // air at (2,4,2) is the surface
+
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), lower);
+        frog.setCategory(Category.CAVE);
+        // Seat the frog inside the lower water block (submerged).
+        BlockPos abs = helper.absolutePos(lower);
+        frog.setPos(abs.getX() + 0.5, abs.getY() + 0.1, abs.getZ() + 0.5);
+
+        BlockPos got = com.flatts.productivefrogs.content.entity.ai.LayCategoryFrogspawn
+            .findLaySurface(helper.getLevel(), frog);
+        BlockPos expected = helper.absolutePos(upper.above());   // air above the surface source
+        if (got == null) {
+            helper.fail("submerged frog found no surface lay target (should climb its own column)");
+            return;
+        }
+        if (!got.equals(expected)) {
+            helper.fail("submerged lay target " + got + " != expected surface " + expected);
+            return;
+        }
+        helper.succeed();
+    }
+
+    // =================================================================
     // Frog stat EFFECTS (docs/frog_breeding.md) - the gameplay payoff of
     // the three stats, verified in-world (curve math is in FrogStatsTest).
     // =================================================================
