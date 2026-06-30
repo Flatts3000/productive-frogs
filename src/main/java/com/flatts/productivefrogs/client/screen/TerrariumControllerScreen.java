@@ -6,7 +6,7 @@ import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFRegistries;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -29,7 +29,9 @@ public class TerrariumControllerScreen extends PFContainerScreen<TerrariumContro
     private static final int OK_GREEN = 0xFF3FA037;
     private static final int BAD_RED = 0xFFB23030;
     private static final int SWATCH_BORDER = 0xFF2B2B2B;
-    private static final int TEXT = 0x404040;
+    // 26.1 GuiGraphicsExtractor.text() skips drawing when the alpha channel is 0
+    // (the old GuiGraphics.drawString auto-promoted alpha); carry full alpha here.
+    private static final int TEXT = 0xFF404040;
 
     private static final int DOT_X = 9;
     private static final int DOT_Y = 19;
@@ -43,13 +45,12 @@ public class TerrariumControllerScreen extends PFContainerScreen<TerrariumContro
     private static final int BAR_H = 12;
 
     public TerrariumControllerScreen(TerrariumControllerMenu menu, Inventory playerInv, Component title) {
-        super(menu, playerInv, title);
-        this.imageWidth = 176;
-        this.imageHeight = 94;
+        super(menu, playerInv, title, 176, 94);
     }
 
     @Override
-    protected void renderBg(GuiGraphics gui, float partialTick, int mouseX, int mouseY) {
+    public void extractBackground(GuiGraphicsExtractor gui, int mouseX, int mouseY, float partialTick) {
+        super.extractBackground(gui, mouseX, mouseY, partialTick);
         int x = this.leftPos;
         int y = this.topPos;
         gui.fill(x, y, x + this.imageWidth, y + this.imageHeight, PANEL);
@@ -89,8 +90,8 @@ public class TerrariumControllerScreen extends PFContainerScreen<TerrariumContro
     }
 
     @Override
-    protected void renderLabels(GuiGraphics gui, int mouseX, int mouseY) {
-        gui.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, TEXT, false);
+    protected void extractLabels(GuiGraphicsExtractor gui, int mouseX, int mouseY) {
+        gui.text(this.font, this.title, this.titleLabelX, this.titleLabelY, TEXT, false);
 
         // Formed / problem line beside the indicator dot.
         Component structure;
@@ -106,34 +107,34 @@ public class TerrariumControllerScreen extends PFContainerScreen<TerrariumContro
                 : Component.translatable("message.productivefrogs.terrarium.not_formed_generic");
             structure = reason.copy().withStyle(ChatFormatting.DARK_RED);
         }
-        gui.drawString(this.font, structure, DOT_X + DOT + 4, DOT_Y, TEXT, false);
+        gui.text(this.font, structure, DOT_X + DOT + 4, DOT_Y, TEXT, false);
 
         // Milk name beside the swatch - only when milk is buffered.
         Identifier variant = this.menu.tankVariant();
         if (variant != null) {
-            gui.drawString(this.font,
+            gui.text(this.font,
                 Component.translatable("block.productivefrogs." + variant.getPath() + "_slime_milk"),
                 SWATCH_X + SWATCH + 4, SWATCH_Y + 1, TEXT, false);
         }
 
         // Charge count overlaid on the buffer bar.
-        gui.drawCenteredString(this.font, this.menu.charges() + " / " + this.menu.bufferDepth(),
+        gui.centeredText(this.font, this.menu.charges() + " / " + this.menu.bufferDepth(),
             BAR_X + BAR_W / 2, BAR_Y + 2, 0xFFFFFFFF);
 
         // Multiblock contents + live population (dashes when unformed).
         boolean formed = this.menu.formed();
         int row = BAR_Y + BAR_H + 6;
-        gui.drawString(this.font,
+        gui.text(this.font,
             Component.translatable("productivefrogs.gui.controller.sprinklers", formed ? String.valueOf(this.menu.sprinklerCount()) : "-"),
             BAR_X, row, TEXT, false);
-        gui.drawString(this.font,
+        gui.text(this.font,
             Component.translatable("productivefrogs.gui.controller.incubators", formed ? String.valueOf(this.menu.incubatorCount()) : "-"),
             BAR_X + 88, row, TEXT, false);
         // Live frog count only - no "/ cap" denominator. The cap is just an
         // Incubator release gate, not a hard limit (frogs can be led/placed in
         // past it), so showing "10 / 8" read as a broken cap. See the Incubator
         // GUI for the cap that actually governs its releases.
-        gui.drawString(this.font,
+        gui.text(this.font,
             Component.translatable("productivefrogs.gui.controller.frogs",
                 formed ? String.valueOf(this.menu.frogCount()) : "-"),
             BAR_X, row + 11, TEXT, false);

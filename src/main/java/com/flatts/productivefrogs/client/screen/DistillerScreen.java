@@ -3,7 +3,8 @@ package com.flatts.productivefrogs.client.screen;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.menu.DistillerMenu;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
@@ -43,33 +44,32 @@ public class DistillerScreen extends PFContainerScreen<DistillerMenu> {
 
     public DistillerScreen(DistillerMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
-        this.imageWidth = 176;
-        this.imageHeight = 166;
     }
 
     @Override
-    public void render(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-        super.render(gui, mouseX, mouseY, partialTick);
+    protected void extractTooltip(GuiGraphicsExtractor gui, int mouseX, int mouseY) {
+        super.extractTooltip(gui, mouseX, mouseY);
         renderEnergyTooltip(gui, mouseX, mouseY);
     }
 
-    private void renderEnergyTooltip(GuiGraphics gui, int mouseX, int mouseY) {
+    private void renderEnergyTooltip(GuiGraphicsExtractor gui, int mouseX, int mouseY) {
         int bx = (this.width - this.imageWidth) / 2 + BAR_X;
         int by = (this.height - this.imageHeight) / 2 + BAR_Y;
         if (mouseX < bx || mouseX >= bx + BAR_WIDTH || mouseY < by || mouseY >= by + BAR_HEIGHT) {
             return;
         }
-        gui.renderComponentTooltip(this.font, java.util.List.of(
+        gui.setComponentTooltipForNextFrame(this.font, java.util.List.of(
             Component.translatable("productivefrogs.gui.energy_amount",
                 this.menu.getEnergy(), this.menu.getEnergyCapacity()).withStyle(ChatFormatting.GRAY)
         ), mouseX, mouseY);
     }
 
     @Override
-    protected void renderBg(GuiGraphics gui, float partialTick, int mouseX, int mouseY) {
+    public void extractBackground(GuiGraphicsExtractor gui, int mouseX, int mouseY, float partialTick) {
+        super.extractBackground(gui, mouseX, mouseY, partialTick);
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
-        gui.blit(BACKGROUND, x, y, 0.0F, 0.0F, this.imageWidth, this.imageHeight,
+        gui.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND, x, y, 0.0F, 0.0F, this.imageWidth, this.imageHeight,
                  BG_TEX_WIDTH, BG_TEX_HEIGHT);
 
         // Energy bar, filling bottom-up.
@@ -91,9 +91,9 @@ public class DistillerScreen extends PFContainerScreen<DistillerMenu> {
         int total = this.menu.getProgressTotal();
         if (progress > 0 && total > 0) {
             int arrow = Math.min(ARROW_WIDTH, (progress * ARROW_WIDTH) / total);
-            gui.blit(BACKGROUND,
+            gui.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND,
                      x + ARROW_BG_X, y + ARROW_BG_Y,
-                     ARROW_SRC_X, ARROW_SRC_Y,
+                     (float) ARROW_SRC_X, (float) ARROW_SRC_Y,
                      arrow, ARROW_HEIGHT,
                      BG_TEX_WIDTH, BG_TEX_HEIGHT);
         }

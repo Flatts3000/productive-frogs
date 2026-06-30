@@ -3,7 +3,8 @@ package com.flatts.productivefrogs.client.screen;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
 import com.flatts.productivefrogs.content.menu.SlimeMilkerMenu;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
@@ -45,17 +46,16 @@ public class SlimeMilkerScreen extends PFContainerScreen<SlimeMilkerMenu> {
     private static final int BG_TEX_HEIGHT = 256;
 
     public SlimeMilkerScreen(SlimeMilkerMenu menu, Inventory playerInv, Component title) {
+        // Vanilla container size: 176x166 PNG region (the 3-arg base default).
         super(menu, playerInv, title);
-        // Vanilla container size: 176x166 PNG region.
-        this.imageWidth = 176;
-        this.imageHeight = 166;
     }
 
     @Override
-    protected void renderBg(GuiGraphics gui, float partialTick, int mouseX, int mouseY) {
+    public void extractBackground(GuiGraphicsExtractor gui, int mouseX, int mouseY, float partialTick) {
+        super.extractBackground(gui, mouseX, mouseY, partialTick);
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
-        gui.blit(BACKGROUND, x, y, 0.0F, 0.0F, this.imageWidth, this.imageHeight,
+        gui.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND, x, y, 0.0F, 0.0F, this.imageWidth, this.imageHeight,
                  BG_TEX_WIDTH, BG_TEX_HEIGHT);
 
         // Cook-progress arrow — width scales linearly with cookProgress
@@ -65,9 +65,9 @@ public class SlimeMilkerScreen extends PFContainerScreen<SlimeMilkerMenu> {
         int total = this.menu.getCookTotal();
         if (progress > 0 && total > 0) {
             int filled = Math.min(ARROW_WIDTH, (progress * ARROW_WIDTH) / total);
-            gui.blit(BACKGROUND,
+            gui.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND,
                      x + ARROW_BG_X, y + ARROW_BG_Y,
-                     ARROW_SRC_X, ARROW_SRC_Y,
+                     (float) ARROW_SRC_X, (float) ARROW_SRC_Y,
                      filled, ARROW_HEIGHT,
                      BG_TEX_WIDTH, BG_TEX_HEIGHT);
         }
