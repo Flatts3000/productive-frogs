@@ -12,6 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
@@ -240,6 +241,20 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
 
     public int progress() {
         return progress;
+    }
+
+    // 26.1 port: the cast output drops here (the BE still exists on the removal path), NOT in the
+    // block's affectNeighborsAfterRemoval, which runs after the BE is gone. The output handler is
+    // not a vanilla Container, so the super default won't drop it - re-home the pop here.
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (this.level instanceof ServerLevel serverLevel) {
+            ItemStack out = output.getStackInSlot(OUTPUT_SLOT);
+            if (!out.isEmpty()) {
+                Block.popResource(serverLevel, pos, out);
+            }
+        }
     }
 
     /**

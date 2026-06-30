@@ -144,16 +144,9 @@ public class TerrariumControllerBlock extends Block implements EntityBlock {
         return InteractionResult.SUCCESS;
     }
 
-    // NOTE (26.1 port): the BlockEntity is removed BEFORE affectNeighborsAfterRemoval runs,
-    // so the multiblock teardown below can no longer read the BE here. The teardown must move
-    // to TerrariumControllerBlockEntity#preRemoveSideEffects (BlockEntity-owned). Kept here as
-    // a (currently no-op) guard so the intent stays visible until that relocation lands.
-    @Override
-    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
-        if (level.getBlockEntity(pos) instanceof TerrariumControllerBlockEntity be) {
-            be.onBroken(level, pos);
-        }
-    }
+    // 26.1: the multiblock teardown lives in TerrariumControllerBlockEntity#preRemoveSideEffects
+    // (which fires while the BE still exists, unlike affectNeighborsAfterRemoval where it is
+    // already gone). This block has no BE-independent removal side effect, so no override here.
 
     @SuppressWarnings("unchecked")
     @Nullable

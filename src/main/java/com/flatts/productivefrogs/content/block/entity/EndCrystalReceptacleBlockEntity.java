@@ -8,6 +8,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
@@ -124,6 +126,20 @@ public class EndCrystalReceptacleBlockEntity extends BlockEntity {
     /** The held crystal, for drop-on-break. */
     public ItemStack contents() {
         return crystal.getStackInSlot(0);
+    }
+
+    // 26.1 port: the crystal drops here (the BE still exists on the removal path), NOT in the
+    // block's affectNeighborsAfterRemoval, which runs after the BE is gone. This BE is not a
+    // vanilla Container, so the super default won't drop it - re-home the spill here.
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (this.level instanceof ServerLevel serverLevel) {
+            ItemStack held = contents();
+            if (!held.isEmpty()) {
+                Containers.dropItemStack(serverLevel, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, held);
+            }
+        }
     }
 
     private void onCrystalChanged() {

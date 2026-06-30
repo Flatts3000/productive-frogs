@@ -3,10 +3,8 @@ package com.flatts.productivefrogs.content.block;
 import com.flatts.productivefrogs.content.block.entity.AlembicBlockEntity;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -51,21 +49,9 @@ public class AlembicBlock extends Block implements EntityBlock {
         return InteractionResult.SUCCESS;
     }
 
-    // NOTE (26.1 port): the BlockEntity is removed before affectNeighborsAfterRemoval runs, so the
-    // inventory drop below can no longer read the BE here. The drop must move to
-    // AlembicBlockEntity#preRemoveSideEffects (BlockEntity-owned). Kept as a (currently no-op)
-    // guard so the intent stays visible until that relocation lands.
-    @Override
-    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
-        if (level.getBlockEntity(pos) instanceof AlembicBlockEntity alembic) {
-            for (int slot = 0; slot < alembic.items().getSlots(); slot++) {
-                ItemStack held = alembic.items().getStackInSlot(slot);
-                if (!held.isEmpty()) {
-                    Block.popResource(level, pos, held);
-                }
-            }
-        }
-    }
+    // 26.1 port: drop-on-break now lives in AlembicBlockEntity#preRemoveSideEffects (the BE still
+    // exists there, whereas it is gone by affectNeighborsAfterRemoval). This block has no
+    // BE-independent removal side effect, so no affectNeighborsAfterRemoval override is needed.
 
     @SuppressWarnings("unchecked")
     @Nullable

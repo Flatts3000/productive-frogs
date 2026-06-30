@@ -227,6 +227,17 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
         TerrariumManager.deregister(level, pos);
     }
 
+    // 26.1 port: multiblock teardown runs here (the BE still exists on the removal path), NOT in
+    // the block's affectNeighborsAfterRemoval, which runs after the BE is gone and could no longer
+    // read it. Deregisters from TerrariumManager so the formed structure is torn down on break.
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (this.level instanceof ServerLevel serverLevel) {
+            onBroken(serverLevel, pos);
+        }
+    }
+
     // ---- milk funnel (phase 2) -----------------------------------------
 
     /**

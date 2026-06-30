@@ -3,7 +3,6 @@ package com.flatts.productivefrogs.content.block;
 import com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -71,19 +70,9 @@ public class CastingMoldBlock extends Block implements EntityBlock {
         return InteractionResult.SUCCESS;
     }
 
-    // NOTE (26.1 port): the BlockEntity is removed before affectNeighborsAfterRemoval runs, so the
-    // output drop below can no longer read the BE here. The drop must move to
-    // CastingMoldBlockEntity#preRemoveSideEffects (BlockEntity-owned). Kept as a (currently no-op)
-    // guard so the intent stays visible until that relocation lands.
-    @Override
-    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
-        if (level.getBlockEntity(pos) instanceof CastingMoldBlockEntity mold) {
-            ItemStack out = mold.output().getStackInSlot(CastingMoldBlockEntity.OUTPUT_SLOT);
-            if (!out.isEmpty()) {
-                Block.popResource(level, pos, out);
-            }
-        }
-    }
+    // 26.1 port: drop-on-break now lives in CastingMoldBlockEntity#preRemoveSideEffects (the BE
+    // still exists there, whereas it is gone by affectNeighborsAfterRemoval). This block has no
+    // BE-independent removal side effect, so no affectNeighborsAfterRemoval override is needed.
 
     @SuppressWarnings("unchecked")
     @Nullable

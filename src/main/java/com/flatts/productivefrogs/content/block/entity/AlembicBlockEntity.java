@@ -21,6 +21,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
@@ -329,6 +330,22 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
 
     public int progress() {
         return progress;
+    }
+
+    // 26.1 port: the held stacks drop here (the BE still exists on the removal path), NOT in the
+    // block's affectNeighborsAfterRemoval, which runs after the BE is gone. The handler is not a
+    // vanilla Container, so the super default won't drop it - re-home the slot loop here.
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (this.level instanceof ServerLevel serverLevel) {
+            for (int slot = 0; slot < items.getSlots(); slot++) {
+                ItemStack held = items.getStackInSlot(slot);
+                if (!held.isEmpty()) {
+                    Block.popResource(serverLevel, pos, held);
+                }
+            }
+        }
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, AlembicBlockEntity be) {

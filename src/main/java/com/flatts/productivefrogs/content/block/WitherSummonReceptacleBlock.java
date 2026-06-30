@@ -2,10 +2,8 @@ package com.flatts.productivefrogs.content.block;
 
 import com.flatts.productivefrogs.content.block.entity.WitherSummonReceptacleBlockEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -92,17 +90,7 @@ public class WitherSummonReceptacleBlock extends Block implements EntityBlock {
         return InteractionResult.SUCCESS;
     }
 
-    // NOTE (26.1 port): the BlockEntity is removed before affectNeighborsAfterRemoval runs, so the
-    // contents drop below can no longer read the BE here. The drop must move to
-    // WitherSummonReceptacleBlockEntity#preRemoveSideEffects (BlockEntity-owned). Kept as a
-    // (currently no-op) guard so the intent stays visible until that relocation lands.
-    @Override
-    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
-        if (level.getBlockEntity(pos) instanceof WitherSummonReceptacleBlockEntity be) {
-            ItemStack held = be.contents();
-            if (!held.isEmpty()) {
-                Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, held);
-            }
-        }
-    }
+    // 26.1: the held-item drop lives in WitherSummonReceptacleBlockEntity#preRemoveSideEffects
+    // (which fires while the BE still exists, unlike affectNeighborsAfterRemoval where it is
+    // already gone). This block has no BE-independent removal side effect, so no override here.
 }
