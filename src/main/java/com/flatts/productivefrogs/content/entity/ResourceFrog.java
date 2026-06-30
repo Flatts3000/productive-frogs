@@ -23,7 +23,6 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.ActivityData;
@@ -644,7 +643,12 @@ public class ResourceFrog extends Frog {
         // entire production loop stalled at the tongue grab. Any non-zero value
         // would technically kill a 1-HP size-1 slime — we use the vanilla number
         // so larger / armored future prey still die in one tongue eat.
-        return Mob.createMobAttributes()
+        // 26.1: base on Frog.createAttributes() (not Mob.createMobAttributes) so we
+        // inherit the frog-specific TEMPT_RANGE attribute that 26.1's TemptingSensor
+        // reads every tick - building from the bare Mob supplier omitted it and crashed
+        // the frog tick ("Can't find attribute minecraft:tempt_range"). The .add() calls
+        // below still override the values we customize.
+        return Frog.createAttributes()
             .add(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, 1.0)
             .add(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, 10.0)
             .add(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, 10.0)
