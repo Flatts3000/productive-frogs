@@ -1,8 +1,8 @@
 package com.flatts.productivefrogs.content.block.entity;
 
 import com.flatts.productivefrogs.registry.PFItemTags;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -87,12 +87,14 @@ public class SpawneryInventory extends ItemStackHandler {
         return outputView;
     }
 
-    public void serialize(CompoundTag tag) {
-        tag.merge(serializeNBT(RegistryAccess.EMPTY));
+    // 26.1: ItemStackHandler implements ValueIOSerializable; the BE hands us the
+    // ValueOutput/ValueInput child (legacy serializeNBT(RegistryAccess) is gone).
+    public void serialize(ValueOutput output) {
+        super.serialize(output);
     }
 
-    public void deserialize(CompoundTag tag) {
-        deserializeNBT(RegistryAccess.EMPTY, tag);
+    public void deserialize(ValueInput input) {
+        super.deserialize(input);
     }
 
 }
