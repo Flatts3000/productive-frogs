@@ -135,6 +135,12 @@ public final class PFVariantMilk {
         return h == null ? null : h.get();
     }
 
+    /** The variant's flowing fluid (pairs with {@link #sourceFluid}); used by the client FluidModel registration. */
+    public static SlimeMilkFluid.Flowing flowingFluid(Identifier variantId) {
+        DeferredHolder<Fluid, SlimeMilkFluid.Flowing> h = FLOWINGS.get(variantId);
+        return h == null ? null : h.get();
+    }
+
     /**
      * Reverse lookup: the variant id whose source fluid is {@code fluid}, or null.
      * Used by the Terrarium Controller's fluid intake to map a piped milk

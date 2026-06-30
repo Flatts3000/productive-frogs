@@ -17,25 +17,41 @@ import com.flatts.productivefrogs.client.renderer.ParentSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceFrogRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
+import com.flatts.productivefrogs.client.SynthesizedTint;
 import com.flatts.productivefrogs.client.screen.CastingMoldScreen;
 import com.flatts.productivefrogs.client.screen.SlimeChurnScreen;
 import com.flatts.productivefrogs.client.screen.SlimeMilkerScreen;
 import com.flatts.productivefrogs.client.screen.SpawneryScreen;
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.content.block.entity.MimicMilkSourceBlockEntity;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFEntities;
+import com.flatts.productivefrogs.registry.PFFluids;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
+import com.flatts.productivefrogs.registry.PFMoltenFluids;
 import com.flatts.productivefrogs.registry.PFParticles;
+import com.flatts.productivefrogs.registry.PFVariantMilk;
 import java.util.List;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.FluidModel;
+import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
+import net.neoforged.neoforge.client.event.RegisterFluidModelsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.fluid.FluidTintSource;
 
 /**
  * Client-only setup. Registers:
@@ -209,6 +225,83 @@ public final class PFClientEvents {
     }
 
     /**
+     * Per-fluid render models (26.1). {@code IClientFluidTypeExtensions} lost its
+     * texture/tint methods; still/flow textures + tint now come from a
+     * {@link FluidModel} registered here. PF mints its Slime Milk, Mimic Milk, and
+     * molten-metal fluids DYNAMICALLY at mod-init, so we register their models the
+     * same dynamic way - one shared greyscale texture set per family, tinted at
+     * RENDER time by the fluid's variant (the SlimeVariant registry isn't available
+     * at registration, so a baked constant won't do; {@link Tints#variantColor}
+     * resolves through the running client level, like the item {@link VariantColorTint}).
+     */
+    @SubscribeEvent
+    public static void onRegisterFluidModels(RegisterFluidModelsEvent event) {
+        Material milkStill = new Material(id("block/slime_milk_still"));
+        Material milkFlow = new Material(id("block/slime_milk_flow"));
+        for (Identifier vid : PFVariantMilk.registeredVariants()) {
+            Fluid src = PFVariantMilk.sourceFluid(vid);
+            Fluid flow = PFVariantMilk.flowingFluid(vid);
+            if (src == null || flow == null) {
+                continue;
+            }
+            event.register(new FluidModel.Unbaked(milkStill, milkFlow, null, variantFluidTint(vid)), src, flow);
+        }
+
+        // Mimic Milk (#253): shared milk texture; its colour is the source BE's
+        // synthesized item resolved at the queried position, neutral prismatic grey
+        // when no BE/position is available (e.g. the held-bucket render).
+        event.register(new FluidModel.Unbaked(milkStill, milkFlow, null, mimicFluidTint()),
+            PFFluids.MIMIC_MILK.get(), PFFluids.MIMIC_MILK_FLOWING.get());
+
+        Material moltenStill = new Material(id("block/molten_still"));
+        Material moltenFlow = new Material(id("block/molten_flow"));
+        for (Identifier mid : PFMoltenFluids.registeredMetals()) {
+            Fluid src = PFMoltenFluids.sourceFluid(mid);
+            Fluid flow = PFMoltenFluids.flowingFluid(mid);
+            if (src == null || flow == null) {
+                continue;
+            }
+            event.register(new FluidModel.Unbaked(moltenStill, moltenFlow, null, variantFluidTint(mid)), src, flow);
+        }
+    }
+
+    /** Render-time tint to a baked variant's {@code primary_color} (cream fallback when unresolved). */
+    private static FluidTintSource variantFluidTint(Identifier variant) {
+        return new FluidTintSource() {
+            @Override
+            public int color(FluidState state) {
+                int color = Tints.variantColor(null, variant);
+                return color != -1 ? color : Tints.opaque(0xF0F0E0);
+            }
+        };
+    }
+
+    /** Mimic Milk tint: the source BE's synthesized-item colour at {@code pos}, neutral grey otherwise. */
+    private static FluidTintSource mimicFluidTint() {
+        return new FluidTintSource() {
+            @Override
+            public int color(FluidState state) {
+                return 0xFFC8C8D2;
+            }
+
+            @Override
+            public int colorInWorld(FluidState fluidState, BlockState blockState, BlockAndTintGetter level, BlockPos pos) {
+                if (level != null && pos != null
+                        && level.getBlockEntity(pos) instanceof MimicMilkSourceBlockEntity be) {
+                    Identifier itemId = be.getSynthesizedItem();
+                    if (itemId != null) {
+                        Item item = BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
+                        if (item != null) {
+                            return SynthesizedTint.colorFor(item);
+                        }
+                    }
+                }
+                return color(fluidState);
+            }
+        };
+    }
+
+    /**
      * Bind the appliance MenuTypes to their client screens.
      */
     @SubscribeEvent
@@ -263,24 +356,4 @@ public final class PFClientEvents {
                 SynthesizedTint.clearCache();
             });
     }
-
-    // NOTE (26.1 port, R-1, fluid render moved to data-driven FluidModel):
-    // onRegisterClientExtensions was removed. IClientFluidTypeExtensions in 26.1
-    // lost getStillTexture / getFlowingTexture / getTintColor / getTintColor(state,
-    // getter, pos) - it only carries getRenderOverlayTexture / renderOverlay /
-    // modifyFogColor / modifyFogRender now. Per-fluid still/flow textures + tint
-    // are data-driven via FluidModel (FluidStateModelSet; sprite =
-    // ...getFluidStateModelSet().get(state).stillMaterial().sprite(), tint =
-    // FluidModel.fluidTintSource()). PF mints its per-variant Slime Milk fluids,
-    // the per-metal molten fluids, and the Mimic Milk fluid DYNAMICALLY at mod-init
-    // from the variant index, so none of them has a static fluid model JSON. Giving
-    // each one a FluidModel (datagen per known variant, or a runtime fluid-model
-    // hook) is tied to the deferred R-1 milk single-fluid rework - resolve them
-    // together. Until then these fluids render with the vanilla/default fluid model
-    // (untextured/untinted milk). The tint logic these extensions used to carry is
-    // preserved: per-variant + molten -> the variant's primary_color (see
-    // VariantColorTint / Tints.variantColor); Mimic Milk -> the source BE's
-    // synthesized item via SynthesizedTint.colorFor, neutral prismatic grey
-    // (0xFFC8C8D2) when no position/BE is available. runClient-verified; not a
-    // compile blocker.
 }

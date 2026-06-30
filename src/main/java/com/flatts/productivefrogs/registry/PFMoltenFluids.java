@@ -148,6 +148,13 @@ public final class PFMoltenFluids {
         return h == null ? null : h.get();
     }
 
+    /** The metal's flowing fluid (pairs with {@link #sourceFluid}); used by the client FluidModel registration. */
+    @Nullable
+    public static Fluid flowingFluid(Identifier variantId) {
+        DeferredHolder<Fluid, BaseFlowingFluid.Flowing> h = FLOWINGS.get(variantId);
+        return h == null ? null : h.get();
+    }
+
     @Nullable
     public static FluidType fluidType(Identifier variantId) {
         DeferredHolder<FluidType, FluidType> h = TYPES.get(variantId);
