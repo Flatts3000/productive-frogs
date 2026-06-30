@@ -189,7 +189,7 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
         if (phantom == null) {
             return; // never added to the world; only the loot context needs it
         }
-        phantom.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
+        phantom.snapTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
         LootParams params = new LootParams.Builder(server)
             .withParameter(LootContextParams.THIS_ENTITY, phantom)
             .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
@@ -234,14 +234,14 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
         if (frogs.isEmpty()) {
             DragonsbaneFrog frog = DragonsbaneFrog.type().create(server);
             if (frog != null) {
-                frog.moveTo(cx, cy, cz, 180.0F, 0.0F);
+                frog.snapTo(cx, cy, cz, 180.0F, 0.0F);
                 frog.setYBodyRot(180.0F);
                 frog.setYHeadRot(180.0F);
                 server.addFreshEntity(frog);
             }
         } else {
             DragonsbaneFrog frog = frogs.get(0);
-            frog.moveTo(cx, cy, cz, frog.getYRot(), 0.0F);
+            frog.snapTo(cx, cy, cz, frog.getYRot(), 0.0F);
             frog.setDeltaMovement(Vec3.ZERO);
             for (int i = 1; i < frogs.size(); i++) {
                 frogs.get(i).discard();

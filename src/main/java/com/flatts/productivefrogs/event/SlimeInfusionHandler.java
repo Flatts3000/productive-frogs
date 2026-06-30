@@ -17,7 +17,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.ConversionParams;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.player.Player;
@@ -25,7 +27,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import org.jetbrains.annotations.Nullable;
 
@@ -164,25 +165,27 @@ public final class SlimeInfusionHandler {
      */
     public static ResourceSlime transformInPlace(Slime sourceSlime, Category category) {
         EntityType<ResourceSlime> target = PFEntities.RESOURCE_SLIME.get();
-        if (!EventHooks.canLivingConvert(sourceSlime, target, ignored -> {})) {
-            return null;
-        }
 
         int size = sourceSlime.getSize();
         float health = sourceSlime.getHealth();
         Vec3 velocity = sourceSlime.getDeltaMovement();
 
-        ResourceSlime resource = sourceSlime.convertTo(target, false);
-        if (resource == null) {
-            return null;
-        }
-        EventHooks.onLivingConvert(sourceSlime, resource);
-        resource.setSize(size, false);
-        resource.setCategory(category);
-        resource.setHealth(health);
-        resource.setDeltaMovement(velocity);
-        resource.setPersistenceRequired();
-        return resource;
+        // 26.1: convertTo takes ConversionParams + an AfterConversion callback and
+        // fires the living-conversion event internally (the old manual
+        // EventHooks.canLivingConvert/onLivingConvert guard is now redundant). It
+        // returns null if the conversion is cancelled. The post-convert setup runs
+        // in the callback, before the new mob is added to the world.
+        return sourceSlime.convertTo(
+            target,
+            ConversionParams.single(sourceSlime, false, false),
+            EntitySpawnReason.CONVERSION,
+            converted -> {
+                converted.setSize(size, false);
+                converted.setCategory(category);
+                converted.setHealth(health);
+                converted.setDeltaMovement(velocity);
+                converted.setPersistenceRequired();
+            });
     }
 
     /**

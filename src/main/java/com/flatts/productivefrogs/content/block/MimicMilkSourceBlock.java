@@ -199,13 +199,13 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
         int spawned = 0;
         for (int i = 0; i < batch; i++) {
             BlockPos spawnPos = chooseSpawnPos(level, pos);
-            MimicSlime slime = PFEntities.MIMIC_SLIME.get().create(level);
+            MimicSlime slime = PFEntities.MIMIC_SLIME.get().create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
             if (slime == null) {
                 continue;
             }
             slime.setSize(1, true);
             slime.setSynthesizedItem(itemId);
-            slime.moveTo(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5,
+            slime.snapTo(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5,
                 random.nextFloat() * 360F, 0F);
             level.addFreshEntity(slime);
             spawned++;

@@ -10,7 +10,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerType;
@@ -66,15 +66,15 @@ public final class PrincessKissHandler {
 
     /** Replace the frog with a plain (unemployed, never nitwit) villager at its spot. */
     private static void convertToVillager(Entity frog, ServerLevel level) {
-        Villager villager = EntityType.VILLAGER.create(level);
+        Villager villager = EntityType.VILLAGER.create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
         if (villager == null) {
             return;
         }
-        villager.moveTo(frog.getX(), frog.getY(), frog.getZ(), frog.getYRot(), frog.getXRot());
+        villager.snapTo(frog.getX(), frog.getY(), frog.getZ(), frog.getYRot(), frog.getXRot());
         // finalizeSpawn leaves the villager unemployed (profession NONE) - not a
         // nitwit, which must be set explicitly - so it can take a job.
         villager.finalizeSpawn(level, level.getCurrentDifficultyAt(frog.blockPosition()),
-            MobSpawnType.CONVERSION, null);
+            EntitySpawnReason.CONVERSION, null);
         // CONVERSION spawns don't pick a biome villager type, so it would default
         // to PLAINS everywhere; set it from the conversion biome explicitly.
         villager.setVillagerData(villager.getVillagerData()

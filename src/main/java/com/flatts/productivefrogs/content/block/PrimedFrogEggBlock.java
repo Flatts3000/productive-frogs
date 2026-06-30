@@ -11,7 +11,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -159,7 +159,7 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
 
         int count = random.nextInt(MIN_TADPOLES_SPAWN, MAX_TADPOLES_SPAWN + 1);
         for (int i = 0; i < count; i++) {
-            ResourceTadpole tadpole = PFEntities.RESOURCE_TADPOLE.get().create(level);
+            ResourceTadpole tadpole = PFEntities.RESOURCE_TADPOLE.get().create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
             if (tadpole == null) {
                 continue;
             }
@@ -173,7 +173,7 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
             double z = pos.getZ() + clampedOffset(random);
             float yaw = random.nextInt(1, 361);
 
-            tadpole.moveTo(x, pos.getY() - 0.5, z, yaw, 0.0F);
+            tadpole.snapTo(x, pos.getY() - 0.5, z, yaw, 0.0F);
             tadpole.setPersistenceRequired();
             level.addFreshEntity(tadpole);
         }

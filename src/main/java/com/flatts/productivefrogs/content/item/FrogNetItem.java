@@ -105,7 +105,7 @@ public class FrogNetItem extends Item {
         if (type == null) {
             return null;
         }
-        Entity entity = type.create(level);
+        Entity entity = type.create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
         if (entity == null) {
             return null;
         }
@@ -174,7 +174,7 @@ public class FrogNetItem extends Item {
         }
         // Spawn in the block adjacent to the clicked face, centred on the cell.
         BlockPos spawn = context.getClickedPos().relative(context.getClickedFace());
-        frog.moveTo(spawn.getX() + 0.5D, spawn.getY(), spawn.getZ() + 0.5D,
+        frog.snapTo(spawn.getX() + 0.5D, spawn.getY(), spawn.getZ() + 0.5D,
             frog.getYRot(), frog.getXRot());
         level.addFreshEntity(frog);
         // Reusable: clear the capture and leave the empty net in hand (the Sturdy

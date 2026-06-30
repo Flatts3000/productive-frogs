@@ -210,7 +210,7 @@ public class SweetslimedLilyPadBlockEntity extends BlockEntity {
         frog.setDeltaMovement(0.0, 0.0, 0.0);
         // moveTo (not setPos) so the prev-position resets too - a clean instant
         // teleport with no client-side glide. Keep its yaw so it can still face prey.
-        frog.moveTo(cx, py, cz, frog.getYRot(), frog.getXRot());
+        frog.snapTo(cx, py, cz, frog.getYRot(), frog.getXRot());
         frog.setOnGround(true);
     }
 }

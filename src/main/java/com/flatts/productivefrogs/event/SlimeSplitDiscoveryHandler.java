@@ -119,11 +119,11 @@ public final class SlimeSplitDiscoveryHandler {
             if (parent.getRandom().nextFloat() >= chance) {
                 continue;
             }
-            ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level);
+            ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
             if (resource == null) {
                 continue;
             }
-            resource.moveTo(child.getX(), child.getY(), child.getZ(), child.getYRot(), child.getXRot());
+            resource.snapTo(child.getX(), child.getY(), child.getZ(), child.getYRot(), child.getXRot());
             resource.setSize(childSlime.getSize(), true);
             // Category first (fallback when no variants in pool), then a
             // weighted variant pick — setVariant re-syncs category from the

@@ -420,7 +420,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
             return false;
         }
         slime.setSize(1, true);
-        slime.moveTo(spawnPos.getX() + 0.5,
+        slime.snapTo(spawnPos.getX() + 0.5,
                      spawnPos.getY(),
                      spawnPos.getZ() + 0.5,
                      random.nextFloat() * 360F,
@@ -538,10 +538,10 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
         // froglight, no spawn egg), so they are matched by sentinel id here
         // rather than via the registry - a deliberate, contained seam.
         if (VANILLA_SENTINEL.equals(variantId)) {
-            return EntityType.SLIME.create(level);
+            return EntityType.SLIME.create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
         }
         if (MAGMA_SENTINEL.equals(variantId)) {
-            return EntityType.MAGMA_CUBE.create(level);
+            return EntityType.MAGMA_CUBE.create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
         }
         // A real variant can opt into a custom spawn entity (a modded Slime
         // subtype) via its slime_variant JSON's optional spawn_entity field.
@@ -549,7 +549,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
         if (custom != null) {
             return custom;
         }
-        ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level);
+        ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
         if (resource == null) {
             return null;
         }
@@ -570,7 +570,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
             return null;
         }
         return BuiltInRegistries.ENTITY_TYPE.getOptional(variant.spawnEntity().get())
-            .map(type -> type.create(level))
+            .map(type -> type.create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED))
             .filter(Slime.class::isInstance)
             .map(Slime.class::cast)
             .orElse(null);

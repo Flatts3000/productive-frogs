@@ -11,7 +11,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.AbstractFish;
 import net.minecraft.world.entity.animal.frog.Tadpole;
@@ -321,17 +321,17 @@ public class ResourceTadpole extends Tadpole {
             return;
         }
 
-        ResourceFrog frog = target.create(this.level());
+        ResourceFrog frog = target.create(this.level(), net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
         if (frog == null) return;
         EventHooks.onLivingConvert(this, frog);
         Category category = getCategory();
         frog.setCategory(category);
         frog.setMidas(isMidas());
-        frog.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
+        frog.snapTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
         frog.finalizeSpawn(
             serverLevel,
             serverLevel.getCurrentDifficultyAt(frog.blockPosition()),
-            MobSpawnType.CONVERSION,
+            EntitySpawnReason.CONVERSION,
             null
         );
         // Apply inherited stats AFTER finalizeSpawn so they override the

@@ -14,7 +14,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -230,7 +230,7 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     private void releaseFrog(ServerLevel level, BlockPos pos, BlockState state, TerrariumManager.FormedTerrarium terrarium) {
-        ResourceFrog frog = PFEntities.RESOURCE_FROG.get().create(level);
+        ResourceFrog frog = PFEntities.RESOURCE_FROG.get().create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
         if (frog == null) {
             return;
         }
@@ -240,8 +240,8 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
         Direction inward = state.hasProperty(BlockStateProperties.FACING)
             ? state.getValue(BlockStateProperties.FACING).getOpposite() : Direction.UP;
         BlockPos spawn = pos.relative(inward);
-        frog.moveTo(spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5, 0.0F, 0.0F);
-        frog.finalizeSpawn(level, level.getCurrentDifficultyAt(spawn), MobSpawnType.CONVERSION, null);
+        frog.snapTo(spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5, 0.0F, 0.0F);
+        frog.finalizeSpawn(level, level.getCurrentDifficultyAt(spawn), EntitySpawnReason.CONVERSION, null);
         // Stats AFTER finalizeSpawn, so inherited values override the baseline -
         // identical to ResourceTadpole.ageUp.
         if (hasStats) {

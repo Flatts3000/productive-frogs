@@ -341,7 +341,7 @@ public class SprinklerBlockEntity extends BlockEntity {
             }
             // Equivalence lane (#253): spawn a Mimic Slime carrying the item, not a variant slime.
             com.flatts.productivefrogs.content.entity.MimicSlime m =
-                com.flatts.productivefrogs.registry.PFEntities.MIMIC_SLIME.get().create(level);
+                com.flatts.productivefrogs.registry.PFEntities.MIMIC_SLIME.get().create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
             if (m == null) {
                 return;
             }
@@ -354,7 +354,7 @@ public class SprinklerBlockEntity extends BlockEntity {
             return;
         }
         slime.setSize(1, true);
-        slime.moveTo(target.getX() + 0.5, target.getY(), target.getZ() + 0.5,
+        slime.snapTo(target.getX() + 0.5, target.getY(), target.getZ() + 0.5,
             level.getRandom().nextFloat() * 360F, 0F);
         level.addFreshEntity(slime);
     }

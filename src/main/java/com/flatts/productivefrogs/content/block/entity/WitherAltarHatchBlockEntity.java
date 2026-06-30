@@ -187,7 +187,7 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
         if (phantom == null) {
             return; // never added to the world; only the loot context needs it
         }
-        phantom.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
+        phantom.snapTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
         LootParams params = new LootParams.Builder(server)
             .withParameter(LootContextParams.THIS_ENTITY, phantom)
             .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
@@ -246,14 +246,14 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
         if (frogs.isEmpty()) {
             WitherbaneFrog frog = WitherbaneFrog.type().create(server);
             if (frog != null) {
-                frog.moveTo(cx, cy, cz, yaw, 0.0F);
+                frog.snapTo(cx, cy, cz, yaw, 0.0F);
                 frog.setYBodyRot(yaw);
                 frog.setYHeadRot(yaw);
                 server.addFreshEntity(frog);
             }
         } else {
             WitherbaneFrog frog = frogs.get(0);
-            frog.moveTo(cx, cy, cz, yaw, 0.0F);
+            frog.snapTo(cx, cy, cz, yaw, 0.0F);
             frog.setYBodyRot(yaw);
             frog.setYHeadRot(yaw);
             frog.setDeltaMovement(Vec3.ZERO);

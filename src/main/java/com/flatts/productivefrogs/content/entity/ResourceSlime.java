@@ -18,7 +18,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Bucketable;
 import net.minecraft.world.entity.monster.Slime;
@@ -256,7 +256,7 @@ public class ResourceSlime extends Slime implements Bucketable {
         for (int l = 0; l < childCount; l++) {
             float xOff = (l % 2 - 0.5F) * halfWidth;
             float zOff = (l / 2 - 0.5F) * halfWidth;
-            ResourceSlime child = (ResourceSlime) this.getType().create(this.level());
+            ResourceSlime child = (ResourceSlime) this.getType().create(this.level(), net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
             if (child == null) continue;
             if (persistent) child.setPersistenceRequired();
             child.setNoAi(noAi);
@@ -270,7 +270,7 @@ public class ResourceSlime extends Slime implements Bucketable {
             if (variantId != null) {
                 child.setVariant(variantId);
             }
-            child.moveTo(
+            child.snapTo(
                 this.getX() + xOff,
                 this.getY() + 0.5,
                 this.getZ() + zOff,

@@ -13,7 +13,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.SpawnPlacementTypes;
@@ -159,7 +159,7 @@ public final class PFModBusEvents {
     private static <T extends net.minecraft.world.entity.Mob> boolean checkInfernalSlimeSpawnRules(
         net.minecraft.world.entity.EntityType<T> type,
         net.minecraft.world.level.ServerLevelAccessor level,
-        net.minecraft.world.entity.MobSpawnType reason,
+        net.minecraft.world.entity.EntitySpawnReason reason,
         net.minecraft.core.BlockPos pos,
         net.minecraft.util.RandomSource random
     ) {
@@ -386,7 +386,7 @@ public final class PFModBusEvents {
     private static <T extends Mob> boolean checkParentSlimeSpawnRules(
         EntityType<T> type,
         ServerLevelAccessor level,
-        MobSpawnType reason,
+        EntitySpawnReason reason,
         BlockPos pos,
         RandomSource random
     ) {
