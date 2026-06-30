@@ -9,7 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-import net.minecraft.core.Registry;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -198,12 +199,12 @@ public record SlimeVariant(
      */
     @Nullable
     public static Map.Entry<Identifier, SlimeVariant> findByPrimer(
-            Registry<SlimeVariant> registry, ItemStack stack) {
+            HolderLookup.RegistryLookup<SlimeVariant> registry, ItemStack stack) {
         Identifier itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
         Map.Entry<Identifier, SlimeVariant> tagMatch = null;
-        for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
-            SlimeVariant variant = entry.getValue();
-            Identifier loc = entry.getKey().identifier();
+        for (Holder.Reference<SlimeVariant> entry : registry.listElements().toList()) {
+            SlimeVariant variant = entry.value();
+            Identifier loc = entry.key().identifier();
             // A config-disabled variant (#203) is unprimable: skip it entirely so
             // priming its resource does nothing (and a disabled exact-item variant
             // can't shadow an enabled tag match below).
@@ -245,14 +246,14 @@ public record SlimeVariant(
      */
     @Nullable
     public static Map.Entry<Identifier, SlimeVariant> findByPrimerItem(
-            Registry<SlimeVariant> registry, Identifier itemId) {
-        for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
+            HolderLookup.RegistryLookup<SlimeVariant> registry, Identifier itemId) {
+        for (Holder.Reference<SlimeVariant> entry : registry.listElements().toList()) {
             // Skip config-disabled variants (#203) - a disabled resource is unprimable.
-            if (!entry.getValue().isEnabled(entry.getKey().identifier())) {
+            if (!entry.value().isEnabled(entry.key().identifier())) {
                 continue;
             }
-            if (entry.getValue().primerItem().filter(id -> id.equals(itemId)).isPresent()) {
-                return Map.entry(entry.getKey().identifier(), entry.getValue());
+            if (entry.value().primerItem().filter(id -> id.equals(itemId)).isPresent()) {
+                return Map.entry(entry.key().identifier(), entry.value());
             }
         }
         return null;
@@ -271,26 +272,26 @@ public record SlimeVariant(
      */
     @Nullable
     public static Map.Entry<Identifier, SlimeVariant> pickWeighted(
-            Registry<SlimeVariant> registry, Category category, RandomSource random) {
+            HolderLookup.RegistryLookup<SlimeVariant> registry, Category category, RandomSource random) {
         List<Map.Entry<Identifier, SlimeVariant>> pool = new ArrayList<>();
         // Accumulate as long so a datapack with many high-weight variants
         // (each capped at Integer.MAX_VALUE individually) can't overflow.
         // RandomSource doesn't expose nextLong-with-bound directly, so cap
         // total + roll at Integer.MAX_VALUE — anything beyond is silly anyway.
         long totalWeight = 0L;
-        for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
-            if (entry.getValue().category() != category) continue;
+        for (Holder.Reference<SlimeVariant> entry : registry.listElements().toList()) {
+            if (entry.value().category() != category) continue;
             // Weight 0 = prime-only (#172/#173): excluded from the pool
             // entirely, so it can neither be rolled nor returned by the
             // defensive fallback, and an all-zero category cleanly yields null
             // (no nextInt(0) crash).
-            if (entry.getValue().weight() <= 0) continue;
+            if (entry.value().weight() <= 0) continue;
             // Config-disabled variants (#203) drop out of the discovery pool too;
             // a fully-disabled category then yields an empty pool -> null, exactly
             // like a category with no variants.
-            if (!entry.getValue().isEnabled(entry.getKey().identifier())) continue;
-            pool.add(Map.entry(entry.getKey().identifier(), entry.getValue()));
-            totalWeight += entry.getValue().weight();
+            if (!entry.value().isEnabled(entry.key().identifier())) continue;
+            pool.add(Map.entry(entry.key().identifier(), entry.value()));
+            totalWeight += entry.value().weight();
         }
         if (pool.isEmpty()) {
             return null;

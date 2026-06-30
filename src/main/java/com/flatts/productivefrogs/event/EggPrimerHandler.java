@@ -112,9 +112,6 @@ public final class EggPrimerHandler {
 
     private static Map.Entry<Identifier, SlimeVariant> findVariantForHeldItem(
             Level level, ItemStack stack) {
-        Registry<SlimeVariant> registry = level.registryAccess()
-            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
-        if (registry == null) return null;
-        return SlimeVariant.findByPrimer(registry, stack);
+        return SlimeVariant.findByPrimer(PFRegistries.variants(level.registryAccess()), stack);
     }
 }

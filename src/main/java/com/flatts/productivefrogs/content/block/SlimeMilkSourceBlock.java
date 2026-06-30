@@ -326,8 +326,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
     /** Resolve a variant from the registry, or null (registry absent / unknown id). */
     @Nullable
     private static SlimeVariant variantFor(net.minecraft.world.level.Level level, Identifier variantId) {
-        var registry = level.registryAccess().registry(PFRegistries.SLIME_VARIANT).orElse(null);
-        return registry == null ? null : registry.get(variantId);
+        return PFRegistries.variant(level.registryAccess(), variantId);
     }
 
     @Nullable

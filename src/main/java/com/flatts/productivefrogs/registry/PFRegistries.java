@@ -3,9 +3,12 @@ package com.flatts.productivefrogs.registry;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.data.ParentSpeciesEntry;
 import com.flatts.productivefrogs.data.SlimeVariant;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Resource keys for Productive Frogs' custom datapack registries. The
@@ -40,6 +43,36 @@ public final class PFRegistries {
         ResourceKey.createRegistryKey(
             Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "parent_species")
         );
+
+    // ---- 26.1 registry access ------------------------------------------------
+    // On 26.1 RegistryAccess no longer exposes registry()/registryOrThrow()
+    // (returning a Registry<T>); the access path is HolderLookup.Provider's
+    // lookupOrThrow(key) -> HolderLookup.RegistryLookup<T>, whose get(ResourceKey)
+    // yields Optional<Holder<T>>. These helpers centralize that mechanics so call
+    // sites stay one-liners and the API coupling lives in one place.
+
+    /** The Slime Variant registry lookup, for iteration/streaming via listElements(). */
+    public static HolderLookup.RegistryLookup<SlimeVariant> variants(HolderLookup.Provider registries) {
+        return registries.lookupOrThrow(SLIME_VARIANT);
+    }
+
+    /** Resolve a Slime Variant by id, or {@code null} if absent. */
+    @Nullable
+    public static SlimeVariant variant(HolderLookup.Provider registries, Identifier id) {
+        return registries.lookupOrThrow(SLIME_VARIANT)
+            .get(ResourceKey.create(SLIME_VARIANT, id))
+            .map(Holder::value)
+            .orElse(null);
+    }
+
+    /** Resolve a Parent Species entry by id, or {@code null} if absent. */
+    @Nullable
+    public static ParentSpeciesEntry parentSpecies(HolderLookup.Provider registries, Identifier id) {
+        return registries.lookupOrThrow(PARENT_SPECIES)
+            .get(ResourceKey.create(PARENT_SPECIES, id))
+            .map(Holder::value)
+            .orElse(null);
+    }
 
     private PFRegistries() {
         // utility class

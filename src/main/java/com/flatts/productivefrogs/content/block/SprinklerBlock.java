@@ -132,12 +132,7 @@ public class SprinklerBlock extends Block implements EntityBlock {
     private static final int DEFAULT_MILK_RGB = 0xF0F0E0;
 
     private static int variantColor(Level level, Identifier variant) {
-        Registry<SlimeVariant> registry = level.registryAccess()
-            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
-        if (registry == null) {
-            return DEFAULT_MILK_RGB;
-        }
-        SlimeVariant v = registry.get(variant);
+        SlimeVariant v = PFRegistries.variant(level.registryAccess(), variant);
         return v == null ? DEFAULT_MILK_RGB : v.primaryColor();
     }
 
