@@ -102,6 +102,10 @@ Each gets the same treatment (assumption -> verified 26.1 capability -> decision
 
 ---
 
-## Evidence index
+## Evidence index + a correction
 
-All API claims verified against the locally decompiled `neoforge-26.1.2.76-sources.jar` and the joined NeoForM runtime sources (gradle caches), not the upstream-primer research (which mispredicted the `ResourceLocation`->`Identifier` rename and the entity package moves - the real 26.1 NeoForge mappings retain `ResourceLocation` and PF's entity imports already match). When an assumption is questioned, cite the actual 26.1 source file, as R-1 does.
+**The authoritative sources, in order:** (1) the **compiler** (`./gradlew compileJava` against the real classpath) - final word; (2) **NeoForge's own source** (`neoforge-26.1.2.76-sources.jar`) for NeoForge's classes (`Capabilities`, `FluidResource`, `ResourceHandler`, `SimpleEnergyHandler`) - reliable; these back R-1 and R-3.
+
+**Do NOT trust the NFRT joined/intermediate jar (`sourcesAndCompiledWithNeoForge_*.jar`) for vanilla class names.** It is a pre-final-mapping pipeline stage and gave **false signals** (2026-06-29): it showed `ResourceLocation.java` and `BlockEntity.saveAdditional(CompoundTag)`, leading to a wrong "ResourceLocation retained / entity imports match / port is small" conclusion. The compiler then showed **3,676 errors** including ~1,270 `ResourceLocation` "cannot find symbol" - and NeoForge's own `Capabilities.java` imports `net.minecraft.resources.Identifier`. **So `ResourceLocation` -> `Identifier` IS real**, the GameTest registry rewrite IS real (938 errors in `PFGameTests`), and the upstream-primer research was substantially correct about the breakage. When questioning an assumption, verify against the compiler and NeoForge's own source - not the intermediate decompiled vanilla jar.
+
+The R-1 (milk) and R-3 (capability) decisions are unaffected: both rest on NeoForge's own source and are forced regardless (the old `Capabilities.ItemHandler`/`EnergyStorage` holders are gone, confirmed by the compiler's `ItemHandler`/`FluidHandler` errors).
