@@ -5,16 +5,21 @@ import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.fish.AbstractFish;
 import net.minecraft.world.entity.animal.frog.Tadpole;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
@@ -352,5 +357,41 @@ public class ResourceTadpole extends Tadpole {
         this.playSound(SoundEvents.TADPOLE_GROW_UP, 0.15F, 1.0F);
         serverLevel.addFreshEntityWithPassengers(frog);
         this.discard();
+    }
+
+    /**
+     * Resource Tadpoles accept {@link PFItems#SWEETSLIME} (the Resource-Frog treat)
+     * to speed growth, in addition to the slimeball they inherit via
+     * {@code #minecraft:frog_food} (#277). Vanilla {@code Tadpole#isFood}/{@code feed}
+     * are private, so Sweetslime is handled here - replicating vanilla's feed
+     * (consume one + the standard feeding age boost + happy-villager particles);
+     * everything else (the slimeball feed, bucket pickup) defers to super.
+     *
+     * <p>The boost mirrors vanilla {@code Tadpole.feed} exactly:
+     * {@code getSpeedUpSecondsWhenFeeding} returns seconds and vanilla's private
+     * {@code ageUp(int)} multiplies by 20 to reach ticks - omitting the {@code * 20}
+     * makes the feed 20x too weak.
+     */
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (!stack.is(PFItems.SWEETSLIME.get())) {
+            return super.mobInteract(player, hand);
+        }
+        if (this.level().isClientSide()) {
+            // Server does the consume + age mutation; client just animates the swing.
+            return InteractionResult.SUCCESS;
+        }
+        stack.consume(1, player);
+        int boostTicks = AgeableMob.getSpeedUpSecondsWhenFeeding(
+            Math.max(0, Tadpole.ticksToBeFrog - this.age)) * 20;
+        this.age = Math.min(Tadpole.ticksToBeFrog, this.age + boostTicks);
+        if (this.age >= Tadpole.ticksToBeFrog) {
+            this.ageUp();
+        }
+        ((ServerLevel) this.level()).sendParticles(ParticleTypes.HAPPY_VILLAGER,
+            this.getRandomX(1.0), this.getRandomY() + 0.5, this.getRandomZ(1.0),
+            5, 0.0, 0.0, 0.0, 0.0);
+        return InteractionResult.SUCCESS;
     }
 }

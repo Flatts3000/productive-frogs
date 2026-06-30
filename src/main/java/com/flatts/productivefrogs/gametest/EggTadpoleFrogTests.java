@@ -36,6 +36,7 @@ final class EggTadpoleFrogTests {
         PFGameTests.test("primed_egg_breaks_when_water_removed", 100, EggTadpoleFrogTests::primedEggBreaksWhenWaterRemoved);
         PFGameTests.test("primed_egg_hatches_into_matching_category_tadpoles", 100, EggTadpoleFrogTests::primedEggHatchesIntoMatchingCategoryTadpoles);
         PFGameTests.test("tadpole_ages_up_into_resource_frog_of_same_category", 100, EggTadpoleFrogTests::tadpoleAgesUpIntoResourceFrogOfSameCategory);
+        PFGameTests.test("tadpole_accepts_sweetslime_to_speed_growth", 100, EggTadpoleFrogTests::tadpoleAcceptsSweetslimeToSpeedGrowth);
         PFGameTests.test("tadpole_bucket_round_trip_preserves_category", 100, EggTadpoleFrogTests::tadpoleBucketRoundTripPreservesCategory);
         PFGameTests.test("tadpole_bucket_round_trip_preserves_pending_stats", 100, EggTadpoleFrogTests::tadpoleBucketRoundTripPreservesPendingStats);
         PFGameTests.test("primed_egg_schedules_deterministic_hatch_delay", 20, EggTadpoleFrogTests::primedEggSchedulesDeterministicHatchDelay);
@@ -131,6 +132,38 @@ final class EggTadpoleFrogTests {
                 helper.fail("tadpole entity must be removed during ageUp conversion");
             }
         });
+    }
+
+    /**
+     * Resource Tadpoles accept Sweetslime (not just slimeballs) to speed growth
+     * (#277). Feeding one a Sweetslime advances its maturation by the vanilla feed
+     * amount (seconds * 20 ticks), so the remaining growth time drops by that exact
+     * amount - a missing seconds->ticks conversion (20x too weak) is caught, not just
+     * "some decrease".
+     */
+    private static void tadpoleAcceptsSweetslimeToSpeedGrowth(GameTestHelper helper) {
+        ResourceTadpole tadpole = helper.spawn(PFEntities.RESOURCE_TADPOLE.get(), new BlockPos(2, 2, 2));
+        int before = tadpole.remainingGrowthTicks();
+
+        net.minecraft.world.entity.player.Player player =
+            helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(PFItems.SWEETSLIME.get()));
+        tadpole.mobInteract(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+
+        int after = tadpole.remainingGrowthTicks();
+        if (after >= before) {
+            helper.fail("feeding Sweetslime should advance growth: remaining before=" + before + " after=" + after);
+        }
+        int boostTicks = net.minecraft.world.entity.AgeableMob.getSpeedUpSecondsWhenFeeding(
+            net.minecraft.world.entity.animal.frog.Tadpole.ticksToBeFrog) * 20;
+        int expectedAfter = ResourceTadpole.correctedRemainingTicks(
+            boostTicks, com.flatts.productivefrogs.PFConfig.tadpoleGrowthTicks(),
+            net.minecraft.world.entity.animal.frog.Tadpole.ticksToBeFrog);
+        if (after != expectedAfter) {
+            helper.fail("Sweetslime feed should advance growth by " + boostTicks + " ticks: remaining after="
+                + after + " expected=" + expectedAfter + " (before=" + before + ")");
+        }
+        helper.succeed();
     }
 
     /**
