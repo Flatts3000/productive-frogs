@@ -4,21 +4,31 @@ import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.animal.AbstractFish;
 import net.minecraft.world.entity.animal.frog.Tadpole;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.EventHooks;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The Resource Tadpole — Productive Frogs' tadpole that matures into a
@@ -310,6 +320,15 @@ public class ResourceTadpole extends Tadpole {
      * transformer). Mirrors vanilla's logic but converts into a
      * {@link ResourceFrog} instead of {@code minecraft:frog}, carrying the
      * category forward.
+     *
+     * <p>Adds a suffocation guard (#276): vanilla {@code Tadpole.ageUp} drops the
+     * frog at the tadpole's exact position with no space check, so a tadpole
+     * maturing too close to a block spawns a frog whose larger hitbox is stuck in
+     * solid blocks and it suffocates. We place the frog at the nearest spot its
+     * hitbox actually fits; if it is fully boxed in we defer - vanilla
+     * {@code setAge} calls {@code ageUp} again every tick, so the tadpole retries
+     * and matures the moment room opens. (The same bug affects vanilla frogs;
+     * reported upstream to Mojang.)
      */
     @Override
     public void ageUp() {
@@ -321,13 +340,18 @@ public class ResourceTadpole extends Tadpole {
             return;
         }
 
+        Vec3 spawnPos = findNonSuffocatingPos(serverLevel, target.getDimensions());
+        if (spawnPos == null) {
+            return; // no room yet - stay a tadpole; vanilla retries ageUp next tick
+        }
+
         ResourceFrog frog = target.create(this.level());
         if (frog == null) return;
         EventHooks.onLivingConvert(this, frog);
         Category category = getCategory();
         frog.setCategory(category);
         frog.setMidas(isMidas());
-        frog.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
+        frog.moveTo(spawnPos.x, spawnPos.y, spawnPos.z, this.getYRot(), this.getXRot());
         frog.finalizeSpawn(
             serverLevel,
             serverLevel.getCurrentDifficultyAt(frog.blockPosition()),
@@ -350,5 +374,67 @@ public class ResourceTadpole extends Tadpole {
         this.playSound(SoundEvents.TADPOLE_GROW_UP, 0.15F, 1.0F);
         serverLevel.addFreshEntityWithPassengers(frog);
         this.discard();
+    }
+
+    /**
+     * Find a position near the tadpole where a frog of {@code dimensions} fits
+     * without overlapping a solid block (so the matured frog will not suffocate).
+     * Searches the tadpole's own block column first, then one up, then the
+     * horizontal ring (at its level and one up), then two up - block-aligned, so the
+     * spawn never straddles a block boundary the way the tadpole's fractional swim
+     * position can. Returns the first collision-free spot, or {@code null} if the
+     * tadpole is fully boxed in (caller defers maturation).
+     */
+    @Nullable
+    private Vec3 findNonSuffocatingPos(ServerLevel level, EntityDimensions dimensions) {
+        BlockPos base = this.blockPosition();
+        int[][] offsets = {
+            {0, 0, 0}, {0, 1, 0},
+            {1, 0, 0}, {-1, 0, 0}, {0, 0, 1}, {0, 0, -1},
+            {1, 1, 0}, {-1, 1, 0}, {0, 1, 1}, {0, 1, -1},
+            {0, 2, 0},
+        };
+        for (int[] o : offsets) {
+            double x = base.getX() + 0.5 + o[0];
+            double y = base.getY() + o[1];
+            double z = base.getZ() + 0.5 + o[2];
+            AABB box = dimensions.makeBoundingBox(x, y, z);
+            if (level.noCollision(box)) {
+                return new Vec3(x, y, z);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Resource Tadpoles accept {@link PFItems#SWEETSLIME} (the Resource-Frog treat)
+     * to speed growth, in addition to the slimeball they inherit via
+     * {@code #minecraft:frog_food} (#277). Vanilla {@code Tadpole#isFood}/{@code feed}
+     * are private, so Sweetslime is handled here - replicating vanilla's feed
+     * (consume one + the standard feeding age boost + happy-villager particles);
+     * everything else (the slimeball feed, bucket pickup) defers to super.
+     */
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (stack.is(PFItems.SWEETSLIME.get())) {
+            if (this.level() instanceof ServerLevel serverLevel) {
+                stack.consume(1, player);
+                // Match vanilla Tadpole.feed exactly: getSpeedUpSecondsWhenFeeding
+                // returns seconds, and vanilla's private ageUp(int) multiplies by 20
+                // to reach ticks. Omitting the * 20 makes the feed 20x too weak.
+                int boostTicks = AgeableMob.getSpeedUpSecondsWhenFeeding(
+                    Math.max(0, Tadpole.ticksToBeFrog - this.age)) * 20;
+                this.age = Math.min(Tadpole.ticksToBeFrog, this.age + boostTicks);
+                if (this.age >= Tadpole.ticksToBeFrog) {
+                    this.ageUp();
+                }
+                serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER,
+                    this.getRandomX(1.0), this.getRandomY() + 0.5, this.getRandomZ(1.0),
+                    5, 0.0, 0.0, 0.0, 0.0);
+            }
+            return InteractionResult.sidedSuccess(this.level().isClientSide());
+        }
+        return super.mobInteract(player, hand);
     }
 }
