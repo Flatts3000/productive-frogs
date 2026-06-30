@@ -30,6 +30,8 @@ import net.minecraft.world.item.ItemUtils;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -123,22 +125,20 @@ public class MimicSlime extends Slime implements Bucketable {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
-        super.addAdditionalSaveData(tag);
+    public void addAdditionalSaveData(ValueOutput output) {
+        super.addAdditionalSaveData(output);
         Identifier id = getSynthesizedItem();
         if (id != null) {
-            tag.putString("SynthesizedItem", id.toString());
+            output.putString("SynthesizedItem", id.toString());
         }
-        tag.putBoolean("FromBucket", fromBucket());
+        output.putBoolean("FromBucket", fromBucket());
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag tag) {
-        super.readAdditionalSaveData(tag);
-        if (tag.contains("SynthesizedItem", Tag.TAG_STRING)) {
-            setSynthesizedItem(Identifier.tryParse(tag.getString("SynthesizedItem")));
-        }
-        setFromBucket(tag.contains("FromBucket", Tag.TAG_BYTE) && tag.getBoolean("FromBucket"));
+    public void readAdditionalSaveData(ValueInput input) {
+        super.readAdditionalSaveData(input);
+        input.getString("SynthesizedItem").ifPresent(s -> setSynthesizedItem(Identifier.tryParse(s)));
+        setFromBucket(input.getBooleanOr("FromBucket", false));
     }
 
     // ---------------------------------------------------------------------

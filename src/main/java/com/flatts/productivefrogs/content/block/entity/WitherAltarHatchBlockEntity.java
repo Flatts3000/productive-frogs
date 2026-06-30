@@ -32,6 +32,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -298,26 +300,27 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
         this.items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
-        ContainerHelper.loadAllItems(tag, this.items, registries);
-        this.summonTicks = tag.getInt("SummonTicks");
-        this.ritual = readRitual(tag);
+        ContainerHelper.loadAllItems(input, this.items);
+        this.summonTicks = input.getIntOr("SummonTicks", 0);
+        this.ritual = readRitual(input);
     }
 
     /** Read the cached ritual direction, defaulting to canonical (back-compat for pre-fix altars). */
-    private static Direction readRitual(CompoundTag tag) {
-        Direction d = tag.contains("Ritual") ? Direction.byName(tag.getString("Ritual")) : null;
+    private static Direction readRitual(ValueInput input) {
+        String name = input.getStringOr("Ritual", "");
+        Direction d = name.isEmpty() ? null : Direction.byName(name);
         return d != null && d.getAxis().isHorizontal() ? d : WitherAltarValidator.CANONICAL_RITUAL;
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        ContainerHelper.saveAllItems(tag, this.items, registries);
-        tag.putInt("SummonTicks", summonTicks);
-        tag.putString("Ritual", ritual.getName());
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        ContainerHelper.saveAllItems(output, this.items);
+        output.putInt("SummonTicks", summonTicks);
+        output.putString("Ritual", ritual.getName());
     }
 
     // Sync the summon progress AND the resolved ritual to the client (the chest contents

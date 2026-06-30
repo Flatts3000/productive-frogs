@@ -34,9 +34,8 @@ import net.minecraft.world.item.SpawnEggItem;
  */
 public final class ResourceSlimeSpawnEggItem extends SpawnEggItem {
 
-    public ResourceSlimeSpawnEggItem(EntityType<? extends Mob> type, int backgroundColor,
-                                     int highlightColor, Properties properties) {
-        super(type, backgroundColor, highlightColor, properties);
+    public ResourceSlimeSpawnEggItem(EntityType<? extends Mob> type, Properties properties) {
+        super(properties.spawnEgg(type));
     }
 
     @Override

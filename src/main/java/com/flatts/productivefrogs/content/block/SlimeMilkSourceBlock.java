@@ -447,7 +447,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
     @Override
     protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
         super.entityInside(state, level, pos, entity);
-        if (level.isClientSide || !PFConfig.milkCatalystsEnabled()) {
+        if (level.isClientSide() || !PFConfig.milkCatalystsEnabled()) {
             return;
         }
         if (!(entity instanceof ItemEntity itemEntity) || !state.getFluidState().isSource()) {

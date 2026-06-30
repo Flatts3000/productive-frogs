@@ -10,7 +10,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -18,6 +17,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -225,7 +226,7 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
         this.quantityLevel = Mth.clamp(quantityLevel, 0, PFConfig.catalystMaxQuantityLevel());
         this.infinite = infinite;
         setChanged();
-        if (this.level != null && !this.level.isClientSide) {
+        if (this.level != null && !this.level.isClientSide()) {
             this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);
         }
     }
@@ -270,40 +271,40 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
         if (variantId != null) {
-            tag.putString("Variant", variantId.toString());
+            output.putString("Variant", variantId.toString());
         }
         if (spawnsRemaining != UNINITIALIZED) {
-            tag.putInt("SpawnsRemaining", spawnsRemaining);
+            output.putInt("SpawnsRemaining", spawnsRemaining);
         }
         if (spawnsCapacity != UNINITIALIZED) {
-            tag.putInt("SpawnsCapacity", spawnsCapacity);
+            output.putInt("SpawnsCapacity", spawnsCapacity);
         }
         if (speedLevel > 0) {
-            tag.putInt("SpeedLevel", speedLevel);
+            output.putInt("SpeedLevel", speedLevel);
         }
         if (quantityLevel > 0) {
-            tag.putInt("QuantityLevel", quantityLevel);
+            output.putInt("QuantityLevel", quantityLevel);
         }
         if (infinite) {
-            tag.putBoolean("Infinite", true);
+            output.putBoolean("Infinite", true);
         }
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        variantId = tag.contains("Variant", Tag.TAG_STRING)
-            ? Identifier.tryParse(tag.getString("Variant")) : null;
-        spawnsRemaining = tag.contains("SpawnsRemaining", Tag.TAG_INT)
-            ? Mth.clamp(tag.getInt("SpawnsRemaining"), 0, MAX_STORED_SPAWNS) : UNINITIALIZED;
-        spawnsCapacity = tag.contains("SpawnsCapacity", Tag.TAG_INT)
-            ? Mth.clamp(tag.getInt("SpawnsCapacity"), 0, MAX_STORED_SPAWNS) : UNINITIALIZED;
-        speedLevel = tag.contains("SpeedLevel", Tag.TAG_INT) ? Math.max(0, tag.getInt("SpeedLevel")) : 0;
-        quantityLevel = tag.contains("QuantityLevel", Tag.TAG_INT) ? Math.max(0, tag.getInt("QuantityLevel")) : 0;
-        infinite = tag.getBoolean("Infinite");
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        String variant = input.getStringOr("Variant", "");
+        variantId = variant.isEmpty() ? null : Identifier.tryParse(variant);
+        int remaining = input.getIntOr("SpawnsRemaining", UNINITIALIZED);
+        spawnsRemaining = remaining == UNINITIALIZED ? UNINITIALIZED : Mth.clamp(remaining, 0, MAX_STORED_SPAWNS);
+        int capacity = input.getIntOr("SpawnsCapacity", UNINITIALIZED);
+        spawnsCapacity = capacity == UNINITIALIZED ? UNINITIALIZED : Mth.clamp(capacity, 0, MAX_STORED_SPAWNS);
+        speedLevel = Math.max(0, input.getIntOr("SpeedLevel", 0));
+        quantityLevel = Math.max(0, input.getIntOr("QuantityLevel", 0));
+        infinite = input.getBooleanOr("Infinite", false);
     }
 
     @Override

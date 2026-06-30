@@ -11,7 +11,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.MenuProvider;
@@ -25,6 +24,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -272,7 +273,7 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
      */
     private void syncToClients() {
         setChanged();
-        if (level != null && !level.isClientSide) {
+        if (level != null && !level.isClientSide()) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
     }
@@ -301,40 +302,41 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
         if (category != null) {
-            tag.putString("Category", category.name());
+            output.putString("Category", category.name());
             if (midas) {
-                tag.putBoolean("Midas", true);
+                output.putBoolean("Midas", true);
             }
-            tag.putBoolean("HasStats", hasStats);
-            tag.putInt("Appetite", appetite);
-            tag.putInt("Bounty", bounty);
-            tag.putInt("Reach", reach);
-            tag.putInt("GrowthRemaining", growthRemaining);
-            tag.putInt("GrowthTotal", growthTotal);
-            tag.putBoolean("PendingRelease", pendingRelease);
+            output.putBoolean("HasStats", hasStats);
+            output.putInt("Appetite", appetite);
+            output.putInt("Bounty", bounty);
+            output.putInt("Reach", reach);
+            output.putInt("GrowthRemaining", growthRemaining);
+            output.putInt("GrowthTotal", growthTotal);
+            output.putBoolean("PendingRelease", pendingRelease);
         }
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.contains("Category", Tag.TAG_STRING)) {
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        String cat = input.getStringOr("Category", "");
+        if (!cat.isEmpty()) {
             try {
-                category = Category.valueOf(tag.getString("Category"));
+                category = Category.valueOf(cat);
             } catch (IllegalArgumentException e) {
                 category = null;
             }
-            midas = tag.getBoolean("Midas");
-            hasStats = tag.getBoolean("HasStats");
-            appetite = tag.getInt("Appetite");
-            bounty = tag.getInt("Bounty");
-            reach = tag.getInt("Reach");
-            growthRemaining = Math.max(0, tag.getInt("GrowthRemaining"));
-            growthTotal = Math.max(growthRemaining, tag.getInt("GrowthTotal"));
-            pendingRelease = tag.getBoolean("PendingRelease");
+            midas = input.getBooleanOr("Midas", false);
+            hasStats = input.getBooleanOr("HasStats", false);
+            appetite = input.getIntOr("Appetite", 0);
+            bounty = input.getIntOr("Bounty", 0);
+            reach = input.getIntOr("Reach", 0);
+            growthRemaining = Math.max(0, input.getIntOr("GrowthRemaining", 0));
+            growthTotal = Math.max(growthRemaining, input.getIntOr("GrowthTotal", 0));
+            pendingRelease = input.getBooleanOr("PendingRelease", false);
         } else {
             category = null;
             midas = false;
@@ -343,9 +345,7 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries); // sync category + growth for Jade
-        return tag;
+        return saveCustomOnly(registries); // sync category + growth for Jade
     }
 
     @Override

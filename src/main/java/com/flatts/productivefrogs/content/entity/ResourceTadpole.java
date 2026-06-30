@@ -220,37 +220,37 @@ public class ResourceTadpole extends Tadpole {
     }
 
     @Override
-    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
-        super.addAdditionalSaveData(tag);
-        tag.putString("Category", getCategory().name());
+    public void addAdditionalSaveData(net.minecraft.world.level.storage.ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        output.putString("Category", getCategory().name());
         if (hasPendingStats) {
-            tag.putBoolean("HasPendingStats", true);
-            tag.putInt("PendingAppetite", pendingAppetite);
-            tag.putInt("PendingBounty", pendingBounty);
-            tag.putInt("PendingReach", pendingReach);
+            output.putBoolean("HasPendingStats", true);
+            output.putInt("PendingAppetite", pendingAppetite);
+            output.putInt("PendingBounty", pendingBounty);
+            output.putInt("PendingReach", pendingReach);
         }
         if (isMidas()) {
-            tag.putBoolean("Midas", true);
+            output.putBoolean("Midas", true);
         }
     }
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
-        super.readAdditionalSaveData(tag);
-        if (tag.contains("Category", net.minecraft.nbt.Tag.TAG_STRING)) {
+    public void readAdditionalSaveData(net.minecraft.world.level.storage.ValueInput input) {
+        super.readAdditionalSaveData(input);
+        input.getString("Category").ifPresent(name -> {
             try {
-                setCategory(Category.valueOf(tag.getString("Category")));
+                setCategory(Category.valueOf(name));
             } catch (IllegalArgumentException ignored) {
                 // Unknown category in save data — leave default.
             }
-        }
-        hasPendingStats = tag.getBoolean("HasPendingStats");
+        });
+        hasPendingStats = input.getBooleanOr("HasPendingStats", false);
         if (hasPendingStats) {
-            pendingAppetite = tag.getInt("PendingAppetite");
-            pendingBounty = tag.getInt("PendingBounty");
-            pendingReach = tag.getInt("PendingReach");
+            pendingAppetite = input.getIntOr("PendingAppetite", 0);
+            pendingBounty = input.getIntOr("PendingBounty", 0);
+            pendingReach = input.getIntOr("PendingReach", 0);
         }
-        setMidas(tag.getBoolean("Midas"));
+        setMidas(input.getBooleanOr("Midas", false));
     }
 
     @Override

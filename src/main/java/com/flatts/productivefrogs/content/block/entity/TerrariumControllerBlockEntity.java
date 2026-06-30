@@ -18,10 +18,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -32,6 +32,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.Nullable;
@@ -299,7 +301,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
     /** Mark dirty AND push a BE update so the GUI/Jade see the buffered variant (not just the int charge count). */
     private void syncToClients() {
         setChanged();
-        if (level != null && !level.isClientSide) {
+        if (level != null && !level.isClientSide()) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
     }
@@ -422,12 +424,12 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
     // ---- serialization -------------------------------------------------
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
         if (tankVariant != null) {
-            tag.putString("TankVariant", tankVariant.toString());
+            output.putString("TankVariant", tankVariant.toString());
             if (tankMimic) {
-                tag.putBoolean("TankMimic", true);
+                output.putBoolean("TankMimic", true);
             }
         }
         if (!charges.isEmpty()) {
@@ -435,33 +437,30 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
             for (MilkCharge charge : charges) {
                 list.add(charge.toTag());
             }
-            tag.put("Charges", list);
+            output.store("Charges", ExtraCodecs.NBT, list);
         }
         // distributeCursor is a transient round-robin position; it self-establishes
         // within one distribute cycle, so it is intentionally not persisted.
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        tankVariant = tag.contains("TankVariant", Tag.TAG_STRING)
-            ? Identifier.tryParse(tag.getString("TankVariant")) : null;
-        tankMimic = tag.getBoolean("TankMimic");
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        String tank = input.getStringOr("TankVariant", "");
+        tankVariant = tank.isEmpty() ? null : Identifier.tryParse(tank);
+        tankMimic = input.getBooleanOr("TankMimic", false);
         charges.clear();
-        if (tag.contains("Charges", Tag.TAG_LIST)) {
-            ListTag list = tag.getList("Charges", Tag.TAG_COMPOUND);
-            for (int i = 0; i < list.size(); i++) {
-                charges.addLast(MilkCharge.fromTag(list.getCompound(i)));
+        input.read("Charges", ExtraCodecs.NBT).ifPresent(tag -> {
+            if (tag instanceof ListTag list) {
+                list.compoundStream().forEach(charge -> charges.addLast(MilkCharge.fromTag(charge)));
             }
-        }
+        });
         distributeCursor = 0;
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries); // sync tankVariant + charge count for Jade
-        return tag;
+        return saveCustomOnly(registries); // sync tankVariant + charge count for Jade
     }
 
     @Override

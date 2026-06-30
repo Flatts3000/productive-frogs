@@ -8,7 +8,6 @@ import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -27,6 +26,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
@@ -345,31 +346,24 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
     // -------------------------------------------------------------------
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.put("Tank", tank.writeToNBT(registries, new CompoundTag()));
-        tag.put("Output", output.serializeNBT(registries));
-        tag.putInt("Progress", progress);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        tank.serialize(output.child("Tank"));
+        this.output.serialize(output.child("Output"));
+        output.putInt("Progress", progress);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.contains("Tank", Tag.TAG_COMPOUND)) {
-            tank.readFromNBT(registries, tag.getCompound("Tank"));
-        }
-        if (tag.contains("Output", Tag.TAG_COMPOUND)) {
-            output.deserializeNBT(registries, tag.getCompound("Output"));
-        }
-        int loaded = tag.contains("Progress", Tag.TAG_INT) ? tag.getInt("Progress") : 0;
-        progress = Math.max(0, Math.min(loaded, CAST_TIME));
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        input.child("Tank").ifPresent(tank::deserialize);
+        input.child("Output").ifPresent(output::deserialize);
+        progress = Math.max(0, Math.min(input.getIntOr("Progress", 0), CAST_TIME));
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries);
-        return tag;
+        return saveCustomOnly(registries);
     }
 
     @Override

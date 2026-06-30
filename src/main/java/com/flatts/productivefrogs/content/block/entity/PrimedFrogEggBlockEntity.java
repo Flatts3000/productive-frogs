@@ -6,6 +6,8 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 /**
  * BlockEntity for a {@link com.flatts.productivefrogs.content.block.PrimedFrogEggBlock}.
@@ -110,32 +112,32 @@ public class PrimedFrogEggBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
         if (hasStats) {
-            tag.putBoolean("HasStats", true);
-            tag.putInt("Appetite", appetite);
-            tag.putInt("Bounty", bounty);
-            tag.putInt("Reach", reach);
+            output.putBoolean("HasStats", true);
+            output.putInt("Appetite", appetite);
+            output.putInt("Bounty", bounty);
+            output.putInt("Reach", reach);
         }
         if (hatchGameTime > 0) {
-            tag.putLong("HatchGameTime", hatchGameTime);
+            output.putLong("HatchGameTime", hatchGameTime);
         }
         if (midas) {
-            tag.putBoolean("Midas", true);
+            output.putBoolean("Midas", true);
         }
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        hasStats = tag.getBoolean("HasStats");
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        hasStats = input.getBooleanOr("HasStats", false);
         if (hasStats) {
-            appetite = tag.getInt("Appetite");
-            bounty = tag.getInt("Bounty");
-            reach = tag.getInt("Reach");
+            appetite = input.getIntOr("Appetite", 0);
+            bounty = input.getIntOr("Bounty", 0);
+            reach = input.getIntOr("Reach", 0);
         }
-        hatchGameTime = tag.getLong("HatchGameTime");
-        midas = tag.getBoolean("Midas");
+        hatchGameTime = input.getLongOr("HatchGameTime", 0L);
+        midas = input.getBooleanOr("Midas", false);
     }
 }

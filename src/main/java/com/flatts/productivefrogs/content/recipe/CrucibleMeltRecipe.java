@@ -3,12 +3,14 @@ package com.flatts.productivefrogs.content.recipe;
 import com.flatts.productivefrogs.registry.PFRecipeTypes;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeBookCategories;
+import net.minecraft.world.item.crafting.RecipeBookCategory;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
@@ -31,12 +33,23 @@ import net.neoforged.neoforge.fluids.FluidStack;
  * }
  * }</pre>
  *
- * <p>The item-shaped {@link Recipe} surfaces (assemble / getResultItem) return
+ * <p>The item-shaped {@link Recipe} surfaces (assemble) return
  * {@link ItemStack#EMPTY} - the output is fluid, read via {@link #result()} by
  * {@code CrucibleBlockEntity}. {@link #isSpecial()} is true so the recipe book
  * doesn't try to surface an empty-result recipe.
  */
 public class CrucibleMeltRecipe implements Recipe<SingleRecipeInput> {
+
+    public static final MapCodec<CrucibleMeltRecipe> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+        Ingredient.CODEC_NONEMPTY.fieldOf("ingredient").forGetter(CrucibleMeltRecipe::ingredient),
+        FluidStack.CODEC.fieldOf("result").forGetter(CrucibleMeltRecipe::result)
+    ).apply(instance, CrucibleMeltRecipe::new));
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, CrucibleMeltRecipe> STREAM_CODEC = StreamCodec.composite(
+        Ingredient.CONTENTS_STREAM_CODEC, CrucibleMeltRecipe::ingredient,
+        FluidStack.STREAM_CODEC, CrucibleMeltRecipe::result,
+        CrucibleMeltRecipe::new
+    );
 
     private final Ingredient ingredient;
     private final FluidStack result;
@@ -61,17 +74,7 @@ public class CrucibleMeltRecipe implements Recipe<SingleRecipeInput> {
     }
 
     @Override
-    public ItemStack assemble(SingleRecipeInput input, HolderLookup.Provider registries) {
-        return ItemStack.EMPTY;
-    }
-
-    @Override
-    public boolean canCraftInDimensions(int width, int height) {
-        return true;
-    }
-
-    @Override
-    public ItemStack getResultItem(HolderLookup.Provider registries) {
+    public ItemStack assemble(SingleRecipeInput input) {
         return ItemStack.EMPTY;
     }
 
@@ -81,36 +84,32 @@ public class CrucibleMeltRecipe implements Recipe<SingleRecipeInput> {
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public boolean showNotification() {
+        return false;
+    }
+
+    @Override
+    public String group() {
+        return "";
+    }
+
+    @Override
+    public PlacementInfo placementInfo() {
+        return PlacementInfo.NOT_PLACEABLE;
+    }
+
+    @Override
+    public RecipeBookCategory recipeBookCategory() {
+        return RecipeBookCategories.CRAFTING_MISC;
+    }
+
+    @Override
+    public RecipeSerializer<CrucibleMeltRecipe> getSerializer() {
         return PFRecipeTypes.CRUCIBLE_MELTING_SERIALIZER.get();
     }
 
     @Override
-    public RecipeType<?> getType() {
+    public RecipeType<CrucibleMeltRecipe> getType() {
         return PFRecipeTypes.CRUCIBLE_MELTING.get();
-    }
-
-    public static class Serializer implements RecipeSerializer<CrucibleMeltRecipe> {
-
-        public static final MapCodec<CrucibleMeltRecipe> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Ingredient.CODEC_NONEMPTY.fieldOf("ingredient").forGetter(CrucibleMeltRecipe::ingredient),
-            FluidStack.CODEC.fieldOf("result").forGetter(CrucibleMeltRecipe::result)
-        ).apply(instance, CrucibleMeltRecipe::new));
-
-        public static final StreamCodec<RegistryFriendlyByteBuf, CrucibleMeltRecipe> STREAM_CODEC = StreamCodec.composite(
-            Ingredient.CONTENTS_STREAM_CODEC, CrucibleMeltRecipe::ingredient,
-            FluidStack.STREAM_CODEC, CrucibleMeltRecipe::result,
-            CrucibleMeltRecipe::new
-        );
-
-        @Override
-        public MapCodec<CrucibleMeltRecipe> codec() {
-            return CODEC;
-        }
-
-        @Override
-        public StreamCodec<RegistryFriendlyByteBuf, CrucibleMeltRecipe> streamCodec() {
-            return STREAM_CODEC;
-        }
     }
 }

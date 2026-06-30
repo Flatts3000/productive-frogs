@@ -12,7 +12,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -29,6 +28,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
@@ -448,44 +449,39 @@ public class CrucibleBlockEntity extends BlockEntity {
     // -------------------------------------------------------------------
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.put("Tank", tank.writeToNBT(registries, new CompoundTag()));
-        tag.putInt("Solids", solids);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        tank.serialize(output.child("Tank"));
+        output.putInt("Solids", solids);
         if (pendingFluid != null) {
-            tag.putString("PendingFluid", BuiltInRegistries.FLUID.getKey(pendingFluid).toString());
+            output.putString("PendingFluid", BuiltInRegistries.FLUID.getKey(pendingFluid).toString());
         }
         if (lastVariant != null) {
-            tag.putString("LastVariant", lastVariant.toString());
+            output.putString("LastVariant", lastVariant.toString());
         }
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.contains("Tank", Tag.TAG_COMPOUND)) {
-            tank.readFromNBT(registries, tag.getCompound("Tank"));
-        }
-        solids = Math.max(0, Math.min(
-            tag.contains("Solids", Tag.TAG_INT) ? tag.getInt("Solids") : 0, MAX_SOLIDS));
-        pendingFluid = tag.contains("PendingFluid", Tag.TAG_STRING)
-            ? BuiltInRegistries.FLUID.get(Identifier.parse(tag.getString("PendingFluid")))
-            : null;
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        input.child("Tank").ifPresent(tank::deserialize);
+        solids = Math.max(0, Math.min(input.getIntOr("Solids", 0), MAX_SOLIDS));
+        String pendingKey = input.getStringOr("PendingFluid", "");
+        pendingFluid = pendingKey.isEmpty()
+            ? null
+            : BuiltInRegistries.FLUID.get(Identifier.parse(pendingKey));
         if (pendingFluid == Fluids.EMPTY) {
             pendingFluid = null;
         }
-        lastVariant = tag.contains("LastVariant", Tag.TAG_STRING)
-            ? Identifier.tryParse(tag.getString("LastVariant"))
-            : null;
+        String variantKey = input.getStringOr("LastVariant", "");
+        lastVariant = variantKey.isEmpty() ? null : Identifier.tryParse(variantKey);
         updateFluidLight();
     }
 
     // Client sync: the renderer + Jade read everything from the update tag.
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries);
-        return tag;
+        return saveCustomOnly(registries);
     }
 
     @Override

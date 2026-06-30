@@ -3,11 +3,13 @@ package com.flatts.productivefrogs.content.recipe;
 import com.flatts.productivefrogs.registry.PFRecipeTypes;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeBookCategories;
+import net.minecraft.world.item.crafting.RecipeBookCategory;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
@@ -36,6 +38,17 @@ import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
  * type and testing {@link #fluid()} against its buffer.
  */
 public class MoldCastingRecipe implements Recipe<SingleRecipeInput> {
+
+    public static final MapCodec<MoldCastingRecipe> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+        SizedFluidIngredient.FLAT_CODEC.fieldOf("fluid").forGetter(MoldCastingRecipe::fluid),
+        ItemStack.CODEC.fieldOf("result").forGetter(MoldCastingRecipe::result)
+    ).apply(instance, MoldCastingRecipe::new));
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, MoldCastingRecipe> STREAM_CODEC = StreamCodec.composite(
+        SizedFluidIngredient.STREAM_CODEC, MoldCastingRecipe::fluid,
+        ItemStack.STREAM_CODEC, MoldCastingRecipe::result,
+        MoldCastingRecipe::new
+    );
 
     private final SizedFluidIngredient fluid;
     private final ItemStack result;
@@ -67,18 +80,8 @@ public class MoldCastingRecipe implements Recipe<SingleRecipeInput> {
     }
 
     @Override
-    public ItemStack assemble(SingleRecipeInput input, HolderLookup.Provider registries) {
+    public ItemStack assemble(SingleRecipeInput input) {
         return result.copy();
-    }
-
-    @Override
-    public boolean canCraftInDimensions(int width, int height) {
-        return true;
-    }
-
-    @Override
-    public ItemStack getResultItem(HolderLookup.Provider registries) {
-        return result;
     }
 
     @Override
@@ -87,36 +90,32 @@ public class MoldCastingRecipe implements Recipe<SingleRecipeInput> {
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public boolean showNotification() {
+        return false;
+    }
+
+    @Override
+    public String group() {
+        return "";
+    }
+
+    @Override
+    public PlacementInfo placementInfo() {
+        return PlacementInfo.NOT_PLACEABLE;
+    }
+
+    @Override
+    public RecipeBookCategory recipeBookCategory() {
+        return RecipeBookCategories.CRAFTING_MISC;
+    }
+
+    @Override
+    public RecipeSerializer<MoldCastingRecipe> getSerializer() {
         return PFRecipeTypes.MOLD_CASTING_SERIALIZER.get();
     }
 
     @Override
-    public RecipeType<?> getType() {
+    public RecipeType<MoldCastingRecipe> getType() {
         return PFRecipeTypes.MOLD_CASTING.get();
-    }
-
-    public static class Serializer implements RecipeSerializer<MoldCastingRecipe> {
-
-        public static final MapCodec<MoldCastingRecipe> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            SizedFluidIngredient.FLAT_CODEC.fieldOf("fluid").forGetter(MoldCastingRecipe::fluid),
-            ItemStack.CODEC.fieldOf("result").forGetter(MoldCastingRecipe::result)
-        ).apply(instance, MoldCastingRecipe::new));
-
-        public static final StreamCodec<RegistryFriendlyByteBuf, MoldCastingRecipe> STREAM_CODEC = StreamCodec.composite(
-            SizedFluidIngredient.STREAM_CODEC, MoldCastingRecipe::fluid,
-            ItemStack.STREAM_CODEC, MoldCastingRecipe::result,
-            MoldCastingRecipe::new
-        );
-
-        @Override
-        public MapCodec<MoldCastingRecipe> codec() {
-            return CODEC;
-        }
-
-        @Override
-        public StreamCodec<RegistryFriendlyByteBuf, MoldCastingRecipe> streamCodec() {
-            return STREAM_CODEC;
-        }
     }
 }

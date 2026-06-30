@@ -224,27 +224,22 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
     // -------------------------------------------------------------------
 
     @Override
-    protected void saveAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.putInt("CookProgress", cookProgress);
-        net.minecraft.nbt.CompoundTag invTag = new net.minecraft.nbt.CompoundTag();
-        inventory.serialize(invTag);
-        tag.put("Inventory", invTag);
+    protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
+        super.saveAdditional(output);
+        output.putInt("CookProgress", cookProgress);
+        inventory.serialize(output.child("Inventory"));
     }
 
     @Override
-    protected void loadAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    protected void loadAdditional(net.minecraft.world.level.storage.ValueInput input) {
+        super.loadAdditional(input);
         // Clamp on load: a tampered/old save could carry a negative or
         // overlarge value. A negative cookProgress would never reach
         // COOK_TIME_TOTAL until it wrapped through Integer.MAX_VALUE, stalling
         // the block "working" forever; clamp into [0, COOK_TIME_TOTAL].
-        int loaded = tag.contains("CookProgress", net.minecraft.nbt.Tag.TAG_INT)
-            ? tag.getInt("CookProgress") : 0;
+        int loaded = input.getIntOr("CookProgress", 0);
         cookProgress = Math.max(0, Math.min(loaded, COOK_TIME_TOTAL));
-        if (tag.contains("Inventory", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
-            inventory.deserialize(tag.getCompound("Inventory"));
-        }
+        input.child("Inventory").ifPresent(inventory::deserialize);
     }
 
     // Client sync: without these, a closed milker's inventory + cook progress
@@ -253,9 +248,7 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
     // need; reuse it for the update tag.
     @Override
     public net.minecraft.nbt.CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider registries) {
-        net.minecraft.nbt.CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries);
-        return tag;
+        return saveCustomOnly(registries);
     }
 
     @Override

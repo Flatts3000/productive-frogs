@@ -425,42 +425,41 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
     // -------------------------------------------------------------------
 
     @Override
-    protected void saveAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.putInt("IntervalRemaining", intervalRemaining);
-        tag.putInt("IntervalTotal", intervalTotal);
+    protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
+        super.saveAdditional(output);
+        output.putInt("IntervalRemaining", intervalRemaining);
+        output.putInt("IntervalTotal", intervalTotal);
         // A variant batch needs both ids; a Mimic batch (#253) persists the item
         // id + the mimic flag (no category).
         if (pendingBatch > 0 && pendingVariant != null && (pendingMimic || pendingCategory != null)) {
-            tag.putInt("PendingBatch", pendingBatch);
-            tag.putString("PendingVariant", pendingVariant.toString());
+            output.putInt("PendingBatch", pendingBatch);
+            output.putString("PendingVariant", pendingVariant.toString());
             if (pendingMimic) {
-                tag.putBoolean("PendingMimic", true);
+                output.putBoolean("PendingMimic", true);
             } else {
-                tag.putString("PendingCategory", pendingCategory.name());
+                output.putString("PendingCategory", pendingCategory.name());
             }
         }
-        net.minecraft.nbt.CompoundTag invTag = new net.minecraft.nbt.CompoundTag();
-        inventory.serialize(invTag);
-        tag.put("Inventory", invTag);
+        inventory.serialize(output.child("Inventory"));
     }
 
     @Override
-    protected void loadAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    protected void loadAdditional(net.minecraft.world.level.storage.ValueInput input) {
+        super.loadAdditional(input);
         // Clamp on load: tampered/old saves must not stall the churn (a
         // negative remaining would never reach 0) - same posture as the
         // Milker's cookProgress clamp.
-        intervalTotal = Math.max(0, tag.getInt("IntervalTotal"));
-        intervalRemaining = Math.max(0, Math.min(tag.getInt("IntervalRemaining"), intervalTotal));
-        pendingBatch = Math.max(0, tag.getInt("PendingBatch"));
-        pendingVariant = tag.contains("PendingVariant", net.minecraft.nbt.Tag.TAG_STRING)
-            ? Identifier.tryParse(tag.getString("PendingVariant")) : null;
-        pendingMimic = tag.getBoolean("PendingMimic");
+        intervalTotal = Math.max(0, input.getIntOr("IntervalTotal", 0));
+        intervalRemaining = Math.max(0, Math.min(input.getIntOr("IntervalRemaining", 0), intervalTotal));
+        pendingBatch = Math.max(0, input.getIntOr("PendingBatch", 0));
+        String pendingVariantId = input.getStringOr("PendingVariant", "");
+        pendingVariant = pendingVariantId.isEmpty() ? null : Identifier.tryParse(pendingVariantId);
+        pendingMimic = input.getBooleanOr("PendingMimic", false);
         pendingCategory = null;
-        if (tag.contains("PendingCategory", net.minecraft.nbt.Tag.TAG_STRING)) {
+        String pendingCategoryName = input.getStringOr("PendingCategory", "");
+        if (!pendingCategoryName.isEmpty()) {
             try {
-                pendingCategory = Category.valueOf(tag.getString("PendingCategory"));
+                pendingCategory = Category.valueOf(pendingCategoryName);
             } catch (IllegalArgumentException ignored) {
             }
         }
@@ -470,18 +469,14 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
             pendingBatch = 0;
             pendingMimic = false;
         }
-        if (tag.contains("Inventory", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
-            inventory.deserialize(tag.getCompound("Inventory"));
-        }
+        input.child("Inventory").ifPresent(inventory::deserialize);
     }
 
     // Client sync for chunk load (Jade/WTHIT read contents without opening
     // the GUI) - same posture as the Milker.
     @Override
     public net.minecraft.nbt.CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider registries) {
-        net.minecraft.nbt.CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries);
-        return tag;
+        return saveCustomOnly(registries);
     }
 
     @Override

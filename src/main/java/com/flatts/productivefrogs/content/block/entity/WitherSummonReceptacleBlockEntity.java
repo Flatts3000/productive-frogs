@@ -7,7 +7,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -17,6 +16,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
@@ -159,27 +160,24 @@ public class WitherSummonReceptacleBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.put("Held", held.serializeNBT(registries));
-        tag.putString("Ritual", ritual.getName());
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        held.serialize(output.child("Held"));
+        output.putString("Ritual", ritual.getName());
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.contains("Held", Tag.TAG_COMPOUND)) {
-            held.deserializeNBT(registries, tag.getCompound("Held"));
-        }
-        Direction d = tag.contains("Ritual") ? Direction.byName(tag.getString("Ritual")) : null;
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        input.child("Held").ifPresent(held::deserialize);
+        String name = input.getStringOr("Ritual", "");
+        Direction d = name.isEmpty() ? null : Direction.byName(name);
         this.ritual = d != null && d.getAxis().isHorizontal() ? d : WitherAltarValidator.CANONICAL_RITUAL;
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries);
-        return tag;
+        return saveCustomOnly(registries);
     }
 
     @Override

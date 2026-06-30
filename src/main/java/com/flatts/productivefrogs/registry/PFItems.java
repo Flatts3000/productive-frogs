@@ -36,6 +36,8 @@ import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.Tiers;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.TypedEntityData;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -294,11 +296,9 @@ public final class PFItems {
         props -> {
             EntityType<?> type = PFEntities.RESOURCE_FROG.get();
             CompoundTag nbt = new CompoundTag();
-            nbt.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
             nbt.putString("Category", Category.VOID.name());
             nbt.putBoolean("Midas", true);
-            return new SpawnEggItem((EntityType<? extends Mob>) type, 0xFFD700, 0xB8860B,
-                new Item.Properties().component(DataComponents.ENTITY_DATA, CustomData.of(nbt)));
+            return new SpawnEggItem(props.component(DataComponents.ENTITY_DATA, TypedEntityData.of(type, nbt)));
         });
 
     /**
@@ -312,11 +312,9 @@ public final class PFItems {
         props -> {
             EntityType<?> type = PFEntities.RESOURCE_TADPOLE.get();
             CompoundTag nbt = new CompoundTag();
-            nbt.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
             nbt.putString("Category", Category.VOID.name());
             nbt.putBoolean("Midas", true);
-            return new SpawnEggItem((EntityType<? extends Mob>) type, 0xFFD700, 0xB8860B,
-                new Item.Properties().component(DataComponents.ENTITY_DATA, CustomData.of(nbt)));
+            return new SpawnEggItem(props.component(DataComponents.ENTITY_DATA, TypedEntityData.of(type, nbt)));
         });
 
     /**
@@ -335,8 +333,7 @@ public final class PFItems {
     public static final DeferredItem<ResourceSlimeSpawnEggItem> RESOURCE_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "resource_slime_spawn_egg",
         props -> new ResourceSlimeSpawnEggItem(
-            PFEntities.RESOURCE_SLIME.get(),
-            Category.BOG.tintRgb(), darker(Category.BOG.tintRgb()), props)
+            PFEntities.RESOURCE_SLIME.get(), props)
     );
 
     /**
@@ -365,43 +362,37 @@ public final class PFItems {
      */
     public static final DeferredItem<SpawnEggItem> CAVE_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "cave_slime_spawn_egg",
-        props -> new SpawnEggItem(PFEntities.CAVE_SLIME.get(),
-            Category.CAVE.tintRgb(), darker(Category.CAVE.tintRgb()), props)
+        props -> new SpawnEggItem(props.spawnEgg(PFEntities.CAVE_SLIME.get()))
     );
 
     /** Geode Slime spawn egg — GEODE parent species. Mirrors Cave Slime. */
     public static final DeferredItem<SpawnEggItem> GEODE_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "geode_slime_spawn_egg",
-        props -> new SpawnEggItem(PFEntities.GEODE_SLIME.get(),
-            Category.GEODE.tintRgb(), darker(Category.GEODE.tintRgb()), props)
+        props -> new SpawnEggItem(props.spawnEgg(PFEntities.GEODE_SLIME.get()))
     );
 
     /** Tide Slime spawn egg — TIDE parent species. Mirrors Cave Slime. */
     public static final DeferredItem<SpawnEggItem> TIDE_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "tide_slime_spawn_egg",
-        props -> new SpawnEggItem(PFEntities.TIDE_SLIME.get(),
-            Category.TIDE.tintRgb(), darker(Category.TIDE.tintRgb()), props)
+        props -> new SpawnEggItem(props.spawnEgg(PFEntities.TIDE_SLIME.get()))
     );
 
     /** Void Slime spawn egg — VOID parent species. Mirrors Cave Slime. */
     public static final DeferredItem<SpawnEggItem> VOID_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "void_slime_spawn_egg",
-        props -> new SpawnEggItem(PFEntities.VOID_SLIME.get(),
-            Category.VOID.tintRgb(), darker(Category.VOID.tintRgb()), props)
+        props -> new SpawnEggItem(props.spawnEgg(PFEntities.VOID_SLIME.get()))
     );
 
     /** Bog Slime spawn egg — BOG parent species. V1.5 addition. */
     public static final DeferredItem<SpawnEggItem> BOG_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "bog_slime_spawn_egg",
-        props -> new SpawnEggItem(PFEntities.BOG_SLIME.get(),
-            Category.BOG.tintRgb(), darker(Category.BOG.tintRgb()), props)
+        props -> new SpawnEggItem(props.spawnEgg(PFEntities.BOG_SLIME.get()))
     );
 
     /** Infernal Slime spawn egg — INFERNAL parent species. V1.5 addition. */
     public static final DeferredItem<SpawnEggItem> INFERNAL_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "infernal_slime_spawn_egg",
-        props -> new SpawnEggItem(PFEntities.INFERNAL_SLIME.get(),
-            Category.INFERNAL.tintRgb(), darker(Category.INFERNAL.tintRgb()), props)
+        props -> new SpawnEggItem(props.spawnEgg(PFEntities.INFERNAL_SLIME.get()))
     );
 
     /**
@@ -432,7 +423,7 @@ public final class PFItems {
      * is the V1 production keystone (right-click with slime bucket → milk
      * bucket out). See {@link com.flatts.productivefrogs.content.block.SlimeMilkerBlock}.
      */
-    public static final DeferredItem<BlockItem> SLIME_MILKER = ITEMS.registerSimpleBlockItem(
+    public static final DeferredItem<BlockItem> SLIME_MILKER = registerSimpleBlockItem(
         "slime_milker",
         PFBlocks.SLIME_MILKER,
         new Item.Properties()
@@ -443,7 +434,7 @@ public final class PFItems {
      * Milker's inverse (milk bucket + empty buckets -> captured Slime Buckets
      * on the placed-source spawn economy).
      */
-    public static final DeferredItem<BlockItem> SLIME_CHURN = ITEMS.registerSimpleBlockItem(
+    public static final DeferredItem<BlockItem> SLIME_CHURN = registerSimpleBlockItem(
         "slime_churn",
         PFBlocks.SLIME_CHURN,
         new Item.Properties()
@@ -454,7 +445,7 @@ public final class PFItems {
      * craftable + shown in JEI/creative when {@code spawnery.enabled} is true (the
      * item is always registered so a placed block functions if obtained via /give).
      */
-    public static final DeferredItem<BlockItem> SPAWNERY = ITEMS.registerSimpleBlockItem(
+    public static final DeferredItem<BlockItem> SPAWNERY = registerSimpleBlockItem(
         "spawnery",
         PFBlocks.SPAWNERY,
         new Item.Properties()
@@ -464,7 +455,7 @@ public final class PFItems {
      * Froglight Crucible BlockItem (v1.12 wave 1) - places {@link PFBlocks#CRUCIBLE},
      * the GUI-less heated basin that melts Froglights into fluids.
      */
-    public static final DeferredItem<BlockItem> CRUCIBLE = ITEMS.registerSimpleBlockItem(
+    public static final DeferredItem<BlockItem> CRUCIBLE = registerSimpleBlockItem(
         "crucible",
         PFBlocks.CRUCIBLE,
         new Item.Properties()
@@ -474,7 +465,7 @@ public final class PFItems {
      * Casting Mold BlockItem (v1.12 wave 2) - places {@link PFBlocks#CASTING_MOLD},
      * the molten-to-ingot solidifier that completes the Crucible tower.
      */
-    public static final DeferredItem<BlockItem> CASTING_MOLD = ITEMS.registerSimpleBlockItem(
+    public static final DeferredItem<BlockItem> CASTING_MOLD = registerSimpleBlockItem(
         "casting_mold",
         PFBlocks.CASTING_MOLD,
         new Item.Properties()
@@ -495,7 +486,7 @@ public final class PFItems {
      * Distiller BlockItem (#253) - places {@link PFBlocks#DISTILLER}, the
      * Equivalence lane's RF-powered extractor (Prismatic Froglight -> item).
      */
-    public static final DeferredItem<BlockItem> DISTILLER = ITEMS.registerSimpleBlockItem(
+    public static final DeferredItem<BlockItem> DISTILLER = registerSimpleBlockItem(
         "distiller",
         PFBlocks.DISTILLER,
         new Item.Properties()
@@ -505,7 +496,7 @@ public final class PFItems {
      * Alembic BlockItem (#253) - places {@link PFBlocks#ALEMBIC}, the Equivalence
      * lane's RF-powered synthesizer (item -> Mimic Slime Bucket).
      */
-    public static final DeferredItem<BlockItem> ALEMBIC = ITEMS.registerSimpleBlockItem(
+    public static final DeferredItem<BlockItem> ALEMBIC = registerSimpleBlockItem(
         "alembic",
         PFBlocks.ALEMBIC,
         new Item.Properties()
@@ -516,13 +507,13 @@ public final class PFItems {
      * habitat - Controller / Sprinkler / Incubator / Hatch.
      */
     public static final DeferredItem<BlockItem> TERRARIUM_CONTROLLER =
-        ITEMS.registerSimpleBlockItem("terrarium_controller", PFBlocks.TERRARIUM_CONTROLLER, new Item.Properties());
+        registerSimpleBlockItem("terrarium_controller", PFBlocks.TERRARIUM_CONTROLLER, new Item.Properties());
     public static final DeferredItem<BlockItem> SPRINKLER =
-        ITEMS.registerSimpleBlockItem("sprinkler", PFBlocks.SPRINKLER, new Item.Properties());
+        registerSimpleBlockItem("sprinkler", PFBlocks.SPRINKLER, new Item.Properties());
     public static final DeferredItem<BlockItem> INCUBATOR =
-        ITEMS.registerSimpleBlockItem("incubator", PFBlocks.INCUBATOR, new Item.Properties());
+        registerSimpleBlockItem("incubator", PFBlocks.INCUBATOR, new Item.Properties());
     public static final DeferredItem<BlockItem> HATCH =
-        ITEMS.registerSimpleBlockItem("hatch", PFBlocks.HATCH, new Item.Properties());
+        registerSimpleBlockItem("hatch", PFBlocks.HATCH, new Item.Properties());
 
     /**
      * Boss-tier catalyst BlockItems (#184). Placing the matching catalyst on all
@@ -530,40 +521,40 @@ public final class PFItems {
      * {@code docs/boss_catalyst_altar.md}.
      */
     public static final DeferredItem<BlockItem> NETHER_STAR_CATALYST =
-        ITEMS.registerSimpleBlockItem("nether_star_catalyst", PFBlocks.NETHER_STAR_CATALYST, new Item.Properties());
+        registerSimpleBlockItem("nether_star_catalyst", PFBlocks.NETHER_STAR_CATALYST, new Item.Properties());
     public static final DeferredItem<BlockItem> DRAGON_EGG_CATALYST =
-        ITEMS.registerSimpleBlockItem("dragon_egg_catalyst", PFBlocks.DRAGON_EGG_CATALYST, new Item.Properties());
+        registerSimpleBlockItem("dragon_egg_catalyst", PFBlocks.DRAGON_EGG_CATALYST, new Item.Properties());
     public static final DeferredItem<BlockItem> WITHER_SKELETON_SKULL_CATALYST =
-        ITEMS.registerSimpleBlockItem("wither_skeleton_skull_catalyst", PFBlocks.WITHER_SKELETON_SKULL_CATALYST, new Item.Properties());
+        registerSimpleBlockItem("wither_skeleton_skull_catalyst", PFBlocks.WITHER_SKELETON_SKULL_CATALYST, new Item.Properties());
     public static final DeferredItem<BlockItem> DRAGON_BREATH_CATALYST =
-        ITEMS.registerSimpleBlockItem("dragon_breath_catalyst", PFBlocks.DRAGON_BREATH_CATALYST, new Item.Properties());
+        registerSimpleBlockItem("dragon_breath_catalyst", PFBlocks.DRAGON_BREATH_CATALYST, new Item.Properties());
 
     // Reinforced Froglights (#249) - the dragon altar's structural blocks.
     public static final DeferredItem<BlockItem> REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT =
-        ITEMS.registerSimpleBlockItem("reinforced_wither_skeleton_skull_froglight", PFBlocks.REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT, new Item.Properties());
+        registerSimpleBlockItem("reinforced_wither_skeleton_skull_froglight", PFBlocks.REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT, new Item.Properties());
     public static final DeferredItem<BlockItem> REINFORCED_NETHER_STAR_FROGLIGHT =
-        ITEMS.registerSimpleBlockItem("reinforced_nether_star_froglight", PFBlocks.REINFORCED_NETHER_STAR_FROGLIGHT, new Item.Properties());
+        registerSimpleBlockItem("reinforced_nether_star_froglight", PFBlocks.REINFORCED_NETHER_STAR_FROGLIGHT, new Item.Properties());
 
     // End Crystal Receptacle (#249) - the dragon altar's crystal sockets.
     public static final DeferredItem<BlockItem> END_CRYSTAL_RECEPTACLE =
-        ITEMS.registerSimpleBlockItem("end_crystal_receptacle", PFBlocks.END_CRYSTAL_RECEPTACLE, new Item.Properties());
+        registerSimpleBlockItem("end_crystal_receptacle", PFBlocks.END_CRYSTAL_RECEPTACLE, new Item.Properties());
     // End Dragon Altar Hatch (#249) - the dragon altar's output.
     public static final DeferredItem<BlockItem> END_DRAGON_ALTAR_HATCH =
-        ITEMS.registerSimpleBlockItem("end_dragon_altar_hatch", PFBlocks.END_DRAGON_ALTAR_HATCH, new Item.Properties());
+        registerSimpleBlockItem("end_dragon_altar_hatch", PFBlocks.END_DRAGON_ALTAR_HATCH, new Item.Properties());
 
     // Wither Altar (#247) - the Nether-themed reinforced froglights, receptacles, hatch, and capstone.
     public static final DeferredItem<BlockItem> REINFORCED_SOUL_SAND_FROGLIGHT =
-        ITEMS.registerSimpleBlockItem("reinforced_soul_sand_froglight", PFBlocks.REINFORCED_SOUL_SAND_FROGLIGHT, new Item.Properties());
+        registerSimpleBlockItem("reinforced_soul_sand_froglight", PFBlocks.REINFORCED_SOUL_SAND_FROGLIGHT, new Item.Properties());
     public static final DeferredItem<BlockItem> REINFORCED_BLAZE_ROD_FROGLIGHT =
-        ITEMS.registerSimpleBlockItem("reinforced_blaze_rod_froglight", PFBlocks.REINFORCED_BLAZE_ROD_FROGLIGHT, new Item.Properties());
+        registerSimpleBlockItem("reinforced_blaze_rod_froglight", PFBlocks.REINFORCED_BLAZE_ROD_FROGLIGHT, new Item.Properties());
     public static final DeferredItem<BlockItem> SOUL_SAND_RECEPTACLE =
-        ITEMS.registerSimpleBlockItem("soul_sand_receptacle", PFBlocks.SOUL_SAND_RECEPTACLE, new Item.Properties());
+        registerSimpleBlockItem("soul_sand_receptacle", PFBlocks.SOUL_SAND_RECEPTACLE, new Item.Properties());
     public static final DeferredItem<BlockItem> WITHER_SKULL_RECEPTACLE =
-        ITEMS.registerSimpleBlockItem("wither_skull_receptacle", PFBlocks.WITHER_SKULL_RECEPTACLE, new Item.Properties());
+        registerSimpleBlockItem("wither_skull_receptacle", PFBlocks.WITHER_SKULL_RECEPTACLE, new Item.Properties());
     public static final DeferredItem<BlockItem> WITHER_ALTAR_HATCH =
-        ITEMS.registerSimpleBlockItem("wither_altar_hatch", PFBlocks.WITHER_ALTAR_HATCH, new Item.Properties());
+        registerSimpleBlockItem("wither_altar_hatch", PFBlocks.WITHER_ALTAR_HATCH, new Item.Properties());
     public static final DeferredItem<BlockItem> WITHERED_STAR =
-        ITEMS.registerSimpleBlockItem("withered_star", PFBlocks.WITHERED_STAR, new Item.Properties());
+        registerSimpleBlockItem("withered_star", PFBlocks.WITHERED_STAR, new Item.Properties());
 
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
@@ -665,6 +656,16 @@ public final class PFItems {
     public static ItemStack slimeMilkBucket(Identifier variantId) {
         net.minecraft.world.item.Item bucket = PFVariantMilk.bucket(variantId);
         return bucket == null ? ItemStack.EMPTY : new ItemStack(bucket);
+    }
+
+    /**
+     * Adapter for the 26.1 {@code registerSimpleBlockItem} signature, which now
+     * takes a {@code Supplier<Item.Properties>} rather than a Properties instance.
+     * Call sites keep passing a Properties instance; this wraps it in a supplier.
+     */
+    private static DeferredItem<BlockItem> registerSimpleBlockItem(
+            String name, Supplier<? extends Block> block, Item.Properties properties) {
+        return ITEMS.registerSimpleBlockItem(name, block, () -> properties);
     }
 
     private PFItems() {

@@ -7,6 +7,7 @@ import com.flatts.productivefrogs.util.PFDebug;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.Brain;
@@ -15,6 +16,8 @@ import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,17 +78,15 @@ public class SweetslimedLilyPadBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        if (claimant != null) {
-            tag.putUUID("Claimant", claimant);
-        }
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        output.storeNullable("Claimant", UUIDUtil.CODEC, claimant);
     }
 
     @Override
-    protected void loadAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        claimant = tag.hasUUID("Claimant") ? tag.getUUID("Claimant") : null;
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        claimant = input.read("Claimant", UUIDUtil.CODEC).orElse(null);
     }
 
     /** Set the claimed frog (or null), marking the BE dirty so the claim persists across a reload. */

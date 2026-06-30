@@ -30,6 +30,8 @@ import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -284,18 +286,18 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
         this.items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
-        ContainerHelper.loadAllItems(tag, this.items, registries);
-        this.summonTicks = tag.getInt("SummonTicks");
+        ContainerHelper.loadAllItems(input, this.items);
+        this.summonTicks = input.getIntOr("SummonTicks", 0);
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        ContainerHelper.saveAllItems(tag, this.items, registries);
-        tag.putInt("SummonTicks", summonTicks);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        ContainerHelper.saveAllItems(output, this.items);
+        output.putInt("SummonTicks", summonTicks);
     }
 
     // Sync only the summon progress to the client (the chest contents ride the menu,

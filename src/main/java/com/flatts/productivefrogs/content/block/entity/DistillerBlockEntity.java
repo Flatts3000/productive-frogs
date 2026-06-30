@@ -9,7 +9,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -28,6 +27,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -309,31 +310,24 @@ public class DistillerBlockEntity extends BlockEntity implements MenuProvider {
     // -------------------------------------------------------------------
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.put("Items", items.serializeNBT(registries));
-        tag.putInt("Energy", energy.getEnergyStored());
-        tag.putInt("Progress", progress);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        items.serialize(output.child("Items"));
+        output.putInt("Energy", energy.getEnergyStored());
+        output.putInt("Progress", progress);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.contains("Items", Tag.TAG_COMPOUND)) {
-            items.deserializeNBT(registries, tag.getCompound("Items"));
-        }
-        if (tag.contains("Energy", Tag.TAG_INT)) {
-            energy.load(tag.getInt("Energy"));
-        }
-        int loaded = tag.contains("Progress", Tag.TAG_INT) ? tag.getInt("Progress") : 0;
-        progress = Math.max(0, Math.min(loaded, DISTILL_TIME));
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        input.child("Items").ifPresent(items::deserialize);
+        energy.load(input.getIntOr("Energy", 0));
+        progress = Math.max(0, Math.min(input.getIntOr("Progress", 0), DISTILL_TIME));
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries);
-        return tag;
+        return saveCustomOnly(registries);
     }
 
     @Override

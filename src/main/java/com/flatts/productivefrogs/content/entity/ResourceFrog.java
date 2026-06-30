@@ -212,53 +212,52 @@ public class ResourceFrog extends Frog {
     }
 
     @Override
-    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
-        super.addAdditionalSaveData(tag);
-        tag.putString("Category", getCategory().name());
-        tag.putInt("Appetite", getAppetite());
-        tag.putInt("Bounty", getBounty());
-        tag.putInt("Reach", getReach());
+    public void addAdditionalSaveData(net.minecraft.world.level.storage.ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        output.putString("Category", getCategory().name());
+        output.putInt("Appetite", getAppetite());
+        output.putInt("Bounty", getBounty());
+        output.putInt("Reach", getReach());
         if (isMidas()) {
-            tag.putBoolean("Midas", true);
+            output.putBoolean("Midas", true);
         }
         if (hasPendingOffspring) {
-            tag.putBoolean("HasPendingOffspring", true);
-            tag.putInt("PendingOffspringAppetite", pendingOffspringAppetite);
-            tag.putInt("PendingOffspringBounty", pendingOffspringBounty);
-            tag.putInt("PendingOffspringReach", pendingOffspringReach);
+            output.putBoolean("HasPendingOffspring", true);
+            output.putInt("PendingOffspringAppetite", pendingOffspringAppetite);
+            output.putInt("PendingOffspringBounty", pendingOffspringBounty);
+            output.putInt("PendingOffspringReach", pendingOffspringReach);
         }
         if (perchPad != null) {
-            tag.putLong("PerchPad", perchPad.asLong());
-            tag.putLong("PerchValidUntil", perchValidUntil);
+            output.putLong("PerchPad", perchPad.asLong());
+            output.putLong("PerchValidUntil", perchValidUntil);
         }
     }
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
-        super.readAdditionalSaveData(tag);
-        if (tag.contains("Category", net.minecraft.nbt.Tag.TAG_STRING)) {
+    public void readAdditionalSaveData(net.minecraft.world.level.storage.ValueInput input) {
+        super.readAdditionalSaveData(input);
+        input.getString("Category").ifPresent(name -> {
             try {
-                setCategory(Category.valueOf(tag.getString("Category")));
+                setCategory(Category.valueOf(name));
             } catch (IllegalArgumentException ignored) {
                 // Unknown category in save data — leave default.
             }
-        }
-        if (tag.contains("Appetite", net.minecraft.nbt.Tag.TAG_INT)) {
+        });
+        input.getInt("Appetite").ifPresent(appetite ->
             // A frog persisted with stats is established - getters clamp, so a
             // tampered save can't inject out-of-range values.
-            setStats(tag.getInt("Appetite"), tag.getInt("Bounty"), tag.getInt("Reach"));
-        }
-        setMidas(tag.getBoolean("Midas"));
-        hasPendingOffspring = tag.getBoolean("HasPendingOffspring");
+            setStats(appetite, input.getIntOr("Bounty", 0), input.getIntOr("Reach", 0)));
+        setMidas(input.getBooleanOr("Midas", false));
+        hasPendingOffspring = input.getBooleanOr("HasPendingOffspring", false);
         if (hasPendingOffspring) {
-            pendingOffspringAppetite = tag.getInt("PendingOffspringAppetite");
-            pendingOffspringBounty = tag.getInt("PendingOffspringBounty");
-            pendingOffspringReach = tag.getInt("PendingOffspringReach");
+            pendingOffspringAppetite = input.getIntOr("PendingOffspringAppetite", 0);
+            pendingOffspringBounty = input.getIntOr("PendingOffspringBounty", 0);
+            pendingOffspringReach = input.getIntOr("PendingOffspringReach", 0);
         }
-        if (tag.contains("PerchPad", net.minecraft.nbt.Tag.TAG_LONG)) {
-            perchPad = net.minecraft.core.BlockPos.of(tag.getLong("PerchPad"));
-            perchValidUntil = tag.getLong("PerchValidUntil");
-        }
+        input.getLong("PerchPad").ifPresent(packed -> {
+            perchPad = net.minecraft.core.BlockPos.of(packed);
+            perchValidUntil = input.getLongOr("PerchValidUntil", 0L);
+        });
     }
 
     // ---- Sweetslimed lily pad perch (#214) ----

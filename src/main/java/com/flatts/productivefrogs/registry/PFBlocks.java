@@ -54,6 +54,19 @@ public final class PFBlocks {
     public static final DeferredRegister.Blocks BLOCKS =
         DeferredRegister.createBlocks(ProductiveFrogs.MOD_ID);
 
+    /**
+     * Local adapter for the 26.1 {@code registerBlock} signature change: the 3rd
+     * argument is now a {@code Supplier<BlockBehaviour.Properties>} (or UnaryOperator),
+     * not a Properties instance. Call sites still hand a freshly-built Properties
+     * instance per block; we wrap it in a supplier the DeferredRegister invokes once.
+     */
+    private static <B extends Block> DeferredBlock<B> registerBlock(
+            String name,
+            java.util.function.Function<BlockBehaviour.Properties, ? extends B> factory,
+            BlockBehaviour.Properties properties) {
+        return BLOCKS.registerBlock(name, factory, () -> properties);
+    }
+
     public static final Map<Category, DeferredBlock<PrimedFrogEggBlock>> PRIMED_FROG_EGGS = buildPrimedEggs();
 
     /**
@@ -62,7 +75,7 @@ public final class PFBlocks {
      * named "Midas Egg", carries the VOID sentinel category for its tadpoles, and
      * the midas marker so it hatches Midas.
      */
-    public static final DeferredBlock<PrimedFrogEggBlock> MIDAS_FROG_EGG = BLOCKS.registerBlock(
+    public static final DeferredBlock<PrimedFrogEggBlock> MIDAS_FROG_EGG = registerBlock(
         "midas_frog_egg",
         props -> new PrimedFrogEggBlock(Category.VOID, true, props),
         primedEggProperties(Category.VOID)
@@ -77,7 +90,7 @@ public final class PFBlocks {
      * Inherits vanilla Froglight properties (light 15, FROGLIGHT sound).
      */
     public static final DeferredBlock<ConfigurableFroglightBlock> CONFIGURABLE_FROGLIGHT =
-        BLOCKS.registerBlock(
+        registerBlock(
             "configurable_froglight",
             ConfigurableFroglightBlock::new,
             BlockBehaviour.Properties.of()
@@ -102,7 +115,7 @@ public final class PFBlocks {
      * cheap to break with hand, sturdy enough to feel "built". Sound type
      * METAL since the design is a mechanical press.
      */
-    public static final DeferredBlock<SlimeMilkerBlock> SLIME_MILKER = BLOCKS.registerBlock(
+    public static final DeferredBlock<SlimeMilkerBlock> SLIME_MILKER = registerBlock(
         "slime_milker",
         SlimeMilkerBlock::new,
         BlockBehaviour.Properties.of()
@@ -120,7 +133,7 @@ public final class PFBlocks {
      * texture follows the recipe (oak planks frame / moss lid / slime core /
      * packed-mud base row), so the block feels like wood.
      */
-    public static final DeferredBlock<SlimeChurnBlock> SLIME_CHURN = BLOCKS.registerBlock(
+    public static final DeferredBlock<SlimeChurnBlock> SLIME_CHURN = registerBlock(
         "slime_churn",
         SlimeChurnBlock::new,
         BlockBehaviour.Properties.of()
@@ -135,7 +148,7 @@ public final class PFBlocks {
      * fueled by slime balls, optionally primed to a species. {@link SpawneryBlock#LIT}
      * drives a furnace-style burn glow. See {@code docs/spawnery.md}.
      */
-    public static final DeferredBlock<SpawneryBlock> SPAWNERY = BLOCKS.registerBlock(
+    public static final DeferredBlock<SpawneryBlock> SPAWNERY = registerBlock(
         "spawnery",
         SpawneryBlock::new,
         BlockBehaviour.Properties.of()
@@ -151,7 +164,7 @@ public final class PFBlocks {
      * driven); {@link CrucibleBlock#LIT} glows while actively melting. Stone
      * feel like a cauldron; light level 11 while lit (molten glow).
      */
-    public static final DeferredBlock<CrucibleBlock> CRUCIBLE = BLOCKS.registerBlock(
+    public static final DeferredBlock<CrucibleBlock> CRUCIBLE = registerBlock(
         "crucible",
         CrucibleBlock::new,
         BlockBehaviour.Properties.of()
@@ -172,7 +185,7 @@ public final class PFBlocks {
      * or runs free-standing fed by pipes and buckets. Iron-and-bricks identity
      * like the Crucible; METAL sound for the iron frame.
      */
-    public static final DeferredBlock<CastingMoldBlock> CASTING_MOLD = BLOCKS.registerBlock(
+    public static final DeferredBlock<CastingMoldBlock> CASTING_MOLD = registerBlock(
         "casting_mold",
         CastingMoldBlock::new,
         BlockBehaviour.Properties.of()
@@ -186,7 +199,7 @@ public final class PFBlocks {
      * first energy machine); renders a Prismatic Froglight back to its carried
      * item. Iron/glass alchemy identity; METAL sound.
      */
-    public static final DeferredBlock<DistillerBlock> DISTILLER = BLOCKS.registerBlock(
+    public static final DeferredBlock<DistillerBlock> DISTILLER = registerBlock(
         "distiller",
         DistillerBlock::new,
         BlockBehaviour.Properties.of()
@@ -200,7 +213,7 @@ public final class PFBlocks {
      * bucket + off-roster item -> Mimic Slime Bucket). Same alchemy identity as
      * the Distiller; METAL sound.
      */
-    public static final DeferredBlock<AlembicBlock> ALEMBIC = BLOCKS.registerBlock(
+    public static final DeferredBlock<AlembicBlock> ALEMBIC = registerBlock(
         "alembic",
         AlembicBlock::new,
         BlockBehaviour.Properties.of()
@@ -214,7 +227,7 @@ public final class PFBlocks {
      * One block (the synthesized item rides on its BE); reuses the shared milk
      * fluid render + block properties. Spawns Mimic Slimes via the milk economy.
      */
-    public static final DeferredBlock<MimicMilkSourceBlock> MIMIC_MILK = BLOCKS.registerBlock(
+    public static final DeferredBlock<MimicMilkSourceBlock> MIMIC_MILK = registerBlock(
         "mimic_slime_milk",
         p -> new MimicMilkSourceBlock(PFFluids.MIMIC_MILK.get(), p),
         PFVariantMilk.milkBlockProperties()
@@ -227,7 +240,7 @@ public final class PFBlocks {
      * identity (the blocks craft from Infernal-species resources); the milk
      * intake + Sprinkler distribution land in phase 2.
      */
-    public static final DeferredBlock<TerrariumControllerBlock> TERRARIUM_CONTROLLER = BLOCKS.registerBlock(
+    public static final DeferredBlock<TerrariumControllerBlock> TERRARIUM_CONTROLLER = registerBlock(
         "terrarium_controller",
         TerrariumControllerBlock::new,
         BlockBehaviour.Properties.of()
@@ -242,7 +255,7 @@ public final class PFBlocks {
      * cavity ceiling; phase 2 gives each the placed-Slime-Milk spawn loop.
      * Cheapest of the five (you craft many).
      */
-    public static final DeferredBlock<SprinklerBlock> SPRINKLER = BLOCKS.registerBlock(
+    public static final DeferredBlock<SprinklerBlock> SPRINKLER = registerBlock(
         "sprinkler",
         SprinklerBlock::new,
         BlockBehaviour.Properties.of()
@@ -261,7 +274,7 @@ public final class PFBlocks {
     );
 
     /** The Incubator (#185) - grows frogspawn/tadpoles into stat-preserving frogs (phase 4). */
-    public static final DeferredBlock<IncubatorBlock> INCUBATOR = BLOCKS.registerBlock(
+    public static final DeferredBlock<IncubatorBlock> INCUBATOR = registerBlock(
         "incubator",
         IncubatorBlock::new,
         BlockBehaviour.Properties.of()
@@ -271,7 +284,7 @@ public final class PFBlocks {
     );
 
     /** The Hatch (#185) - the Terrarium's froglight output inventory (phase 3). */
-    public static final DeferredBlock<HatchBlock> HATCH = BLOCKS.registerBlock(
+    public static final DeferredBlock<HatchBlock> HATCH = registerBlock(
         "hatch",
         HatchBlock::new,
         BlockBehaviour.Properties.of()
@@ -286,7 +299,7 @@ public final class PFBlocks {
      * that pins the nearest Resource Frog to it. Lily-pad-like properties; instant
      * break and DESTROY push-reaction match the vanilla pad.
      */
-    public static final DeferredBlock<SweetslimedLilyPadBlock> SWEETSLIMED_LILY_PAD = BLOCKS.registerBlock(
+    public static final DeferredBlock<SweetslimedLilyPadBlock> SWEETSLIMED_LILY_PAD = registerBlock(
         "sweetslimed_lily_pad",
         SweetslimedLilyPadBlock::new,
         BlockBehaviour.Properties.of()
@@ -321,9 +334,9 @@ public final class PFBlocks {
      * data-driven {@link ConfigurableFroglightBlock}.
      */
     public static final DeferredBlock<Block> REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT =
-        BLOCKS.registerBlock("reinforced_wither_skeleton_skull_froglight", Block::new, reinforcedFroglightProperties());
+        registerBlock("reinforced_wither_skeleton_skull_froglight", Block::new, reinforcedFroglightProperties());
     public static final DeferredBlock<Block> REINFORCED_NETHER_STAR_FROGLIGHT =
-        BLOCKS.registerBlock("reinforced_nether_star_froglight", Block::new, reinforcedFroglightProperties());
+        registerBlock("reinforced_nether_star_froglight", Block::new, reinforcedFroglightProperties());
 
     /**
      * End Crystal Receptacle (#249) - the dragon altar's four crystal sockets, at
@@ -332,7 +345,7 @@ public final class PFBlocks {
      * tier blast resistance, so it reads as part of the dragon-proof altar.
      */
     public static final DeferredBlock<EndCrystalReceptacleBlock> END_CRYSTAL_RECEPTACLE =
-        BLOCKS.registerBlock("end_crystal_receptacle", EndCrystalReceptacleBlock::new, receptacleProperties());
+        registerBlock("end_crystal_receptacle", EndCrystalReceptacleBlock::new, receptacleProperties());
 
     /**
      * End Dragon Altar Hatch (#249) - the altar's output. Same function as the
@@ -340,7 +353,7 @@ public final class PFBlocks {
      * non-directional block; the summon deposits the dragon's drops here.
      */
     public static final DeferredBlock<EndDragonAltarHatchBlock> END_DRAGON_ALTAR_HATCH =
-        BLOCKS.registerBlock("end_dragon_altar_hatch", EndDragonAltarHatchBlock::new, receptacleProperties());
+        registerBlock("end_dragon_altar_hatch", EndDragonAltarHatchBlock::new, receptacleProperties());
 
     /**
      * Reinforced Froglights for the Wither Altar (#247) - the Nether-themed structural
@@ -349,9 +362,9 @@ public final class PFBlocks {
      * froglights: full-cube, non-directional, light 15, obsidian-tier blast resistance.
      */
     public static final DeferredBlock<Block> REINFORCED_SOUL_SAND_FROGLIGHT =
-        BLOCKS.registerBlock("reinforced_soul_sand_froglight", Block::new, reinforcedFroglightProperties());
+        registerBlock("reinforced_soul_sand_froglight", Block::new, reinforcedFroglightProperties());
     public static final DeferredBlock<Block> REINFORCED_BLAZE_ROD_FROGLIGHT =
-        BLOCKS.registerBlock("reinforced_blaze_rod_froglight", Block::new, reinforcedFroglightProperties());
+        registerBlock("reinforced_blaze_rod_froglight", Block::new, reinforcedFroglightProperties());
 
     /**
      * The two Wither Altar summon receptacles (#247) - the vanilla summon T rendered as
@@ -359,15 +372,15 @@ public final class PFBlocks {
      * accepting its own item; a full T (4 soul sand + 3 skulls) fires the summon.
      */
     public static final DeferredBlock<WitherSummonReceptacleBlock> SOUL_SAND_RECEPTACLE =
-        BLOCKS.registerBlock("soul_sand_receptacle",
+        registerBlock("soul_sand_receptacle",
             p -> new WitherSummonReceptacleBlock(p, Items.SOUL_SAND), receptacleProperties());
     public static final DeferredBlock<WitherSummonReceptacleBlock> WITHER_SKULL_RECEPTACLE =
-        BLOCKS.registerBlock("wither_skull_receptacle",
+        registerBlock("wither_skull_receptacle",
             p -> new WitherSummonReceptacleBlock(p, Items.WITHER_SKELETON_SKULL), receptacleProperties());
 
     /** Wither Altar Hatch (#247) - the altar's output + summon brain. */
     public static final DeferredBlock<WitherAltarHatchBlock> WITHER_ALTAR_HATCH =
-        BLOCKS.registerBlock("wither_altar_hatch", WitherAltarHatchBlock::new, receptacleProperties());
+        registerBlock("wither_altar_hatch", WitherAltarHatchBlock::new, receptacleProperties());
 
     /**
      * Withered Star (#247) - the Wither Altar's capstone, set into the arena floor.
@@ -375,7 +388,7 @@ public final class PFBlocks {
      * A glowing, obsidian-tier placeable block.
      */
     public static final DeferredBlock<Block> WITHERED_STAR =
-        BLOCKS.registerBlock("withered_star", Block::new, BlockBehaviour.Properties.of()
+        registerBlock("withered_star", Block::new, BlockBehaviour.Properties.of()
             .mapColor(MapColor.SNOW)
             .strength(3.0F, 1200.0F)
             .lightLevel(state -> 10)
@@ -407,7 +420,7 @@ public final class PFBlocks {
     }
 
     private static DeferredBlock<Block> registerCatalyst(String name) {
-        return BLOCKS.registerBlock(
+        return registerBlock(
             name,
             Block::new,
             BlockBehaviour.Properties.of()
@@ -439,7 +452,7 @@ public final class PFBlocks {
     private static Map<Category, DeferredBlock<PrimedFrogEggBlock>> buildPrimedEggs() {
         EnumMap<Category, DeferredBlock<PrimedFrogEggBlock>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {
-            map.put(cat, BLOCKS.registerBlock(
+            map.put(cat, registerBlock(
                 cat.primedEggItemName(),
                 props -> new PrimedFrogEggBlock(cat, props),
                 primedEggProperties(cat)

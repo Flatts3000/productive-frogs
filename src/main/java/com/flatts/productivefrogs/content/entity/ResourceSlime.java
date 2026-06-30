@@ -205,25 +205,24 @@ public class ResourceSlime extends Slime implements Bucketable {
     }
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
-        super.readAdditionalSaveData(tag);
-        if (tag.contains("Category", net.minecraft.nbt.Tag.TAG_STRING)) {
+    public void readAdditionalSaveData(net.minecraft.world.level.storage.ValueInput input) {
+        super.readAdditionalSaveData(input);
+        input.getString("Category").ifPresent(name -> {
             try {
-                setCategory(Category.valueOf(tag.getString("Category")));
+                setCategory(Category.valueOf(name));
             } catch (IllegalArgumentException ignored) {
                 // Unknown category in save data — leave default.
             }
-        }
-        setFromBucket(tag.contains("FromBucket", net.minecraft.nbt.Tag.TAG_BYTE)
-            && tag.getBoolean("FromBucket"));
+        });
+        setFromBucket(input.getBooleanOr("FromBucket", false));
         // Variant load: read AFTER Category so setVariant's category sync
         // overrides the Category field with the registry's authoritative value.
-        if (tag.contains("Variant", net.minecraft.nbt.Tag.TAG_STRING)) {
-            Identifier id = Identifier.tryParse(tag.getString("Variant"));
+        input.getString("Variant").ifPresent(variant -> {
+            Identifier id = Identifier.tryParse(variant);
             if (id != null) {
                 setVariant(id);
             }
-        }
+        });
     }
 
     /**
@@ -406,15 +405,15 @@ public class ResourceSlime extends Slime implements Bucketable {
     }
 
     @Override
-    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
-        super.addAdditionalSaveData(tag);
-        tag.putString("Category", getCategory().name());
+    public void addAdditionalSaveData(net.minecraft.world.level.storage.ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        output.putString("Category", getCategory().name());
         // The category save is handled above; persist the fromBucket flag too
         // so a slime released from a bucket doesn't despawn on chunk reload.
-        tag.putBoolean("FromBucket", fromBucket());
+        output.putBoolean("FromBucket", fromBucket());
         Identifier variantId = getVariantId();
         if (variantId != null) {
-            tag.putString("Variant", variantId.toString());
+            output.putString("Variant", variantId.toString());
         }
     }
     // NOTE: the readAdditional override above intentionally lives in this class
