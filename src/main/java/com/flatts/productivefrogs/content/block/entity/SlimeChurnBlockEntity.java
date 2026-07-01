@@ -153,8 +153,13 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
         // the synthesized item id for Mimic Milk. Both run the same spawn economy.
         boolean mimic = milk.getItem() instanceof com.flatts.productivefrogs.content.item.MimicMilkBucketItem;
         Identifier variantId;
-        if (milk.getItem() instanceof SlimeMilkBucketItem milkItem) {
-            variantId = milkItem.variantId();
+        if (milk.getItem() instanceof SlimeMilkBucketItem) {
+            variantId = SlimeMilkBucketItem.variantOf(milk);
+            if (variantId == null) {
+                be.resetInterval();
+                setWorking(level, pos, state, false);
+                return;
+            }
         } else if (mimic) {
             variantId = milk.get(PFDataComponents.SYNTHESIZED_ITEM.get());
             if (variantId == null) {

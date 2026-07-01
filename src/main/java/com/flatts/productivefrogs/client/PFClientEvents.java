@@ -24,13 +24,13 @@ import com.flatts.productivefrogs.client.screen.SlimeMilkerScreen;
 import com.flatts.productivefrogs.client.screen.SpawneryScreen;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.content.block.entity.MimicMilkSourceBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFFluids;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
 import com.flatts.productivefrogs.registry.PFMoltenFluids;
 import com.flatts.productivefrogs.registry.PFParticles;
-import com.flatts.productivefrogs.registry.PFVariantMilk;
 import java.util.List;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.FluidModel;
@@ -238,14 +238,13 @@ public final class PFClientEvents {
     public static void onRegisterFluidModels(RegisterFluidModelsEvent event) {
         Material milkStill = new Material(id("block/slime_milk_still"));
         Material milkFlow = new Material(id("block/slime_milk_flow"));
-        for (Identifier vid : PFVariantMilk.registeredVariants()) {
-            Fluid src = PFVariantMilk.sourceFluid(vid);
-            Fluid flow = PFVariantMilk.flowingFluid(vid);
-            if (src == null || flow == null) {
-                continue;
-            }
-            event.register(new FluidModel.Unbaked(milkStill, milkFlow, null, variantFluidTint(vid)), src, flow);
-        }
+
+        // Slime Milk (26.1 R-1): ONE fluid, shared greyscale texture. In-world the
+        // placed source's colour is its BE variant's primary_color resolved at the
+        // queried position; cream fallback when no BE/position is available (e.g. a
+        // pipe/tank render). The held-bucket tint is the item VariantColorTint.
+        event.register(new FluidModel.Unbaked(milkStill, milkFlow, null, slimeMilkFluidTint()),
+            PFFluids.SLIME_MILK.get(), PFFluids.SLIME_MILK_FLOWING.get());
 
         // Mimic Milk (#253): shared milk texture; its colour is the source BE's
         // synthesized item resolved at the queried position, neutral prismatic grey
@@ -272,6 +271,33 @@ public final class PFClientEvents {
             public int color(FluidState state) {
                 int color = Tints.variantColor(null, variant);
                 return color != -1 ? color : Tints.opaque(0xF0F0E0);
+            }
+        };
+    }
+
+    /**
+     * Slime Milk tint (26.1 R-1, single fluid): in-world it reads the placed source
+     * BE's variant and resolves that variant's {@code primary_color}; cream fallback
+     * when no BE/variant/position is available (a pipe/tank render or unstamped source).
+     */
+    private static FluidTintSource slimeMilkFluidTint() {
+        return new FluidTintSource() {
+            @Override
+            public int color(FluidState state) {
+                return Tints.opaque(0xF0F0E0);
+            }
+
+            @Override
+            public int colorInWorld(FluidState fluidState, BlockState blockState, BlockAndTintGetter level, BlockPos pos) {
+                if (level != null && pos != null
+                        && level.getBlockEntity(pos) instanceof SlimeMilkSourceBlockEntity be
+                        && be.getVariantId() != null) {
+                    int color = Tints.variantColor(null, be.getVariantId());
+                    if (color != -1) {
+                        return color;
+                    }
+                }
+                return color(fluidState);
             }
         };
     }

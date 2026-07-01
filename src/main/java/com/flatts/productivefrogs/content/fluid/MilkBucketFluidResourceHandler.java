@@ -22,9 +22,13 @@ import net.neoforged.neoforge.transfer.item.ItemResource;
  * network keeps those stats as a fluid (the Terrarium Controller reads them back
  * into a {@code MilkCharge}).
  *
- * <p>The variant always survives independently of this copy, since it rides the
- * per-variant fluid identity. The reverse leg (fluid -&gt; refilled bucket) does not
- * re-stamp the components, the same acknowledged caveat the legacy wrapper carried.
+ * <p>Since R-1 (single {@code slime_milk} fluid) the Slime Milk <b>variant</b> also
+ * rides a data component ({@code SLIME_VARIANT}), not the fluid identity, so it is
+ * one of the {@code carried} types and is copied on both legs: bucket -&gt; fluid in
+ * {@link #getResourceFrom} and fluid -&gt; bucket in {@link #update} (vanilla
+ * {@link FluidType#getBucket(net.neoforged.neoforge.fluids.FluidStack)} mints a bare
+ * bucket, so the reverse copy is explicit). A tank round-trip therefore preserves
+ * the variant and every carried stat in both directions.
  *
  * <p>Transaction correctness is inherited from {@link ItemAccessResourceHandler},
  * which journals the underlying {@link ItemAccess}; this subclass only customises
@@ -59,6 +63,11 @@ public final class MilkBucketFluidResourceHandler extends ItemAccessResourceHand
         return value == null ? fluid : fluid.with(type, value);
     }
 
+    private static <D> ItemResource copyComponentToItem(ItemResource bucket, FluidResource from, DataComponentType<D> type) {
+        D value = from.getComponents().get(type);
+        return value == null ? bucket : bucket.with(type, value);
+    }
+
     @Override
     protected int getAmountFrom(ItemResource accessResource, int index) {
         return getResourceFrom(accessResource, index).isEmpty() ? 0 : FluidType.BUCKET_VOLUME;
@@ -72,7 +81,15 @@ public final class MilkBucketFluidResourceHandler extends ItemAccessResourceHand
             return ItemResource.EMPTY;
         }
         var newStack = newResource.toStack(newAmount);
-        return ItemResource.of(newStack.getFluidType().getBucket(newStack));
+        ItemResource bucket = ItemResource.of(newStack.getFluidType().getBucket(newStack));
+        // FluidType.getBucket(FluidStack) mints a bare bucket (no component copy), so
+        // re-stamp the carried components (variant / synthesized-item + catalyst stats)
+        // from the FluidResource back onto it - the reverse of getResourceFrom - so a
+        // tank -> bucket drain keeps them.
+        for (DataComponentType<?> type : carried) {
+            bucket = copyComponentToItem(bucket, newResource, type);
+        }
+        return bucket;
     }
 
     @Override

@@ -1,8 +1,10 @@
 package com.flatts.productivefrogs.event;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.registry.PFBlocks;
-import com.flatts.productivefrogs.registry.PFVariantMilk;
+import com.flatts.productivefrogs.registry.PFFluidTypes;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -10,7 +12,6 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
-import net.neoforged.neoforge.fluids.FluidType;
 
 /**
  * Boss-tier Slime Milk is <b>toxic to players</b> (#184): standing in a boss
@@ -23,10 +24,13 @@ import net.neoforged.neoforge.fluids.FluidType;
  * so non-player {@link net.minecraft.world.entity.LivingEntity}s are untouched.
  * Creative/spectator players are exempt (building/observing the altar).
  *
- * <p>Keyed off the same closed boss set as the catalyst blocks
- * ({@link PFBlocks#catalystForVariant()}'s key set) - both source and flowing
- * milk of a variant share one {@link FluidType}, so {@code isInFluidType} catches
- * a player standing in either. Self-registers on the game event bus.
+ * <p>26.1 R-1: Slime Milk is one component-carrying fluid, so a boss variant is
+ * no longer a distinct {@code FluidType}. Detection is now two steps: the player's
+ * feet must be in the single {@code slime_milk} FluidType, AND the source block at
+ * that position must carry a boss variant on its BE (milk is source-only and never
+ * spreads, so a standing player is always in a source cell with a BE). Keyed off
+ * the same closed boss set as the catalyst blocks
+ * ({@link PFBlocks#catalystForVariant()}'s key set). Self-registers on the game bus.
  */
 @EventBusSubscriber(modid = ProductiveFrogs.MOD_ID)
 public final class ToxicMilkHandler {
@@ -51,16 +55,19 @@ public final class ToxicMilkHandler {
         if (player.tickCount % CHECK_INTERVAL != 0) {
             return;
         }
-        // NeoForge 26.1 removed Entity#isInFluidType; read the FluidState the player
-        // is standing in directly and match its per-variant FluidType (source and
-        // flowing of a variant share one type) against the boss set.
-        FluidType feetType = player.level().getFluidState(player.blockPosition()).getFluidType();
-        for (Identifier bossVariant : PFBlocks.catalystForVariant().keySet()) {
-            FluidType type = PFVariantMilk.fluidType(bossVariant);
-            if (type != null && feetType == type) {
-                player.addEffect(new MobEffectInstance(MobEffects.WITHER, WITHER_DURATION, WITHER_AMPLIFIER));
-                return;
-            }
+        // The player must be standing in the single slime_milk fluid...
+        BlockPos feet = player.blockPosition();
+        if (player.level().getFluidState(feet).getFluidType() != PFFluidTypes.SLIME_MILK_TYPE.get()) {
+            return;
+        }
+        // ...and the source at that position must be a boss variant (read off its BE;
+        // milk is source-only, so a standing player is in a source cell with a BE).
+        if (!(player.level().getBlockEntity(feet) instanceof SlimeMilkSourceBlockEntity be)) {
+            return;
+        }
+        Identifier variant = be.getVariantId();
+        if (variant != null && PFBlocks.catalystForVariant().containsKey(variant)) {
+            player.addEffect(new MobEffectInstance(MobEffects.WITHER, WITHER_DURATION, WITHER_AMPLIFIER));
         }
     }
 }

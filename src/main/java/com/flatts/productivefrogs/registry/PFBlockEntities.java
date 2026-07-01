@@ -105,16 +105,15 @@ public final class PFBlockEntities {
         );
 
     /**
-     * One BE type backing every per-variant Slime Milk source block (v1.8). The
-     * valid-blocks set is all per-variant blocks minted by {@link PFVariantMilk};
-     * resolved lazily here (after bootstrap), so the BE stores the spawn economy +
-     * catalyst upgrades while the block carries the variant (see
-     * {@link SlimeMilkSourceBlockEntity}).
+     * BE type backing the single Slime Milk source block (26.1 R-1). Stores the
+     * variant it spawns (seeded from the placing bucket's {@code SLIME_VARIANT}
+     * component) plus the spawn economy + catalyst upgrades. Replaces the v1.8
+     * per-variant block set. See {@link SlimeMilkSourceBlockEntity}.
      */
     public static final Supplier<BlockEntityType<SlimeMilkSourceBlockEntity>> SLIME_MILK_SOURCE =
         BLOCK_ENTITIES.register(
             "slime_milk_source",
-            () -> new BlockEntityType<>(SlimeMilkSourceBlockEntity::new, PFVariantMilk.allBlocksArray())
+            () -> new BlockEntityType<>(SlimeMilkSourceBlockEntity::new, PFBlocks.SLIME_MILK_SOURCE.get())
         );
 
     /**

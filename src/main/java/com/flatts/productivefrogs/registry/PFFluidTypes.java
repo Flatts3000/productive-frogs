@@ -8,18 +8,18 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 /**
- * Slime Milk {@link FluidType} registration. As of v1.8 each variant gets its own
- * FluidType, minted dynamically by {@link PFVariantMilk} (so a variant's milk is a
- * distinct {@code Fluid} that tank/pipe mods can preserve through automation - see
- * {@code docs/automated_milk_variants.md}). This class owns the shared
- * {@link DeferredRegister} and the {@link #milkProperties() properties} every
- * per-variant type shares.
+ * Slime Milk {@link FluidType} registration. As of the 26.1 re-implementation (R-1)
+ * there is a SINGLE {@code slime_milk} FluidType (plus the Mimic Milk type): the
+ * variant rides the {@code SLIME_VARIANT} component on the {@code FluidResource} /
+ * bucket, which the 26.1 transfer API preserves through automation, so a distinct
+ * {@code Fluid}/type per variant (v1.8) is no longer needed. This class owns the
+ * shared {@link DeferredRegister} and the {@link #milkProperties() properties} both
+ * milk types share. See {@code docs/port_mc_26_1_reimplementation.md} (R-1).
  *
- * <p>Per-variant colour is applied at render time: each per-variant FluidType's
- * client extension knows its own variant and reads the colour from the
- * {@code slime_variant} registry (see
- * {@link com.flatts.productivefrogs.client.PFClientEvents}), so one greyscale
- * texture set serves every variant.
+ * <p>Colour is applied at render time: the placed source's per-instance colour is
+ * resolved from its BE variant (see
+ * {@link com.flatts.productivefrogs.client.PFClientEvents}), so one greyscale texture
+ * set serves every variant.
  *
  * <p>Properties give milk a "slower than water, doesn't flow forever" feel:
  * density 1500 (sinks slowly), viscosity 2000 (slower than water), swimmable but
@@ -33,10 +33,21 @@ public final class PFFluidTypes {
         DeferredRegister.create(NeoForgeRegistries.Keys.FLUID_TYPES, ProductiveFrogs.MOD_ID);
 
     /**
-     * The single Mimic Milk fluid type (Equivalence lane, #253). Unlike the
-     * per-variant milk types, there is ONE; its per-instance colour is resolved at
-     * render time from the source block's BE (see {@code PFClientEvents}). Shares
-     * the milk feel ({@link #milkProperties()}).
+     * The single Slime Milk fluid type (26.1 R-1). There is ONE type; the variant
+     * rides as the {@code SLIME_VARIANT} component on the {@code FluidResource} /
+     * bucket, and the placed source's per-instance colour is resolved at render
+     * time from its BE (see {@code PFClientEvents}). Replaces the v1.8 per-variant
+     * types (the 26.1 transfer API preserves the component through automation, so a
+     * distinct {@code Fluid} per variant is no longer needed).
+     */
+    public static final DeferredHolder<FluidType, FluidType> SLIME_MILK_TYPE =
+        TYPES.register("slime_milk", () -> new FluidType(milkProperties()));
+
+    /**
+     * The single Mimic Milk fluid type (Equivalence lane, #253). Like Slime Milk,
+     * there is ONE; its per-instance colour is resolved at render time from the
+     * source block's BE (see {@code PFClientEvents}). Shares the milk feel
+     * ({@link #milkProperties()}).
      */
     public static final DeferredHolder<FluidType, FluidType> MIMIC_MILK_TYPE =
         TYPES.register("mimic_slime_milk", () -> new FluidType(milkProperties()));

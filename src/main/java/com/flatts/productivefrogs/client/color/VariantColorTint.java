@@ -1,7 +1,7 @@
 package com.flatts.productivefrogs.client.color;
 
+import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.Identifier;
@@ -10,23 +10,24 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Per-variant Slime Milk bucket tint (v1.8). Each {@code <variant>_slime_milk_bucket}
- * is one item per variant, so the variant is baked into the model JSON's
- * {@code variant} field rather than read from a component. Tints the milk layer
- * by that variant's registry {@code primary_color}, falling back to a milky
- * off-white before the registry is available so the item stays visible.
- *
- * @param variant the {@code slime_variant} registry id this milk bucket carries.
+ * The single Slime Milk bucket's milk-layer tint (26.1 R-1). The variant now rides
+ * the {@code SLIME_VARIANT} component on the bucket {@code ItemStack} (not a baked
+ * model field), so this reads it off the stack and tints by that variant's registry
+ * {@code primary_color}, falling back to a milky off-white when unresolved so the
+ * item stays visible. Mirrors {@link SynthesizedItemTint} (the Mimic bucket's
+ * component-reading tint).
  */
-public record VariantColorTint(Identifier variant) implements ItemTintSource {
+public record VariantColorTint() implements ItemTintSource {
 
-    public static final MapCodec<VariantColorTint> CODEC = RecordCodecBuilder.mapCodec(
-        i -> i.group(
-            Identifier.CODEC.fieldOf("variant").forGetter(VariantColorTint::variant)
-        ).apply(i, VariantColorTint::new));
+    public static final VariantColorTint INSTANCE = new VariantColorTint();
+    public static final MapCodec<VariantColorTint> CODEC = MapCodec.unit(INSTANCE);
 
     @Override
     public int calculate(ItemStack stack, @Nullable ClientLevel level, @Nullable LivingEntity owner) {
+        Identifier variant = stack.get(PFDataComponents.SLIME_VARIANT.get());
+        if (variant == null) {
+            return Tints.opaque(0xF0F0E0);
+        }
         int color = Tints.variantColor(level, variant);
         return color != -1 ? color : Tints.opaque(0xF0F0E0);
     }

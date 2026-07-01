@@ -3,8 +3,8 @@ package com.flatts.productivefrogs.content.block.entity;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
 import com.flatts.productivefrogs.content.menu.SlimeMilkerMenu;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
+import com.flatts.productivefrogs.content.item.SlimeMilkBucketItem;
 import com.flatts.productivefrogs.registry.PFItems;
-import com.flatts.productivefrogs.registry.PFVariantMilk;
 import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
@@ -16,8 +16,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.item.BucketItem;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -178,13 +176,8 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
                     () -> String.format("milker @%s fail-closed: input bucket carries no variant", pos));
                 return null;
             }
-            Item milkBucketItem = PFVariantMilk.bucket(variantId);
-            if (milkBucketItem == null) {
-                PFDebug.logOnce(PFDebug.Area.MILKER, "nomilk#" + pos,
-                    () -> String.format("milker @%s fail-closed: no per-variant milk fluid for %s", pos, variantId));
-                return null;
-            }
-            return new ItemStack(milkBucketItem);
+            // 26.1 R-1: one Slime Milk bucket item, variant stamped as SLIME_VARIANT.
+            return SlimeMilkBucketItem.forVariant(variantId);
         }
         if (input.is(PFItems.MIMIC_SLIME_BUCKET.get())) {
             Identifier itemId = input.get(

@@ -13,6 +13,7 @@ import com.flatts.productivefrogs.content.block.HatchBlock;
 import com.flatts.productivefrogs.content.block.IncubatorBlock;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
 import com.flatts.productivefrogs.content.block.SlimeChurnBlock;
+import com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
 import com.flatts.productivefrogs.content.block.SpawneryBlock;
 import com.flatts.productivefrogs.content.block.SprinklerBlock;
@@ -28,6 +29,7 @@ import java.util.Map;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
@@ -101,11 +103,20 @@ public final class PFBlocks {
         );
 
     /**
-     * The Slime Milk source blocks are <b>per-variant</b> ({@code <variant>_slime_milk}),
-     * minted dynamically at mod-init by {@link PFVariantMilk} into {@link #BLOCKS}
-     * - there is no single source block. See {@code docs/automated_milk_variants.md}.
-     *
-     * <p>The Slime Milker — V1 production keystone block. Furnace-shaped GUI
+     * The single Slime Milk source block (26.1 R-1) - {@code slime_milk_source}.
+     * The variant it spawns rides on its {@link SlimeMilkSourceBlockEntity}, seeded
+     * from the placing bucket's {@code SLIME_VARIANT} component. Replaces the v1.8
+     * per-variant source blocks ({@code PFVariantMilk}, deleted). Mirrors the Mimic
+     * Milk source block below. See {@code docs/port_mc_26_1_reimplementation.md} (R-1).
+     */
+    public static final DeferredBlock<SlimeMilkSourceBlock> SLIME_MILK_SOURCE = registerBlock(
+        "slime_milk_source",
+        p -> new SlimeMilkSourceBlock(PFFluids.SLIME_MILK.get(), p),
+        milkBlockProperties()
+    );
+
+    /**
+     * The Slime Milker — V1 production keystone block. Furnace-shaped GUI
      * block with one input slot (Slime Bucket), one output slot (variant
      * Slime Milk bucket), and a 100-tick cook. Hopper-compatible via a
      * side-aware Capabilities.ItemHandler.BLOCK provider in PFModBusEvents.
@@ -230,8 +241,21 @@ public final class PFBlocks {
     public static final DeferredBlock<MimicMilkSourceBlock> MIMIC_MILK = registerBlock(
         "mimic_slime_milk",
         p -> new MimicMilkSourceBlock(PFFluids.MIMIC_MILK.get(), p),
-        PFVariantMilk.milkBlockProperties()
+        milkBlockProperties()
     );
+
+    /** Shared block properties for the Slime Milk + Mimic Milk source blocks (was PFVariantMilk's). */
+    private static BlockBehaviour.Properties milkBlockProperties() {
+        return BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .replaceable()
+            .noCollision()
+            .strength(100.0F)
+            .pushReaction(PushReaction.DESTROY)
+            .noLootTable()
+            .liquid()
+            .sound(SoundType.EMPTY);
+    }
 
     /**
      * The Terrarium Controller (#185) - the multiblock anchor. Validates the

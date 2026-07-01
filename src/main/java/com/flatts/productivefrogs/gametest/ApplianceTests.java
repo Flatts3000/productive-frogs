@@ -4,10 +4,11 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.SpawneryBlockEntity;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.content.item.SlimeMilkBucketItem;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFEntities;
+import com.flatts.productivefrogs.registry.PFFluids;
 import com.flatts.productivefrogs.registry.PFItems;
-import com.flatts.productivefrogs.registry.PFVariantMilk;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -194,12 +195,22 @@ final class ApplianceTests {
             return;
         }
         net.neoforged.neoforge.transfer.fluid.FluidResource contents = handler.getResource(0);
-        net.minecraft.world.level.material.Fluid expectedFluid =
-            PFVariantMilk.sourceFluid(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant));
+        // 26.1 R-1: one shared slime_milk fluid for every variant; the variant rides
+        // the SLIME_VARIANT component on the FluidResource, not the fluid identity.
+        net.minecraft.world.level.material.Fluid expectedFluid = PFFluids.SLIME_MILK.get();
         if (contents.getFluid() != expectedFluid) {
             helper.fail(variant + " bucket handler reports fluid "
                 + BuiltInRegistries.FLUID.getKey(contents.getFluid())
                 + ", expected " + BuiltInRegistries.FLUID.getKey(expectedFluid));
+        }
+        // The variant must survive the bucket -> FluidResource drain via the
+        // SLIME_VARIANT copy in MilkBucketFluidResourceHandler - otherwise the
+        // Terrarium Controller reads a null variant and rejects all piped milk.
+        Identifier expectedVariant = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variant);
+        Identifier gotVariant = contents.get(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get());
+        if (!expectedVariant.equals(gotVariant)) {
+            helper.fail(variant + " bucket handler FluidResource lost SLIME_VARIANT: got " + gotVariant
+                + ", expected " + expectedVariant);
         }
     }
 
@@ -316,15 +327,10 @@ final class ApplianceTests {
         return churn;
     }
 
-    /** Fresh iron Slime Milk bucket (no budget components - the churn seeds them). */
+    /** Fresh iron Slime Milk bucket (variant stamped, no budget components - the churn seeds them). */
     private static ItemStack ironMilkBucket(GameTestHelper helper) {
-        net.minecraft.world.item.Item bucket = PFVariantMilk.bucket(
+        return SlimeMilkBucketItem.forVariant(
             Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
-        if (bucket == null) {
-            helper.fail("iron slime milk bucket not registered");
-            return ItemStack.EMPTY;
-        }
-        return new ItemStack(bucket);
     }
 
     /** Drive the churn's serverTick {@code times} times, stopping early when the slime output fills. */
@@ -997,9 +1003,10 @@ final class ApplianceTests {
             Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantPath));
     }
 
-    /** True if {@code stack} is the per-variant Slime Milk bucket for productivefrogs:&lt;variantPath&gt;. */
+    /** True if {@code stack} is the Slime Milk bucket stamped for productivefrogs:&lt;variantPath&gt;. */
     private static boolean isMilkBucket(ItemStack stack, String variantPath) {
-        return stack.is(PFVariantMilk.bucket(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantPath)));
+        return stack.is(PFItems.SLIME_MILK_BUCKET.get())
+            && Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantPath)
+                .equals(SlimeMilkBucketItem.variantOf(stack));
     }
 }

@@ -5,11 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.flatts.productivefrogs.PFConfig;
-import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.item.MilkCatalyst;
-import com.flatts.productivefrogs.registry.PFVariantMilk;
+import com.flatts.productivefrogs.registry.PFBlocks;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -26,12 +24,11 @@ import org.junit.jupiter.api.Test;
 class SlimeMilkSourceCatalystTest {
 
     private static SlimeMilkSourceBlockEntity newSource() {
-        // Any per-variant source block's default state works; the BE economy is
-        // variant-agnostic. Use iron (a first-party variant, always registered).
+        // The single Slime Milk source block's default state (26.1 R-1); the BE
+        // economy is variant-agnostic, so no variant needs to be stamped here.
         return new SlimeMilkSourceBlockEntity(
             BlockPos.ZERO,
-            PFVariantMilk.block(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"))
-                .defaultBlockState());
+            PFBlocks.SLIME_MILK_SOURCE.get().defaultBlockState());
     }
 
     @Test

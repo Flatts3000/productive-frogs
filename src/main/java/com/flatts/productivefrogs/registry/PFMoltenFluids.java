@@ -16,8 +16,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Dynamic molten-metal fluids for the Crucible's wave-2 melt lane
- * ({@code docs/froglight_crucible.md}), registered at mod-init like the v1.8
- * per-variant Slime Milk ({@link PFVariantMilk}) but deliberately leaner: a
+ * ({@code docs/froglight_crucible.md}), registered at mod-init like the former v1.8
+ * per-variant Slime Milk ({@code PFVariantMilk}, since collapsed in R-1) but
+ * deliberately leaner: a
  * {@code FluidType} + source/flowing {@code Fluid} only - <b>no source block
  * (not placeable) and no bucket</b>; molten metal exists for the
  * tank -> pipe -> Casting Mold loop.

@@ -10,7 +10,8 @@ import com.flatts.productivefrogs.content.multiblock.TerrariumValidationResult;
 import com.flatts.productivefrogs.content.multiblock.TerrariumValidator;
 import com.flatts.productivefrogs.content.menu.TerrariumControllerMenu;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
-import com.flatts.productivefrogs.registry.PFVariantMilk;
+import com.flatts.productivefrogs.registry.PFDataComponents;
+import com.flatts.productivefrogs.registry.PFFluids;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
@@ -280,7 +281,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
                 com.flatts.productivefrogs.registry.PFDataComponents.SYNTHESIZED_ITEM.get());
             tankMimic = true;
         } else {
-            tankVariant = ((SlimeMilkBucketItem) milkBucket.getItem()).variantId();
+            tankVariant = SlimeMilkBucketItem.variantOf(milkBucket);
             tankMimic = false;
         }
         charges.addLast(MilkCharge.fromBucket(milkBucket));
@@ -302,8 +303,8 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
                 && charges.size() < PFConfig.terrariumControllerBufferDepth()
                 && (tankVariant == null || (tankMimic && tankVariant.equals(item)));
         }
-        if (bucket.getItem() instanceof SlimeMilkBucketItem milk) {
-            Identifier variant = milk.variantId();
+        if (bucket.getItem() instanceof SlimeMilkBucketItem) {
+            Identifier variant = SlimeMilkBucketItem.variantOf(bucket);
             return variant != null && !tankMimic && canAccept(variant);
         }
         return false;
@@ -377,6 +378,30 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
         return new ControllerFluidResource();
     }
 
+    /**
+     * The variant a milk {@link net.neoforged.neoforge.transfer.fluid.FluidResource}
+     * carries (26.1 R-1), or null when it isn't Slime Milk. With one component-carrying
+     * fluid the variant rides the {@code SLIME_VARIANT} component (copied on by the milk
+     * bucket resource handler), so the funnel reads it directly instead of a per-variant
+     * fluid reverse lookup.
+     */
+    @Nullable
+    private static Identifier milkVariantOf(net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+        if (resource.getFluid() != PFFluids.SLIME_MILK.get()) {
+            return null;
+        }
+        return resource.get(PFDataComponents.SLIME_VARIANT.get());
+    }
+
+    /** The variant a milk {@link FluidStack} carries (legacy IFluidHandler path), or null. */
+    @Nullable
+    private static Identifier milkVariantOf(FluidStack stack) {
+        if (stack.getFluid() != PFFluids.SLIME_MILK.get()) {
+            return null;
+        }
+        return stack.get(PFDataComponents.SLIME_VARIANT.get());
+    }
+
     /** Snapshot of the funnel state the fluid intake mutates, for transaction rollback. */
     private record FunnelSnapshot(java.util.ArrayDeque<MilkCharge> charges, Identifier tankVariant) {}
 
@@ -407,7 +432,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
 
         @Override
         public boolean isValid(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
-            Identifier variant = PFVariantMilk.variantOf(resource.getFluid());
+            Identifier variant = milkVariantOf(resource);
             return variant != null && canAccept(variant);
         }
 
@@ -417,7 +442,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
             if (amount <= 0) {
                 return 0;
             }
-            Identifier variant = PFVariantMilk.variantOf(resource.getFluid());
+            Identifier variant = milkVariantOf(resource);
             if (variant == null || !canAccept(variant)) {
                 return 0;
             }
@@ -492,13 +517,13 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
 
         @Override
         public boolean isFluidValid(int tank, FluidStack stack) {
-            Identifier variant = PFVariantMilk.variantOf(stack.getFluid());
+            Identifier variant = milkVariantOf(stack);
             return variant != null && canAccept(variant);
         }
 
         @Override
         public int fill(FluidStack resource, FluidAction action) {
-            Identifier variant = PFVariantMilk.variantOf(resource.getFluid());
+            Identifier variant = milkVariantOf(resource);
             if (variant == null || !canAccept(variant)) {
                 return 0;
             }

@@ -4,7 +4,6 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
-import com.flatts.productivefrogs.registry.PFVariantMilk;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.level.block.Rotation;
@@ -295,14 +294,13 @@ final class BossAltarTests {
 
     // ---- Shared helpers (carried from the 1.21.1 PFGameTests monolith) ----
 
-    /** Place a per-variant Slime Milk source block and stamp its BE variant. */
+    /** Place the single Slime Milk source block and stamp its BE variant (26.1 R-1). */
     private static com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock placeMilkSource(
             GameTestHelper helper, BlockPos pos, String variantPath) {
-        var block = PFVariantMilk.block(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantPath));
-        // The per-variant block carries its variant baked in; onPlace seeds the BE
-        // variant + spawn budget. We still stamp the BE defensively because some
-        // callers read the BE variant synchronously right after setBlock.
+        var block = PFBlocks.SLIME_MILK_SOURCE.get();
+        // The single source block has no baked variant; it is inert until the BE is
+        // stamped (in-world the placing bucket's checkExtraContent does this from its
+        // SLIME_VARIANT component). stampMilkVariant is that seed here.
         helper.setBlock(pos, block.defaultBlockState());
         stampMilkVariant(helper, pos, variantPath);
         return block;

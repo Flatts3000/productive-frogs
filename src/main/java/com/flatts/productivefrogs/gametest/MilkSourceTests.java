@@ -3,8 +3,9 @@ package com.flatts.productivefrogs.gametest;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.registry.PFEntities;
+import com.flatts.productivefrogs.content.item.SlimeMilkBucketItem;
+import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFItems;
-import com.flatts.productivefrogs.registry.PFVariantMilk;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -81,12 +82,12 @@ final class MilkSourceTests {
         BlockPos abs = helper.absolutePos(pos);
         Identifier iron = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
 
-        // The per-variant source block is authoritative for the variant: placing
-        // the iron block (its onPlace) seeds the BE with iron. checkExtraContent
-        // no longer writes the variant, only catalyst/budget upgrades.
-        helper.setBlock(pos, PFVariantMilk.block(iron).defaultBlockState());
+        // 26.1 R-1: the single source block is inert until stamped. Placing an
+        // iron-stamped bucket over it runs checkExtraContent, which reads the bucket's
+        // SLIME_VARIANT component and writes iron onto the source's BE.
+        helper.setBlock(pos, PFBlocks.SLIME_MILK_SOURCE.get().defaultBlockState());
         ItemStack bucket = milkBucket("iron");
-        ((com.flatts.productivefrogs.content.item.SlimeMilkBucketItem) PFVariantMilk.bucket(iron))
+        ((com.flatts.productivefrogs.content.item.SlimeMilkBucketItem) PFItems.SLIME_MILK_BUCKET.get())
             .checkExtraContent(null, level, bucket, abs);
         if (!(level.getBlockEntity(abs)
                 instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity be)
@@ -96,7 +97,7 @@ final class MilkSourceTests {
         }
 
         // Re-bucket: pickupBlock returns the iron-variant filled bucket.
-        ItemStack picked = PFVariantMilk.block(iron)
+        ItemStack picked = PFBlocks.SLIME_MILK_SOURCE.get()
             .pickupBlock(null, level, abs, level.getBlockState(abs));
         if (!isMilkBucket(picked, "iron")) {
             helper.fail("pickupBlock should return an iron-stamped slime_milk_bucket, got " + picked);
@@ -118,7 +119,7 @@ final class MilkSourceTests {
         ServerLevel level = helper.getLevel();
         BlockPos abs = helper.absolutePos(pos);
         Identifier iron = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
-        var block = PFVariantMilk.block(iron);
+        var block = PFBlocks.SLIME_MILK_SOURCE.get();
 
         // Partially-depleted iron source: 5 spawns left (counter lives on the BE).
         helper.setBlock(pos, block.defaultBlockState());
@@ -137,7 +138,7 @@ final class MilkSourceTests {
         // Re-place a fresh (default) source, then run the placement hook with
         // the carried bucket: it must restore the count to 5, not leave it full.
         helper.setBlock(pos, block.defaultBlockState());
-        ((com.flatts.productivefrogs.content.item.SlimeMilkBucketItem) PFVariantMilk.bucket(iron))
+        ((com.flatts.productivefrogs.content.item.SlimeMilkBucketItem) PFItems.SLIME_MILK_BUCKET.get())
             .checkExtraContent(null, level, picked, abs);
         int restored = getMilkSpawns(helper, pos);
         if (restored != 5) {
@@ -299,7 +300,7 @@ final class MilkSourceTests {
     private static void slimeMilkSourcePausesWhenAreaIsCrowded(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
         helper.setBlock(sourcePos.east(), Blocks.STONE);
-        var block = PFVariantMilk.block(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+        var block = PFBlocks.SLIME_MILK_SOURCE.get();
         helper.setBlock(sourcePos, block);
         stampMilkVariant(helper, sourcePos, "iron");
         setMilkSpawns(helper, sourcePos, 5);
@@ -350,7 +351,7 @@ final class MilkSourceTests {
         helper.setBlock(sourcePos.east(), Blocks.STONE);
 
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            PFVariantMilk.block(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+            PFBlocks.SLIME_MILK_SOURCE.get();
         helper.setBlock(sourcePos, block);
         stampMilkVariant(helper, sourcePos, "iron");
         setMilkSpawns(helper, sourcePos, 5);
@@ -394,7 +395,7 @@ final class MilkSourceTests {
         helper.setBlock(sourcePos.east(), Blocks.STONE);
 
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            PFVariantMilk.block(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+            PFBlocks.SLIME_MILK_SOURCE.get();
         helper.setBlock(sourcePos, block);
         stampMilkVariant(helper, sourcePos, "iron");
         setMilkSpawns(helper, sourcePos, 0);
@@ -439,7 +440,7 @@ final class MilkSourceTests {
         helper.setBlock(sourcePos.east(), Blocks.STONE);
 
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            PFVariantMilk.block(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+            PFBlocks.SLIME_MILK_SOURCE.get();
         helper.setBlock(sourcePos, block);
         stampMilkVariant(helper, sourcePos, "iron");
         setMilkSpawns(helper, sourcePos, 1);
@@ -481,7 +482,7 @@ final class MilkSourceTests {
     private static void slimeMilkSourceSeedsDefaultSpawnCountOnPlacement(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 2, 2);
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            PFVariantMilk.block(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+            PFBlocks.SLIME_MILK_SOURCE.get();
         helper.setBlock(pos, block);
         stampMilkVariant(helper, pos, "iron");
         int expected = com.flatts.productivefrogs.PFConfig.SPEC.isLoaded()
@@ -508,7 +509,7 @@ final class MilkSourceTests {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
         helper.setBlock(sourcePos.east(), Blocks.STONE);
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            PFVariantMilk.block(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+            PFBlocks.SLIME_MILK_SOURCE.get();
         helper.setBlock(sourcePos, block);
         stampMilkVariant(helper, sourcePos, "iron");
         setMilkSpawns(helper, sourcePos, 2);
@@ -613,7 +614,7 @@ final class MilkSourceTests {
     private static void catalystDroppedInPoolIsConsumed(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            PFVariantMilk.block(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+            PFBlocks.SLIME_MILK_SOURCE.get();
         helper.setBlock(sourcePos, block);
         stampMilkVariant(helper, sourcePos, "iron");
         setMilkSpawns(helper, sourcePos, 4);
@@ -641,7 +642,7 @@ final class MilkSourceTests {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
         helper.setBlock(sourcePos.east(), Blocks.STONE);
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            PFVariantMilk.block(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+            PFBlocks.SLIME_MILK_SOURCE.get();
         helper.setBlock(sourcePos, block);
         stampMilkVariant(helper, sourcePos, "iron");
         var be = milkBE(helper, sourcePos);
@@ -686,7 +687,7 @@ final class MilkSourceTests {
     private static void catalystAtCapIsNotConsumed(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            PFVariantMilk.block(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+            PFBlocks.SLIME_MILK_SOURCE.get();
         helper.setBlock(sourcePos, block);
         stampMilkVariant(helper, sourcePos, "iron");
         var be = milkBE(helper, sourcePos);
@@ -733,7 +734,7 @@ final class MilkSourceTests {
         ServerLevel level = helper.getLevel();
         BlockPos abs = helper.absolutePos(pos);
         com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            PFVariantMilk.block(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));
+            PFBlocks.SLIME_MILK_SOURCE.get();
         helper.setBlock(pos, block);
         stampMilkVariant(helper, pos, "iron");
         var be = milkBE(helper, pos);
@@ -762,7 +763,7 @@ final class MilkSourceTests {
         // Re-place a fresh source, run the placement hook, and confirm restore.
         helper.setBlock(pos, block);
         ((com.flatts.productivefrogs.content.item.SlimeMilkBucketItem)
-                PFVariantMilk.bucket(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron")))
+                PFItems.SLIME_MILK_BUCKET.get())
             .checkExtraContent(null, level, picked, abs);
         var be2 = milkBE(helper, pos);
         if (be2 == null || be2.getSpeedLevel() != speed || be2.getQuantityLevel() != quantity || !be2.isInfinite()) {
@@ -785,10 +786,11 @@ final class MilkSourceTests {
             Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantPath));
     }
 
-    /** True if {@code stack} is the per-variant Slime Milk bucket for productivefrogs:&lt;variantPath&gt;. */
+    /** True if {@code stack} is the Slime Milk bucket stamped for productivefrogs:&lt;variantPath&gt;. */
     private static boolean isMilkBucket(ItemStack stack, String variantPath) {
-        return stack.is(PFVariantMilk.bucket(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantPath)));
+        return stack.is(PFItems.SLIME_MILK_BUCKET.get())
+            && Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantPath)
+                .equals(SlimeMilkBucketItem.variantOf(stack));
     }
 
     /**
@@ -798,11 +800,10 @@ final class MilkSourceTests {
      */
     private static com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock placeMilkSource(
             GameTestHelper helper, BlockPos pos, String variantPath) {
-        var block = PFVariantMilk.block(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantPath));
-        // The per-variant block carries its variant baked in; onPlace seeds the BE
-        // variant + spawn budget. We still stamp the BE defensively because some
-        // callers read the BE variant synchronously right after setBlock.
+        var block = PFBlocks.SLIME_MILK_SOURCE.get();
+        // 26.1 R-1: the single source block has no baked variant; placing it is inert
+        // until the BE is stamped (in-world the placing bucket's checkExtraContent does
+        // this from its SLIME_VARIANT component). stampMilkVariant is that seed here.
         helper.setBlock(pos, block.defaultBlockState());
         stampMilkVariant(helper, pos, variantPath);
         return block;

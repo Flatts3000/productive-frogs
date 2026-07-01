@@ -10,10 +10,8 @@ import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFPotions;
-import com.flatts.productivefrogs.registry.PFVariantMilk;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
-import net.minecraft.resources.Identifier;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
@@ -336,32 +334,29 @@ public final class PFModBusEvents {
             (be, side) -> RestrictedItemResourceHandler.ofAll(be.itemHandler(), true, true)
         );
 
-        // Per-variant Slime Milk buckets (v1.8) are SlimeMilkBucketItem extends
+        // The single Slime Milk bucket (26.1 R-1) is a SlimeMilkBucketItem extends
         // BucketItem. 26.1 swapped the item fluid cap to Capabilities.Fluid.ITEM
         // (a ResourceHandler<FluidResource> over an ItemAccess); NeoForge only
-        // auto-registers the vanilla BucketItem, not subclasses, so wire each up
-        // explicitly - this is what lets tank/pipe mods pump a variant's milk and
-        // round-trip it. MilkBucketFluidResourceHandler copies the catalyst
-        // components onto the drained fluid (#185), so piped milk keeps
-        // Count/Speed/Quantity/Infinite end to end; the variant rides the fluid
-        // identity regardless.
+        // auto-registers the vanilla BucketItem, not subclasses, so wire it up
+        // explicitly - this is what lets tank/pipe mods pump milk and round-trip it.
+        // MilkBucketFluidResourceHandler copies the SLIME_VARIANT + catalyst
+        // components onto the drained FluidResource, so the variant AND the
+        // Count/Speed/Quantity/Infinite stats survive bucket -> fluid (the Terrarium
+        // Controller reads them back into a MilkCharge). The variant no longer rides
+        // the fluid identity, so copying SLIME_VARIANT is what preserves it.
         DataComponentType<?>[] milkCarried = new DataComponentType<?>[] {
+            PFDataComponents.SLIME_VARIANT.get(),
             PFDataComponents.SPAWNS_REMAINING.get(),
             PFDataComponents.MILK_CAPACITY.get(),
             PFDataComponents.MILK_SPEED.get(),
             PFDataComponents.MILK_QUANTITY.get(),
             PFDataComponents.MILK_INFINITE.get()
         };
-        for (Identifier variantId : PFVariantMilk.registeredVariants()) {
-            net.minecraft.world.item.Item bucket = PFVariantMilk.bucket(variantId);
-            if (bucket != null) {
-                event.registerItem(
-                    Capabilities.Fluid.ITEM,
-                    (stack, access) -> new MilkBucketFluidResourceHandler(access, milkCarried),
-                    bucket
-                );
-            }
-        }
+        event.registerItem(
+            Capabilities.Fluid.ITEM,
+            (stack, access) -> new MilkBucketFluidResourceHandler(access, milkCarried),
+            PFItems.SLIME_MILK_BUCKET.get()
+        );
 
         // Mimic Milk bucket (#253) is also a BucketItem subclass, so it needs the
         // same explicit Fluid.ITEM registration. It additionally preserves the
