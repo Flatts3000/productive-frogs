@@ -6,10 +6,6 @@
       {
         "type": "productivefrogs:resource_slime_egg",
         "spot": false
-      },
-      {
-        "type": "productivefrogs:resource_slime_egg",
-        "spot": true
       }
     ]
   }

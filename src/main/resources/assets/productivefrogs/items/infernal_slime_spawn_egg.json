@@ -1,6 +1,12 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "productivefrogs:item/infernal_slime_spawn_egg"
+    "model": "productivefrogs:item/infernal_slime_spawn_egg",
+    "tints": [
+      {
+        "type": "productivefrogs:category_color",
+        "category": "infernal"
+      }
+    ]
   }
 }

@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.client;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.client.color.BucketCategoryTint;
+import com.flatts.productivefrogs.client.color.CategoryColorTint;
 import com.flatts.productivefrogs.client.color.ConfigurableFroglightBlockTint;
 import com.flatts.productivefrogs.client.color.ConfigurableFroglightTint;
 import com.flatts.productivefrogs.client.color.ConstantBlockTint;
@@ -218,6 +219,7 @@ public final class PFClientEvents {
         event.register(id("configurable_froglight"), ConfigurableFroglightTint.CODEC);
         event.register(id("variant_color"), VariantColorTint.CODEC);
         event.register(id("resource_slime_egg"), ResourceSlimeEggTint.CODEC);
+        event.register(id("category_color"), CategoryColorTint.CODEC);
     }
 
     private static Identifier id(String path) {
