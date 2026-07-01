@@ -23,7 +23,39 @@ public record BucketCategoryTint() implements ItemTintSource {
     @Override
     public int calculate(ItemStack stack, @Nullable ClientLevel level, @Nullable LivingEntity owner) {
         Category cat = ResourceTadpoleBucketItem.readCategory(stack);
-        return cat == null ? Tints.opaque(0x6B4530) : Tints.opaque(cat.tintRgb());
+        return cat == null ? Tints.opaque(0x6B4530) : Tints.opaque(contrastAgainstWater(cat.tintRgb()));
+    }
+
+    /**
+     * The tadpole silhouette sits in the vanilla teal water of the bucket art. A
+     * species whose colour shares that water's teal/cyan hue (Tide, Geode) tints to
+     * roughly the water colour and vanishes into it. Darken only those clashing hues
+     * one step so they separate from the water by value; every other species keeps
+     * its full brightness. Hue-gated so it touches only the offending colours.
+     */
+    private static int contrastAgainstWater(int rgb) {
+        int r = (rgb >> 16) & 0xFF;
+        int g = (rgb >> 8) & 0xFF;
+        int b = rgb & 0xFF;
+        int max = Math.max(r, Math.max(g, b));
+        int min = Math.min(r, Math.min(g, b));
+        if (max == min) {
+            return rgb; // greyscale - no hue to clash
+        }
+        float d = max - min;
+        float hue;
+        if (max == r) {
+            hue = ((g - b) / d) % 6.0F;
+        } else if (max == g) {
+            hue = (b - r) / d + 2.0F;
+        } else {
+            hue = (r - g) / d + 4.0F;
+        }
+        hue *= 60.0F;
+        if (hue < 0.0F) {
+            hue += 360.0F;
+        }
+        return (hue >= 150.0F && hue <= 205.0F) ? Tints.darker(rgb) : rgb;
     }
 
     @Override
