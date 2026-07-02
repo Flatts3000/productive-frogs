@@ -138,6 +138,11 @@ public final class PFClientEvents {
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.WITHER_SUMMON_RECEPTACLE.get(),
             com.flatts.productivefrogs.client.renderer.WitherSummonReceptacleRenderer::new);
+        // Terrarium Controller: a red outline around the shell block the validator
+        // flagged, shown while diagnosing. See client/renderer/TerrariumControllerRenderer.
+        event.registerBlockEntityRenderer(
+            com.flatts.productivefrogs.registry.PFBlockEntities.TERRARIUM_CONTROLLER.get(),
+            com.flatts.productivefrogs.client.renderer.TerrariumControllerRenderer::new);
     }
 
     private static Identifier parentTexture(String name) {

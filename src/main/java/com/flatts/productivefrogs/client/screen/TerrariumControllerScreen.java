@@ -7,9 +7,11 @@ import com.flatts.productivefrogs.registry.PFRegistries;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
@@ -67,6 +69,12 @@ public class TerrariumControllerScreen extends PFContainerScreen<TerrariumContro
         gui.fill(dx - 1, dy - 1, dx + DOT + 1, dy + DOT + 1, SWATCH_BORDER);
         gui.fill(dx, dy, dx + DOT, dy + DOT, formed ? OK_GREEN : BAD_RED);
 
+        // The milk buffer + counts only mean something once formed; while unformed the
+        // panel is given over to the (wrapped) structural diagnostic instead.
+        if (!formed) {
+            return;
+        }
+
         // Milk swatch - only when milk is actually buffered (no empty placeholder).
         Identifier variant = this.menu.tankVariant();
         int milkColor = variant == null ? DEFAULT_MILK : variantColor(variant);
@@ -93,21 +101,15 @@ public class TerrariumControllerScreen extends PFContainerScreen<TerrariumContro
     protected void extractLabels(GuiGraphicsExtractor gui, int mouseX, int mouseY) {
         gui.text(this.font, this.title, this.titleLabelX, this.titleLabelY, TEXT, false);
 
-        // Formed / problem line beside the indicator dot.
-        Component structure;
-        if (this.menu.formed()) {
-            structure = Component.translatable("message.productivefrogs.terrarium.formed")
-                .withStyle(ChatFormatting.DARK_GREEN);
-        } else {
-            int idx = this.menu.problemIndex();
-            String key = idx >= 0 && idx < TerrariumControllerBlockEntity.PROBLEM_KEYS.length
-                ? TerrariumControllerBlockEntity.PROBLEM_KEYS[idx] : null;
-            Component reason = key != null
-                ? Component.translatable("message.productivefrogs.terrarium." + key)
-                : Component.translatable("message.productivefrogs.terrarium.not_formed_generic");
-            structure = reason.copy().withStyle(ChatFormatting.DARK_RED);
+        if (!this.menu.formed()) {
+            renderProblem(gui);
+            return;
         }
-        gui.text(this.font, structure, DOT_X + DOT + 4, DOT_Y, TEXT, false);
+
+        // Formed line beside the (green) indicator dot.
+        gui.text(this.font,
+            Component.translatable("message.productivefrogs.terrarium.formed").withStyle(ChatFormatting.DARK_GREEN),
+            DOT_X + DOT + 4, DOT_Y, TEXT, false);
 
         // Milk name beside the swatch - only when milk is buffered.
         Identifier variant = this.menu.tankVariant();
@@ -121,23 +123,48 @@ public class TerrariumControllerScreen extends PFContainerScreen<TerrariumContro
         gui.centeredText(this.font, this.menu.charges() + " / " + this.menu.bufferDepth(),
             BAR_X + BAR_W / 2, BAR_Y + 2, 0xFFFFFFFF);
 
-        // Multiblock contents + live population (dashes when unformed).
-        boolean formed = this.menu.formed();
+        // Multiblock contents + live population.
         int row = BAR_Y + BAR_H + 6;
         gui.text(this.font,
-            Component.translatable("productivefrogs.gui.controller.sprinklers", formed ? String.valueOf(this.menu.sprinklerCount()) : "-"),
+            Component.translatable("productivefrogs.gui.controller.sprinklers", String.valueOf(this.menu.sprinklerCount())),
             BAR_X, row, TEXT, false);
         gui.text(this.font,
-            Component.translatable("productivefrogs.gui.controller.incubators", formed ? String.valueOf(this.menu.incubatorCount()) : "-"),
+            Component.translatable("productivefrogs.gui.controller.incubators", String.valueOf(this.menu.incubatorCount())),
             BAR_X + 88, row, TEXT, false);
-        // Live frog count only - no "/ cap" denominator. The cap is just an
-        // Incubator release gate, not a hard limit (frogs can be led/placed in
-        // past it), so showing "10 / 8" read as a broken cap. See the Incubator
-        // GUI for the cap that actually governs its releases.
+        // Live frog count only - no "/ cap" denominator. The cap is just an Incubator
+        // release gate, not a hard limit (frogs can be led/placed in past it), so
+        // "10 / 8" read as a broken cap. See the Incubator GUI for the governing cap.
         gui.text(this.font,
-            Component.translatable("productivefrogs.gui.controller.frogs",
-                formed ? String.valueOf(this.menu.frogCount()) : "-"),
+            Component.translatable("productivefrogs.gui.controller.frogs", String.valueOf(this.menu.frogCount())),
             BAR_X, row + 11, TEXT, false);
+    }
+
+    /**
+     * Draw the first structural failure beside the (red) indicator dot: the reason,
+     * plus the offending block's coordinates when the validator located it. The text
+     * <b>wraps</b> to the panel interior so it no longer runs off the right edge (the
+     * reported bug), and the coordinates make the message's "here" concrete.
+     */
+    private void renderProblem(GuiGraphicsExtractor gui) {
+        int idx = this.menu.problemIndex();
+        String key = idx >= 0 && idx < TerrariumControllerBlockEntity.PROBLEM_KEYS.length
+            ? TerrariumControllerBlockEntity.PROBLEM_KEYS[idx] : null;
+        Component reason = key != null
+            ? Component.translatable("message.productivefrogs.terrarium." + key)
+            : Component.translatable("message.productivefrogs.terrarium.not_formed_generic");
+        BlockPos problem = this.menu.problemPos();
+        Component full = problem == null ? reason
+            : Component.translatable("message.productivefrogs.terrarium.problem_at",
+                reason, problem.getX(), problem.getY(), problem.getZ());
+        Component structure = full.copy().withStyle(ChatFormatting.DARK_RED);
+
+        int textX = DOT_X + DOT + 4;
+        int wrapWidth = this.imageWidth - textX - 4;
+        int lineY = DOT_Y;
+        for (FormattedCharSequence line : this.font.split(structure, wrapWidth)) {
+            gui.text(this.font, line, textX, lineY, TEXT, false);
+            lineY += this.font.lineHeight + 1;
+        }
     }
 
     /** Opaque ARGB primary colour for a milk variant, or the milky default when unresolved. */

@@ -68,6 +68,18 @@ public class TerrariumControllerMenu extends AbstractContainerMenu {
         return dataAccess.get(TerrariumControllerBlockEntity.DATA_PROBLEM);
     }
 
+    /** Absolute position of the first structural problem (synced on the client BE), or null. */
+    @Nullable
+    public BlockPos problemPos() {
+        return be == null ? null : be.clientProblemPos();
+    }
+
+    /** This controller's position - lets the in-world outline scope itself to the open screen. */
+    @Nullable
+    public BlockPos controllerPos() {
+        return be == null ? null : be.getBlockPos();
+    }
+
     /** Sprinklers in the formed multiblock (0 when unformed). */
     public int sprinklerCount() {
         return dataAccess.get(TerrariumControllerBlockEntity.DATA_SPRINKLERS);
