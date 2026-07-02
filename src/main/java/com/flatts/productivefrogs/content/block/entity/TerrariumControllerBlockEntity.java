@@ -90,6 +90,15 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
     private boolean tankMimic;
     private int distributeCursor;
 
+    /**
+     * Client-only: absolute position of the first structural problem, synced via
+     * {@link #getUpdateTag} (never persisted to disk). Drives the status GUI's
+     * coordinate readout and the in-world problem outline; null when the terrarium
+     * is formed or the current problem carries no position.
+     */
+    @Nullable
+    private BlockPos clientProblemPos;
+
     private final ControllerFluidIntake fluidIntake = new ControllerFluidIntake();
 
     private final ContainerData dataAccess = new ContainerData() {
@@ -197,6 +206,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
     // ---- validation (phase 1) ------------------------------------------
 
     public TerrariumValidationResult runValidation(ServerLevel level, BlockPos pos, BlockState state) {
+        BlockPos prevProblem = problemPosOf(this.lastResult);
         TerrariumValidationResult result = TerrariumValidator.validate(level, pos, state);
         this.lastResult = result;
         if (result.formed()) {
@@ -206,9 +216,20 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
         }
         if (result.formed() != this.formed) {
             this.formed = result.formed();
+            // setBlock(UPDATE_ALL) re-sends the BE update tag (incl. the problem pos) to clients.
             level.setBlock(pos, state.setValue(TerrariumControllerBlock.FORMED, this.formed), Block.UPDATE_ALL);
+        } else if (!java.util.Objects.equals(prevProblem, problemPosOf(result))) {
+            // Still unformed, but the offending block moved: refresh clients so the GUI
+            // coordinates and the in-world outline track the current problem.
+            syncToClients();
         }
         return result;
+    }
+
+    /** The first structural problem's position for {@code result}, or null (formed / positionless problem). */
+    @Nullable
+    private static BlockPos problemPosOf(@Nullable TerrariumValidationResult result) {
+        return result != null && result.firstProblem() != null ? result.firstProblem().at() : null;
     }
 
     public TerrariumValidationResult forceValidate(ServerLevel level, BlockPos pos) {
@@ -499,6 +520,12 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
         return tankVariant;
     }
 
+    /** Client-only: the first structural problem's position for the GUI/outline, or null. */
+    @Nullable
+    public BlockPos clientProblemPos() {
+        return clientProblemPos;
+    }
+
     private final class ControllerFluidIntake implements IFluidHandler {
         @Override
         public int getTanks() {
@@ -588,11 +615,20 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
             }
         });
         distributeCursor = 0;
+        // Client-only render/GUI hint (absent on disk loads -> null); see getUpdateTag.
+        long problem = input.getLongOr("ProblemPos", Long.MIN_VALUE);
+        clientProblemPos = problem == Long.MIN_VALUE ? null : BlockPos.of(problem);
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        return saveCustomOnly(registries); // sync tankVariant + charge count for Jade
+        CompoundTag tag = saveCustomOnly(registries); // sync tankVariant + charge count for Jade
+        // Client-only hint (deliberately NOT written by saveAdditional, so it never
+        // persists to disk): the offending block for the status GUI's coordinates and
+        // the in-world problem outline. Long.MIN_VALUE encodes "no positioned problem".
+        BlockPos problem = formed ? null : problemPosOf(lastResult);
+        tag.putLong("ProblemPos", problem == null ? Long.MIN_VALUE : problem.asLong());
+        return tag;
     }
 
     @Override
