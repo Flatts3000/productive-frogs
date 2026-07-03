@@ -59,6 +59,14 @@ public final class FrogTongueDropHandler {
             return;
         }
 
+        // Layer-2 kind gate (#281): only a species (Resource-kind) frog earns a
+        // Froglight from a Resource Slime. A Predator's fallback category could
+        // otherwise pass the category match below if some path bypassed the
+        // sensor; Midas is likewise excluded (its Mimic path has its own handler).
+        if (!(frog.getKind() instanceof com.flatts.productivefrogs.data.FrogKind.Resource)) {
+            return;
+        }
+
         if (frog.getCategory() != slime.getCategory()) {
             if (!frog.level().isClientSide()) {
                 PFDebug.log(PFDebug.Area.TONGUE, () -> String.format(

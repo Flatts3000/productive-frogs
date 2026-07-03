@@ -46,29 +46,31 @@ public final class ResourceTadpoleBucketItem extends MobBucketItem {
     }
 
     /**
-     * Pull the stored category out of the bucket's {@code BUCKET_ENTITY_DATA}
-     * payload. Returns {@code null} if the bucket doesn't have one (legacy
-     * data, corrupted save, etc.).
+     * Pull the stored kind out of the bucket's {@code BUCKET_ENTITY_DATA}
+     * payload (#281): the {@code "Kind"} id the tadpole bucket now writes, with
+     * the legacy {@code "Category"}(+{@code "Midas"}) fallback that slime buckets
+     * and pre-Kind data still use. Returns {@code null} for an empty bucket.
      */
     @Nullable
-    public static Category readCategory(ItemStack stack) {
+    public static com.flatts.productivefrogs.data.FrogKind readKind(ItemStack stack) {
         CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
         if (data == null) {
             return null;
         }
-        CompoundTag tag = data.copyTag();
-        if (!tag.contains("Category")) {
-            return null;
-        }
-        String name = tag.getStringOr("Category", "");
-        if (name.isEmpty()) {
-            return null;
-        }
-        try {
-            return Category.valueOf(name);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
+        return com.flatts.productivefrogs.data.FrogKind.readFromTag(data.copyTag()).orElse(null);
+    }
+
+    /**
+     * Pull the stored category out of the bucket's {@code BUCKET_ENTITY_DATA}
+     * payload - the kind's fallback category (#281: a Kind-written tadpole
+     * bucket resolves through {@link #readKind}; a Category-written slime
+     * bucket resolves through the same legacy read). Returns {@code null} if
+     * the bucket doesn't carry either form.
+     */
+    @Nullable
+    public static Category readCategory(ItemStack stack) {
+        com.flatts.productivefrogs.data.FrogKind kind = readKind(stack);
+        return kind == null ? null : kind.fallbackCategory();
     }
 
     /**

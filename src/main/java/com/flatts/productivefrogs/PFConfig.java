@@ -111,6 +111,13 @@ public final class PFConfig {
     // out transitively (no variant -> no source -> no milk). Default true.
     public static final ModConfigSpec.BooleanValue BOSS_ENABLED;
 
+    // Predation system master switch (#281). Gates the predator tier's creation
+    // surfaces: the designated resource-species breeding crosses and predator
+    // breed-true pairings refuse while off. Existing predator frogs stay alive
+    // (a freeze, like frog_stats) but produce no offspring. Default true - core
+    // 2.0 content.
+    public static final ModConfigSpec.BooleanValue PREDATORS_ENABLED;
+
     // End Dragon Altar (#249) tunables, under the boss section. Summon length (the
     // beam-and-grow show), the XP reward per summon, and whether the Dragon Egg is
     // re-deposited on every summon (vanilla only ever yields one).
@@ -762,6 +769,20 @@ public final class PFConfig {
 
         builder.pop();
 
+        builder.push("predators");
+
+        PREDATORS_ENABLED = builder
+            .comment(
+                "Master switch for the predation system (#281, Productive Frogs 2.0). Default true.",
+                "When false the predator tier's creation surfaces shut off: the four designated",
+                "resource-species breeding crosses (Bog x Cave, Infernal x Geode, Tide x Bog,",
+                "Void x Geode) refuse to mate, and predator frogs no longer breed true. Existing",
+                "predator frogs stay in the world unchanged (a freeze, not a delete)."
+            )
+            .define("enabled", true);
+
+        builder.pop();
+
         builder.push("boss");
 
         BOSS_ENABLED = builder
@@ -1047,6 +1068,22 @@ public final class PFConfig {
     /** Whether the boss tier master is on ({@code boss.enabled}, #200); fallback true. */
     public static boolean bossEnabled() {
         return !SPEC.isLoaded() || BOSS_ENABLED.get();
+    }
+
+    /**
+     * Test-only override for {@link #predatorsEnabled()} - the GameTests that pin
+     * the predators-off behavior set this (mirrors {@code equivalenceEnabledOverride}).
+     * Null in production.
+     */
+    @org.jetbrains.annotations.Nullable
+    public static Boolean predatorsEnabledOverride;
+
+    /** Whether the predation system is on ({@code predators.enabled}, #281); fallback true. */
+    public static boolean predatorsEnabled() {
+        if (predatorsEnabledOverride != null) {
+            return predatorsEnabledOverride;
+        }
+        return !SPEC.isLoaded() || PREDATORS_ENABLED.get();
     }
 
     /** End Dragon Altar summon length in ticks ({@code boss.dragon_altar.summonTicks}, #249); fallback {@value #DEFAULT_DRAGON_ALTAR_SUMMON_TICKS}. */

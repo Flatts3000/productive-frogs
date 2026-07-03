@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.data.FrogKind;
 import com.flatts.productivefrogs.registry.PFEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -112,7 +113,7 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
         if (level.getBlockEntity(pos) instanceof PrimedFrogEggBlockEntity egg) {
             egg.setHatchGameTime(level.getGameTime() + delay);
             if (midas) {
-                egg.setMidas(true);
+                egg.setKind(FrogKind.MIDAS);
             }
         }
     }
@@ -153,8 +154,12 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
         int appetite = carryStats ? eggBe.getAppetite() : 0;
         int bounty = carryStats ? eggBe.getBounty() : 0;
         int reach = carryStats ? eggBe.getReach() : 0;
-        // Midas egg (#253): hatches Midas tadpoles regardless of the carrier block's category.
-        boolean midas = eggBe != null && eggBe.isMidas();
+        // The hatch kind (#281): the BE's stamped kind wins (a cross-conceived
+        // predator, a laid/Kiss-primed Midas); otherwise the carrier block decides
+        // (its species, or Midas for the dedicated Midas egg block).
+        FrogKind beKind = eggBe != null ? eggBe.getKind() : null;
+        FrogKind kind = beKind != null ? beKind
+            : (this.midas ? FrogKind.MIDAS : FrogKind.resource(this.category));
 
         destroy(level, pos);
         level.playSound(null, pos, SoundEvents.FROGSPAWN_HATCH, SoundSource.BLOCKS, 1.0F, 1.0F);
@@ -165,8 +170,7 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
             if (tadpole == null) {
                 continue;
             }
-            tadpole.setCategory(this.category);
-            tadpole.setMidas(midas);
+            tadpole.setKind(kind);
             if (carryStats) {
                 tadpole.setPendingStats(appetite, bounty, reach);
             }

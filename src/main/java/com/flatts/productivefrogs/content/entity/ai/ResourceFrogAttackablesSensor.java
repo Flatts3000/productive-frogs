@@ -65,13 +65,26 @@ public class ResourceFrogAttackablesSensor extends FrogAttackablesSensor {
         if (!Sensor.isEntityAttackable(level, frog, target) || !Frog.canEat(target) || isUnreachable(frog, target)) {
             return false;
         }
-        // Midas (Equivalence lane, #253) eats ONLY Mimic Slimes - never the six
-        // species' Resource Slimes - and uses the same reach gate. MimicSlime is a
-        // sibling of ResourceSlime (extends vanilla Slime), so the species path
-        // below already excludes it; this is the symmetric inclusion for Midas.
-        if (frog.isMidas()) {
-            return target instanceof com.flatts.productivefrogs.content.entity.MimicSlime
-                && target.closerThan(frog, reachRadius(frog));
+        // Diet by KIND (#281) - the exhaustive switch is the mutual-exclusion
+        // layer 1 (the drop handlers are layer 2):
+        // - Midas (#253) eats ONLY Mimic Slimes, never the species' Resource
+        //   Slimes (MimicSlime is a Slime sibling, so the species path below
+        //   already excludes it; this is the symmetric inclusion).
+        // - A Predator NEVER targets slimes of any kind; its vanilla-mob prey
+        //   wiring lands with the eat path (#281 Phase 1, next chunk) - until
+        //   then it hunts nothing.
+        // - A species frog falls through to the category match below.
+        switch (frog.getKind()) {
+            case com.flatts.productivefrogs.data.FrogKind.Midas m -> {
+                return target instanceof com.flatts.productivefrogs.content.entity.MimicSlime
+                    && target.closerThan(frog, reachRadius(frog));
+            }
+            case com.flatts.productivefrogs.data.FrogKind.Predator p -> {
+                return false;
+            }
+            case com.flatts.productivefrogs.data.FrogKind.Resource r -> {
+                // fall through to the category-matched slime path below
+            }
         }
         // Only Resource Slimes of the matching category are eligible prey.
         // Vanilla slimes/magma cubes get filtered out — they must be infused

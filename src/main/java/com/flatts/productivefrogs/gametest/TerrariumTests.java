@@ -499,7 +499,7 @@ final class TerrariumTests {
             (com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(incRel));
         com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity.frogCapOverride = 64;
         try {
-            inc.seedFromBreeding(Category.CAVE, 5, 7, 3);
+            inc.seedFromBreeding(com.flatts.productivefrogs.data.FrogKind.resource(Category.CAVE), 5, 7, 3);
             inc.primeForImmediateRelease();
             com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity.serverTick(
                 level, helper.absolutePos(incRel), level.getBlockState(helper.absolutePos(incRel)), inc);
@@ -535,7 +535,7 @@ final class TerrariumTests {
         net.minecraft.world.phys.AABB cavity = net.minecraft.world.phys.AABB.encapsulatingFullBlocks(
             helper.absolutePos(new BlockPos(2, 2, 2)), helper.absolutePos(new BlockPos(6, 6, 6)));
         try {
-            inc.seedFromBreeding(Category.CAVE, 1, 1, 1);
+            inc.seedFromBreeding(com.flatts.productivefrogs.data.FrogKind.resource(Category.CAVE), 1, 1, 1);
             inc.primeForImmediateRelease();
             // Cap 0 -> hold (no release, still incubating).
             com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity.frogCapOverride = 0;
