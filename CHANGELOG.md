@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## v1.24.5 - 2026-07-03 - Deep Breath
+
+### Fixed
+
+- **Resource Frogs and their tadpoles no longer drown.** Vanilla frogs can breathe underwater - ours never could. Keep a Resource Frog in a flooded pen or a submerged farm chamber and it would quietly run out of air and die while the vanilla frog next to it swam along happily, a bug that has been with the mod since the very first release. Resource Frogs and Resource Tadpoles now breathe underwater exactly like their vanilla cousins.
+
 ## v1.24.4 - 2026-06-30 - Growing Pains
 
 ### Fixed
