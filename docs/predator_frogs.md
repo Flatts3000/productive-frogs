@@ -2,7 +2,7 @@
 
 > **What this is.** The phased implementation plan for the "frogs eat mobs" redesign (epic [#281](https://github.com/Flatts3000/productive-frogs/issues/281)). The epic issue is the authoritative **spec** (decisions + acceptance criteria); this doc is the **runway** - how the system is built and shipped in dependency order. Read #281 first.
 >
-> **One-line thesis.** All mob drops come from a frog eating the mob. A bred **Predator Frog** eats vanilla mobs in the world (live entity, like a Resource Frog); bosses are eaten at their altars by a bred **Apex Frog**. **No enclosure blocks** - the hard classes are handled by frog abilities (a shared teleport-suppression aura, the amphibious Gulper) plus ordinary player-built containment, fed by a waterloggable **Slurry Basin** (and a sibling **Slime Milk Basin** on the slime side). XP is a fluid at altars, orbs in the open. No Froglight from a vanilla-mob eat.
+> **One-line thesis.** All mob drops come from a frog eating the mob. A bred **Predator Frog** eats vanilla mobs in the world (live entity, like a Resource Frog); bosses are eaten at their altars by a bred **Apex Frog**. **No enclosure blocks** - the hard classes are handled by Basin-spawned teleport-disable + the amphibious Gulper, plus ordinary player-built containment, fed by a waterloggable **Slurry Basin** (and a sibling **Slime Milk Basin** on the slime side). XP is a fluid at altars, orbs in the open. No Froglight from a vanilla-mob eat.
 
 ## Scope: this IS 2.0.0
 
@@ -43,7 +43,7 @@ The end-to-end slice that proves the thesis: a bred Predator Frog eats a mob and
 - The **Predator Frog tier** - Prowler (overworld), Cinder (nether), Gulper (aquatic), Rift (end). A new tier/flag, **not** a 7th `Category` (Midas precedent). New EntityType(s), egg items, tadpoles, renderers (subclass + tint).
 - **Breeding cross** - the settled resource-species pair map (Bog x Cave -> Prowler, Infernal x Geode -> Cinder, Tide x Bog -> Gulper, Void x Geode -> Rift) deterministically yields a predator tadpole; same-environment predators breed true; all other cross pairs still cannot mate. Stats (Appetite/Bounty/Reach) inherit through the cross.
 - **Eat path (all non-boss classes)** - extend `ResourceFrogAttackablesSensor` + `FrogTongueDropHandler` to vanilla mobs, gated so a predator only targets its environment's mobs and the six resource frogs are untouched (both-layer mutual exclusion preserved). The sensor targets any eligible class in range (ground open, flyers in a player box, aquatic in water, teleporters held by the aura).
-- **Frog abilities** - a **shared teleport-suppression aura** (a predator suppresses its hunted mob's teleport, so a boxed enderman/shulker stays put; Prowler farms enderman by first-encounter, Rift the shulker) and the **amphibious Gulper** (`canBreatheUnderwater` override + inherited swimming; the vanilla tongue already works underwater). These replace the enclosures entirely.
+- **Basin-spawned teleport-disable + amphibious Gulper** - a mob spawned by a Mob Slurry Basin has **teleportation disabled by default** (a spawn-time flag), so a Basin-farmed enderman/shulker can't escape and the frog eats it (no aura; Prowler farms enderman by first-encounter, Rift the shulker). The **Gulper** is amphibious (`canBreatheUnderwater` override + inherited swimming; the vanilla tongue already works underwater). These replace the enclosures entirely.
 - **Environment rule** - a mob's frog = where the player first encounters it (enderman -> overworld / Prowler).
 - **Data-driven mob eligibility** - hand-authored per-mob class/environment JSON (the map on #281 is the seed), excluding no-kill-drop mobs. Datapack-overridable.
 - **Player-kill loot** - roll the mob's loot table as a player kill (player-gated drops included) with looting = Bounty tier; loot drops on the ground (hoppers collect, like Froglights); XP as **vanilla orbs**.
@@ -127,7 +127,7 @@ Close-out.
 | Liquid Experience mis-tagged -> no cross-mod interop | Medium | Test against the `c:experience` tag, not a specific mod; pin the 20 mB/point ratio in a unit test. |
 | Whole-entity round-trip drops stats (Ender Net + altar install) | Medium | `saveWithoutId` everywhere an entity serializes (the #210 lesson); GameTest capture -> release and install -> release conservation on every removal path. |
 | Waterlogged Basin fights the water pool (mixing / washing / suffocation) | Medium | Fluid stays inside the block (never a world fluid); Basin is waterloggable and works wet or dry; GameTest that a waterlogged Basin spawns into the surrounding water without disturbing the pool. |
-| Shared teleport-suppression aura mis-scoped (leaks or over-suppresses) | Low | Bound the radius; suppress only the hunted mob's teleport, not player/ender-pearl mechanics; GameTest a boxed enderman/shulker stays put in range and teleports normally out of range. |
+| Basin teleport-disable mis-applied (leaks to wild mobs, or breaks vanilla) | Low | Flag lives on the Basin-spawned entity only; wild teleporters keep vanilla behaviour; GameTest a Basin-spawned enderman/shulker cannot teleport while a wild one still can. |
 
 ## Deferred to implementation time (not open design questions)
 
