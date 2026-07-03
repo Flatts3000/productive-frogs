@@ -237,13 +237,13 @@ final class PredatorEatPathTests {
         });
     }
 
-    /** The teleport lock cancels the ender self-teleport event; an unlocked mob teleports normally. */
     /** GameTest worlds run at day - helmet a zombie so daylight doesn't kill it mid-test. */
     private static void sunProof(Zombie zombie) {
         zombie.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD,
             new net.minecraft.world.item.ItemStack(Items.IRON_HELMET));
     }
 
+    /** The teleport lock cancels the ender self-teleport event; an unlocked mob teleports normally (and stays data-free). */
     private static void teleportLockCancelsEnderTeleport(GameTestHelper helper) {
         var locked = helper.spawn(EntityType.ENDERMAN, new BlockPos(1, 2, 2));
         locked.setNoAi(true);
