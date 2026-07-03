@@ -5158,6 +5158,31 @@ public final class PFGameTests {
      * {@code helper.spawn} alone does not call it, so we invoke it like the real
      * conversion/spawn paths do.
      */
+    /**
+     * Resource Frogs and Tadpoles breathe underwater exactly like their vanilla
+     * counterparts. Vanilla wires this through the
+     * {@code minecraft:can_breathe_under_water} EntityType tag (LivingEntity's
+     * canBreatheUnderwater is FINAL and tag-driven on 1.21.1), and tag
+     * membership keys on the EntityType id - so PF's subclassed entities were
+     * never in it and every Resource Frog drowned when kept underwater. Fixed
+     * by shipping our own tag entries; this pins them.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 20)
+    public static void pfFrogsBreatheUnderwaterLikeVanilla(GameTestHelper helper) {
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 2));
+        frog.setCategory(Category.TIDE);
+        ResourceTadpole tadpole = helper.spawn(PFEntities.RESOURCE_TADPOLE.get(), new BlockPos(2, 2, 3));
+        if (!frog.canBreatheUnderwater()) {
+            helper.fail("a Resource Frog must breathe underwater like a vanilla frog (can_breathe_under_water tag)");
+            return;
+        }
+        if (!tadpole.canBreatheUnderwater()) {
+            helper.fail("a Resource Tadpole must breathe underwater like a vanilla tadpole");
+            return;
+        }
+        helper.succeed();
+    }
+
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 20)
     public static void resourceFrogIsPersistentAfterFinalizeSpawn(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 2, 2);
