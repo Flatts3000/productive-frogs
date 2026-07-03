@@ -2,7 +2,7 @@
 
 > **What this is.** The phased implementation plan for the "frogs eat mobs" redesign (epic [#281](https://github.com/Flatts3000/productive-frogs/issues/281)). The epic issue is the authoritative **spec** (decisions + acceptance criteria); this doc is the **runway** - how the system is built and shipped in dependency order. Read #281 first.
 >
-> **One-line thesis.** All mob drops come from a frog eating the mob. A bred **Predator Frog** eats vanilla mobs in the world (live entity, like a Resource Frog); bosses are eaten at their altars by a bred **Apex Frog**. **No enclosure blocks** - the hard classes are handled by frog abilities (Rift teleport-suppression aura, amphibious Gulper) plus ordinary player-built containment, fed by a waterloggable **Slurry Basin**. XP is a fluid at altars, orbs in the open. No Froglight from a vanilla-mob eat.
+> **One-line thesis.** All mob drops come from a frog eating the mob. A bred **Predator Frog** eats vanilla mobs in the world (live entity, like a Resource Frog); bosses are eaten at their altars by a bred **Apex Frog**. **No enclosure blocks** - the hard classes are handled by frog abilities (a shared teleport-suppression aura, the amphibious Gulper) plus ordinary player-built containment, fed by a waterloggable **Slurry Basin** (and a sibling **Slime Milk Basin** on the slime side). XP is a fluid at altars, orbs in the open. No Froglight from a vanilla-mob eat.
 
 ## Scope: this IS 2.0.0
 
@@ -43,7 +43,8 @@ The end-to-end slice that proves the thesis: a bred Predator Frog eats a mob and
 - The **Predator Frog tier** - Prowler (overworld), Cinder (nether), Gulper (aquatic), Rift (end). A new tier/flag, **not** a 7th `Category` (Midas precedent). New EntityType(s), egg items, tadpoles, renderers (subclass + tint).
 - **Breeding cross** - the settled resource-species pair map (Bog x Cave -> Prowler, Infernal x Geode -> Cinder, Tide x Bog -> Gulper, Void x Geode -> Rift) deterministically yields a predator tadpole; same-environment predators breed true; all other cross pairs still cannot mate. Stats (Appetite/Bounty/Reach) inherit through the cross.
 - **Eat path (all non-boss classes)** - extend `ResourceFrogAttackablesSensor` + `FrogTongueDropHandler` to vanilla mobs, gated so a predator only targets its environment's mobs and the six resource frogs are untouched (both-layer mutual exclusion preserved). The sensor targets any eligible class in range (ground open, flyers in a player box, aquatic in water, teleporters held by the aura).
-- **Frog abilities** - **Rift teleport-suppression aura** (mobs in radius can't teleport, so a boxed enderman/shulker stays put) and the **amphibious Gulper** (moves + tongues in water). These replace the enclosures entirely.
+- **Frog abilities** - a **shared teleport-suppression aura** (a predator suppresses its hunted mob's teleport, so a boxed enderman/shulker stays put; Prowler farms enderman by first-encounter, Rift the shulker) and the **amphibious Gulper** (`canBreatheUnderwater` override + inherited swimming; the vanilla tongue already works underwater). These replace the enclosures entirely.
+- **Environment rule** - a mob's frog = where the player first encounters it (enderman -> overworld / Prowler).
 - **Data-driven mob eligibility** - hand-authored per-mob class/environment JSON (the map on #281 is the seed), excluding no-kill-drop mobs. Datapack-overridable.
 - **Player-kill loot** - roll the mob's loot table as a player kill (player-gated drops included) with looting = Bounty tier; loot drops on the ground (hoppers collect, like Froglights); XP as **vanilla orbs**.
 - **Config flag** for the whole predation system (default ON, v1.18 config-suite posture).
@@ -79,7 +80,8 @@ The supply chain that makes the eat path farmable.
 - **Ender Net** - new item, ender-themed color scheme, captures **any** living mob, whole-entity round-trip (`saveWithoutId`, the #210 lesson). Frog Net stays frog-only.
 - **Slurry Press** - new appliance, standard furnace-style shape (Block + BE + Inventory + Menu + Screen; copy the Milker/Churn). Filled Ender Net + empty bucket in -> `<Mob> Slurry` bucket out + empty net returned. Bucket output (no internal tank), mirroring the Churn. Rejects boss-mob nets.
 - **Mob Slurry** - one fluid + mob-type data component (R-1 model), `%s Slurry` lang template.
-- **Slurry Basin** - a **waterloggable container block** that holds the slurry inside the block (fill by bucket or fluid pipe) and spawns its mob on the `MilkSpawnEconomy` (budget + catalysts). The slurry never becomes a world fluid. **Aquatic Basins require water**: inert when dry, spawning fish into the surrounding pool; because the slurry stays contained, the Basin coexists with the water with no mixing or washing-away.
+- **Slurry Basin** - a **waterloggable container block** that holds the slurry inside the block (fill by bucket or fluid pipe) and spawns its mob on the `MilkSpawnEconomy` (budget + catalysts). One block serves land and water: the slurry never becomes a world fluid, and an **aquatic Basin requires water** (inert when dry, spawning fish into the surrounding pool, coexisting with it with no mixing or washing-away).
+- **Slime Milk Basin** - the same Basin form on the slime side: holds Slime Milk (variant component), spawns Resource Slimes. In 2.0 it is the milk spawner (the old Slime Milk source block folds into it; the Terrarium Sprinklers, fed by piped milk, are unaffected), unifying the slime + mob sides under one Basin family.
 
 **GameTest:** Ender Net capture round-trip, Slurry Press (net + bucket -> Slurry bucket + empty net, boss rejection), Slurry Basin spawn economy + aquatic water-required (inert dry, spawns into water).
 
@@ -123,7 +125,7 @@ Close-out.
 | Liquid Experience mis-tagged -> no cross-mod interop | Medium | Test against the `c:experience` tag, not a specific mod; pin the 20 mB/point ratio in a unit test. |
 | Whole-entity round-trip drops stats (Ender Net + altar install) | Medium | `saveWithoutId` everywhere an entity serializes (the #210 lesson); GameTest capture -> release and install -> release conservation on every removal path. |
 | Aquatic Slurry Basin fights the water pool (mixing / washing / suffocation) | Medium | Slurry stays inside the block (never a world fluid); Basin is waterloggable and inert when dry; GameTest that an aquatic Basin spawns into surrounding water and does not disturb the pool. |
-| Rift teleport-suppression aura mis-scoped (leaks or over-suppresses) | Low | Bound the radius; suppress only hostile-target mob teleports, not player/ender-pearl mechanics; GameTest a boxed enderman/shulker stays put in range and teleports normally out of range. |
+| Shared teleport-suppression aura mis-scoped (leaks or over-suppresses) | Low | Bound the radius; suppress only the hunted mob's teleport, not player/ender-pearl mechanics; GameTest a boxed enderman/shulker stays put in range and teleports normally out of range. |
 
 ## Deferred to implementation time (not open design questions)
 
