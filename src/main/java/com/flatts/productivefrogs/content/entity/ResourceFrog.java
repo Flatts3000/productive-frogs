@@ -170,12 +170,15 @@ public class ResourceFrog extends Frog {
     }
 
     // Underwater breathing: ALL PF frogs breathe underwater, like vanilla frogs.
-    // On 1.21.1 this was a Frog CLASS override we inherited for free; 26.1 moved
-    // it to the minecraft:can_breathe_under_water EntityType tag, which a
-    // subclassed EntityType silently loses - so PF ships tag entries for
-    // resource_frog + resource_tadpole (data/minecraft/tags/entity_type/) instead
-    // of a code override. The Gulper needs no special ability for its water pool;
-    // its distinction is purely its aquatic prey set.
+    // Vanilla wires this through the minecraft:can_breathe_under_water EntityType
+    // tag (LivingEntity.canBreatheUnderwater is tag-driven - and already was on
+    // 1.21.1, where it is FINAL), and tag membership keys on the EntityType id -
+    // a subclassed EntityType is never in the parent's tags. So PF ships tag
+    // entries for resource_frog + resource_tadpole
+    // (data/minecraft/tags/entity_type/) instead of a code override; the same
+    // fix was hotfixed onto the 1.x line, where PF frogs had been drowning since
+    // v1.0. The Gulper needs no special ability for its water pool; its
+    // distinction is purely its aquatic prey set.
 
     private static int statCap() {
         return PFConfig.statCap();
