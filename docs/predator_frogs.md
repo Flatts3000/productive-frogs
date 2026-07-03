@@ -83,7 +83,7 @@ The supply chain that makes the eat path farmable.
 - **Mob Slurry Basin** - a **waterloggable container block** that holds any mob's slurry inside the block (fill by bucket or fluid pipe) and spawns it on the `MilkSpawnEconomy` (budget + catalysts). One block for every mob; **works waterlogged or dry** (waterlog it so aquatic mobs survive). The slurry never becomes a world fluid, so a waterlogged Basin coexists with the pool with no mixing or washing-away.
 - **Slime Milk Basin** - the parallel block on the slime side: a waterloggable container holding any variant's Slime Milk, spawning Resource Slimes, working wet or dry. In 2.0 it is the milk spawner (the old Slime Milk source block folds into it; the Terrarium Sprinklers, fed by piped milk, are unaffected), unifying the slime + mob sides under one Basin family.
 
-**GameTest:** Ender Net capture round-trip, Slurry Press (net + bucket -> Slurry bucket + empty net, boss rejection), Slurry Basin spawn economy + aquatic water-required (inert dry, spawns into water).
+**GameTest:** Ender Net capture round-trip, Slurry Press (net + bucket -> Slurry bucket + empty net, boss rejection), Mob Slurry Basin + Slime Milk Basin spawn economy (each works waterlogged and dry).
 
 ---
 
@@ -124,7 +124,7 @@ Close-out.
 | Variant retirement breaks existing packs/worlds | Medium | Follow the v1.6 retirement pattern (items lose names/recipes, soft where possible); one coordinated breaking note; stage ground-class in Phase 1, remainder in Phase 5. |
 | Liquid Experience mis-tagged -> no cross-mod interop | Medium | Test against the `c:experience` tag, not a specific mod; pin the 20 mB/point ratio in a unit test. |
 | Whole-entity round-trip drops stats (Ender Net + altar install) | Medium | `saveWithoutId` everywhere an entity serializes (the #210 lesson); GameTest capture -> release and install -> release conservation on every removal path. |
-| Aquatic Slurry Basin fights the water pool (mixing / washing / suffocation) | Medium | Slurry stays inside the block (never a world fluid); Basin is waterloggable and inert when dry; GameTest that an aquatic Basin spawns into surrounding water and does not disturb the pool. |
+| Waterlogged Basin fights the water pool (mixing / washing / suffocation) | Medium | Fluid stays inside the block (never a world fluid); Basin is waterloggable and works wet or dry; GameTest that a waterlogged Basin spawns into the surrounding water without disturbing the pool. |
 | Shared teleport-suppression aura mis-scoped (leaks or over-suppresses) | Low | Bound the radius; suppress only the hunted mob's teleport, not player/ender-pearl mechanics; GameTest a boxed enderman/shulker stays put in range and teleports normally out of range. |
 
 ## Deferred to implementation time (not open design questions)
