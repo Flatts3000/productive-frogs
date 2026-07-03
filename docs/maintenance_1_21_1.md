@@ -1,6 +1,6 @@
 # Maintenance Runbook: the mc-1.21.1 line
 
-> **Scope.** How updates land on the frozen **MC 1.21.1 / NeoForge 21.1.x** line after `main` moved to MC 26.1 (Productive Frogs 2.x). This branch is **hotfix-only**; the active line lives on `main`. Branch model background: `docs/port_mc_26_1.md`.
+> **Scope.** How updates land on the frozen **MC 1.21.1 / NeoForge 21.1.x** line after `main` moved to MC 26.1 (Productive Frogs 2.x). This branch is **hotfix-only**; the active line lives on `main`. Branch model background: `docs/port_mc_26_1.md` **on `main`** (this branch was frozen before that doc landed, so it does not exist here).
 
 ## Branch model
 
@@ -50,4 +50,4 @@ Dependabot config is read from the default branch (`main`) and does not target t
 
 ## Sunset
 
-This line has no fixed end date. It sunsets when Sky Frogs migrates off 1.21.1 or activity drops to zero; when that happens, mark this doc as historical (like `legacy/mc-1.21.11`) rather than deleting the branch.
+This line has no fixed end date. It sunsets when Sky Frogs migrates off 1.21.1 or activity drops to zero; when that happens, rename the branch under the `legacy/` prefix rather than deleting it (precedent: the `legacy/mc-1.21.11` branch preserves the original MC 1.21.11 line).
