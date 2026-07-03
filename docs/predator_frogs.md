@@ -42,7 +42,7 @@ The end-to-end slice that proves the thesis: a bred Predator Frog eats a mob and
 **Ships:**
 - The **Predator Frog tier** - Prowler (overworld), Cinder (nether), Gulper (aquatic), Rift (end). A new tier/flag, **not** a 7th `Category` (Midas precedent). New EntityType(s), egg items, tadpoles, renderers (subclass + tint).
 - **Breeding cross** - the settled resource-species pair map (Bog x Cave -> Prowler, Infernal x Geode -> Cinder, Tide x Bog -> Gulper, Void x Geode -> Rift) deterministically yields a predator tadpole; same-environment predators breed true; all other cross pairs still cannot mate. Stats (Appetite/Bounty/Reach) inherit through the cross.
-- **Eat path (all non-boss classes)** - extend `ResourceFrogAttackablesSensor` + `FrogTongueDropHandler` to vanilla mobs, gated so a predator only targets its environment's mobs and the six resource frogs are untouched (both-layer mutual exclusion preserved). The sensor targets any eligible class in range (ground open, flyers in a player box, aquatic in water, teleporters held by the aura).
+- **Eat path (all non-boss classes)** - extend `ResourceFrogAttackablesSensor` + `FrogTongueDropHandler` to vanilla mobs, gated so a predator only targets its environment's mobs and the six resource frogs are untouched (both-layer mutual exclusion preserved). The sensor targets any eligible class in range (ground open, flyers in a player box, aquatic in water, teleporters that were Basin-spawned so teleport is disabled).
 - **Basin-spawned teleport-disable + amphibious Gulper** - a mob spawned by a Mob Slurry Basin has **teleportation disabled by default** (a spawn-time flag), so a Basin-farmed enderman/shulker can't escape and the frog eats it (no aura; Prowler farms enderman by first-encounter, Rift the shulker). The **Gulper** is amphibious (`canBreatheUnderwater` override + inherited swimming; the vanilla tongue already works underwater). These replace the enclosures entirely.
 - **Environment rule** - a mob's frog = where the player first encounters it (enderman -> overworld / Prowler).
 - **Data-driven mob eligibility** - hand-authored per-mob class/environment JSON (the map on #281 is the seed), excluding no-kill-drop mobs. Datapack-overridable.
@@ -89,7 +89,7 @@ The supply chain that makes the eat path farmable.
 
 ---
 
-> **Phase removed.** The former Phase 4 was the fly/swim/teleport enclosures (Aviary / Aquarium / Endarium + Enclosure Hatch + a virtual eat cycle). The 2026-07-03 decision to nix all enclosures deleted it: flyers get a player box, aquatic mobs the amphibious Gulper in a water pool, teleporters the Rift suppression aura - all folded into Phase 1's abilities + Phase 3's Slurry Basin. No enclosure blocks ship.
+> **Phase removed.** The former Phase 4 was the fly/swim/teleport enclosures (Aviary / Aquarium / Endarium + Enclosure Hatch + a virtual eat cycle). The 2026-07-03 decision to nix all enclosures deleted it: flyers get a player box, aquatic mobs the amphibious Gulper in a water pool, teleporters are Basin-spawned with teleport disabled - all folded into Phase 1's abilities + Phase 3's Slurry Basin. No enclosure blocks ship.
 
 ## Phase 4 - Apex Frogs + boss altars  (size: L)
 
