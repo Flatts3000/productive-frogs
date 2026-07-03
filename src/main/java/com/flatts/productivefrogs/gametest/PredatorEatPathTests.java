@@ -44,6 +44,84 @@ final class PredatorEatPathTests {
             PredatorEatPathTests::teleportLockCancelsEnderTeleport);
         PFGameTests.test("gulper_breathes_underwater_other_frogs_do_not", 20,
             PredatorEatPathTests::gulperBreathesUnderwaterOtherFrogsDoNot);
+        PFGameTests.test("predator_only_eats_size_one_slimes", 20,
+            PredatorEatPathTests::predatorOnlyEatsSizeOneSlimes);
+        PFGameTests.test("legacy_and_kind_spawn_egg_nbt_both_resolve", 40,
+            PredatorEatPathTests::legacyAndKindSpawnEggNbtBothResolve);
+    }
+
+    /**
+     * Vanilla-frog parity on slime-family prey (review finding #4): only a
+     * size-1 vanilla slime is eligible - a big slime would be one-shot, split,
+     * and turn into a looting-scaled loot cascade.
+     */
+    private static void predatorOnlyEatsSizeOneSlimes(GameTestHelper helper) {
+        ResourceFrog prowler = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 2));
+        prowler.setKind(FrogKind.Predator.PROWLER);
+        var big = helper.spawn(EntityType.SLIME, new BlockPos(2, 2, 4));
+        big.setSize(4, true);
+        var small = helper.spawn(EntityType.SLIME, new BlockPos(4, 2, 2));
+        small.setSize(1, true);
+        if (PFShootTongue.isEligiblePrey(prowler, FrogKind.Predator.PROWLER, big)) {
+            helper.fail("a size-4 slime must not be predator prey (split cascade)");
+            return;
+        }
+        if (!PFShootTongue.isEligiblePrey(prowler, FrogKind.Predator.PROWLER, small)) {
+            helper.fail("a size-1 slime is registry prey and must be eligible");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * The spawn-egg regression pin (review finding #1): drive the REAL 26.1 egg
+     * mechanism - TypedEntityData.loadInto does saveWithoutId -> merge egg NBT ->
+     * reload, so the entity's default Kind coexists with the egg's keys and the
+     * resolution order decides the identity. All three egg dialects must win
+     * over the freshly-saved default.
+     */
+    private static void legacyAndKindSpawnEggNbtBothResolve(GameTestHelper helper) {
+        record Pin(net.minecraft.world.item.ItemStack egg, FrogKind expected, String label) {}
+        java.util.List<Pin> pins = java.util.List.of(
+            new Pin(new net.minecraft.world.item.ItemStack(
+                    com.flatts.productivefrogs.registry.PFItems.RESOURCE_FROG_SPAWN_EGGS
+                        .get(Category.CAVE).get()),
+                FrogKind.resource(Category.CAVE), "cave species egg"),
+            new Pin(new net.minecraft.world.item.ItemStack(
+                    com.flatts.productivefrogs.registry.PFItems.MIDAS_FROG_SPAWN_EGG.get()),
+                FrogKind.MIDAS, "midas egg"),
+            new Pin(new net.minecraft.world.item.ItemStack(
+                    com.flatts.productivefrogs.registry.PFItems.PREDATOR_FROG_SPAWN_EGGS
+                        .get(FrogKind.Predator.PROWLER).get()),
+                FrogKind.Predator.PROWLER, "prowler egg")
+        );
+        // The ORIGINAL regression dialect: a legacy egg whose baked NBT carries
+        // only "Category" (pre-Kind packs / old item NBT). The merge leaves the
+        // entity's freshly-saved default Kind alongside it; legacy must win.
+        net.minecraft.nbt.CompoundTag legacyNbt = new net.minecraft.nbt.CompoundTag();
+        legacyNbt.putString("Category", Category.TIDE.name());
+        var legacyEgg = new net.minecraft.world.item.ItemStack(
+            com.flatts.productivefrogs.registry.PFItems.RESOURCE_FROG_SPAWN_EGGS.get(Category.CAVE).get());
+        legacyEgg.set(net.minecraft.core.component.DataComponents.ENTITY_DATA,
+            net.minecraft.world.item.component.TypedEntityData.of(PFEntities.RESOURCE_FROG.get(), legacyNbt));
+        pins = new java.util.ArrayList<>(pins);
+        pins.add(new Pin(legacyEgg, FrogKind.resource(Category.TIDE), "legacy Category-dialect egg"));
+        for (Pin pin : pins) {
+            var data = pin.egg().get(net.minecraft.core.component.DataComponents.ENTITY_DATA);
+            if (data == null) {
+                helper.fail(pin.label() + " has no baked ENTITY_DATA");
+                return;
+            }
+            ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 2));
+            data.loadInto(frog); // the exact vanilla spawn-path application
+            if (frog.getKind() != pin.expected()) {
+                helper.fail(pin.label() + " resolved to " + frog.getKind().id()
+                    + ", expected " + pin.expected().id() + " (the default-Kind shadowing regression)");
+                return;
+            }
+            frog.discard();
+        }
+        helper.succeed();
     }
 
     /** Spot-checks of the shipped predator_prey JSONs against the settled #281 map. */
@@ -185,6 +263,12 @@ final class PredatorEatPathTests {
         NeoForge.EVENT_BUS.post(freeEvent);
         if (freeEvent.isCanceled()) {
             helper.fail("an unlocked enderman's teleport must not be cancelled");
+            return;
+        }
+        // Save-bloat pin (review finding #2): the lock CHECK must never attach
+        // data - a wild teleporter that merely fired the event stays clean.
+        if (free.hasData(com.flatts.productivefrogs.registry.PFAttachments.TELEPORT_DISABLED.get())) {
+            helper.fail("checking the teleport lock attached (and would persist) data on a wild enderman");
             return;
         }
         helper.succeed();

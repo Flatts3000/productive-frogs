@@ -44,7 +44,7 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
     public static final int DATA_GROWTH_REMAINING = 0;
     public static final int DATA_GROWTH_TOTAL = 1;
     public static final int DATA_STATE = 2; // 0=empty, 1=growing, 2=waiting at cap
-    public static final int DATA_CATEGORY = 3; // category ordinal, -1 when empty
+    public static final int DATA_KIND = 3; // FrogKind syncIndex (transient, session-local), -1 when empty
     public static final int DATA_FROGS = 4; // live frogs in the cavity
     public static final int DATA_FROG_CAP = 5; // configured frog cap
     public static final int DATA_COUNT = 6;
@@ -73,7 +73,10 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
                 case DATA_GROWTH_REMAINING -> growthRemaining;
                 case DATA_GROWTH_TOTAL -> growthTotal;
                 case DATA_STATE -> kind == null ? 0 : (pendingRelease ? 2 : 1);
-                case DATA_CATEGORY -> kind == null ? -1 : kind.fallbackCategory().ordinal();
+                // The KIND itself reaches the client (as its transient syncIndex),
+                // not the fallback category - a Prowler seed must read "Prowler",
+                // not its anchor species (review finding #7).
+                case DATA_KIND -> kind == null ? -1 : FrogKind.syncIndex(kind);
                 case DATA_FROGS -> cavityFrogCount();
                 case DATA_FROG_CAP -> frogCap();
                 default -> 0;

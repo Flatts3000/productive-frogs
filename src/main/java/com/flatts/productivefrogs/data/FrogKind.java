@@ -105,51 +105,80 @@ public sealed interface FrogKind permits FrogKind.Resource, FrogKind.Midas, Frog
     }
 
     /**
-     * Read a kind from entity save data: the {@code "Kind"} id string, with a
-     * legacy fallback for pre-Kind writers ({@code "Category"} + {@code "Midas"} -
-     * the baked spawn-egg ENTITY_DATA and old GameTest NBT still write that pair).
+     * Read a kind from entity save data. One contract, one implementation
+     * ({@link #resolve}): the legacy pre-Kind keys ({@code "Midas"} /
+     * {@code "Category"}) WIN over {@code "Kind"} when present. PF itself never
+     * writes the legacy pair post-2.0, so their presence always means a legacy
+     * writer merged onto a modern save - and 26.1's {@code TypedEntityData.loadInto}
+     * does exactly that (saveWithoutId -> merge egg NBT -> reload), leaving the
+     * entity's default {@code Kind} alongside the egg's legacy keys. Reading Kind
+     * first made every legacy spawn egg hatch the BOG default (review finding #1).
      * Empty when the data carries neither form.
      */
     static java.util.Optional<FrogKind> readFrom(net.minecraft.world.level.storage.ValueInput input) {
-        java.util.Optional<FrogKind> byKind = input.getString("Kind").map(FrogKind::byId);
-        if (byKind.isPresent()) {
-            return byKind;
-        }
-        if (input.getBooleanOr("Midas", false)) {
-            return java.util.Optional.of(MIDAS);
-        }
-        return input.getString("Category").map(name -> {
-            try {
-                return resource(Category.valueOf(name));
-            } catch (IllegalArgumentException ignored) {
-                return null;
-            }
-        });
+        return resolve(input.getString("Kind"), input.getBooleanOr("Midas", false), input.getString("Category"));
     }
 
     /** {@link #readFrom} for the CompoundTag surfaces (bucket entity data). Same key contract. */
     static java.util.Optional<FrogKind> readFromTag(net.minecraft.nbt.CompoundTag tag) {
-        java.util.Optional<FrogKind> byKind = tag.getString("Kind").map(FrogKind::byId);
-        if (byKind.isPresent()) {
-            return byKind;
-        }
-        if (tag.getBooleanOr("Midas", false)) {
+        return resolve(tag.getString("Kind"), tag.getBooleanOr("Midas", false), tag.getString("Category"));
+    }
+
+    /**
+     * The single Kind/legacy resolution used by both NBT surfaces (and unit-tested
+     * directly). Precedence: legacy {@code Midas} flag, then a parseable legacy
+     * {@code Category}, then the modern {@code Kind} id. An unparseable legacy
+     * category falls through to the Kind id rather than failing the read.
+     */
+    static java.util.Optional<FrogKind> resolve(
+            java.util.Optional<String> kindId, boolean legacyMidas, java.util.Optional<String> legacyCategory) {
+        if (legacyMidas) {
             return java.util.Optional.of(MIDAS);
         }
-        return tag.getString("Category").map(name -> {
+        if (legacyCategory.isPresent()) {
             try {
-                return resource(Category.valueOf(name));
+                return java.util.Optional.of(resource(Category.valueOf(legacyCategory.get())));
             } catch (IllegalArgumentException ignored) {
-                return null;
+                // Unknown legacy category - fall through to the modern id.
             }
-        });
+        }
+        return kindId.map(FrogKind::byId);
+    }
+
+    /**
+     * Every registered kind, in stable registration order - the ONE canonical
+     * enumeration (backs {@link #byId} and the transient {@link #syncIndex}).
+     * A unit test walks the sealed hierarchy's permitted subclasses against this
+     * list, so a future kind (Apex) that forgets to register here fails CI even
+     * though the map itself cannot be compiler-enforced.
+     */
+    static java.util.List<FrogKind> all() {
+        return Registry.ALL;
+    }
+
+    /**
+     * Transient per-session index for int-channel sync (ContainerData). NOT
+     * save-safe - never persist it; saves use {@link #id()}.
+     */
+    static int syncIndex(FrogKind kind) {
+        return Registry.ALL.indexOf(kind);
+    }
+
+    /** Reverse of {@link #syncIndex}; null when out of range (empty slot = -1). */
+    @Nullable
+    static FrogKind bySyncIndex(int index) {
+        return index >= 0 && index < Registry.ALL.size() ? Registry.ALL.get(index) : null;
     }
 
     /**
      * One of the six species - identity wraps the {@link Category}. Interned so
      * {@code ==} works alongside {@code equals} (records also compare by value).
      */
-    record Resource(Category category) implements FrogKind {
+    record Resource(Category category, String id) implements FrogKind {
+
+        Resource(Category category) {
+            this(category, "resource/" + category.id());
+        }
 
         private static final EnumMap<Category, Resource> INTERNED = new EnumMap<>(Category.class);
         static {
@@ -160,11 +189,6 @@ public sealed interface FrogKind permits FrogKind.Resource, FrogKind.Midas, Frog
 
         static Resource of(Category category) {
             return INTERNED.get(category);
-        }
-
-        @Override
-        public String id() {
-            return "resource/" + category.id();
         }
 
         @Override
@@ -253,12 +277,14 @@ public sealed interface FrogKind permits FrogKind.Resource, FrogKind.Midas, Frog
         RIFT("rift", Category.VOID, Category.GEODE, 0xFF8A5CD0);
 
         private final String key;
+        private final String id;
         private final Category anchor;
         private final Category partner;
         private final int tintArgb;
 
         Predator(String key, Category anchor, Category partner, int tintArgb) {
             this.key = key;
+            this.id = "predator/" + key;
             this.anchor = anchor;
             this.partner = partner;
             this.tintArgb = tintArgb;
@@ -280,7 +306,7 @@ public sealed interface FrogKind permits FrogKind.Resource, FrogKind.Midas, Frog
 
         @Override
         public String id() {
-            return "predator/" + key;
+            return id;
         }
 
         @Override
@@ -326,17 +352,27 @@ public sealed interface FrogKind permits FrogKind.Resource, FrogKind.Midas, Frog
         }
     }
 
-    /** Id lookup table; initialization-order-safe holder (interface fields init before use). */
+    /**
+     * Id lookup table; initialization-order-safe holder (interface fields init
+     * before use). ALL is the single enumeration; BY_ID derives from it. A new
+     * kind is registered by adding ONE line to the ALL builder - and
+     * {@code FrogKindTest} walks the sealed hierarchy's permitted subclasses so
+     * a missed registration fails the build instead of silently deserializing
+     * to the BOG fallback.
+     */
     final class Registry {
+        private static final java.util.List<FrogKind> ALL;
         private static final Map<String, FrogKind> BY_ID = new LinkedHashMap<>();
         static {
+            java.util.List<FrogKind> all = new java.util.ArrayList<>();
             for (Category c : Category.values()) {
-                FrogKind k = Resource.of(c);
-                BY_ID.put(k.id(), k);
+                all.add(Resource.of(c));
             }
-            BY_ID.put(MIDAS.id(), MIDAS);
-            for (Predator p : Predator.values()) {
-                BY_ID.put(p.id(), p);
+            all.add(MIDAS);
+            all.addAll(java.util.List.of(Predator.values()));
+            ALL = java.util.List.copyOf(all);
+            for (FrogKind k : ALL) {
+                BY_ID.put(k.id(), k);
             }
         }
 

@@ -137,4 +137,54 @@ class FrogKindTest {
         assertEquals("midas", FrogKind.MIDAS.nameSuffix());
         assertEquals("bog", FrogKind.resource(Category.BOG).nameSuffix());
     }
+
+    /**
+     * The NBT resolution contract (review finding #1): legacy keys WIN over the
+     * modern Kind id. 26.1's TypedEntityData.loadInto merges a spawn egg's baked
+     * legacy NBT over a full entity save that already carries the default Kind -
+     * reading Kind first made every legacy egg hatch the BOG default.
+     */
+    @org.junit.jupiter.api.Test
+    void legacyKeysWinOverModernKindId() {
+        java.util.Optional<String> noKind = java.util.Optional.empty();
+        java.util.Optional<String> defaultKind = java.util.Optional.of("resource/bog");
+        java.util.Optional<String> noCategory = java.util.Optional.empty();
+
+        // The spawn-egg merge shape: stale default Kind + the egg's legacy Category.
+        assertSame(FrogKind.resource(Category.CAVE),
+            FrogKind.resolve(defaultKind, false, java.util.Optional.of("CAVE")).orElseThrow());
+        // The Midas egg merge shape: stale default Kind + Category VOID + Midas.
+        assertSame(FrogKind.MIDAS,
+            FrogKind.resolve(defaultKind, true, java.util.Optional.of("VOID")).orElseThrow());
+        // Modern-only data (a normal world save / a predator egg) resolves by Kind.
+        assertSame(FrogKind.Predator.PROWLER,
+            FrogKind.resolve(java.util.Optional.of("predator/prowler"), false, noCategory).orElseThrow());
+        // An unparseable legacy category falls through to the Kind id.
+        assertSame(FrogKind.resource(Category.BOG),
+            FrogKind.resolve(defaultKind, false, java.util.Optional.of("NOT_A_SPECIES")).orElseThrow());
+        // Nothing readable -> empty.
+        assertTrue(FrogKind.resolve(noKind, false, noCategory).isEmpty());
+    }
+
+    /**
+     * Every permitted subclass of the sealed hierarchy has at least one
+     * registered kind (review finding #9): the BY_ID map is the one identity
+     * surface the compiler's exhaustiveness cannot cover, so this test is the
+     * enforcement - adding Apex to the permits list without registering it in
+     * FrogKind.Registry fails here instead of silently deserializing to BOG.
+     */
+    @org.junit.jupiter.api.Test
+    void everyPermittedSubclassIsRegistered() {
+        Class<?>[] permitted = FrogKind.class.getPermittedSubclasses();
+        assertTrue(permitted.length >= 3, "sealed hierarchy lost its permits list?");
+        for (Class<?> sub : permitted) {
+            assertTrue(FrogKind.all().stream().anyMatch(sub::isInstance),
+                sub.getSimpleName() + " has no registered kinds in FrogKind.Registry - "
+                    + "byId would return null and entities would deserialize to the BOG fallback");
+        }
+        // And the sync index round-trips for every registered kind.
+        for (FrogKind kind : FrogKind.all()) {
+            assertSame(kind, FrogKind.bySyncIndex(FrogKind.syncIndex(kind)), kind.id());
+        }
+    }
 }

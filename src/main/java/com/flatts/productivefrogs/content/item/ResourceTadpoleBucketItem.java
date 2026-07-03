@@ -38,11 +38,14 @@ public final class ResourceTadpoleBucketItem extends MobBucketItem {
 
     @Override
     public Component getName(ItemStack stack) {
-        Category category = readCategory(stack);
-        if (category == null) {
+        com.flatts.productivefrogs.data.FrogKind kind = readKind(stack);
+        if (kind == null) {
             return Component.translatable(getDescriptionId());
         }
-        return Component.translatable("item.productivefrogs.resource_tadpole_bucket." + category.id());
+        // Kind-suffixed (#281): a Prowler tadpole bucket reads "Bucket of Prowler
+        // Tadpole", not its anchor species - the bucket must never be visually
+        // indistinguishable from a plain species bucket (review finding #6).
+        return Component.translatable("item.productivefrogs.resource_tadpole_bucket." + kind.nameSuffix());
     }
 
     /**

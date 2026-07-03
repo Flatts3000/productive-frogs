@@ -58,8 +58,13 @@ public class ResourceFrogAttackablesSensor extends FrogAttackablesSensor {
         // Terrarium backpressure (#185): a frog inside a formed Terrarium whose
         // Hatch is full refuses all prey - nothing it ate would have anywhere to
         // go, so it stops eating rather than wasting slimes (layer 1; the drop
-        // handler is the safety net).
-        if (isOwningHatchFull(frog)) {
+        // handler is the safety net). Predators are EXEMPT: their kills pay
+        // ground player-kill loot that never routes through the Hatch, so the
+        // backpressure would freeze them for a container they don't use
+        // (review finding #5). Species Froglights and Midas Prismatics both
+        // deposit to the Hatch, so those kinds keep the gate.
+        if (!(frog.getKind() instanceof com.flatts.productivefrogs.data.FrogKind.Predator)
+                && isOwningHatchFull(frog)) {
             return false;
         }
         if (!Sensor.isEntityAttackable(level, frog, target) || isUnreachable(frog, target)) {

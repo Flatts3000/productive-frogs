@@ -67,9 +67,27 @@ public class ResourceTadpole extends Tadpole {
         builder.define(DATA_KIND, FrogKind.resource(Category.BOG).id());
     }
 
+    // Parsed cache of DATA_KIND (see ResourceFrog.cachedKind - render extract
+    // reads the kind tint per frame). Invalidated in onSyncedDataUpdated.
+    @org.jetbrains.annotations.Nullable
+    private FrogKind cachedKind;
+
     /** The unified identity (#281) - what this tadpole matures into. Never null. */
     public FrogKind getKind() {
-        return FrogKind.byIdOrDefault(this.entityData.get(DATA_KIND), FrogKind.resource(Category.BOG));
+        FrogKind kind = cachedKind;
+        if (kind == null) {
+            kind = FrogKind.byIdOrDefault(this.entityData.get(DATA_KIND), FrogKind.resource(Category.BOG));
+            cachedKind = kind;
+        }
+        return kind;
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> accessor) {
+        super.onSyncedDataUpdated(accessor);
+        if (DATA_KIND.equals(accessor)) {
+            cachedKind = null;
+        }
     }
 
     public void setKind(FrogKind kind) {
@@ -190,15 +208,6 @@ public class ResourceTadpole extends Tadpole {
     /** Whether this tadpole matures into a Midas frog (#253). Derived from the kind. */
     public boolean isMidas() {
         return getKind() instanceof FrogKind.Midas;
-    }
-
-    /** Legacy sugar - see {@code ResourceFrog#setMidas}: true re-kinds to Midas, false only strips it. */
-    public void setMidas(boolean midas) {
-        if (midas) {
-            setKind(FrogKind.MIDAS);
-        } else if (isMidas()) {
-            setKind(FrogKind.resource(Category.VOID));
-        }
     }
 
     /**

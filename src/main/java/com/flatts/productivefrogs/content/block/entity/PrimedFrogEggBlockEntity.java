@@ -85,15 +85,6 @@ public class PrimedFrogEggBlockEntity extends BlockEntity {
         return kind instanceof FrogKind.Midas;
     }
 
-    /** Legacy sugar for the Kiss-prime path and old callers: true stamps the Midas kind. */
-    public void setMidas(boolean midas) {
-        if (midas) {
-            setKind(FrogKind.MIDAS);
-        } else if (isMidas()) {
-            setKind(null);
-        }
-    }
-
     /** Absolute level game-time the egg hatches, or 0 if unknown. Drives the Jade countdown. */
     public long getHatchGameTime() {
         return hatchGameTime;

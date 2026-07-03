@@ -33,9 +33,15 @@ public final class PredationTeleportHandler {
         entity.setData(PFAttachments.TELEPORT_DISABLED.get(), true);
     }
 
-    /** Whether {@code entity} carries the teleport lock. */
+    /**
+     * Whether {@code entity} carries the teleport lock. Guarded by hasData:
+     * NeoForge's getData CREATES + persists + syncs the default on a miss, and
+     * this runs on every wild teleporter's EnderEntity event - an unguarded read
+     * would stamp save-data onto every enderman in the world (review finding #2).
+     */
     public static boolean isTeleportDisabled(Entity entity) {
-        return entity.getData(PFAttachments.TELEPORT_DISABLED.get());
+        return entity.hasData(PFAttachments.TELEPORT_DISABLED.get())
+            && entity.getData(PFAttachments.TELEPORT_DISABLED.get());
     }
 
     @SubscribeEvent

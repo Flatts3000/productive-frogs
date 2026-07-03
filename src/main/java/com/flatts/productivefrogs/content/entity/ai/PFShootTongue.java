@@ -59,12 +59,24 @@ public class PFShootTongue extends ShootTongue {
     private static final GameProfile PREDATOR_PROFILE = new GameProfile(
         UUID.fromString("d1a2b7f0-81c4-4c69-9a73-6a0f8f2c281e"), "[PF] Predator Frog");
 
-    public PFShootTongue(SoundEvent tongueSound, SoundEvent eatSound) {
-        super(tongueSound, eatSound);
+    /**
+     * Vanilla's sound wiring, fixed: this behavior is only ever built with the
+     * stock frog sounds (and the predator eat re-plays FROG_EAT itself since the
+     * base field is private), so the constructor takes none - a configurable
+     * param that only half the paths honored was API fiction.
+     */
+    public PFShootTongue() {
+        super(net.minecraft.sounds.SoundEvents.FROG_TONGUE, net.minecraft.sounds.SoundEvents.FROG_EAT);
     }
 
     @Override
     protected boolean checkExtraStartConditions(ServerLevel level, Frog body) {
+        // Species/Midas frogs run vanilla's own gate (no frozen copy to drift on
+        // the next port); only the predator arm needs the replicated bookkeeping
+        // with prey-registry edibility instead of Frog.canEat.
+        if (!(body instanceof ResourceFrog frog) || !(frog.getKind() instanceof FrogKind.Predator predator)) {
+            return super.checkExtraStartConditions(level, body);
+        }
         Optional<LivingEntity> memory = body.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET);
         if (memory.isEmpty()) {
             return false;
@@ -76,15 +88,8 @@ public class PFShootTongue extends ShootTongue {
             body.getBrain().eraseMemory(MemoryModuleType.ATTACK_TARGET);
             this.addUnreachableTargetToMemory(body, target);
         }
-        return canPathfindToTarget && body.getPose() != Pose.CROAKING && canEatByKind(body, target);
-    }
-
-    /** Kind-aware edibility - the tongue-side twin of the sensor's diet switch. */
-    private static boolean canEatByKind(Frog body, LivingEntity target) {
-        if (body instanceof ResourceFrog frog && frog.getKind() instanceof FrogKind.Predator predator) {
-            return isEligiblePrey(frog, predator, target);
-        }
-        return Frog.canEat(target);
+        return canPathfindToTarget && body.getPose() != Pose.CROAKING
+            && isEligiblePrey(frog, predator, target);
     }
 
     /**
@@ -94,6 +99,13 @@ public class PFShootTongue extends ShootTongue {
      */
     public static boolean isEligiblePrey(ResourceFrog frog, FrogKind.Predator predator, LivingEntity target) {
         if (!PFConfig.predatorsEnabled() || !(target instanceof Mob) || !target.isAlive()) {
+            return false;
+        }
+        // Vanilla-frog parity for slime-family prey: size 1 only. Without this,
+        // one-shotting a big vanilla slime/magma cube triggers the death split,
+        // and every child is fresh eligible prey - a looting-scaled loot cascade
+        // per encounter no other prey entry has (review finding #4).
+        if (target instanceof net.minecraft.world.entity.monster.Slime slime && slime.getSize() != 1) {
             return false;
         }
         FrogKind.Predator mapped = PredatorPrey.predatorFor(

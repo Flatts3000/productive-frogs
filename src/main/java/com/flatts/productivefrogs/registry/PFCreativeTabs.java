@@ -285,7 +285,9 @@ public final class PFCreativeTabs {
     private static ItemStack makeCategoryTadpoleBucket(Category category) {
         ItemStack stack = new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
-            tag.putString("Category", category.name());
+            // Same "Kind" dialect ResourceTadpole.saveToBucketTag writes, so the
+            // creative stack and a real scooped bucket are one JEI subtype.
+            tag.putString("Kind", com.flatts.productivefrogs.data.FrogKind.resource(category).id());
         });
         return stack;
     }

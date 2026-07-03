@@ -76,23 +76,40 @@ public record PredatorPrey(
         Handling.CODEC.fieldOf("handling").forGetter(PredatorPrey::handling)
     ).apply(instance, PredatorPrey::new));
 
+    // Per-reload index (review finding #10): predatorFor runs per candidate per
+    // predator frog per sensor scan, so the registry scan (and especially the
+    // per-call listElements().toList() allocation) is hot-path waste. Rebuilt by
+    // rebuildIndex on TagsUpdatedEvent (server start + /reload); until the first
+    // rebuild the raw registry walk (no toList) serves as the fallback.
+    @Nullable
+    private static volatile java.util.Map<Identifier, FrogKind.Predator> index;
+
+    /** Rebuild the lookup index from the loaded registry (called on datapack (re)load). */
+    public static void rebuildIndex(HolderLookup.Provider registries) {
+        java.util.Map<Identifier, FrogKind.Predator> map = new java.util.HashMap<>();
+        registries.lookupOrThrow(com.flatts.productivefrogs.registry.PFRegistries.PREDATOR_PREY)
+            .listElements()
+            .forEach(holder -> map.put(holder.value().entityType(), holder.value().predator()));
+        index = java.util.Map.copyOf(map);
+    }
+
     /**
      * The predator that eats {@code type}, or null when the mob is not in the
-     * prey registry (bosses, no-drop mobs, unmapped modded mobs). Linear scan -
-     * ~55 shipped entries checked from the prey sensor's candidate filter; if
-     * the registry ever grows into the hundreds, materialize a per-reload cache
-     * keyed by EntityType id.
+     * prey registry (bosses, no-drop mobs, unmapped modded mobs). One map get
+     * once the reload index is built; a raw registry walk before that.
      */
     @Nullable
     public static FrogKind.Predator predatorFor(HolderLookup.RegistryLookup<PredatorPrey> registry, EntityType<?> type) {
         Identifier id = EntityType.getKey(type);
-        for (Holder<PredatorPrey> holder : registry.listElements().toList()) {
-            PredatorPrey entry = holder.value();
-            if (entry.entityType().equals(id)) {
-                return entry.predator();
-            }
+        java.util.Map<Identifier, FrogKind.Predator> idx = index;
+        if (idx != null) {
+            return idx.get(id);
         }
-        return null;
+        return registry.listElements()
+            .filter(holder -> holder.value().entityType().equals(id))
+            .map(holder -> holder.value().predator())
+            .findFirst()
+            .orElse(null);
     }
 
 }

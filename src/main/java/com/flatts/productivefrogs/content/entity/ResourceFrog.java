@@ -130,9 +130,29 @@ public class ResourceFrog extends Frog {
         builder.define(DATA_REACH, FrogStats.STAT_MIN);
     }
 
+    // Parsed cache of DATA_KIND - getKind runs on hot paths (render extract per
+    // frame, the underwater air check per tick, the sensor per candidate), so the
+    // string-map lookup happens once per change, not per call. Invalidated in
+    // onSyncedDataUpdated (the vanilla derived-synced-data pattern).
+    @Nullable
+    private FrogKind cachedKind;
+
     /** The unified identity (#281) - what this frog IS. Never null (unknown synced ids fall back to Bog). */
     public FrogKind getKind() {
-        return FrogKind.byIdOrDefault(this.entityData.get(DATA_KIND), FrogKind.resource(Category.BOG));
+        FrogKind kind = cachedKind;
+        if (kind == null) {
+            kind = FrogKind.byIdOrDefault(this.entityData.get(DATA_KIND), FrogKind.resource(Category.BOG));
+            cachedKind = kind;
+        }
+        return kind;
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> accessor) {
+        super.onSyncedDataUpdated(accessor);
+        if (DATA_KIND.equals(accessor)) {
+            cachedKind = null;
+        }
     }
 
     public void setKind(FrogKind kind) {
@@ -159,19 +179,6 @@ public class ResourceFrog extends Frog {
     @Override
     public boolean canBreatheUnderwater() {
         return getKind() == FrogKind.Predator.GULPER || super.canBreatheUnderwater();
-    }
-
-    /**
-     * Legacy sugar for the pre-Kind writers (tests, hatch paths): {@code true}
-     * re-kinds this frog to Midas; {@code false} only strips an existing Midas
-     * kind (back to its VOID carrier species), leaving any other kind untouched.
-     */
-    public void setMidas(boolean midas) {
-        if (midas) {
-            setKind(FrogKind.MIDAS);
-        } else if (isMidas()) {
-            setKind(FrogKind.resource(Category.VOID));
-        }
     }
 
     private static int statCap() {
@@ -235,7 +242,7 @@ public class ResourceFrog extends Frog {
     }
 
     /**
-     * Kind-aware display name — so Jade, the F3 entity readout, and any
+     * Kind-aware display name - so Jade, the F3 entity readout, and any
      * other client surface that calls {@code getName()} reads "Bog Frog" /
      * "Midas Frog" / "Prowler Frog" instead of the generic "Resource Frog".
      * Falls back to the custom name (player-set via name tag) when present.
@@ -467,21 +474,9 @@ public class ResourceFrog extends Frog {
     }
 
     /**
-     * Kind-based breeding gate. The pure pairing rules live on {@link FrogKind}
-     * ({@code canMateWith}); this override applies the config gating around them:
-     * <ul>
-     *   <li><b>Midas</b> (#253) is its own line regardless of config: Midas x
-     *       Midas only, never with a species frog.</li>
-     *   <li><b>Predators</b> (#281): any pairing involving a predator requires
-     *       {@code predators.enabled}; when on, predators breed true with their
-     *       own kind only.</li>
-     *   <li><b>Resource x resource</b>: with {@code breeding.sameSpeciesOnly}
-     *       (default true) a pair mates when same-species OR when it is one of
-     *       the four designated predator crosses (Bog x Cave, Infernal x Geode,
-     *       Tide x Bog, Void x Geode - gated on {@code predators.enabled}).
-     *       With sameSpeciesOnly disabled the gate falls back to vanilla
-     *       "same EntityType + both in love", exactly as before.</li>
-     * </ul>
+     * Kind-based breeding gate. All pairing POLICY (pure kind rules + config
+     * gating) lives in {@link FrogBreedingRules}, the single exhaustive home
+     * shared with the conception capture - see that class for the rules.
      */
     @Override
     public boolean canMate(Animal other) {
@@ -489,21 +484,7 @@ public class ResourceFrog extends Frog {
             return false;
         }
         if (other instanceof ResourceFrog partner) {
-            FrogKind mine = getKind();
-            FrogKind theirs = partner.getKind();
-            if (mine instanceof FrogKind.Midas || theirs instanceof FrogKind.Midas) {
-                return mine.canMateWith(theirs);
-            }
-            if (mine instanceof FrogKind.Predator || theirs instanceof FrogKind.Predator) {
-                return PFConfig.predatorsEnabled() && mine.canMateWith(theirs);
-            }
-            if (PFConfig.sameSpeciesOnly()) {
-                if (mine.equals(theirs)) {
-                    return true;
-                }
-                // The designated resource crosses that conceive a predator (#281).
-                return PFConfig.predatorsEnabled() && mine.canMateWith(theirs);
-            }
+            return FrogBreedingRules.canMate(getKind(), partner.getKind());
         }
         return true;
     }
@@ -536,14 +517,9 @@ public class ResourceFrog extends Frog {
     private void captureOffspringStats(ResourceFrog mate, RandomSource random) {
         // Offspring KIND (#281): same-kind pairs breed true; a designated resource
         // cross conceives its predator. Captured here (both parents present) and
-        // threaded to the egg by the lay behavior. Falls back to this parent's own
-        // kind for pairings with no defined offspring (e.g. sameSpeciesOnly=false
-        // odd pairs) or with the predation system off mid-love.
-        FrogKind offspring = getKind().offspringWith(mate.getKind());
-        if (offspring == null || (offspring instanceof FrogKind.Predator && !PFConfig.predatorsEnabled())) {
-            offspring = getKind();
-        }
-        this.pendingOffspringKind = offspring;
+        // threaded to the egg by the lay behavior. Policy shared with canMate via
+        // FrogBreedingRules (one gate location).
+        this.pendingOffspringKind = FrogBreedingRules.offspring(getKind(), mate.getKind());
         // Stat layer off (#202): stamp baseline so a frog bred by any path (another
         // mod, a command) carries default stats rather than a hidden rolled value.
         if (!PFConfig.frogStatsEnabled()) {
@@ -685,9 +661,7 @@ public class ResourceFrog extends Frog {
                 // the fake-player kill for predators. Same priority slot.
                 out.add(withReplacedBehavior(data,
                     behavior -> behavior instanceof net.minecraft.world.entity.animal.frog.ShootTongue,
-                    new com.flatts.productivefrogs.content.entity.ai.PFShootTongue(
-                        net.minecraft.sounds.SoundEvents.FROG_TONGUE,
-                        net.minecraft.sounds.SoundEvents.FROG_EAT)));
+                    new com.flatts.productivefrogs.content.entity.ai.PFShootTongue()));
             } else {
                 out.add(data);
             }

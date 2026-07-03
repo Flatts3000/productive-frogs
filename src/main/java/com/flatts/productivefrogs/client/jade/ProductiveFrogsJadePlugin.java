@@ -71,12 +71,13 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
 
     // Jade 26.1 (MC 1.21.6+) forbids a data provider from also implementing
     // IComponentProvider, so each provider's appendServerData registers through
-    // one of these single-interface delegates (same UID as its client half).
-    private record BlockDataDelegate(
-        Identifier uid, java.util.function.BiConsumer<CompoundTag, BlockAccessor> body
-    ) implements IServerDataProvider<BlockAccessor> {
+    // this single-interface generic delegate (same UID as its client half) -
+    // one record covers Block and Entity accessors alike.
+    private record DataDelegate<A extends snownee.jade.api.Accessor<?>>(
+        Identifier uid, java.util.function.BiConsumer<CompoundTag, A> body
+    ) implements IServerDataProvider<A> {
         @Override
-        public void appendServerData(CompoundTag data, BlockAccessor accessor) {
+        public void appendServerData(CompoundTag data, A accessor) {
             body.accept(data, accessor);
         }
 
@@ -86,28 +87,14 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         }
     }
 
-    private record EntityDataDelegate(
-        Identifier uid, java.util.function.BiConsumer<CompoundTag, EntityAccessor> body
-    ) implements IServerDataProvider<EntityAccessor> {
-        @Override
-        public void appendServerData(CompoundTag data, EntityAccessor accessor) {
-            body.accept(data, accessor);
-        }
-
-        @Override
-        public Identifier getUid() {
-            return uid;
-        }
-    }
-
-    private static final BlockDataDelegate PRIMED_EGG_STATS_DATA =
-        new BlockDataDelegate(PRIMED_EGG_STATS.getUid(), PRIMED_EGG_STATS::appendServerData);
-    private static final EntityDataDelegate TADPOLE_STATS_DATA =
-        new EntityDataDelegate(TADPOLE_STATS.getUid(), TADPOLE_STATS::appendServerData);
-    private static final BlockDataDelegate MILK_SOURCE_DATA =
-        new BlockDataDelegate(MILK_SOURCE.getUid(), MILK_SOURCE::appendServerData);
-    private static final BlockDataDelegate APPLIANCES_DATA =
-        new BlockDataDelegate(APPLIANCES.getUid(), APPLIANCES::appendServerData);
+    private static final DataDelegate<BlockAccessor> PRIMED_EGG_STATS_DATA =
+        new DataDelegate<>(PRIMED_EGG_STATS.getUid(), PRIMED_EGG_STATS::appendServerData);
+    private static final DataDelegate<EntityAccessor> TADPOLE_STATS_DATA =
+        new DataDelegate<>(TADPOLE_STATS.getUid(), TADPOLE_STATS::appendServerData);
+    private static final DataDelegate<BlockAccessor> MILK_SOURCE_DATA =
+        new DataDelegate<>(MILK_SOURCE.getUid(), MILK_SOURCE::appendServerData);
+    private static final DataDelegate<BlockAccessor> APPLIANCES_DATA =
+        new DataDelegate<>(APPLIANCES.getUid(), APPLIANCES::appendServerData);
 
     /**
      * Common (server-side) registration. The pending offspring stats on a laid

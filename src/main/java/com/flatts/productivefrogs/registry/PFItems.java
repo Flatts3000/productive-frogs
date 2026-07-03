@@ -310,8 +310,7 @@ public final class PFItems {
         props -> {
             EntityType<?> type = PFEntities.RESOURCE_FROG.get();
             CompoundTag nbt = new CompoundTag();
-            nbt.putString("Category", Category.VOID.name());
-            nbt.putBoolean("Midas", true);
+            nbt.putString("Kind", com.flatts.productivefrogs.data.FrogKind.MIDAS.id());
             return new SpawnEggItem(props.component(DataComponents.ENTITY_DATA, TypedEntityData.of(type, nbt)));
         });
 
@@ -326,8 +325,7 @@ public final class PFItems {
         props -> {
             EntityType<?> type = PFEntities.RESOURCE_TADPOLE.get();
             CompoundTag nbt = new CompoundTag();
-            nbt.putString("Category", Category.VOID.name());
-            nbt.putBoolean("Midas", true);
+            nbt.putString("Kind", com.flatts.productivefrogs.data.FrogKind.MIDAS.id());
             return new SpawnEggItem(props.component(DataComponents.ENTITY_DATA, TypedEntityData.of(type, nbt)));
         });
 
@@ -639,7 +637,10 @@ public final class PFItems {
     // PFClientEvents (RegisterColorHandlersEvent) when that file lands.
     private static Item.Properties applySpawnEggProps(Item.Properties props, EntityType<?> type, Category category) {
         CompoundTag nbt = new CompoundTag();
-        nbt.putString("Category", category.name());
+        // Modern "Kind" id (26.1 TypedEntityData.loadInto merges this tag over a
+        // full entity save, so the egg must speak the same dialect the entity
+        // persists - see FrogKind.readFrom's legacy-precedence note).
+        nbt.putString("Kind", com.flatts.productivefrogs.data.FrogKind.resource(category).id());
         return props
             .component(DataComponents.ENTITY_DATA, TypedEntityData.of(type, nbt))
             .requiredFeatures(type.requiredFeatures())

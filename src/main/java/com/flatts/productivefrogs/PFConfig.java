@@ -777,7 +777,9 @@ public final class PFConfig {
                 "When false the predator tier's creation surfaces shut off: the four designated",
                 "resource-species breeding crosses (Bog x Cave, Infernal x Geode, Tide x Bog,",
                 "Void x Geode) refuse to mate, and predator frogs no longer breed true. Existing",
-                "predator frogs stay in the world unchanged (a freeze, not a delete)."
+                "predator frogs stay in the world unchanged (a freeze, not a delete), and eggs",
+                "already conceived before the flip still hatch their predator (in-flight content",
+                "completes; only NEW conceptions are gated)."
             )
             .define("enabled", true);
 
