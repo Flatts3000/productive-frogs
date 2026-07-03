@@ -169,17 +169,13 @@ public class ResourceFrog extends Frog {
         return getKind() instanceof FrogKind.Predator;
     }
 
-    /**
-     * The Gulper's amphibious ability (#281): it breathes underwater, so it
-     * farms aquatic prey in a player water pool without drowning. Verified
-     * against the 26.1 Frog sources: vanilla frogs swim (AmphibiousPathNavigation)
-     * and the tongue has no water gate, but they DO drown - this one override is
-     * the entire ability.
-     */
-    @Override
-    public boolean canBreatheUnderwater() {
-        return getKind() == FrogKind.Predator.GULPER || super.canBreatheUnderwater();
-    }
+    // Underwater breathing: ALL PF frogs breathe underwater, like vanilla frogs.
+    // On 1.21.1 this was a Frog CLASS override we inherited for free; 26.1 moved
+    // it to the minecraft:can_breathe_under_water EntityType tag, which a
+    // subclassed EntityType silently loses - so PF ships tag entries for
+    // resource_frog + resource_tadpole (data/minecraft/tags/entity_type/) instead
+    // of a code override. The Gulper needs no special ability for its water pool;
+    // its distinction is purely its aquatic prey set.
 
     private static int statCap() {
         return PFConfig.statCap();

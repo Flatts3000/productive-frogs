@@ -42,8 +42,8 @@ final class PredatorEatPathTests {
             PredatorEatPathTests::speciesFrogNeverTargetsVanillaMobs);
         PFGameTests.test("teleport_lock_cancels_ender_teleport", 20,
             PredatorEatPathTests::teleportLockCancelsEnderTeleport);
-        PFGameTests.test("gulper_breathes_underwater_other_frogs_do_not", 20,
-            PredatorEatPathTests::gulperBreathesUnderwaterOtherFrogsDoNot);
+        PFGameTests.test("all_pf_frogs_breathe_underwater_like_vanilla", 20,
+            PredatorEatPathTests::allPfFrogsBreatheUnderwaterLikeVanilla);
         PFGameTests.test("predator_only_eats_size_one_slimes", 20,
             PredatorEatPathTests::predatorOnlyEatsSizeOneSlimes);
         PFGameTests.test("legacy_and_kind_spawn_egg_nbt_both_resolve", 40,
@@ -274,21 +274,27 @@ final class PredatorEatPathTests {
         helper.succeed();
     }
 
-    /** The Gulper's amphibious ability: it breathes underwater; other kinds keep vanilla drowning. */
-    private static void gulperBreathesUnderwaterOtherFrogsDoNot(GameTestHelper helper) {
+    /**
+     * Vanilla parity: ALL PF frogs breathe underwater, exactly like minecraft:frog.
+     * 26.1 moved this from a Frog class override (which ResourceFrog inherited on
+     * 1.21.1) to the can_breathe_under_water EntityType tag, which a subclassed
+     * EntityType loses - PF restores it via its own tag entries; this pins them.
+     */
+    private static void allPfFrogsBreatheUnderwaterLikeVanilla(GameTestHelper helper) {
         ResourceFrog gulper = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(1, 2, 2));
         gulper.setKind(FrogKind.Predator.GULPER);
         ResourceFrog prowler = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(3, 2, 2));
         prowler.setKind(FrogKind.Predator.PROWLER);
         ResourceFrog tide = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 2, 3));
         tide.setKind(FrogKind.resource(Category.TIDE));
+        var tadpole = helper.spawn(PFEntities.RESOURCE_TADPOLE.get(), new BlockPos(2, 2, 2));
 
-        if (!gulper.canBreatheUnderwater()) {
-            helper.fail("the Gulper must breathe underwater (its settled ability)");
+        if (!gulper.canBreatheUnderwater() || !prowler.canBreatheUnderwater() || !tide.canBreatheUnderwater()) {
+            helper.fail("every PF frog must breathe underwater like a vanilla frog (can_breathe_under_water tag)");
             return;
         }
-        if (prowler.canBreatheUnderwater() || tide.canBreatheUnderwater()) {
-            helper.fail("only the Gulper gets the underwater-breathing ability");
+        if (!tadpole.canBreatheUnderwater()) {
+            helper.fail("the Resource Tadpole must breathe underwater like a vanilla tadpole");
             return;
         }
         helper.succeed();
