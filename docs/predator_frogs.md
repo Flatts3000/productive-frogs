@@ -81,7 +81,9 @@ The supply chain that makes the eat path farmable.
 - **Slurry Press** - new appliance, standard furnace-style shape (Block + BE + Inventory + Menu + Screen; copy the Milker/Churn). Filled Ender Net + empty bucket in -> `<Mob> Slurry` bucket out + empty net returned. Bucket output (no internal tank), mirroring the Churn. Rejects boss-mob nets.
 - **Mob Slurry** - one fluid + mob-type data component (R-1 model), `%s Slurry` lang template.
 - **Mob Slurry Basin** - a **waterloggable container block** that holds any mob's slurry inside the block (fill by bucket or fluid pipe) and spawns it on the `MilkSpawnEconomy` (budget + catalysts). One block for every mob; **works waterlogged or dry** (waterlog it so aquatic mobs survive). The slurry never becomes a world fluid, so a waterlogged Basin coexists with the pool with no mixing or washing-away.
-- **Slime Milk Basin** - the parallel block on the slime side: a waterloggable container holding any variant's Slime Milk, spawning Resource Slimes, working wet or dry. In 2.0 it is the milk spawner (the old Slime Milk source block folds into it; the Terrarium Sprinklers, fed by piped milk, are unaffected), unifying the slime + mob sides under one Basin family.
+- **Slime Milk Basin** - the parallel block on the slime side: a waterloggable container holding any variant's Slime Milk, spawning Resource Slimes, working wet or dry. **Additive** - the existing Slime Milk source block stays (both coexist).
+
+**Parity principle:** Mob Slurry and Slime Milk are two separate paths that **mostly** share features - spawn economy, catalysts (Bountiful/Rapid/Teeming/Endless), buckets, pipes/tanks, Basin behavior all match. The primary divergence is the production appliance (Slurry Press vs Milker); other differences only where the mechanics require them. Default to parity.
 
 **GameTest:** Ender Net capture round-trip, Slurry Press (net + bucket -> Slurry bucket + empty net, boss rejection), Mob Slurry Basin + Slime Milk Basin spawn economy (each works waterlogged and dry).
 
