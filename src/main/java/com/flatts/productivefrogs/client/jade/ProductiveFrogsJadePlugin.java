@@ -63,11 +63,51 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
     private static final Identifier MILK_SOURCE_UID =
         Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "milk_source");
 
-    /** Shared instances: each is both the client tooltip and the server-data fetcher. */
+    /** Shared client-tooltip instances (their server-data halves are the delegates below). */
     private static final PrimedEggStatsProvider PRIMED_EGG_STATS = new PrimedEggStatsProvider();
     private static final TadpoleStatsProvider TADPOLE_STATS = new TadpoleStatsProvider();
     private static final MilkSourceProvider MILK_SOURCE = new MilkSourceProvider();
     private static final ApplianceProvider APPLIANCES = new ApplianceProvider();
+
+    // Jade 26.1 (MC 1.21.6+) forbids a data provider from also implementing
+    // IComponentProvider, so each provider's appendServerData registers through
+    // one of these single-interface delegates (same UID as its client half).
+    private record BlockDataDelegate(
+        Identifier uid, java.util.function.BiConsumer<CompoundTag, BlockAccessor> body
+    ) implements IServerDataProvider<BlockAccessor> {
+        @Override
+        public void appendServerData(CompoundTag data, BlockAccessor accessor) {
+            body.accept(data, accessor);
+        }
+
+        @Override
+        public Identifier getUid() {
+            return uid;
+        }
+    }
+
+    private record EntityDataDelegate(
+        Identifier uid, java.util.function.BiConsumer<CompoundTag, EntityAccessor> body
+    ) implements IServerDataProvider<EntityAccessor> {
+        @Override
+        public void appendServerData(CompoundTag data, EntityAccessor accessor) {
+            body.accept(data, accessor);
+        }
+
+        @Override
+        public Identifier getUid() {
+            return uid;
+        }
+    }
+
+    private static final BlockDataDelegate PRIMED_EGG_STATS_DATA =
+        new BlockDataDelegate(PRIMED_EGG_STATS.getUid(), PRIMED_EGG_STATS::appendServerData);
+    private static final EntityDataDelegate TADPOLE_STATS_DATA =
+        new EntityDataDelegate(TADPOLE_STATS.getUid(), TADPOLE_STATS::appendServerData);
+    private static final BlockDataDelegate MILK_SOURCE_DATA =
+        new BlockDataDelegate(MILK_SOURCE.getUid(), MILK_SOURCE::appendServerData);
+    private static final BlockDataDelegate APPLIANCES_DATA =
+        new BlockDataDelegate(APPLIANCES.getUid(), APPLIANCES::appendServerData);
 
     /**
      * Common (server-side) registration. The pending offspring stats on a laid
@@ -77,25 +117,25 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
      */
     @Override
     public void register(IWailaCommonRegistration registration) {
-        registration.registerBlockDataProvider(PRIMED_EGG_STATS, PrimedFrogEggBlock.class);
-        registration.registerEntityDataProvider(TADPOLE_STATS, ResourceTadpole.class);
+        registration.registerBlockDataProvider(PRIMED_EGG_STATS_DATA, PrimedFrogEggBlock.class);
+        registration.registerEntityDataProvider(TADPOLE_STATS_DATA, ResourceTadpole.class);
         // The spawns-remaining readout reads the authoritative server-side
         // blockstate so it updates live as the source depletes (the prior
         // client-blockstate read could show a stale full count).
-        registration.registerBlockDataProvider(MILK_SOURCE, SlimeMilkSourceBlock.class);
+        registration.registerBlockDataProvider(MILK_SOURCE_DATA, SlimeMilkSourceBlock.class);
         // Mimic Milk source (#253) shares the MILK_SOURCE provider (same UID, so no
         // extra config.jade.plugin lang key) - it branches on the block type.
-        registration.registerBlockDataProvider(MILK_SOURCE,
+        registration.registerBlockDataProvider(MILK_SOURCE_DATA,
             com.flatts.productivefrogs.content.block.MimicMilkSourceBlock.class);
         // The Terrarium machines change state fast; fetch their readouts from the
         // server BE each Jade refresh (see ApplianceProvider#appendServerData).
-        registration.registerBlockDataProvider(APPLIANCES,
+        registration.registerBlockDataProvider(APPLIANCES_DATA,
             com.flatts.productivefrogs.content.block.SprinklerBlock.class);
-        registration.registerBlockDataProvider(APPLIANCES,
+        registration.registerBlockDataProvider(APPLIANCES_DATA,
             com.flatts.productivefrogs.content.block.TerrariumControllerBlock.class);
-        registration.registerBlockDataProvider(APPLIANCES,
+        registration.registerBlockDataProvider(APPLIANCES_DATA,
             com.flatts.productivefrogs.content.block.IncubatorBlock.class);
-        registration.registerBlockDataProvider(APPLIANCES,
+        registration.registerBlockDataProvider(APPLIANCES_DATA,
             com.flatts.productivefrogs.content.block.HatchBlock.class);
     }
 
@@ -131,7 +171,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
     }
 
     /** Provider for the Slime Milker + Spawnery appliances; branches on the BlockEntity. */
-    private static final class ApplianceProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
+    private static final class ApplianceProvider implements IBlockComponentProvider {
 
         /**
          * The Terrarium machines change state fast (per spawn / per distribution
@@ -141,7 +181,6 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
          * (Milker / Spawnery / Crucible / Mold / Froglight) ride their update tag and
          * stay client reads in {@link #appendTooltip}.
          */
-        @Override
         public void appendServerData(net.minecraft.nbt.CompoundTag data, BlockAccessor accessor) {
             BlockEntity be = accessor.getBlockEntity();
             if (be instanceof com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity s && !s.isEmpty()) {
@@ -377,10 +416,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
      * default) but has no variant on its BE and is inert decoration, so it is not
      * annotated - mirroring the server's own gate in {@code SlimeMilkSourceBlock#tick}.
      */
-    private static final class MilkSourceProvider
-            implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
+    private static final class MilkSourceProvider implements IBlockComponentProvider {
 
-        @Override
         public void appendServerData(CompoundTag data, BlockAccessor accessor) {
             BlockState state = accessor.getBlockState();
             // Mimic Milk source (Equivalence lane, #253): a different block + BE.
@@ -561,10 +598,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
      * Spawnery output, {@code /setblock}) carries no stats and shows nothing -
      * its hatchlings mature into baseline (1/1/1) frogs. See {@code docs/frog_breeding.md}.
      */
-    private static final class PrimedEggStatsProvider
-            implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
+    private static final class PrimedEggStatsProvider implements IBlockComponentProvider {
 
-        @Override
         public void appendServerData(CompoundTag data, BlockAccessor accessor) {
             if (!(accessor.getBlockEntity() instanceof PrimedFrogEggBlockEntity egg)) {
                 return;
@@ -608,10 +643,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
      * (client). A non-bred tadpole carries no pending stats and shows nothing - it
      * matures into a baseline (1/1/1) frog. See {@code docs/frog_breeding.md}.
      */
-    private static final class TadpoleStatsProvider
-            implements IEntityComponentProvider, IServerDataProvider<EntityAccessor> {
+    private static final class TadpoleStatsProvider implements IEntityComponentProvider {
 
-        @Override
         public void appendServerData(CompoundTag data, EntityAccessor accessor) {
             if (!(accessor.getEntity() instanceof ResourceTadpole tadpole)) {
                 return;
