@@ -65,6 +65,13 @@ public sealed interface FrogKind permits FrogKind.Resource, FrogKind.Midas, Frog
      */
     Category fallbackCategory();
 
+    /**
+     * The kind's render tint (ARGB, opaque). A species tints its category color,
+     * Midas gold, each predator its own hue (art-pass values; distinct from the
+     * six species so a predator reads as a new tier at a glance).
+     */
+    int tintArgb();
+
     /** Pure pairing rule - whether these two kinds are a valid breeding pair (no config applied). */
     boolean canMateWith(FrogKind other);
 
@@ -171,6 +178,11 @@ public sealed interface FrogKind permits FrogKind.Resource, FrogKind.Midas, Frog
         }
 
         @Override
+        public int tintArgb() {
+            return category.tintArgb();
+        }
+
+        @Override
         public boolean canMateWith(FrogKind other) {
             return other instanceof Resource r
                 && (r.category == category || Predator.fromCross(category, r.category) != null);
@@ -212,6 +224,11 @@ public sealed interface FrogKind permits FrogKind.Resource, FrogKind.Midas, Frog
         }
 
         @Override
+        public int tintArgb() {
+            return 0xFFFFD700; // gold - the pre-2.0 Midas render tint
+        }
+
+        @Override
         public boolean canMateWith(FrogKind other) {
             return other instanceof Midas;
         }
@@ -230,19 +247,21 @@ public sealed interface FrogKind permits FrogKind.Resource, FrogKind.Midas, Frog
      * anchor (first species) doubles as the {@link #fallbackCategory()}.
      */
     enum Predator implements FrogKind {
-        PROWLER("prowler", Category.BOG, Category.CAVE),
-        CINDER("cinder", Category.INFERNAL, Category.GEODE),
-        GULPER("gulper", Category.TIDE, Category.BOG),
-        RIFT("rift", Category.VOID, Category.GEODE);
+        PROWLER("prowler", Category.BOG, Category.CAVE, 0xFF7A8B3D),
+        CINDER("cinder", Category.INFERNAL, Category.GEODE, 0xFFC2452A),
+        GULPER("gulper", Category.TIDE, Category.BOG, 0xFF2E7C8F),
+        RIFT("rift", Category.VOID, Category.GEODE, 0xFF8A5CD0);
 
         private final String key;
         private final Category anchor;
         private final Category partner;
+        private final int tintArgb;
 
-        Predator(String key, Category anchor, Category partner) {
+        Predator(String key, Category anchor, Category partner, int tintArgb) {
             this.key = key;
             this.anchor = anchor;
             this.partner = partner;
+            this.tintArgb = tintArgb;
         }
 
         /** The lang/registry key fragment ({@code prowler}, {@code cinder}, ...). */
@@ -272,6 +291,11 @@ public sealed interface FrogKind permits FrogKind.Resource, FrogKind.Midas, Frog
         @Override
         public Category fallbackCategory() {
             return anchor;
+        }
+
+        @Override
+        public int tintArgb() {
+            return tintArgb;
         }
 
         @Override

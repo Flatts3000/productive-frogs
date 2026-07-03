@@ -37,6 +37,11 @@ public final class PFDataPackRegistryEvents {
             SlimeVariant.CODEC
         );
         event.dataPackRegistry(
+            PFRegistries.PREDATOR_PREY,
+            com.flatts.productivefrogs.data.PredatorPrey.CODEC,
+            com.flatts.productivefrogs.data.PredatorPrey.CODEC
+        );
+        event.dataPackRegistry(
             PFRegistries.PARENT_SPECIES,
             ParentSpeciesEntry.CODEC,
             ParentSpeciesEntry.CODEC

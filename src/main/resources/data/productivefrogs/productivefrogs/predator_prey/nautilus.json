@@ -1,0 +1,5 @@
+{
+  "entity_type": "minecraft:nautilus",
+  "predator": "gulper",
+  "handling": "swim"
+}

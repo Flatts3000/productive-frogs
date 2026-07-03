@@ -37,6 +37,11 @@ Nixing the enclosures removed a whole phase: the fly/swim/teleport classes are n
 
 ## Phase 1 - Predator tier + eat path + frog abilities  (size: XL, foundational)
 
+> **STATUS: IMPLEMENTED** on `feat/predator-frogs-phase1` (2026-07-03). Two architecture notes from the build:
+> - Identity was refactored to a **unified sealed `FrogKind`** (resource/<category>, midas, predator/<kind>) replacing the Category-ordinal + Midas-boolean pair, per the maintainer's "refactor into a better pattern" ruling - one synced string, exhaustive-switch branch sites, so the Apex tier fails compilation everywhere a decision is owed.
+> - The eat kill is a **fake-player kill**: a server FakePlayer wielding a looting-N sword (N = the Bounty mapping) deals lethal damage, so the prey dies a genuine player death - player-gated drops, looting, and XP orbs all flow from the vanilla death pipeline with zero loot-table emulation. Prey edibility bypasses `frog_food` (tagging prey would make vanilla frogs hunt it) via a PF `PFShootTongue` behavior + the `predator_prey` registry.
+> - The variant retirement ("Breaking" below) was deliberately NOT started here - deferred whole to Phase 5 so the cull is one coordinated, maintainer-reviewed sweep.
+
 The end-to-end slice that proves the thesis: a bred Predator Frog eats a mob and drops its player-kill loot + XP orbs. Predators are **live world entities** (like Resource Frogs). Works day-one off natural spawns; the Slurry farm comes in Phase 3.
 
 **Ships:**

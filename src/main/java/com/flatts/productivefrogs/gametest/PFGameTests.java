@@ -89,6 +89,7 @@ public final class PFGameTests {
         BossAltarTests.register();
         BreedingFrogAiTests.register();
         PredatorBreedingTests.register();
+        PredatorEatPathTests.register();
         TerrariumTests.register();
         EquivalenceLaneTests.register();
 

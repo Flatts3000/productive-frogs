@@ -1,0 +1,5 @@
+{
+  "entity_type": "minecraft:parrot",
+  "predator": "prowler",
+  "handling": "fly"
+}

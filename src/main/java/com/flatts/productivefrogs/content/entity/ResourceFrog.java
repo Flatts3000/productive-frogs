@@ -150,6 +150,18 @@ public class ResourceFrog extends Frog {
     }
 
     /**
+     * The Gulper's amphibious ability (#281): it breathes underwater, so it
+     * farms aquatic prey in a player water pool without drowning. Verified
+     * against the 26.1 Frog sources: vanilla frogs swim (AmphibiousPathNavigation)
+     * and the tongue has no water gate, but they DO drown - this one override is
+     * the entire ability.
+     */
+    @Override
+    public boolean canBreatheUnderwater() {
+        return getKind() == FrogKind.Predator.GULPER || super.canBreatheUnderwater();
+    }
+
+    /**
      * Legacy sugar for the pre-Kind writers (tests, hatch paths): {@code true}
      * re-kinds this frog to Midas; {@code false} only strips an existing Midas
      * kind (back to its VOID carrier species), leaving any other kind untouched.
@@ -376,6 +388,13 @@ public class ResourceFrog extends Frog {
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (!stack.is(PFItems.SLIME_BUCKET.get())) {
+            return super.mobInteract(player, hand);
+        }
+        // Direct-feed is a species-frog surface only (#281): a predator's fallback
+        // category would otherwise match a species bucket and mint a Froglight
+        // the predation design says it must never produce. Midas already fails
+        // the category match (VOID carrier vs a variant-stamped species bucket).
+        if (!(getKind() instanceof FrogKind.Resource)) {
             return super.mobInteract(player, hand);
         }
         Category bucketCategory = ResourceTadpoleBucketItem.readCategory(stack);
@@ -660,11 +679,38 @@ public class ResourceFrog extends Frog {
                 out.add(withExtraBehavior(data, 0, resourceMakeLove));
             } else if (activity == Activity.LAY_SPAWN) {
                 out.add(withExtraBehavior(data, 2, LayCategoryFrogspawn.create()));
+            } else if (activity == Activity.TONGUE) {
+                // Swap vanilla ShootTongue for the kind-aware PFShootTongue (#281):
+                // same behavior for species/Midas frogs, prey-registry edibility +
+                // the fake-player kill for predators. Same priority slot.
+                out.add(withReplacedBehavior(data,
+                    behavior -> behavior instanceof net.minecraft.world.entity.animal.frog.ShootTongue,
+                    new com.flatts.productivefrogs.content.entity.ai.PFShootTongue(
+                        net.minecraft.sounds.SoundEvents.FROG_TONGUE,
+                        net.minecraft.sounds.SoundEvents.FROG_EAT)));
             } else {
                 out.add(data);
             }
         }
         return out;
+    }
+
+    /** Copy {@code data} with each behavior matching {@code match} swapped for {@code replacement}. */
+    private static ActivityData<Frog> withReplacedBehavior(
+            ActivityData<Frog> data,
+            java.util.function.Predicate<BehaviorControl<? super Frog>> match,
+            BehaviorControl<? super Frog> replacement) {
+        ImmutableList.Builder<Pair<Integer, ? extends BehaviorControl<? super Frog>>> merged =
+            ImmutableList.builder();
+        for (Pair<Integer, ? extends BehaviorControl<? super Frog>> pair : data.behaviorPriorityPairs()) {
+            if (match.test(pair.getSecond())) {
+                merged.add(Pair.of(pair.getFirst(), replacement));
+            } else {
+                merged.add(pair);
+            }
+        }
+        return ActivityData.create(
+            data.activityType(), merged.build(), data.conditions(), data.memoriesToEraseWhenStopped());
     }
 
     /** Copy {@code data} with one extra prioritized behavior merged into its list. */

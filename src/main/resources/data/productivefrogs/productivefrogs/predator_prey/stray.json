@@ -1,0 +1,5 @@
+{
+  "entity_type": "minecraft:stray",
+  "predator": "prowler",
+  "handling": "walk"
+}
