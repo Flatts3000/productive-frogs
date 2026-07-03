@@ -2,7 +2,7 @@
 
 > **What this is.** The phased implementation plan for the "frogs eat mobs" redesign (epic [#281](https://github.com/Flatts3000/productive-frogs/issues/281)). The epic issue is the authoritative **spec** (decisions + acceptance criteria); this doc is the **runway** - how the system is built and shipped in dependency order. Read #281 first.
 >
-> **One-line thesis.** All mob drops come from a frog eating the mob. Ground mobs are eaten in the open by a bred **Predator Frog**; fly/swim/teleport mobs are eaten inside a per-class enclosure; bosses are eaten at their altars by a bred **Apex Frog**. XP is a fluid. No Froglight is produced from a vanilla-mob eat.
+> **One-line thesis.** All mob drops come from a frog eating the mob. A bred **Predator Frog** eats vanilla mobs in the world (live entity, like a Resource Frog); bosses are eaten at their altars by a bred **Apex Frog**. **No enclosure blocks** - the hard classes are handled by frog abilities (Rift teleport-suppression aura, amphibious Gulper) plus ordinary player-built containment, fed by a waterloggable **Slurry Basin**. XP is a fluid at altars, orbs in the open. No Froglight from a vanilla-mob eat.
 
 ## Scope: this IS 2.0.0
 
@@ -10,51 +10,49 @@ The predation system is the **defining feature of the 2.0.0 release** - it is wh
 
 **Sequencing:**
 - The green `port/mc-26.1` branch **merges to `main`** as the 2.0.0 **foundation** - `main` becomes 26.1 and enters 2.0.0 development. This merge is branch integration, not a release.
-- Phases 1-6 below are the **2.0.0 development sequence** (dev + beta builds on `main`), not separate minor releases.
-- **2.0.0 releases when the predation system lands** (Phase 5 at minimum; Phase 6 polish may trail into a 2.0.x). It does not release on the bare port.
-- #281's **2.0.0 milestone is correct** - no re-milestoning. The Froglight-payout -> raw-drops shift and the Apex-Frog altar gate are 2.0.0 content (Phase 5).
+- Phases 1-5 below are the **2.0.0 development sequence** (dev + beta builds on `main`), not separate minor releases.
+- **2.0.0 releases when the predation system lands** (Phase 4 at minimum; Phase 5 polish may trail into a 2.0.x). It does not release on the bare port.
+- #281's **2.0.0 milestone is correct** - no re-milestoning. The Froglight-payout -> raw-drops shift and the Apex-Frog altar gate are 2.0.0 content (Phase 4).
 
 **Supersedes:** `docs/port_mc_26_1.md` Phase 9 ("release 2.0.0 once the build is green ... does not wait on partner mods") predates this scope decision. The port merge is the foundation, but the 2.0.0 *release* is gated on this epic, not on the bare green port. (Still true that it does not wait on partner *mods* - cross-mod integrations remain deferred to 2.x minors.)
 
 ## Dependency graph
 
 ```
-Phase 1  Predator tier + ground eat path   (foundational; everything hangs off the tier)
+Phase 1  Predator tier + eat path + frog abilities  (foundational; everything hangs off the tier)
    |
-   +--> Phase 2  Liquid Experience          (small, self-contained fluid)
+   +--> Phase 2  Liquid Experience                   (small, self-contained fluid)
    |
-   +--> Phase 3  Ender Net + Slurry Press    (supply: makes the ground path farmable)
-   |        |
-   |        v
-   +----> Phase 4  Class enclosures          (needs tier + LE + Slurry)
+   +--> Phase 3  Ender Net + Slurry Press + Basin     (supply: makes the eat path farmable)
    |
-   +--> Phase 5  Apex frogs + boss altars    (needs tier + LE; two new altars #279/#280)
+   +--> Phase 4  Apex frogs + boss altars             (needs tier + LE; two new altars #279/#280)
             |
             v
-        Phase 6  Retirement sweep + polish + guide
+        Phase 5  Retirement sweep + polish + guide
 ```
 
-Phases 2, 3, and 5 can run in parallel once Phase 1 lands. Phase 4 is the join point (needs 1 + 2 + 3). Phase 6 closes out.
+Nixing the enclosures removed a whole phase: the fly/swim/teleport classes are now handled by frog abilities (folded into Phase 1) plus the Slurry Basin (Phase 3), not a dedicated build. Phases 2, 3, and 4 can run in parallel once Phase 1 lands. Phase 5 closes out.
 
 ---
 
-## Phase 1 - Predator tier + the ground eat path  (size: XL, foundational)
+## Phase 1 - Predator tier + eat path + frog abilities  (size: XL, foundational)
 
-The smallest end-to-end slice that proves the thesis: a bred Predator Frog eats a wild ground mob and drops its player-kill loot + XP orbs. Works day-one off natural mob spawns; the Slurry farm comes in Phase 3.
+The end-to-end slice that proves the thesis: a bred Predator Frog eats a mob and drops its player-kill loot + XP orbs. Predators are **live world entities** (like Resource Frogs). Works day-one off natural spawns; the Slurry farm comes in Phase 3.
 
 **Ships:**
 - The **Predator Frog tier** - Prowler (overworld), Cinder (nether), Gulper (aquatic), Rift (end). A new tier/flag, **not** a 7th `Category` (Midas precedent). New EntityType(s), egg items, tadpoles, renderers (subclass + tint).
 - **Breeding cross** - the settled resource-species pair map (Bog x Cave -> Prowler, Infernal x Geode -> Cinder, Tide x Bog -> Gulper, Void x Geode -> Rift) deterministically yields a predator tadpole; same-environment predators breed true; all other cross pairs still cannot mate. Stats (Appetite/Bounty/Reach) inherit through the cross.
-- **Ground eat path** - extend `ResourceFrogAttackablesSensor` + `FrogTongueDropHandler` to vanilla mobs, gated so a predator only targets its environment's ground mobs and the six resource frogs are untouched (both-layer mutual exclusion preserved).
-- **Data-driven mob eligibility** - hand-authored per-mob class/environment JSON (ground/walk mobs first). Datapack-overridable.
-- **Player-kill loot** - roll the mob's loot table as a player kill (player-gated drops included) with looting = Bounty tier; emit the mob's XP as **vanilla orbs** at the eat site.
+- **Eat path (all non-boss classes)** - extend `ResourceFrogAttackablesSensor` + `FrogTongueDropHandler` to vanilla mobs, gated so a predator only targets its environment's mobs and the six resource frogs are untouched (both-layer mutual exclusion preserved). The sensor targets any eligible class in range (ground open, flyers in a player box, aquatic in water, teleporters held by the aura).
+- **Frog abilities** - **Rift teleport-suppression aura** (mobs in radius can't teleport, so a boxed enderman/shulker stays put) and the **amphibious Gulper** (moves + tongues in water). These replace the enclosures entirely.
+- **Data-driven mob eligibility** - hand-authored per-mob class/environment JSON (the map on #281 is the seed), excluding no-kill-drop mobs. Datapack-overridable.
+- **Player-kill loot** - roll the mob's loot table as a player kill (player-gated drops included) with looting = Bounty tier; loot drops on the ground (hoppers collect, like Froglights); XP as **vanilla orbs**.
 - **Config flag** for the whole predation system (default ON, v1.18 config-suite posture).
 
-**Breaking:** begins retiring the ground mob-derived slime variants (bone, string, leather, feather, gunpowder, rotten flesh, ...) - items lose names/recipes as in the v1.6 retirement. Coordinate with Phase 6's full sweep; retire only the ground-class ones here.
+**Breaking:** begins retiring the mob-derived slime variants (bone, string, leather, feather, gunpowder, rotten flesh, ...) - items lose names/recipes as in the v1.6 retirement. Coordinate with Phase 5's full sweep.
 
-**GameTest:** breeding-cross determinism + breed-true, both-direction sensor gating (resource vs predator vs slime), eat-path loot roll + Bounty->looting mapping.
+**GameTest:** breeding-cross determinism + breed-true, both-direction sensor gating (resource vs predator vs slime), eat-path loot roll + Bounty->looting mapping, Rift teleport-suppression, Gulper amphibious eat.
 
-**Internal build order:** frog-tier infra + breeding first (entities exist and breed), then the eat path on top.
+**Internal build order:** frog-tier infra + breeding first (entities exist and breed), then the eat path + abilities on top.
 
 ---
 
@@ -69,40 +67,27 @@ The XP fluid. Small and self-contained; unblocks builds banking XP.
 
 **GameTest:** 20 mB/point conservation, `c:experience` tag interop (any tank exposing the tag round-trips PF's fluid).
 
-**Note:** open-world predator eats stay orbs (Phase 1); this fluid only ever fills build tanks (Phases 4 + 5).
+**Note:** open predation stays orbs (Phase 1, no build to bank it); this fluid only ever fills the boss-altar Hatch tanks (Phase 4) and serves `c:experience` interop.
 
 ---
 
-## Phase 3 - Ender Net + Slurry Press + Mob Slurry  (size: L)
+## Phase 3 - Ender Net + Slurry Press + Slurry Basin  (size: L)
 
-The supply chain that makes the ground path farmable and feeds the enclosures.
+The supply chain that makes the eat path farmable.
 
 **Ships:**
 - **Ender Net** - new item, ender-themed color scheme, captures **any** living mob, whole-entity round-trip (`saveWithoutId`, the #210 lesson). Frog Net stays frog-only.
 - **Slurry Press** - new appliance, standard furnace-style shape (Block + BE + Inventory + Menu + Screen; copy the Milker/Churn). Filled Ender Net + empty bucket in -> `<Mob> Slurry` bucket out + empty net returned. Bucket output (no internal tank), mirroring the Churn. Rejects boss-mob nets.
-- **Mob Slurry** - one fluid + mob-type data component (R-1 model), `%s Slurry` lang template. A placed Slurry source spawns its mob on the `MilkSpawnEconomy` (budget + catalysts), exactly like a Slime Milk source.
+- **Mob Slurry** - one fluid + mob-type data component (R-1 model), `%s Slurry` lang template.
+- **Slurry Basin** - a **waterloggable container block** that holds the slurry inside the block (fill by bucket or fluid pipe) and spawns its mob on the `MilkSpawnEconomy` (budget + catalysts). The slurry never becomes a world fluid. **Aquatic Basins require water**: inert when dry, spawning fish into the surrounding pool; because the slurry stays contained, the Basin coexists with the water with no mixing or washing-away.
 
-**GameTest:** Ender Net capture round-trip, Slurry Press (net + bucket -> Slurry bucket + empty net, boss rejection), placed Slurry source spawn economy.
-
----
-
-## Phase 4 - Class enclosures: Aviary / Aquarium / Endarium  (size: L)
-
-The fly/swim/teleport builds - the join point (needs the tier, Liquid Experience, and Slurry).
-
-**Ships:**
-- **Enclosure Hatch** (shared bottom block: net-install target, frog store, loot inventory + XP tank) + three class blocks on top: **Aviary** (fly), **Aquarium** (swim), **Endarium** (teleport). Two-block pair validates on placement/neighbor change; either alone is inert.
-- **Net install** - shift-right-click the Hatch with a Frog Net or Ender Net holding a predator; frog stored as BE data + BER render, no live entity. Break -> release the real frog (whole-entity, every removal path via `preRemoveSideEffects`). Reject non-predator nets.
-- **Virtual eat cycle** - Slurry inserted into the class block (only slurries matching the class); runs with both a frog and slurry and only when the frog's environment matches the slurry's mob; Appetite-paced; consumes slurry on the spawn-economy budget (catalysts ride the components); fake spawn + eat render, **no entities ever spawn**; loot -> Hatch, XP -> Hatch's Liquid Experience tank.
-- Extends the mob-class JSON to fly/swim/teleport mobs (hand-authored).
-
-**Breaking:** retire the fly/swim/teleport mob-derived variants (blaze, ender pearl, phantom membrane, ...).
-
-**GameTest:** pair validation, install-reject-release round-trip, the full virtual cycle (slurry consumption, class + environment gating, loot-to-Hatch, XP-to-tank).
+**GameTest:** Ender Net capture round-trip, Slurry Press (net + bucket -> Slurry bucket + empty net, boss rejection), Slurry Basin spawn economy + aquatic water-required (inert dry, spawns into water).
 
 ---
 
-## Phase 5 - Apex Frogs + boss altars  (size: L)
+> **Phase removed.** The former Phase 4 was the fly/swim/teleport enclosures (Aviary / Aquarium / Endarium + Enclosure Hatch + a virtual eat cycle). The 2026-07-03 decision to nix all enclosures deleted it: flyers get a player box, aquatic mobs the amphibious Gulper in a water pool, teleporters the Rift suppression aura - all folded into Phase 1's abilities + Phase 3's Slurry Basin. No enclosure blocks ship.
+
+## Phase 4 - Apex Frogs + boss altars  (size: L)
 
 The boss tier and the altar retrofit + two new altars.
 
@@ -115,14 +100,14 @@ The boss tier and the altar retrofit + two new altars.
 
 ---
 
-## Phase 6 - Retirement sweep + polish + guide  (size: M)
+## Phase 5 - Retirement sweep + polish + guide  (size: M)
 
 Close-out.
 
 **Ships:**
 - **Full mob-derived variant retirement** - audit the `slime_variant` JSONs, remove every variant that stood in for a mob drop (enumerated from the tree at this point), confirm ore/resource variants untouched. One coordinated breaking note.
-- **JEI + Jade** for the new appliances/blocks (Slurry Press, Enclosure Hatch + class blocks, altars); subtype interpreters where a component-carrying item needs distinct entries.
-- **Advancements** for the new milestones (first predator bred, first apex, first enclosure, boss farmed via frog).
+- **JEI + Jade** for the new appliances/blocks (Slurry Press, Slurry Basin, altars); subtype interpreters where a component-carrying item needs distinct entries.
+- **Advancements** for the new milestones (first predator bred, first apex, first mob farmed, boss farmed via frog).
 - **Patchouli guide** entries (deferred until Patchouli ports to 26.1 - do not block the phase on it).
 - Config consolidation + CHANGELOG + this doc marked delivered.
 
@@ -134,14 +119,16 @@ Close-out.
 |---|---|---|
 | Breeding-cross touches `canMate` / vanilla breeding | High | Phase 1 adds designated-pair exceptions without loosening the six-species `canMate`; GameTest both the new crosses and that undesignated pairs still refuse. |
 | Sensor/drop extension weakens the six-species gating | High | Preserve both-layer mutual exclusion; GameTest that resource frogs never eat mobs and predators never eat slimes, both directions. |
-| Variant retirement breaks existing packs/worlds | Medium | Follow the v1.6 retirement pattern (items lose names/recipes, soft where possible); one coordinated breaking note; stage ground-class in Phase 1, remainder in Phase 6. |
+| Variant retirement breaks existing packs/worlds | Medium | Follow the v1.6 retirement pattern (items lose names/recipes, soft where possible); one coordinated breaking note; stage ground-class in Phase 1, remainder in Phase 5. |
 | Liquid Experience mis-tagged -> no cross-mod interop | Medium | Test against the `c:experience` tag, not a specific mod; pin the 20 mB/point ratio in a unit test. |
-| Whole-entity round-trip drops stats (nets + Hatch install) | Medium | `saveWithoutId` everywhere an entity serializes (the #210 lesson); GameTest install -> release conservation on every removal path. |
+| Whole-entity round-trip drops stats (Ender Net + altar install) | Medium | `saveWithoutId` everywhere an entity serializes (the #210 lesson); GameTest capture -> release and install -> release conservation on every removal path. |
+| Aquatic Slurry Basin fights the water pool (mixing / washing / suffocation) | Medium | Slurry stays inside the block (never a world fluid); Basin is waterloggable and inert when dry; GameTest that an aquatic Basin spawns into surrounding water and does not disturb the pool. |
+| Rift teleport-suppression aura mis-scoped (leaks or over-suppresses) | Low | Bound the radius; suppress only hostile-target mob teleports, not player/ender-pearl mechanics; GameTest a boxed enderman/shulker stays put in range and teleports normally out of range. |
 
 ## Deferred to implementation time (not open design questions)
 
-- The **full hand-authored mob -> class/environment JSON** for the vanilla roster (the movement-class guide in #281 is the seed).
-- The **final retired-variant list**, enumerated from the `slime_variant` tree at Phase 6.
+- The **full hand-authored mob -> class/environment JSON** for the vanilla roster (the mob-handling map on #281 is the seed).
+- The **final retired-variant list**, enumerated from the `slime_variant` tree at Phase 5.
 
 ## Cross-references
 
