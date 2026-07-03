@@ -38,7 +38,7 @@ public class ResourceTadpoleRenderer extends TadpoleRenderer {
     public void extractRenderState(Tadpole entity, LivingEntityRenderState state, float partialTicks) {
         super.extractRenderState(entity, state, partialTicks);
         if (state instanceof ResourceTadpoleRenderState rs && entity instanceof ResourceTadpole rt) {
-            rs.tint = 0xFF000000 | rt.getCategory().tintRgb();
+            rs.tint = rt.getKind().tintArgb();
         }
     }
 }

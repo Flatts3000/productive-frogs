@@ -1,0 +1,5 @@
+{
+  "entity_type": "minecraft:slime",
+  "predator": "prowler",
+  "handling": "walk"
+}

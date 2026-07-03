@@ -1,0 +1,5 @@
+{
+  "entity_type": "minecraft:creaking",
+  "predator": "prowler",
+  "handling": "walk"
+}

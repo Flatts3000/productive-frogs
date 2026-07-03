@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.multiblock.TerrariumManager;
+import com.flatts.productivefrogs.data.FrogKind;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import java.util.ArrayList;
 import java.util.List;
@@ -89,14 +90,14 @@ public final class LayCategoryFrogspawn {
         }
         for (BlockPos incubatorPos : terrarium.incubators()) {
             if (level.getBlockEntity(incubatorPos) instanceof IncubatorBlockEntity incubator && incubator.hasRoom()) {
-                // Midas (#253) carries its marker into the Incubator so a bred Midas
-                // matures into a Midas (not a VOID frog). A bred pair always has
-                // pending stats, so the baseline path never carries Midas - fine.
+                // The offspring KIND carries into the Incubator (#281): a bred pair
+                // seeds the kind captured at conception (breed-true, or a designated
+                // cross's predator); a non-bred lay seeds the parent's own kind.
                 boolean seeded = frog.hasPendingOffspring()
-                    ? incubator.seedFromBreeding(frog.getCategory(),
+                    ? incubator.seedFromBreeding(frog.getPendingOffspringKind(),
                         frog.getPendingOffspringAppetite(), frog.getPendingOffspringBounty(),
-                        frog.getPendingOffspringReach(), frog.isMidas())
-                    : incubator.seedBaseline(frog.getCategory());
+                        frog.getPendingOffspringReach())
+                    : incubator.seedBaseline(frog.getKind());
                 if (seeded) {
                     frog.clearPendingOffspring();
                     level.playSound(null, incubatorPos, SoundEvents.FROG_LAY_SPAWN, SoundSource.BLOCKS, 1.0F, 1.0F);
@@ -161,31 +162,35 @@ public final class LayCategoryFrogspawn {
             return false;
         }
 
-        // Midas (#253) lays its own egg block (named "Midas Egg", hatches Midas);
-        // the six species lay their category egg.
-        BlockState placed = (frog.isMidas()
-            ? PFBlocks.MIDAS_FROG_EGG.get()
-            : PFBlocks.primedEgg(frog.getCategory()))
-            .defaultBlockState();
+        // The egg block is chosen by the OFFSPRING kind (#281): a species lays its
+        // category egg, Midas its own egg block, and a predator offspring (from a
+        // designated cross or a breed-true predator pair) rides its anchor
+        // species' egg as the carrier - the BE kind stamp below decides the hatch.
+        FrogKind offspring = frog.hasPendingOffspring() ? frog.getPendingOffspringKind() : frog.getKind();
+        BlockState placed = (switch (offspring) {
+            case FrogKind.Resource r -> PFBlocks.primedEgg(r.category());
+            case FrogKind.Midas m -> PFBlocks.MIDAS_FROG_EGG.get();
+            case FrogKind.Predator p -> PFBlocks.primedEgg(p.fallbackCategory());
+        }).defaultBlockState();
         level.setBlock(placePos, placed, 3);
         level.gameEvent(GameEvent.BLOCK_PLACE, placePos, GameEvent.Context.of(frog, placed));
         level.playSound(null, frog, SoundEvents.FROG_LAY_SPAWN, SoundSource.BLOCKS, 1.0F, 1.0F);
 
-        // Hand the offspring stats computed at conception
+        // Hand the offspring kind + the stats computed at conception
         // (ResourceFrog#spawnChildFromBreeding) off to the egg's BlockEntity so
         // they survive the frogspawn intermediary and reach the hatched tadpoles.
         // A non-bred lay (no pending roll) leaves the egg statless, and the
         // hatchlings mature into baseline (1/1/1) frogs. See docs/frog_breeding.md.
-        // (The Midas egg block stamps its own midas marker in onPlace, so a bred
-        // Midas egg hatches Midas - #253.)
-        if (frog.hasPendingOffspring()
-                && level.getBlockEntity(placePos) instanceof PrimedFrogEggBlockEntity eggBe) {
-            eggBe.setPendingStats(
-                frog.getPendingOffspringAppetite(),
-                frog.getPendingOffspringBounty(),
-                frog.getPendingOffspringReach()
-            );
-            frog.clearPendingOffspring();
+        if (level.getBlockEntity(placePos) instanceof PrimedFrogEggBlockEntity eggBe) {
+            eggBe.setKind(offspring);
+            if (frog.hasPendingOffspring()) {
+                eggBe.setPendingStats(
+                    frog.getPendingOffspringAppetite(),
+                    frog.getPendingOffspringBounty(),
+                    frog.getPendingOffspringReach()
+                );
+                frog.clearPendingOffspring();
+            }
         }
         return true;
     }

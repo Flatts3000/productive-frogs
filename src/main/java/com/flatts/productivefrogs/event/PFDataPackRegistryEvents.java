@@ -8,6 +8,7 @@ import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.TagsUpdatedEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 
@@ -29,12 +30,27 @@ public final class PFDataPackRegistryEvents {
         // event handler, not instantiable
     }
 
+    /**
+     * Rebuild the predator-prey lookup index (#281) whenever datapack contents
+     * (re)load - fires on server start and /reload, on both sides. Keeps the
+     * hot-path predatorFor to a single map get.
+     */
+    @SubscribeEvent
+    public static void onTagsUpdated(TagsUpdatedEvent event) {
+        com.flatts.productivefrogs.data.PredatorPrey.rebuildIndex(event.getLookupProvider());
+    }
+
     @SubscribeEvent
     public static void onNewRegistry(DataPackRegistryEvent.NewRegistry event) {
         event.dataPackRegistry(
             PFRegistries.SLIME_VARIANT,
             SlimeVariant.CODEC,
             SlimeVariant.CODEC
+        );
+        event.dataPackRegistry(
+            PFRegistries.PREDATOR_PREY,
+            com.flatts.productivefrogs.data.PredatorPrey.CODEC,
+            com.flatts.productivefrogs.data.PredatorPrey.CODEC
         );
         event.dataPackRegistry(
             PFRegistries.PARENT_SPECIES,

@@ -44,8 +44,9 @@ public class ResourceFrogRenderer extends FrogRenderer {
     public void extractRenderState(Frog entity, FrogRenderState state, float partialTicks) {
         super.extractRenderState(entity, state, partialTicks);
         if (state instanceof ResourceFrogRenderState rs && entity instanceof ResourceFrog rf) {
-            // Midas (#253) renders gold, overriding its sentinel category tint.
-            rs.tint = rf.isMidas() ? 0xFFFFD700 : (0xFF000000 | rf.getCategory().tintRgb());
+            // One tint per KIND (#281): species = category color, Midas = gold,
+            // predators = their own hues.
+            rs.tint = rf.getKind().tintArgb();
         }
     }
 }

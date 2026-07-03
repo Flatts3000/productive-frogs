@@ -42,7 +42,7 @@ class IncubatorBlockEntityTest {
     @Test
     void onlyIncubatesOneAtATime() {
         IncubatorBlockEntity i = newIncubator();
-        assertTrue(i.seedFromBreeding(Category.CAVE, 5, 7, 3));
+        assertTrue(i.seedFromBreeding(com.flatts.productivefrogs.data.FrogKind.resource(Category.CAVE), 5, 7, 3));
         assertFalse(i.seedBaseline(Category.GEODE), "a second seed is refused while incubating");
         assertEquals(Category.CAVE, i.getCategory(), "the first seed is untouched");
     }
@@ -66,7 +66,7 @@ class IncubatorBlockEntityTest {
     @Test
     void nbtRoundTripPreservesSeed() {
         IncubatorBlockEntity i = newIncubator();
-        i.seedFromBreeding(Category.INFERNAL, 5, 7, 3);
+        i.seedFromBreeding(com.flatts.productivefrogs.data.FrogKind.resource(Category.INFERNAL), 5, 7, 3);
         TagValueOutput out = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, RegistryAccess.EMPTY);
         i.saveAdditional(out);
         CompoundTag tag = out.buildResult();

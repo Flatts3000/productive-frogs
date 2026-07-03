@@ -310,8 +310,7 @@ public final class PFItems {
         props -> {
             EntityType<?> type = PFEntities.RESOURCE_FROG.get();
             CompoundTag nbt = new CompoundTag();
-            nbt.putString("Category", Category.VOID.name());
-            nbt.putBoolean("Midas", true);
+            nbt.putString("Kind", com.flatts.productivefrogs.data.FrogKind.MIDAS.id());
             return new SpawnEggItem(props.component(DataComponents.ENTITY_DATA, TypedEntityData.of(type, nbt)));
         });
 
@@ -326,10 +325,41 @@ public final class PFItems {
         props -> {
             EntityType<?> type = PFEntities.RESOURCE_TADPOLE.get();
             CompoundTag nbt = new CompoundTag();
-            nbt.putString("Category", Category.VOID.name());
-            nbt.putBoolean("Midas", true);
+            nbt.putString("Kind", com.flatts.productivefrogs.data.FrogKind.MIDAS.id());
             return new SpawnEggItem(props.component(DataComponents.ENTITY_DATA, TypedEntityData.of(type, nbt)));
         });
+
+    /**
+     * Predator spawn eggs (#281) - one frog + one tadpole egg per predator kind
+     * (Prowler / Cinder / Gulper / Rift), the creative/testing counterpart to
+     * the breeding crosses (the survival acquisition). Each stamps the kind id
+     * into ENTITY_DATA ({@code Kind}), which the entities' readAdditionalSaveData
+     * resolves via {@code FrogKind.readFrom}.
+     */
+    public static final Map<com.flatts.productivefrogs.data.FrogKind.Predator, DeferredItem<SpawnEggItem>>
+        PREDATOR_FROG_SPAWN_EGGS = buildPredatorSpawnEggs("frog", () -> PFEntities.RESOURCE_FROG.get());
+
+    /** Tadpole counterparts of {@link #PREDATOR_FROG_SPAWN_EGGS}. */
+    public static final Map<com.flatts.productivefrogs.data.FrogKind.Predator, DeferredItem<SpawnEggItem>>
+        PREDATOR_TADPOLE_SPAWN_EGGS = buildPredatorSpawnEggs("tadpole", () -> PFEntities.RESOURCE_TADPOLE.get());
+
+    private static Map<com.flatts.productivefrogs.data.FrogKind.Predator, DeferredItem<SpawnEggItem>>
+            buildPredatorSpawnEggs(String noun, java.util.function.Supplier<EntityType<?>> typeSupplier) {
+        Map<com.flatts.productivefrogs.data.FrogKind.Predator, DeferredItem<SpawnEggItem>> eggs =
+            new java.util.EnumMap<>(com.flatts.productivefrogs.data.FrogKind.Predator.class);
+        for (com.flatts.productivefrogs.data.FrogKind.Predator kind
+                : com.flatts.productivefrogs.data.FrogKind.Predator.values()) {
+            eggs.put(kind, ITEMS.registerItem(
+                kind.key() + "_" + noun + "_spawn_egg",
+                props -> {
+                    CompoundTag nbt = new CompoundTag();
+                    nbt.putString("Kind", kind.id());
+                    return new SpawnEggItem(props.component(
+                        DataComponents.ENTITY_DATA, TypedEntityData.of(typeSupplier.get(), nbt)));
+                }));
+        }
+        return java.util.Collections.unmodifiableMap(eggs);
+    }
 
     /**
      * The single Resource Slime spawn egg. One registered item whose variant
@@ -607,7 +637,10 @@ public final class PFItems {
     // PFClientEvents (RegisterColorHandlersEvent) when that file lands.
     private static Item.Properties applySpawnEggProps(Item.Properties props, EntityType<?> type, Category category) {
         CompoundTag nbt = new CompoundTag();
-        nbt.putString("Category", category.name());
+        // Modern "Kind" id (26.1 TypedEntityData.loadInto merges this tag over a
+        // full entity save, so the egg must speak the same dialect the entity
+        // persists - see FrogKind.readFrom's legacy-precedence note).
+        nbt.putString("Kind", com.flatts.productivefrogs.data.FrogKind.resource(category).id());
         return props
             .component(DataComponents.ENTITY_DATA, TypedEntityData.of(type, nbt))
             .requiredFeatures(type.requiredFeatures())

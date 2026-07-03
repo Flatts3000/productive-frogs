@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.entity.ai.LayCategoryFrogspawn;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.data.FrogKind;
 import com.flatts.productivefrogs.event.FrogTongueDropHandler;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
@@ -45,23 +46,30 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The Resource Frog — a Productive Frogs frog locked to one of the six
- * {@link Category} variants. Inherits vanilla {@link Frog} AI wholesale per
- * the locked Q8 decision; the only difference from vanilla is the category
- * field, which gates which slimes the frog will eventually consider tasty.
+ * The Productive Frogs frog entity. Inherits vanilla {@link Frog} AI wholesale
+ * per the locked Q8 decision; what a given instance IS is its {@link FrogKind}
+ * (#281) - one of the six species (diet: same-category Resource Slimes), Midas
+ * (#253; diet: Mimic Slimes), or a tier-2 Predator (Prowler / Cinder / Gulper /
+ * Rift; diet: vanilla mobs - wired in the predation eat path). The kind gates
+ * diet (via {@code ResourceFrogAttackablesSensor}), breeding ({@link #canMate}),
+ * the lay-block, drops, name, and tint.
  *
- * <p>Category is synced as an integer ordinal on the entity's
- * {@link SynchedEntityData}. Stored as the enum {@code name()} string in
- * persistent save data for readable NBT.
- *
- * <p>Out of scope for this PR: tongue/prey AI changes (need Resource Slimes
- * to exist first) and per-category visuals (texture tinting comes with the
- * texture batch). Players see category via display name.
+ * <p>The kind is synced as its id string on the entity's
+ * {@link SynchedEntityData} and stored as {@code "Kind"} in save data (with a
+ * legacy {@code Category}+{@code Midas} read for pre-Kind NBT writers).
  */
 public class ResourceFrog extends Frog {
 
-    private static final EntityDataAccessor<Integer> DATA_CATEGORY =
-        SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.INT);
+    // The unified identity (docs/predator_frogs.md, #281): ONE synced value that
+    // says what this frog is - a species (resource/<category>), Midas (#253,
+    // folded in from the pre-2.0 boolean), or a tier-2 predator. Synced as the
+    // FrogKind id string; persisted as "Kind" (with a legacy Category+Midas read
+    // for pre-Kind NBT writers like the baked spawn-egg ENTITY_DATA). The old
+    // DATA_CATEGORY int + DATA_MIDAS boolean pair is gone; getCategory()/isMidas()
+    // remain as derived reads and setCategory()/setMidas() as sugar writers so
+    // category-reading surfaces keep working unchanged.
+    private static final EntityDataAccessor<String> DATA_KIND =
+        SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.STRING);
 
     // Breeding stats (docs/frog_breeding.md). Synced so the Jade tooltip and
     // the cosmetic render tier can read them client-side. Persisted in NBT.
@@ -72,16 +80,6 @@ public class ResourceFrog extends Frog {
         SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_REACH =
         SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.INT);
-
-    // Midas marker (Equivalence lane, #253). A Midas frog is a ResourceFrog whose
-    // ONLY divergences are diet (eats Mimic Slimes, not its category's Resource
-    // Slimes - branched in ResourceFrogAttackablesSensor) and drop (a Prismatic
-    // Froglight stamped with the eaten Mimic Slime's item - MidasTongueDropHandler).
-    // Threaded through the egg -> tadpole -> frog pipeline like the stats, and
-    // breeds true. A flag (not a 7th Category) so the six-species machinery and
-    // every Category.values() surface stay exactly as they are.
-    private static final EntityDataAccessor<Boolean> DATA_MIDAS =
-        SynchedEntityData.defineId(ResourceFrog.class, EntityDataSerializers.BOOLEAN);
 
     // Set true once stats are established (baseline or inheritance) so a
     // re-fired finalizeSpawn (vanilla can call it more than once) doesn't
@@ -97,6 +95,13 @@ public class ResourceFrog extends Frog {
     private int pendingOffspringAppetite;
     private int pendingOffspringBounty;
     private int pendingOffspringReach;
+
+    // The KIND the pending offspring hatches as, captured at conception alongside
+    // the stats (#281): a designated cross (Bog x Cave) conceives a predator, a
+    // same-kind pair breeds true. Null until a conception; falls back to this
+    // (pregnant) parent's own kind at lay when unset.
+    @Nullable
+    private FrogKind pendingOffspringKind;
 
     // Sweetslimed lily pad perch (#214, docs/lily_pad_perch.md). Server-only: the
     // pad this frog is pinned to and the level game-time the claim lapses at. The
@@ -119,21 +124,61 @@ public class ResourceFrog extends Frog {
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
-        builder.define(DATA_CATEGORY, Category.BOG.ordinal());
+        builder.define(DATA_KIND, FrogKind.resource(Category.BOG).id());
         builder.define(DATA_APPETITE, FrogStats.STAT_MIN);
         builder.define(DATA_BOUNTY, FrogStats.STAT_MIN);
         builder.define(DATA_REACH, FrogStats.STAT_MIN);
-        builder.define(DATA_MIDAS, false);
     }
 
-    /** True if this is a Midas frog (Equivalence lane, #253). */
+    // Parsed cache of DATA_KIND - getKind runs on hot paths (render extract per
+    // frame, the underwater air check per tick, the sensor per candidate), so the
+    // string-map lookup happens once per change, not per call. Invalidated in
+    // onSyncedDataUpdated (the vanilla derived-synced-data pattern).
+    @Nullable
+    private FrogKind cachedKind;
+
+    /** The unified identity (#281) - what this frog IS. Never null (unknown synced ids fall back to Bog). */
+    public FrogKind getKind() {
+        FrogKind kind = cachedKind;
+        if (kind == null) {
+            kind = FrogKind.byIdOrDefault(this.entityData.get(DATA_KIND), FrogKind.resource(Category.BOG));
+            cachedKind = kind;
+        }
+        return kind;
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> accessor) {
+        super.onSyncedDataUpdated(accessor);
+        if (DATA_KIND.equals(accessor)) {
+            cachedKind = null;
+        }
+    }
+
+    public void setKind(FrogKind kind) {
+        this.entityData.set(DATA_KIND, kind.id());
+    }
+
+    /** True if this is a Midas frog (#253). Derived from the kind - there is no separate flag. */
     public boolean isMidas() {
-        return this.entityData.get(DATA_MIDAS);
+        return getKind() instanceof FrogKind.Midas;
     }
 
-    public void setMidas(boolean midas) {
-        this.entityData.set(DATA_MIDAS, midas);
+    /** True if this is a tier-2 Predator Frog (#281). */
+    public boolean isPredator() {
+        return getKind() instanceof FrogKind.Predator;
     }
+
+    // Underwater breathing: ALL PF frogs breathe underwater, like vanilla frogs.
+    // Vanilla wires this through the minecraft:can_breathe_under_water EntityType
+    // tag (LivingEntity.canBreatheUnderwater is tag-driven - and already was on
+    // 1.21.1, where it is FINAL), and tag membership keys on the EntityType id -
+    // a subclassed EntityType is never in the parent's tags. So PF ships tag
+    // entries for resource_frog + resource_tadpole
+    // (data/minecraft/tags/entity_type/) instead of a code override; the same
+    // fix was hotfixed onto the 1.x line, where PF frogs had been drowning since
+    // v1.0. The Gulper needs no special ability for its water pool; its
+    // distinction is purely its aquatic prey set.
 
     private static int statCap() {
         return PFConfig.statCap();
@@ -181,53 +226,53 @@ public class ResourceFrog extends Frog {
         return statCap();
     }
 
+    /**
+     * The category legacy surfaces read - the species itself for a resource frog,
+     * the kind's fallback for Midas (VOID) and predators (their breeding anchor).
+     * Identity comparisons must use {@link #getKind()}, not this.
+     */
     public Category getCategory() {
-        // Defensive: synced data can be set to any int via modded packets or
-        // corrupted save data. fromOrdinalOrDefault falls back to BOG rather
-        // than crashing if the ordinal is out of range.
-        return Category.fromOrdinalOrDefault(this.entityData.get(DATA_CATEGORY));
+        return getKind().fallbackCategory();
     }
 
+    /** Sugar: re-kind this frog to the given species. */
     public void setCategory(Category category) {
-        this.entityData.set(DATA_CATEGORY, category.ordinal());
+        setKind(FrogKind.resource(category));
     }
 
     /**
-     * Category-aware display name — so Jade, the F3 entity readout, and any
-     * other client surface that calls {@code getName()} reads "Bog Frog"
-     * instead of the generic "Resource Frog". Falls back to the custom name
-     * (player-set via name tag) when present.
+     * Kind-aware display name - so Jade, the F3 entity readout, and any
+     * other client surface that calls {@code getName()} reads "Bog Frog" /
+     * "Midas Frog" / "Prowler Frog" instead of the generic "Resource Frog".
+     * Falls back to the custom name (player-set via name tag) when present.
      *
-     * <p>Lang key: {@code entity.productivefrogs.resource_frog.<id>}.
+     * <p>Lang key: {@code entity.productivefrogs.resource_frog.<kind suffix>}.
      */
     @Override
     public net.minecraft.network.chat.Component getName() {
         if (this.hasCustomName()) {
             return super.getName();
         }
-        if (isMidas()) {
-            return net.minecraft.network.chat.Component.translatable(getType().getDescriptionId() + ".midas");
-        }
         return net.minecraft.network.chat.Component.translatable(
-            getType().getDescriptionId() + "." + getCategory().id()
+            getType().getDescriptionId() + "." + getKind().nameSuffix()
         );
     }
 
     @Override
     public void addAdditionalSaveData(net.minecraft.world.level.storage.ValueOutput output) {
         super.addAdditionalSaveData(output);
-        output.putString("Category", getCategory().name());
+        output.putString("Kind", getKind().id());
         output.putInt("Appetite", getAppetite());
         output.putInt("Bounty", getBounty());
         output.putInt("Reach", getReach());
-        if (isMidas()) {
-            output.putBoolean("Midas", true);
-        }
         if (hasPendingOffspring) {
             output.putBoolean("HasPendingOffspring", true);
             output.putInt("PendingOffspringAppetite", pendingOffspringAppetite);
             output.putInt("PendingOffspringBounty", pendingOffspringBounty);
             output.putInt("PendingOffspringReach", pendingOffspringReach);
+        }
+        if (pendingOffspringKind != null) {
+            output.putString("PendingOffspringKind", pendingOffspringKind.id());
         }
         if (perchPad != null) {
             output.putLong("PerchPad", perchPad.asLong());
@@ -238,24 +283,18 @@ public class ResourceFrog extends Frog {
     @Override
     public void readAdditionalSaveData(net.minecraft.world.level.storage.ValueInput input) {
         super.readAdditionalSaveData(input);
-        input.getString("Category").ifPresent(name -> {
-            try {
-                setCategory(Category.valueOf(name));
-            } catch (IllegalArgumentException ignored) {
-                // Unknown category in save data — leave default.
-            }
-        });
+        FrogKind.readFrom(input).ifPresent(this::setKind);
         input.getInt("Appetite").ifPresent(appetite ->
             // A frog persisted with stats is established - getters clamp, so a
             // tampered save can't inject out-of-range values.
             setStats(appetite, input.getIntOr("Bounty", 0), input.getIntOr("Reach", 0)));
-        setMidas(input.getBooleanOr("Midas", false));
         hasPendingOffspring = input.getBooleanOr("HasPendingOffspring", false);
         if (hasPendingOffspring) {
             pendingOffspringAppetite = input.getIntOr("PendingOffspringAppetite", 0);
             pendingOffspringBounty = input.getIntOr("PendingOffspringBounty", 0);
             pendingOffspringReach = input.getIntOr("PendingOffspringReach", 0);
         }
+        pendingOffspringKind = input.getString("PendingOffspringKind").map(FrogKind::byId).orElse(null);
         input.getLong("PerchPad").ifPresent(packed -> {
             perchPad = net.minecraft.core.BlockPos.of(packed);
             perchValidUntil = input.getLongOr("PerchValidUntil", 0L);
@@ -357,6 +396,13 @@ public class ResourceFrog extends Frog {
         if (!stack.is(PFItems.SLIME_BUCKET.get())) {
             return super.mobInteract(player, hand);
         }
+        // Direct-feed is a species-frog surface only (#281): a predator's fallback
+        // category would otherwise match a species bucket and mint a Froglight
+        // the predation design says it must never produce. Midas already fails
+        // the category match (VOID carrier vs a variant-stamped species bucket).
+        if (!(getKind() instanceof FrogKind.Resource)) {
+            return super.mobInteract(player, hand);
+        }
         Category bucketCategory = ResourceTadpoleBucketItem.readCategory(stack);
         if (bucketCategory == null || bucketCategory != this.getCategory()) {
             // Bucket has no category (empty / vanilla slime bucket) or the
@@ -427,13 +473,9 @@ public class ResourceFrog extends Frog {
     }
 
     /**
-     * Same-species breeding gate (D4): a Resource Frog only mates with another
-     * Resource Frog of the same {@link Category}. Config-gated via
-     * {@code breeding.sameSpeciesOnly} (default true); when disabled the gate
-     * falls back to vanilla "same EntityType + both in love". The class check
-     * (via super) already restricts partners to other Resource Frogs since
-     * ResourceFrog is its own class; the category check narrows that to the same
-     * species.
+     * Kind-based breeding gate. All pairing POLICY (pure kind rules + config
+     * gating) lives in {@link FrogBreedingRules}, the single exhaustive home
+     * shared with the conception capture - see that class for the rules.
      */
     @Override
     public boolean canMate(Animal other) {
@@ -441,15 +483,7 @@ public class ResourceFrog extends Frog {
             return false;
         }
         if (other instanceof ResourceFrog partner) {
-            // Midas (Equivalence lane, #253) is its own breeding line: Midas x
-            // Midas only, and never with a species frog (even one sharing Midas's
-            // fallback category). So the colony you grow from one Kiss stays Midas.
-            if (this.isMidas() || partner.isMidas()) {
-                return this.isMidas() && partner.isMidas();
-            }
-            if (PFConfig.sameSpeciesOnly()) {
-                return this.getCategory() == partner.getCategory();
-            }
+            return FrogBreedingRules.canMate(getKind(), partner.getKind());
         }
         return true;
     }
@@ -480,6 +514,11 @@ public class ResourceFrog extends Frog {
     }
 
     private void captureOffspringStats(ResourceFrog mate, RandomSource random) {
+        // Offspring KIND (#281): same-kind pairs breed true; a designated resource
+        // cross conceives its predator. Captured here (both parents present) and
+        // threaded to the egg by the lay behavior. Policy shared with canMate via
+        // FrogBreedingRules (one gate location).
+        this.pendingOffspringKind = FrogBreedingRules.offspring(getKind(), mate.getKind());
         // Stat layer off (#202): stamp baseline so a frog bred by any path (another
         // mod, a command) carries default stats rather than a hidden rolled value.
         if (!PFConfig.frogStatsEnabled()) {
@@ -491,13 +530,13 @@ public class ResourceFrog extends Frog {
         }
         // Two-layer roll (docs/frog_breeding.md): blend (parent average) then climb,
         // with a guaranteed +1 on at least one stat so a breed is never wasted.
-        int[] offspring = FrogStats.inheritStats(
+        int[] roll = FrogStats.inheritStats(
             new int[] { getAppetite(), getBounty(), getReach() },
             new int[] { mate.getAppetite(), mate.getBounty(), mate.getReach() },
             PFConfig.improvementChance(), PFConfig.guaranteedImprovement(), PFConfig.statCap(), random);
-        this.pendingOffspringAppetite = offspring[0];
-        this.pendingOffspringBounty = offspring[1];
-        this.pendingOffspringReach = offspring[2];
+        this.pendingOffspringAppetite = roll[0];
+        this.pendingOffspringBounty = roll[1];
+        this.pendingOffspringReach = roll[2];
         this.hasPendingOffspring = true;
         PFDebug.log(PFDebug.Area.EGG, () -> String.format(
             "conception: %s parents A(%d,%d) B(%d,%d) R(%d,%d) -> offspring A%d/B%d/R%d",
@@ -523,9 +562,19 @@ public class ResourceFrog extends Frog {
         return pendingOffspringReach;
     }
 
+    /**
+     * The kind the pending offspring hatches as (#281): the mate's/this frog's
+     * shared kind for a breed-true pairing, the mapped predator for a designated
+     * cross. Falls back to this parent's own kind when no conception captured one.
+     */
+    public FrogKind getPendingOffspringKind() {
+        return pendingOffspringKind != null ? pendingOffspringKind : getKind();
+    }
+
     /** Clear the captured offspring stats once the lay behavior has stamped them onto the egg. */
     public void clearPendingOffspring() {
         hasPendingOffspring = false;
+        pendingOffspringKind = null;
     }
 
     // Lazily-built brain provider (26.1). Vanilla Frog now declares a static
@@ -605,11 +654,36 @@ public class ResourceFrog extends Frog {
                 out.add(withExtraBehavior(data, 0, resourceMakeLove));
             } else if (activity == Activity.LAY_SPAWN) {
                 out.add(withExtraBehavior(data, 2, LayCategoryFrogspawn.create()));
+            } else if (activity == Activity.TONGUE) {
+                // Swap vanilla ShootTongue for the kind-aware PFShootTongue (#281):
+                // same behavior for species/Midas frogs, prey-registry edibility +
+                // the fake-player kill for predators. Same priority slot.
+                out.add(withReplacedBehavior(data,
+                    behavior -> behavior instanceof net.minecraft.world.entity.animal.frog.ShootTongue,
+                    new com.flatts.productivefrogs.content.entity.ai.PFShootTongue()));
             } else {
                 out.add(data);
             }
         }
         return out;
+    }
+
+    /** Copy {@code data} with each behavior matching {@code match} swapped for {@code replacement}. */
+    private static ActivityData<Frog> withReplacedBehavior(
+            ActivityData<Frog> data,
+            java.util.function.Predicate<BehaviorControl<? super Frog>> match,
+            BehaviorControl<? super Frog> replacement) {
+        ImmutableList.Builder<Pair<Integer, ? extends BehaviorControl<? super Frog>>> merged =
+            ImmutableList.builder();
+        for (Pair<Integer, ? extends BehaviorControl<? super Frog>> pair : data.behaviorPriorityPairs()) {
+            if (match.test(pair.getSecond())) {
+                merged.add(Pair.of(pair.getFirst(), replacement));
+            } else {
+                merged.add(pair);
+            }
+        }
+        return ActivityData.create(
+            data.activityType(), merged.build(), data.conditions(), data.memoriesToEraseWhenStopped());
     }
 
     /** Copy {@code data} with one extra prioritized behavior merged into its list. */

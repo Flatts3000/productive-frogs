@@ -138,9 +138,12 @@ final class BreedingFrogAiTests {
             return;
         }
         // Flip one to a different species: the gate must now reject the pair.
-        b.setCategory(Category.BOG);
+        // (CAVE x TIDE - an UNDESIGNATED pair. CAVE x BOG is no longer a valid
+        // refusal case: it is the Prowler breeding cross (#281) and now mates -
+        // pinned in PredatorBreedingTests.)
+        b.setCategory(Category.TIDE);
         if (a.canMate(b)) {
-            helper.fail("a CAVE frog must not mate a BOG frog with sameSpeciesOnly on");
+            helper.fail("a CAVE frog must not mate a TIDE frog with sameSpeciesOnly on");
             return;
         }
         helper.succeed();

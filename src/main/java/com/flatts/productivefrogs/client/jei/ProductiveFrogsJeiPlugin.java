@@ -260,7 +260,12 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             return "";
         }
         CompoundTag tag = data.copyTag();
-        return tag.getString("Category") + "|" + tag.getString("Variant");
+        // Kind-aware (#281): tadpole buckets write "Kind"; slime buckets and
+        // legacy data write "Category"(+"Midas") - FrogKind.readFromTag resolves
+        // both dialects to one canonical id so every stack keys consistently.
+        String kind = com.flatts.productivefrogs.data.FrogKind.readFromTag(tag)
+            .map(com.flatts.productivefrogs.data.FrogKind::id).orElse("");
+        return kind + "|" + tag.getStringOr("Variant", "");
     }
 
     @Override

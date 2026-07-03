@@ -22,8 +22,10 @@ public record BucketCategoryTint() implements ItemTintSource {
 
     @Override
     public int calculate(ItemStack stack, @Nullable ClientLevel level, @Nullable LivingEntity owner) {
-        Category cat = ResourceTadpoleBucketItem.readCategory(stack);
-        return cat == null ? Tints.opaque(0x6B4530) : Tints.opaque(contrastAgainstWater(cat.tintRgb()));
+        com.flatts.productivefrogs.data.FrogKind kind = ResourceTadpoleBucketItem.readKind(stack);
+        return kind == null
+            ? Tints.opaque(0x6B4530)
+            : Tints.opaque(contrastAgainstWater(kind.tintArgb() & 0xFFFFFF));
     }
 
     /**

@@ -44,6 +44,16 @@ public final class PFRegistries {
             Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "parent_species")
         );
 
+    /**
+     * The predation prey map (#281): one entry per mob a Predator Frog eats -
+     * {@code data/<ns>/productivefrogs/predator_prey/<name>.json}. Hand-authored
+     * from the settled #281 map; datapack-extensible like the two above.
+     */
+    public static final ResourceKey<Registry<com.flatts.productivefrogs.data.PredatorPrey>> PREDATOR_PREY =
+        ResourceKey.createRegistryKey(
+            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "predator_prey")
+        );
+
     // ---- 26.1 registry access ------------------------------------------------
     // On 26.1 RegistryAccess no longer exposes registry()/registryOrThrow()
     // (returning a Registry<T>); the access path is HolderLookup.Provider's
@@ -54,6 +64,12 @@ public final class PFRegistries {
     /** The Slime Variant registry lookup, for iteration/streaming via listElements(). */
     public static HolderLookup.RegistryLookup<SlimeVariant> variants(HolderLookup.Provider registries) {
         return registries.lookupOrThrow(SLIME_VARIANT);
+    }
+
+    /** The predation prey-map lookup (#281). */
+    public static HolderLookup.RegistryLookup<com.flatts.productivefrogs.data.PredatorPrey> predatorPrey(
+            HolderLookup.Provider registries) {
+        return registries.lookupOrThrow(PREDATOR_PREY);
     }
 
     /** Resolve a Slime Variant by id, or {@code null} if absent. */

@@ -1,0 +1,5 @@
+{
+  "entity_type": "minecraft:parched",
+  "predator": "prowler",
+  "handling": "walk"
+}

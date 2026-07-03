@@ -1,0 +1,5 @@
+{
+  "entity_type": "minecraft:camel_husk",
+  "predator": "prowler",
+  "handling": "walk"
+}

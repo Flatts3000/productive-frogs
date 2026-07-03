@@ -53,14 +53,15 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
         gui.fill(x + this.imageWidth - 1, y, x + this.imageWidth, y + this.imageHeight, BEVEL_DARK);
 
         int state = this.menu.state();
-        Category cat = this.menu.incubatingCategory();
+        com.flatts.productivefrogs.data.FrogKind kind = this.menu.incubatingKind();
 
-        // Species colour swatch (only while it holds a seed).
-        if (cat != null) {
+        // Kind colour swatch (only while it holds a seed) - a predator seed shows
+        // its own hue, not its anchor species' (review finding #7).
+        if (kind != null) {
             int sx = x + SWATCH_X;
             int sy = y + SWATCH_Y;
             gui.fill(sx - 1, sy - 1, sx + SWATCH + 1, sy + SWATCH + 1, SWATCH_BORDER);
-            gui.fill(sx, sy, sx + SWATCH, sy + SWATCH, 0xFF000000 | cat.tintRgb());
+            gui.fill(sx, sy, sx + SWATCH, sy + SWATCH, kind.tintArgb());
         }
 
         // Growth bar: recessed track + category-tinted fill (amber when held at cap).
@@ -72,7 +73,7 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
         if (state == 1 && total > 0) {
             int done = total - this.menu.growthRemaining();
             int filled = Math.max(0, Math.min(BAR_W, done * BAR_W / total));
-            int fill = cat != null ? (0xFF000000 | cat.tintRgb()) : BAR_WAITING;
+            int fill = kind != null ? kind.tintArgb() : BAR_WAITING;
             gui.fill(bx, by, bx + filled, by + BAR_H, fill);
         } else if (state == 2) {
             gui.fill(bx, by, bx + BAR_W, by + BAR_H, BAR_WAITING);
@@ -85,7 +86,7 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
         int state = this.menu.state();
 
         // Status line (swatch is drawn in extractBackground; text sits beside it when seeded).
-        int statusX = this.menu.incubatingCategory() != null ? SWATCH_X + SWATCH + 4 : SWATCH_X;
+        int statusX = this.menu.incubatingKind() != null ? SWATCH_X + SWATCH + 4 : SWATCH_X;
         Component status = switch (state) {
             case 1 -> Component.translatable("productivefrogs.gui.incubator.growing", speciesName());
             case 2 -> Component.translatable("productivefrogs.gui.incubator.waiting");
@@ -134,10 +135,10 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
 
     /** Display name of the species being incubated (e.g. "Cave Frog"); blank when empty. */
     private Component speciesName() {
-        Category cat = this.menu.incubatingCategory();
-        return cat == null
+        com.flatts.productivefrogs.data.FrogKind kind = this.menu.incubatingKind();
+        return kind == null
             ? Component.empty()
-            : Component.translatable("entity.productivefrogs.resource_frog." + cat.name().toLowerCase(Locale.ROOT));
+            : Component.translatable("entity.productivefrogs.resource_frog." + kind.nameSuffix());
     }
 
     /** Ticks -> "m:ss" (20 ticks = 1 second). */

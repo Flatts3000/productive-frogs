@@ -88,6 +88,8 @@ public final class PFGameTests {
         CrucibleMoldTests.register();
         BossAltarTests.register();
         BreedingFrogAiTests.register();
+        PredatorBreedingTests.register();
+        PredatorEatPathTests.register();
         TerrariumTests.register();
         EquivalenceLaneTests.register();
 

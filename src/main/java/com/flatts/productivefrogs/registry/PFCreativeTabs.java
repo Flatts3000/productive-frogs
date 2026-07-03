@@ -238,11 +238,22 @@ public final class PFCreativeTabs {
                     if (PFConfig.equivalenceEnabled()) {
                         output.accept(PFItems.MIDAS_FROG_SPAWN_EGG.get());
                     }
+                    // Predator frog spawn eggs (#281) - hidden when predation is off.
+                    if (PFConfig.predatorsEnabled()) {
+                        for (var entry : PFItems.PREDATOR_FROG_SPAWN_EGGS.values()) {
+                            output.accept(entry.get());
+                        }
+                    }
                     for (var entry : PFItems.RESOURCE_TADPOLE_SPAWN_EGGS.values()) {
                         output.accept(entry.get());
                     }
                     if (PFConfig.equivalenceEnabled()) {
                         output.accept(PFItems.MIDAS_TADPOLE_SPAWN_EGG.get());
+                    }
+                    if (PFConfig.predatorsEnabled()) {
+                        for (var entry : PFItems.PREDATOR_TADPOLE_SPAWN_EGGS.values()) {
+                            output.accept(entry.get());
+                        }
                     }
                     // One stamped stack per variant (no unstamped base egg — a
                     // variant-less Resource Slime egg isn't a meaningful creative
@@ -274,7 +285,9 @@ public final class PFCreativeTabs {
     private static ItemStack makeCategoryTadpoleBucket(Category category) {
         ItemStack stack = new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
-            tag.putString("Category", category.name());
+            // Same "Kind" dialect ResourceTadpole.saveToBucketTag writes, so the
+            // creative stack and a real scooped bucket are one JEI subtype.
+            tag.putString("Kind", com.flatts.productivefrogs.data.FrogKind.resource(category).id());
         });
         return stack;
     }
