@@ -4,7 +4,7 @@ on:
   push:
     branches: ["**"]
   pull_request:
-    branches: [main]
+    branches: [main, mc-1.21.1]
 
 env:
   # Opt JavaScript-based actions into Node.js 24 ahead of the June 2 2026
