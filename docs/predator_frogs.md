@@ -64,6 +64,12 @@ The end-to-end slice that proves the thesis: a bred Predator Frog eats a mob and
 
 ## Phase 2 - Liquid Experience  (size: S)
 
+> **STATUS: IMPLEMENTED** on `feat/liquid-experience-phase2` (2026-07-03). Pattern notes from the build:
+> - Deliberately the **simplest fluid shape in the mod** - a third shape alongside milk and molten, chosen fresh rather than cloning either: no data components (XP is fungible, so NeoForge's STOCK `BucketResourceHandler` serves the bucket - a first for PF), no source block / BE (never placeable, "no world pools" is enforced by construction), but with a bucket (molten has none).
+> - The 20 mB/point ratio turned out to be the **NeoForge-documented standard** on `Tags.Fluids.EXPERIENCE` itself, not just community convention - the constants + helpers live on `LiquidExperienceFluid`, pinned by a unit test.
+> - The bucket's right-click IS the spend path: drink it, absorb exactly 50 points, keep the empty bucket. No orb scatter, no new block needed.
+> - Gotcha for future transfer-API tests: `ItemAccess.forStack` never swaps the underlying Item, so a bucket drain (full -> empty bucket) through it silently moves 0 mB - use a player-slot / handler-slot access.
+
 The XP fluid. Small and self-contained; unblocks builds banking XP.
 
 **Ships:**

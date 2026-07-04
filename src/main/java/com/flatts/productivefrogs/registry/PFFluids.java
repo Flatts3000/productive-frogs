@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.content.fluid.LiquidExperienceFluid;
 import com.flatts.productivefrogs.content.fluid.MimicMilkFluid;
 import com.flatts.productivefrogs.content.fluid.SlimeMilkFluid;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -77,6 +78,30 @@ public final class PFFluids {
                 .block(() -> (LiquidBlock) PFBlocks.MIMIC_MILK.get());
         }
         return mimicMilkProps;
+    }
+
+    /**
+     * Liquid Experience (#281 Phase 2) - source + flowing, {@code c:experience}
+     * at 20 mB/point ({@link LiquidExperienceFluid#MB_PER_POINT}). The simplest
+     * fluid in the mod: no components (XP is fungible), no source block (never
+     * placeable - it lives in tanks/pipes/buckets), no BE. The flowing form is
+     * registered for completeness but never manifests (refuses all spread).
+     */
+    public static final DeferredHolder<Fluid, LiquidExperienceFluid.Source> LIQUID_EXPERIENCE =
+        FLUIDS.register("liquid_experience", () -> new LiquidExperienceFluid.Source(liquidExperienceProps()));
+    public static final DeferredHolder<Fluid, LiquidExperienceFluid.Flowing> LIQUID_EXPERIENCE_FLOWING =
+        FLUIDS.register("liquid_experience_flowing", () -> new LiquidExperienceFluid.Flowing(liquidExperienceProps()));
+
+    private static BaseFlowingFluid.Properties liquidExperienceProps;
+
+    /** Shared properties for both Liquid Experience forms (built once, lazily). No {@code .block()} - not placeable. */
+    private static BaseFlowingFluid.Properties liquidExperienceProps() {
+        if (liquidExperienceProps == null) {
+            liquidExperienceProps = new BaseFlowingFluid.Properties(
+                PFFluidTypes.LIQUID_EXPERIENCE_TYPE, LIQUID_EXPERIENCE, LIQUID_EXPERIENCE_FLOWING)
+                .bucket(PFItems.LIQUID_EXPERIENCE_BUCKET);
+        }
+        return liquidExperienceProps;
     }
 
     private PFFluids() {

@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.item.ConfigurableFroglightItem;
 import com.flatts.productivefrogs.content.item.FrogEggItem;
 import com.flatts.productivefrogs.content.item.FrogNetItem;
+import com.flatts.productivefrogs.content.item.LiquidExperienceBucketItem;
 import com.flatts.productivefrogs.content.item.MilkCatalyst;
 import com.flatts.productivefrogs.content.item.MilkCatalystItem;
 import com.flatts.productivefrogs.content.item.MimicMilkBucketItem;
@@ -251,6 +252,21 @@ public final class PFItems {
         "slime_milk_bucket",
         props -> new SlimeMilkBucketItem(
             PFFluids.SLIME_MILK.get(),
+            props.stacksTo(1).craftRemainder(Items.BUCKET)
+        )
+    );
+
+    /**
+     * Liquid Experience bucket (#281 Phase 2). Right-click drinks it - the player
+     * absorbs exactly 50 XP points (one bucket at the {@code c:experience}
+     * 20 mB/point standard) and keeps the empty bucket. Never places a fluid
+     * block (Liquid Experience has none); tanks/pipes move it via
+     * {@code Capabilities.Fluid.ITEM} (wired in {@code PFModBusEvents}).
+     */
+    public static final DeferredItem<LiquidExperienceBucketItem> LIQUID_EXPERIENCE_BUCKET = ITEMS.registerItem(
+        "liquid_experience_bucket",
+        props -> new LiquidExperienceBucketItem(
+            PFFluids.LIQUID_EXPERIENCE.get(),
             props.stacksTo(1).craftRemainder(Items.BUCKET)
         )
     );

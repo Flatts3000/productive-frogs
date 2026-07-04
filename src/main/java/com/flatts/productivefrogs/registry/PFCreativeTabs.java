@@ -67,6 +67,11 @@ public final class PFCreativeTabs {
                         output.accept(PFItems.MIMIC_SLIME_BUCKET.get());
                         output.accept(PFItems.MIMIC_MILK_BUCKET.get());
                     }
+                    // Liquid Experience bucket (#281 Phase 2) - the predation
+                    // system's XP fluid, hidden when predation is off.
+                    if (PFConfig.predatorsEnabled()) {
+                        output.accept(PFItems.LIQUID_EXPERIENCE_BUCKET.get());
+                    }
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
                         if (h.value().isEnabled(h.key().identifier())) {
                             output.accept(PFItems.variantSlimeBucket(h.key().identifier(), h.value().category()));

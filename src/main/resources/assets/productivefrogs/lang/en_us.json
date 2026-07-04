@@ -706,5 +706,8 @@
   "item.productivefrogs.slime_milk_bucket": "Slime Milk Bucket",
   "item.productivefrogs.slime_milk_bucket.item": "Bucket of %s Slime Milk",
   "block.productivefrogs.slime_milk_source": "Slime Milk",
-  "fluid_type.productivefrogs.slime_milk": "Slime Milk"
+  "fluid_type.productivefrogs.slime_milk": "Slime Milk",
+  "item.productivefrogs.liquid_experience_bucket": "Bucket of Liquid Experience",
+  "item.productivefrogs.liquid_experience_bucket.tooltip": "Drink to absorb 50 experience points.",
+  "fluid_type.productivefrogs.liquid_experience": "Liquid Experience"
 }
