@@ -5486,6 +5486,114 @@ public final class PFGameTests {
     }
 
     // =================================================================
+    // Multi-lay probe (suspected v1.24.3 regression): one pregnancy must
+    // produce exactly ONE egg through the REAL brain path - our priority-2
+    // lay + vanilla's priority-3 layer both live in LAY_SPAWN, and the
+    // seam-level #270 tests above never drive the brain.
+    // =================================================================
+
+    /** Count every egg-type block (six primed eggs, Midas egg, vanilla frogspawn) in the plot. */
+    private static int countEggBlocks(GameTestHelper helper) {
+        int count = 0;
+        for (BlockPos pos : BlockPos.betweenClosed(
+                helper.absolutePos(new BlockPos(0, 1, 0)), helper.absolutePos(new BlockPos(4, 4, 4)))) {
+            net.minecraft.world.level.block.state.BlockState state = helper.getLevel().getBlockState(pos);
+            if (state.getBlock() instanceof com.flatts.productivefrogs.content.block.PrimedFrogEggBlock
+                    || state.is(Blocks.FROGSPAWN)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /** Stone pen: floor at y1, 3-high walls on the border, so the frog and its eggs stay in the plot. */
+    private static void buildLayPen(GameTestHelper helper) {
+        for (int x = 0; x <= 4; x++) {
+            for (int z = 0; z <= 4; z++) {
+                helper.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
+                if (x == 0 || x == 4 || z == 0 || z == 4) {
+                    for (int y = 2; y <= 4; y++) {
+                        helper.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * ONE pregnancy -> exactly ONE egg, through the real brain (LAY_SPAWN with
+     * both our priority-2 behavior and vanilla's priority-3 layer live). A
+     * pregnant frog penned beside a pool gets 180 ticks of real AI; the plot
+     * must then hold exactly one egg-type block and the pregnancy memory must
+     * be gone.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 220)
+    public static void onePregnancyLaysExactlyOneEggViaBrain(GameTestHelper helper) {
+        buildLayPen(helper);
+        helper.setBlock(new BlockPos(2, 1, 2), Blocks.WATER); // pool in the floor plane
+
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(1, 2, 1));
+        frog.setCategory(Category.CAVE);
+        frog.getBrain().setMemory(
+            net.minecraft.world.entity.ai.memory.MemoryModuleType.IS_PREGNANT,
+            net.minecraft.util.Unit.INSTANCE);
+
+        helper.runAfterDelay(180, () -> {
+            int eggs = countEggBlocks(helper);
+            if (eggs == 0) {
+                helper.fail("probe inconclusive: pregnant frog never laid in 180 ticks");
+                return;
+            }
+            if (eggs > 1) {
+                helper.fail("MULTI-LAY REPRODUCED: one pregnancy produced " + eggs + " eggs");
+                return;
+            }
+            if (frog.getBrain().hasMemoryValue(
+                    net.minecraft.world.entity.ai.memory.MemoryModuleType.IS_PREGNANT)) {
+                helper.fail("IS_PREGNANT still set after the lay - the frog would lay again");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /**
+     * The same single-egg guarantee from the v1.24.3-NEW submerged start: a
+     * pregnant frog at the bottom of a 2-deep column (a lay state vanilla
+     * never allowed) must still produce exactly one egg.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 220)
+    public static void onePregnancyLaysExactlyOneEggSubmerged(GameTestHelper helper) {
+        buildLayPen(helper);
+        // A 2-deep enclosed water column in the pen centre: floor cell + the
+        // cell above, walled so the upper source cannot spread.
+        helper.setBlock(new BlockPos(2, 1, 2), Blocks.WATER);
+        for (int[] d : new int[][] {{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
+            helper.setBlock(new BlockPos(2 + d[0], 2, 2 + d[1]), Blocks.STONE);
+        }
+        helper.setBlock(new BlockPos(2, 2, 2), Blocks.WATER);
+
+        ResourceFrog frog = helper.spawn(PFEntities.RESOURCE_FROG.get(), new BlockPos(2, 1, 2));
+        frog.setCategory(Category.TIDE);
+        frog.getBrain().setMemory(
+            net.minecraft.world.entity.ai.memory.MemoryModuleType.IS_PREGNANT,
+            net.minecraft.util.Unit.INSTANCE);
+
+        helper.runAfterDelay(180, () -> {
+            int eggs = countEggBlocks(helper);
+            if (eggs == 0) {
+                helper.fail("probe inconclusive: submerged pregnant frog never laid in 180 ticks");
+                return;
+            }
+            if (eggs > 1) {
+                helper.fail("MULTI-LAY REPRODUCED (submerged): one pregnancy produced " + eggs + " eggs");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    // =================================================================
     // Frog stat EFFECTS (docs/frog_breeding.md) - the gameplay payoff of
     // the three stats, verified in-world (curve math is in FrogStatsTest).
     // =================================================================
