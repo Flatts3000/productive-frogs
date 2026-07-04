@@ -19,9 +19,9 @@ walls; the resolved interior direction drives the receptacle lookups, the
 Wardenbane perch, and the replica render.
 
 - **Floor** (`y-1`): 5x5 Reinforced Sculk Froglight, with the **Echoing
-  Catalyst** capstone set beneath the pit center (crafted from a Sculk
-  Catalyst - building the altar proves a first Warden kill; the altar pays
-  catalysts thereafter).
+  Catalyst** capstone set into the floor beneath the pit center (crafted
+  from a Sculk Catalyst - building the altar proves a first Warden kill;
+  the altar pays catalysts thereafter).
 - **Shaft lining** (`y0..2`): the 5x5 ring, Reinforced Sculk Froglight, around
   a 3x3 open cavity.
 - **Rim at grade** (`y3`): Reinforced Echo Shard Froglight ring with the four

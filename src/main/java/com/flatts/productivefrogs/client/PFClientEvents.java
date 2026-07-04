@@ -154,8 +154,15 @@ public final class PFClientEvents {
             com.flatts.productivefrogs.registry.PFBlockEntities.WARDEN_ALTAR_HATCH.get(),
             ctx -> new com.flatts.productivefrogs.client.renderer.GrowingReplicaRenderer<>(ctx,
                 net.minecraft.world.entity.EntityType.WARDEN,
-                new net.minecraft.world.phys.Vec3(0.0, 0.0, 2.0), 1.2,
-                com.flatts.productivefrogs.PFConfig::wardenAltarSummonTicks));
+                new net.minecraft.world.phys.Vec3(0.0, 0.0, 2.0), 0.0,
+                com.flatts.productivefrogs.PFConfig::wardenAltarSummonTicks,
+                false, // full-size: the vanilla emerge animation IS the reveal
+                (phantom, firstFrame) -> {
+                    if (firstFrame && phantom instanceof net.minecraft.world.entity.monster.warden.Warden warden) {
+                        warden.setPose(net.minecraft.world.entity.Pose.EMERGING);
+                        warden.emergeAnimationState.start(warden.tickCount);
+                    }
+                }));
         // Elder Guardian Altar Hatch (#280): the Elder Guardian replica swelling mid-tank.
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.ELDER_ALTAR_HATCH.get(),

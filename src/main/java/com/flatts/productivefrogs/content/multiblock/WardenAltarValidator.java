@@ -127,7 +127,7 @@ public final class WardenAltarValidator {
 
     private static Oriented validateOriented(LevelReader level, BlockPos hatch, Direction interior) {
         if (!allMatch(level, hatch, CAPSTONE, interior, PFBlocks.ECHOING_CATALYST.get())) {
-            return new Oriented(0, "missing the Echoing Catalyst beneath the pit center (defeat a Warden first)");
+            return new Oriented(0, "missing the Echoing Catalyst in the pit floor (defeat a Warden first)");
         }
         if (!allMatch(level, hatch, SCULK, interior, PFBlocks.REINFORCED_SCULK_FROGLIGHT.get())) {
             return new Oriented(1, "incomplete Reinforced Sculk Froglight floor/lining");

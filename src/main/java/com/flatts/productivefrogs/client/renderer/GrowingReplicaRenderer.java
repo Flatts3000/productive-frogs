@@ -16,6 +16,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Generic in-world summon animation for the Phase 4b altars (#279/#280): a
@@ -44,17 +45,36 @@ public class GrowingReplicaRenderer<T extends BossAltarHatchBlockEntity>
     /** How far below the rest position the replica starts (rises as the summon runs). */
     private final double riseDepth;
     private final IntSupplier summonDuration;
+    /** Scale the replica 0 -> 1 over the summon; false renders full-size (a vanilla emerge animation supplies the drama). */
+    private final boolean growScale;
+    /** Per-summon animation driver (e.g. the Warden's emerge); called each frame with firstFrame on the summon's first observed frame. */
+    @Nullable
+    private final ReplicaAnimator animator;
+
+    /** Drives a vanilla animation on the phantom (started on the summon's first observed frame). */
+    @FunctionalInterface
+    public interface ReplicaAnimator {
+        void animate(Entity phantom, boolean firstFrame);
+    }
 
     /** A client-side phantom boss fed to the vanilla renderer; never in the world. */
     private Entity phantom;
 
     public GrowingReplicaRenderer(BlockEntityRendererProvider.Context ctx, EntityType<?> replicaType,
             Vec3 restOffset, double riseDepth, IntSupplier summonDuration) {
+        this(ctx, replicaType, restOffset, riseDepth, summonDuration, true, null);
+    }
+
+    public GrowingReplicaRenderer(BlockEntityRendererProvider.Context ctx, EntityType<?> replicaType,
+            Vec3 restOffset, double riseDepth, IntSupplier summonDuration,
+            boolean growScale, @Nullable ReplicaAnimator animator) {
         this.dispatcher = ctx.entityRenderer();
         this.replicaType = replicaType;
         this.restOffset = restOffset;
         this.riseDepth = riseDepth;
         this.summonDuration = summonDuration;
+        this.growScale = growScale;
+        this.animator = animator;
     }
 
     @Override
@@ -74,7 +94,8 @@ public class GrowingReplicaRenderer<T extends BossAltarHatchBlockEntity>
         // summonTicks is only synced at start/end (the on/off signal), so drive the
         // growth from the client's own elapsed time since the summon was first observed.
         long time = be.getLevel().getGameTime();
-        if (be.clientSummonStartGameTime < 0L) {
+        boolean firstFrame = be.clientSummonStartGameTime < 0L;
+        if (firstFrame) {
             be.clientSummonStartGameTime = time;
         }
         float elapsed = (time - be.clientSummonStartGameTime) + partialTick;
@@ -87,13 +108,7 @@ public class GrowingReplicaRenderer<T extends BossAltarHatchBlockEntity>
             return;
         }
         phantom.tickCount = (int) time; // advance idle animation
-        // Face back toward the wall-mounted Hatch (canonical interior SOUTH -> face NORTH).
         net.minecraft.core.Direction interior = be.orientation();
-        phantom.setYRot(interior.getOpposite().toYRot());
-        EntityRenderState replica = dispatcher.extractEntity(phantom, partialTick);
-        replica.shadowRadius = 0.0F; // suppress the shadow (it is a mirage)
-        state.replica = replica;
-        state.progress = progress;
         // Rotate the canonical rest offset into the resolved frame.
         state.offX = switch (interior) {
             case WEST -> -restOffset.z;
@@ -107,6 +122,36 @@ public class GrowingReplicaRenderer<T extends BossAltarHatchBlockEntity>
             case EAST -> -restOffset.x;
             default -> restOffset.z;
         };
+        // Position the phantom at the replica's REAL world spot before extraction:
+        // the extracted render state samples its lightmap at the entity's position,
+        // so an unplaced phantom renders with garbage light (the pitch-black Warden).
+        double wx = be.getBlockPos().getX() + 0.5 + state.offX;
+        double wy = be.getBlockPos().getY() + restOffset.y;
+        double wz = be.getBlockPos().getZ() + 0.5 + state.offZ;
+        phantom.setPos(wx, wy, wz);
+        // Face back toward the wall-mounted Hatch (canonical interior SOUTH -> face
+        // NORTH). Body/head/interpolation fields all need setting - the model reads
+        // yBodyRot, not yRot (the replica that faced away from the Hatch).
+        float yaw = interior.getOpposite().toYRot();
+        phantom.setYRot(yaw);
+        // Snap the OLD pos/rot to match: the light probe lerps old -> current by
+        // partial tick, so stale old fields (world origin) sample light along a
+        // line through unloaded chunks - the dark/blinking replica.
+        phantom.setOldPosAndRot();
+        phantom.yRotO = yaw;
+        if (phantom instanceof net.minecraft.world.entity.LivingEntity living) {
+            living.yBodyRot = yaw;
+            living.yBodyRotO = yaw;
+            living.setYHeadRot(yaw);
+            living.yHeadRotO = yaw;
+        }
+        if (animator != null) {
+            animator.animate(phantom, firstFrame);
+        }
+        EntityRenderState replica = dispatcher.extractEntity(phantom, partialTick);
+        replica.shadowRadius = 0.0F; // suppress the shadow (it is a mirage)
+        state.replica = replica;
+        state.progress = progress;
         state.active = true;
     }
 
@@ -117,7 +162,7 @@ public class GrowingReplicaRenderer<T extends BossAltarHatchBlockEntity>
             return;
         }
         float progress = state.progress;
-        float scale = 0.05F + 0.95F * progress;
+        float scale = growScale ? 0.05F + 0.95F * progress : 1.0F;
         poseStack.pushPose();
         poseStack.translate(
             0.5 + state.offX,
