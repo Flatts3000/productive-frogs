@@ -557,7 +557,8 @@ public final class PFBlocks {
             receptacleProperties());
     public static final DeferredBlock<SummonReceptacleBlock> TIDE_OFFERING_RECEPTACLE =
         registerBlock("tide_offering_receptacle",
-            p -> new SummonReceptacleBlock(p, Items.PRISMARINE_CRYSTALS), receptacleProperties());
+            p -> new SummonReceptacleBlock(p, Items.PRISMARINE_CRYSTALS,
+                SummonReceptacleBlock.DisplayMode.TOP), receptacleProperties());
     /**
      * Reinforced Light Blue Stained Glass - the Monument Well's walls (#280,
      * maintainer ruling 2026-07-04: the tank walls are glass so the swimming
