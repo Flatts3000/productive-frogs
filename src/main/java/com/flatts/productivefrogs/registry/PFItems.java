@@ -132,7 +132,7 @@ public final class PFItems {
      */
     public static final DeferredItem<PlaceOnWaterBlockItem> SWEETSLIMED_LILY_PAD = ITEMS.registerItem(
         "sweetslimed_lily_pad",
-        props -> new PlaceOnWaterBlockItem(PFBlocks.SWEETSLIMED_LILY_PAD.get(), props)
+        props -> new PlaceOnWaterBlockItem(PFBlocks.SWEETSLIMED_LILY_PAD.get(), props.useBlockDescriptionPrefix())
     );
 
     /**
@@ -422,9 +422,10 @@ public final class PFItems {
      */
     public static final DeferredItem<ConfigurableFroglightItem> CONFIGURABLE_FROGLIGHT = ITEMS.registerItem(
         "configurable_froglight",
-        // 1.21.1: no Item.Properties.useBlockDescriptionPrefix(); ConfigurableFroglightItem
-        // overrides getDescriptionId itself to fall through to the block translation key.
-        props -> new ConfigurableFroglightItem(PFBlocks.CONFIGURABLE_FROGLIGHT.get(), props)
+        // useBlockDescriptionPrefix: every froglight lang key (base AND the
+        // per-variant "block...configurable_froglight.<variant>" suffixes the
+        // item's getName builds) lives under the block.* prefix.
+        props -> new ConfigurableFroglightItem(PFBlocks.CONFIGURABLE_FROGLIGHT.get(), props.useBlockDescriptionPrefix())
     );
 
     /**
@@ -576,7 +577,7 @@ public final class PFItems {
      */
     public static final DeferredItem<BlockItem> MIDAS_FROG_EGG = ITEMS.registerItem(
         "midas_frog_egg",
-        props -> new PlaceOnWaterBlockItem(PFBlocks.MIDAS_FROG_EGG.get(), props)
+        props -> new PlaceOnWaterBlockItem(PFBlocks.MIDAS_FROG_EGG.get(), props.useBlockDescriptionPrefix())
     );
 
     /**
@@ -663,10 +664,13 @@ public final class PFItems {
             // the water block and then fails canSurvive). Without this, the
             // primed egg block items can't be placed at all.
             Category catCopy = cat;
+            // useBlockDescriptionPrefix: the name comes from the BLOCK lang key
+            // (block.productivefrogs.<cat>_frog_egg) - a bare registerItem would
+            // mint an item.* description id no lang entry covers.
             map.put(cat, ITEMS.registerItem(
                 cat.primedEggItemName(),
                 props -> new PlaceOnWaterBlockItem(
-                    PFBlocks.PRIMED_FROG_EGGS.get(catCopy).get(), props)
+                    PFBlocks.PRIMED_FROG_EGGS.get(catCopy).get(), props.useBlockDescriptionPrefix())
             ));
         }
         return map;
