@@ -112,10 +112,11 @@ public class WitherAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
     }
 
     /**
-     * The raw-drops payout (#281 Phase 4): the star is paid explicitly (the vanilla
-     * loot table only drops it on a player-credited kill, which the phantom
-     * generic-kill roll is not) and stripped from the roll so a table that DOES
-     * yield one can't double-pay.
+     * The raw-drops payout (#281 Phase 4): the star is paid explicitly - vanilla's
+     * wither loot TABLE is empty; the Nether Star is hardcoded in
+     * {@code WitherBoss.dropCustomDeathLoot}, so no loot-context trick can roll
+     * it - and stripped from the roll so a pack table that DOES add one can't
+     * double-pay (the roll is player-credited, so such a pool would pay).
      */
     @Override
     protected void payOut(ServerLevel server, BlockPos pos) {

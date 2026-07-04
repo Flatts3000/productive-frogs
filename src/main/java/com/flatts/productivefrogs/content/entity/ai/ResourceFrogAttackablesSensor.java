@@ -63,7 +63,11 @@ public class ResourceFrogAttackablesSensor extends FrogAttackablesSensor {
         // backpressure would freeze them for a container they don't use
         // (review finding #5). Species Froglights and Midas Prismatics both
         // deposit to the Hatch, so those kinds keep the gate.
-        if (!(frog.getKind() instanceof com.flatts.productivefrogs.data.FrogKind.Predator)
+        // Hunters (Predator AND Apex) drop ground loot via the fake-player devour
+        // path and never deposit into the Terrarium Hatch, so backpressure must
+        // not freeze either kind (review finding: Apex was missed when the kind
+        // arrived after this exemption).
+        if (!PFShootTongue.isHunterKind(frog.getKind())
                 && isOwningHatchFull(frog)) {
             return false;
         }

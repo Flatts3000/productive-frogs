@@ -19,10 +19,10 @@ import net.minecraft.world.level.block.state.BlockState;
  * summon brain, anchored in the tank floor. Altar-specific pieces: the symmetric
  * water-checked {@link ElderAltarValidator}, four Tide Offering Receptacles at
  * the roof corners as fuel (4 prismarine crystals - renewable through the
- * predation chain), Elderbane swimming above the Hatch, and the raw-drops
- * payout - one explicit Wet Sponge (its pool is killed_by_player-conditioned)
- * plus the unconditioned rest of the Elder Guardian's loot roll, plus the
- * data-driven {@code productivefrogs:elder_altar} supplemental table.
+ * predation chain), Elderbane swimming in front of the Hatch, and the
+ * raw-drops payout - the Elder Guardian's full player-credited loot roll
+ * (Wet Sponge included) plus the data-driven
+ * {@code productivefrogs:elder_altar} supplemental table.
  */
 public class ElderAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
 
@@ -103,18 +103,16 @@ public class ElderAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
     }
 
     /**
-     * The raw-drops payout (#281 Phase 4): the Wet Sponge is paid explicitly (its
-     * loot pool carries {@code killed_by_player}, which the phantom generic-kill
-     * roll is not - the same trap as the wither's Nether Star) and stripped from
-     * the roll so a table that DOES yield one can't double-pay; the rest of the
-     * Elder Guardian's table (shards, cod/crystals) rolls unconditioned.
+     * The raw-drops payout (#281 Phase 4): the Elder Guardian's own loot roll
+     * pays everything - {@code rollLoot} is player-credited, so the
+     * {@code killed_by_player}-gated pools (the Wet Sponge, the fishing bonus)
+     * pay naturally; no explicit top-up or strip-guard needed (review fix).
      */
     @Override
     protected void payOut(ServerLevel server, BlockPos pos) {
-        spillDeposit(server, pos, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.WET_SPONGE));
         rollLoot(server, pos, EntityType.ELDER_GUARDIAN,
             EntityType.ELDER_GUARDIAN.getDefaultLootTable().orElseThrow(),
-            stack -> !stack.is(net.minecraft.world.item.Items.WET_SPONGE));
+            stack -> true);
         rollLoot(server, pos, EntityType.ELDER_GUARDIAN, ELDER_ALTAR_LOOT_TABLE, stack -> true);
         server.playSound(null, pos, SoundEvents.ELDER_GUARDIAN_DEATH, SoundSource.HOSTILE, 1.0F, 1.0F);
     }

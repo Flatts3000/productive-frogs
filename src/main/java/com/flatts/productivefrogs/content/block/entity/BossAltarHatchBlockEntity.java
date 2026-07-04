@@ -261,11 +261,20 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
 
     // ---- shared helpers ------------------------------------------------------
 
+    /** The altar's phantom-kill credit (the devour path's profile pattern; one fake player per level). */
+    private static final com.mojang.authlib.GameProfile ALTAR_PROFILE = new com.mojang.authlib.GameProfile(
+        java.util.UUID.fromString("b0551a15-4a15-4a15-8a15-a15a15a15a15"), "[PF Boss Altar]");
+
     /**
      * Roll a loot table into the hatch with a never-spawned phantom of
-     * {@code phantomType} as the {@code this_entity} context (mirrors a real kill so
-     * pack/GLM conditions apply, but no boss ever enters the world). Stacks failing
-     * {@code keep} are dropped - the strip-guard against double-paying an explicit reward.
+     * {@code phantomType} as the {@code this_entity} context. The kill is
+     * PLAYER-CREDITED via a fake player ({@code playerAttack} damage source +
+     * {@code LAST_DAMAGE_PLAYER}), exactly like {@code PFShootTongue.devour} -
+     * so {@code killed_by_player}-gated pools (the elder's Wet Sponge and
+     * fishing bonus, pack/GLM additions) pay naturally instead of being
+     * silently dropped by a generic-kill context (review finding). Stacks
+     * failing {@code keep} are dropped - the strip-guard against double-paying
+     * an explicit reward.
      */
     protected void rollLoot(ServerLevel server, BlockPos pos, EntityType<?> phantomType,
             ResourceKey<LootTable> tableKey, Predicate<ItemStack> keep) {
@@ -274,10 +283,15 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
             return; // never added to the world; only the loot context needs it
         }
         phantom.snapTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
+        net.neoforged.neoforge.common.util.FakePlayer killer =
+            net.neoforged.neoforge.common.util.FakePlayerFactory.get(server, ALTAR_PROFILE);
+        killer.setPos(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
         LootParams params = new LootParams.Builder(server)
             .withParameter(LootContextParams.THIS_ENTITY, phantom)
             .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
-            .withParameter(LootContextParams.DAMAGE_SOURCE, server.damageSources().genericKill())
+            .withParameter(LootContextParams.DAMAGE_SOURCE, server.damageSources().playerAttack(killer))
+            .withParameter(LootContextParams.ATTACKING_ENTITY, killer)
+            .withParameter(LootContextParams.LAST_DAMAGE_PLAYER, killer)
             .create(LootContextParamSets.ENTITY);
         LootTable table = server.getServer().reloadableRegistries().getLootTable(tableKey);
         table.getRandomItems(params, server.getRandom().nextLong(), stack -> {
