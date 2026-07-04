@@ -1,6 +1,9 @@
 package com.flatts.productivefrogs.content.item;
 
 import com.flatts.productivefrogs.content.fluid.LiquidExperienceFluid;
+import java.util.function.Consumer;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
@@ -11,7 +14,10 @@ import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUtils;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.material.Fluid;
 
 /**
  * The Liquid Experience bucket (#281 Phase 2). Right-click is the spend path:
@@ -31,19 +37,16 @@ import net.minecraft.world.level.Level;
  */
 public final class LiquidExperienceBucketItem extends BucketItem {
 
-    public LiquidExperienceBucketItem(net.minecraft.world.level.material.Fluid content, Properties properties) {
+    public LiquidExperienceBucketItem(Fluid content, Properties properties) {
         super(content, properties);
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context,
-            net.minecraft.world.item.component.TooltipDisplay tooltipDisplay,
-            java.util.function.Consumer<net.minecraft.network.chat.Component> tooltip,
-            net.minecraft.world.item.TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay,
+            Consumer<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, context, tooltipDisplay, tooltip, flag);
-        tooltip.accept(net.minecraft.network.chat.Component
-            .translatable("item.productivefrogs.liquid_experience_bucket.tooltip")
-            .withStyle(net.minecraft.ChatFormatting.GRAY));
+        tooltip.accept(Component.translatable("item.productivefrogs.liquid_experience_bucket.tooltip")
+            .withStyle(ChatFormatting.GRAY));
     }
 
     @Override
