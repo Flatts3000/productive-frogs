@@ -376,6 +376,17 @@ public final class PFModBusEvents {
             PFItems.MIMIC_MILK_BUCKET.get()
         );
 
+        // Liquid Experience bucket (#281 Phase 2): also a BucketItem subclass, so it
+        // needs the same explicit Fluid.ITEM registration - but XP is fungible (no
+        // components to carry), so NeoForge's STOCK BucketResourceHandler serves
+        // unmodified. This is what lets any c:experience tank/pipe/drain pump the
+        // fluid out of (and back into) the bucket at exact bucket volume.
+        event.registerItem(
+            Capabilities.Fluid.ITEM,
+            (stack, access) -> new net.neoforged.neoforge.transfer.fluid.BucketResourceHandler(access),
+            PFItems.LIQUID_EXPERIENCE_BUCKET.get()
+        );
+
         // PORT-DROP(2.0): the brewed-Froglight Curios item capability returns with
         // Curios support as a 2.x minor (CuriosCompat removed in the 26.1 port).
         // Brewed Froglights keep their placed-aura + held-buff forms; only the

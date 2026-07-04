@@ -52,11 +52,35 @@ public final class PFFluidTypes {
     public static final DeferredHolder<FluidType, FluidType> MIMIC_MILK_TYPE =
         TYPES.register("mimic_slime_milk", () -> new FluidType(milkProperties()));
 
+    /**
+     * Liquid Experience (#281 Phase 2) - the {@code c:experience} XP fluid. One
+     * plain type: XP is fungible, so unlike milk there is no per-instance colour
+     * or component to resolve (the render tint is a constant XP green, see
+     * {@code PFClientEvents}). Glows faintly like the orbs it bottles.
+     */
+    public static final DeferredHolder<FluidType, FluidType> LIQUID_EXPERIENCE_TYPE =
+        TYPES.register("liquid_experience", () -> new FluidType(experienceProperties()));
+
     static FluidType.Properties milkProperties() {
         return FluidType.Properties.create()
             .density(1500)
             .viscosity(2000)
             .lightLevel(0)
+            .canSwim(true)
+            .canDrown(false);
+    }
+
+    /**
+     * Liquid Experience: water-ish weight with a slight syrup drag, glowing like
+     * the orbs it bottles. Not placeable (no {@code .block()} on the fluid), so
+     * the swim/drown flags never matter in-world; set safe values anyway for any
+     * mod that inspects the type.
+     */
+    static FluidType.Properties experienceProperties() {
+        return FluidType.Properties.create()
+            .density(1200)
+            .viscosity(1500)
+            .lightLevel(10)
             .canSwim(true)
             .canDrown(false);
     }

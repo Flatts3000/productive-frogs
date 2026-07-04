@@ -259,6 +259,13 @@ public final class PFClientEvents {
         event.register(new FluidModel.Unbaked(milkStill, milkFlow, null, mimicFluidTint()),
             PFFluids.MIMIC_MILK.get(), PFFluids.MIMIC_MILK_FLOWING.get());
 
+        // Liquid Experience (#281 Phase 2): the shared greyscale milk texture set
+        // with a CONSTANT XP-green tint - no BE, no variant, the colour never
+        // varies, so no render-time resolution is needed (the simplest tint in
+        // the mod, matching the simplest fluid).
+        event.register(new FluidModel.Unbaked(milkStill, milkFlow, null, constantFluidTint(LIQUID_EXPERIENCE_GREEN)),
+            PFFluids.LIQUID_EXPERIENCE.get(), PFFluids.LIQUID_EXPERIENCE_FLOWING.get());
+
         Material moltenStill = new Material(id("block/molten_still"));
         Material moltenFlow = new Material(id("block/molten_flow"));
         for (Identifier mid : PFMoltenFluids.registeredMetals()) {
@@ -269,6 +276,20 @@ public final class PFClientEvents {
             }
             event.register(new FluidModel.Unbaked(moltenStill, moltenFlow, null, variantFluidTint(mid)), src, flow);
         }
+    }
+
+    /** Vanilla experience-orb green - the fixed Liquid Experience tint (and its bucket art). */
+    private static final int LIQUID_EXPERIENCE_GREEN = 0x80FF20;
+
+    /** A fixed-colour fluid tint (Liquid Experience - nothing per-instance to resolve). */
+    private static FluidTintSource constantFluidTint(int rgb) {
+        int argb = Tints.opaque(rgb);
+        return new FluidTintSource() {
+            @Override
+            public int color(FluidState state) {
+                return argb;
+            }
+        };
     }
 
     /** Render-time tint to a baked variant's {@code primary_color} (cream fallback when unresolved). */

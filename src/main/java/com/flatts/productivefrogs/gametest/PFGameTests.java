@@ -90,6 +90,7 @@ public final class PFGameTests {
         BreedingFrogAiTests.register();
         PredatorBreedingTests.register();
         PredatorEatPathTests.register();
+        LiquidExperienceTests.register();
         TerrariumTests.register();
         EquivalenceLaneTests.register();
 

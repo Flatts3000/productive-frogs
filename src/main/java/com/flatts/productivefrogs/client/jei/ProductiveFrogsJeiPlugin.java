@@ -182,6 +182,11 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         if (!PFConfig.frogStatsEnabled()) {
             hidden.add(new ItemStack(PFItems.SWEETSLIME.get()));
         }
+        // Liquid Experience bucket (#281 Phase 2): hide when predation is off,
+        // the same posture as the creative tab.
+        if (!PFConfig.predatorsEnabled()) {
+            hidden.add(new ItemStack(PFItems.LIQUID_EXPERIENCE_BUCKET.get()));
+        }
         if (!hidden.isEmpty()) {
             jeiRuntime.getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hidden);
         }
