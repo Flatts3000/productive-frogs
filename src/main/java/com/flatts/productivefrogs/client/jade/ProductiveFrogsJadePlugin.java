@@ -487,9 +487,6 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 return;
             }
             data.putBoolean("MilkSource", true);
-            // Boss-tier altar (#184): N/6 catalyst faces, so an incomplete shell
-            // is debuggable. Written before the Unlimited early-return below so it
-            // shows even on an infinite (Endless-catalyst) boss source.
             // Catalyst upgrade levels (v1.7): written before the count branch so
             // they still show on an infinite source. SpeedMax/QuantityMax travel
             // with the data so the client needs no config read.

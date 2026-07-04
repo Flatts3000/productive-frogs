@@ -9,8 +9,11 @@ Supersedes the scrapped #248. Fourth altar on the shared
 ## Shape - a sealed aquarium
 
 Altar rules: one Hatch, reinforced froglights, gated by one boss resource. The
-well is a 5x5x5 sealed tank, **4-fold symmetric**, anchored on the **Elder
-Altar Hatch** in the tank floor center:
+well is a 5x5x5 sealed tank, anchored on the **Elder Altar Hatch** set INTO the
+tank wall at water-floor level - its outer face sticks out of the glass so
+pipes reach it (the floor-center anchor was pipe-unreachable). The validator is
+**facing-aware** (the wither pattern); the resolved interior direction drives
+the receptacle lookups, the Elderbane perch, and the replica render:
 
 - **Floor** (`y-1`): 5x5 Reinforced Sponge Froglight.
 - **Walls** (`y0..2`): the 5x5 ring, **Reinforced Light Blue Stained Glass** -
@@ -20,9 +23,10 @@ Altar Hatch** in the tank floor center:
   Offering Receptacles** standing at the corners like monument spires and the
   **Monument Core** capstone at the center (crafted from a Wet Sponge - the
   Elder Guardian's signature drop).
-- **Interior**: every 3x3x3 cell (except the Hatch) must be a **water source**
-  - the validator checks the flood, not just the shell. Elderbane, the display
-  frog, swims pinned in front of the Hatch.
+- **Interior**: every 3x3x3 cell must be a **water source** - the validator
+  checks the flood, not just the shell (the Hatch sits in the wall, outside
+  the flooded volume). Elderbane, the display frog, swims pinned in front of
+  the Hatch.
 
 Canonical layout: `data/productivefrogs/structure/elder_altar.nbt`, locked by
 the `elder_altar_*` GameTests (including `elder_altar_rejects_drained_tank` -

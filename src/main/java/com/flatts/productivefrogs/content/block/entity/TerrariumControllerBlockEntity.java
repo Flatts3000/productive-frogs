@@ -264,11 +264,9 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
 
     /**
      * Whether the buffer can take another charge of {@code variant}: buffer not
-     * full, reject-until-empty on variant, AND not a boss-tier ({@code spawn_catalyst})
-     * variant. Boss milk is refused outright - a Sprinkler can't reproduce the
-     * source's 6-face catalyst altar gate, so the Terrarium must not become an
-     * altar bypass (issue #184). All intake paths (bucket, pipe fill, isFluidValid)
-     * funnel through here.
+     * full, reject-until-empty on variant. All intake paths (bucket, pipe fill,
+     * isFluidValid) funnel through here. (The boss-milk refusal retired with the
+     * catalyst altars in Phase 5 - no spawn_catalyst variants exist on 2.0.)
      */
     public boolean canAccept(Identifier variant) {
         return charges.size() < PFConfig.terrariumControllerBufferDepth()

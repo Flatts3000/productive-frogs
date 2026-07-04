@@ -4,6 +4,8 @@
 > v1.14 and was removed in the 2.0 mob-drop redesign - the four boss altars
 > (docs/dragon_altar.md, wither, warden, elder) replaced it with raw drops +
 > Liquid Experience. This document is kept as the historical design record.
+> A datapack variant still declaring `spawn_catalyst` now FAILS at decode time
+> with a pointer here (silently ignoring it would load the variant ungated).
 
 > **Status: SHIPPED in v1.14.0 (#182, 2026-06-07).** Built as written. The boss-tier variants (#172/#173) + their prime-only `weight 0` mechanic shipped in the same release. The decision log at the bottom records how the shape was settled; everything below describes the shipped behavior.
 >
