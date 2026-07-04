@@ -1,0 +1,25 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "productivefrogs:config_enabled",
+      "config": "predators"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "group": "productivefrogs",
+  "pattern": [
+    "SSS",
+    "SES",
+    " I "
+  ],
+  "key": {
+    "S": "minecraft:string",
+    "E": "minecraft:ender_pearl",
+    "I": "minecraft:stick"
+  },
+  "result": {
+    "id": "productivefrogs:ender_net",
+    "count": 1
+  }
+}

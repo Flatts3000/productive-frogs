@@ -11,10 +11,13 @@ import com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockE
 import com.flatts.productivefrogs.content.block.entity.HatchBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.MimicMilkSourceBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.MobSlurryBasinBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeChurnBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.SlimeMilkBasinBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.SlurryPressBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SpawneryBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SweetslimedLilyPadBlockEntity;
@@ -59,6 +62,36 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "slime_churn",
             () -> new BlockEntityType<>(SlimeChurnBlockEntity::new, PFBlocks.SLIME_CHURN.get())
+        );
+
+    /**
+     * BE type for the {@code slurry_press} block (#281, Phase 3) - the 2-in/2-out
+     * inventory and the flat press-cycle progress. See {@link SlurryPressBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<SlurryPressBlockEntity>> SLURRY_PRESS =
+        BLOCK_ENTITIES.register(
+            "slurry_press",
+            () -> new BlockEntityType<>(SlurryPressBlockEntity::new, PFBlocks.SLURRY_PRESS.get())
+        );
+
+    /**
+     * BE type for the {@code mob_slurry_basin} (#281, Phase 3) - the held slurry
+     * charge + spawn economy. See {@link MobSlurryBasinBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<MobSlurryBasinBlockEntity>> MOB_SLURRY_BASIN =
+        BLOCK_ENTITIES.register(
+            "mob_slurry_basin",
+            () -> new BlockEntityType<>(MobSlurryBasinBlockEntity::new, PFBlocks.MOB_SLURRY_BASIN.get())
+        );
+
+    /**
+     * BE type for the {@code slime_milk_basin} (#281, Phase 3) - the held milk
+     * charge + spawn economy. See {@link SlimeMilkBasinBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<SlimeMilkBasinBlockEntity>> SLIME_MILK_BASIN =
+        BLOCK_ENTITIES.register(
+            "slime_milk_basin",
+            () -> new BlockEntityType<>(SlimeMilkBasinBlockEntity::new, PFBlocks.SLIME_MILK_BASIN.get())
         );
 
     /**

@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.registry;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.fluid.LiquidExperienceFluid;
 import com.flatts.productivefrogs.content.fluid.MimicMilkFluid;
+import com.flatts.productivefrogs.content.fluid.MobSlurryFluid;
 import com.flatts.productivefrogs.content.fluid.SlimeMilkFluid;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.LiquidBlock;
@@ -102,6 +103,29 @@ public final class PFFluids {
                 .bucket(PFItems.LIQUID_EXPERIENCE_BUCKET);
         }
         return liquidExperienceProps;
+    }
+
+    /**
+     * Mob Slurry (#281 Phase 3) - source + flowing, both refusing all spread,
+     * with NO block form ("the slurry never becomes a world fluid"): it lives
+     * in buckets, tanks/pipes, and inside the Basin. The mob rides the
+     * {@code SLURRIED_ENTITY} component on the bucket / {@code FluidResource}.
+     */
+    public static final DeferredHolder<Fluid, MobSlurryFluid.Source> MOB_SLURRY =
+        FLUIDS.register("mob_slurry", () -> new MobSlurryFluid.Source(mobSlurryProps()));
+    public static final DeferredHolder<Fluid, MobSlurryFluid.Flowing> MOB_SLURRY_FLOWING =
+        FLUIDS.register("mob_slurry_flowing", () -> new MobSlurryFluid.Flowing(mobSlurryProps()));
+
+    private static BaseFlowingFluid.Properties mobSlurryProps;
+
+    /** Shared properties for both Mob Slurry forms (built once, lazily). No {@code .block()} - not placeable. */
+    private static BaseFlowingFluid.Properties mobSlurryProps() {
+        if (mobSlurryProps == null) {
+            mobSlurryProps = new BaseFlowingFluid.Properties(
+                PFFluidTypes.MOB_SLURRY_TYPE, MOB_SLURRY, MOB_SLURRY_FLOWING)
+                .bucket(PFItems.MOB_SLURRY_BUCKET);
+        }
+        return mobSlurryProps;
     }
 
     private PFFluids() {

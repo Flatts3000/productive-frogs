@@ -85,6 +85,13 @@ The XP fluid. Small and self-contained; unblocks builds banking XP.
 
 ## Phase 3 - Ender Net + Slurry Press + Slurry Basin  (size: L)
 
+> **STATUS: IMPLEMENTED** on `feat/predator-frogs-phase3` (2026-07-03). Pattern notes from the build:
+> - The net mechanic was **refactored into a shared `EntityNetItem` base** (capture / release / whole-entity `saveWithoutId` round-trip / tamper-checked release) rather than cloning the Frog Net - each net supplies only its catch gate and config flag. The Frog Net's behaviour is unchanged.
+> - Mob Slurry is the **R-1 model a third time**: ONE `mob_slurry` fluid + a `SLURRIED_ENTITY` EntityType-id component, carried through tanks/pipes by the same `MilkBucketFluidResourceHandler` as milk (with the full budget/catalyst component set - parity by literally sharing the handler). Like Liquid Experience it has **no block form**, which is what makes the waterlogged Basin trivially safe: the fluid can never exist in the world, so there is nothing for pool water to mix with or wash away.
+> - The Press runs a **flat 100-tick cycle**, not the spawn economy - the economy (budget, catalysts, cadence) lives downstream on the Basin, exactly where it lives for milk. Boss rejection (`c:bosses`) is enforced at slot-insert AND re-checked at tick (tampered NBT stalls inert).
+> - The two Basins share one **`AbstractBasinBlockEntity` engine** (economy state, catalyst right-click + bucket component round-trip, fill-only pipe intake on the Terrarium funnel pattern, drain-to-bucket) - the parity principle enforced by the shared class being the feature set. The maintainer's spawn-placement order (horizontal ring, then above, then below, any of the 26 cells) is collision-checked per spawned entity, so tall mobs and water cells both work. A depleted Basin EMPTIES (the block persists) - that is its whole advantage over the milk source, which drains to air.
+> - Every slurry-spawned mob is stamped with the Phase 1 `TELEPORT_DISABLED` attachment at creation (uniformly - a no-op for non-teleporters); the Slime Milk Basin refuses boss (`spawn_catalyst`) milk, mirroring the Terrarium Controller.
+
 The supply chain that makes the eat path farmable.
 
 **Ships:**

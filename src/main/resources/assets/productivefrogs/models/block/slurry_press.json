@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/orientable_with_bottom",
+  "textures": {
+    "top": "productivefrogs:block/slurry_press_top",
+    "bottom": "productivefrogs:block/slurry_press_bottom",
+    "side": "productivefrogs:block/slurry_press_side",
+    "front": "productivefrogs:block/slurry_press_front"
+  }
+}

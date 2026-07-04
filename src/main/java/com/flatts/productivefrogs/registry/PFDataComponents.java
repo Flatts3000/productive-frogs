@@ -78,6 +78,22 @@ public final class PFDataComponents {
     );
 
     /**
+     * EntityType id carried by Mob Slurry content (#281, predation Phase 3) - the
+     * Slurry bucket and the Mob Slurry Basin's held charge. The R-1 pattern a
+     * third time: ONE {@code mob_slurry} fluid, the mob it condenses riding as
+     * this component (the 26.1 transfer API preserves it through tanks/pipes).
+     * Mutually exclusive with {@link #SLIME_VARIANT} / {@link #SYNTHESIZED_ITEM}
+     * (slurry is keyed on a mob, not a variant or an item).
+     */
+    public static final Supplier<DataComponentType<Identifier>> SLURRIED_ENTITY = COMPONENTS.register(
+        "slurried_entity",
+        () -> DataComponentType.<Identifier>builder()
+            .persistent(Identifier.CODEC)
+            .networkSynchronized(Identifier.STREAM_CODEC)
+            .build()
+    );
+
+    /**
      * Spawns-remaining counter carried by a Slime Milk bucket filled by
      * re-bucketing a placed source. Lets the depletion progress survive the
      * world -> bucket -> world round-trip: {@code SlimeMilkSourceBlock.pickupBlock}

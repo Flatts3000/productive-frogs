@@ -239,8 +239,9 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * it. Counts only PF {@link ResourceSlime}s of the matching {@link Category}
      * (vanilla slimes don't count); if the variant's category can't be resolved
      * (e.g. a sentinel source), counts any ResourceSlime so the cap still bounds it.
+     * Public since Phase 3: the Slime Milk Basin shares this exact check.
      */
-    private static boolean isAreaCrowded(ServerLevel level, BlockPos pos, Identifier variantId) {
+    public static boolean isAreaCrowded(ServerLevel level, BlockPos pos, Identifier variantId) {
         Category category = categoryForVariant(level, variantId);
         net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(pos).inflate(PFConfig.spawnCapRadius());
         java.util.List<ResourceSlime> nearby = level.getEntitiesOfClass(
