@@ -68,9 +68,11 @@ public class BasinBlock extends Block implements EntityBlock, SimpleWaterloggedB
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 
     /**
-     * A half-block basin - a crucible cut in half, inset 1px on every side
-     * (maintainer rulings): flush walls would z-fight the water rendered in a
-     * waterlogged cell, so no face of the model touches the block boundary.
+     * A half-block basin - a crucible cut in half (maintainer rulings): the
+     * four SIDES are inset 1px so flush walls can't z-fight the water rendered
+     * in a waterlogged cell, but the BOTTOM sits against the block's bottom
+     * (y=0) - a basin rests on the ground, and the flush down face culls
+     * normally against the block below.
      */
     private static final VoxelShape SHAPE =
         Shapes.box(1.0 / 16.0, 0.0, 1.0 / 16.0, 15.0 / 16.0, 0.5, 15.0 / 16.0);
