@@ -86,6 +86,13 @@ public class SummonReceptacleBlock extends Block implements EntityBlock {
         }
         if (!level.isClientSide()) {
             be.tryInsert(stack);
+            // The item renders on the side the player clicked (top/bottom clicks fall
+            // back to the face they are looking at). A formed altar overrides this -
+            // the hatch re-stamps the ritual face on its next validation pass.
+            net.minecraft.core.Direction face = hit.getDirection().getAxis().isHorizontal()
+                ? hit.getDirection()
+                : player.getDirection().getOpposite();
+            be.setDisplayFace(face);
             if (!player.getAbilities().instabuild) {
                 stack.shrink(1);
             }
