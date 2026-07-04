@@ -1,18 +1,12 @@
 package com.flatts.productivefrogs.content.block;
 
 import com.flatts.productivefrogs.content.block.entity.BossAltarHatchBlockEntity;
-import com.flatts.productivefrogs.content.item.EntityNetItem;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -62,34 +56,10 @@ public class BossAltarHatchBlock extends Block implements EntityBlock {
         return (BlockEntityTicker<T>) (BlockEntityTicker<? extends BossAltarHatchBlockEntity>) BossAltarHatchBlockEntity::serverTick;
     }
 
-    /**
-     * Apex install (#281 Phase 4, maintainer ruling): shift-right-click with a
-     * net holding THIS altar's Apex frog installs it - the whole net NBT moves
-     * onto the hatch's dock (the display frog renders while installed; breaking
-     * the hatch respawns the real frog) and the net comes back empty. The wrong
-     * frog (or any other kind) is refused with a no-thanks sound, nothing
-     * consumed. A plain right-click still opens the chest.
-     */
-    @Override
-    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
-            Player player, InteractionHand hand, BlockHitResult hit) {
-        if (player.isShiftKeyDown()
-                && stack.getItem() instanceof EntityNetItem
-                && EntityNetItem.isFilled(stack)
-                && level.getBlockEntity(pos) instanceof BossAltarHatchBlockEntity hatch) {
-            if (!level.isClientSide()) {
-                if (hatch.dock().tryInstall(stack)) {
-                    stack.remove(DataComponents.CUSTOM_DATA);
-                    hatch.syncToClient(); // the Jade warning reads the installed state client-side
-                    level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 1.0F, 0.8F);
-                } else {
-                    level.playSound(null, pos, SoundEvents.VILLAGER_NO, SoundSource.BLOCKS, 0.6F, 1.0F);
-                }
-            }
-            return InteractionResult.SUCCESS;
-        }
-        return InteractionResult.TRY_WITH_EMPTY_HAND;
-    }
+    // NOTE: the Apex net-install gesture (shift-right-click with a filled net)
+    // lives in EntityNetItem#useOn, NOT here - sneaking with an item in hand
+    // skips block interaction entirely (isSecondaryUseActive), so a block-side
+    // branch can never fire for that gesture. A plain right-click opens the chest.
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {

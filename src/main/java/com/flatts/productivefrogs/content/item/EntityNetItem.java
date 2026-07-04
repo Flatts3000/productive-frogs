@@ -159,6 +159,28 @@ public abstract class EntityNetItem extends Item {
             return InteractionResult.PASS;
         }
         Level level = context.getLevel();
+        // Apex install (#281 Phase 4): clicking a boss-altar Hatch with a filled
+        // net INSTALLS instead of releasing. This lives here, not in the block:
+        // sneaking with an item skips block interaction entirely on this MC line
+        // (isSecondaryUseActive), so the documented shift-right-click gesture only
+        // ever reaches the item's useOn - the original block-side branch was dead
+        // code and the net quietly spilled the frog beside the altar instead.
+        if (level.getBlockEntity(context.getClickedPos())
+                instanceof com.flatts.productivefrogs.content.block.entity.BossAltarHatchBlockEntity hatch) {
+            if (level.isClientSide()) {
+                return InteractionResult.SUCCESS;
+            }
+            if (hatch.dock().tryInstall(stack)) {
+                stack.remove(DataComponents.CUSTOM_DATA);
+                hatch.syncToClient(); // the Jade warning reads the installed state client-side
+                level.playSound(null, context.getClickedPos(), net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_CHIME,
+                    net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 0.8F);
+            } else {
+                level.playSound(null, context.getClickedPos(), net.minecraft.sounds.SoundEvents.VILLAGER_NO,
+                    net.minecraft.sounds.SoundSource.BLOCKS, 0.6F, 1.0F);
+            }
+            return InteractionResult.SUCCESS; // never spill the frog onto an altar hatch
+        }
         if (level.isClientSide()) {
             return InteractionResult.SUCCESS;
         }
