@@ -31,6 +31,17 @@ public final class PFEntityTags {
     public static final TagKey<EntityType<?>> ENDER_NET_DENYLIST = TagKey.create(
         Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "ender_net_denylist"));
 
+    /**
+     * Mobs that must never become Mob Slurry (#281 Phase 3): {@code #c:bosses}
+     * plus every Productive Frogs mob - the mod's own creatures have their own
+     * economies (milk on the slime side, breeding on the frog side), and
+     * slurrying a Resource Slime would both bypass the milk lane and respawn
+     * variant-less husks. Checked by the Slurry Press (produce) AND the Mob
+     * Slurry Basin (accept), so even tampered NBT can't route around it.
+     */
+    public static final TagKey<EntityType<?>> SLURRY_DENYLIST = TagKey.create(
+        Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "slurry_denylist"));
+
     private PFEntityTags() {
         // constants holder
     }

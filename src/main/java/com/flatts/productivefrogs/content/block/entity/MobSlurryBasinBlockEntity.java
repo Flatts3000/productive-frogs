@@ -52,7 +52,8 @@ public class MobSlurryBasinBlockEntity extends AbstractBasinBlockEntity {
     @Override
     public boolean acceptsKey(ServerLevel level, Identifier key) {
         EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getOptional(key).orElse(null);
-        return type != null && !type.builtInRegistryHolder().is(Tags.EntityTypes.BOSSES);
+        return type != null && !type.builtInRegistryHolder().is(
+            com.flatts.productivefrogs.registry.PFEntityTags.SLURRY_DENYLIST);
     }
 
     @Override
