@@ -650,14 +650,6 @@ public final class PFItems {
      * six faces of a boss-variant Slime Milk source arms it. See
      * {@code docs/boss_catalyst_altar.md}.
      */
-    public static final DeferredItem<BlockItem> NETHER_STAR_CATALYST =
-        registerSimpleBlockItem("nether_star_catalyst", PFBlocks.NETHER_STAR_CATALYST, new Item.Properties());
-    public static final DeferredItem<BlockItem> DRAGON_EGG_CATALYST =
-        registerSimpleBlockItem("dragon_egg_catalyst", PFBlocks.DRAGON_EGG_CATALYST, new Item.Properties());
-    public static final DeferredItem<BlockItem> WITHER_SKELETON_SKULL_CATALYST =
-        registerSimpleBlockItem("wither_skeleton_skull_catalyst", PFBlocks.WITHER_SKELETON_SKULL_CATALYST, new Item.Properties());
-    public static final DeferredItem<BlockItem> DRAGON_BREATH_CATALYST =
-        registerSimpleBlockItem("dragon_breath_catalyst", PFBlocks.DRAGON_BREATH_CATALYST, new Item.Properties());
 
     // Reinforced Froglights (#249) - the dragon altar's structural blocks.
     public static final DeferredItem<BlockItem> REINFORCED_OBSIDIAN_FROGLIGHT =

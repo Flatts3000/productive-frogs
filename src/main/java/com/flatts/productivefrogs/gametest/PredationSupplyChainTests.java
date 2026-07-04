@@ -55,8 +55,8 @@ final class PredationSupplyChainTests {
             PredationSupplyChainTests::mobSlurryBasinSpawnsLockedMobAndDepletes);
         PFGameTests.test("mob_slurry_basin_works_waterlogged", 80,
             PredationSupplyChainTests::mobSlurryBasinWorksWaterlogged);
-        PFGameTests.test("slime_milk_basin_spawns_variant_slime_and_rejects_boss_milk", 80,
-            PredationSupplyChainTests::slimeMilkBasinSpawnsVariantSlimeAndRejectsBossMilk);
+        PFGameTests.test("slime_milk_basin_spawns_variant_slime", 80,
+            PredationSupplyChainTests::slimeMilkBasinSpawnsVariantSlime);
         PFGameTests.test("basin_drain_returns_bucket_with_budget_intact", 40,
             PredationSupplyChainTests::basinDrainReturnsBucketWithBudgetIntact);
         PFGameTests.test("basin_consumes_dropped_catalyst", 80,
@@ -300,9 +300,8 @@ final class PredationSupplyChainTests {
     /**
      * The slime-side Basin: charged with a variant's milk it spawns that
      * variant's Resource Slime (through the shared createSlimeForVariant seam),
-     * and boss (altar-gated, spawn_catalyst) milk is refused outright.
      */
-    private static void slimeMilkBasinSpawnsVariantSlimeAndRejectsBossMilk(GameTestHelper helper) {
+    private static void slimeMilkBasinSpawnsVariantSlime(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 2, 2);
         helper.setBlock(pos, PFBlocks.SLIME_MILK_BASIN.get());
         if (!(helper.getLevel().getBlockEntity(helper.absolutePos(pos))
@@ -311,11 +310,6 @@ final class PredationSupplyChainTests {
             return;
         }
         Identifier iron = Identifier.fromNamespaceAndPath("productivefrogs", "iron");
-        Identifier bossMilk = Identifier.fromNamespaceAndPath("productivefrogs", "nether_star");
-        if (basin.acceptsKey(helper.getLevel(), bossMilk)) {
-            helper.fail("boss (spawn_catalyst) milk must be refused by the Basin");
-            return;
-        }
         basin.charge(iron, 4, 4, 0, 0, false);
         basin.forceReadyToFire();
 

@@ -276,13 +276,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
             // even on an unlikely id collision (defense-in-depth; canAcceptBucket
             // already enforces this single-kind rule for the bucket path).
             && !tankMimic
-            && (tankVariant == null || tankVariant.equals(variant))
-            && !requiresCatalystAltar(variant);
-    }
-
-    /** Boss-tier variants ({@code spawn_catalyst}) are altar-gated; the Controller refuses them. */
-    private boolean requiresCatalystAltar(Identifier variant) {
-        return level != null && SlimeMilkSourceBlock.variantRequiresCatalyst(level, variant);
+            && (tankVariant == null || tankVariant.equals(variant));
     }
 
     /**

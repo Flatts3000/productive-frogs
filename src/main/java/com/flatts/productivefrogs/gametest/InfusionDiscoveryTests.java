@@ -38,7 +38,6 @@ final class InfusionDiscoveryTests {
     static void register() {
         PFGameTests.test("cave_slime_plus_cave_variant_primer_produces_variant_slime", 100, InfusionDiscoveryTests::caveSlimePlusCaveVariantPrimerProducesVariantSlime);
         PFGameTests.test("infusion_with_variant_primer_sets_specific_variant", 100, InfusionDiscoveryTests::infusionWithVariantPrimerSetsSpecificVariant);
-        PFGameTests.test("zero_weight_variants_are_prime_only", 100, InfusionDiscoveryTests::zeroWeightVariantsArePrimeOnly);
         PFGameTests.test("split_discovery_picks_variant_from_pool", 100, InfusionDiscoveryTests::splitDiscoveryPicksVariantFromPool);
         PFGameTests.test("slime_variant_datapack_registry_loads_initial_variants", 100, InfusionDiscoveryTests::slimeVariantDatapackRegistryLoadsInitialVariants);
         PFGameTests.test("cross_mod_variant_presence_matches_mod_loaded_conditions", 100, InfusionDiscoveryTests::crossModVariantPresenceMatchesModLoadedConditions);
@@ -130,41 +129,6 @@ final class InfusionDiscoveryTests {
     }
 
     /**
-     * Weight 0 = prime-only (#172/#173): boss-tier variants never come out of
-     * split-discovery {@code pickWeighted}, but still resolve as primers.
-     */
-    private static void zeroWeightVariantsArePrimeOnly(GameTestHelper helper) {
-        HolderLookup.RegistryLookup<SlimeVariant> registry =
-            PFRegistries.variants(helper.getLevel().registryAccess());
-        java.util.Set<Identifier> bossTier = java.util.Set.of(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_egg"),
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_breath"),
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star"),
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "wither_skeleton_skull"));
-        net.minecraft.util.RandomSource random = helper.getLevel().getRandom();
-        for (int i = 0; i < 500; i++) {
-            for (Category cat : new Category[] {Category.VOID, Category.INFERNAL}) {
-                java.util.Map.Entry<Identifier, SlimeVariant> pick =
-                    SlimeVariant.pickWeighted(registry, cat, random);
-                if (pick != null && bossTier.contains(pick.getKey())) {
-                    helper.fail("weight-0 variant " + pick.getKey() + " came out of split-discovery");
-                    return;
-                }
-            }
-        }
-        // Prime path stays open: each boss variant resolves by its primer item.
-        for (Identifier id : bossTier) {
-            java.util.Map.Entry<Identifier, SlimeVariant> byPrimer = SlimeVariant.findByPrimerItem(
-                registry, Identifier.fromNamespaceAndPath("minecraft", id.getPath()));
-            if (byPrimer == null || !byPrimer.getKey().equals(id)) {
-                helper.fail("boss variant " + id + " should still resolve via its primer item");
-                return;
-            }
-        }
-        helper.succeed();
-    }
-
-    /**
      * Forced 100%-discovery split of a Cave Slime converts every child into a
      * CAVE Resource Slime carrying a variant from the live CAVE pool.
      */
@@ -245,8 +209,7 @@ final class InfusionDiscoveryTests {
             "iron", "copper", "gold",
             "redstone", "lapis", "coal",
             "diamond", "emerald",
-            "prismarine", "sponge",
-            "ender_pearl"
+            "prismarine", "sponge"
         };
         for (String name : expected) {
             Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, name);

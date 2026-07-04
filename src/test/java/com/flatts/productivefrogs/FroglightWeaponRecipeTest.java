@@ -51,8 +51,12 @@ class FroglightWeaponRecipeTest {
         assertEquals("BDB", pattern.get(2).getAsString(), "cleaver: row 2");
 
         JsonObject key = recipe.getAsJsonObject("key");
-        assertFroglightVariant(key.getAsJsonObject("N"), "productivefrogs:nether_star");
-        assertFroglightVariant(key.getAsJsonObject("D"), "productivefrogs:dragon_egg");
+        // Phase 5: the boss VARIANTS retired with the raw-drops ruling; the
+        // cleaver re-keyed to the raw boss items (both altar-renewable).
+        assertEquals("minecraft:nether_star", key.get("N").getAsString(),
+            "cleaver: N = raw nether star");
+        assertEquals("minecraft:dragon_egg", key.get("D").getAsString(),
+            "cleaver: D = raw dragon egg");
         assertEquals("minecraft:dragon_breath", key.get("B").getAsString(),
             "cleaver: B = dragon's breath");
 

@@ -94,10 +94,6 @@ final class CrucibleMoldTests {
         assertVariantSmelts(helper, rm, level, "emerald", net.minecraft.world.item.Items.EMERALD);
         assertVariantSmelts(helper, rm, level, "prismarine", net.minecraft.world.item.Items.PRISMARINE);
         assertVariantSmelts(helper, rm, level, "sponge", net.minecraft.world.item.Items.SPONGE);
-        assertVariantSmelts(helper, rm, level, "ender_pearl", net.minecraft.world.item.Items.ENDER_PEARL);
-        // blaze's resource moved powder -> rod in #148 (primer == smelt-output
-        // holds; the rod is the actual mob drop and the v1.8.3 fuel equivalent).
-        assertVariantSmelts(helper, rm, level, "blaze", net.minecraft.world.item.Items.BLAZE_ROD);
 
         helper.succeed();
     }
@@ -353,9 +349,9 @@ final class CrucibleMoldTests {
             helper.fail("crucible block did not create a CrucibleBlockEntity");
             return;
         }
-        froglight.setVariantId(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "blaze"));
-        if (crucible.heatBelow() != 6) {
-            helper.fail("Blaze Froglight below should read heat 6 from froglight_heat, got " + crucible.heatBelow());
+        froglight.setVariantId(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "lava"));
+        if (crucible.heatBelow() != 3) {
+            helper.fail("Lava Froglight below should read heat 3 from froglight_heat, got " + crucible.heatBelow());
             return;
         }
         froglight.setVariantId(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"));

@@ -159,15 +159,6 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         if (!PFConfig.froglightWeaponEnabled() || !PFConfig.bossEnabled()) {
             hidden.add(new ItemStack(PFItems.FROGLIGHT_CLEAVER.get()));
         }
-        // Boss-tier catalyst altar blocks (#200): hide the four altar blocks when the
-        // boss master is off. (The boss variants' own items - buckets, milk, froglights,
-        // eggs - hide transitively via the per-variant isEnabled gate in the loops above.)
-        if (!PFConfig.bossEnabled()) {
-            hidden.add(new ItemStack(PFItems.NETHER_STAR_CATALYST.get()));
-            hidden.add(new ItemStack(PFItems.DRAGON_EGG_CATALYST.get()));
-            hidden.add(new ItemStack(PFItems.WITHER_SKELETON_SKULL_CATALYST.get()));
-            hidden.add(new ItemStack(PFItems.DRAGON_BREATH_CATALYST.get()));
-        }
         // Frog Legs (#194) + Soup (#217): hide all when the feature is disabled.
         if (!PFConfig.frogLegsEnabled()) {
             hidden.add(new ItemStack(PFItems.RAW_FROG_LEGS.get()));

@@ -35,7 +35,6 @@ final class TerrariumTests {
         PFGameTests.test("terrarium_rejects_sprinkler_off_ceiling", "empty_9x9x9", 100, TerrariumTests::terrariumRejectsSprinklerOffCeiling);
         PFGameTests.test("terrarium_shell_break_deregisters", "empty_9x9x9", 100, TerrariumTests::terrariumShellBreakDeregisters);
         PFGameTests.test("terrarium_controller_rejects_second_variant_until_empty", "empty_9x9x9", 100, TerrariumTests::terrariumControllerRejectsSecondVariantUntilEmpty);
-        PFGameTests.test("terrarium_controller_rejects_boss_milk", "empty_9x9x9", 100, TerrariumTests::terrariumControllerRejectsBossMilk);
         PFGameTests.test("terrarium_charge_preserves_catalysts", "empty_9x9x9", 100, TerrariumTests::terrariumChargePreservesCatalysts);
         PFGameTests.test("terrarium_sprinkler_spawns_into_cavity", "empty_9x9x9", 100, TerrariumTests::terrariumSprinklerSpawnsIntoCavity);
         PFGameTests.test("terrarium_cavity_cap_pauses_sprinkler", "empty_9x9x9", 100, TerrariumTests::terrariumCavityCapPausesSprinkler);
@@ -173,34 +172,6 @@ final class TerrariumTests {
         }
         if (!be.pushChargeFromBucket(copper)) {
             helper.fail("copper should be accepted once the buffer drained");
-            return;
-        }
-        helper.succeed();
-    }
-
-    /** The Controller refuses boss-tier (spawn_catalyst) milk - no altar bypass via the Terrarium. */
-    private static void terrariumControllerRejectsBossMilk(GameTestHelper helper) {
-        BlockPos controller = buildValidTerrarium(helper, 1);
-        ServerLevel level = helper.getLevel();
-        com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity be =
-            (com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(controller));
-        be.forceValidate(level, helper.absolutePos(controller));
-        ItemStack bossMilk = PFItems.slimeMilkBucket(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star"));
-        if (bossMilk.isEmpty()) {
-            helper.fail("nether_star (boss) milk bucket should exist");
-            return;
-        }
-        if (be.canAccept(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star"))) {
-            helper.fail("Controller must refuse boss-tier milk (canAccept)");
-            return;
-        }
-        if (be.pushChargeFromBucket(bossMilk)) {
-            helper.fail("Controller must refuse a boss-tier milk bucket");
-            return;
-        }
-        if (be.bufferedCharges() != 0) {
-            helper.fail("no boss charge should have been buffered");
             return;
         }
         helper.succeed();
