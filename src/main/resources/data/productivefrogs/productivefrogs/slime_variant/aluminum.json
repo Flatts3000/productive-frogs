@@ -1,0 +1,9 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "alltheores" }
+  ],
+  "primer_tag": "c:ingots/aluminum",
+  "category": "cave",
+  "primary_color": 14080732,
+  "secondary_color": 11317942
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Brewed Froglights",
+  "icon": "productivefrogs:configurable_froglight",
+  "category": "productivefrogs:froglights",
+  "sortnum": 100,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Splash or linger a potion onto a slime before a frog eats it, and the Froglight it drops captures that effect.$(br2)A brewed Froglight is a toggleable effect source: place it as an aura that buffs everything nearby (right-click to toggle), hold it for a personal buff, or wear it in the Curios brewed slot."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The effect is separate from the resource - a Froglight is stamped with both its variant and its effect. Smelting a brewed Froglight gives the plain resource and discards the effect."
+    }
+  ]
+}

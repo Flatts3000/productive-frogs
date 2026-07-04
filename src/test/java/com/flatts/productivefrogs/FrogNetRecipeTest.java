@@ -49,8 +49,8 @@ class FrogNetRecipeTest {
         assertEquals(" I ", pattern.get(2).getAsString(), "frog_net: row 2");
 
         JsonObject key = recipe.getAsJsonObject("key");
-        assertEquals("minecraft:string", key.get("S").getAsString(), "frog_net: S = string");
-        assertEquals("minecraft:stick", key.get("I").getAsString(), "frog_net: I = stick");
+        assertEquals("minecraft:string", key.getAsJsonObject("S").get("item").getAsString(), "frog_net: S = string");
+        assertEquals("minecraft:stick", key.getAsJsonObject("I").get("item").getAsString(), "frog_net: I = stick");
 
         JsonArray conditions = recipe.getAsJsonArray("neoforge:conditions");
         assertNotNull(conditions, "frog_net: must carry a config_enabled condition");

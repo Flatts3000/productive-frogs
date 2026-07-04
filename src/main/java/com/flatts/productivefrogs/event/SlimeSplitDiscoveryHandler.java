@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.level.Level;
@@ -107,7 +107,8 @@ public final class SlimeSplitDiscoveryHandler {
             return;
         }
 
-        var variantRegistry = PFRegistries.variants(level.registryAccess());
+        Registry<SlimeVariant> variantRegistry = level.registryAccess()
+            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
 
         float chance = discoveryChancePerOffspring();
         List<Mob> children = event.getChildren();
@@ -119,18 +120,18 @@ public final class SlimeSplitDiscoveryHandler {
             if (parent.getRandom().nextFloat() >= chance) {
                 continue;
             }
-            ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
+            ResourceSlime resource = PFEntities.RESOURCE_SLIME.get().create(level);
             if (resource == null) {
                 continue;
             }
-            resource.snapTo(child.getX(), child.getY(), child.getZ(), child.getYRot(), child.getXRot());
+            resource.moveTo(child.getX(), child.getY(), child.getZ(), child.getYRot(), child.getXRot());
             resource.setSize(childSlime.getSize(), true);
             // Category first (fallback when no variants in pool), then a
             // weighted variant pick — setVariant re-syncs category from the
             // registry so the two stay consistent when a variant is picked.
             resource.setCategory(category);
             if (variantRegistry != null) {
-                Map.Entry<Identifier, SlimeVariant> picked =
+                Map.Entry<ResourceLocation, SlimeVariant> picked =
                     SlimeVariant.pickWeighted(variantRegistry, category, parent.getRandom());
                 if (picked != null) {
                     resource.setVariant(picked.getKey());
@@ -169,11 +170,15 @@ public final class SlimeSplitDiscoveryHandler {
      */
     @Nullable
     private static Category categoryForParent(Mob parent, Level level) {
-        Identifier parentTypeId = BuiltInRegistries.ENTITY_TYPE.getKey(parent.getType());
+        ResourceLocation parentTypeId = BuiltInRegistries.ENTITY_TYPE.getKey(parent.getType());
         if (parentTypeId == null) {
             return null;
         }
-        return ParentSpeciesEntry.categoryFor(
-            PFRegistries.parentSpeciesLookup(level.registryAccess()), parentTypeId);
+        Registry<ParentSpeciesEntry> registry = level.registryAccess()
+            .registry(PFRegistries.PARENT_SPECIES).orElse(null);
+        if (registry == null) {
+            return null;
+        }
+        return ParentSpeciesEntry.categoryFor(registry, parentTypeId);
     }
 }

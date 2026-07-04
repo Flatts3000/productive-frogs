@@ -1,9 +1,6 @@
 {
   "neoforge:conditions": [
-    {
-      "type": "productivefrogs:config_enabled",
-      "config": "boss"
-    }
+    { "type": "productivefrogs:config_enabled", "config": "boss" }
   ],
   "type": "minecraft:crafting_shaped",
   "category": "building",
@@ -14,12 +11,9 @@
     "OSO"
   ],
   "key": {
-    "O": "minecraft:obsidian",
-    "S": "minecraft:soul_soil",
-    "U": "minecraft:coal_block"
+    "O": { "item": "minecraft:obsidian" },
+    "S": { "item": "minecraft:soul_soil" },
+    "U": { "item": "minecraft:coal_block" }
   },
-  "result": {
-    "id": "productivefrogs:wither_skull_receptacle",
-    "count": 1
-  }
+  "result": { "id": "productivefrogs:wither_skull_receptacle", "count": 1 }
 }

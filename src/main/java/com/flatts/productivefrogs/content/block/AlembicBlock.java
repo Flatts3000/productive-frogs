@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -46,12 +47,22 @@ public class AlembicBlock extends Block implements EntityBlock {
                 && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
             serverPlayer.openMenu(alembic, pos);
         }
-        return InteractionResult.SUCCESS;
+        return InteractionResult.sidedSuccess(level.isClientSide());
     }
 
-    // 26.1 port: drop-on-break now lives in AlembicBlockEntity#preRemoveSideEffects (the BE still
-    // exists there, whereas it is gone by affectNeighborsAfterRemoval). This block has no
-    // BE-independent removal side effect, so no affectNeighborsAfterRemoval override is needed.
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock())
+                && level.getBlockEntity(pos) instanceof AlembicBlockEntity alembic) {
+            for (int slot = 0; slot < alembic.items().getSlots(); slot++) {
+                ItemStack held = alembic.items().getStackInSlot(slot);
+                if (!held.isEmpty()) {
+                    Block.popResource(level, pos, held);
+                }
+            }
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
+    }
 
     @SuppressWarnings("unchecked")
     @Nullable

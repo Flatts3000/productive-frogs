@@ -5,11 +5,10 @@ import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -124,7 +123,7 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected net.minecraft.world.InteractionResult useItemOn(
+    protected net.minecraft.world.ItemInteractionResult useItemOn(
         ItemStack stack,
         BlockState state,
         Level level,
@@ -134,12 +133,12 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
         BlockHitResult hit
     ) {
         // Open the GUI regardless of held item. 1.21.1 useItemOn returns
-        // InteractionResult (not InteractionResult); SUCCESS / PASS_TO_DEFAULT_BLOCK_INTERACTION
+        // ItemInteractionResult (not InteractionResult); SUCCESS / PASS_TO_DEFAULT_BLOCK_INTERACTION
         // are the relevant return values.
         InteractionResult openResult = openMilkerMenu(state, level, pos, player);
         return openResult == InteractionResult.SUCCESS
-            ? net.minecraft.world.InteractionResult.SUCCESS
-            : net.minecraft.world.InteractionResult.TRY_WITH_EMPTY_HAND;
+            ? net.minecraft.world.ItemInteractionResult.SUCCESS
+            : net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
     private InteractionResult openMilkerMenu(BlockState state, Level level, BlockPos pos, Player player) {
@@ -160,10 +159,13 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
-        // Notify comparators / redstone of removal. Item-dropping is handled
-        // by playerWillDestroy above; we don't reach into the BE here.
-        level.updateNeighbourForOutputSignal(pos, this);
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock())) {
+            // Notify comparators / redstone of removal. Item-dropping is handled
+            // by playerWillDestroy above; we don't reach into the BE here.
+            level.updateNeighbourForOutputSignal(pos, this);
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     @Override
@@ -196,7 +198,7 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
      */
     @Nullable
     public static String readBucketVariant(ItemStack stack) {
-        Identifier id = readBucketVariantId(stack);
+        ResourceLocation id = readBucketVariantId(stack);
         return id == null ? null : id.getPath();
     }
 
@@ -210,7 +212,7 @@ public class SlimeMilkerBlock extends Block implements EntityBlock {
      * namespace so cross-namespace datapack variants survive the conversion.
      */
     @Nullable
-    public static Identifier readBucketVariantId(ItemStack stack) {
+    public static ResourceLocation readBucketVariantId(ItemStack stack) {
         return ResourceTadpoleBucketItem.readVariant(stack);
     }
 

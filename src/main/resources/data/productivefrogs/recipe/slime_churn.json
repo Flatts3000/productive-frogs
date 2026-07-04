@@ -1,9 +1,6 @@
 {
   "neoforge:conditions": [
-    {
-      "type": "productivefrogs:config_enabled",
-      "config": "slime_churn"
-    }
+    { "type": "productivefrogs:config_enabled", "config": "slime_churn" }
   ],
   "type": "minecraft:crafting_shaped",
   "category": "misc",
@@ -13,10 +10,10 @@
     "CCC"
   ],
   "key": {
-    "P": "#minecraft:planks",
-    "M": "minecraft:moss_block",
-    "S": "minecraft:slime_ball",
-    "C": "minecraft:packed_mud"
+    "P": { "tag": "minecraft:planks" },
+    "M": { "item": "minecraft:moss_block" },
+    "S": { "item": "minecraft:slime_ball" },
+    "C": { "item": "minecraft:packed_mud" }
   },
   "result": {
     "id": "productivefrogs:slime_churn",

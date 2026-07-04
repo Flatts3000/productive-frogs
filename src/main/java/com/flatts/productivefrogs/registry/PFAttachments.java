@@ -27,21 +27,7 @@ public final class PFAttachments {
     public static final Supplier<AttachmentType<Integer>> PRINCESS_CONVERTING =
         ATTACHMENT_TYPES.register(
             "princess_converting_ticks",
-            () -> AttachmentType.builder(() -> 0).serialize(Codec.INT.fieldOf("value")).build());
-
-    /**
-     * Teleport lock (#281): a mob spawned by a Mob Slurry Basin carries this so
-     * it can't teleport away from the predator farming it - the settled
-     * no-enclosures answer for enderman/shulker. {@code PredationTeleportHandler}
-     * cancels {@code EntityTeleportEvent.EnderEntity} while it is set. Persisted
-     * (Codec.BOOL) so a Basin-spawned teleporter stays locked across reloads;
-     * wild mobs never carry it. The Basin (predation Phase 3) is the setter -
-     * until it ships, the attachment + handler are the standing mechanism.
-     */
-    public static final Supplier<AttachmentType<Boolean>> TELEPORT_DISABLED =
-        ATTACHMENT_TYPES.register(
-            "teleport_disabled",
-            () -> AttachmentType.builder(() -> false).serialize(Codec.BOOL.fieldOf("value")).build());
+            () -> AttachmentType.builder(() -> 0).serialize(Codec.INT).build());
 
     private PFAttachments() {
         // registry holder

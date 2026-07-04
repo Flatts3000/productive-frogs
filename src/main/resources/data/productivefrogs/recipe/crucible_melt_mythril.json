@@ -1,22 +1,12 @@
 {
   "neoforge:conditions": [
-    {
-      "type": "neoforge:mod_loaded",
-      "modid": "mythicmetals"
-    }
+    { "type": "neoforge:mod_loaded", "modid": "mythicmetals" }
   ],
   "type": "productivefrogs:crucible_melting",
   "ingredient": {
-    "neoforge:ingredient_type": "neoforge:components",
-    "items": [
-      "productivefrogs:configurable_froglight"
-    ],
-    "components": {
-      "productivefrogs:slime_variant": "productivefrogs:mythril"
-    }
+    "type": "neoforge:components",
+    "items": [ "productivefrogs:configurable_froglight" ],
+    "components": { "productivefrogs:slime_variant": "productivefrogs:mythril" }
   },
-  "result": {
-    "id": "productivefrogs:molten_mythril",
-    "amount": 180
-  }
+  "result": { "id": "productivefrogs:molten_mythril", "amount": 180 }
 }

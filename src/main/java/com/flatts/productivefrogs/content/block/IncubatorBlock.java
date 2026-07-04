@@ -9,7 +9,7 @@ import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -24,7 +24,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class IncubatorBlock extends Block implements EntityBlock {
 
-    public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
+    public static final DirectionProperty FACING = BlockStateProperties.FACING;
 
     public IncubatorBlock(Properties properties) {
         super(properties);
@@ -95,7 +95,7 @@ public class IncubatorBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
             Player player, InteractionHand hand, BlockHitResult hit) {
         // Sweetslime: feed an actively-incubating Incubator to shave time off (10%
         // of the full lifecycle per slime), like hurrying a tadpole along. Gated on
@@ -114,7 +114,7 @@ public class IncubatorBlock extends Block implements EntityBlock {
                         pos.getX() + 0.5, pos.getY() + 0.8, pos.getZ() + 0.5, 8, 0.25, 0.25, 0.25, 0.0);
                 }
             }
-            return InteractionResult.SUCCESS;
+            return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
         // Seed with a Frog Egg bottle: read its species and start an incubation
         // (baseline stats - a bottled egg carries none; bred stats arrive via the
@@ -128,9 +128,9 @@ public class IncubatorBlock extends Block implements EntityBlock {
                 level.playSound(null, pos, net.minecraft.sounds.SoundEvents.FROG_LAY_SPAWN,
                     net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 1.0F);
             }
-            return InteractionResult.SUCCESS;
+            return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
-        return InteractionResult.TRY_WITH_EMPTY_HAND;
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
     @SuppressWarnings("unchecked")

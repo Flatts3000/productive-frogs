@@ -1,0 +1,13 @@
+{
+  "name": "Sprinkler",
+  "icon": "productivefrogs:sprinkler",
+  "category": "productivefrogs:terrarium",
+  "sortnum": 20,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:sprinkler",
+      "text": "Goes in the ceiling, facing down. Fed by the Controller, a Sprinkler rains its milk's slimes into the cavity for the frogs to eat. Line the ceiling with more of them for more throughput; one with no milk just sits idle."
+    }
+  ]
+}

@@ -1,9 +1,9 @@
 package com.flatts.productivefrogs.content.block.entity;
 
 import com.flatts.productivefrogs.registry.PFItems;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
@@ -67,27 +67,17 @@ public class SlimeMilkerInventory extends ItemStackHandler {
         return outputView;
     }
 
-    /** 26.1 {@code Capabilities.Item.BLOCK} input view: insert-only over the slime-bucket slot. */
-    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResource() {
-        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(this, new int[] {INPUT_SLOT}, true, false);
-    }
-
-    /** 26.1 {@code Capabilities.Item.BLOCK} output view: extract-only over the milk-bucket slot. */
-    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResource() {
-        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(this, new int[] {OUTPUT_SLOT}, false, true);
-    }
-
     /**
-     * Write our handler's slots into the BE-owned {@code "Inventory"} child.
-     * 26.1: ItemStackHandler implements ValueIOSerializable, so the BE hands us a
-     * ValueOutput/ValueInput (the legacy serializeNBT(RegistryAccess) form is gone).
+     * Snapshot the inventory state into a passed CompoundTag using the
+     * RegistryAccess.EMPTY provider. The BE owns the parent tag's key
+     * ("Inventory") so we just write our handler's NBT directly.
      */
-    public void serialize(ValueOutput output) {
-        super.serialize(output);
+    public void serialize(CompoundTag tag) {
+        tag.merge(serializeNBT(net.minecraft.core.RegistryAccess.EMPTY));
     }
 
-    public void deserialize(ValueInput input) {
-        super.deserialize(input);
+    public void deserialize(CompoundTag tag) {
+        deserializeNBT(net.minecraft.core.RegistryAccess.EMPTY, tag);
     }
 
     /**

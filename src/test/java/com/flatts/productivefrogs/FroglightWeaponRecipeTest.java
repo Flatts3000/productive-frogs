@@ -53,7 +53,7 @@ class FroglightWeaponRecipeTest {
         JsonObject key = recipe.getAsJsonObject("key");
         assertFroglightVariant(key.getAsJsonObject("N"), "productivefrogs:nether_star");
         assertFroglightVariant(key.getAsJsonObject("D"), "productivefrogs:dragon_egg");
-        assertEquals("minecraft:dragon_breath", key.get("B").getAsString(),
+        assertEquals("minecraft:dragon_breath", key.getAsJsonObject("B").get("item").getAsString(),
             "cleaver: B = dragon's breath");
 
         JsonArray conditions = recipe.getAsJsonArray("neoforge:conditions");
@@ -68,7 +68,7 @@ class FroglightWeaponRecipeTest {
 
     /** A component-ingredient requiring a configurable_froglight of the given variant. */
     private static void assertFroglightVariant(JsonObject ingredient, String variant) {
-        assertEquals("neoforge:components", ingredient.get("neoforge:ingredient_type").getAsString(), "froglight ingredient type");
+        assertEquals("neoforge:components", ingredient.get("type").getAsString(), "froglight ingredient type");
         assertEquals("productivefrogs:configurable_froglight",
             ingredient.getAsJsonArray("items").get(0).getAsString(), "froglight ingredient item");
         assertEquals(variant,

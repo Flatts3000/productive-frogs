@@ -1,0 +1,22 @@
+{
+  "neoforge:conditions": [
+    { "type": "productivefrogs:config_enabled", "config": "boss" }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "productivefrogs",
+  "pattern": [
+    " O ",
+    "OFO",
+    " O "
+  ],
+  "key": {
+    "O": { "item": "minecraft:obsidian" },
+    "F": {
+      "type": "neoforge:components",
+      "items": [ "productivefrogs:configurable_froglight" ],
+      "components": { "productivefrogs:slime_variant": "productivefrogs:blaze" }
+    }
+  },
+  "result": { "id": "productivefrogs:reinforced_blaze_rod_froglight", "count": 1 }
+}

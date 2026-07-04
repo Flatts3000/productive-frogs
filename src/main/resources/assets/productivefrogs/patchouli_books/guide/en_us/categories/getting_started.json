@@ -1,0 +1,6 @@
+{
+  "name": "Getting Started",
+  "description": "The core loop at a glance: slimes feed frogs, frogs make Froglights, Froglights smelt into resources.",
+  "icon": "minecraft:slime_ball",
+  "sortnum": 0
+}

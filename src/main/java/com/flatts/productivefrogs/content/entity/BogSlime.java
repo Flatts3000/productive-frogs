@@ -45,6 +45,11 @@ public class BogSlime extends Slime {
      */
     @Override
     protected ParticleOptions getParticleType() {
-        return new DustParticleOptions(Category.BOG.tintRgb(), 1.0F);
+        int rgb = Category.BOG.tintRgb();
+        org.joml.Vector3f color = new org.joml.Vector3f(
+            ((rgb >> 16) & 0xFF) / 255.0F,
+            ((rgb >> 8) & 0xFF) / 255.0F,
+            (rgb & 0xFF) / 255.0F);
+        return new DustParticleOptions(color, 1.0F);
     }
 }

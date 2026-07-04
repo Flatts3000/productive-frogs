@@ -6,14 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
-import com.flatts.productivefrogs.TestRegistryUtil;
 import com.flatts.productivefrogs.data.Category;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -27,15 +25,10 @@ import org.junit.jupiter.params.provider.EnumSource;
  */
 class PFDataComponentsTest {
 
-    @BeforeAll
-    static void bindComponents() {
-        TestRegistryUtil.bindComponents();
-    }
-
     @Test
     void containedCategoryComponentIsRegistered() {
-        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "contained_category");
-        DataComponentType<?> type = BuiltInRegistries.DATA_COMPONENT_TYPE.getValue(id);
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "contained_category");
+        DataComponentType<?> type = BuiltInRegistries.DATA_COMPONENT_TYPE.get(id);
         assertNotNull(type, id + " must be registered");
         assertSame(PFDataComponents.CONTAINED_CATEGORY.get(), type,
             "Supplier must resolve to the registered DataComponentType");

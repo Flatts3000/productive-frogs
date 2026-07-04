@@ -14,9 +14,15 @@
     "CGC"
   ],
   "key": {
-    "C": "minecraft:copper_ingot",
-    "G": "minecraft:glass",
-    "N": "minecraft:nether_star"
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "N": {
+      "item": "minecraft:nether_star"
+    }
   },
   "result": {
     "id": "productivefrogs:alembic",

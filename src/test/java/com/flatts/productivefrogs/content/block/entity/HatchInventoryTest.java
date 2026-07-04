@@ -4,12 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.flatts.productivefrogs.TestRegistryUtil;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -19,11 +17,6 @@ import org.junit.jupiter.api.Test;
  * drives the {@link HatchBlockEntity#isFull()} backpressure signal.
  */
 class HatchInventoryTest {
-
-    @BeforeAll
-    static void bindComponents() {
-        TestRegistryUtil.bindComponents();
-    }
 
     private static HatchBlockEntity newHatch() {
         return new HatchBlockEntity(BlockPos.ZERO, PFBlocks.HATCH.get().defaultBlockState());

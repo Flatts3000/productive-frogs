@@ -12,15 +12,15 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -29,8 +29,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
@@ -113,7 +111,7 @@ public class CrucibleBlockEntity extends BlockEntity {
      * surface doesn't flicker grey on reload.
      */
     @Nullable
-    private Identifier lastVariant = null;
+    private ResourceLocation lastVariant = null;
 
     /** Extract-only view handed to pipes and FluidUtil bucket interactions. */
     private final IFluidHandler extractOnlyTank = new IFluidHandler() {
@@ -221,117 +219,9 @@ public class CrucibleBlockEntity extends BlockEntity {
         return extractOnlyTank;
     }
 
-    /**
-     * The 26.1 {@code Capabilities.Fluid.BLOCK} view: extract-only (drain only;
-     * fill is a no-op by design). Wraps {@link #tank} with the snapshot transaction
-     * discipline; commit fires the contents-changed sync.
-     */
-    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> fluidResource() {
-        return new com.flatts.productivefrogs.content.transfer.FluidTankResourceHandler(
-            tank, null, false, true, this::onContentsChanged);
-    }
-
     /** The hopper-facing insert-only item handler. */
     public IItemHandler itemHandler() {
         return insertOnlyItems;
-    }
-
-    /**
-     * The 26.1 {@code Capabilities.Item.BLOCK} view: insert-only, immediate-convert
-     * (a Froglight or meltable block is consumed straight into the solids queue, no
-     * internal slot - the Ex Deorum shape). The melt mutates {@link #solids} /
-     * {@link #pendingFluid} / {@link #lastVariant}, so the journal snapshots exactly
-     * those three; the irreversible side effects (sound + sync) are deferred to
-     * commit so an aborted hopper probe stays silent and changes nothing.
-     */
-    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> itemResource() {
-        return new CrucibleItemIntake();
-    }
-
-    /** Snapshot of the melt state the item funnel mutates, for transaction rollback. */
-    private record MeltSnapshot(int solids, Fluid pendingFluid, Identifier lastVariant) {}
-
-    private final class CrucibleItemIntake
-            implements net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> {
-
-        private final IntakeJournal journal = new IntakeJournal();
-
-        @Override
-        public int size() {
-            return 1;
-        }
-
-        @Override
-        public net.neoforged.neoforge.transfer.item.ItemResource getResource(int index) {
-            return net.neoforged.neoforge.transfer.item.ItemResource.EMPTY;
-        }
-
-        @Override
-        public long getAmountAsLong(int index) {
-            return 0L;
-        }
-
-        @Override
-        public long getCapacityAsLong(int index, net.neoforged.neoforge.transfer.item.ItemResource resource) {
-            return 1L;
-        }
-
-        @Override
-        public boolean isValid(int index, net.neoforged.neoforge.transfer.item.ItemResource resource) {
-            return insertCheck(resource.toStack(1)) == InsertCheck.OK;
-        }
-
-        @Override
-        public int insert(int index, net.neoforged.neoforge.transfer.item.ItemResource resource, int amount,
-                net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
-            if (amount <= 0 || level == null || level.isClientSide()) {
-                return 0;
-            }
-            net.minecraft.world.item.ItemStack one = resource.toStack(1);
-            if (insertCheck(one) != InsertCheck.OK) {
-                return 0;
-            }
-            CrucibleMeltRecipe recipe = recipeFor(one);
-            if (recipe == null) {
-                return 0;
-            }
-            journal.updateSnapshots(transaction);
-            solids += recipe.result().getAmount();
-            pendingFluid = recipe.result().getFluid();
-            // A Froglight carries its variant colour; a raw block has none, so clear it.
-            lastVariant = one.get(PFDataComponents.SLIME_VARIANT.get());
-            return 1;
-        }
-
-        @Override
-        public int extract(int index, net.neoforged.neoforge.transfer.item.ItemResource resource, int amount,
-                net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
-            return 0;
-        }
-
-        private final class IntakeJournal
-                extends net.neoforged.neoforge.transfer.transaction.SnapshotJournal<MeltSnapshot> {
-
-            @Override
-            protected MeltSnapshot createSnapshot() {
-                return new MeltSnapshot(solids, pendingFluid, lastVariant);
-            }
-
-            @Override
-            protected void revertToSnapshot(MeltSnapshot snapshot) {
-                solids = snapshot.solids();
-                pendingFluid = snapshot.pendingFluid();
-                lastVariant = snapshot.lastVariant();
-            }
-
-            @Override
-            protected void onRootCommit(MeltSnapshot originalState) {
-                if (level != null && !level.isClientSide()) {
-                    level.playSound(null, worldPosition, SoundEvents.LAVA_AMBIENT, SoundSource.BLOCKS, 0.5F, 1.0F);
-                }
-                onContentsChanged();
-            }
-        }
     }
 
     /** Tank contents, for the renderer/Jade/GameTests. Do not mutate. */
@@ -352,7 +242,7 @@ public class CrucibleBlockEntity extends BlockEntity {
 
     /** Variant of the most recent Froglight, for the solids-surface tint. */
     @Nullable
-    public Identifier lastVariant() {
+    public ResourceLocation lastVariant() {
         return lastVariant;
     }
 
@@ -479,8 +369,9 @@ public class CrucibleBlockEntity extends BlockEntity {
         if (level.getBlockEntity(worldPosition.below()) instanceof ConfigurableFroglightBlockEntity froglight
                 && froglight.getVariantId() != null) {
             Integer heat = level.registryAccess()
-                .lookup(com.flatts.productivefrogs.registry.PFRegistries.SLIME_VARIANT)
-                .flatMap(reg -> reg.get(froglight.getVariantId()))
+                .registry(com.flatts.productivefrogs.registry.PFRegistries.SLIME_VARIANT)
+                .flatMap(reg -> reg.getHolder(net.minecraft.resources.ResourceKey.create(
+                    com.flatts.productivefrogs.registry.PFRegistries.SLIME_VARIANT, froglight.getVariantId())))
                 .map(holder -> holder.getData(PFDataMaps.FROGLIGHT_HEAT))
                 .orElse(null);
             if (heat != null) {
@@ -503,10 +394,10 @@ public class CrucibleBlockEntity extends BlockEntity {
 
     @Nullable
     private CrucibleMeltRecipe recipeFor(ItemStack stack) {
-        if (level == null || !(level.recipeAccess() instanceof RecipeManager manager)) {
+        if (level == null) {
             return null;
         }
-        Optional<RecipeHolder<CrucibleMeltRecipe>> match = manager
+        Optional<RecipeHolder<CrucibleMeltRecipe>> match = level.getRecipeManager()
             .getRecipeFor(PFRecipeTypes.CRUCIBLE_MELTING.get(), new SingleRecipeInput(stack), level);
         return match.map(RecipeHolder::value).orElse(null);
     }
@@ -557,39 +448,44 @@ public class CrucibleBlockEntity extends BlockEntity {
     // -------------------------------------------------------------------
 
     @Override
-    protected void saveAdditional(ValueOutput output) {
-        super.saveAdditional(output);
-        tank.serialize(output.child("Tank"));
-        output.putInt("Solids", solids);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        tag.put("Tank", tank.writeToNBT(registries, new CompoundTag()));
+        tag.putInt("Solids", solids);
         if (pendingFluid != null) {
-            output.putString("PendingFluid", BuiltInRegistries.FLUID.getKey(pendingFluid).toString());
+            tag.putString("PendingFluid", BuiltInRegistries.FLUID.getKey(pendingFluid).toString());
         }
         if (lastVariant != null) {
-            output.putString("LastVariant", lastVariant.toString());
+            tag.putString("LastVariant", lastVariant.toString());
         }
     }
 
     @Override
-    protected void loadAdditional(ValueInput input) {
-        super.loadAdditional(input);
-        input.child("Tank").ifPresent(tank::deserialize);
-        solids = Math.max(0, Math.min(input.getIntOr("Solids", 0), MAX_SOLIDS));
-        String pendingKey = input.getStringOr("PendingFluid", "");
-        pendingFluid = pendingKey.isEmpty()
-            ? null
-            : BuiltInRegistries.FLUID.getValue(Identifier.parse(pendingKey));
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        if (tag.contains("Tank", Tag.TAG_COMPOUND)) {
+            tank.readFromNBT(registries, tag.getCompound("Tank"));
+        }
+        solids = Math.max(0, Math.min(
+            tag.contains("Solids", Tag.TAG_INT) ? tag.getInt("Solids") : 0, MAX_SOLIDS));
+        pendingFluid = tag.contains("PendingFluid", Tag.TAG_STRING)
+            ? BuiltInRegistries.FLUID.get(ResourceLocation.parse(tag.getString("PendingFluid")))
+            : null;
         if (pendingFluid == Fluids.EMPTY) {
             pendingFluid = null;
         }
-        String variantKey = input.getStringOr("LastVariant", "");
-        lastVariant = variantKey.isEmpty() ? null : Identifier.tryParse(variantKey);
+        lastVariant = tag.contains("LastVariant", Tag.TAG_STRING)
+            ? ResourceLocation.tryParse(tag.getString("LastVariant"))
+            : null;
         updateFluidLight();
     }
 
     // Client sync: the renderer + Jade read everything from the update tag.
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        return saveCustomOnly(registries);
+        CompoundTag tag = super.getUpdateTag(registries);
+        saveAdditional(tag, registries);
+        return tag;
     }
 
     @Override

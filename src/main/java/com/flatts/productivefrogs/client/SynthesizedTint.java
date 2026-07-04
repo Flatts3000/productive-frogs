@@ -5,14 +5,11 @@ import com.mojang.blaze3d.platform.NativeImage;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.sprite.Material;
-import net.minecraft.util.RandomSource;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -88,17 +85,8 @@ public final class SynthesizedTint {
         try {
             Minecraft mc = Minecraft.getInstance();
             ItemStack stack = new ItemStack(item);
-            // 26.1: item models resolve through the ItemModelResolver into an
-            // ItemStackRenderState; the representative texture is a layer's
-            // particle Material baked off the atlas.
-            ItemStackRenderState renderState = new ItemStackRenderState();
-            mc.getItemModelResolver().updateForTopItem(renderState, stack, ItemDisplayContext.GUI,
-                mc.level, null, 0);
-            Material.Baked particle = renderState.pickParticleMaterial(RandomSource.create());
-            if (particle == null) {
-                return FALLBACK_ARGB;
-            }
-            TextureAtlasSprite sprite = particle.sprite();
+            BakedModel model = mc.getItemRenderer().getModel(stack, mc.level, null, 0);
+            TextureAtlasSprite sprite = model.getParticleIcon();
             SpriteContents contents = sprite.contents();
             NativeImage image = contents.getOriginalImage();
             if (image == null) {
@@ -112,15 +100,15 @@ public final class SynthesizedTint {
             long count = 0;
             for (int y = 0; y < h; y++) {
                 for (int x = 0; x < w; x++) {
-                    // 26.1: NativeImage#getPixel returns ARGB (0xAARRGGBB).
-                    int argb = image.getPixel(x, y);
-                    int a = (argb >> 24) & 0xFF;
+                    // NativeImage packs pixels as ABGR (0xAABBGGRR).
+                    int abgr = image.getPixelRGBA(x, y);
+                    int a = (abgr >> 24) & 0xFF;
                     if (a < ALPHA_CUTOFF) {
                         continue;
                     }
-                    r += (argb >> 16) & 0xFF;
-                    g += (argb >> 8) & 0xFF;
-                    b += argb & 0xFF;
+                    b += (abgr >> 16) & 0xFF;
+                    g += (abgr >> 8) & 0xFF;
+                    r += abgr & 0xFF;
                     count++;
                 }
             }

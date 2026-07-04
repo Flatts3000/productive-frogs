@@ -4,7 +4,6 @@ import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.multiblock.TerrariumManager;
 import com.flatts.productivefrogs.data.Category;
-import com.flatts.productivefrogs.data.FrogKind;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.content.menu.IncubatorMenu;
@@ -12,10 +11,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -25,8 +25,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -44,7 +42,7 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
     public static final int DATA_GROWTH_REMAINING = 0;
     public static final int DATA_GROWTH_TOTAL = 1;
     public static final int DATA_STATE = 2; // 0=empty, 1=growing, 2=waiting at cap
-    public static final int DATA_KIND = 3; // FrogKind syncIndex (transient, session-local), -1 when empty
+    public static final int DATA_CATEGORY = 3; // category ordinal, -1 when empty
     public static final int DATA_FROGS = 4; // live frogs in the cavity
     public static final int DATA_FROG_CAP = 5; // configured frog cap
     public static final int DATA_COUNT = 6;
@@ -53,11 +51,10 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
     @Nullable
     public static volatile Integer frogCapOverride = null;
 
-    // The unified identity of the incubating seed (#281) - what it matures into
-    // (a species, Midas, or a predator from a designated cross). Null = empty.
-    // Replaces the pre-2.0 Category + midas-boolean pair.
     @Nullable
-    private FrogKind kind;
+    private Category category;
+    /** Equivalence lane (#253): the incubating seed matures into a Midas frog. */
+    private boolean midas;
     private boolean hasStats;
     private int appetite;
     private int bounty;
@@ -72,11 +69,8 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
             return switch (index) {
                 case DATA_GROWTH_REMAINING -> growthRemaining;
                 case DATA_GROWTH_TOTAL -> growthTotal;
-                case DATA_STATE -> kind == null ? 0 : (pendingRelease ? 2 : 1);
-                // The KIND itself reaches the client (as its transient syncIndex),
-                // not the fallback category - a Prowler seed must read "Prowler",
-                // not its anchor species (review finding #7).
-                case DATA_KIND -> kind == null ? -1 : FrogKind.syncIndex(kind);
+                case DATA_STATE -> category == null ? 0 : (pendingRelease ? 2 : 1);
+                case DATA_CATEGORY -> category == null ? -1 : category.ordinal();
                 case DATA_FROGS -> cavityFrogCount();
                 case DATA_FROG_CAP -> frogCap();
                 default -> 0;
@@ -108,7 +102,7 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
 
     /** Room for a new seed (not currently incubating). */
     public boolean hasRoom() {
-        return kind == null;
+        return category == null;
     }
 
     /** Matured but held back at the frog cap (for the Jade look-at). */
@@ -118,7 +112,7 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
 
     /** Actively growing a seed (not empty, not yet matured/waiting). */
     public boolean isIncubating() {
-        return kind != null && !pendingRelease && growthRemaining > 0;
+        return category != null && !pendingRelease && growthRemaining > 0;
     }
 
     /**
@@ -146,38 +140,32 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
         return growthTotal;
     }
 
-    /** The incubating seed's fallback category for legacy readouts, or null when empty. */
     @Nullable
     public Category getCategory() {
-        return kind == null ? null : kind.fallbackCategory();
-    }
-
-    /** The incubating seed's kind (#281), or null when empty. */
-    @Nullable
-    public FrogKind getKind() {
-        return kind;
+        return category;
     }
 
     /** Seed from a frogspawn item (baseline stats - a plain egg carries none). */
     public boolean seedBaseline(Category category) {
-        return seedBaseline(FrogKind.resource(category));
+        return seed(category, false, 0, 0, 0, false);
     }
 
-    /** Seed a kind at baseline stats (#281). */
-    public boolean seedBaseline(FrogKind kind) {
-        return seed(kind, false, 0, 0, 0);
+    /** Seed from the in-cavity breeding redirect: a bred frog's pending-offspring stats. */
+    public boolean seedFromBreeding(Category category, int appetite, int bounty, int reach) {
+        return seed(category, true, appetite, bounty, reach, false);
     }
 
-    /** Seed from the in-cavity breeding redirect: the conception's offspring kind + stat roll. */
-    public boolean seedFromBreeding(FrogKind kind, int appetite, int bounty, int reach) {
-        return seed(kind, true, appetite, bounty, reach);
+    /** Breeding redirect carrying the Midas marker (#253): matures into a Midas frog. */
+    public boolean seedFromBreeding(Category category, int appetite, int bounty, int reach, boolean midas) {
+        return seed(category, true, appetite, bounty, reach, midas);
     }
 
-    private boolean seed(FrogKind kind, boolean hasStats, int appetite, int bounty, int reach) {
-        if (this.kind != null) {
+    private boolean seed(Category category, boolean hasStats, int appetite, int bounty, int reach, boolean midas) {
+        if (this.category != null) {
             return false; // already incubating - one at a time
         }
-        this.kind = kind;
+        this.category = category;
+        this.midas = midas;
         this.hasStats = hasStats;
         this.appetite = appetite;
         this.bounty = bounty;
@@ -209,7 +197,7 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, IncubatorBlockEntity be) {
-        if (!(level instanceof ServerLevel server) || be.kind == null) {
+        if (!(level instanceof ServerLevel server) || be.category == null) {
             return;
         }
         TerrariumManager.FormedTerrarium terrarium = TerrariumManager.owningIncubator(server, pos);
@@ -241,17 +229,18 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     private void releaseFrog(ServerLevel level, BlockPos pos, BlockState state, TerrariumManager.FormedTerrarium terrarium) {
-        ResourceFrog frog = PFEntities.RESOURCE_FROG.get().create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
+        ResourceFrog frog = PFEntities.RESOURCE_FROG.get().create(level);
         if (frog == null) {
             return;
         }
-        frog.setKind(kind);
+        frog.setCategory(category);
+        frog.setMidas(midas);
         // Spawn into the cavity cell the Incubator faces (inward = FACING.opposite()).
         Direction inward = state.hasProperty(BlockStateProperties.FACING)
             ? state.getValue(BlockStateProperties.FACING).getOpposite() : Direction.UP;
         BlockPos spawn = pos.relative(inward);
-        frog.snapTo(spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5, 0.0F, 0.0F);
-        frog.finalizeSpawn(level, level.getCurrentDifficultyAt(spawn), EntitySpawnReason.CONVERSION, null);
+        frog.moveTo(spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5, 0.0F, 0.0F);
+        frog.finalizeSpawn(level, level.getCurrentDifficultyAt(spawn), MobSpawnType.CONVERSION, null);
         // Stats AFTER finalizeSpawn, so inherited values override the baseline -
         // identical to ResourceTadpole.ageUp.
         if (hasStats) {
@@ -262,7 +251,8 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     private void clear() {
-        this.kind = null;
+        this.category = null;
+        this.midas = false;
         this.hasStats = false;
         this.appetite = 0;
         this.bounty = 0;
@@ -282,7 +272,7 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
      */
     private void syncToClients() {
         setChanged();
-        if (level != null && !level.isClientSide()) {
+        if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
     }
@@ -311,39 +301,51 @@ public class IncubatorBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     @Override
-    protected void saveAdditional(ValueOutput output) {
-        super.saveAdditional(output);
-        if (kind != null) {
-            output.putString("Kind", kind.id());
-            output.putBoolean("HasStats", hasStats);
-            output.putInt("Appetite", appetite);
-            output.putInt("Bounty", bounty);
-            output.putInt("Reach", reach);
-            output.putInt("GrowthRemaining", growthRemaining);
-            output.putInt("GrowthTotal", growthTotal);
-            output.putBoolean("PendingRelease", pendingRelease);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        if (category != null) {
+            tag.putString("Category", category.name());
+            if (midas) {
+                tag.putBoolean("Midas", true);
+            }
+            tag.putBoolean("HasStats", hasStats);
+            tag.putInt("Appetite", appetite);
+            tag.putInt("Bounty", bounty);
+            tag.putInt("Reach", reach);
+            tag.putInt("GrowthRemaining", growthRemaining);
+            tag.putInt("GrowthTotal", growthTotal);
+            tag.putBoolean("PendingRelease", pendingRelease);
         }
     }
 
     @Override
-    protected void loadAdditional(ValueInput input) {
-        super.loadAdditional(input);
-        // "Kind" id with the legacy Category+Midas fallback (pre-Kind saves).
-        kind = FrogKind.readFrom(input).orElse(null);
-        if (kind != null) {
-            hasStats = input.getBooleanOr("HasStats", false);
-            appetite = input.getIntOr("Appetite", 0);
-            bounty = input.getIntOr("Bounty", 0);
-            reach = input.getIntOr("Reach", 0);
-            growthRemaining = Math.max(0, input.getIntOr("GrowthRemaining", 0));
-            growthTotal = Math.max(growthRemaining, input.getIntOr("GrowthTotal", 0));
-            pendingRelease = input.getBooleanOr("PendingRelease", false);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        if (tag.contains("Category", Tag.TAG_STRING)) {
+            try {
+                category = Category.valueOf(tag.getString("Category"));
+            } catch (IllegalArgumentException e) {
+                category = null;
+            }
+            midas = tag.getBoolean("Midas");
+            hasStats = tag.getBoolean("HasStats");
+            appetite = tag.getInt("Appetite");
+            bounty = tag.getInt("Bounty");
+            reach = tag.getInt("Reach");
+            growthRemaining = Math.max(0, tag.getInt("GrowthRemaining"));
+            growthTotal = Math.max(growthRemaining, tag.getInt("GrowthTotal"));
+            pendingRelease = tag.getBoolean("PendingRelease");
+        } else {
+            category = null;
+            midas = false;
         }
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        return saveCustomOnly(registries); // sync category + growth for Jade
+        CompoundTag tag = super.getUpdateTag(registries);
+        saveAdditional(tag, registries); // sync category + growth for Jade
+        return tag;
     }
 
     @Override

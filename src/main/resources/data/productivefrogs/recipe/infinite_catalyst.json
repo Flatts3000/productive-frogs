@@ -1,13 +1,7 @@
 {
   "neoforge:conditions": [
-    {
-      "type": "productivefrogs:config_enabled",
-      "config": "count_catalyst"
-    },
-    {
-      "type": "productivefrogs:config_enabled",
-      "config": "infinite_catalyst"
-    }
+    { "type": "productivefrogs:config_enabled", "config": "count_catalyst" },
+    { "type": "productivefrogs:config_enabled", "config": "infinite_catalyst" }
   ],
   "type": "minecraft:crafting_shaped",
   "category": "misc",
@@ -17,8 +11,8 @@
     "BBB"
   ],
   "key": {
-    "B": "productivefrogs:count_catalyst",
-    "D": "minecraft:diamond"
+    "B": { "item": "productivefrogs:count_catalyst" },
+    "D": { "item": "minecraft:diamond" }
   },
   "result": {
     "id": "productivefrogs:infinite_catalyst",

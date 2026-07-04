@@ -8,6 +8,7 @@ import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.StringRepresentable;
+import org.joml.Vector3f;
 
 /**
  * The six parent slime species Productive Frogs is built around. Each species
@@ -82,7 +83,11 @@ public enum Category implements StringRepresentable {
      * prefers its variant's primary colour over the category tint when present.
      */
     public static DustParticleOptions dustParticle(int rgb) {
-        return new DustParticleOptions(rgb, 1.0F);
+        Vector3f color = new Vector3f(
+            ((rgb >> 16) & 0xFF) / 255.0F,
+            ((rgb >>  8) & 0xFF) / 255.0F,
+            (rgb         & 0xFF) / 255.0F);
+        return new DustParticleOptions(color, 1.0F);
     }
 
     /** Splat particle tinted with this category's colour. Used by the parent species. */

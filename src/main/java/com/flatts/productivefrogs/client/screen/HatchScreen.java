@@ -1,10 +1,9 @@
 package com.flatts.productivefrogs.client.screen;
 
 import com.flatts.productivefrogs.content.menu.HatchMenu;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
@@ -16,24 +15,24 @@ import net.minecraft.world.entity.player.Inventory;
  */
 public class HatchScreen extends PFContainerScreen<HatchMenu> {
 
-    private static final Identifier CONTAINER =
-        Identifier.withDefaultNamespace("textures/gui/container/generic_54.png");
+    private static final ResourceLocation CONTAINER =
+        ResourceLocation.withDefaultNamespace("textures/gui/container/generic_54.png");
     private static final int ROWS = 2;
 
     public HatchScreen(HatchMenu menu, Inventory playerInv, Component title) {
-        // vanilla generic-container height for 2 rows
-        super(menu, playerInv, title, 176, 114 + ROWS * 18);
+        super(menu, playerInv, title);
+        this.imageWidth = 176;
+        this.imageHeight = 114 + ROWS * 18; // vanilla generic-container height for 2 rows
         this.inventoryLabelY = this.imageHeight - 94;
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor gui, int mouseX, int mouseY, float partialTick) {
-        super.extractBackground(gui, mouseX, mouseY, partialTick);
+    protected void renderBg(GuiGraphics gui, float partialTick, int mouseX, int mouseY) {
         int x = this.leftPos;
         int y = this.topPos;
         // Top: the title bar + ROWS slot rows.
-        gui.blit(RenderPipelines.GUI_TEXTURED, CONTAINER, x, y, 0.0F, 0.0F, this.imageWidth, ROWS * 18 + 17, 256, 256);
+        gui.blit(CONTAINER, x, y, 0, 0, this.imageWidth, ROWS * 18 + 17);
         // Bottom: the player-inventory section (source v=126, height 96).
-        gui.blit(RenderPipelines.GUI_TEXTURED, CONTAINER, x, y + ROWS * 18 + 17, 0.0F, 126.0F, this.imageWidth, 96, 256, 256);
+        gui.blit(CONTAINER, x, y + ROWS * 18 + 17, 0, 126, this.imageWidth, 96);
     }
 }

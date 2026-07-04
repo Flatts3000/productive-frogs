@@ -62,7 +62,7 @@ class FrogLegsRecipeTest {
         boolean usesCookedLegs = false;
         boolean usesBowl = false;
         for (var el : ingredients) {
-            String item = el.getAsString();
+            String item = el.getAsJsonObject().get("item").getAsString();
             usesCookedLegs |= "productivefrogs:cooked_frog_legs".equals(item);
             usesBowl |= "minecraft:bowl".equals(item);
         }
@@ -81,7 +81,7 @@ class FrogLegsRecipeTest {
         JsonObject recipe = parse(RECIPE_ROOT.resolve(file));
         assertEquals(type, recipe.get("type").getAsString(), file + ": recipe type");
         assertEquals("productivefrogs:raw_frog_legs",
-            recipe.get("ingredient").getAsString(), file + ": ingredient");
+            recipe.getAsJsonObject("ingredient").get("item").getAsString(), file + ": ingredient");
         assertEquals("productivefrogs:cooked_frog_legs",
             recipe.getAsJsonObject("result").get("id").getAsString(), file + ": result");
 

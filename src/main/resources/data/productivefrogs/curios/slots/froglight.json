@@ -1,0 +1,5 @@
+{
+  "order": 210,
+  "icon": "productivefrogs:slot/empty_froglight_slot",
+  "validators": ["productivefrogs:brewed"]
+}

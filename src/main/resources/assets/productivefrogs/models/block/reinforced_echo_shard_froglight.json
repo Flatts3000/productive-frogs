@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "productivefrogs:block/reinforced_echo_shard_froglight"
-  }
-}

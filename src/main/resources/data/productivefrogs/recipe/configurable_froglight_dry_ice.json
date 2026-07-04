@@ -1,23 +1,14 @@
 {
   "neoforge:conditions": [
-    {
-      "type": "neoforge:mod_loaded",
-      "modid": "powah"
-    }
+    { "type": "neoforge:mod_loaded", "modid": "powah" }
   ],
   "type": "minecraft:smelting",
   "ingredient": {
-    "neoforge:ingredient_type": "neoforge:components",
-    "items": [
-      "productivefrogs:configurable_froglight"
-    ],
-    "components": {
-      "productivefrogs:slime_variant": "productivefrogs:dry_ice"
-    }
+    "type": "neoforge:components",
+    "items": [ "productivefrogs:configurable_froglight" ],
+    "components": { "productivefrogs:slime_variant": "productivefrogs:dry_ice" }
   },
-  "result": {
-    "id": "powah:dry_ice"
-  },
+  "result": { "id": "powah:dry_ice" },
   "experience": 0.7,
   "cookingtime": 200,
   "category": "misc",

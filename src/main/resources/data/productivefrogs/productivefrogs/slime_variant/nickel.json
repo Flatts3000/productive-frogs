@@ -1,0 +1,9 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "alltheores" }
+  ],
+  "primer_tag": "c:ingots/nickel",
+  "category": "cave",
+  "primary_color": 15130286,
+  "secondary_color": 12761734
+}

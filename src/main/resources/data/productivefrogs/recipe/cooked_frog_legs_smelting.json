@@ -1,15 +1,10 @@
 {
   "neoforge:conditions": [
-    {
-      "type": "productivefrogs:config_enabled",
-      "config": "frog_legs"
-    }
+    { "type": "productivefrogs:config_enabled", "config": "frog_legs" }
   ],
   "type": "minecraft:smelting",
-  "ingredient": "productivefrogs:raw_frog_legs",
-  "result": {
-    "id": "productivefrogs:cooked_frog_legs"
-  },
+  "ingredient": { "item": "productivefrogs:raw_frog_legs" },
+  "result": { "id": "productivefrogs:cooked_frog_legs" },
   "experience": 0.35,
   "cookingtime": 200,
   "category": "food",

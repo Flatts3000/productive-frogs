@@ -8,14 +8,11 @@
     "NNN"
   ],
   "key": {
-    "G": "minecraft:glowstone",
-    "Q": "minecraft:quartz_block",
-    "B": "minecraft:blaze_rod",
-    "C": "minecraft:magma_cream",
-    "N": "minecraft:nether_bricks"
+    "G": { "item": "minecraft:glowstone" },
+    "Q": { "item": "minecraft:quartz_block" },
+    "B": { "item": "minecraft:blaze_rod" },
+    "C": { "item": "minecraft:magma_cream" },
+    "N": { "item": "minecraft:nether_bricks" }
   },
-  "result": {
-    "id": "productivefrogs:terrarium_controller",
-    "count": 1
-  }
+  "result": { "id": "productivefrogs:terrarium_controller", "count": 1 }
 }

@@ -1,0 +1,12 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:or", "values": [
+      { "type": "neoforge:mod_loaded", "modid": "ae2" },
+      { "type": "neoforge:mod_loaded", "modid": "refinedstorage" }
+    ] }
+  ],
+  "primer_tag": "c:silicon",
+  "category": "geode",
+  "primary_color": 4868690,
+  "secondary_color": 3289658
+}

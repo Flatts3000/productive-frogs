@@ -1,23 +1,14 @@
 {
   "neoforge:conditions": [
-    {
-      "type": "neoforge:mod_loaded",
-      "modid": "refinedstorage"
-    }
+    { "type": "neoforge:mod_loaded", "modid": "refinedstorage" }
   ],
   "type": "minecraft:smelting",
   "ingredient": {
-    "neoforge:ingredient_type": "neoforge:components",
-    "items": [
-      "productivefrogs:configurable_froglight"
-    ],
-    "components": {
-      "productivefrogs:slime_variant": "productivefrogs:improved_processor"
-    }
+    "type": "neoforge:components",
+    "items": [ "productivefrogs:configurable_froglight" ],
+    "components": { "productivefrogs:slime_variant": "productivefrogs:improved_processor" }
   },
-  "result": {
-    "id": "refinedstorage:improved_processor"
-  },
+  "result": { "id": "refinedstorage:improved_processor" },
   "experience": 0.7,
   "cookingtime": 200,
   "category": "misc",

@@ -4,8 +4,10 @@ import com.flatts.productivefrogs.content.block.entity.WitherSummonReceptacleBlo
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -58,12 +60,12 @@ public class WitherSummonReceptacleBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
             Player player, InteractionHand hand, BlockHitResult hit) {
         if (!stack.is(accepted)
                 || !(level.getBlockEntity(pos) instanceof WitherSummonReceptacleBlockEntity be)
                 || be.isFilled()) {
-            return InteractionResult.TRY_WITH_EMPTY_HAND;
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (!level.isClientSide()) {
             be.tryInsert(stack);
@@ -72,7 +74,7 @@ public class WitherSummonReceptacleBlock extends Block implements EntityBlock {
             }
             level.playSound(null, pos, SoundEvents.END_PORTAL_FRAME_FILL, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
-        return InteractionResult.SUCCESS;
+        return ItemInteractionResult.sidedSuccess(level.isClientSide());
     }
 
     @Override
@@ -87,10 +89,17 @@ public class WitherSummonReceptacleBlock extends Block implements EntityBlock {
             }
             level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 0.6F, 1.2F);
         }
-        return InteractionResult.SUCCESS;
+        return InteractionResult.sidedSuccess(level.isClientSide());
     }
 
-    // 26.1: the held-item drop lives in WitherSummonReceptacleBlockEntity#preRemoveSideEffects
-    // (which fires while the BE still exists, unlike affectNeighborsAfterRemoval where it is
-    // already gone). This block has no BE-independent removal side effect, so no override here.
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof WitherSummonReceptacleBlockEntity be) {
+            ItemStack held = be.contents();
+            if (!held.isEmpty()) {
+                Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, held);
+            }
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
+    }
 }

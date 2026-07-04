@@ -50,7 +50,7 @@ class TerrariumRecipeTest {
         Set<String> items = new HashSet<>();
         JsonObject key = recipe.getAsJsonObject("key");
         for (String k : key.keySet()) {
-            items.add(key.get(k).getAsString());
+            items.add(key.getAsJsonObject(k).get("item").getAsString());
         }
         return items;
     }

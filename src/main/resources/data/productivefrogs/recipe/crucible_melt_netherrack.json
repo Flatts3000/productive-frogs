@@ -1,8 +1,5 @@
 {
   "type": "productivefrogs:crucible_melting",
-  "ingredient": "#c:netherracks",
-  "result": {
-    "id": "minecraft:lava",
-    "amount": 500
-  }
+  "ingredient": { "tag": "c:netherracks" },
+  "result": { "id": "minecraft:lava", "amount": 500 }
 }

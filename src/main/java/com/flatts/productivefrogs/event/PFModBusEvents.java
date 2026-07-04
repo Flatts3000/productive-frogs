@@ -3,19 +3,17 @@ package com.flatts.productivefrogs.event;
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
-import com.flatts.productivefrogs.content.fluid.MilkBucketFluidResourceHandler;
-import com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
-import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFPotions;
+import com.flatts.productivefrogs.registry.PFVariantMilk;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.component.DataComponentType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.SpawnPlacementTypes;
@@ -161,7 +159,7 @@ public final class PFModBusEvents {
     private static <T extends net.minecraft.world.entity.Mob> boolean checkInfernalSlimeSpawnRules(
         net.minecraft.world.entity.EntityType<T> type,
         net.minecraft.world.level.ServerLevelAccessor level,
-        net.minecraft.world.entity.EntitySpawnReason reason,
+        net.minecraft.world.entity.MobSpawnType reason,
         net.minecraft.core.BlockPos pos,
         net.minecraft.util.RandomSource random
     ) {
@@ -187,19 +185,18 @@ public final class PFModBusEvents {
      */
     @SubscribeEvent
     public static void onRegisterCapabilities(RegisterCapabilitiesEvent event) {
-        // 26.1 R-3: the legacy block caps (Capabilities.ItemHandler/FluidHandler/
-        // EnergyStorage.BLOCK, IItemHandler/IFluidHandler/IEnergyStorage) were
-        // replaced by Capabilities.Item/Fluid/Energy.BLOCK over ResourceHandler/
-        // EnergyHandler. NeoForge ships no forward bridge, so each BE exposes a
-        // hand-written journaled adapter (content/transfer/) that we register here;
-        // the storage, menus and cook loops are untouched. See the adapter javadocs
-        // for the snapshot-before-mutate / read-your-writes transaction reasoning.
+        // 1.21.1 NeoForge: Capabilities.ItemHandler.BLOCK (returns IItemHandler).
+        // The Capabilities.Item.BLOCK rename + ResourceHandler<ItemResource>
+        // transfer-API surface only landed in 1.21.4+.
         event.registerBlockEntity(
-            Capabilities.Item.BLOCK,
+            Capabilities.ItemHandler.BLOCK,
             PFBlockEntities.SLIME_MILKER.get(),
-            (be, side) -> side == Direction.DOWN
-                ? be.getInventory().outputResource()
-                : be.getInventory().inputResource()
+            (be, side) -> {
+                if (side == Direction.DOWN) {
+                    return be.getInventory().outputView();
+                }
+                return be.getInventory().inputView();
+            }
         );
 
         // Slime Churn (#187): bottom face = extract-only view over BOTH output
@@ -207,22 +204,22 @@ public final class PFModBusEvents {
         // insert view over both input slots, routed by per-slot validity
         // (milk buckets to the milk slot, empties to the bucket slot).
         event.registerBlockEntity(
-            Capabilities.Item.BLOCK,
+            Capabilities.ItemHandler.BLOCK,
             PFBlockEntities.SLIME_CHURN.get(),
             (be, side) -> side == Direction.DOWN
-                ? be.getInventory().outputResource()
-                : be.getInventory().inputResource()
+                ? be.getInventory().outputView()
+                : be.getInventory().inputView()
         );
 
         // Spawnery: bottom face = extract-only output; every other face = the
         // insert view over the three input slots (bottle / fuel / primer), which
         // routes each pushed item to the slot that accepts it.
         event.registerBlockEntity(
-            Capabilities.Item.BLOCK,
+            Capabilities.ItemHandler.BLOCK,
             PFBlockEntities.SPAWNERY.get(),
             (be, side) -> side == Direction.DOWN
-                ? be.getInventory().outputResource()
-                : be.getInventory().inputResource()
+                ? be.getInventory().outputView()
+                : be.getInventory().inputView()
         );
 
         // Crucible (v1.12): extract-only fluid tank for pipes and the bucket
@@ -231,14 +228,14 @@ public final class PFModBusEvents {
         // hoppers can feed Froglights into the solids queue (Ex Deorum
         // parity). See CrucibleBlockEntity.
         event.registerBlockEntity(
-            Capabilities.Fluid.BLOCK,
+            Capabilities.FluidHandler.BLOCK,
             PFBlockEntities.CRUCIBLE.get(),
-            (be, side) -> be.fluidResource()
+            (be, side) -> be.fluidHandler()
         );
         event.registerBlockEntity(
-            Capabilities.Item.BLOCK,
+            Capabilities.ItemHandler.BLOCK,
             PFBlockEntities.CRUCIBLE.get(),
-            (be, side) -> be.itemResource()
+            (be, side) -> be.itemHandler()
         );
 
         // Casting Mold (v1.12 wave 2): fill-ONLY fluid tank (recipe-
@@ -246,14 +243,14 @@ public final class PFModBusEvents {
         // is a no-op, committed molten only leaves as a cast item) plus an
         // extract-only item view so hoppers can pull cast ingots.
         event.registerBlockEntity(
-            Capabilities.Fluid.BLOCK,
+            Capabilities.FluidHandler.BLOCK,
             PFBlockEntities.CASTING_MOLD.get(),
-            (be, side) -> be.fluidResource()
+            (be, side) -> be.fluidHandler()
         );
         event.registerBlockEntity(
-            Capabilities.Item.BLOCK,
+            Capabilities.ItemHandler.BLOCK,
             PFBlockEntities.CASTING_MOLD.get(),
-            (be, side) -> be.outputResource()
+            (be, side) -> be.outputView()
         );
 
         // Distiller (#253): PF's first RF machine. A receive-only energy buffer
@@ -261,195 +258,116 @@ public final class PFModBusEvents {
         // internally), plus side-aware item views - the down face pulls the
         // rendered item, every other face feeds Prismatic Froglights in.
         event.registerBlockEntity(
-            Capabilities.Energy.BLOCK,
+            Capabilities.EnergyStorage.BLOCK,
             PFBlockEntities.DISTILLER.get(),
-            (be, side) -> be.energyHandler()
+            (be, side) -> be.energyStorage()
         );
         event.registerBlockEntity(
-            Capabilities.Item.BLOCK,
+            Capabilities.ItemHandler.BLOCK,
             PFBlockEntities.DISTILLER.get(),
-            (be, side) -> side == Direction.DOWN ? be.outputResource() : be.inputResource()
+            (be, side) -> side == Direction.DOWN ? be.outputView() : be.inputView()
         );
 
         // Alembic (#253): the lane's other RF machine. Receive-only energy buffer;
         // down face pulls the Mimic Slime Bucket, other faces feed bucket + item.
         event.registerBlockEntity(
-            Capabilities.Energy.BLOCK,
+            Capabilities.EnergyStorage.BLOCK,
             PFBlockEntities.ALEMBIC.get(),
-            (be, side) -> be.energyHandler()
+            (be, side) -> be.energyStorage()
         );
         event.registerBlockEntity(
-            Capabilities.Item.BLOCK,
+            Capabilities.ItemHandler.BLOCK,
             PFBlockEntities.ALEMBIC.get(),
-            (be, side) -> side == Direction.DOWN ? be.outputResource() : be.inputResource()
-        );
-
-        // Slurry Press (#281, Phase 3): standard appliance hopper I/O - the down
-        // face pulls the outputs (Slurry bucket + returned net), every other
-        // face feeds nets + empty buckets (per-slot validity routes each item).
-        event.registerBlockEntity(
-            Capabilities.Item.BLOCK,
-            PFBlockEntities.SLURRY_PRESS.get(),
-            (be, side) -> side == Direction.DOWN
-                ? be.getInventory().outputResource()
-                : be.getInventory().inputResource()
-        );
-
-        // The two Basins (#281, Phase 3): fill-only fluid intake (exactly 1000 mB
-        // of the matching component-carrying fluid while empty; the key + budget
-        // components ride the FluidResource). Drain is a no-op - the empty-bucket
-        // right-click is the hand drain; pipes refill, they don't siphon.
-        event.registerBlockEntity(
-            Capabilities.Fluid.BLOCK,
-            PFBlockEntities.MOB_SLURRY_BASIN.get(),
-            (be, side) -> be.fluidResource()
-        );
-        event.registerBlockEntity(
-            Capabilities.Fluid.BLOCK,
-            PFBlockEntities.SLIME_MILK_BASIN.get(),
-            (be, side) -> be.fluidResource()
+            (be, side) -> side == Direction.DOWN ? be.outputView() : be.inputView()
         );
 
         // Terrarium Controller (#185): fill-only fluid intake for piped milk. The
-        // catalyst components ride the FluidStack (via the milk bucket fluid
-        // resource handler), so the Controller reads them back into a MilkCharge.
-        // Drain is a no-op (the funnel converts fluid to charges, not a reservoir).
+        // catalyst components ride the FluidStack (via MilkFluidBucketWrapper), so
+        // the Controller reads them back into a MilkCharge. Drain is a no-op (the
+        // funnel converts fluid to charges, it is not a reservoir).
         event.registerBlockEntity(
-            Capabilities.Fluid.BLOCK,
+            Capabilities.FluidHandler.BLOCK,
             PFBlockEntities.TERRARIUM_CONTROLLER.get(),
-            (be, side) -> be.fluidResource()
+            (be, side) -> be.fluidHandler()
         );
 
         // Terrarium Hatch (#185): the froglight output inventory, for piping out.
         event.registerBlockEntity(
-            Capabilities.Item.BLOCK,
+            Capabilities.ItemHandler.BLOCK,
             PFBlockEntities.HATCH.get(),
-            (be, side) -> be.inventoryResource()
+            (be, side) -> be.inventory()
         );
 
         // End Crystal Receptacle (#249): insert-only - hoppers/pipes feed End
         // Crystals in; the dragon-altar summon spends them, so extraction is
         // blocked (a hopper below can't steal a primed crystal).
         event.registerBlockEntity(
-            Capabilities.Item.BLOCK,
+            Capabilities.ItemHandler.BLOCK,
             PFBlockEntities.END_CRYSTAL_RECEPTACLE.get(),
-            (be, side) -> be.crystalResource()
-        );
-
-        // Boss altar Liquid Experience banks (#281 Phase 4): extract-only -
-        // the altar's XP payout accumulates as liquid_experience in the hatch
-        // dock; pipes drain it from any face. Insert is a no-op.
-        event.registerBlockEntity(
-            Capabilities.Fluid.BLOCK,
-            PFBlockEntities.END_DRAGON_ALTAR_HATCH.get(),
-            (be, side) -> be.dock().fluidResource()
-        );
-        event.registerBlockEntity(
-            Capabilities.Fluid.BLOCK,
-            PFBlockEntities.WITHER_ALTAR_HATCH.get(),
-            (be, side) -> be.dock().fluidResource()
+            (be, side) -> be.insertOnlyHandler()
         );
 
         // End Dragon Altar Hatch (#249): the altar's output - pipes pull the
         // dragon's drops from any face (chest-style inventory).
         event.registerBlockEntity(
-            Capabilities.Item.BLOCK,
+            Capabilities.ItemHandler.BLOCK,
             PFBlockEntities.END_DRAGON_ALTAR_HATCH.get(),
-            (be, side) -> RestrictedItemResourceHandler.ofAll(be.itemHandler(), true, true)
+            (be, side) -> be.itemHandler()
         );
 
         // Wither Altar summon receptacles (#247): insert-only, like the dragon altar's
         // crystal sockets - pipes feed soul sand / skulls in; the summon spends them.
         event.registerBlockEntity(
-            Capabilities.Item.BLOCK,
+            Capabilities.ItemHandler.BLOCK,
             PFBlockEntities.WITHER_SUMMON_RECEPTACLE.get(),
-            (be, side) -> be.heldResource()
+            (be, side) -> be.insertOnlyHandler()
         );
 
         // Wither Altar Hatch (#247): the altar's output - pipes pull the reward
         // from any face (chest-style inventory).
         event.registerBlockEntity(
-            Capabilities.Item.BLOCK,
+            Capabilities.ItemHandler.BLOCK,
             PFBlockEntities.WITHER_ALTAR_HATCH.get(),
-            (be, side) -> RestrictedItemResourceHandler.ofAll(be.itemHandler(), true, true)
+            (be, side) -> be.itemHandler()
         );
 
-        // The single Slime Milk bucket (26.1 R-1) is a SlimeMilkBucketItem extends
-        // BucketItem. 26.1 swapped the item fluid cap to Capabilities.Fluid.ITEM
-        // (a ResourceHandler<FluidResource> over an ItemAccess); NeoForge only
-        // auto-registers the vanilla BucketItem, not subclasses, so wire it up
-        // explicitly - this is what lets tank/pipe mods pump milk and round-trip it.
-        // MilkBucketFluidResourceHandler copies the SLIME_VARIANT + catalyst
-        // components onto the drained FluidResource, so the variant AND the
-        // Count/Speed/Quantity/Infinite stats survive bucket -> fluid (the Terrarium
-        // Controller reads them back into a MilkCharge). The variant no longer rides
-        // the fluid identity, so copying SLIME_VARIANT is what preserves it.
-        DataComponentType<?>[] milkCarried = new DataComponentType<?>[] {
-            PFDataComponents.SLIME_VARIANT.get(),
-            PFDataComponents.SPAWNS_REMAINING.get(),
-            PFDataComponents.MILK_CAPACITY.get(),
-            PFDataComponents.MILK_SPEED.get(),
-            PFDataComponents.MILK_QUANTITY.get(),
-            PFDataComponents.MILK_INFINITE.get()
-        };
-        event.registerItem(
-            Capabilities.Fluid.ITEM,
-            (stack, access) -> new MilkBucketFluidResourceHandler(access, milkCarried),
-            PFItems.SLIME_MILK_BUCKET.get()
-        );
+        // Per-variant Slime Milk buckets (v1.8) are SlimeMilkBucketItem extends
+        // BucketItem. NeoForge only auto-registers FluidHandler.ITEM for the exact
+        // BucketItem class, not subclasses, so wire each up explicitly - this is
+        // what lets tank/pipe mods pump a variant's milk and round-trip it. The
+        // component-preserving MilkFluidBucketWrapper additionally copies the
+        // catalyst components onto the drained FluidStack (#185), so piped milk
+        // keeps Count/Speed/Quantity/Infinite end to end; the variant rides the
+        // fluid identity regardless.
+        for (ResourceLocation variantId : PFVariantMilk.registeredVariants()) {
+            net.minecraft.world.item.Item bucket = PFVariantMilk.bucket(variantId);
+            if (bucket != null) {
+                event.registerItem(
+                    Capabilities.FluidHandler.ITEM,
+                    (stack, ctx) -> new com.flatts.productivefrogs.content.fluid.MilkFluidBucketWrapper(stack),
+                    bucket
+                );
+            }
+        }
 
         // Mimic Milk bucket (#253) is also a BucketItem subclass, so it needs the
-        // same explicit Fluid.ITEM registration. It additionally preserves the
-        // synthesized item id onto the drained fluid so a bucket <-> tank round-trip
-        // keeps it (on top of the catalyst components above).
-        DataComponentType<?>[] mimicCarried = new DataComponentType<?>[] {
-            PFDataComponents.SPAWNS_REMAINING.get(),
-            PFDataComponents.MILK_CAPACITY.get(),
-            PFDataComponents.MILK_SPEED.get(),
-            PFDataComponents.MILK_QUANTITY.get(),
-            PFDataComponents.MILK_INFINITE.get(),
-            PFDataComponents.SYNTHESIZED_ITEM.get()
-        };
+        // same explicit FluidHandler.ITEM registration. Its wrapper additionally
+        // preserves the synthesized item id onto the drained FluidStack so a
+        // bucket <-> tank round-trip keeps it (MimicMilkFluidBucketWrapper).
         event.registerItem(
-            Capabilities.Fluid.ITEM,
-            (stack, access) -> new MilkBucketFluidResourceHandler(access, mimicCarried),
+            Capabilities.FluidHandler.ITEM,
+            (stack, ctx) -> new com.flatts.productivefrogs.content.fluid.MimicMilkFluidBucketWrapper(stack),
             PFItems.MIMIC_MILK_BUCKET.get()
         );
 
-        // Liquid Experience bucket (#281 Phase 2): also a BucketItem subclass, so it
-        // needs the same explicit Fluid.ITEM registration - but XP is fungible (no
-        // components to carry), so NeoForge's STOCK BucketResourceHandler serves
-        // unmodified. This is what lets any c:experience tank/pipe/drain pump the
-        // fluid out of (and back into) the bucket at exact bucket volume.
-        event.registerItem(
-            Capabilities.Fluid.ITEM,
-            (stack, access) -> new net.neoforged.neoforge.transfer.fluid.BucketResourceHandler(access),
-            PFItems.LIQUID_EXPERIENCE_BUCKET.get()
-        );
-
-        // Mob Slurry bucket (#281, Phase 3): a BucketItem subclass, so it needs the
-        // explicit Fluid.ITEM registration. Carries the mob key (SLURRIED_ENTITY)
-        // plus the budget/catalyst set onto the drained FluidResource - the same
-        // handler and component round-trip as milk, so tank/pipe automation moves
-        // slurry with its identity and upgrades intact (parity principle).
-        DataComponentType<?>[] slurryCarried = new DataComponentType<?>[] {
-            PFDataComponents.SLURRIED_ENTITY.get(),
-            PFDataComponents.SPAWNS_REMAINING.get(),
-            PFDataComponents.MILK_CAPACITY.get(),
-            PFDataComponents.MILK_SPEED.get(),
-            PFDataComponents.MILK_QUANTITY.get(),
-            PFDataComponents.MILK_INFINITE.get()
-        };
-        event.registerItem(
-            Capabilities.Fluid.ITEM,
-            (stack, access) -> new MilkBucketFluidResourceHandler(access, slurryCarried),
-            PFItems.MOB_SLURRY_BUCKET.get()
-        );
-
-        // PORT-DROP(2.0): the brewed-Froglight Curios item capability returns with
-        // Curios support as a 2.x minor (CuriosCompat removed in the 26.1 port).
-        // Brewed Froglights keep their placed-aura + held-buff forms; only the
-        // worn-charm slot is gone until Curios is re-added.
+        // Brewed Froglight curio (#169) - register the Curios item capability
+        // ONLY when curios is loaded. The call is behind the guard so
+        // CuriosCompat (and the Curios API types it references) never classload
+        // on a curios-less pack - the Jade/JEI soft-dep posture. Curios is
+        // compileOnly + a run/mods drop-in, never bundled.
+        if (net.neoforged.fml.ModList.get().isLoaded("curios")) {
+            com.flatts.productivefrogs.integration.curios.CuriosCompat.registerCapabilities(event);
+        }
     }
 
     /**
@@ -463,6 +381,19 @@ public final class PFModBusEvents {
         event.register(com.flatts.productivefrogs.registry.PFDataMaps.FROGLIGHT_HEAT);
     }
 
+    /**
+     * Common setup: register the Curios {@code productivefrogs:brewed} slot
+     * validator (#169) when Curios is loaded. Behind the isLoaded guard +
+     * enqueued so CuriosCompat never classloads on a Curios-less pack and the
+     * static-API call runs on the main thread. The validator must exist before
+     * datapacks (slot JSONs) load, which is after common setup.
+     */
+    @SubscribeEvent
+    public static void onCommonSetup(net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) {
+        if (net.neoforged.fml.ModList.get().isLoaded("curios")) {
+            event.enqueueWork(com.flatts.productivefrogs.integration.curios.CuriosCompat::registerPredicate);
+        }
+    }
 
     /**
      * Mirror of {@link Monster#checkMonsterSpawnRules} but typed against
@@ -472,7 +403,7 @@ public final class PFModBusEvents {
     private static <T extends Mob> boolean checkParentSlimeSpawnRules(
         EntityType<T> type,
         ServerLevelAccessor level,
-        EntitySpawnReason reason,
+        MobSpawnType reason,
         BlockPos pos,
         RandomSource random
     ) {

@@ -1,15 +1,12 @@
 {
   "neoforge:conditions": [
-    {
-      "type": "productivefrogs:config_enabled",
-      "config": "frog_stats"
-    }
+    { "type": "productivefrogs:config_enabled", "config": "frog_stats" }
   ],
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    "minecraft:slime_ball",
-    "minecraft:sugar"
+    { "item": "minecraft:slime_ball" },
+    { "item": "minecraft:sugar" }
   ],
   "result": {
     "id": "productivefrogs:sweetslime",

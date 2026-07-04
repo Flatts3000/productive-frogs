@@ -8,11 +8,7 @@ import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.util.ProblemReporter;
-import net.minecraft.world.level.storage.TagValueInput;
-import net.minecraft.world.level.storage.TagValueOutput;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -42,7 +38,7 @@ class IncubatorBlockEntityTest {
     @Test
     void onlyIncubatesOneAtATime() {
         IncubatorBlockEntity i = newIncubator();
-        assertTrue(i.seedFromBreeding(com.flatts.productivefrogs.data.FrogKind.resource(Category.CAVE), 5, 7, 3));
+        assertTrue(i.seedFromBreeding(Category.CAVE, 5, 7, 3));
         assertFalse(i.seedBaseline(Category.GEODE), "a second seed is refused while incubating");
         assertEquals(Category.CAVE, i.getCategory(), "the first seed is untouched");
     }
@@ -66,13 +62,12 @@ class IncubatorBlockEntityTest {
     @Test
     void nbtRoundTripPreservesSeed() {
         IncubatorBlockEntity i = newIncubator();
-        i.seedFromBreeding(com.flatts.productivefrogs.data.FrogKind.resource(Category.INFERNAL), 5, 7, 3);
-        TagValueOutput out = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, RegistryAccess.EMPTY);
-        i.saveAdditional(out);
-        CompoundTag tag = out.buildResult();
+        i.seedFromBreeding(Category.INFERNAL, 5, 7, 3);
+        CompoundTag tag = new CompoundTag();
+        i.saveAdditional(tag, null);
 
         IncubatorBlockEntity reloaded = newIncubator();
-        reloaded.loadAdditional(TagValueInput.create(ProblemReporter.DISCARDING, RegistryAccess.EMPTY, tag));
+        reloaded.loadAdditional(tag, null);
         assertEquals(Category.INFERNAL, reloaded.getCategory());
         assertEquals(i.growthTotal(), reloaded.growthTotal());
         assertFalse(reloaded.hasRoom());

@@ -1,0 +1,6 @@
+{
+  "name": "The Terrarium",
+  "description": "The sealed multiblock habitat that runs the whole frog loop on its own.",
+  "icon": "productivefrogs:terrarium_controller",
+  "sortnum": 400
+}

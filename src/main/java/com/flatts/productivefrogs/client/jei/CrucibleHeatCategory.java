@@ -11,9 +11,9 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -35,7 +35,7 @@ public final class CrucibleHeatCategory implements IRecipeCategory<CrucibleHeatC
      * keys the JEI registry name (the source block's id, or the froglight
      * variant id for the Lava Froglight entry).
      */
-    public record Entry(ItemStack display, int heat, Identifier id) {
+    public record Entry(ItemStack display, int heat, ResourceLocation id) {
     }
 
     public static final RecipeType<Entry> TYPE =
@@ -90,14 +90,14 @@ public final class CrucibleHeatCategory implements IRecipeCategory<CrucibleHeatC
 
     @Override
     public void draw(Entry entry, IRecipeSlotsView slotsView,
-                     GuiGraphicsExtractor gui, double mouseX, double mouseY) {
-        gui.text(Minecraft.getInstance().font,
+                     GuiGraphics gui, double mouseX, double mouseY) {
+        gui.drawString(Minecraft.getInstance().font,
             Component.translatable("productivefrogs.jei.crucible_heat_value", entry.heat()),
             TEXT_X, TEXT_Y, 0xFF404040, false);
     }
 
     @Override
-    public Identifier getRegistryName(Entry entry) {
+    public ResourceLocation getRegistryName(Entry entry) {
         return entry.id();
     }
 }

@@ -1,0 +1,42 @@
+{
+  "name": "Building the Terrarium",
+  "icon": "productivefrogs:terrarium_controller",
+  "category": "productivefrogs:terrarium",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The Terrarium is a sealed multiblock that runs the whole frog loop on its own. Build the box, seal it, and pipe Slime Milk into the Controller: ceiling Sprinklers rain slimes down, frogs eat them, and the Froglights collect in the Hatch."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The shell is 7 wide, 7 deep, and 6 tall - any full block (glass works, so you can see in), or a block in the terrarium_shell tag like mud - around a 5x5x4 cavity. You can mix materials freely; the example below uses a mud floor, glass walls, and oak corner posts.$(br2)Each machine sits on a wall or the ceiling; see its own page in this chapter for where and how."
+    },
+    {
+      "type": "patchouli:multiblock",
+      "name": "The Terrarium",
+      "text": "Seal the shell, place the Controller, then look at it - it lights up when the structure is valid.",
+      "multiblock": {
+        "mapping": {
+          "G": "minecraft:glass",
+          "W": "minecraft:oak_planks",
+          "M": "minecraft:mud",
+          "A": "minecraft:air",
+          "0": "minecraft:air",
+          "P": "productivefrogs:sprinkler[facing=down]",
+          "C": "productivefrogs:terrarium_controller[facing=west]",
+          "H": "productivefrogs:hatch[facing=east]",
+          "I": "productivefrogs:incubator[facing=north]"
+        },
+        "pattern": [
+          ["WGGGGGW", "GPPPPPG", "GPPPPPG", "GPPPPPG", "GPPPPPG", "GPPPPPG", "WGGGGGW"],
+          ["WGGGGGW", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "WGGGGGW"],
+          ["WGGIGGW", "GAAAAAG", "GAAAAAG", "CAAAAAH", "GAAAAAG", "GAAAAAG", "WGGGGGW"],
+          ["WGGGGGW", "GAAAAAG", "GAAAAAG", "GAA0AAG", "GAAAAAG", "GAAAAAG", "WGGGGGW"],
+          ["WGGGGGW", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "WGGGGGW"],
+          ["WMMMMMW", "MMMMMMM", "MMMMMMM", "MMMMMMM", "MMMMMMM", "MMMMMMM", "WMMMMMW"]
+        ]
+      }
+    }
+  ]
+}

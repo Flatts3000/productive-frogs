@@ -4,7 +4,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.recipe.CrucibleMeltRecipe;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.neoforged.bus.api.IEventBus;
@@ -28,21 +28,18 @@ public final class PFRecipeTypes {
 
     public static final Supplier<RecipeType<CrucibleMeltRecipe>> CRUCIBLE_MELTING =
         RECIPE_TYPES.register("crucible_melting", () -> RecipeType.simple(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "crucible_melting")));
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "crucible_melting")));
 
     public static final Supplier<RecipeSerializer<CrucibleMeltRecipe>> CRUCIBLE_MELTING_SERIALIZER =
-        RECIPE_SERIALIZERS.register("crucible_melting",
-            () -> new RecipeSerializer<>(CrucibleMeltRecipe.CODEC, CrucibleMeltRecipe.STREAM_CODEC));
+        RECIPE_SERIALIZERS.register("crucible_melting", CrucibleMeltRecipe.Serializer::new);
 
     public static final Supplier<RecipeType<com.flatts.productivefrogs.content.recipe.MoldCastingRecipe>> MOLD_CASTING =
         RECIPE_TYPES.register("mold_casting", () -> RecipeType.simple(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "mold_casting")));
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "mold_casting")));
 
     public static final Supplier<RecipeSerializer<com.flatts.productivefrogs.content.recipe.MoldCastingRecipe>> MOLD_CASTING_SERIALIZER =
         RECIPE_SERIALIZERS.register("mold_casting",
-            () -> new RecipeSerializer<>(
-                com.flatts.productivefrogs.content.recipe.MoldCastingRecipe.CODEC,
-                com.flatts.productivefrogs.content.recipe.MoldCastingRecipe.STREAM_CODEC));
+            com.flatts.productivefrogs.content.recipe.MoldCastingRecipe.Serializer::new);
 
     private PFRecipeTypes() {
         // utility class

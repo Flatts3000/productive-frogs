@@ -3,9 +3,8 @@ package com.flatts.productivefrogs.data;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.Optional;
-import net.minecraft.core.Holder;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.resources.Identifier;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -50,9 +49,9 @@ import org.jetbrains.annotations.Nullable;
  * entries, materialize a cache rather than scanning on a hot path.
  */
 public record ParentSpeciesEntry(
-    Identifier entityType,
+    ResourceLocation entityType,
     Category category,
-    Optional<Identifier> innerBlock
+    Optional<ResourceLocation> innerBlock
 ) {
 
     /**
@@ -68,9 +67,9 @@ public record ParentSpeciesEntry(
      */
     public static final Codec<ParentSpeciesEntry> CODEC = RecordCodecBuilder.create(
         instance -> instance.group(
-            Identifier.CODEC.fieldOf("entity_type").forGetter(ParentSpeciesEntry::entityType),
+            ResourceLocation.CODEC.fieldOf("entity_type").forGetter(ParentSpeciesEntry::entityType),
             Category.CODEC.fieldOf("category").forGetter(ParentSpeciesEntry::category),
-            Identifier.CODEC.optionalFieldOf("inner_block").forGetter(ParentSpeciesEntry::innerBlock)
+            ResourceLocation.CODEC.optionalFieldOf("inner_block").forGetter(ParentSpeciesEntry::innerBlock)
         ).apply(instance, ParentSpeciesEntry::new)
     );
 
@@ -81,10 +80,10 @@ public record ParentSpeciesEntry(
      * paths consistently. Linear scan; see the class javadoc on scale.
      */
     @Nullable
-    public static Category categoryFor(HolderLookup.RegistryLookup<ParentSpeciesEntry> registry, Identifier entityTypeId) {
-        for (Holder.Reference<ParentSpeciesEntry> entry : registry.listElements().toList()) {
-            if (entry.value().entityType().equals(entityTypeId)) {
-                return entry.value().category();
+    public static Category categoryFor(Registry<ParentSpeciesEntry> registry, ResourceLocation entityTypeId) {
+        for (ParentSpeciesEntry entry : registry) {
+            if (entry.entityType().equals(entityTypeId)) {
+                return entry.category();
             }
         }
         return null;

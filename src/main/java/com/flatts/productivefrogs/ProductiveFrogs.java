@@ -18,6 +18,8 @@ import com.flatts.productivefrogs.registry.PFParticles;
 import com.flatts.productivefrogs.registry.PFPotions;
 import com.flatts.productivefrogs.registry.PFRecipeTypes;
 import com.flatts.productivefrogs.registry.PFSensors;
+import com.flatts.productivefrogs.registry.PFVariantMilk;
+import com.flatts.productivefrogs.setup.VariantFluidDiscovery;
 import com.flatts.productivefrogs.util.PFDebug;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -50,9 +52,12 @@ public final class ProductiveFrogs {
 
         PFDataComponents.register(modEventBus);
         PFAttachments.register(modEventBus);
-        // Slime Milk is a SINGLE component-carrying fluid (26.1 R-1): the variant
-        // rides the SLIME_VARIANT component, not the fluid identity, so there is no
-        // per-variant fluid minting to bootstrap here any more (PFVariantMilk deleted).
+        // Per-variant Slime Milk (v1.8): discover the variant ids that get their
+        // own fluid (built-in index + config/productivefrogs/variants) and mint a
+        // fluid/block/bucket for each. Must run BEFORE the Fluid/Block/Item
+        // DeferredRegisters fire - BuiltInRegistries.FLUID freezes right after mod
+        // construction, so a fluid can only exist for a variant known now.
+        PFVariantMilk.bootstrap(VariantFluidDiscovery.discover());
         // Molten metals (v1.12 Crucible melt lane): mint PF-side fluids only
         // where AllTheOres doesn't already provide them - see PFMoltenFluids
         // for the ATM-interop rules. Same must-run-before-registers constraint

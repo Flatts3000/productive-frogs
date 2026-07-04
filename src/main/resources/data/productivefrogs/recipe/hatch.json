@@ -8,13 +8,10 @@
     "NHN"
   ],
   "key": {
-    "N": "minecraft:nether_bricks",
-    "H": "minecraft:hopper",
-    "I": "minecraft:iron_ingot",
-    "C": "minecraft:chest"
+    "N": { "item": "minecraft:nether_bricks" },
+    "H": { "item": "minecraft:hopper" },
+    "I": { "item": "minecraft:iron_ingot" },
+    "C": { "item": "minecraft:chest" }
   },
-  "result": {
-    "id": "productivefrogs:hatch",
-    "count": 1
-  }
+  "result": { "id": "productivefrogs:hatch", "count": 1 }
 }

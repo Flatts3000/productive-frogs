@@ -7,7 +7,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
@@ -60,7 +60,7 @@ public final class TerrariumValidator {
      * {@code data/productivefrogs/tags/block/terrarium_shell.json}.
      */
     static final TagKey<Block> TERRARIUM_SHELL =
-        TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "terrarium_shell"));
+        TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "terrarium_shell"));
 
     private TerrariumValidator() {
         // utility class

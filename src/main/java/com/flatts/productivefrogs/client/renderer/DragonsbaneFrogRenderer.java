@@ -1,10 +1,10 @@
 package com.flatts.productivefrogs.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.model.animal.frog.FrogModel;
+import net.minecraft.client.model.FrogModel;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.FrogRenderer;
-import net.minecraft.client.renderer.entity.state.FrogRenderState;
+import net.minecraft.world.entity.animal.frog.Frog;
 
 /**
  * Renderer for the dragon altar's display frog (#249) - "Dragonsbane". Makes it read
@@ -13,10 +13,6 @@ import net.minecraft.client.renderer.entity.state.FrogRenderState;
  * ender-purple via the shared {@link CategoryTintLayer} (the same overlay the Resource
  * Frogs use for their category tint). Ambient ender particles are emitted by the entity
  * itself (see {@link com.flatts.productivefrogs.content.entity.DragonsbaneFrog#tick()}).
- *
- * <p>The tint is a constant (not per-entity), so no custom render state is needed -
- * the layer's tint getter returns {@link #VOID_TINT} regardless of state, and its
- * texture getter reads the vanilla biome-variant texture off {@link FrogRenderState}.
  */
 public class DragonsbaneFrogRenderer extends FrogRenderer {
 
@@ -27,13 +23,13 @@ public class DragonsbaneFrogRenderer extends FrogRenderer {
 
     public DragonsbaneFrogRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
-        this.addLayer(new CategoryTintLayer<FrogRenderState, FrogModel>(
-            this, state -> state.texture, state -> VOID_TINT));
+        this.addLayer(new CategoryTintLayer<Frog, FrogModel<Frog>>(
+            this, this::getTextureLocation, entity -> VOID_TINT));
     }
 
     @Override
-    protected void scale(FrogRenderState state, PoseStack poseStack) {
-        poseStack.scale(SCALE, SCALE, SCALE);
-        super.scale(state, poseStack);
+    protected void scale(Frog frog, PoseStack pose, float partialTick) {
+        pose.scale(SCALE, SCALE, SCALE);
+        super.scale(frog, pose, partialTick);
     }
 }

@@ -62,9 +62,9 @@ public record MilkCharge(int spawnsRemaining, int capacity, int speed, int quant
     public static MilkCharge fromTag(CompoundTag tag) {
         // Clamp on load so a hand-edited / corrupted save can't inject a junk charge
         // (negative budget, etc.) into the Controller's dispatch queue.
-        int rem = Mth.clamp(tag.getIntOr("Remaining", 0), 0, SlimeMilkSourceBlockEntity.MAX_STORED_SPAWNS);
-        int cap = Mth.clamp(Math.max(tag.getIntOr("Capacity", 0), rem), 0, SlimeMilkSourceBlockEntity.MAX_STORED_SPAWNS);
-        return new MilkCharge(rem, cap, Math.max(0, tag.getIntOr("Speed", 0)),
-            Math.max(0, tag.getIntOr("Quantity", 0)), tag.getBooleanOr("Infinite", false));
+        int rem = Mth.clamp(tag.getInt("Remaining"), 0, SlimeMilkSourceBlockEntity.MAX_STORED_SPAWNS);
+        int cap = Mth.clamp(Math.max(tag.getInt("Capacity"), rem), 0, SlimeMilkSourceBlockEntity.MAX_STORED_SPAWNS);
+        return new MilkCharge(rem, cap, Math.max(0, tag.getInt("Speed")),
+            Math.max(0, tag.getInt("Quantity")), tag.getBoolean("Infinite"));
     }
 }

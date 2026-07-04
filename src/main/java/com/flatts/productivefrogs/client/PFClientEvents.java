@@ -1,83 +1,76 @@
 package com.flatts.productivefrogs.client;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
-import com.flatts.productivefrogs.client.color.BucketCategoryTint;
-import com.flatts.productivefrogs.client.color.CategoryColorTint;
-import com.flatts.productivefrogs.client.color.ConfigurableFroglightBlockTint;
-import com.flatts.productivefrogs.client.color.ConfigurableFroglightTint;
-import com.flatts.productivefrogs.client.color.ConstantBlockTint;
-import com.flatts.productivefrogs.client.color.ContainedCategoryTint;
-import com.flatts.productivefrogs.client.color.NoTint;
-import com.flatts.productivefrogs.client.color.ResourceSlimeEggTint;
-import com.flatts.productivefrogs.client.color.SlimeBucketTint;
-import com.flatts.productivefrogs.client.color.SprinklerBlockTint;
-import com.flatts.productivefrogs.client.color.SynthesizedItemTint;
-import com.flatts.productivefrogs.client.color.Tints;
-import com.flatts.productivefrogs.client.color.VariantColorTint;
 import com.flatts.productivefrogs.client.renderer.ParentSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceFrogRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
-import com.flatts.productivefrogs.client.SynthesizedTint;
 import com.flatts.productivefrogs.client.screen.CastingMoldScreen;
 import com.flatts.productivefrogs.client.screen.SlimeChurnScreen;
-import com.flatts.productivefrogs.client.screen.SlurryPressScreen;
 import com.flatts.productivefrogs.client.screen.SlimeMilkerScreen;
 import com.flatts.productivefrogs.client.screen.SpawneryScreen;
+import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
+import com.flatts.productivefrogs.content.item.FrogEggItem;
+import com.flatts.productivefrogs.content.item.FrogNetItem;
+import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.data.Category;
-import com.flatts.productivefrogs.content.block.entity.MimicMilkSourceBlockEntity;
-import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
+import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFBlocks;
+import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
-import com.flatts.productivefrogs.registry.PFFluids;
+import com.flatts.productivefrogs.registry.PFFluidTypes;
+import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
-import com.flatts.productivefrogs.registry.PFMoltenFluids;
 import com.flatts.productivefrogs.registry.PFParticles;
-import java.util.List;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
-import net.minecraft.client.renderer.block.FluidModel;
-import net.minecraft.client.resources.model.sprite.Material;
+import com.flatts.productivefrogs.registry.PFRegistries;
+import com.flatts.productivefrogs.registry.PFVariantMilk;
+import com.flatts.productivefrogs.util.PFDebug;
+import java.util.function.Consumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.material.FluidState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
-import net.neoforged.neoforge.client.event.RegisterFluidModelsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
-import net.neoforged.neoforge.client.fluid.FluidTintSource;
+import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
+import net.neoforged.neoforge.fluids.FluidType;
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 
 /**
  * Client-only setup. Registers:
  *
  * <ul>
- *   <li>Entity / block-entity renderers (slime, tadpole, frog, crucible, altars).</li>
- *   <li>{@link RegisterColorHandlersEvent.BlockTintSources} for the Primed Frog Egg
- *       blocks, the variant-keyed Configurable Froglight, and the Sprinkler milk
- *       surface (block tints still bind by {@code Block} object, list index =
- *       tint index).</li>
- *   <li>{@link RegisterColorHandlersEvent.ItemTintSources} for the item-form tints.
- *       In 26.1 item tints are data-driven: this registers the tint-source
- *       <b>codec types</b>; each item's <b>model JSON</b> {@code tints} array
- *       references a type by id to actually apply it (see the NOTE on
- *       {@link #onRegisterItemColors}).</li>
- *   <li>{@link AddClientReloadListenersEvent} to drop the client-side caches on a
- *       resource reload.</li>
+ *   <li>Entity renderers (slime, tadpole, frog).</li>
+ *   <li>{@link RegisterColorHandlersEvent.Block} for the Primed Frog Egg blocks,
+ *       category Froglight blocks, and the variant-keyed Configurable Froglight.</li>
+ *   <li>{@link RegisterColorHandlersEvent.Item} for the item-form tints
+ *       (Slime Bucket, Resource Tadpole Bucket, Frog Egg bottle, variant
+ *       spawn eggs, Configurable Froglight item, category Froglights).</li>
+ *   <li>{@link RegisterClientExtensionsEvent} for per-variant Slime Milk fluid
+ *       textures.</li>
  * </ul>
  *
- * <p>26.1 port: the legacy {@code RegisterColorHandlersEvent.Block} / {@code .Item}
- * lambda registration is gone; tints are now {@code BlockTintSource} /
- * {@code ItemTintSource} objects (package {@code client.color}). Per-item fluid
- * texture/tint and the Frog Net model predicate also moved to data-driven model
- * JSON - see the NOTEs below.
+ * <p>On 1.21.1 we register item colors via {@link RegisterColorHandlersEvent.Item}
+ * (the legacy event still present in this version). The 1.21.4+ JSON-driven
+ * {@code ItemTintSource} pipeline doesn't exist here — it'll come back in a
+ * future MC version bump.
  */
 @EventBusSubscriber(modid = ProductiveFrogs.MOD_ID, value = Dist.CLIENT)
 public final class PFClientEvents {
@@ -119,15 +112,6 @@ public final class PFClientEvents {
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.CRUCIBLE.get(),
             com.flatts.productivefrogs.client.renderer.CrucibleRenderer::new);
-        // The two Basins (#281 Phase 3): the held charge rendered as a fluid
-        // surface inside the half-block bowl, level tracking the remaining
-        // budget. One renderer, both flavours. See client/renderer/BasinRenderer.
-        event.registerBlockEntityRenderer(
-            com.flatts.productivefrogs.registry.PFBlockEntities.MOB_SLURRY_BASIN.get(),
-            com.flatts.productivefrogs.client.renderer.BasinRenderer::new);
-        event.registerBlockEntityRenderer(
-            com.flatts.productivefrogs.registry.PFBlockEntities.SLIME_MILK_BASIN.get(),
-            com.flatts.productivefrogs.client.renderer.BasinRenderer::new);
         // End Crystal Receptacle (#249): the floating vanilla end-crystal model on
         // top when filled. See client/renderer/EndCrystalReceptacleRenderer.
         event.registerBlockEntityRenderer(
@@ -148,281 +132,324 @@ public final class PFClientEvents {
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.WITHER_SUMMON_RECEPTACLE.get(),
             com.flatts.productivefrogs.client.renderer.WitherSummonReceptacleRenderer::new);
-        // Terrarium Controller: a red outline around the shell block the validator
-        // flagged, shown while diagnosing. See client/renderer/TerrariumControllerRenderer.
-        event.registerBlockEntityRenderer(
-            com.flatts.productivefrogs.registry.PFBlockEntities.TERRARIUM_CONTROLLER.get(),
-            com.flatts.productivefrogs.client.renderer.TerrariumControllerRenderer::new);
     }
 
-    private static Identifier parentTexture(String name) {
-        return Identifier.fromNamespaceAndPath(
+    private static ResourceLocation parentTexture(String name) {
+        return ResourceLocation.fromNamespaceAndPath(
             ProductiveFrogs.MOD_ID, "textures/entity/slime/" + name + ".png");
     }
 
-    /**
-     * Block tint sources (26.1). The legacy {@code RegisterColorHandlersEvent.Block}
-     * lambda API is gone; tints are {@code BlockTintSource} objects registered per
-     * {@code Block}, where the {@link List} index is the tint index. Unlike item
-     * tints, block tints still bind by {@code Block} object here (no model-JSON
-     * step), so these apply directly.
-     */
     @SubscribeEvent
-    public static void onRegisterBlockColors(RegisterColorHandlersEvent.BlockTintSources event) {
+    public static void onRegisterBlockColors(RegisterColorHandlersEvent.Block event) {
         for (Category cat : Category.values()) {
-            // Primed Frog Egg blocks - per-species constant colour at tint index 0.
+            final int rgb = opaque(cat.tintRgb());
             event.register(
-                List.of(new ConstantBlockTint(Tints.opaque(cat.tintRgb()))),
-                PFBlocks.primedEgg(cat));
+                (state, level, pos, tintIndex) -> tintIndex == 0 ? rgb : -1,
+                PFBlocks.primedEgg(cat)
+            );
         }
         // Midas egg (#253) - gold, its own block (not a tinted VOID egg).
         event.register(
-            List.of(new ConstantBlockTint(0xFFFFD700)),
-            PFBlocks.MIDAS_FROG_EGG.get());
-        // Per-kind egg blocks (predators + apex): each tints its kind's colour.
-        for (var entry : PFBlocks.KIND_FROG_EGGS.entrySet()) {
-            event.register(
-                List.of(new ConstantBlockTint(entry.getKey().tintArgb())),
-                entry.getValue().get());
-        }
-        // Variant-keyed configurable Froglight: reads the variant id from the BE,
-        // looks up the matching SlimeVariant, returns its primary_color (or the
-        // EE-lane synthesized item's sprite-average colour). Tint index 0.
+            (state, level, pos, tintIndex) -> tintIndex == 0 ? 0xFFFFD700 : -1,
+            PFBlocks.MIDAS_FROG_EGG.get()
+        );
+        // Variant-keyed configurable Froglight: BlockColor reads the variant
+        // identifier from the BE, looks up the matching SlimeVariant in the
+        // datapack registry, returns its primary_color.
         event.register(
-            List.of(new ConfigurableFroglightBlockTint()),
-            PFBlocks.CONFIGURABLE_FROGLIGHT.get());
-        // Filled Sprinkler: the top milk surface (tint index 1) reads the held
-        // variant off the BE and tints to its primary_color. Index 0 (base faces)
-        // is untinted via NoTint so the milk source sits at index 1.
-        event.register(
-            List.of(NoTint.INSTANCE, new SprinklerBlockTint()),
-            PFBlocks.SPRINKLER.get());
-    }
-
-    /**
-     * Item tint sources (26.1). The legacy {@code RegisterColorHandlersEvent.Item}
-     * per-item lambda API is gone. 26.1 item tints are fully data-driven: this
-     * registers the tint-source <b>codec types</b> by id; an item only tints once
-     * its <b>model JSON</b> references a type from its {@code tints} array.
-     *
-     * <p>NOTE (26.1 port, item-model tints TODO - runClient-verified, not a compile
-     * blocker): the repo's item models are still in the legacy
-     * {@code assets/productivefrogs/models/item/*.json} form. Migrating to the
-     * 1.21.4+ {@code assets/productivefrogs/items/*.json} item-definition format and
-     * authoring the {@code tints} arrays is a separate (broad) workstream. Until
-     * then these tint-source types are registered but unbound, so the item-form
-     * tints below will not render. The required {@code tints} bindings are:
-     * <ul>
-     *   <li>{@code frog_egg} layer 0 -> {@code productivefrogs:contained_category} (spot=false).</li>
-     *   <li>{@code resource_tadpole_bucket} silhouette layer -> {@code productivefrogs:tadpole_bucket_category}.</li>
-     *   <li>{@code slime_bucket} silhouette layer -> {@code productivefrogs:slime_bucket}.</li>
-     *   <li>{@code mimic_slime_bucket} + {@code mimic_milk_bucket} layer -> {@code productivefrogs:synthesized_item}.</li>
-     *   <li>each {@code <variant>_slime_milk_bucket} milk layer -> {@code productivefrogs:variant_color} with {@code "variant": "<id>"}
-     *       (replaces the old per-variant registration loop over PFVariantMilk.registeredVariants()).</li>
-     *   <li>{@code configurable_froglight} layer 0 -> {@code productivefrogs:configurable_froglight}.</li>
-     *   <li>{@code resource_slime_spawn_egg} base layer -> {@code productivefrogs:resource_slime_egg} (spot=false),
-     *       overlay layer -> same type with {@code "spot": true}.</li>
-     *   <li>frog / tadpole spawn eggs base layer -> {@code productivefrogs:contained_category} (spot=false),
-     *       overlay layer -> same type with {@code "spot": true}.</li>
-     *   <li>the six parent-slime spawn eggs ({@code cave_slime_spawn_egg}, ...) carry no category component,
-     *       so bind each to {@code minecraft:constant} with the species' opaque {@code tintRgb()} (base) and
-     *       the ~30% darker shade (overlay).</li>
-     *   <li>Primed Frog Egg + Midas Frog Egg block-items: bind to {@code minecraft:constant} with the matching
-     *       block colour (block tints no longer auto-propagate to the BlockItem icon in this model system).</li>
-     * </ul>
-     */
-    @SubscribeEvent
-    public static void onRegisterItemColors(RegisterColorHandlersEvent.ItemTintSources event) {
-        event.register(id("contained_category"), ContainedCategoryTint.CODEC);
-        event.register(id("tadpole_bucket_category"), BucketCategoryTint.CODEC);
-        event.register(id("slime_bucket"), SlimeBucketTint.CODEC);
-        event.register(id("synthesized_item"), SynthesizedItemTint.CODEC);
-        event.register(id("configurable_froglight"), ConfigurableFroglightTint.CODEC);
-        event.register(id("variant_color"), VariantColorTint.CODEC);
-        event.register(id("slurried_entity"), com.flatts.productivefrogs.client.color.SlurriedEntityTint.CODEC);
-        event.register(id("resource_slime_egg"), ResourceSlimeEggTint.CODEC);
-        event.register(id("category_color"), CategoryColorTint.CODEC);
-    }
-
-    private static Identifier id(String path) {
-        return Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, path);
-    }
-
-    /**
-     * Per-fluid render models (26.1). {@code IClientFluidTypeExtensions} lost its
-     * texture/tint methods; still/flow textures + tint now come from a
-     * {@link FluidModel} registered here. PF mints its Slime Milk, Mimic Milk, and
-     * molten-metal fluids DYNAMICALLY at mod-init, so we register their models the
-     * same dynamic way - one shared greyscale texture set per family, tinted at
-     * RENDER time by the fluid's variant (the SlimeVariant registry isn't available
-     * at registration, so a baked constant won't do; {@link Tints#variantColor}
-     * resolves through the running client level, like the item {@link VariantColorTint}).
-     */
-    @SubscribeEvent
-    public static void onRegisterFluidModels(RegisterFluidModelsEvent event) {
-        Material milkStill = new Material(id("block/slime_milk_still"));
-        Material milkFlow = new Material(id("block/slime_milk_flow"));
-
-        // Slime Milk (26.1 R-1): ONE fluid, shared greyscale texture. In-world the
-        // placed source's colour is its BE variant's primary_color resolved at the
-        // queried position; cream fallback when no BE/position is available (e.g. a
-        // pipe/tank render). The held-bucket tint is the item VariantColorTint.
-        event.register(new FluidModel.Unbaked(milkStill, milkFlow, null, slimeMilkFluidTint()),
-            PFFluids.SLIME_MILK.get(), PFFluids.SLIME_MILK_FLOWING.get());
-
-        // Mimic Milk (#253): shared milk texture; its colour is the source BE's
-        // synthesized item resolved at the queried position, neutral prismatic grey
-        // when no BE/position is available (e.g. the held-bucket render).
-        event.register(new FluidModel.Unbaked(milkStill, milkFlow, null, mimicFluidTint()),
-            PFFluids.MIMIC_MILK.get(), PFFluids.MIMIC_MILK_FLOWING.get());
-
-        // Liquid Experience (#281 Phase 2): the shared greyscale milk texture set
-        // with a CONSTANT XP-green tint - no BE, no variant, the colour never
-        // varies, so no render-time resolution is needed (the simplest tint in
-        // the mod, matching the simplest fluid).
-        event.register(new FluidModel.Unbaked(milkStill, milkFlow, null, constantFluidTint(LIQUID_EXPERIENCE_GREEN)),
-            PFFluids.LIQUID_EXPERIENCE.get(), PFFluids.LIQUID_EXPERIENCE_FLOWING.get());
-
-        // Mob Slurry (#281 Phase 3): shared greyscale milk texture, coloured
-        // FOR THE MOB it condenses (maintainer ruling) - colorAsStack resolves
-        // the SLURRIED_ENTITY component through MobColors (spawn-egg sprite
-        // average); murky ender purple when unresolvable. The Basin's contents
-        // surface and any tank gauge route through colorAsStack.
-        event.register(new FluidModel.Unbaked(milkStill, milkFlow, null, mobSlurryFluidTint()),
-            PFFluids.MOB_SLURRY.get(), PFFluids.MOB_SLURRY_FLOWING.get());
-
-        Material moltenStill = new Material(id("block/molten_still"));
-        Material moltenFlow = new Material(id("block/molten_flow"));
-        for (Identifier mid : PFMoltenFluids.registeredMetals()) {
-            Fluid src = PFMoltenFluids.sourceFluid(mid);
-            Fluid flow = PFMoltenFluids.flowingFluid(mid);
-            if (src == null || flow == null) {
-                continue;
-            }
-            event.register(new FluidModel.Unbaked(moltenStill, moltenFlow, null, variantFluidTint(mid)), src, flow);
-        }
-    }
-
-    /** Vanilla experience-orb green - the fixed Liquid Experience tint (and its bucket art). */
-    private static final int LIQUID_EXPERIENCE_GREEN = 0x80FF20;
-
-    /**
-     * Mob Slurry tint: per-mob via the SLURRIED_ENTITY component (spawn-egg
-     * sprite average), murky ender purple fallback - the same resolution the
-     * bucket's SlurriedEntityTint uses, so bucket and fluid always agree.
-     */
-    private static FluidTintSource mobSlurryFluidTint() {
-        int fallback = Tints.opaque(com.flatts.productivefrogs.client.color.SlurriedEntityTint.FALLBACK_RGB);
-        return new FluidTintSource() {
-            @Override
-            public int color(FluidState state) {
-                return fallback;
-            }
-
-            @Override
-            public int colorAsStack(net.neoforged.neoforge.fluids.FluidStack stack) {
-                Identifier entityId = stack.get(
-                    com.flatts.productivefrogs.registry.PFDataComponents.SLURRIED_ENTITY.get());
-                if (entityId != null) {
-                    int argb = MobColors.colorFor(entityId);
-                    if (argb != -1) {
-                        return argb;
-                    }
+            (state, level, pos, tintIndex) -> {
+                if (tintIndex != 0 || level == null || pos == null) {
+                    return -1;
                 }
-                return fallback;
-            }
-        };
-    }
-
-    /** A fixed-colour fluid tint (Liquid Experience - nothing per-instance to resolve). */
-    private static FluidTintSource constantFluidTint(int rgb) {
-        int argb = Tints.opaque(rgb);
-        return new FluidTintSource() {
-            @Override
-            public int color(FluidState state) {
+                var be = level.getBlockEntity(pos);
+                if (!(be instanceof ConfigurableFroglightBlockEntity froglightBe)) {
+                    return -1;
+                }
+                // Equivalence lane (#253): a placed Prismatic Froglight tints from
+                // its carried item's sprite-average colour (runtime resolver).
+                ResourceLocation synthBlockItem = froglightBe.getSynthesizedItem();
+                if (synthBlockItem != null) {
+                    Item item = BuiltInRegistries.ITEM.getOptional(synthBlockItem).orElse(null);
+                    return item == null ? -1 : SynthesizedTint.colorFor(item);
+                }
+                ResourceLocation variantId = froglightBe.getVariantId();
+                if (variantId == null) {
+                    return -1;
+                }
+                var beLevel = froglightBe.getLevel();
+                if (beLevel == null) {
+                    return -1;
+                }
+                Registry<SlimeVariant> registry = beLevel.registryAccess()
+                    .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+                if (registry == null) {
+                    return -1;
+                }
+                SlimeVariant variant = registry.get(variantId);
+                final int argb = variant == null ? -1 : opaque(variant.primaryColor());
+                if (PFDebug.on(PFDebug.Area.TINT)) {
+                    PFDebug.logOnce(PFDebug.Area.TINT, "froglight_block/" + variantId,
+                        () -> String.format("configurable_froglight(block) variant=%s -> #%08X", variantId, argb));
+                }
                 return argb;
-            }
-        };
-    }
-
-    /** Render-time tint to a baked variant's {@code primary_color} (cream fallback when unresolved). */
-    private static FluidTintSource variantFluidTint(Identifier variant) {
-        return new FluidTintSource() {
-            @Override
-            public int color(FluidState state) {
-                int color = Tints.variantColor(null, variant);
-                return color != -1 ? color : Tints.opaque(0xF0F0E0);
-            }
-        };
+            },
+            PFBlocks.CONFIGURABLE_FROGLIGHT.get()
+        );
+        // Filled Sprinkler: the top milk surface (tintIndex 1) reads the held
+        // variant off the BE and tints to its primary_color, so a filled Sprinkler
+        // shows what milk is inside it from above. The base faces (tintIndex 0)
+        // and an empty Sprinkler (no variant / empty model has no tinted face)
+        // are untinted.
+        event.register(
+            (state, level, pos, tintIndex) -> {
+                if (tintIndex != 1 || level == null || pos == null) {
+                    return -1;
+                }
+                if (!(level.getBlockEntity(pos)
+                        instanceof com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity sprinkler)
+                        || sprinkler.isEmpty()) {
+                    return -1;
+                }
+                ResourceLocation variantId = sprinkler.getVariantId();
+                if (variantId == null) {
+                    return -1;
+                }
+                int color = variantTint(variantId);
+                return color != -1 ? color : opaque(0xF0F0E0);
+            },
+            PFBlocks.SPRINKLER.get()
+        );
     }
 
     /**
-     * Slime Milk tint (26.1 R-1, single fluid): in-world it reads the placed source
-     * BE's variant and resolves that variant's {@code primary_color}; cream fallback
-     * when no BE/variant/position is available (a pipe/tank render or unstamped source).
+     * Item-color registration — 1.21.1 uses the legacy {@link RegisterColorHandlersEvent.Item}
+     * event with per-item lambdas. (1.21.4+ moved this to JSON {@code items/*.json} +
+     * {@code ItemTintSource} but that doesn't exist in 1.21.1.)
+     *
+     * <p>Every non-{@code -1} return is OR-ed with {@code 0xFF000000} via
+     * {@link #opaque(int)}. Without this, a raw 24-bit RGB value like
+     * {@code 0x808088} is interpreted as ARGB with {@code alpha == 0}, which
+     * renders the tinted layer fully transparent. Vanilla applies opaque-alpha
+     * inside its auto-registered SpawnEggItem handler; modded handlers must
+     * do it explicitly.
      */
-    private static FluidTintSource slimeMilkFluidTint() {
-        return new FluidTintSource() {
-            @Override
-            public int color(FluidState state) {
-                return Tints.opaque(0xF0F0E0);
-            }
+    @SubscribeEvent
+    public static void onRegisterItemColors(RegisterColorHandlersEvent.Item event) {
+        // Frog Egg bottle — vanilla potion model has layer0=potion_overlay (the
+        // liquid) and layer1=potion (the bottle glass). We want to tint the
+        // liquid, so target tintIndex == 0.
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 0) return -1;
+            Category cat = stack.get(PFDataComponents.CONTAINED_CATEGORY.get());
+            return cat == null ? -1 : opaque(cat.tintRgb());
+        }, PFItems.FROG_EGG.get());
 
-            @Override
-            public int colorInWorld(FluidState fluidState, BlockState blockState, BlockAndTintGetter level, BlockPos pos) {
-                if (level != null && pos != null
-                        && level.getBlockEntity(pos) instanceof SlimeMilkSourceBlockEntity be
-                        && be.getVariantId() != null) {
-                    int color = Tints.variantColor(null, be.getVariantId());
-                    if (color != -1) {
-                        return color;
-                    }
-                }
-                return color(fluidState);
-            }
+        // Resource Tadpole Bucket — tint from BUCKET_ENTITY_DATA Category.
+        // Empty bucket (no captured tadpole) defaults to vanilla tadpole
+        // brown so the silhouette stays visible in the creative tab.
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 1) return -1;
+            Category cat = ResourceTadpoleBucketItem.readCategory(stack);
+            return cat == null ? opaque(0x6B4530) : opaque(cat.tintRgb());
+        }, PFItems.RESOURCE_TADPOLE_BUCKET.get());
 
-            @Override
-            public int colorAsStack(net.neoforged.neoforge.fluids.FluidStack stack) {
-                // R-1: the variant rides the SLIME_VARIANT component on the stack
-                // (the milk bucket fluid handler copies it on) - resolve it so a
-                // stack-based render (tank gauges, the Basin's contents surface)
-                // tints per-variant instead of falling back to cream.
-                Identifier variant = stack.get(
-                    com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get());
-                if (variant != null) {
-                    int color = Tints.variantColor(null, variant);
-                    if (color != -1) {
-                        return color;
-                    }
-                }
-                return color(stack.getFluid().defaultFluidState());
-            }
-        };
-    }
-
-    /** Mimic Milk tint: the source BE's synthesized-item colour at {@code pos}, neutral grey otherwise. */
-    private static FluidTintSource mimicFluidTint() {
-        return new FluidTintSource() {
-            @Override
-            public int color(FluidState state) {
-                return 0xFFC8C8D2;
-            }
-
-            @Override
-            public int colorInWorld(FluidState fluidState, BlockState blockState, BlockAndTintGetter level, BlockPos pos) {
-                if (level != null && pos != null
-                        && level.getBlockEntity(pos) instanceof MimicMilkSourceBlockEntity be) {
-                    Identifier itemId = be.getSynthesizedItem();
-                    if (itemId != null) {
-                        Item item = BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
-                        if (item != null) {
-                            return SynthesizedTint.colorFor(item);
+        // Slime Bucket — variant first (via BUCKET_ENTITY_DATA Variant),
+        // fall back to category if no variant
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 1) return -1;
+            // Try variant primary_color first
+            CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
+            if (data != null) {
+                CompoundTag tag = data.copyTag();
+                if (tag.contains("Variant")) {
+                    ResourceLocation variantId = ResourceLocation.tryParse(tag.getString("Variant"));
+                    if (variantId != null) {
+                        Minecraft mc = Minecraft.getInstance();
+                        if (mc.level != null) {
+                            Registry<SlimeVariant> registry = mc.level.registryAccess()
+                                .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+                            if (registry != null) {
+                                SlimeVariant variant = registry.get(variantId);
+                                if (variant != null) {
+                                    final int argb = opaque(variant.primaryColor());
+                                    if (PFDebug.on(PFDebug.Area.TINT)) {
+                                        PFDebug.logOnce(PFDebug.Area.TINT, "slime_bucket/" + variantId,
+                                            () -> String.format(
+                                                "slime_bucket(item) tintIndex=1 variant=%s -> #%08X", variantId, argb));
+                                    }
+                                    return argb;
+                                }
+                            }
                         }
                     }
                 }
-                return color(fluidState);
+                if (tag.contains("Category")) {
+                    try {
+                        return opaque(Category.valueOf(tag.getString("Category")).tintRgb());
+                    } catch (IllegalArgumentException ignored) {}
+                }
             }
-        };
+            // Empty Slime Bucket (no captured slime) — fall back to vanilla
+            // slime green so the silhouette stays visible in the creative
+            // tab instead of rendering an invisible (-1 = no tint) layer.
+            return opaque(0x5DDE36);
+        }, PFItems.SLIME_BUCKET.get());
+
+        // Mimic Slime Bucket (#253) — the silhouette layer (tintIndex 1) wears
+        // the carried item's sprite-average colour, read off the top-level
+        // SYNTHESIZED_ITEM component. Falls back to a neutral prismatic grey
+        // when un-stamped so the silhouette stays visible.
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 1) return -1;
+            ResourceLocation itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+            if (itemId == null) return opaque(0xC8C8D2);
+            Item item = BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
+            return item == null ? opaque(0xC8C8D2) : SynthesizedTint.colorFor(item);
+        }, PFItems.MIMIC_SLIME_BUCKET.get());
+
+        // Mimic Milk Bucket (#253) — milk layer (tintIndex 1) wears the carried
+        // item's colour off the top-level SYNTHESIZED_ITEM component.
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 1) return -1;
+            ResourceLocation itemId = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+            if (itemId == null) return opaque(0xC8C8D2);
+            Item item = BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
+            return item == null ? opaque(0xC8C8D2) : SynthesizedTint.colorFor(item);
+        }, PFItems.MIMIC_MILK_BUCKET.get());
+
+        // Slime Milk buckets — one item per variant (v1.8). Each tints its milk
+        // layer (tintIndex 1) by its OWN variant's registry colour (the variant is
+        // the item identity, no component lookup). Falls back to milky off-white
+        // before the registry is available so the item stays visible.
+        for (ResourceLocation variantId : PFVariantMilk.registeredVariants()) {
+            final ResourceLocation vid = variantId;
+            event.register((stack, tintIndex) -> {
+                if (tintIndex != 1) {
+                    return -1;
+                }
+                int color = variantTint(vid);
+                return color != -1 ? color : opaque(0xF0F0E0);
+            }, PFVariantMilk.bucket(vid));
+        }
+
+        // Primed Frog Egg block items — BlockColor doesn't auto-propagate to
+        // BlockItem in 1.21.1 the way it does in 1.21.4+; register explicit
+        // item color handlers so the 6 in-hand bottles tint per category.
+        for (Category cat : Category.values()) {
+            final int rgb = opaque(cat.tintRgb());
+            event.register(
+                (stack, tintIndex) -> tintIndex == 0 ? rgb : -1,
+                PFItems.PRIMED_FROG_EGG_ITEMS.get(cat).get()
+            );
+        }
+        // Midas egg block item (#253) - gold in inventory, matching the placed block.
+        event.register(
+            (stack, tintIndex) -> tintIndex == 0 ? 0xFFFFD700 : -1,
+            PFItems.MIDAS_FROG_EGG.get()
+        );
+
+        // Configurable Froglight item — tint from SLIME_VARIANT component
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 0) return -1;
+            // Equivalence lane (#253): a synthesized Froglight carries an arbitrary
+            // item id (not a registered variant). Its tint is sampled from that
+            // item's sprite at runtime - no primary_color to look up.
+            ResourceLocation synthesizedItem = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+            if (synthesizedItem != null) {
+                Item item = BuiltInRegistries.ITEM.getOptional(synthesizedItem).orElse(null);
+                final int sargb = item == null ? -1 : SynthesizedTint.colorFor(item);
+                if (PFDebug.on(PFDebug.Area.TINT)) {
+                    PFDebug.logOnce(PFDebug.Area.TINT, "froglight_item_synth/" + synthesizedItem,
+                        () -> String.format("configurable_froglight(item) synthesized=%s -> #%08X", synthesizedItem, sargb));
+                }
+                return sargb;
+            }
+            ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+            if (variantId == null) return -1;
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.level == null) return -1;
+            Registry<SlimeVariant> registry = mc.level.registryAccess()
+                .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+            if (registry == null) return -1;
+            SlimeVariant variant = registry.get(variantId);
+            final int argb = variant == null ? -1 : opaque(variant.primaryColor());
+            if (PFDebug.on(PFDebug.Area.TINT)) {
+                PFDebug.logOnce(PFDebug.Area.TINT, "froglight_item/" + variantId,
+                    () -> String.format("configurable_froglight(item) variant=%s -> #%08X", variantId, argb));
+            }
+            return argb;
+        }, PFItems.CONFIGURABLE_FROGLIGHT.get());
+
+        // Per-category Froglight blockitems — inherit BlockColor automatically,
+        // no separate Item color registration needed.
+
+        // Spawn eggs need explicit color handlers under NeoForge 21.1.230 — the
+        // vanilla SpawnEggItem auto-registration in ItemColors.createDefault
+        // doesn't reliably fire for modded subclasses here. For every spawn egg
+        // we fall back to the underlying SpawnEggItem.getColor(layer) which
+        // returns the (primary, secondary) colors we passed to the ctor.
+
+        // The single Resource Slime spawn egg — tint per-stack from the
+        // SLIME_VARIANT component's registry colours; fall back to the item's
+        // ctor colours (BOG) when no variant is set or the registry isn't loaded
+        // yet (title-screen creative preview before world load).
+        event.register((stack, tintIndex) -> {
+            ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+            if (variantId != null) {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.level != null) {
+                    Registry<SlimeVariant> registry = mc.level.registryAccess()
+                        .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+                    if (registry != null) {
+                        SlimeVariant variant = registry.get(variantId);
+                        if (variant != null) {
+                            final int argb = opaque(tintIndex == 0 ? variant.primaryColor() : variant.secondaryColor());
+                            if (PFDebug.on(PFDebug.Area.TINT)) {
+                                PFDebug.logOnce(PFDebug.Area.TINT, "resource_slime_egg/" + variantId + "/" + tintIndex,
+                                    () -> String.format("resource_slime_spawn_egg tintIndex=%d variant=%s -> #%08X",
+                                        tintIndex, variantId, argb));
+                            }
+                            return argb;
+                        }
+                    }
+                }
+            }
+            return opaque(((SpawnEggItem) stack.getItem()).getColor(tintIndex));
+        }, PFItems.RESOURCE_SLIME_SPAWN_EGG.get());
+
+        // Parent slime species spawn eggs (4) + category frog/tadpole spawn eggs (12).
+        // All of these inherit from vanilla SpawnEggItem with explicit
+        // (primary, secondary) colours set in PFItems.
+        Consumer<SpawnEggItem> registerCtorColors = egg ->
+            event.register((stack, tintIndex) ->
+                opaque(((SpawnEggItem) stack.getItem()).getColor(tintIndex)),
+                egg);
+
+        registerCtorColors.accept(PFItems.BOG_SLIME_SPAWN_EGG.get());
+        registerCtorColors.accept(PFItems.CAVE_SLIME_SPAWN_EGG.get());
+        registerCtorColors.accept(PFItems.GEODE_SLIME_SPAWN_EGG.get());
+        registerCtorColors.accept(PFItems.TIDE_SLIME_SPAWN_EGG.get());
+        registerCtorColors.accept(PFItems.INFERNAL_SLIME_SPAWN_EGG.get());
+        registerCtorColors.accept(PFItems.VOID_SLIME_SPAWN_EGG.get());
+
+        for (var entry : PFItems.RESOURCE_FROG_SPAWN_EGGS.entrySet()) {
+            registerCtorColors.accept(entry.getValue().get());
+        }
+        for (var entry : PFItems.RESOURCE_TADPOLE_SPAWN_EGGS.entrySet()) {
+            registerCtorColors.accept(entry.getValue().get());
+        }
+    }
+
+    /**
+     * Ensure the alpha byte is set to 0xFF. Item color handlers in 1.21.1
+     * return ARGB-shaped {@code int}s; a raw 24-bit RGB value (alpha == 0)
+     * makes the tinted layer render fully transparent. Source colors here
+     * ({@link Category#tintRgb()}, {@link SlimeVariant#primaryColor()}, the
+     * ctor-passed {@link net.minecraft.world.item.SpawnEggItem} colors) are
+     * all 24-bit; this normalises them.
+     */
+    private static int opaque(int rgb) {
+        return 0xFF000000 | rgb;
     }
 
     /**
@@ -432,7 +459,6 @@ public final class PFClientEvents {
     public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
         event.register(PFMenuTypes.SLIME_MILKER.get(), SlimeMilkerScreen::new);
         event.register(PFMenuTypes.SLIME_CHURN.get(), SlimeChurnScreen::new);
-        event.register(PFMenuTypes.SLURRY_PRESS.get(), SlurryPressScreen::new);
         event.register(PFMenuTypes.SPAWNERY.get(), SpawneryScreen::new);
         event.register(PFMenuTypes.CASTING_MOLD.get(), CastingMoldScreen::new);
         event.register(PFMenuTypes.DISTILLER.get(), com.flatts.productivefrogs.client.screen.DistillerScreen::new);
@@ -442,11 +468,19 @@ public final class PFClientEvents {
         event.register(PFMenuTypes.TERRARIUM_CONTROLLER.get(), com.flatts.productivefrogs.client.screen.TerrariumControllerScreen::new);
     }
 
-    // Frog Net filled/empty switch (26.1 port): the old ItemProperties predicate
-    // (productivefrogs:filled) is gone - it now lives data-driven in
-    // assets/productivefrogs/items/frog_net.json as a minecraft:condition on
-    // has_component(minecraft:custom_data) (a captured frog stamps CUSTOM_DATA),
-    // selecting frog_net_filled when present, frog_net otherwise.
+    /**
+     * Client-setup-time registrations. The Frog Net's {@code productivefrogs:filled}
+     * item-model property drives its empty/loaded model override (mirrors Productive
+     * Bees' bee-cage {@code filled} property). {@code ItemProperties.register} mutates
+     * a shared map, so it runs on the main thread via {@code enqueueWork}.
+     */
+    @SubscribeEvent
+    public static void onClientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> ItemProperties.register(
+            PFItems.FROG_NET.get(),
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "filled"),
+            (stack, level, entity, seed) -> FrogNetItem.isFilled(stack) ? 1.0F : 0.0F));
+    }
 
     /** Bind the tintable Sprinkler-drip particle to its sprite set. */
     @SubscribeEvent
@@ -456,24 +490,152 @@ public final class PFClientEvents {
     }
 
     /**
-     * Drop the client-side caches on a resource reload. Without this, a pack that
-     * adds or removes a {@code <variant>_resource_slime.png} between reloads keeps
-     * serving the stale texture-presence result, and the EE-lane sprite-average
-     * tint cache keeps serving pre-swap colours.
-     *
-     * <p>26.1 port: {@code RegisterClientReloadListenersEvent#registerReloadListener}
-     * became {@link AddClientReloadListenersEvent#addListener(Identifier,
-     * net.minecraft.server.packs.resources.PreparableReloadListener)} (now id-keyed).
+     * Drop the Resource Slime renderer's texture-existence cache on resource
+     * reload. Without this, a pack that adds or removes a
+     * {@code <variant>_resource_slime.png} between reloads keeps serving the
+     * stale presence result (the category fallback would stick, or vice versa).
      */
     @SubscribeEvent
-    public static void onRegisterReloadListeners(AddClientReloadListenersEvent event) {
-        event.addListener(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "client_caches"),
+    public static void onRegisterReloadListeners(RegisterClientReloadListenersEvent event) {
+        event.registerReloadListener(
             (ResourceManagerReloadListener) rm -> {
                 ResourceSlimeRenderer.clearTextureCaches();
                 // Drop the EE-lane sprite-average tint cache so a resource-pack swap /
                 // /reload re-samples re-textured items (Mimic Slime + Prismatic Froglight).
                 SynthesizedTint.clearCache();
             });
+    }
+
+    /**
+     * Bind each per-variant Slime Milk FluidType (v1.8) to the shared greyscale
+     * still + flowing textures, tinted by that variant's {@code primary_color}.
+     * Because the variant IS the fluid (one FluidType per variant), the tint is a
+     * simple per-type colour lookup - no position walk-back: every block of a
+     * variant's pool, source or flowing, tints the same.
+     */
+    @SubscribeEvent
+    public static void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
+        ResourceLocation still = ResourceLocation.fromNamespaceAndPath(
+            ProductiveFrogs.MOD_ID, "block/slime_milk_still");
+        ResourceLocation flow = ResourceLocation.fromNamespaceAndPath(
+            ProductiveFrogs.MOD_ID, "block/slime_milk_flow");
+        for (ResourceLocation variantId : PFVariantMilk.registeredVariants()) {
+            final ResourceLocation vid = variantId;
+            FluidType type = PFVariantMilk.fluidType(vid);
+            if (type == null) {
+                continue;
+            }
+            event.registerFluidType(
+                new IClientFluidTypeExtensions() {
+                    @Override
+                    public ResourceLocation getStillTexture() { return still; }
+
+                    @Override
+                    public ResourceLocation getFlowingTexture() { return flow; }
+
+                    @Override
+                    public int getTintColor() {
+                        int color = variantTint(vid);
+                        return color != -1 ? color : 0xFFFFFFFF;
+                    }
+
+                    @Override
+                    public int getTintColor(FluidState state, BlockAndTintGetter getter, BlockPos pos) {
+                        return getTintColor();
+                    }
+                },
+                type
+            );
+        }
+
+        // Mimic Milk (#253): ONE fluid type, shared greyscale milk texture. Its
+        // per-instance colour comes from the source block's BE at the queried
+        // position (source-only, so every Mimic Milk block has a BE), resolved
+        // through the runtime item-sprite resolver. No-position fallback is a
+        // neutral prismatic grey (e.g. the held-bucket fluid render).
+        event.registerFluidType(
+            new IClientFluidTypeExtensions() {
+                @Override
+                public ResourceLocation getStillTexture() { return still; }
+
+                @Override
+                public ResourceLocation getFlowingTexture() { return flow; }
+
+                @Override
+                public int getTintColor() { return 0xFFC8C8D2; }
+
+                @Override
+                public int getTintColor(FluidState state, BlockAndTintGetter getter, BlockPos pos) {
+                    if (getter != null && pos != null
+                            && getter.getBlockEntity(pos) instanceof com.flatts.productivefrogs.content.block.entity.MimicMilkSourceBlockEntity be) {
+                        ResourceLocation itemId = be.getSynthesizedItem();
+                        if (itemId != null) {
+                            Item item = BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
+                            if (item != null) {
+                                return SynthesizedTint.colorFor(item);
+                            }
+                        }
+                    }
+                    return getTintColor();
+                }
+            },
+            PFFluidTypes.MIMIC_MILK_TYPE.get()
+        );
+
+        // Molten metals (v1.12): same per-variant tint model over a shared
+        // greyscale molten texture set (desaturated lava still/flow). The
+        // metal id IS the variant id, so the colour lookup is identical.
+        ResourceLocation moltenStill = ResourceLocation.fromNamespaceAndPath(
+            ProductiveFrogs.MOD_ID, "block/molten_still");
+        ResourceLocation moltenFlow = ResourceLocation.fromNamespaceAndPath(
+            ProductiveFrogs.MOD_ID, "block/molten_flow");
+        for (ResourceLocation metalId : com.flatts.productivefrogs.registry.PFMoltenFluids.registeredMetals()) {
+            final ResourceLocation vid = metalId;
+            FluidType type = com.flatts.productivefrogs.registry.PFMoltenFluids.fluidType(vid);
+            if (type == null) {
+                continue;
+            }
+            event.registerFluidType(
+                new IClientFluidTypeExtensions() {
+                    @Override
+                    public ResourceLocation getStillTexture() { return moltenStill; }
+
+                    @Override
+                    public ResourceLocation getFlowingTexture() { return moltenFlow; }
+
+                    @Override
+                    public int getTintColor() {
+                        int color = variantTint(vid);
+                        return color != -1 ? color : 0xFFFFFFFF;
+                    }
+
+                    @Override
+                    public int getTintColor(FluidState state, BlockAndTintGetter getter, BlockPos pos) {
+                        return getTintColor();
+                    }
+                },
+                type
+            );
+        }
+    }
+
+    /**
+     * Opaque {@code primary_color} for a variant from the {@code slime_variant}
+     * registry, or {@code -1} when the registry is not yet available (caller picks
+     * a fallback). Shared by the per-variant milk bucket item tint and per-variant
+     * fluid tint.
+     */
+    private static int variantTint(ResourceLocation variantId) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) {
+            return -1;
+        }
+        Registry<SlimeVariant> registry = mc.level.registryAccess()
+            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+        if (registry == null) {
+            return -1;
+        }
+        SlimeVariant variant = registry.get(variantId);
+        return variant == null ? -1 : opaque(variant.primaryColor());
     }
 }

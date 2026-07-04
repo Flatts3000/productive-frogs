@@ -4,20 +4,18 @@ plugins {
     // CurseForgeGradle: wraps the CurseForge Upload API so `./gradlew publishCurseForge`
     // pushes a new file to the project page. Read the API token from .env (gitignored),
     // env var, or gradle.properties. Task registered at the bottom of this file.
-    id 'net.darkhax.curseforgegradle' version '1.2.30'
+    id 'net.darkhax.curseforgegradle' version '1.1.26'
 }
 
 base {
-    // MC version in the artifact name (Mekanism convention) so the 1.21.1 and
-    // 26.1 lines' jars are unmistakable: productivefrogs-26.1.2-2.0.0-alpha.1.jar
-    archivesName = "${mod_id}-${minecraft_version}"
+    archivesName = mod_id
 }
 
 group = mod_group_id
 version = mod_version
 
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of(25)
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
 }
 
 neoForge {
@@ -114,10 +112,9 @@ dependencies {
     // so each variant/category shows as a distinct JEI entry rather than the
     // items collapsing into one generic line.
     //
-    // JEI on 26.1 (NeoForge): the 29.6.x line. compileOnly api for the
-    // @JeiPlugin classes; runtimeOnly full jar so dev sessions show the sidebar.
-    compileOnly "mezz.jei:jei-26.1.2-neoforge-api:29.6.2.38"
-    runtimeOnly "mezz.jei:jei-26.1.2-neoforge:29.6.2.38"
+    // JEI for MC 1.21.1 lives on the 19.21.x line.
+    compileOnly "mezz.jei:jei-1.21.1-neoforge-api:19.27.0.340"
+    runtimeOnly "mezz.jei:jei-1.21.1-neoforge:19.27.0.340"
 
     // Jade (the WAILA fork) - compileOnly ONLY. Our @WailaPlugin
     // (client/jade/ProductiveFrogsJadePlugin) references the Jade API at build
@@ -126,9 +123,7 @@ dependencies {
     // NeoForge's duplicate-modid check. When Jade is present at runtime it discovers
     // and runs our plugin; when it's absent (e.g. the CI gameTest job) the plugin
     // class is simply never loaded. Modrinth yd8FKCmx = Jade 15.10.5+neoforge (1.21.1).
-    // Jade on 26.1 (NeoForge) - compileOnly only (run/mods drop-in at runtime,
-    // same posture as 1.21.1). Modrinth gWlwZzoj = Jade 26.1.8+neoforge.
-    compileOnly "maven.modrinth:jade:gWlwZzoj"
+    compileOnly "maven.modrinth:jade:yd8FKCmx"
 
     // Curios API (modid `curios`) - compileOnly ONLY, same posture as Jade.
     // Brewed Froglights (#162/#169) self-buff while worn in a Curios slot; the
@@ -139,10 +134,7 @@ dependencies {
     // duplicate-modid check. When Curios is absent the curio code never loads.
     // Modrinth yohfFbgD = curios-neoforge 9.5.1+1.21.1 (the full jar carries the
     // API classes we compile against). Installed into run/mods by fetch_dev_mods.py.
-    // PORT-DROP(2.0): Curios is out of 2.0 scope (the brewed-Froglight worn-charm
-    // slot returns as a 2.x minor; brewed Froglights keep their aura + held forms).
-    // The integration/curios glue + curios/ slot data are stripped in Phase 0.
-    // compileOnly "maven.modrinth:curios:<26.1-version-id>"
+    compileOnly "maven.modrinth:curios:yohfFbgD"
 
     // Refined Storage 2 (modid `refinedstorage`) - DEV RUNTIME ONLY, not a real
     // dependency and NOT bundled in the published jar. Our RS support is pure data
@@ -154,9 +146,7 @@ dependencies {
     // build and declares NO mod dependencies of its own, so nothing transitive to add.
     // Modrinth version id kxRNbIBe. Unlike Jade this is safe as runtimeOnly: there is
     // no run/mods drop-in to double-load against.
-    // PORT-DROP(2.0): Refined Storage was a dev-runtime-only mod to exercise the
-    // RS cross-mod variants, which are out of 2.0 scope (no cross-mod content).
-    // runtimeOnly "maven.modrinth:refined-storage:<26.1-version>"
+    runtimeOnly "maven.modrinth:refined-storage:2.0.9"
 
     testImplementation platform('org.junit:junit-bom:5.11.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -176,9 +166,6 @@ sourceSets {
         resources {
             srcDir 'src/generated/resources'
         }
-        // R-6 (26.1 port): the GameTest suite is re-included - migrated to the 26.1
-        // registry form (TEST_FUNCTION + FunctionGameTestInstance) and split across
-        // per-domain files under gametest/.
     }
 }
 
@@ -191,7 +178,6 @@ tasks.processResources {
     inputs.property 'mod_description', mod_description
     inputs.property 'minecraft_version_range', minecraft_version_range
     inputs.property 'neoforge_loader_version_range', neoforge_loader_version_range
-    inputs.property 'neoforge_version', neoforge_version
 
     filesMatching(['META-INF/neoforge.mods.toml', 'pack.mcmeta']) {
         expand(
@@ -202,17 +188,13 @@ tasks.processResources {
             mod_authors: mod_authors,
             mod_description: mod_description,
             minecraft_version_range: minecraft_version_range,
-            neoforge_loader_version_range: neoforge_loader_version_range,
-            neoforge_version: neoforge_version
+            neoforge_loader_version_range: neoforge_loader_version_range
         )
     }
 }
 
 tasks.withType(JavaCompile).configureEach {
-    options.release = 25
-    // PORT: raise javac's 100-error cap so the full 26.1 delta surface is visible
-    // during the port (revert before merge to main).
-    options.compilerArgs += ['-Xmaxerrs', '2000', '-Xmaxwarns', '0']
+    options.release = 21
 }
 
 jar {
@@ -312,10 +294,10 @@ tasks.register('publishCurseForge', net.darkhax.curseforgegradle.TaskPublishCurs
     // scope + cross-mod compat (Mekanism, Create, AE2, Refined Storage, ...) in-pack;
     // the pre-release config suite (#200/#202/#203/#204) shipped in v1.18, clearing the
     // last stable blocker. Promoted out of beta.
-    primary.releaseType = 'alpha'
-    primary.addGameVersion('26.1.2')
+    primary.releaseType = 'release'
+    primary.addGameVersion('1.21.1')
     primary.addModLoader('NeoForge')
-    primary.addJavaVersion('Java 25')
+    primary.addJavaVersion('Java 21')
     // Tag both environments so the file lists as Client + Server (the mod runs on
     // both - server spawns/economy, client render/JEI). Saves re-tagging each upload.
     primary.addEnvironment('Client', 'Server')
