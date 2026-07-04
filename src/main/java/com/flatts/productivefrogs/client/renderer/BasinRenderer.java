@@ -34,8 +34,8 @@ import net.neoforged.neoforge.fluids.FluidStack;
  */
 public class BasinRenderer implements BlockEntityRenderer<AbstractBasinBlockEntity, BasinRenderer.BasinRenderState> {
 
-    private static final float MIN_XZ = 2.0F / 16.0F;
-    private static final float MAX_XZ = 14.0F / 16.0F;
+    private static final float MIN_XZ = 3.0F / 16.0F;
+    private static final float MAX_XZ = 13.0F / 16.0F;
     /** The bowl floor (the model's inner floor face) and the rim lip. */
     private static final float FLOOR_Y = 2.5F / 16.0F;
     private static final float RIM_Y = 7.5F / 16.0F;
