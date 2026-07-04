@@ -113,8 +113,16 @@ public final class ElderAltarValidator {
     }
 
     public static Result validate(LevelReader level, BlockPos hatch) {
+        return validate(level, hatch, null);
+    }
+
+    /** Validate with an orientation hint (the hatch's cached direction) - the common case is one pass. */
+    public static Result validate(LevelReader level, BlockPos hatch, @Nullable Direction hint) {
         if (!level.getBlockState(hatch).is(PFBlocks.ELDER_ALTAR_HATCH.get())) {
             return new Result(false, "no hatch", null);
+        }
+        if (hint != null && hint.getAxis().isHorizontal() && validateOriented(level, hatch, hint).valid()) {
+            return new Result(true, "ready", hint);
         }
         Oriented best = null;
         for (Direction interior : Direction.Plane.HORIZONTAL) {

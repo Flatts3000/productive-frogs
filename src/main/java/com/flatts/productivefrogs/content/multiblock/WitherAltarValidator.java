@@ -73,8 +73,21 @@ public final class WitherAltarValidator {
     }
 
     public static Result validate(LevelReader level, BlockPos hatch) {
+        return validate(level, hatch, null);
+    }
+
+    /**
+     * Validate with an orientation hint: a formed altar's direction virtually
+     * never changes, so the hatch passes its cached orientation and the common
+     * case is ONE full pass instead of scanning up to four rotations every
+     * reconcile (review finding).
+     */
+    public static Result validate(LevelReader level, BlockPos hatch, @Nullable Direction hint) {
         if (!level.getBlockState(hatch).is(PFBlocks.WITHER_ALTAR_HATCH.get())) {
             return new Result(false, "no hatch", null);
+        }
+        if (hint != null && hint.getAxis().isHorizontal() && validateOriented(level, hatch, hint).valid()) {
+            return new Result(true, "ready", hint);
         }
         // Try each horizontal orientation; accept the first that fully matches. On
         // failure, report the orientation that got furthest (the player-facing problem).

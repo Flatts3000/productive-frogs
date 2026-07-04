@@ -42,7 +42,7 @@ public class WitherAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
 
     @Override
     protected boolean validateStructure(ServerLevel server, BlockPos pos) {
-        WitherAltarValidator.Result result = WitherAltarValidator.validate(server, pos);
+        WitherAltarValidator.Result result = WitherAltarValidator.validate(server, pos, ritual());
         if (result.valid() && result.ritual() != null) {
             setOrientation(result.ritual());
             // A FORMED altar forces every receptacle's held item onto the

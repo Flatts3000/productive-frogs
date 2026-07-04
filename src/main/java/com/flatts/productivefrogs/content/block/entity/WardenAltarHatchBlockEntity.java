@@ -33,7 +33,7 @@ public class WardenAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
 
     @Override
     protected boolean validateStructure(ServerLevel server, BlockPos pos) {
-        WardenAltarValidator.Result result = WardenAltarValidator.validate(server, pos);
+        WardenAltarValidator.Result result = WardenAltarValidator.validate(server, pos, orientation());
         if (result.valid()) {
             setOrientation(result.interior());
         }

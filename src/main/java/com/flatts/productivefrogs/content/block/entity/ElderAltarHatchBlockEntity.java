@@ -43,7 +43,7 @@ public class ElderAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
 
     @Override
     protected boolean validateStructure(ServerLevel server, BlockPos pos) {
-        ElderAltarValidator.Result result = ElderAltarValidator.validate(server, pos);
+        ElderAltarValidator.Result result = ElderAltarValidator.validate(server, pos, orientation());
         if (result.valid()) {
             setOrientation(result.interior());
         }

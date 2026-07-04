@@ -301,18 +301,6 @@ public abstract class AbstractBasinBlockEntity extends BlockEntity {
             be.clearCharge();
             return;
         }
-        // Defensive re-check each cycle (datapack reload / tampered NBT): a key
-        // this Basin may not hold goes inert (charge kept - it may become valid
-        // again on the next reload) rather than spawning.
-        if (!be.acceptsKey(serverLevel, key)) {
-            be.resetInterval();
-            return;
-        }
-        // Density cap: pause WITHOUT spending budget (the source's posture).
-        if (PFConfig.spawnCapEnabled() && be.isCrowded(serverLevel, pos, key)) {
-            be.resetInterval();
-            return;
-        }
         if (be.intervalTotal <= 0) {
             be.intervalTotal = MilkSpawnEconomy.intervalTicks(be.speedLevel, level.getRandom());
             be.intervalRemaining = be.intervalTotal;
@@ -320,8 +308,23 @@ public abstract class AbstractBasinBlockEntity extends BlockEntity {
             return;
         }
         if (be.intervalRemaining > 0) {
+            // Countdown ticks are pure in-memory state: no setChanged here (it
+            // dirtied the chunk 20x/sec per basin - review finding). Losing a
+            // partial countdown on an unclean stop just restarts the interval.
             be.intervalRemaining--;
-            be.setChanged();
+            return;
+        }
+        // The expensive gates run ONCE per spawn event, not every tick (the
+        // milk source's scheduled-tick posture; review finding: these ran 20x/sec
+        // per charged basin). Defensive key re-check (datapack reload / tampered
+        // NBT): an unacceptable key goes inert, charge kept. Density cap: pause
+        // WITHOUT spending budget.
+        if (!be.acceptsKey(serverLevel, key)) {
+            be.resetInterval();
+            return;
+        }
+        if (PFConfig.spawnCapEnabled() && be.isCrowded(serverLevel, pos, key)) {
+            be.resetInterval();
             return;
         }
 
