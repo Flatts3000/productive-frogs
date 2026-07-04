@@ -4,7 +4,8 @@ Same technique as generate_reinforced_froglight_textures.py: keep the shipped
 wither-altar art's pixel structure (hatch / receptacle / capstone templates) and
 remap each pixel's luminance onto a per-theme color ramp, so the new altars'
 blocks read as siblings of the shipped ones with the deep-dark / monument
-palette. Provisional pending the comparison-page approval pass.
+palette. APPROVED by the maintainer 2026-07-04 - these are the final textures;
+re-run only to reproduce them, not to redesign.
 
 Run from the repo root:  python scripts/generate_phase4b_altar_textures.py
 """
