@@ -146,10 +146,10 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             com.flatts.productivefrogs.content.block.CastingMoldBlock.class);
         registration.registerBlockComponent(provider,
             com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock.class);
+        // One shared BossAltarHatchBlock backs every altar hatch; the provider
+        // dispatches on the hatch BE subclass.
         registration.registerBlockComponent(provider,
-            com.flatts.productivefrogs.content.block.EndDragonAltarHatchBlock.class);
-        registration.registerBlockComponent(provider,
-            com.flatts.productivefrogs.content.block.WitherAltarHatchBlock.class);
+            com.flatts.productivefrogs.content.block.BossAltarHatchBlock.class);
         registration.registerBlockComponent(provider,
             com.flatts.productivefrogs.content.block.TerrariumControllerBlock.class);
         registration.registerBlockComponent(provider,

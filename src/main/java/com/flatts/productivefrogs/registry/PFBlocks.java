@@ -8,7 +8,7 @@ import com.flatts.productivefrogs.content.block.MimicMilkSourceBlock;
 import com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock;
 import com.flatts.productivefrogs.content.block.CrucibleBlock;
 import com.flatts.productivefrogs.content.block.EndCrystalReceptacleBlock;
-import com.flatts.productivefrogs.content.block.EndDragonAltarHatchBlock;
+import com.flatts.productivefrogs.content.block.BossAltarHatchBlock;
 import com.flatts.productivefrogs.content.block.HatchBlock;
 import com.flatts.productivefrogs.content.block.IncubatorBlock;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
@@ -21,8 +21,7 @@ import com.flatts.productivefrogs.content.block.SpawneryBlock;
 import com.flatts.productivefrogs.content.block.SprinklerBlock;
 import com.flatts.productivefrogs.content.block.SweetslimedLilyPadBlock;
 import com.flatts.productivefrogs.content.block.TerrariumControllerBlock;
-import com.flatts.productivefrogs.content.block.WitherAltarHatchBlock;
-import com.flatts.productivefrogs.content.block.WitherSummonReceptacleBlock;
+import com.flatts.productivefrogs.content.block.SummonReceptacleBlock;
 import com.flatts.productivefrogs.data.Category;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -454,8 +453,12 @@ public final class PFBlocks {
      * Terrarium Hatch (open like a chest, pipe items out) but a distinct,
      * non-directional block; the summon deposits the dragon's drops here.
      */
-    public static final DeferredBlock<EndDragonAltarHatchBlock> END_DRAGON_ALTAR_HATCH =
-        registerBlock("end_dragon_altar_hatch", EndDragonAltarHatchBlock::new, receptacleProperties());
+    public static final DeferredBlock<BossAltarHatchBlock> END_DRAGON_ALTAR_HATCH =
+        registerBlock("end_dragon_altar_hatch",
+            p -> new BossAltarHatchBlock(p,
+                () -> PFBlockEntities.END_DRAGON_ALTAR_HATCH.get(),
+                com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity::new),
+            receptacleProperties());
 
     /**
      * Reinforced Froglights for the Wither Altar (#247) - the Nether-themed structural
@@ -485,19 +488,23 @@ public final class PFBlocks {
 
     /**
      * The two Wither Altar summon receptacles (#247) - the vanilla summon T rendered as
-     * sockets. One parameterized {@link WitherSummonReceptacleBlock} backs both, each
+     * sockets. One parameterized {@link SummonReceptacleBlock} backs both, each
      * accepting its own item; a full T (4 soul sand + 3 skulls) fires the summon.
      */
-    public static final DeferredBlock<WitherSummonReceptacleBlock> SOUL_SAND_RECEPTACLE =
+    public static final DeferredBlock<SummonReceptacleBlock> SOUL_SAND_RECEPTACLE =
         registerBlock("soul_sand_receptacle",
-            p -> new WitherSummonReceptacleBlock(p, Items.SOUL_SAND), receptacleProperties());
-    public static final DeferredBlock<WitherSummonReceptacleBlock> WITHER_SKULL_RECEPTACLE =
+            p -> new SummonReceptacleBlock(p, Items.SOUL_SAND), receptacleProperties());
+    public static final DeferredBlock<SummonReceptacleBlock> WITHER_SKULL_RECEPTACLE =
         registerBlock("wither_skull_receptacle",
-            p -> new WitherSummonReceptacleBlock(p, Items.WITHER_SKELETON_SKULL), receptacleProperties());
+            p -> new SummonReceptacleBlock(p, Items.WITHER_SKELETON_SKULL), receptacleProperties());
 
     /** Wither Altar Hatch (#247) - the altar's output + summon brain. */
-    public static final DeferredBlock<WitherAltarHatchBlock> WITHER_ALTAR_HATCH =
-        registerBlock("wither_altar_hatch", WitherAltarHatchBlock::new, receptacleProperties());
+    public static final DeferredBlock<BossAltarHatchBlock> WITHER_ALTAR_HATCH =
+        registerBlock("wither_altar_hatch",
+            p -> new BossAltarHatchBlock(p,
+                () -> PFBlockEntities.WITHER_ALTAR_HATCH.get(),
+                com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity::new),
+            receptacleProperties());
 
     /**
      * Withered Star (#247) - the Wither Altar's capstone, set into the arena floor.

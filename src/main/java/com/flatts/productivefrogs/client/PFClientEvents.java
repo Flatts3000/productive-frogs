@@ -144,10 +144,10 @@ public final class PFClientEvents {
             com.flatts.productivefrogs.registry.PFBlockEntities.WITHER_ALTAR_HATCH.get(),
             com.flatts.productivefrogs.client.renderer.WitherAltarHatchRenderer::new);
         // Wither summon receptacles (#247): the held item (soul sand / wither skull)
-        // rendered on the frog-facing face. See client/renderer/WitherSummonReceptacleRenderer.
+        // rendered on the frog-facing face. See client/renderer/SummonReceptacleRenderer.
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.WITHER_SUMMON_RECEPTACLE.get(),
-            com.flatts.productivefrogs.client.renderer.WitherSummonReceptacleRenderer::new);
+            com.flatts.productivefrogs.client.renderer.SummonReceptacleRenderer::new);
         // Terrarium Controller: a red outline around the shell block the validator
         // flagged, shown while diagnosing. See client/renderer/TerrariumControllerRenderer.
         event.registerBlockEntityRenderer(

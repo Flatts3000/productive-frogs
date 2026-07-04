@@ -323,9 +323,9 @@ final class BossAltarTests {
         // Prime each receptacle with its accepted item (soul sand or a wither skeleton skull).
         for (BlockPos rp : com.flatts.productivefrogs.content.multiblock.WitherAltarValidator.receptacles(absHatch)) {
             if (helper.getLevel().getBlockState(rp).getBlock()
-                        instanceof com.flatts.productivefrogs.content.block.WitherSummonReceptacleBlock wb
+                        instanceof com.flatts.productivefrogs.content.block.SummonReceptacleBlock wb
                     && helper.getLevel().getBlockEntity(rp)
-                        instanceof com.flatts.productivefrogs.content.block.entity.WitherSummonReceptacleBlockEntity r) {
+                        instanceof com.flatts.productivefrogs.content.block.entity.SummonReceptacleBlockEntity r) {
                 if (!r.isFilled()) {
                     r.tryInsert(new ItemStack(wb.accepted()));
                 }
