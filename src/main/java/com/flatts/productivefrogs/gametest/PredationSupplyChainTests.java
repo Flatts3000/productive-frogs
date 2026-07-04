@@ -59,6 +59,8 @@ final class PredationSupplyChainTests {
             PredationSupplyChainTests::slimeMilkBasinSpawnsVariantSlimeAndRejectsBossMilk);
         PFGameTests.test("basin_drain_returns_bucket_with_budget_intact", 40,
             PredationSupplyChainTests::basinDrainReturnsBucketWithBudgetIntact);
+        PFGameTests.test("basin_consumes_dropped_catalyst", 80,
+            PredationSupplyChainTests::basinConsumesDroppedCatalyst);
         PFGameTests.test("predators_disabled_idles_press_and_slurry_basin", 60,
             PredationSupplyChainTests::predatorsDisabledIdlesPressAndSlurryBasin);
     }
@@ -190,6 +192,13 @@ final class PredationSupplyChainTests {
         ItemStack refused = press.getInventory().insertItem(SlurryPressInventory.NET_SLOT, witherNet, false);
         if (refused.isEmpty()) {
             helper.fail("insertItem must refuse a boss (c:bosses) net");
+            return;
+        }
+        // PF's own mobs are denylisted too (a Resource Slime pressed into
+        // slurry would bypass the milk economy - maintainer ruling).
+        ItemStack pfNet = netWith("productivefrogs:resource_slime");
+        if (press.getInventory().insertItem(SlurryPressInventory.NET_SLOT, pfNet, false).isEmpty()) {
+            helper.fail("insertItem must refuse a PF-mob (slurry_denylist) net");
             return;
         }
         // Layer 2: a force-set boss net (setStackInSlot bypasses the filter,
@@ -349,6 +358,39 @@ final class PredationSupplyChainTests {
             return;
         }
         helper.succeed();
+    }
+
+    /**
+     * Catalyst parity (maintainer ruling: Basins allow catalysts): a catalyst
+     * item DROPPED into the bowl is consumed and applied, exactly like dropping
+     * one into a milk source pool - which is also what makes a dropper able to
+     * feed catalysts in. (The right-click path shares the same consumption
+     * core, so this pins both.)
+     */
+    private static void basinConsumesDroppedCatalyst(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos, PFBlocks.MOB_SLURRY_BASIN.get());
+        if (!(helper.getLevel().getBlockEntity(helper.absolutePos(pos))
+                instanceof MobSlurryBasinBlockEntity basin)) {
+            helper.fail("no MobSlurryBasinBlockEntity");
+            return;
+        }
+        basin.charge(SLIME_ID, 8, 8, 0, 0, false);
+
+        // Drop a Speed catalyst into the bowl (spawned just above, falls in).
+        BlockPos abs = helper.absolutePos(pos);
+        net.minecraft.world.entity.item.ItemEntity drop = new net.minecraft.world.entity.item.ItemEntity(
+            helper.getLevel(), abs.getX() + 0.5, abs.getY() + 0.9, abs.getZ() + 0.5,
+            new ItemStack(com.flatts.productivefrogs.registry.PFItems.SPEED_CATALYST.get()));
+        drop.setDeltaMovement(0, 0, 0);
+        helper.getLevel().addFreshEntity(drop);
+
+        helper.succeedWhen(() -> {
+            helper.assertTrue(basin.getSpeedLevel() == 1,
+                "dropped Speed catalyst must apply (speed=" + basin.getSpeedLevel() + ")");
+            helper.assertTrue(drop.isRemoved() || drop.getItem().isEmpty(),
+                "the consumed catalyst item must be gone");
+        });
     }
 
     /**

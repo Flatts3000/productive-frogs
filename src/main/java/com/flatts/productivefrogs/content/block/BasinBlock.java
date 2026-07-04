@@ -180,32 +180,85 @@ public class BasinBlock extends Block implements EntityBlock, SimpleWaterloggedB
             return InteractionResult.SUCCESS;
         }
 
-        // Apply a catalyst by right-click (pool-drop parity).
-        MilkCatalyst catalyst = MilkCatalyst.fromStack(stack);
-        if (catalyst != null && basin.isCharged()) {
-            if (level.isClientSide()) {
-                return InteractionResult.SUCCESS;
-            }
-            if (!com.flatts.productivefrogs.PFConfig.milkCatalystsEnabled() || !catalyst.isEnabled()) {
-                return InteractionResult.SUCCESS;
-            }
-            if ((catalyst == MilkCatalyst.COUNT || catalyst == MilkCatalyst.INFINITE)
-                    && !AbstractBasinBlockEntity.depletionEnabled()) {
-                return InteractionResult.SUCCESS;
-            }
-            if (basin.applyCatalyst(catalyst)) {
-                stack.shrink(1);
-                level.playSound(null, pos, SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS,
-                    0.7F, 1.3F + level.getRandom().nextFloat() * 0.2F);
-                if (level instanceof ServerLevel serverLevel) {
-                    serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER,
-                        pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, 8, 0.3, 0.3, 0.3, 0.0);
-                }
+        // Apply a catalyst by right-click (the hand path; drop-in below is the
+        // automation path - both feed the same shared consumption core).
+        if (MilkCatalyst.fromStack(stack) != null && basin.isCharged()) {
+            if (!level.isClientSide()) {
+                tryConsumeCatalyst(level, pos, basin, stack);
             }
             return InteractionResult.SUCCESS;
         }
 
         return InteractionResult.TRY_WITH_EMPTY_HAND;
+    }
+
+    /**
+     * Consume catalyst items dropped INTO the bowl - full parity with dropping
+     * one into a milk source pool (maintainer ruling: Basins allow catalysts),
+     * and the automation path (a dropper can feed catalysts in). An item
+     * resting in the open bowl overlaps this block's cell, so vanilla calls
+     * {@code entityInside} for it every tick.
+     *
+     * <p>Same gates as {@code SlimeMilkSourceBlock.entityInside}: server-side,
+     * catalysts globally enabled, a real charged Basin, the per-catalyst flag
+     * on, and Count/Infinite only while depletion matters. A refused catalyst
+     * is left floating for the player rather than silently eaten.
+     */
+    @Override
+    protected void entityInside(BlockState state, Level level, BlockPos pos,
+            net.minecraft.world.entity.Entity entity,
+            net.minecraft.world.entity.InsideBlockEffectApplier effectApplier, boolean isPrecise) {
+        super.entityInside(state, level, pos, entity, effectApplier, isPrecise);
+        if (level.isClientSide() || !(entity instanceof net.minecraft.world.entity.item.ItemEntity itemEntity)) {
+            return;
+        }
+        if (!(level.getBlockEntity(pos) instanceof AbstractBasinBlockEntity basin) || !basin.isCharged()) {
+            return;
+        }
+        ItemStack stack = itemEntity.getItem();
+        if (MilkCatalyst.fromStack(stack) == null) {
+            return;
+        }
+        if (tryConsumeCatalyst(level, pos, basin, stack)) {
+            if (stack.isEmpty()) {
+                itemEntity.discard();
+            } else {
+                itemEntity.setItem(stack);
+            }
+        }
+    }
+
+    /**
+     * The shared catalyst-consumption core (right-click + drop-in): apply one
+     * catalyst to the charged Basin, shrink the stack by one, and play the
+     * source pool's feedback. Returns false - stack untouched - when the
+     * catalyst is config-disabled, meaningless (Count/Infinite with depletion
+     * off), or already maxed on this Basin.
+     */
+    private static boolean tryConsumeCatalyst(Level level, BlockPos pos,
+            AbstractBasinBlockEntity basin, ItemStack stack) {
+        MilkCatalyst catalyst = MilkCatalyst.fromStack(stack);
+        if (catalyst == null) {
+            return false;
+        }
+        if (!com.flatts.productivefrogs.PFConfig.milkCatalystsEnabled() || !catalyst.isEnabled()) {
+            return false;
+        }
+        if ((catalyst == MilkCatalyst.COUNT || catalyst == MilkCatalyst.INFINITE)
+                && !AbstractBasinBlockEntity.depletionEnabled()) {
+            return false;
+        }
+        if (!basin.applyCatalyst(catalyst)) {
+            return false;
+        }
+        stack.shrink(1);
+        level.playSound(null, pos, SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS,
+            0.7F, 1.3F + level.getRandom().nextFloat() * 0.2F);
+        if (level instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER,
+                pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, 8, 0.3, 0.3, 0.3, 0.0);
+        }
+        return true;
     }
 
     @SuppressWarnings("unchecked")
