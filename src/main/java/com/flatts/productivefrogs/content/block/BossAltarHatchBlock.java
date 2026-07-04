@@ -80,6 +80,7 @@ public class BossAltarHatchBlock extends Block implements EntityBlock {
             if (!level.isClientSide()) {
                 if (hatch.dock().tryInstall(stack)) {
                     stack.remove(DataComponents.CUSTOM_DATA);
+                    hatch.syncToClient(); // the Jade warning reads the installed state client-side
                     level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 1.0F, 0.8F);
                 } else {
                     level.playSound(null, pos, SoundEvents.VILLAGER_NO, SoundSource.BLOCKS, 0.6F, 1.0F);

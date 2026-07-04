@@ -215,52 +215,56 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             return UID;
         }
 
+        /** Per-altar validation outcome, normalized: the lang-key prefix + valid + detail. */
+        private record AltarStatus(String prefix, boolean valid, String detail) {
+        }
+
+        /** Dispatch the shared hatch BE to its altar's validator (pure client block-identity checks). */
+        private static AltarStatus altarStatus(
+                com.flatts.productivefrogs.content.block.entity.BossAltarHatchBlockEntity hatch,
+                BlockAccessor accessor) {
+            if (hatch instanceof com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity) {
+                var r = com.flatts.productivefrogs.content.multiblock.DragonAltarValidator.validate(
+                    accessor.getLevel(), accessor.getPosition());
+                return new AltarStatus("productivefrogs.jade.dragon_altar", r.valid(), r.detail());
+            }
+            if (hatch instanceof com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity) {
+                var r = com.flatts.productivefrogs.content.multiblock.WitherAltarValidator.validate(
+                    accessor.getLevel(), accessor.getPosition());
+                return new AltarStatus("productivefrogs.jade.wither_altar", r.valid(), r.detail());
+            }
+            if (hatch instanceof com.flatts.productivefrogs.content.block.entity.WardenAltarHatchBlockEntity) {
+                var r = com.flatts.productivefrogs.content.multiblock.WardenAltarValidator.validate(
+                    accessor.getLevel(), accessor.getPosition());
+                return new AltarStatus("productivefrogs.jade.warden_altar", r.valid(), r.detail());
+            }
+            var r = com.flatts.productivefrogs.content.multiblock.ElderAltarValidator.validate(
+                accessor.getLevel(), accessor.getPosition());
+            return new AltarStatus("productivefrogs.jade.elder_altar", r.valid(), r.detail());
+        }
+
         @Override
         public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
             BlockEntity be = accessor.getBlockEntity();
             if (be == null) {
                 return;
             }
-            // End Dragon Altar Hatch (#249): show whether the surrounding altar
-            // validates. Reads only block identity, so it is a pure client check.
-            if (be instanceof com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity) {
-                com.flatts.productivefrogs.content.multiblock.DragonAltarValidator.Result r =
-                    com.flatts.productivefrogs.content.multiblock.DragonAltarValidator.validate(
-                        accessor.getLevel(), accessor.getPosition());
-                tooltip.add(Component.translatable(r.valid()
-                    ? "productivefrogs.jade.dragon_altar.ready"
-                    : "productivefrogs.jade.dragon_altar.incomplete", r.detail()));
-                return;
-            }
-            // Wither Altar Hatch (#247): same as the dragon altar - whether the
-            // surrounding altar validates. Pure client block-identity check.
-            if (be instanceof com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity) {
-                com.flatts.productivefrogs.content.multiblock.WitherAltarValidator.Result r =
-                    com.flatts.productivefrogs.content.multiblock.WitherAltarValidator.validate(
-                        accessor.getLevel(), accessor.getPosition());
-                tooltip.add(Component.translatable(r.valid()
-                    ? "productivefrogs.jade.wither_altar.ready"
-                    : "productivefrogs.jade.wither_altar.incomplete", r.detail()));
-                return;
-            }
-            // Warden Altar Hatch (#279) + Elder Guardian Altar Hatch (#280): same
-            // pure client block-identity structure checks.
-            if (be instanceof com.flatts.productivefrogs.content.block.entity.WardenAltarHatchBlockEntity) {
-                com.flatts.productivefrogs.content.multiblock.WardenAltarValidator.Result r =
-                    com.flatts.productivefrogs.content.multiblock.WardenAltarValidator.validate(
-                        accessor.getLevel(), accessor.getPosition());
-                tooltip.add(Component.translatable(r.valid()
-                    ? "productivefrogs.jade.warden_altar.ready"
-                    : "productivefrogs.jade.warden_altar.incomplete", r.detail()));
-                return;
-            }
-            if (be instanceof com.flatts.productivefrogs.content.block.entity.ElderAltarHatchBlockEntity) {
-                com.flatts.productivefrogs.content.multiblock.ElderAltarValidator.Result r =
-                    com.flatts.productivefrogs.content.multiblock.ElderAltarValidator.validate(
-                        accessor.getLevel(), accessor.getPosition());
-                tooltip.add(Component.translatable(r.valid()
-                    ? "productivefrogs.jade.elder_altar.ready"
-                    : "productivefrogs.jade.elder_altar.incomplete", r.detail()));
+            // Boss altar Hatches (#247/#249/#279/#280): one branch on the shared
+            // hatch BE - the per-altar validator is a pure client block-identity
+            // check, plus the Phase 4 armed warning: a structurally complete altar
+            // that has no Apex frog installed says so instead of reading "ready".
+            if (be instanceof com.flatts.productivefrogs.content.block.entity.BossAltarHatchBlockEntity hatch) {
+                var status = altarStatus(hatch, accessor);
+                boolean unarmed = status.valid()
+                    && com.flatts.productivefrogs.PFConfig.predatorsEnabled()
+                    && !hatch.apexInstalled();
+                if (unarmed) {
+                    tooltip.add(Component.translatable(status.prefix() + ".no_frog"));
+                } else {
+                    tooltip.add(Component.translatable(status.valid()
+                        ? status.prefix() + ".ready"
+                        : status.prefix() + ".incomplete", status.detail()));
+                }
                 return;
             }
             net.minecraft.nbt.CompoundTag data = accessor.getServerData();

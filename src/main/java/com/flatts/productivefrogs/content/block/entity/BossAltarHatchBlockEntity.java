@@ -74,6 +74,8 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
     private int summonTicks;
     /** Client-only render state: game time when the renderer first saw this summon, for local growth animation. */
     public long clientSummonStartGameTime = -1L;
+    /** Client mirror of the dock's installed state (rides the update tag; the frog NBT itself never syncs). */
+    private boolean clientApexInstalled;
 
     protected BossAltarHatchBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, FrogKind.Apex apex) {
         super(type, pos, state);
@@ -126,6 +128,15 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
     /** The Apex dock (#281 Phase 4): the installed Apex frog + the Liquid Experience bank. */
     public AltarApexDock dock() {
         return dock;
+    }
+
+    /**
+     * Whether this altar's Apex frog is installed - server reads the dock, the
+     * client reads the update-tag mirror. Drives the Jade "waiting for its Apex
+     * Frog" warning on a structurally-complete but unarmed altar.
+     */
+    public boolean apexInstalled() {
+        return dock.isInstalled() || clientApexInstalled;
     }
 
     /** Deposit a reward item, returning whatever did not fit (the caller spills it). */
@@ -290,7 +301,7 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
         }
     }
 
-    protected void syncToClient() {
+    public void syncToClient() {
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
@@ -325,6 +336,7 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
         ContainerHelper.loadAllItems(input, this.items);
         this.summonTicks = input.getIntOr("SummonTicks", 0);
         this.dock.load(input);
+        this.clientApexInstalled = input.getBooleanOr("ApexInstalled", false);
     }
 
     @Override
@@ -341,6 +353,7 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = super.getUpdateTag(registries);
         tag.putInt("SummonTicks", summonTicks);
+        tag.putBoolean("ApexInstalled", dock.isInstalled());
         return tag;
     }
 
