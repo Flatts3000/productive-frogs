@@ -52,11 +52,32 @@ public final class AltarApexDock {
 
     @Nullable
     private CompoundTag installedFrogNbt;
-    private int liquidXpMb;
+    /**
+     * The Liquid Experience bank. A legacy FluidTank fronted by the shared
+     * {@link com.flatts.productivefrogs.content.transfer.FluidTankResourceHandler}
+     * adapter (extract-only) - replacing the hand-rolled XpBank the review
+     * flagged for duplicating the adapter AND minting a fresh journal per
+     * capability lookup (two lookups in one aborted transaction reverted to the
+     * last journal's snapshot, leaking the first extract). One tank, one cached
+     * handler, one journal.
+     */
+    private final net.neoforged.neoforge.fluids.capability.templates.FluidTank xpTank;
+    private final com.flatts.productivefrogs.content.transfer.FluidTankResourceHandler xpHandler;
+    /**
+     * Sub-point overflow carry (0-19 mB): when a full bank forces overflow, only
+     * whole points can spray as orbs; the remainder carries into the next
+     * {@link #bankXp} so the documented "XP is never voided" contract holds
+     * (review finding: it was silently floored away).
+     */
+    private int xpCarryMb;
 
     public AltarApexDock(FrogKind.Apex required, Runnable onChanged) {
         this.required = required;
         this.onChanged = onChanged;
+        this.xpTank = new net.neoforged.neoforge.fluids.capability.templates.FluidTank(
+            CAPACITY_MB, stack -> stack.getFluid() == PFFluids.LIQUID_EXPERIENCE.get());
+        this.xpHandler = new com.flatts.productivefrogs.content.transfer.FluidTankResourceHandler(
+            xpTank, null, false, true, onChanged);
     }
 
     /** The Apex kind this altar demands ({@code Apex.WITHER}, {@code Apex.DRAGON}, ...). */
@@ -79,9 +100,11 @@ public final class AltarApexDock {
 
     /**
      * Try to install from a filled net: the captured entity must be a Resource
-     * Frog whose Kind is this altar's required Apex. On success the net NBT
-     * moves onto the dock (caller empties the net item). Returns false - net
-     * untouched - for an empty net, a non-frog, or the wrong kind.
+     * FROG (the entity-type check matters: a ResourceTadpole writes the same
+     * Kind NBT dialect, so kind alone would let an apex TADPOLE install and arm
+     * the altar) whose Kind is this altar's required Apex. On success the net
+     * NBT moves onto the dock (caller empties the net item). Returns false -
+     * net untouched - for an empty net, a non-frog, or the wrong kind.
      */
     public boolean tryInstall(ItemStack netStack) {
         if (isInstalled() || !EntityNetItem.isFilled(netStack)) {
@@ -92,6 +115,10 @@ public final class AltarApexDock {
             return false;
         }
         CompoundTag tag = data.copyTag();
+        String entityId = tag.getStringOr("entity", "");
+        if (!com.flatts.productivefrogs.registry.PFEntities.RESOURCE_FROG.getId().toString().equals(entityId)) {
+            return false; // a tadpole (or anything else) is not an installable Apex
+        }
         FrogKind kind = FrogKind.readFromTag(tag).orElse(null);
         if (kind != required) {
             return false;
@@ -111,27 +138,19 @@ public final class AltarApexDock {
         if (installedFrogNbt == null) {
             return;
         }
-        // Rebuild exactly like EntityNetItem.entityFromStack: type id from the
-        // net dialect, whole-entity load, passengers stripped.
-        CompoundTag tag = installedFrogNbt;
-        installedFrogNbt = null;
-        var type = net.minecraft.world.entity.EntityType.byString(tag.getStringOr("entity", "")).orElse(null);
-        if (type == null) {
-            return;
-        }
-        Entity frog = type.create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
+        // One rebuild path: EntityNetItem.rebuildCaptured owns the net-NBT
+        // whole-entity sequence; the dock's gate is "must be a Resource Frog"
+        // (tryInstall guarantees it, but the stored NBT is player-adjacent
+        // data - keep the gate). The stored NBT is cleared only AFTER a
+        // successful spawn - a failed rebuild must never void the entity.
+        Entity frog = EntityNetItem.rebuildCaptured(installedFrogNbt.copy(), level,
+            created -> created instanceof ResourceFrog);
         if (frog == null) {
-            return;
-        }
-        tag.remove("Passengers");
-        frog.load(net.minecraft.world.level.storage.TagValueInput.create(
-            net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), tag));
-        if (!(frog instanceof ResourceFrog)) {
-            frog.discard();
-            return;
+            return; // NBT retained - nothing is voided
         }
         frog.snapTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
         level.addFreshEntity(frog);
+        installedFrogNbt = null;
         onChanged.run();
     }
 
@@ -139,99 +158,41 @@ public final class AltarApexDock {
 
     /**
      * Bank {@code points} of XP as Liquid Experience; whatever exceeds the
-     * bank's capacity sprays as vanilla orbs at {@code at} (never voided).
+     * bank's capacity sprays as vanilla orbs at {@code at} (never voided - a
+     * sub-point mB remainder carries into the next banking).
      */
     public void bankXp(ServerLevel level, Vec3 at, int points) {
-        int mb = LiquidExperienceFluid.pointsToMb(points);
-        int accepted = Math.min(mb, CAPACITY_MB - liquidXpMb);
+        int mb = LiquidExperienceFluid.pointsToMb(points) + xpCarryMb;
+        xpCarryMb = 0;
+        int accepted = Math.min(mb, CAPACITY_MB - xpTank.getFluidAmount());
         if (accepted > 0) {
-            liquidXpMb += accepted;
+            growTank(accepted);
             onChanged.run();
         }
-        int overflowPoints = LiquidExperienceFluid.mbToWholePoints(mb - accepted);
+        int overflowMb = mb - accepted;
+        int overflowPoints = LiquidExperienceFluid.mbToWholePoints(overflowMb);
+        xpCarryMb = overflowMb - overflowPoints * LiquidExperienceFluid.MB_PER_POINT;
         if (overflowPoints > 0) {
             ExperienceOrb.award(level, at, overflowPoints);
         }
     }
 
+    private void growTank(int mb) {
+        net.neoforged.neoforge.fluids.FluidStack current = xpTank.getFluid();
+        if (current.isEmpty()) {
+            xpTank.setFluid(new net.neoforged.neoforge.fluids.FluidStack(PFFluids.LIQUID_EXPERIENCE.get(), mb));
+        } else {
+            current.grow(mb);
+        }
+    }
+
     public int liquidXpMb() {
-        return liquidXpMb;
+        return xpTank.getFluidAmount();
     }
 
-    /** Extract-only Liquid Experience view for pipes ({@code Capabilities.Fluid.BLOCK}). */
+    /** Extract-only Liquid Experience view for pipes ({@code Capabilities.Fluid.BLOCK}). Cached - one journal. */
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> fluidResource() {
-        return new XpBank();
-    }
-
-    private final class XpBank
-            implements net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> {
-
-        private final BankJournal journal = new BankJournal();
-
-        @Override
-        public int size() {
-            return 1;
-        }
-
-        @Override
-        public net.neoforged.neoforge.transfer.fluid.FluidResource getResource(int index) {
-            return liquidXpMb > 0
-                ? net.neoforged.neoforge.transfer.fluid.FluidResource.of(PFFluids.LIQUID_EXPERIENCE.get())
-                : net.neoforged.neoforge.transfer.fluid.FluidResource.EMPTY;
-        }
-
-        @Override
-        public long getAmountAsLong(int index) {
-            return liquidXpMb;
-        }
-
-        @Override
-        public long getCapacityAsLong(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
-            return CAPACITY_MB;
-        }
-
-        @Override
-        public boolean isValid(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
-            return resource.getFluid() == PFFluids.LIQUID_EXPERIENCE.get();
-        }
-
-        @Override
-        public int insert(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount,
-                net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
-            return 0; // the altar fills the bank; pipes only drain
-        }
-
-        @Override
-        public int extract(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount,
-                net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
-            if (amount <= 0 || liquidXpMb <= 0
-                    || resource.getFluid() != PFFluids.LIQUID_EXPERIENCE.get()) {
-                return 0;
-            }
-            int drained = Math.min(amount, liquidXpMb);
-            journal.updateSnapshots(transaction);
-            liquidXpMb -= drained;
-            return drained;
-        }
-
-        private final class BankJournal
-                extends net.neoforged.neoforge.transfer.transaction.SnapshotJournal<Integer> {
-
-            @Override
-            protected Integer createSnapshot() {
-                return liquidXpMb;
-            }
-
-            @Override
-            protected void revertToSnapshot(Integer snapshot) {
-                liquidXpMb = snapshot;
-            }
-
-            @Override
-            protected void onRootCommit(Integer originalState) {
-                onChanged.run();
-            }
-        }
+        return xpHandler;
     }
 
     // ---- serialization ---------------------------------------------------
@@ -240,13 +201,20 @@ public final class AltarApexDock {
         if (installedFrogNbt != null) {
             output.store("InstalledFrog", CompoundTag.CODEC, installedFrogNbt);
         }
-        if (liquidXpMb > 0) {
-            output.putInt("LiquidXpMb", liquidXpMb);
+        if (xpTank.getFluidAmount() > 0) {
+            output.putInt("LiquidXpMb", xpTank.getFluidAmount());
+        }
+        if (xpCarryMb > 0) {
+            output.putInt("XpCarryMb", xpCarryMb);
         }
     }
 
     public void load(ValueInput input) {
         installedFrogNbt = input.read("InstalledFrog", CompoundTag.CODEC).orElse(null);
-        liquidXpMb = Mth.clamp(input.getIntOr("LiquidXpMb", 0), 0, CAPACITY_MB);
+        int mb = Mth.clamp(input.getIntOr("LiquidXpMb", 0), 0, CAPACITY_MB);
+        xpTank.setFluid(mb > 0
+            ? new net.neoforged.neoforge.fluids.FluidStack(PFFluids.LIQUID_EXPERIENCE.get(), mb)
+            : net.neoforged.neoforge.fluids.FluidStack.EMPTY);
+        xpCarryMb = Mth.clamp(input.getIntOr("XpCarryMb", 0), 0, LiquidExperienceFluid.MB_PER_POINT - 1);
     }
 }

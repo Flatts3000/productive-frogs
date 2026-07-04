@@ -9,8 +9,8 @@ import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
@@ -33,9 +33,8 @@ public class EndDragonAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
     private static final int LEVEL_EVENT_DRAGON_ROAR = 3001;   // ANIMATION_DRAGON_SUMMON_ROAR
     private static final int LEVEL_EVENT_DRAGON_DEATH = 1028;  // SOUND_DRAGON_DEATH
 
-    /** Data-driven drop list for the altar (pack-overridable); see {@code loot_table/dragon_altar.json}. */
-    private static final ResourceKey<LootTable> DRAGON_ALTAR_LOOT_TABLE = ResourceKey.create(
-        Registries.LOOT_TABLE, Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_altar"));
+    /** Supplemental drops ({@link BossAltarHatchBlockEntity#altarLootTable}); default: the Princess's Kiss. */
+    private static final ResourceKey<LootTable> DRAGON_ALTAR_LOOT_TABLE = altarLootTable("dragon_altar");
 
     public EndDragonAltarHatchBlockEntity(BlockPos pos, BlockState state) {
         super(PFBlockEntities.END_DRAGON_ALTAR_HATCH.get(), pos, state, FrogKind.Apex.DRAGON);

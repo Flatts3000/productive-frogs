@@ -42,13 +42,12 @@ The end-to-end production loop a player runs in V1, centered on the **Slime Milk
 
 ## Fluid automation (v1.8)
 
-Because each variant's Slime Milk is its own fluid as of v1.8, a fluid-automation mod can farm a variant completely unattended:
+On the 2.0 line there is ONE Slime Milk fluid and the variant rides a component on it (the R-1 model), so fluid automation works with two rules:
 
-- A fluid collector (Just Dire Things Fluid Collector, Mekanism Fluidic Plenisher, or any fluid handler) pulls milk out of a source block.
-- Pipes / a tank (Pipez, Mekanism, Thermal, Create, Fluid Tanks) move and buffer it.
-- A fluid placer (Just Dire Things Fluid Placer, Mekanism Fluidic Plenisher) places it back as a source block of the **same variant**, which spawns that variant's slime for the matching frog.
+- Pulling milk out of a source, moving it through pipes/tanks, and filling buckets (PF buckets or plain empty buckets) all preserve the variant - the component travels on the fluid and is copied onto any bucket the fill mints.
+- **Do not place milk back into the world through a fluid PLACER.** Block placement happens at the fluid level, below where components live, so a machine-placed source comes out variantless and inert (no spawns, no tint) and picking it up destroys the variant and budget. Re-enter the world through a bucket (deployer/dispenser-with-bucket, player), the Slime Milk Basin, or the Terrarium - all of which read the component.
 
-The Slime Milker loop and the empty-bucket round-trip are unchanged - this is purely additive.
+The Slime Milker loop and the empty-bucket round-trip are unchanged.
 
 **Catalysts are not preserved across a tank.** A source's Count / Speed / Quantity / Endless buffs survive a normal empty-bucket re-pickup, but they are lost when milk passes through a tank or pipe, so an automated line spawns at base rates. Buff an automated source by feeding catalysts directly into the placed pool (e.g. a dropper). See [automated_milk_variants.md](./automated_milk_variants.md) and [slime_milk_catalysts.md](./slime_milk_catalysts.md).
 

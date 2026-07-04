@@ -93,7 +93,7 @@ public class PFShootTongue extends ShootTongue {
     }
 
     /** Kinds whose tongue bypasses vanilla's frog_food gate: predators + apex (Phase 4). */
-    private static boolean isHunterKind(FrogKind kind) {
+    public static boolean isHunterKind(FrogKind kind) {
         return kind instanceof FrogKind.Predator || kind instanceof FrogKind.Apex;
     }
 

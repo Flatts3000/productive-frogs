@@ -45,6 +45,10 @@ final class BossAltarTests {
         PFGameTests.test("apex_eats_only_its_own_boss", 40, BossAltarTests::apexEatsOnlyItsOwnBoss);
         PFGameTests.test("apex_installs_via_net_use_on", "dragon_altar", 100,
             BossAltarTests::apexInstallsViaNetUseOn);
+        PFGameTests.test("apex_tadpole_does_not_install", "dragon_altar", 100,
+            BossAltarTests::apexTadpoleDoesNotInstall);
+        PFGameTests.test("wither_altar_fuel_pullback_pays_nothing", "wither_altar", 320,
+            BossAltarTests::witherAltarFuelPullbackPaysNothing);
         PFGameTests.test("wither_altar_stamps_receptacle_faces", "wither_altar", Rotation.CLOCKWISE_90, 100,
             BossAltarTests::witherAltarStampsReceptacleFaces);
         PFGameTests.test("warden_altar_validates_when_built", "warden_altar", 100, BossAltarTests::wardenAltarValidatesWhenBuilt);
@@ -610,6 +614,85 @@ final class BossAltarTests {
                 new net.minecraft.world.phys.AABB(absHatch).inflate(3.0)).isEmpty(),
             "the net must not spill the frog onto the altar");
         helper.succeed();
+    }
+
+    /**
+     * Review finding: a netted apex TADPOLE (same Kind NBT dialect as the frog)
+     * must NOT install - only a Resource FROG arms the altar. Guards both the
+     * skipped-maturation shortcut and the release-path void that followed it.
+     */
+    private static void apexTadpoleDoesNotInstall(GameTestHelper helper) {
+        BlockPos hatch = findAltarHatch(helper);
+        helper.assertTrue(hatch != null, "no End Dragon Altar Hatch in the loaded structure");
+        BlockPos absHatch = helper.absolutePos(hatch);
+        com.flatts.productivefrogs.content.entity.ResourceTadpole tadpole =
+            PFEntities.RESOURCE_TADPOLE.get().create(helper.getLevel(), net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
+        helper.assertTrue(tadpole != null, "could not create the apex tadpole");
+        tadpole.setKind(com.flatts.productivefrogs.data.FrogKind.Apex.DRAGON);
+        ItemStack netStack = new ItemStack(PFItems.FROG_NET.get());
+        com.flatts.productivefrogs.content.item.EntityNetItem.captureEntity(tadpole, netStack);
+        tadpole.discard();
+        if (helper.getLevel().getBlockEntity(absHatch)
+                instanceof com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity hb) {
+            helper.assertTrue(!hb.dock().tryInstall(netStack),
+                "an apex TADPOLE must not install on the altar");
+            helper.assertTrue(!hb.dock().isInstalled(), "dock must stay empty after the refused install");
+            helper.assertTrue(com.flatts.productivefrogs.content.item.EntityNetItem.isFilled(netStack),
+                "the refused net must keep its tadpole");
+        } else {
+            helper.fail("hatch block entity missing");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Review finding (the fuel-pullback exploit): pulling the receptacle fuel
+     * back out AFTER the summon starts must abort the payout - completion
+     * re-checks fuelReady, so a fuel-less ritual pays nothing.
+     */
+    private static void witherAltarFuelPullbackPaysNothing(GameTestHelper helper) {
+        BlockPos hatch = findWitherAltarHatch(helper);
+        helper.assertTrue(hatch != null, "no Wither Altar Hatch in the loaded structure");
+        BlockPos absHatch = helper.absolutePos(hatch);
+        if (helper.getLevel().getBlockEntity(absHatch)
+                instanceof com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity hb) {
+            helper.assertTrue(installApex(helper, hb.dock(),
+                    com.flatts.productivefrogs.data.FrogKind.Apex.WITHER, 1, 1, 1),
+                "Wither Apex install failed");
+        } else {
+            helper.fail("hatch block entity missing before install");
+            return;
+        }
+        com.flatts.productivefrogs.content.multiblock.WitherAltarValidator.Result wr =
+            com.flatts.productivefrogs.content.multiblock.WitherAltarValidator.validate(helper.getLevel(), absHatch);
+        helper.assertTrue(wr.valid(), "wither altar must validate: " + wr.detail());
+        primeReceptacles(helper,
+            com.flatts.productivefrogs.content.multiblock.WitherAltarValidator.receptacles(absHatch, wr.ritual()));
+        // The summon starts within one reconcile interval (20t). Pull ALL the
+        // fuel back out mid-summon (the exploit gesture), then wait past the
+        // full summon window and assert nothing was paid.
+        helper.runAfterDelay(30L, () -> {
+            for (BlockPos rp : com.flatts.productivefrogs.content.multiblock.WitherAltarValidator
+                    .receptacles(absHatch, wr.ritual())) {
+                if (helper.getLevel().getBlockEntity(rp)
+                        instanceof com.flatts.productivefrogs.content.block.entity.SummonReceptacleBlockEntity r) {
+                    r.extract();
+                }
+            }
+        });
+        helper.runAfterDelay(290L, () -> {
+            net.minecraft.world.level.block.entity.BlockEntity be = helper.getLevel().getBlockEntity(absHatch);
+            helper.assertTrue(be instanceof com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity,
+                "hatch block entity missing");
+            net.minecraft.world.Container c = (net.minecraft.world.Container) be;
+            helper.assertTrue(!containerHas(c, Items.NETHER_STAR),
+                "fuel pullback must abort the payout - no Nether Star");
+            var dock = ((com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity) be).dock();
+            helper.assertTrue(dock.liquidXpMb() == 0,
+                "fuel pullback must abort the payout - no banked XP, got " + dock.liquidXpMb() + " mB");
+            helper.succeed();
+        });
     }
 
     /** Find the altar Hatch within the loaded structure (relative pos), or null. */

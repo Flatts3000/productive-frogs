@@ -108,7 +108,21 @@ public abstract class EntityNetItem extends Item {
         if (data == null) {
             return null;
         }
-        CompoundTag tag = data.copyTag();
+        return rebuildCaptured(data.copyTag(), level, this::canCatch);
+    }
+
+    /**
+     * THE whole-entity rebuild for the net NBT dialect - the single owner of
+     * the type-from-tag / create / gate / strip-Passengers / load sequence
+     * (review finding: AltarApexDock.releaseFrog carried a hand copy that had
+     * already drifted). {@code gate} runs on the freshly-created (pre-load)
+     * entity; a refused or uncreatable entity returns null with nothing added
+     * to the world. Serialized passengers are dropped - they weren't part of
+     * the catch, and a crafted Passengers tree could drive deep recursion.
+     */
+    @Nullable
+    public static Entity rebuildCaptured(CompoundTag tag, Level level,
+            java.util.function.Predicate<Entity> gate) {
         EntityType<?> type = EntityType.byString(tag.getStringOr(TAG_ENTITY, "")).orElse(null);
         if (type == null) {
             return null;
@@ -117,7 +131,7 @@ public abstract class EntityNetItem extends Item {
         if (entity == null) {
             return null;
         }
-        if (!canCatch(entity)) {
+        if (!gate.test(entity)) {
             entity.discard();
             return null;
         }
@@ -172,7 +186,6 @@ public abstract class EntityNetItem extends Item {
             }
             if (hatch.dock().tryInstall(stack)) {
                 stack.remove(DataComponents.CUSTOM_DATA);
-                hatch.syncToClient(); // the Jade warning reads the installed state client-side
                 level.playSound(null, context.getClickedPos(), net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_CHIME,
                     net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 0.8F);
             } else {

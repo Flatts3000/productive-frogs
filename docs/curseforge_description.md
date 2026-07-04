@@ -65,7 +65,7 @@ Build the **Terrarium**, a sealed multiblock habitat, and the loop runs on its o
 
 ## The endgame
 
-There is a tier past the everyday loop. Splash a potion onto a slime before a frog eats it and the Froglight keeps that effect, ready to place as a glowing aura, hold for yourself, or wear. The trophy resources (Wither Skeleton Skull, Nether Star, Dragon Egg, Dragon Breath) are farmable, but you earn them: prime the first with the real drop and wall its toxic milk inside a six-sided catalyst altar. The Froglight Cleaver is a sword that drops a slime's Froglight on the kill; the Ender Dragon drops a Princess's Kiss that turns a frog into a tradeable villager. And any frog drops Frog Legs, a renewable meat for a world short on animals.
+There is a tier past the everyday loop. Splash a potion onto a slime before a frog eats it and the Froglight keeps that effect, ready to place as a glowing aura, hold for yourself, or wear. Breed predator frogs that hunt real mobs for their real drops, cross them into Apex Frogs, and install those on boss altars - the Wither, the Ender Dragon, the Warden, and the Elder Guardian each get a buildable arena that summons and harvests them for raw boss drops and bottled experience, no fight required. The Froglight Cleaver is a sword that drops a slime's Froglight on the kill; the Ender Dragon's altar pays a Princess's Kiss that turns a frog into a tradeable villager. And any frog drops Frog Legs, a renewable meat for a world short on animals.
 
 ## Learn as you play
 

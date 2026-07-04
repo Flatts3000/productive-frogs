@@ -213,12 +213,21 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
      * back out), recipe-gated by {@link #acceptsFluid}. Wraps {@link #tank} with the
      * snapshot transaction discipline; commit fires setChanged + sync.
      */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> fluidResourceCached;
+
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> fluidResource() {
-        return new com.flatts.productivefrogs.content.transfer.FluidTankResourceHandler(
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (fluidResourceCached == null) {
+            fluidResourceCached = new com.flatts.productivefrogs.content.transfer.FluidTankResourceHandler(
             tank, this::acceptsFluid, true, false, () -> {
                 setChanged();
                 syncToClients();
             });
+        }
+        return fluidResourceCached;
     }
 
     public IItemHandler outputView() {
@@ -226,8 +235,17 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
     }
 
     /** 26.1 {@code Capabilities.Item.BLOCK} view: extract-only over the cast-item output slot. */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResourceCached;
+
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResource() {
-        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(output, new int[] {OUTPUT_SLOT}, false, true);
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (outputResourceCached == null) {
+            outputResourceCached = new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(output, new int[] {OUTPUT_SLOT}, false, true);
+        }
+        return outputResourceCached;
     }
 
     public ItemStackHandler output() {

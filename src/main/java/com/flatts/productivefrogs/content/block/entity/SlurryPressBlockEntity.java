@@ -127,9 +127,15 @@ public class SlurryPressBlockEntity extends BlockEntity implements MenuProvider 
         // Full validity every tick: filled net, pressable (non-boss) mob, an
         // empty bucket, and BOTH output slots free. Furnace stall semantics -
         // a blocked press holds its progress and resumes where it paused; an
-        // invalid input (e.g. a tampered boss net) resets it.
-        if (!(net.getItem() instanceof com.flatts.productivefrogs.content.item.EnderNetItem)
-                || !EntityNetItem.isFilled(net) || !isPressable(net)) {
+        // invalid input (e.g. a tampered boss net) resets it. capturedType is
+        // parsed ONCE per tick (it deep-copies the whole serialized-entity NBT;
+        // the old isFilled+isPressable+completion trio parsed it up to 3x -
+        // review finding).
+        EntityType<?> capturedType = net.getItem() instanceof com.flatts.productivefrogs.content.item.EnderNetItem
+            ? EntityNetItem.capturedType(net)
+            : null;
+        if (capturedType == null || capturedType.builtInRegistryHolder().is(
+                com.flatts.productivefrogs.registry.PFEntityTags.SLURRY_DENYLIST)) {
             be.resetProgress();
             setWorking(level, pos, state, false);
             return;
@@ -152,12 +158,7 @@ public class SlurryPressBlockEntity extends BlockEntity implements MenuProvider 
         // bucket, hand the emptied net back. Insert outputs BEFORE consuming
         // inputs is unnecessary here - both outputs were verified empty above,
         // so the transaction cannot half-fail.
-        EntityType<?> type = EntityNetItem.capturedType(net);
-        if (type == null) {
-            be.resetProgress();
-            setWorking(level, pos, state, false);
-            return;
-        }
+        EntityType<?> type = capturedType;
         Identifier typeId = EntityType.getKey(type);
         be.inventory.extractItem(SlurryPressInventory.BUCKET_SLOT, 1, false);
         ItemStack emptiedNet = net.copyWithCount(1);

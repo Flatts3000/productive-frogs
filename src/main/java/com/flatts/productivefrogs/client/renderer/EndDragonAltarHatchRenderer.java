@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.client.renderer;
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.core.BlockPos;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -92,6 +93,14 @@ public class EndDragonAltarHatchRenderer
         }
         if (phantom != null) {
             phantom.tickCount = (int) time;
+        // Position the phantom at its real render spot (and snap old pos/rot to
+        // match) BEFORE extraction: the extracted lightmap samples at the entity
+        // position and the light probe lerps old -> current, so an unplaced
+        // phantom renders dark/flickering - the same fix the warden and wither
+        // replicas already carry (review finding: this was the missed copy).
+        BlockPos hatchPos = be.getBlockPos();
+        phantom.setPos(hatchPos.getX() + 0.5, hatchPos.getY() - 2.0, hatchPos.getZ() + 0.5);
+        phantom.setOldPosAndRot();
             state.dragon = dispatcher.extractEntity(phantom, partialTick);
             state.dragon.shadowRadius = 0.0F;
         }

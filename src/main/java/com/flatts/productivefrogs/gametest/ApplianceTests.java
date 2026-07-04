@@ -39,6 +39,8 @@ final class ApplianceTests {
         PFGameTests.test("coal_froglight_fuels_furnace", 300, ApplianceTests::coalFroglightFuelsFurnace);
         PFGameTests.test("lava_froglight_burns_like_lava_bucket", 100, ApplianceTests::lavaFroglightBurnsLikeLavaBucket);
         PFGameTests.test("milk_bucket_exposes_fluid_capability_for_tank_mods", 100, ApplianceTests::milkBucketExposesFluidCapabilityForTankMods);
+        PFGameTests.test("vanilla_bucket_fill_keeps_fluid_components", 40,
+            ApplianceTests::vanillaBucketFillKeepsFluidComponents);
         PFGameTests.test("slime_milker_be_cooks_iron_bucket_to_iron_milk_after_100_ticks", 200, ApplianceTests::slimeMilkerBeCooksIronBucketToIronMilkAfter100Ticks);
         PFGameTests.test("slime_milker_be_resets_progress_when_input_lacks_variant", 100, ApplianceTests::slimeMilkerBeResetsProgressWhenInputLacksVariant);
         PFGameTests.test("slime_churn_produces_variant_slime_bucket_from_milk", 200, ApplianceTests::slimeChurnProducesVariantSlimeBucketFromMilk);
@@ -212,6 +214,50 @@ final class ApplianceTests {
             helper.fail(variant + " bucket handler FluidResource lost SLIME_VARIANT: got " + gotVariant
                 + ", expected " + expectedVariant);
         }
+    }
+
+    /**
+     * Review finding: filling a PLAIN vanilla bucket from a tank went through
+     * NeoForge's stock BucketResourceHandler -> FluidType.getBucket, which minted
+     * a BARE bucket - destroying the SLIME_VARIANT (and catalyst budget) the
+     * fluid carried. ComponentCarryingFluidType.getBucket now copies the
+     * FluidStack's component patch onto the minted bucket; this drives the exact
+     * stock-handler leg (empty minecraft:bucket in an item handler slot).
+     */
+    private static void vanillaBucketFillKeepsFluidComponents(GameTestHelper helper) {
+        net.neoforged.neoforge.items.ItemStackHandler slot = new net.neoforged.neoforge.items.ItemStackHandler(1);
+        slot.setStackInSlot(0, new ItemStack(net.minecraft.world.item.Items.BUCKET));
+        // forHandlerIndex takes the 26.1 ResourceHandler surface, so wrap the
+        // legacy handler with the repo's own adapter (an item-swapping access is
+        // REQUIRED here: the fill replaces bucket -> milk bucket, which forStack
+        // silently refuses - the documented ItemAccess.forStack trap).
+        net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> slotResource =
+            new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(slot, new int[] {0}, true, true);
+        net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> handler =
+            slot.getStackInSlot(0).getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.ITEM,
+                net.neoforged.neoforge.transfer.access.ItemAccess.forHandlerIndex(slotResource, 0));
+        if (handler == null) {
+            helper.fail("empty vanilla bucket exposes no Fluid.ITEM capability");
+            return;
+        }
+        Identifier iron = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        net.neoforged.neoforge.fluids.FluidStack milk =
+            new net.neoforged.neoforge.fluids.FluidStack(PFFluids.SLIME_MILK.get(), 1000);
+        milk.set(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get(), iron);
+        net.neoforged.neoforge.transfer.fluid.FluidResource resource =
+            net.neoforged.neoforge.transfer.fluid.FluidResource.of(milk);
+        int moved;
+        try (net.neoforged.neoforge.transfer.transaction.Transaction tx =
+                net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+            moved = handler.insert(0, resource, 1000, tx);
+            tx.commit();
+        }
+        helper.assertTrue(moved == 1000, "the empty bucket should accept 1000 mB, moved " + moved);
+        ItemStack filled = slot.getStackInSlot(0);
+        Identifier got = filled.get(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get());
+        helper.assertTrue(iron.equals(got),
+            "the minted bucket must keep SLIME_VARIANT through the stock fill leg, got " + got + " on " + filled);
+        helper.succeed();
     }
 
     // ---------------------------------------------------------------------

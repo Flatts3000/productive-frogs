@@ -40,6 +40,15 @@ public class BasinRenderer implements BlockEntityRenderer<AbstractBasinBlockEnti
     private static final float FLOOR_Y = 2.5F / 16.0F;
     private static final float RIM_Y = 7.5F / 16.0F;
 
+    /**
+     * Per-key resolution cache: the tint walk (variant registry lookup, or the
+     * spawn-egg/sprite path for slurry) and the fluid-model lookup only change
+     * when the contained key changes, not per frame (review finding: a wall of
+     * charged basins re-resolved both every frame). Keyed by fluid+key; cleared
+     * with the renderer instance on resource reload.
+     */
+    private final java.util.Map<Identifier, int[]> tintCache = new java.util.HashMap<>();
+
     public BasinRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -59,10 +68,23 @@ public class BasinRenderer implements BlockEntityRenderer<AbstractBasinBlockEnti
         }
         FluidModel fluidModel = Minecraft.getInstance().getModelManager()
             .getFluidStateModelSet().get(basin.pipeFluid().defaultFluidState());
-        FluidStack stack = new FluidStack(basin.pipeFluid(), 1000);
-        stack.set(basin.pipeKeyComponent(), key);
-        FluidTintSource tint = fluidModel.fluidTintSource();
-        int rawTint = tint == null ? 0xFFFFFF : tint.colorAsStack(stack);
+        // Cache only the milk path (a deterministic variant-registry lookup).
+        // The slurry path may resolve to its fallback while the atlas warms up,
+        // and pinning that would freeze the wrong color; its own resolver
+        // (SynthesizedTint) already caches successes underneath.
+        boolean cacheable = basin.pipeKeyComponent()
+            == com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get();
+        int[] cached = cacheable ? tintCache.get(key) : null;
+        if (cached == null) {
+            FluidStack stack = new FluidStack(basin.pipeFluid(), 1000);
+            stack.set(basin.pipeKeyComponent(), key);
+            FluidTintSource tint = fluidModel.fluidTintSource();
+            cached = new int[] {tint == null ? 0xFFFFFF : tint.colorAsStack(stack)};
+            if (cacheable) {
+                tintCache.put(key, cached);
+            }
+        }
+        int rawTint = cached[0];
 
         // Fill height tracks the remaining budget (full for an Endless charge);
         // floored so a nearly-spent charge still visibly holds fluid.
@@ -79,31 +101,11 @@ public class BasinRenderer implements BlockEntityRenderer<AbstractBasinBlockEnti
             CameraRenderState camera) {
         if (state.hasFluid) {
             collector.submitCustomGeometry(poseStack, Sheets.translucentBlockSheet(),
-                (pose, buffer) -> drawSurface(pose, buffer, state.fluidSprite, state.fluidY,
+                (pose, buffer) -> FluidSurfaces.drawSurface(pose, buffer, state.fluidSprite, MIN_XZ, MAX_XZ, state.fluidY,
                     state.fluidColor, state.lightCoords));
         }
     }
 
-    /** One upward-facing quad spanning the bowl interior at height {@code y}. */
-    private static void drawSurface(PoseStack.Pose pose, VertexConsumer buffer, TextureAtlasSprite sprite,
-            float y, int argb, int packedLight) {
-        int r = (argb >> 16) & 0xFF;
-        int g = (argb >> 8) & 0xFF;
-        int b = argb & 0xFF;
-        int a = (argb >>> 24) & 0xFF;
-        float u0 = sprite.getU(MIN_XZ);
-        float u1 = sprite.getU(MAX_XZ);
-        float v0 = sprite.getV(MIN_XZ);
-        float v1 = sprite.getV(MAX_XZ);
-        buffer.addVertex(pose, MIN_XZ, y, MIN_XZ).setColor(r, g, b, a).setUv(u0, v0)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose, 0.0F, 1.0F, 0.0F);
-        buffer.addVertex(pose, MIN_XZ, y, MAX_XZ).setColor(r, g, b, a).setUv(u0, v1)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose, 0.0F, 1.0F, 0.0F);
-        buffer.addVertex(pose, MAX_XZ, y, MAX_XZ).setColor(r, g, b, a).setUv(u1, v1)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose, 0.0F, 1.0F, 0.0F);
-        buffer.addVertex(pose, MAX_XZ, y, MIN_XZ).setColor(r, g, b, a).setUv(u1, v0)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose, 0.0F, 1.0F, 0.0F);
-    }
 
     /** Captured fill state for one frame. */
     public static class BasinRenderState extends BlockEntityRenderState {

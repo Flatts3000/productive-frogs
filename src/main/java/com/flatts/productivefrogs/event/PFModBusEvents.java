@@ -368,7 +368,7 @@ public final class PFModBusEvents {
         event.registerBlockEntity(
             Capabilities.Item.BLOCK,
             PFBlockEntities.END_DRAGON_ALTAR_HATCH.get(),
-            (be, side) -> RestrictedItemResourceHandler.ofAll(be.itemHandler(), true, true)
+            (be, side) -> be.itemResource()
         );
 
         // Wither Altar summon receptacles (#247): insert-only, like the dragon altar's
@@ -384,7 +384,7 @@ public final class PFModBusEvents {
         event.registerBlockEntity(
             Capabilities.Item.BLOCK,
             PFBlockEntities.WITHER_ALTAR_HATCH.get(),
-            (be, side) -> RestrictedItemResourceHandler.ofAll(be.itemHandler(), true, true)
+            (be, side) -> be.itemResource()
         );
 
         // Warden Altar Hatch (#279) + Elder Guardian Altar Hatch (#280): same
@@ -392,12 +392,12 @@ public final class PFModBusEvents {
         event.registerBlockEntity(
             Capabilities.Item.BLOCK,
             PFBlockEntities.WARDEN_ALTAR_HATCH.get(),
-            (be, side) -> RestrictedItemResourceHandler.ofAll(be.itemHandler(), true, true)
+            (be, side) -> be.itemResource()
         );
         event.registerBlockEntity(
             Capabilities.Item.BLOCK,
             PFBlockEntities.ELDER_ALTAR_HATCH.get(),
-            (be, side) -> RestrictedItemResourceHandler.ofAll(be.itemHandler(), true, true)
+            (be, side) -> be.itemResource()
         );
 
         // The single Slime Milk bucket (26.1 R-1) is a SlimeMilkBucketItem extends

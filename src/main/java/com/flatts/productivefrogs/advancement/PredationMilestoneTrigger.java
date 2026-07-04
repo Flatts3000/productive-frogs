@@ -64,9 +64,14 @@ public class PredationMilestoneTrigger extends SimpleCriterionTrigger<PredationM
      * {@code at} - the standard attribution for autonomous frog/altar events.
      */
     public void awardNearby(ServerLevel level, Vec3 at, Milestone milestone) {
-        for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class,
-                AABB.ofSize(at, AWARD_RADIUS * 2, AWARD_RADIUS * 2, AWARD_RADIUS * 2))) {
-            trigger(player, milestone);
+        // level.players() is the small server-maintained list - O(players) with no
+        // entity-section walk; this fires per devour on farms, forever (review
+        // finding: the AABB entity query paid a 64-cube section scan per kill).
+        double radiusSq = AWARD_RADIUS * AWARD_RADIUS;
+        for (ServerPlayer player : level.players()) {
+            if (player.distanceToSqr(at) <= radiusSq) {
+                trigger(player, milestone);
+            }
         }
     }
 

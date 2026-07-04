@@ -51,7 +51,9 @@ public class SummonReceptacleRenderer
     public void extractRenderState(SummonReceptacleBlockEntity be, WitherSummonReceptacleRenderState state,
             float partialTicks, Vec3 cameraPosition, ModelFeatureRenderer.CrumblingOverlay breakProgress) {
         BlockEntityRenderer.super.extractRenderState(be, state, partialTicks, cameraPosition, breakProgress);
-        state.item = new ItemStackRenderState();
+        // The render state is created fresh per frame by the dispatcher and its
+        // field already initializes one ItemStackRenderState (updateForTopItem
+        // clears before writing) - re-allocating here was pure GC churn.
         boolean filled = be.getBlockState().hasProperty(SummonReceptacleBlock.FILLED)
             && be.getBlockState().getValue(SummonReceptacleBlock.FILLED);
         ItemStack stack = be.contents();
@@ -70,10 +72,11 @@ public class SummonReceptacleRenderer
             net.minecraft.core.BlockPos samplePos = state.onTop
                 ? be.getBlockPos().above()
                 : be.getBlockPos().relative(be.ritual().getOpposite());
-            int blockLight = be.getLevel().getBrightness(net.minecraft.world.level.LightLayer.BLOCK, samplePos);
-            int skyLight = be.getLevel().getBrightness(net.minecraft.world.level.LightLayer.SKY, samplePos);
-            // packed lightmap coords: (sky << 20) | (block << 4) - the stable wire format
-            state.itemLight = (skyLight << 20) | (blockLight << 4);
+            // LightCoordsUtil.pack is the vanilla owner of the lightmap wire format
+            // (review finding: this was a hand-rolled reimplementation).
+            state.itemLight = net.minecraft.util.LightCoordsUtil.pack(
+                be.getLevel().getBrightness(net.minecraft.world.level.LightLayer.BLOCK, samplePos),
+                be.getLevel().getBrightness(net.minecraft.world.level.LightLayer.SKY, samplePos));
         } else {
             state.itemLight = state.lightCoords;
         }

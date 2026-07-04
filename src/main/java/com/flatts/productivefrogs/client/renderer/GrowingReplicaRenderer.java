@@ -20,9 +20,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Generic in-world summon animation for the Phase 4b altars (#279/#280): a
- * phantom boss replica scaled 0 -> 1 over the synced summon window, rising out of
- * {@code riseDepth} blocks below its rest position - the Warden climbs out of the
- * pit floor, the Elder Guardian swells mid-tank. Simpler than the bespoke
+ * phantom boss replica at its rest offset - the Warden claws out of the pit
+ * floor via its vanilla EMERGING animation (the animator hook), the Elder
+ * Guardian swells 0 -> 1 mid-tank (growScale). Simpler than the bespoke
  * wither/dragon renderers (no vanilla growth mechanic to borrow), one class for
  * both altars, parameterized at registration.
  *
@@ -42,8 +42,6 @@ public class GrowingReplicaRenderer<T extends BossAltarHatchBlockEntity>
      * frame by the hatch's resolved orientation.
      */
     private final Vec3 restOffset;
-    /** How far below the rest position the replica starts (rises as the summon runs). */
-    private final double riseDepth;
     private final IntSupplier summonDuration;
     /** Scale the replica 0 -> 1 over the summon; false renders full-size (a vanilla emerge animation supplies the drama). */
     private final boolean growScale;
@@ -61,17 +59,11 @@ public class GrowingReplicaRenderer<T extends BossAltarHatchBlockEntity>
     private Entity phantom;
 
     public GrowingReplicaRenderer(BlockEntityRendererProvider.Context ctx, EntityType<?> replicaType,
-            Vec3 restOffset, double riseDepth, IntSupplier summonDuration) {
-        this(ctx, replicaType, restOffset, riseDepth, summonDuration, true, null);
-    }
-
-    public GrowingReplicaRenderer(BlockEntityRendererProvider.Context ctx, EntityType<?> replicaType,
-            Vec3 restOffset, double riseDepth, IntSupplier summonDuration,
+            Vec3 restOffset, IntSupplier summonDuration,
             boolean growScale, @Nullable ReplicaAnimator animator) {
         this.dispatcher = ctx.entityRenderer();
         this.replicaType = replicaType;
         this.restOffset = restOffset;
-        this.riseDepth = riseDepth;
         this.summonDuration = summonDuration;
         this.growScale = growScale;
         this.animator = animator;
@@ -166,7 +158,7 @@ public class GrowingReplicaRenderer<T extends BossAltarHatchBlockEntity>
         poseStack.pushPose();
         poseStack.translate(
             0.5 + state.offX,
-            restOffset.y - riseDepth * (1.0 - progress),
+            restOffset.y,
             0.5 + state.offZ);
         poseStack.scale(scale, scale, scale);
         dispatcher.submit(state.replica, camera, 0.0, 0.0, 0.0, poseStack, collector);

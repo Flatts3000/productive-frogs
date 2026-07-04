@@ -33,6 +33,30 @@ public final class PFFluidTypes {
         DeferredRegister.create(NeoForgeRegistries.Keys.FLUID_TYPES, ProductiveFrogs.MOD_ID);
 
     /**
+     * A FluidType whose {@link #getBucket} copies the FluidStack's component patch
+     * onto the minted bucket. The stock implementation mints a BARE bucket, which
+     * is the leg that silently destroyed the fluid's identity (review finding):
+     * PF's component-restoring handler is registered only on PF's FILLED buckets,
+     * so filling a plain empty {@code minecraft:bucket} from any tank went through
+     * NeoForge's stock BucketResourceHandler -> {@code FluidType.getBucket} and
+     * dropped SLIME_VARIANT / SLURRIED_ENTITY / SYNTHESIZED_ITEM plus the milk
+     * budget components. Copying the whole patch here fixes every component fluid
+     * in one place, for any mod's bucket-filling machinery.
+     */
+    private static final class ComponentCarryingFluidType extends FluidType {
+        private ComponentCarryingFluidType(Properties properties) {
+            super(properties);
+        }
+
+        @Override
+        public net.minecraft.world.item.ItemStack getBucket(net.neoforged.neoforge.fluids.FluidStack stack) {
+            net.minecraft.world.item.ItemStack bucket = super.getBucket(stack);
+            bucket.applyComponents(stack.getComponentsPatch());
+            return bucket;
+        }
+    }
+
+    /**
      * The single Slime Milk fluid type (26.1 R-1). There is ONE type; the variant
      * rides as the {@code SLIME_VARIANT} component on the {@code FluidResource} /
      * bucket, and the placed source's per-instance colour is resolved at render
@@ -41,7 +65,7 @@ public final class PFFluidTypes {
      * distinct {@code Fluid} per variant is no longer needed).
      */
     public static final DeferredHolder<FluidType, FluidType> SLIME_MILK_TYPE =
-        TYPES.register("slime_milk", () -> new FluidType(milkProperties()));
+        TYPES.register("slime_milk", () -> new ComponentCarryingFluidType(milkProperties()));
 
     /**
      * The single Mimic Milk fluid type (Equivalence lane, #253). Like Slime Milk,
@@ -50,7 +74,7 @@ public final class PFFluidTypes {
      * ({@link #milkProperties()}).
      */
     public static final DeferredHolder<FluidType, FluidType> MIMIC_MILK_TYPE =
-        TYPES.register("mimic_slime_milk", () -> new FluidType(milkProperties()));
+        TYPES.register("mimic_slime_milk", () -> new ComponentCarryingFluidType(milkProperties()));
 
     /**
      * Liquid Experience (#281 Phase 2) - the {@code c:experience} XP fluid. One
@@ -68,7 +92,7 @@ public final class PFFluidTypes {
      * the in-world properties are academic.
      */
     public static final DeferredHolder<FluidType, FluidType> MOB_SLURRY_TYPE =
-        TYPES.register("mob_slurry", () -> new FluidType(milkProperties()));
+        TYPES.register("mob_slurry", () -> new ComponentCarryingFluidType(milkProperties()));
 
     static FluidType.Properties milkProperties() {
         return FluidType.Properties.create()

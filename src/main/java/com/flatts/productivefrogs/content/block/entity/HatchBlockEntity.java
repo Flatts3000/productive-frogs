@@ -80,8 +80,17 @@ public class HatchBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     /** The 26.1 {@code Capabilities.Item.BLOCK} view over the full chest inventory (read/insert/extract). */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inventoryResourceCached;
+
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inventoryResource() {
-        return com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler.ofAll(inventory, true, true);
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (inventoryResourceCached == null) {
+            inventoryResourceCached = com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler.ofAll(inventory, true, true);
+        }
+        return inventoryResourceCached;
     }
 
     /** Insert a froglight; returns true only if it fully fit (the caller drops nothing otherwise). */

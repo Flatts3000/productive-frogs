@@ -26,10 +26,8 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Spawning goes through {@link SlimeMilkSourceBlock#createSlimeForVariant}
  * - the same single seam the source and the Terrarium use (sentinels, custom
- * {@code spawn_entity}, category resolution), never re-forked. Boss
- * ({@code spawn_catalyst}) variants are refused: their 6-face altar mechanic
- * is meaningless around a Basin, so boss milk must go to the altar (the
- * Terrarium Controller's posture).
+ * {@code spawn_entity}, category resolution), never re-forked. (The 1.x
+ * boss-milk refusal retired with the catalyst altars in Phase 5.)
  */
 public class SlimeMilkBasinBlockEntity extends AbstractBasinBlockEntity {
 

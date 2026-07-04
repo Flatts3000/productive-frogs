@@ -74,15 +74,33 @@ public class SlurryPressInventory extends ItemStackHandler {
     }
 
     /** 26.1 {@code Capabilities.Item.BLOCK} input view: insert-only over both input slots. */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResourceCached;
+
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResource() {
-        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (inputResourceCached == null) {
+            inputResourceCached = new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
             this, new int[] {NET_SLOT, BUCKET_SLOT}, true, false);
+        }
+        return inputResourceCached;
     }
 
     /** 26.1 {@code Capabilities.Item.BLOCK} output view: extract-only over both output slots. */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResourceCached;
+
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResource() {
-        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (outputResourceCached == null) {
+            outputResourceCached = new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
             this, new int[] {SLURRY_OUTPUT_SLOT, NET_OUTPUT_SLOT}, false, true);
+        }
+        return outputResourceCached;
     }
 
     public void serialize(ValueOutput output) {

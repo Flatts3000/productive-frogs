@@ -443,7 +443,7 @@ final class TongueDropsFroglightTests {
 
         ResourceSlime slime = helper.spawn(PFEntities.RESOURCE_SLIME.get(), slimePos);
         slime.setSize(1, true);
-        // Netherrack is an Infernal variant — categorically wrong for the Bog frog.
+        // Netherrack is an Infernal variant - categorically wrong for the Bog frog.
         slime.setVariant(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "netherrack"));
 
         slime.hurtServer(helper.getLevel(), helper.getLevel().damageSources().mobAttack(frog), 999.0F);

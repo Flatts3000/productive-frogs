@@ -44,12 +44,27 @@ public final class RestrictedItemResourceHandler implements ResourceHandler<Item
     private final boolean allowInsert;
     private final boolean allowExtract;
     private final SlotJournal[] journals;
+    /**
+     * Optional per-root-commit callback for owners whose change reaction has
+     * WORLD side effects (blockstate writes, client sync). Those must not fire
+     * from the mid-transaction mutate/revert (an aborted pipe probe would strobe
+     * the world - review finding); owners guard their change callback while a
+     * transaction is open and receive this once on commit instead.
+     */
+    @org.jetbrains.annotations.Nullable
+    private final Runnable onRootCommit;
 
     public RestrictedItemResourceHandler(IItemHandlerModifiable root, int[] slots, boolean allowInsert, boolean allowExtract) {
+        this(root, slots, allowInsert, allowExtract, null);
+    }
+
+    public RestrictedItemResourceHandler(IItemHandlerModifiable root, int[] slots, boolean allowInsert, boolean allowExtract,
+            @org.jetbrains.annotations.Nullable Runnable onRootCommit) {
         this.root = root;
         this.slots = slots.clone();
         this.allowInsert = allowInsert;
         this.allowExtract = allowExtract;
+        this.onRootCommit = onRootCommit;
         this.journals = new SlotJournal[this.slots.length];
         for (int i = 0; i < this.slots.length; i++) {
             this.journals[i] = new SlotJournal(this.slots[i]);
@@ -153,6 +168,13 @@ public final class RestrictedItemResourceHandler implements ResourceHandler<Item
 
         private SlotJournal(int rootSlot) {
             this.rootSlot = rootSlot;
+        }
+
+        @Override
+        protected void onRootCommit(ItemStack originalState) {
+            if (onRootCommit != null) {
+                onRootCommit.run();
+            }
         }
 
         @Override
