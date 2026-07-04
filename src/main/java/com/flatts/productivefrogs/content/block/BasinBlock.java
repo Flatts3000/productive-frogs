@@ -67,8 +67,8 @@ public class BasinBlock extends Block implements EntityBlock, SimpleWaterloggedB
 
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 
-    /** A basin: full footprint, three-quarter height, hollow visual (the model's job). */
-    private static final VoxelShape SHAPE = Shapes.box(0.0, 0.0, 0.0, 1.0, 0.75, 1.0);
+    /** A half-block basin - a crucible cut in half (maintainer ruling). */
+    private static final VoxelShape SHAPE = Shapes.box(0.0, 0.0, 0.0, 1.0, 0.5, 1.0);
 
     private final BiFunction<BlockPos, BlockState, AbstractBasinBlockEntity> beFactory;
     private final Supplier<BlockEntityType<? extends AbstractBasinBlockEntity>> beType;

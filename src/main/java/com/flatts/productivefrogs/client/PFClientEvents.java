@@ -119,6 +119,15 @@ public final class PFClientEvents {
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.CRUCIBLE.get(),
             com.flatts.productivefrogs.client.renderer.CrucibleRenderer::new);
+        // The two Basins (#281 Phase 3): the held charge rendered as a fluid
+        // surface inside the half-block bowl, level tracking the remaining
+        // budget. One renderer, both flavours. See client/renderer/BasinRenderer.
+        event.registerBlockEntityRenderer(
+            com.flatts.productivefrogs.registry.PFBlockEntities.MOB_SLURRY_BASIN.get(),
+            com.flatts.productivefrogs.client.renderer.BasinRenderer::new);
+        event.registerBlockEntityRenderer(
+            com.flatts.productivefrogs.registry.PFBlockEntities.SLIME_MILK_BASIN.get(),
+            com.flatts.productivefrogs.client.renderer.BasinRenderer::new);
         // End Crystal Receptacle (#249): the floating vanilla end-crystal model on
         // top when filled. See client/renderer/EndCrystalReceptacleRenderer.
         event.registerBlockEntityRenderer(
@@ -336,6 +345,23 @@ public final class PFClientEvents {
                     }
                 }
                 return color(fluidState);
+            }
+
+            @Override
+            public int colorAsStack(net.neoforged.neoforge.fluids.FluidStack stack) {
+                // R-1: the variant rides the SLIME_VARIANT component on the stack
+                // (the milk bucket fluid handler copies it on) - resolve it so a
+                // stack-based render (tank gauges, the Basin's contents surface)
+                // tints per-variant instead of falling back to cream.
+                Identifier variant = stack.get(
+                    com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get());
+                if (variant != null) {
+                    int color = Tints.variantColor(null, variant);
+                    if (color != -1) {
+                        return color;
+                    }
+                }
+                return color(stack.getFluid().defaultFluidState());
             }
         };
     }
