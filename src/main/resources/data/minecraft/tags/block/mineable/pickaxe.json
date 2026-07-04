@@ -10,9 +10,14 @@
     "productivefrogs:sprinkler",
     "productivefrogs:incubator",
     "productivefrogs:hatch",
-    "productivefrogs:reinforced_wither_skeleton_skull_froglight",
-    "productivefrogs:reinforced_nether_star_froglight",
     "productivefrogs:end_crystal_receptacle",
-    "productivefrogs:end_dragon_altar_hatch"
+    "productivefrogs:end_dragon_altar_hatch",
+    "productivefrogs:reinforced_glowstone_froglight",
+    "productivefrogs:reinforced_end_stone_froglight",
+    "productivefrogs:reinforced_obsidian_froglight",
+    "productivefrogs:reinforced_sculk_froglight",
+    "productivefrogs:reinforced_echo_shard_froglight",
+    "productivefrogs:reinforced_prismarine_froglight",
+    "productivefrogs:reinforced_sponge_froglight"
   ]
 }

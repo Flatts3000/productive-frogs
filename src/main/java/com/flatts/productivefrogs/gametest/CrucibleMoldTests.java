@@ -92,7 +92,7 @@ final class CrucibleMoldTests {
         assertVariantSmelts(helper, rm, level, "coal", net.minecraft.world.item.Items.COAL);
         assertVariantSmelts(helper, rm, level, "diamond", net.minecraft.world.item.Items.DIAMOND);
         assertVariantSmelts(helper, rm, level, "emerald", net.minecraft.world.item.Items.EMERALD);
-        assertVariantSmelts(helper, rm, level, "prismarine", net.minecraft.world.item.Items.PRISMARINE_SHARD);
+        assertVariantSmelts(helper, rm, level, "prismarine", net.minecraft.world.item.Items.PRISMARINE);
         assertVariantSmelts(helper, rm, level, "sponge", net.minecraft.world.item.Items.SPONGE);
         assertVariantSmelts(helper, rm, level, "ender_pearl", net.minecraft.world.item.Items.ENDER_PEARL);
         // blaze's resource moved powder -> rod in #148 (primer == smelt-output
