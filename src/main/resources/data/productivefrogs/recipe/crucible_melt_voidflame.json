@@ -7,9 +7,16 @@
   ],
   "type": "productivefrogs:crucible_melting",
   "ingredient": {
-    "type": "neoforge:components",
-    "items": [ "productivefrogs:configurable_froglight" ],
-    "components": { "productivefrogs:slime_variant": "productivefrogs:voidflame" }
+    "neoforge:ingredient_type": "neoforge:components",
+    "items": [
+      "productivefrogs:configurable_froglight"
+    ],
+    "components": {
+      "productivefrogs:slime_variant": "productivefrogs:voidflame"
+    }
   },
-  "result": { "id": "justdirethings:refined_t3_fluid_source", "amount": 1000 }
+  "result": {
+    "id": "justdirethings:refined_t3_fluid_source",
+    "amount": 1000
+  }
 }

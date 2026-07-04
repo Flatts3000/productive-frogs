@@ -1,14 +1,23 @@
 {
   "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "ae2" }
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "ae2"
+    }
   ],
   "type": "minecraft:smelting",
   "ingredient": {
-    "type": "neoforge:components",
-    "items": [ "productivefrogs:configurable_froglight" ],
-    "components": { "productivefrogs:slime_variant": "productivefrogs:certus_quartz" }
+    "neoforge:ingredient_type": "neoforge:components",
+    "items": [
+      "productivefrogs:configurable_froglight"
+    ],
+    "components": {
+      "productivefrogs:slime_variant": "productivefrogs:certus_quartz"
+    }
   },
-  "result": { "id": "ae2:certus_quartz_crystal" },
+  "result": {
+    "id": "ae2:certus_quartz_crystal"
+  },
   "experience": 0.7,
   "cookingtime": 200,
   "category": "misc",

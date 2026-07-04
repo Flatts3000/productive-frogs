@@ -1,9 +1,0 @@
-{
-  "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "fluxnetworks" }
-  ],
-  "primer_item": "fluxnetworks:flux_dust",
-  "category": "infernal",
-  "primary_color": 3021358,
-  "secondary_color": 2101792
-}

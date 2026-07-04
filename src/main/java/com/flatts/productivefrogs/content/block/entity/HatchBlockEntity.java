@@ -11,9 +11,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.MenuProvider;
@@ -26,6 +25,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -49,7 +50,7 @@ public class HatchBlockEntity extends BlockEntity implements MenuProvider {
      * {@code data/productivefrogs/tags/item/hatch_collectible.json}.
      */
     public static final TagKey<Item> HATCH_COLLECTIBLE =
-        TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "hatch_collectible"));
+        TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "hatch_collectible"));
 
     private int tickCounter;
 
@@ -76,6 +77,11 @@ public class HatchBlockEntity extends BlockEntity implements MenuProvider {
     /** Pipe/hopper view (insert is froglight-validated; extract pulls the output). */
     public IItemHandler inventory() {
         return inventory;
+    }
+
+    /** The 26.1 {@code Capabilities.Item.BLOCK} view over the full chest inventory (read/insert/extract). */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inventoryResource() {
+        return com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler.ofAll(inventory, true, true);
     }
 
     /** Insert a froglight; returns true only if it fully fit (the caller drops nothing otherwise). */
@@ -164,9 +170,7 @@ public class HatchBlockEntity extends BlockEntity implements MenuProvider {
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries); // sync the inventory so Jade can count it
-        return tag;
+        return saveCustomOnly(registries); // sync the inventory so Jade can count it
     }
 
     @Override
@@ -187,16 +191,14 @@ public class HatchBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.put("Inventory", inventory.serializeNBT(registries));
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        inventory.serialize(output.child("Inventory"));
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.contains("Inventory", Tag.TAG_COMPOUND)) {
-            inventory.deserializeNBT(registries, tag.getCompound("Inventory"));
-        }
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        input.child("Inventory").ifPresent(inventory::deserialize);
     }
 }

@@ -4,14 +4,13 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.CastingMoldBlockEntity;
 import com.flatts.productivefrogs.content.menu.CastingMoldMenu;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.level.material.Fluid;
-import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 /**
@@ -27,7 +26,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
  */
 public class CastingMoldScreen extends PFContainerScreen<CastingMoldMenu> {
 
-    private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath(
+    private static final Identifier BACKGROUND = Identifier.fromNamespaceAndPath(
         ProductiveFrogs.MOD_ID, "textures/gui/container/casting_mold.png");
 
     // Same composited sheet conventions as the Milker GUI (see
@@ -52,13 +51,11 @@ public class CastingMoldScreen extends PFContainerScreen<CastingMoldMenu> {
 
     public CastingMoldScreen(CastingMoldMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
-        this.imageWidth = 176;
-        this.imageHeight = 166;
     }
 
     @Override
-    public void render(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-        super.render(gui, mouseX, mouseY, partialTick);
+    protected void extractTooltip(GuiGraphicsExtractor gui, int mouseX, int mouseY) {
+        super.extractTooltip(gui, mouseX, mouseY);
         renderGaugeTooltip(gui, mouseX, mouseY);
     }
 
@@ -68,7 +65,7 @@ public class CastingMoldScreen extends PFContainerScreen<CastingMoldMenu> {
      * pass in {@link PFContainerScreen}; the gauge isn't a slot, so it needs
      * this explicit hit-test.
      */
-    private void renderGaugeTooltip(GuiGraphics gui, int mouseX, int mouseY) {
+    private void renderGaugeTooltip(GuiGraphicsExtractor gui, int mouseX, int mouseY) {
         int gx = (this.width - this.imageWidth) / 2 + GAUGE_X;
         int gy = (this.height - this.imageHeight) / 2 + GAUGE_Y;
         if (mouseX < gx || mouseX >= gx + GAUGE_WIDTH || mouseY < gy || mouseY >= gy + GAUGE_HEIGHT) {
@@ -87,23 +84,24 @@ public class CastingMoldScreen extends PFContainerScreen<CastingMoldMenu> {
                 this.menu.getFluidAmount(), CastingMoldBlockEntity.TANK_CAPACITY)
                 .withStyle(net.minecraft.ChatFormatting.GRAY));
         }
-        gui.renderComponentTooltip(this.font, lines, mouseX, mouseY);
+        gui.setComponentTooltipForNextFrame(this.font, lines, mouseX, mouseY);
     }
 
     @Override
-    protected void renderBg(GuiGraphics gui, float partialTick, int mouseX, int mouseY) {
+    public void extractBackground(GuiGraphicsExtractor gui, int mouseX, int mouseY, float partialTick) {
+        super.extractBackground(gui, mouseX, mouseY, partialTick);
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
-        gui.blit(BACKGROUND, x, y, 0.0F, 0.0F, this.imageWidth, this.imageHeight,
+        gui.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND, x, y, 0.0F, 0.0F, this.imageWidth, this.imageHeight,
                  BG_TEX_WIDTH, BG_TEX_HEIGHT);
 
         int progress = this.menu.getProgress();
         int total = this.menu.getProgressTotal();
         if (progress > 0 && total > 0) {
             int filled = Math.min(ARROW_WIDTH, (progress * ARROW_WIDTH) / total);
-            gui.blit(BACKGROUND,
+            gui.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND,
                      x + ARROW_BG_X, y + ARROW_BG_Y,
-                     ARROW_SRC_X, ARROW_SRC_Y,
+                     (float) ARROW_SRC_X, (float) ARROW_SRC_Y,
                      filled, ARROW_HEIGHT,
                      BG_TEX_WIDTH, BG_TEX_HEIGHT);
         }
@@ -112,7 +110,7 @@ public class CastingMoldScreen extends PFContainerScreen<CastingMoldMenu> {
     }
 
     /** Bottom-up fluid column using the buffered fluid's sprite + tint. */
-    private void renderFluidGauge(GuiGraphics gui, int gx, int gy) {
+    private void renderFluidGauge(GuiGraphicsExtractor gui, int gx, int gy) {
         CastingMoldBlockEntity be = this.menu.blockEntity();
         int amount = this.menu.getFluidAmount();
         if (be == null || amount <= 0) {
@@ -123,14 +121,17 @@ public class CastingMoldScreen extends PFContainerScreen<CastingMoldMenu> {
             return;
         }
         Fluid fluid = buffered.getFluid();
-        IClientFluidTypeExtensions ext = IClientFluidTypeExtensions.of(fluid);
-        TextureAtlasSprite sprite = Minecraft.getInstance()
-            .getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
-            .apply(ext.getStillTexture(buffered));
-        int tint = ext.getTintColor();
-        float r = ((tint >> 16) & 0xFF) / 255.0F;
-        float g = ((tint >> 8) & 0xFF) / 255.0F;
-        float b = (tint & 0xFF) / 255.0F;
+        // 26.1: IClientFluidTypeExtensions.getStillTexture/getTintColor are gone;
+        // the fluid's baked still sprite now lives on the FluidStateModelSet.
+        TextureAtlasSprite sprite = Minecraft.getInstance().getModelManager()
+            .getFluidStateModelSet().get(fluid.defaultFluidState())
+            .stillMaterial().sprite();
+        // TODO(26.1 port): the per-fluid tint moved to FluidModel.tintSource() (a
+        // BlockTintSource that resolves against world/biome context, unavailable in
+        // a GUI). Drawing untinted for now; verify the molten colour at runClient
+        // and, if the greyscale sprite needs the variant tint, resolve a flat
+        // colour for the gauge here.
+        int argb = 0xFFFFFFFF;
 
         int filledHeight = Math.min(GAUGE_HEIGHT,
             amount * GAUGE_HEIGHT / CastingMoldBlockEntity.TANK_CAPACITY);
@@ -140,7 +141,7 @@ public class CastingMoldScreen extends PFContainerScreen<CastingMoldMenu> {
         while (remaining > 0) {
             int sliceH = Math.min(16, remaining);
             drawY -= sliceH;
-            gui.blit(gx, drawY, 0, GAUGE_WIDTH, sliceH, sprite, r, g, b, 1.0F);
+            gui.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, gx, drawY, GAUGE_WIDTH, sliceH, argb);
             remaining -= sliceH;
         }
     }

@@ -1,9 +1,0 @@
-{
-  "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "industrialforegoing" }
-  ],
-  "primer_item": "industrialforegoing:plastic",
-  "category": "bog",
-  "primary_color": 15131352,
-  "secondary_color": 12105132
-}

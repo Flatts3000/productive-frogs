@@ -1,7 +1,7 @@
 package com.flatts.productivefrogs.util;
 
 import java.util.Locale;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Display-name derivation for variant ids, so component-driven items (Slime Milk
@@ -24,7 +24,7 @@ public final class VariantNames {
      * Title-cased fallback for a variant id's path: {@code iron} -> "Iron",
      * {@code ender_pearl} -> "Ender Pearl", {@code glow_ink_sac} -> "Glow Ink Sac".
      */
-    public static String titleCase(ResourceLocation variantId) {
+    public static String titleCase(Identifier variantId) {
         String[] words = variantId.getPath().split("_");
         StringBuilder sb = new StringBuilder();
         for (String word : words) {

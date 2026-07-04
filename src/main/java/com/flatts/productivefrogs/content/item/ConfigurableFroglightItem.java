@@ -5,27 +5,31 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.ConfigurableFroglightBlockEntity;
 import com.flatts.productivefrogs.data.StoredEffect;
 import com.flatts.productivefrogs.registry.PFDataComponents;
-import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.FuelValues;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,10 +74,10 @@ public final class ConfigurableFroglightItem extends BlockItem {
      * variant absent from this map stays inert decoration. Add an entry to make a
      * new variant fuel.
      */
-    private static final Map<ResourceLocation, Integer> FUEL_BURN_TICKS = Map.of(
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "coal"), 1600,
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "blaze"), 2400,
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "lava"), 20000
+    private static final Map<Identifier, Integer> FUEL_BURN_TICKS = Map.of(
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "coal"), 1600,
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "blaze"), 2400,
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "lava"), 20000
     );
 
     public ConfigurableFroglightItem(Block block, Properties properties) {
@@ -91,10 +95,10 @@ public final class ConfigurableFroglightItem extends BlockItem {
      * {@code ItemStack#getBurnTime} throws on a negative burn time.
      */
     @Override
-    public int getBurnTime(ItemStack stack, @Nullable RecipeType<?> recipeType) {
-        ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+    public int getBurnTime(ItemStack stack, @Nullable RecipeType<?> recipeType, FuelValues fuelValues) {
+        Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
         Integer ticks = variantId == null ? null : FUEL_BURN_TICKS.get(variantId);
-        return ticks != null ? ticks : super.getBurnTime(stack, recipeType);
+        return ticks != null ? ticks : super.getBurnTime(stack, recipeType, fuelValues);
     }
 
     /**
@@ -109,8 +113,8 @@ public final class ConfigurableFroglightItem extends BlockItem {
      */
     @Override
     protected boolean updateCustomBlockEntityTag(BlockPos pos, Level level, @Nullable Player player, ItemStack stack, BlockState state) {
-        ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
-        ResourceLocation synthesizedItem = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+        Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+        Identifier synthesizedItem = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
         StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
         if (variantId == null && synthesizedItem == null && stored == null) {
             return false;
@@ -146,7 +150,7 @@ public final class ConfigurableFroglightItem extends BlockItem {
     public Component getName(ItemStack stack) {
         // Equivalence lane (#253): a synthesized Froglight names itself from its carried
         // item id ("<item> Froglight"), independent of the variant path below.
-        ResourceLocation synthesizedItem = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+        Identifier synthesizedItem = stack.get(PFDataComponents.SYNTHESIZED_ITEM.get());
         if (synthesizedItem != null) {
             net.minecraft.world.item.Item item =
                 net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(synthesizedItem).orElse(null);
@@ -155,7 +159,7 @@ public final class ConfigurableFroglightItem extends BlockItem {
                 : Component.literal(synthesizedItem.toString());
             return Component.translatable("block.productivefrogs.configurable_froglight.synthesized", itemName);
         }
-        ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+        Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
         if (variantId != null) {
             // Built-in variants have explicit lang keys; a datapack-added variant
             // (no lang) falls back to a title-cased name so it still reads cleanly.
@@ -173,11 +177,11 @@ public final class ConfigurableFroglightItem extends BlockItem {
      * still works because that goes through {@code useOn} when aiming at a block.
      */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
         if (stored == null || !PFConfig.brewedFroglightsEnabled()) {
-            return InteractionResultHolder.pass(stack);
+            return InteractionResult.PASS;
         }
         if (!level.isClientSide()) {
             StoredEffect toggled = stored.withEnabled(!stored.enabled());
@@ -186,7 +190,7 @@ public final class ConfigurableFroglightItem extends BlockItem {
                 toggled.enabled() ? SoundEvents.BEACON_ACTIVATE : SoundEvents.BEACON_DEACTIVATE,
                 SoundSource.PLAYERS, 0.4F, 1.5F);
         }
-        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+        return InteractionResult.SUCCESS;
     }
 
     /**
@@ -198,8 +202,8 @@ public final class ConfigurableFroglightItem extends BlockItem {
      * nothing (the decided main/offhand-only rule). Self-buff only; no radius.
      */
     @Override
-    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
-        if (level.isClientSide() || !(entity instanceof LivingEntity living)) {
+    public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, @Nullable EquipmentSlot slot) {
+        if (!(entity instanceof LivingEntity living)) {
             return;
         }
         StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
@@ -230,8 +234,8 @@ public final class ConfigurableFroglightItem extends BlockItem {
      * plain Froglights are unchanged.
      */
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, context, tooltip, flag);
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay, Consumer<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltipDisplay, tooltip, flag);
         StoredEffect stored = stack.get(PFDataComponents.STORED_EFFECT.get());
         if (stored == null || !PFConfig.brewedFroglightsEnabled()) {
             return; // feature off -> a brewed Froglight reads as plain
@@ -244,9 +248,9 @@ public final class ConfigurableFroglightItem extends BlockItem {
             ? Component.translatable("potion.withAmplifier", effect.getDisplayName(),
                 Component.translatable("potion.potency." + stored.amplifier()))
             : effect.getDisplayName();
-        tooltip.add(Component.translatable("productivefrogs.tooltip.brewed_aura", name)
+        tooltip.accept(Component.translatable("productivefrogs.tooltip.brewed_aura", name)
             .withStyle(effect.getCategory().getTooltipFormatting()));
-        tooltip.add(Component.translatable(stored.enabled()
+        tooltip.accept(Component.translatable(stored.enabled()
                 ? "productivefrogs.tooltip.aura_enabled"
                 : "productivefrogs.tooltip.aura_disabled")
             .withStyle(ChatFormatting.GRAY));

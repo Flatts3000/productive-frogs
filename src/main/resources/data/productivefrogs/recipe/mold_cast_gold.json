@@ -1,5 +1,10 @@
 {
   "type": "productivefrogs:mold_casting",
-  "fluid": { "tag": "c:molten_gold", "amount": 90 },
-  "result": { "id": "minecraft:gold_ingot" }
+  "fluid": {
+    "ingredient": "#c:molten_gold",
+    "amount": 90
+  },
+  "result": {
+    "id": "minecraft:gold_ingot"
+  }
 }

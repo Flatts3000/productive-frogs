@@ -1,6 +1,9 @@
 {
   "neoforge:conditions": [
-    { "type": "productivefrogs:config_enabled", "config": "spawnery" }
+    {
+      "type": "productivefrogs:config_enabled",
+      "config": "spawnery"
+    }
   ],
   "type": "minecraft:crafting_shaped",
   "category": "misc",
@@ -10,9 +13,9 @@
     "CCC"
   ],
   "key": {
-    "C": { "item": "minecraft:cobblestone" },
-    "M": { "item": "minecraft:bone_meal" },
-    "P": { "tag": "minecraft:planks" }
+    "C": "minecraft:cobblestone",
+    "M": "minecraft:bone_meal",
+    "P": "#minecraft:planks"
   },
   "result": {
     "id": "productivefrogs:spawnery",

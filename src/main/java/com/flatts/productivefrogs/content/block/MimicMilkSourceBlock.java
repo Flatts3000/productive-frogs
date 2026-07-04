@@ -9,12 +9,14 @@ import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.InsideBlockEffectApplier;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -82,9 +84,10 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * a no-op). An already-maxed upgrade is left unconsumed for the player.
      */
     @Override
-    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
-        super.entityInside(state, level, pos, entity);
-        if (level.isClientSide || !PFConfig.milkCatalystsEnabled()) {
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity,
+                                InsideBlockEffectApplier effectApplier, boolean isPrecise) {
+        super.entityInside(state, level, pos, entity, effectApplier, isPrecise);
+        if (level.isClientSide() || !PFConfig.milkCatalystsEnabled()) {
             return;
         }
         if (!(entity instanceof ItemEntity itemEntity) || !state.getFluidState().isSource()) {
@@ -127,7 +130,7 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
 
     /** Reject foreign fluids so water/lava can't wash the source away (mirrors SlimeMilkSourceBlock). */
     @Override
-    public boolean canPlaceLiquid(@Nullable Player player, BlockGetter level, BlockPos pos,
+    public boolean canPlaceLiquid(@Nullable LivingEntity user, BlockGetter level, BlockPos pos,
                                   BlockState state, Fluid fluid) {
         return fluid.getFluidType() == this.fluid.getFluidType();
     }
@@ -152,7 +155,7 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
                 || !(level.getBlockEntity(pos) instanceof MimicMilkSourceBlockEntity be)) {
             return;
         }
-        ResourceLocation itemId = be.getSynthesizedItem();
+        Identifier itemId = be.getSynthesizedItem();
         if (itemId == null) {
             // Placed without an item (e.g. /setblock): inert, no reschedule.
             return;
@@ -193,19 +196,19 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * the source's item. The budget is still spent once per event by the caller, so
      * Quantity is strictly additive. Returns true if at least one slime spawned.
      */
-    private boolean spawn(ServerLevel level, BlockPos pos, RandomSource random, ResourceLocation itemId,
+    private boolean spawn(ServerLevel level, BlockPos pos, RandomSource random, Identifier itemId,
                           MimicMilkSourceBlockEntity be) {
         int batch = MilkSpawnEconomy.batchQuantity(be.getQuantityLevel());
         int spawned = 0;
         for (int i = 0; i < batch; i++) {
             BlockPos spawnPos = chooseSpawnPos(level, pos);
-            MimicSlime slime = PFEntities.MIMIC_SLIME.get().create(level);
+            MimicSlime slime = PFEntities.MIMIC_SLIME.get().create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
             if (slime == null) {
                 continue;
             }
             slime.setSize(1, true);
             slime.setSynthesizedItem(itemId);
-            slime.moveTo(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5,
+            slime.snapTo(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5,
                 random.nextFloat() * 360F, 0F);
             level.addFreshEntity(slime);
             spawned++;
@@ -228,13 +231,13 @@ public class MimicMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
     }
 
     @Override
-    public ItemStack pickupBlock(@Nullable Player player, LevelAccessor level, BlockPos pos, BlockState state) {
+    public ItemStack pickupBlock(@Nullable LivingEntity player, LevelAccessor level, BlockPos pos, BlockState state) {
         // Read the item + the full budget/catalyst set BEFORE super removes the block,
         // and stamp them onto the filled bucket so a buffed source survives the
         // world -> bucket round-trip (mirrors SlimeMilkSourceBlock.pickupBlock). Without
         // this, re-bucketing reset the source to the default budget and dropped Endless.
         MimicMilkSourceBlockEntity be = level.getBlockEntity(pos) instanceof MimicMilkSourceBlockEntity b ? b : null;
-        ResourceLocation itemId = be != null ? be.getSynthesizedItem() : null;
+        Identifier itemId = be != null ? be.getSynthesizedItem() : null;
         int remaining = be != null ? be.getSpawnsRemaining() : 0;
         int capacity = be != null ? be.getSpawnsCapacity() : 0;
         int speed = be != null ? be.getSpeedLevel() : 0;

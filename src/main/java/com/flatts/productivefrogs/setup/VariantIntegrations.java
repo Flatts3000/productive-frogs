@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Maps each built-in cross-mod Slime Variant to the host mod(s) that provide it,
@@ -41,7 +41,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 public final class VariantIntegrations {
 
-    private static volatile Map<ResourceLocation, Set<String>> providers;
+    private static volatile Map<Identifier, Set<String>> providers;
 
     private VariantIntegrations() {
         // utility class
@@ -52,7 +52,7 @@ public final class VariantIntegrations {
      * in {@code disabledKeys}. A first-party variant (no provider gate) and an
      * unknown id both return false. {@code disabledKeys} is the config list.
      */
-    public static boolean allProvidersDisabled(ResourceLocation id, Collection<? extends String> disabledKeys) {
+    public static boolean allProvidersDisabled(Identifier id, Collection<? extends String> disabledKeys) {
         if (disabledKeys.isEmpty()) {
             return false;
         }
@@ -61,12 +61,12 @@ public final class VariantIntegrations {
     }
 
     /** Provider modids for a variant id (empty if first-party or unknown). Exposed for tests. */
-    public static Set<String> providersOf(ResourceLocation id) {
+    public static Set<String> providersOf(Identifier id) {
         return providers().getOrDefault(id, Set.of());
     }
 
-    private static Map<ResourceLocation, Set<String>> providers() {
-        Map<ResourceLocation, Set<String>> p = providers;
+    private static Map<Identifier, Set<String>> providers() {
+        Map<Identifier, Set<String>> p = providers;
         if (p == null) {
             synchronized (VariantIntegrations.class) {
                 p = providers;
@@ -79,8 +79,8 @@ public final class VariantIntegrations {
         return p;
     }
 
-    private static Map<ResourceLocation, Set<String>> build() {
-        Map<ResourceLocation, Set<String>> map = new HashMap<>();
+    private static Map<Identifier, Set<String>> build() {
+        Map<Identifier, Set<String>> map = new HashMap<>();
         for (String name : VariantFluidDiscovery.bundledVariantNames()) {
             JsonObject json = VariantFluidDiscovery.readBundledVariant(name);
             if (json == null) {
@@ -91,7 +91,7 @@ public final class VariantIntegrations {
             if (!mods.isEmpty()) {
                 // Store an immutable copy so the public providersOf() can't leak a
                 // mutable view of the cached map's values.
-                map.put(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, name), Set.copyOf(mods));
+                map.put(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, name), Set.copyOf(mods));
             }
         }
         PFDebug.log(PFDebug.Area.REGISTRY, () -> "variant integrations: " + map.size() + " cross-mod variants mapped");

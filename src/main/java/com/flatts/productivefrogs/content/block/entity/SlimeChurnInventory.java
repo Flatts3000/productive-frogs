@@ -1,8 +1,8 @@
 package com.flatts.productivefrogs.content.block.entity;
 
 import com.flatts.productivefrogs.content.item.SlimeMilkBucketItem;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -80,12 +80,26 @@ public class SlimeChurnInventory extends ItemStackHandler {
         return outputView;
     }
 
-    public void serialize(CompoundTag tag) {
-        tag.merge(serializeNBT(RegistryAccess.EMPTY));
+    /** 26.1 {@code Capabilities.Item.BLOCK} input view: insert-only over both input slots (per-slot validity routes each item). */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResource() {
+        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
+            this, new int[] {MILK_SLOT, BUCKET_SLOT}, true, false);
     }
 
-    public void deserialize(CompoundTag tag) {
-        deserializeNBT(RegistryAccess.EMPTY, tag);
+    /** 26.1 {@code Capabilities.Item.BLOCK} output view: extract-only over both output slots. */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResource() {
+        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
+            this, new int[] {SLIME_OUTPUT_SLOT, EMPTY_OUTPUT_SLOT}, false, true);
+    }
+
+    // 26.1: ItemStackHandler implements ValueIOSerializable; the BE hands us the
+    // ValueOutput/ValueInput child (legacy serializeNBT(RegistryAccess) is gone).
+    public void serialize(ValueOutput output) {
+        super.serialize(output);
+    }
+
+    public void deserialize(ValueInput input) {
+        super.deserialize(input);
     }
 
 }

@@ -1,0 +1,5 @@
+{
+  "entity_type": "minecraft:llama",
+  "predator": "prowler",
+  "handling": "walk"
+}

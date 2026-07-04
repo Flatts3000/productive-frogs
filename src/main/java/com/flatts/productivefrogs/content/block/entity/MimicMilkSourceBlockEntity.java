@@ -6,15 +6,16 @@ import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -31,7 +32,7 @@ public class MimicMilkSourceBlockEntity extends BlockEntity {
     public static final int DEFAULT_SPAWNS = 16;
 
     @Nullable
-    private ResourceLocation synthesizedItem;
+    private Identifier synthesizedItem;
 
     /** Remaining slimes this source will spawn before draining; -1 = not yet seeded. */
     private int spawnsRemaining = -1;
@@ -54,12 +55,12 @@ public class MimicMilkSourceBlockEntity extends BlockEntity {
     }
 
     @Nullable
-    public ResourceLocation getSynthesizedItem() {
+    public Identifier getSynthesizedItem() {
         return synthesizedItem;
     }
 
     /** Set the item this source spawns; seeds the spawn budget on first assignment. */
-    public void setSynthesizedItem(@Nullable ResourceLocation synthesizedItem) {
+    public void setSynthesizedItem(@Nullable Identifier synthesizedItem) {
         boolean changed = !java.util.Objects.equals(this.synthesizedItem, synthesizedItem);
         this.synthesizedItem = synthesizedItem;
         if (synthesizedItem != null && spawnsRemaining < 0) {
@@ -178,35 +179,34 @@ public class MimicMilkSourceBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
         if (synthesizedItem != null) {
-            tag.putString("SynthesizedItem", synthesizedItem.toString());
+            output.putString("SynthesizedItem", synthesizedItem.toString());
         }
-        tag.putInt("SpawnsRemaining", spawnsRemaining);
-        tag.putInt("SpawnsCapacity", spawnsCapacity);
+        output.putInt("SpawnsRemaining", spawnsRemaining);
+        output.putInt("SpawnsCapacity", spawnsCapacity);
         if (speedLevel > 0) {
-            tag.putInt("SpeedLevel", speedLevel);
+            output.putInt("SpeedLevel", speedLevel);
         }
         if (quantityLevel > 0) {
-            tag.putInt("QuantityLevel", quantityLevel);
+            output.putInt("QuantityLevel", quantityLevel);
         }
         if (infinite) {
-            tag.putBoolean("Infinite", true);
+            output.putBoolean("Infinite", true);
         }
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        synthesizedItem = tag.contains("SynthesizedItem", Tag.TAG_STRING)
-            ? ResourceLocation.tryParse(tag.getString("SynthesizedItem"))
-            : null;
-        spawnsRemaining = tag.contains("SpawnsRemaining", Tag.TAG_INT) ? tag.getInt("SpawnsRemaining") : -1;
-        spawnsCapacity = tag.contains("SpawnsCapacity", Tag.TAG_INT) ? tag.getInt("SpawnsCapacity") : -1;
-        speedLevel = tag.contains("SpeedLevel", Tag.TAG_INT) ? Math.max(0, tag.getInt("SpeedLevel")) : 0;
-        quantityLevel = tag.contains("QuantityLevel", Tag.TAG_INT) ? Math.max(0, tag.getInt("QuantityLevel")) : 0;
-        infinite = tag.getBoolean("Infinite");
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        String item = input.getStringOr("SynthesizedItem", "");
+        synthesizedItem = item.isEmpty() ? null : Identifier.tryParse(item);
+        spawnsRemaining = input.getIntOr("SpawnsRemaining", -1);
+        spawnsCapacity = input.getIntOr("SpawnsCapacity", -1);
+        speedLevel = Math.max(0, input.getIntOr("SpeedLevel", 0));
+        quantityLevel = Math.max(0, input.getIntOr("QuantityLevel", 0));
+        infinite = input.getBooleanOr("Infinite", false);
     }
 
     @Override
@@ -214,9 +214,7 @@ public class MimicMilkSourceBlockEntity extends BlockEntity {
         // Full save so the Jade look-at tooltip reads the live budget + catalyst
         // levels on the client (mirrors AlembicBlockEntity); a partial tag left the
         // client reading server-side defaults for remaining/cap/speed/quantity.
-        CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries);
-        return tag;
+        return saveCustomOnly(registries);
     }
 
     @Override

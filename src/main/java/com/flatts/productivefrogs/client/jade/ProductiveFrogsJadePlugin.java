@@ -14,7 +14,7 @@ import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.animal.frog.Tadpole;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -52,22 +52,54 @@ import snownee.jade.api.config.IPluginConfig;
 @WailaPlugin
 public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
 
-    private static final ResourceLocation UID =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "appliances");
-    private static final ResourceLocation FROG_STATS_UID =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "frog_stats");
-    private static final ResourceLocation PRIMED_EGG_STATS_UID =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "primed_egg_stats");
-    private static final ResourceLocation TADPOLE_STATS_UID =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tadpole_stats");
-    private static final ResourceLocation MILK_SOURCE_UID =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "milk_source");
+    private static final Identifier UID =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "appliances");
+    private static final Identifier FROG_STATS_UID =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "frog_stats");
+    private static final Identifier PRIMED_EGG_STATS_UID =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "primed_egg_stats");
+    private static final Identifier TADPOLE_STATS_UID =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tadpole_stats");
+    private static final Identifier MILK_SOURCE_UID =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "milk_source");
+    private static final Identifier BASIN_UID =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "basin");
 
-    /** Shared instances: each is both the client tooltip and the server-data fetcher. */
+    /** Shared client-tooltip instances (their server-data halves are the delegates below). */
     private static final PrimedEggStatsProvider PRIMED_EGG_STATS = new PrimedEggStatsProvider();
     private static final TadpoleStatsProvider TADPOLE_STATS = new TadpoleStatsProvider();
     private static final MilkSourceProvider MILK_SOURCE = new MilkSourceProvider();
+    private static final BasinProvider BASIN = new BasinProvider();
     private static final ApplianceProvider APPLIANCES = new ApplianceProvider();
+
+    // Jade 26.1 (MC 1.21.6+) forbids a data provider from also implementing
+    // IComponentProvider, so each provider's appendServerData registers through
+    // this single-interface generic delegate (same UID as its client half) -
+    // one record covers Block and Entity accessors alike.
+    private record DataDelegate<A extends snownee.jade.api.Accessor<?>>(
+        Identifier uid, java.util.function.BiConsumer<CompoundTag, A> body
+    ) implements IServerDataProvider<A> {
+        @Override
+        public void appendServerData(CompoundTag data, A accessor) {
+            body.accept(data, accessor);
+        }
+
+        @Override
+        public Identifier getUid() {
+            return uid;
+        }
+    }
+
+    private static final DataDelegate<BlockAccessor> PRIMED_EGG_STATS_DATA =
+        new DataDelegate<>(PRIMED_EGG_STATS.getUid(), PRIMED_EGG_STATS::appendServerData);
+    private static final DataDelegate<EntityAccessor> TADPOLE_STATS_DATA =
+        new DataDelegate<>(TADPOLE_STATS.getUid(), TADPOLE_STATS::appendServerData);
+    private static final DataDelegate<BlockAccessor> MILK_SOURCE_DATA =
+        new DataDelegate<>(MILK_SOURCE.getUid(), MILK_SOURCE::appendServerData);
+    private static final DataDelegate<BlockAccessor> APPLIANCES_DATA =
+        new DataDelegate<>(APPLIANCES.getUid(), APPLIANCES::appendServerData);
+    private static final DataDelegate<BlockAccessor> BASIN_DATA =
+        new DataDelegate<>(BASIN.getUid(), BASIN::appendServerData);
 
     /**
      * Common (server-side) registration. The pending offspring stats on a laid
@@ -77,26 +109,30 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
      */
     @Override
     public void register(IWailaCommonRegistration registration) {
-        registration.registerBlockDataProvider(PRIMED_EGG_STATS, PrimedFrogEggBlock.class);
-        registration.registerEntityDataProvider(TADPOLE_STATS, ResourceTadpole.class);
+        registration.registerBlockDataProvider(PRIMED_EGG_STATS_DATA, PrimedFrogEggBlock.class);
+        registration.registerEntityDataProvider(TADPOLE_STATS_DATA, ResourceTadpole.class);
         // The spawns-remaining readout reads the authoritative server-side
         // blockstate so it updates live as the source depletes (the prior
         // client-blockstate read could show a stale full count).
-        registration.registerBlockDataProvider(MILK_SOURCE, SlimeMilkSourceBlock.class);
+        registration.registerBlockDataProvider(MILK_SOURCE_DATA, SlimeMilkSourceBlock.class);
         // Mimic Milk source (#253) shares the MILK_SOURCE provider (same UID, so no
         // extra config.jade.plugin lang key) - it branches on the block type.
-        registration.registerBlockDataProvider(MILK_SOURCE,
+        registration.registerBlockDataProvider(MILK_SOURCE_DATA,
             com.flatts.productivefrogs.content.block.MimicMilkSourceBlock.class);
         // The Terrarium machines change state fast; fetch their readouts from the
         // server BE each Jade refresh (see ApplianceProvider#appendServerData).
-        registration.registerBlockDataProvider(APPLIANCES,
+        registration.registerBlockDataProvider(APPLIANCES_DATA,
             com.flatts.productivefrogs.content.block.SprinklerBlock.class);
-        registration.registerBlockDataProvider(APPLIANCES,
+        registration.registerBlockDataProvider(APPLIANCES_DATA,
             com.flatts.productivefrogs.content.block.TerrariumControllerBlock.class);
-        registration.registerBlockDataProvider(APPLIANCES,
+        registration.registerBlockDataProvider(APPLIANCES_DATA,
             com.flatts.productivefrogs.content.block.IncubatorBlock.class);
-        registration.registerBlockDataProvider(APPLIANCES,
+        registration.registerBlockDataProvider(APPLIANCES_DATA,
             com.flatts.productivefrogs.content.block.HatchBlock.class);
+        // The Basins (#281 Phase 3): the held charge's budget drains server-side,
+        // so fetch it per look, exactly like the milk source it mirrors.
+        registration.registerBlockDataProvider(BASIN_DATA,
+            com.flatts.productivefrogs.content.block.BasinBlock.class);
     }
 
     @Override
@@ -123,6 +159,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         registration.registerBlockComponent(provider,
             com.flatts.productivefrogs.content.block.HatchBlock.class);
         registration.registerBlockComponent(MILK_SOURCE, SlimeMilkSourceBlock.class);
+        registration.registerBlockComponent(BASIN,
+            com.flatts.productivefrogs.content.block.BasinBlock.class);
         registration.registerBlockComponent(MILK_SOURCE,
             com.flatts.productivefrogs.content.block.MimicMilkSourceBlock.class);
         registration.registerEntityComponent(new FrogStatsProvider(), ResourceFrog.class);
@@ -131,7 +169,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
     }
 
     /** Provider for the Slime Milker + Spawnery appliances; branches on the BlockEntity. */
-    private static final class ApplianceProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
+    private static final class ApplianceProvider implements IBlockComponentProvider {
 
         /**
          * The Terrarium machines change state fast (per spawn / per distribution
@@ -141,7 +179,6 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
          * (Milker / Spawnery / Crucible / Mold / Froglight) ride their update tag and
          * stay client reads in {@link #appendTooltip}.
          */
-        @Override
         public void appendServerData(net.minecraft.nbt.CompoundTag data, BlockAccessor accessor) {
             BlockEntity be = accessor.getBlockEntity();
             if (be instanceof com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity s && !s.isEmpty()) {
@@ -174,7 +211,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         }
 
         @Override
-        public ResourceLocation getUid() {
+        public Identifier getUid() {
             return UID;
         }
 
@@ -265,8 +302,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 // synthesized item, not a variant - name it "<item> Froglight" the
                 // same way the item does. Takes precedence over the variant path
                 // (the two are mutually exclusive).
-                ResourceLocation synthesizedItem = froglight.getSynthesizedItem();
-                ResourceLocation variantId = froglight.getVariantId();
+                Identifier synthesizedItem = froglight.getSynthesizedItem();
+                Identifier variantId = froglight.getVariantId();
                 if (synthesizedItem != null) {
                     net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM
                         .getOptional(synthesizedItem).orElse(null);
@@ -295,13 +332,13 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             } else if (be instanceof com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity) {
                 // Formed-state + milk buffer, read from authoritative server data.
                 boolean formed;
-                if (data != null && data.getBoolean("C_present")) {
-                    formed = data.getBoolean("C_formed");
+                if (data != null && data.getBooleanOr("C_present", false)) {
+                    formed = data.getBooleanOr("C_formed", false);
                     tooltip.add(Component.translatable(formed
                         ? "productivefrogs.jade.terrarium_formed" : "productivefrogs.jade.terrarium_unformed"));
                     if (data.contains("C_variant")) {
                         tooltip.add(Component.translatable("productivefrogs.jade.controller_buffer",
-                            data.getInt("C_charges"), data.getInt("C_depth")));
+                            data.getIntOr("C_charges", 0), data.getIntOr("C_depth", 0)));
                     }
                 } else {
                     BlockState state = accessor.getBlockState();
@@ -315,7 +352,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 // from server data (re-fetched each Jade refresh) so the count never
                 // sticks on a stale value.
                 if (data != null && data.contains("S_variant")) {
-                    ResourceLocation variant = ResourceLocation.tryParse(data.getString("S_variant"));
+                    Identifier variant = Identifier.tryParse(data.getStringOr("S_variant", ""));
                     if (variant != null) {
                         // translatableWithFallback so a pack/datapack-added variant
                         // (no shipped lang key) reads as a title-cased name instead
@@ -326,34 +363,34 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                                 "block.productivefrogs." + variant.getPath() + "_slime_milk",
                                 com.flatts.productivefrogs.util.VariantNames.titleCase(variant) + " Slime Milk")));
                     }
-                    if (data.getBoolean("S_infinite")) {
+                    if (data.getBooleanOr("S_infinite", false)) {
                         tooltip.add(Component.translatable("productivefrogs.jade.spawns_unlimited"));
                     } else {
                         tooltip.add(Component.translatable("productivefrogs.jade.spawns_left",
-                            data.getInt("S_remaining"), data.getInt("S_cap")));
+                            data.getIntOr("S_remaining", 0), data.getIntOr("S_cap", 0)));
                     }
-                    if (data.getInt("S_speed") > 0) {
+                    if (data.getIntOr("S_speed", 0) > 0) {
                         tooltip.add(Component.translatable("productivefrogs.jade.catalyst_speed",
-                            data.getInt("S_speed"), data.getInt("S_speedMax")));
+                            data.getIntOr("S_speed", 0), data.getIntOr("S_speedMax", 0)));
                     }
-                    if (data.getInt("S_quantity") > 0) {
+                    if (data.getIntOr("S_quantity", 0) > 0) {
                         tooltip.add(Component.translatable("productivefrogs.jade.catalyst_quantity",
-                            data.getInt("S_quantity"), data.getInt("S_quantityMax")));
+                            data.getIntOr("S_quantity", 0), data.getIntOr("S_quantityMax", 0)));
                     }
                 }
             } else if (be instanceof com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity) {
-                if (data != null && data.getBoolean("I_present")) {
-                    if (data.getBoolean("I_waiting")) {
+                if (data != null && data.getBooleanOr("I_present", false)) {
+                    if (data.getBooleanOr("I_waiting", false)) {
                         tooltip.add(Component.translatable("productivefrogs.gui.incubator.waiting"));
                     } else {
                         tooltip.add(Component.translatable("productivefrogs.jade.incubator_growing",
-                            percent(data.getInt("I_total") - data.getInt("I_remaining"), data.getInt("I_total"))));
+                            percent(data.getIntOr("I_total", 0) - data.getIntOr("I_remaining", 0), data.getIntOr("I_total", 0))));
                     }
                 }
             } else if (be instanceof com.flatts.productivefrogs.content.block.entity.HatchBlockEntity) {
-                if (data != null && data.getBoolean("H_present")) {
+                if (data != null && data.getBooleanOr("H_present", false)) {
                     tooltip.add(Component.translatable("productivefrogs.jade.hatch_fill",
-                        data.getInt("H_fill"), com.flatts.productivefrogs.content.block.entity.HatchBlockEntity.SLOTS));
+                        data.getIntOr("H_fill", 0), com.flatts.productivefrogs.content.block.entity.HatchBlockEntity.SLOTS));
                 }
             }
         }
@@ -377,10 +414,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
      * default) but has no variant on its BE and is inert decoration, so it is not
      * annotated - mirroring the server's own gate in {@code SlimeMilkSourceBlock#tick}.
      */
-    private static final class MilkSourceProvider
-            implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
+    private static final class MilkSourceProvider implements IBlockComponentProvider {
 
-        @Override
         public void appendServerData(CompoundTag data, BlockAccessor accessor) {
             BlockState state = accessor.getBlockState();
             // Mimic Milk source (Equivalence lane, #253): a different block + BE.
@@ -414,7 +449,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             // Boss-tier altar (#184): N/6 catalyst faces, so an incomplete shell
             // is debuggable. Written before the Unlimited early-return below so it
             // shows even on an infinite (Endless-catalyst) boss source.
-            ResourceLocation variant = be.getVariantId();
+            Identifier variant = be.getVariantId();
             if (SlimeMilkSourceBlock.variantRequiresCatalyst(accessor.getLevel(), variant)) {
                 data.putInt("AltarFaces",
                     SlimeMilkSourceBlock.catalystFaceCount(accessor.getLevel(), accessor.getPosition(), variant));
@@ -448,43 +483,133 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         @Override
         public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
             CompoundTag data = accessor.getServerData();
-            if (data == null || !data.getBoolean("MilkSource")) {
+            if (data == null || !data.getBooleanOr("MilkSource", false)) {
                 return;
             }
             // Mimic Milk source (#253): name it "<item> Slime Milk" (the generic
             // block name is "Mimic Slime Milk"); the spawns-left lines below apply.
             if (data.contains("MimicItem")) {
-                ResourceLocation itemId = ResourceLocation.tryParse(data.getString("MimicItem"));
+                Identifier itemId = Identifier.tryParse(data.getStringOr("MimicItem", ""));
                 net.minecraft.world.item.Item item = itemId == null ? null
                     : net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
                 Component itemName = item != null
                     ? Component.translatable(item.getDescriptionId())
-                    : Component.literal(data.getString("MimicItem"));
+                    : Component.literal(data.getStringOr("MimicItem", ""));
                 tooltip.replace(JadeIds.CORE_OBJECT_NAME,
                     Component.translatable("block.productivefrogs.mimic_slime_milk.item", itemName));
             }
             if (data.contains("AltarFaces")) {
-                tooltip.add(Component.translatable("productivefrogs.jade.altar", data.getInt("AltarFaces"), 6));
+                tooltip.add(Component.translatable("productivefrogs.jade.altar", data.getIntOr("AltarFaces", 0), 6));
             }
-            if (data.getBoolean("Unlimited")) {
+            if (data.getBooleanOr("Unlimited", false)) {
                 tooltip.add(Component.translatable("productivefrogs.jade.spawns_unlimited"));
             } else {
                 tooltip.add(Component.translatable("productivefrogs.jade.spawns_left",
-                    data.getInt("SpawnsRemaining"), data.getInt("SpawnsCap")));
+                    data.getIntOr("SpawnsRemaining", 0), data.getIntOr("SpawnsCap", 0)));
             }
             if (data.contains("Speed")) {
                 tooltip.add(Component.translatable("productivefrogs.jade.catalyst_speed",
-                    data.getInt("Speed"), data.getInt("SpeedMax")));
+                    data.getIntOr("Speed", 0), data.getIntOr("SpeedMax", 0)));
             }
             if (data.contains("Quantity")) {
                 tooltip.add(Component.translatable("productivefrogs.jade.catalyst_quantity",
-                    data.getInt("Quantity"), data.getInt("QuantityMax")));
+                    data.getIntOr("Quantity", 0), data.getIntOr("QuantityMax", 0)));
             }
         }
 
         @Override
-        public ResourceLocation getUid() {
+        public Identifier getUid() {
             return MILK_SOURCE_UID;
+        }
+    }
+
+
+    /**
+     * Look-at readout for the two Basins (#281 Phase 3, maintainer ruling: a
+     * Basin shows the SAME stats the fluid inside would). One provider, both
+     * flavours: a contents line (the slurried mob, or the milk variant named
+     * exactly as the milk source names it), then the milk source's own
+     * spawns-left / unlimited / catalyst lines, from server data so the count
+     * drains live.
+     */
+    private static final class BasinProvider implements IBlockComponentProvider {
+
+        public void appendServerData(CompoundTag data, BlockAccessor accessor) {
+            if (!(accessor.getBlockEntity()
+                    instanceof com.flatts.productivefrogs.content.block.entity.AbstractBasinBlockEntity basin)) {
+                return;
+            }
+            data.putBoolean("Basin", true);
+            if (!basin.isCharged()) {
+                return;
+            }
+            data.putString("B_key", basin.getContainedKey().toString());
+            data.putBoolean("B_mob",
+                basin instanceof com.flatts.productivefrogs.content.block.entity.MobSlurryBasinBlockEntity);
+            if (basin.getSpeedLevel() > 0) {
+                data.putInt("Speed", basin.getSpeedLevel());
+                data.putInt("SpeedMax", PFConfig.catalystMaxSpeedLevel());
+            }
+            if (basin.getQuantityLevel() > 0) {
+                data.putInt("Quantity", basin.getQuantityLevel());
+                data.putInt("QuantityMax", PFConfig.catalystMaxQuantityLevel());
+            }
+            boolean depletionOff = PFConfig.SPEC.isLoaded() && !PFConfig.DEPLETION_ENABLED.get();
+            if (basin.isInfinite() || depletionOff) {
+                data.putBoolean("Unlimited", true);
+                return;
+            }
+            data.putInt("SpawnsRemaining", basin.getSpawnsRemaining());
+            data.putInt("SpawnsCap", basin.getSpawnsCapacity());
+        }
+
+        @Override
+        public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
+            CompoundTag data = accessor.getServerData();
+            if (data == null || !data.getBooleanOr("Basin", false)) {
+                return;
+            }
+            if (!data.contains("B_key")) {
+                tooltip.add(Component.translatable("productivefrogs.jade.basin_empty"));
+                return;
+            }
+            Identifier key = Identifier.tryParse(data.getStringOr("B_key", ""));
+            if (key != null) {
+                Component contents;
+                if (data.getBooleanOr("B_mob", false)) {
+                    contents = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE
+                        .getOptional(key)
+                        .map(net.minecraft.world.entity.EntityType::getDescription)
+                        .orElse(Component.literal(key.toString()));
+                } else {
+                    // The milk source's naming: shipped lang key with a
+                    // title-cased fallback for pack-added variants.
+                    contents = Component.translatableWithFallback(
+                        "block.productivefrogs." + key.getPath() + "_slime_milk",
+                        com.flatts.productivefrogs.util.VariantNames.titleCase(key) + " Slime Milk");
+                }
+                tooltip.add(Component.translatable("productivefrogs.jade.basin_contains", contents));
+            }
+            // The exact stat lines the fluid inside would show (milk source parity).
+            if (data.getBooleanOr("Unlimited", false)) {
+                tooltip.add(Component.translatable("productivefrogs.jade.spawns_unlimited"));
+            } else {
+                tooltip.add(Component.translatable("productivefrogs.jade.spawns_left",
+                    data.getIntOr("SpawnsRemaining", 0), data.getIntOr("SpawnsCap", 0)));
+            }
+            if (data.contains("Speed")) {
+                tooltip.add(Component.translatable("productivefrogs.jade.catalyst_speed",
+                    data.getIntOr("Speed", 0), data.getIntOr("SpeedMax", 0)));
+            }
+            if (data.contains("Quantity")) {
+                tooltip.add(Component.translatable("productivefrogs.jade.catalyst_quantity",
+                    data.getIntOr("Quantity", 0), data.getIntOr("QuantityMax", 0)));
+            }
+        }
+
+        @Override
+        public Identifier getUid() {
+            return BASIN_UID;
         }
     }
 
@@ -515,11 +640,11 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
 
     /** Client-side: render the pending stat lines from server data when present (egg + tadpole). */
     private static void appendPendingStats(ITooltip tooltip, CompoundTag data) {
-        if (data == null || !data.getBoolean("HasStats")) {
+        if (data == null || !data.getBooleanOr("HasStats", false)) {
             return;
         }
-        appendStatLines(tooltip, data.getInt("Appetite"), data.getInt("Bounty"),
-            data.getInt("Reach"), data.getInt("Cap"));
+        appendStatLines(tooltip, data.getIntOr("Appetite", 0), data.getIntOr("Bounty", 0),
+            data.getIntOr("Reach", 0), data.getIntOr("Cap", 0));
     }
 
     /** Ticks -> {@code m:ss} (20 ticks per second). Shared by the egg hatch + tadpole growth countdowns. */
@@ -545,7 +670,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         }
 
         @Override
-        public ResourceLocation getUid() {
+        public Identifier getUid() {
             return FROG_STATS_UID;
         }
     }
@@ -561,10 +686,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
      * Spawnery output, {@code /setblock}) carries no stats and shows nothing -
      * its hatchlings mature into baseline (1/1/1) frogs. See {@code docs/frog_breeding.md}.
      */
-    private static final class PrimedEggStatsProvider
-            implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
+    private static final class PrimedEggStatsProvider implements IBlockComponentProvider {
 
-        @Override
         public void appendServerData(CompoundTag data, BlockAccessor accessor) {
             if (!(accessor.getBlockEntity() instanceof PrimedFrogEggBlockEntity egg)) {
                 return;
@@ -590,12 +713,12 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             appendPendingStats(tooltip, data);
             if (data.contains("HatchTicks")) {
                 tooltip.add(Component.translatable(
-                    "productivefrogs.jade.hatch_countdown", formatTime(data.getInt("HatchTicks"))));
+                    "productivefrogs.jade.hatch_countdown", formatTime(data.getIntOr("HatchTicks", 0))));
             }
         }
 
         @Override
-        public ResourceLocation getUid() {
+        public Identifier getUid() {
             return PRIMED_EGG_STATS_UID;
         }
     }
@@ -608,10 +731,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
      * (client). A non-bred tadpole carries no pending stats and shows nothing - it
      * matures into a baseline (1/1/1) frog. See {@code docs/frog_breeding.md}.
      */
-    private static final class TadpoleStatsProvider
-            implements IEntityComponentProvider, IServerDataProvider<EntityAccessor> {
+    private static final class TadpoleStatsProvider implements IEntityComponentProvider {
 
-        @Override
         public void appendServerData(CompoundTag data, EntityAccessor accessor) {
             if (!(accessor.getEntity() instanceof ResourceTadpole tadpole)) {
                 return;
@@ -638,12 +759,12 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 // Drop Jade's vanilla-rate growth line and render the corrected one.
                 tooltip.remove(JadeIds.MC_MOB_GROWTH);
                 tooltip.add(Component.translatable(
-                    "productivefrogs.jade.growing_time", formatTime(data.getInt("GrowingTicks"))));
+                    "productivefrogs.jade.growing_time", formatTime(data.getIntOr("GrowingTicks", 0))));
             }
         }
 
         @Override
-        public ResourceLocation getUid() {
+        public Identifier getUid() {
             return TADPOLE_STATS_UID;
         }
     }

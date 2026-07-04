@@ -1,0 +1,17 @@
+{
+  "values": [
+    "#c:bosses",
+    "productivefrogs:resource_frog",
+    "productivefrogs:resource_tadpole",
+    "productivefrogs:resource_slime",
+    "productivefrogs:mimic_slime",
+    "productivefrogs:bog_slime",
+    "productivefrogs:cave_slime",
+    "productivefrogs:geode_slime",
+    "productivefrogs:tide_slime",
+    "productivefrogs:infernal_slime",
+    "productivefrogs:void_slime",
+    "productivefrogs:dragonsbane",
+    "productivefrogs:witherbane"
+  ]
+}

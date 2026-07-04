@@ -1,6 +1,6 @@
 # Versioning & Scope
 
-How features are split across releases, with the engineering rationale for the V1 / V2 split. V1 is the foundation; V2 layers automation on top without breaking V1.
+How features are split across releases, with the engineering rationale. **The V1/V2 meaning evolved:** originally V1 = playable foundation and V2 = automation, but automation shipped in the 1.x line ("V2 is just a name, not a rule", 2026-06-08), and **2.0 now means the MC 26.1 era + mob predation** (see [predator_frogs.md](./predator_frogs.md) and [port_mc_26_1.md](./port_mc_26_1.md)). The V1.x sections below are the shipped-history record.
 
 For the player-facing roadmap (what's shipped, what's coming next, no engineering depth), see [`ROADMAP.md`](../ROADMAP.md) at the repo root. This doc is the source of truth for *why* the split exists; ROADMAP.md is the source of truth for *what* lands in each release.
 
@@ -106,7 +106,7 @@ representable. Spec: [slime_milk_catalysts.md](./slime_milk_catalysts.md).
 
 ## V2 - Automation
 
-> **"V2 is just a name, not a rule"** (maintainer ruling 2026-06-08). This section groups the *automation era* of work, but it is no longer a release gate: the mod stays on the **1.x version line** and these features ship as 1.x minors (the Terrarium starting at v1.16.0), not a 2.0.0. "Built on top of V1; never replaces it" still holds.
+> **Superseded framing.** This section captured the *automation era*, which shipped in the **1.x line** (the Terrarium at v1.16.0) per "V2 is just a name, not a rule" (2026-06-08) - automation was never a release gate. **2.0.0 now means something different:** the MC 26.1 platform port + the **mob-predation system** (all mob drops come from a frog eating the mob). See [predator_frogs.md](./predator_frogs.md) (delivery roadmap), [port_mc_26_1.md](./port_mc_26_1.md) (port plan), and [ROADMAP.md](../ROADMAP.md) "2.0". The automation items below remain **2.x** candidates on the 26.1 base; "built on top of the foundation, never replaces it" still holds.
 
 Tools and blocks that let the player scale and automate the loop. Built on top of the V1 foundation; never replaces it.
 

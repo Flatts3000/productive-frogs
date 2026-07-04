@@ -16,12 +16,12 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
@@ -36,6 +36,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -160,9 +162,39 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
         }
     };
 
-    private final class ReceiveOnlyEnergy extends EnergyStorage {
+    private final class ReceiveOnlyEnergy extends EnergyStorage
+            implements com.flatts.productivefrogs.content.transfer.ReceiveOnlyEnergyHandler.Source {
         ReceiveOnlyEnergy() {
             super(ENERGY_CAPACITY, ENERGY_MAX_RECEIVE, 0);
+        }
+
+        // 26.1 EnergyHandler journal window (see ReceiveOnlyEnergyHandler): the
+        // adapter reads + writes the stored energy directly to support
+        // read-your-writes plus abort-rollback, which the receive-only public
+        // API cannot do. setEnergy fires no callback; the commit one does.
+        @Override
+        public int currentEnergy() {
+            return this.energy;
+        }
+
+        @Override
+        public void setEnergy(int amount) {
+            this.energy = Math.max(0, Math.min(this.capacity, amount));
+        }
+
+        @Override
+        public int energyCapacity() {
+            return this.capacity;
+        }
+
+        @Override
+        public int maxInsertPerOp() {
+            return this.maxReceive;
+        }
+
+        @Override
+        public void onEnergyCommitted() {
+            setChanged();
         }
 
         @Override
@@ -257,9 +289,7 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
         // Roster gate: anything that already primes a slime variant (including the
         // weight-0 boss primers) has its own authored lane - refuse it here.
         if (level != null) {
-            Registry<SlimeVariant> registry = level.registryAccess()
-                .registry(PFRegistries.SLIME_VARIANT).orElse(null);
-            if (registry != null && SlimeVariant.findByPrimer(registry, stack) != null) {
+            if (SlimeVariant.findByPrimer(PFRegistries.variants(level.registryAccess()), stack) != null) {
                 return false;
             }
         }
@@ -278,12 +308,44 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
         return outputView;
     }
 
+    /** 26.1 {@code Capabilities.Item.BLOCK} input view: insert-only over the bucket + item slots (per-slot validity routes each). */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResource() {
+        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
+            items, new int[] {BUCKET_SLOT, ITEM_SLOT}, true, false);
+    }
+
+    /** 26.1 {@code Capabilities.Item.BLOCK} output view: extract-only over the Mimic Slime Bucket slot. */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResource() {
+        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(items, new int[] {OUTPUT_SLOT}, false, true);
+    }
+
     public EnergyStorage energyStorage() {
         return energy;
     }
 
+    /** The 26.1 {@code Capabilities.Energy.BLOCK} view (receive-only); wraps {@link #energy}. */
+    public net.neoforged.neoforge.transfer.energy.EnergyHandler energyHandler() {
+        return new com.flatts.productivefrogs.content.transfer.ReceiveOnlyEnergyHandler(energy);
+    }
+
     public int progress() {
         return progress;
+    }
+
+    // 26.1 port: the held stacks drop here (the BE still exists on the removal path), NOT in the
+    // block's affectNeighborsAfterRemoval, which runs after the BE is gone. The handler is not a
+    // vanilla Container, so the super default won't drop it - re-home the slot loop here.
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (this.level instanceof ServerLevel serverLevel) {
+            for (int slot = 0; slot < items.getSlots(); slot++) {
+                ItemStack held = items.getStackInSlot(slot);
+                if (!held.isEmpty()) {
+                    Block.popResource(serverLevel, pos, held);
+                }
+            }
+        }
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, AlembicBlockEntity be) {
@@ -298,7 +360,7 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
             be.resetProgress();
             return;
         }
-        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(input.getItem());
+        Identifier itemId = BuiltInRegistries.ITEM.getKey(input.getItem());
         ItemStack result = MimicSlimeBucketItem.forItem(itemId);
         if (!be.items.insertItem(OUTPUT_SLOT, result.copy(), true).isEmpty()) {
             return; // output blocked - hold progress.
@@ -340,31 +402,24 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.put("Items", items.serializeNBT(registries));
-        tag.putInt("Energy", energy.getEnergyStored());
-        tag.putInt("Progress", progress);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        items.serialize(output.child("Items"));
+        output.putInt("Energy", energy.getEnergyStored());
+        output.putInt("Progress", progress);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.contains("Items", Tag.TAG_COMPOUND)) {
-            items.deserializeNBT(registries, tag.getCompound("Items"));
-        }
-        if (tag.contains("Energy", Tag.TAG_INT)) {
-            energy.load(tag.getInt("Energy"));
-        }
-        int loaded = tag.contains("Progress", Tag.TAG_INT) ? tag.getInt("Progress") : 0;
-        progress = Math.max(0, Math.min(loaded, SYNTH_TIME));
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        input.child("Items").ifPresent(items::deserialize);
+        energy.load(input.getIntOr("Energy", 0));
+        progress = Math.max(0, Math.min(input.getIntOr("Progress", 0), SYNTH_TIME));
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries);
-        return tag;
+        return saveCustomOnly(registries);
     }
 
     @Override

@@ -1,9 +1,0 @@
-{
-  "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "mekanism" }
-  ],
-  "primer_tag": "c:gems/fluorite",
-  "category": "geode",
-  "primary_color": 13623488,
-  "secondary_color": 11059344
-}

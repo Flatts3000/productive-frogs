@@ -7,7 +7,7 @@
   ],
   "type": "minecraft:smelting",
   "ingredient": {
-    "type": "neoforge:components",
+    "neoforge:ingredient_type": "neoforge:components",
     "items": [
       "productivefrogs:configurable_froglight"
     ],

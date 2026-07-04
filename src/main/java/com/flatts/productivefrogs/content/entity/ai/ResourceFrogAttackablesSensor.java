@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.content.entity.FrogStats;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.util.PFDebug;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.sensing.FrogAttackablesSensor;
@@ -43,12 +44,12 @@ import net.minecraft.world.entity.animal.frog.Frog;
 public class ResourceFrogAttackablesSensor extends FrogAttackablesSensor {
 
     @Override
-    protected boolean isMatchingEntity(LivingEntity attacker, LivingEntity target) {
+    protected boolean isMatchingEntity(ServerLevel level, LivingEntity attacker, LivingEntity target) {
         if (!(attacker instanceof ResourceFrog frog)) {
             // Defensive: this sensor is only attached to ResourceFrog brains, so
             // a non-ResourceFrog attacker would mean misconfigured wiring. Defer
             // to vanilla rather than silently dropping prey.
-            return super.isMatchingEntity(attacker, target);
+            return super.isMatchingEntity(level, attacker, target);
         }
         // Honour the Appetite eat cooldown exactly as vanilla does.
         if (frog.getBrain().hasMemoryValue(MemoryModuleType.HAS_HUNTING_COOLDOWN)) {
@@ -57,20 +58,53 @@ public class ResourceFrogAttackablesSensor extends FrogAttackablesSensor {
         // Terrarium backpressure (#185): a frog inside a formed Terrarium whose
         // Hatch is full refuses all prey - nothing it ate would have anywhere to
         // go, so it stops eating rather than wasting slimes (layer 1; the drop
-        // handler is the safety net).
-        if (isOwningHatchFull(frog)) {
+        // handler is the safety net). Predators are EXEMPT: their kills pay
+        // ground player-kill loot that never routes through the Hatch, so the
+        // backpressure would freeze them for a container they don't use
+        // (review finding #5). Species Froglights and Midas Prismatics both
+        // deposit to the Hatch, so those kinds keep the gate.
+        if (!(frog.getKind() instanceof com.flatts.productivefrogs.data.FrogKind.Predator)
+                && isOwningHatchFull(frog)) {
             return false;
         }
-        if (!Sensor.isEntityAttackable(frog, target) || !Frog.canEat(target) || isUnreachable(frog, target)) {
+        if (!Sensor.isEntityAttackable(level, frog, target) || isUnreachable(frog, target)) {
             return false;
         }
-        // Midas (Equivalence lane, #253) eats ONLY Mimic Slimes - never the six
-        // species' Resource Slimes - and uses the same reach gate. MimicSlime is a
-        // sibling of ResourceSlime (extends vanilla Slime), so the species path
-        // below already excludes it; this is the symmetric inclusion for Midas.
-        if (frog.isMidas()) {
-            return target instanceof com.flatts.productivefrogs.content.entity.MimicSlime
-                && target.closerThan(frog, reachRadius(frog));
+        // Diet by KIND (#281) - the exhaustive switch is the mutual-exclusion
+        // layer 1 (the drop handlers are layer 2). Note the vanilla
+        // Frog.canEat gate (the frog_food tag + size-1 slimes) applies INSIDE
+        // the Midas/Resource arms, not before the switch: a Predator's prey
+        // (zombie, cow, guardian, ...) is deliberately NOT frog_food - tagging
+        // it would make vanilla frogs hunt it - so the predator arm gates on
+        // the predator_prey registry instead.
+        // - Midas (#253) eats ONLY Mimic Slimes, never the species' Resource
+        //   Slimes (MimicSlime is a Slime sibling, so the species path below
+        //   already excludes it; this is the symmetric inclusion).
+        // - A Predator targets ONLY its prey-registry mobs (never slimes of any
+        //   kind), on the same Reach-scaled radius.
+        // - A species frog falls through to the category match below.
+        switch (frog.getKind()) {
+            case com.flatts.productivefrogs.data.FrogKind.Midas m -> {
+                return Frog.canEat(target)
+                    && target instanceof com.flatts.productivefrogs.content.entity.MimicSlime
+                    && target.closerThan(frog, reachRadius(frog));
+            }
+            case com.flatts.productivefrogs.data.FrogKind.Predator p -> {
+                return PFShootTongue.isEligiblePrey(frog, p, target)
+                    && target.closerThan(frog, reachRadius(frog));
+            }
+            case com.flatts.productivefrogs.data.FrogKind.Apex a -> {
+                // An Apex eats ONLY its own boss (Phase 4) - in practice at its
+                // altar, but the gate holds anywhere (shared with the tongue).
+                return PFShootTongue.isEligiblePrey(frog, a, target)
+                    && target.closerThan(frog, reachRadius(frog));
+            }
+            case com.flatts.productivefrogs.data.FrogKind.Resource r -> {
+                if (!Frog.canEat(target)) {
+                    return false;
+                }
+                // fall through to the category-matched slime path below
+            }
         }
         // Only Resource Slimes of the matching category are eligible prey.
         // Vanilla slimes/magma cubes get filtered out — they must be infused

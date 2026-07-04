@@ -12,7 +12,6 @@ import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -30,6 +29,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -238,37 +239,31 @@ public class SpawneryBlockEntity extends BlockEntity implements MenuProvider {
     // -------------------------------------------------------------------
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.putInt("CookProgress", cookProgress);
-        tag.putInt("BurnTime", burnTime);
-        CompoundTag invTag = new CompoundTag();
-        inventory.serialize(invTag);
-        tag.put("Inventory", invTag);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        output.putInt("CookProgress", cookProgress);
+        output.putInt("BurnTime", burnTime);
+        inventory.serialize(output.child("Inventory"));
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
         // burnDuration is recomputed from config each tick, so it isn't persisted.
         // Clamp both counters into [0, productionTicks()] so a tampered/migrated save
         // can't load a huge cookProgress (which would complete() on the first tick) or
         // an over-long burn. productionTicks() reads the live config value.
         int total = productionTicks();
-        int loadedCook = tag.contains("CookProgress", Tag.TAG_INT) ? tag.getInt("CookProgress") : 0;
+        int loadedCook = input.getIntOr("CookProgress", 0);
         cookProgress = Math.max(0, Math.min(loadedCook, total));
-        int loadedBurn = tag.contains("BurnTime", Tag.TAG_INT) ? tag.getInt("BurnTime") : 0;
+        int loadedBurn = input.getIntOr("BurnTime", 0);
         burnTime = Math.max(0, Math.min(loadedBurn, total));
-        if (tag.contains("Inventory", Tag.TAG_COMPOUND)) {
-            inventory.deserialize(tag.getCompound("Inventory"));
-        }
+        input.child("Inventory").ifPresent(inventory::deserialize);
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries);
-        return tag;
+        return saveCustomOnly(registries);
     }
 
     @Override

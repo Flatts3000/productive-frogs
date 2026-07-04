@@ -1,0 +1,5 @@
+{
+  "entity_type": "minecraft:breeze",
+  "predator": "prowler",
+  "handling": "fly"
+}

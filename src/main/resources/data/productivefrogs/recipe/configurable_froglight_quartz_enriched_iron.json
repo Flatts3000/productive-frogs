@@ -1,14 +1,23 @@
 {
   "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "refinedstorage" }
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "refinedstorage"
+    }
   ],
   "type": "minecraft:smelting",
   "ingredient": {
-    "type": "neoforge:components",
-    "items": [ "productivefrogs:configurable_froglight" ],
-    "components": { "productivefrogs:slime_variant": "productivefrogs:quartz_enriched_iron" }
+    "neoforge:ingredient_type": "neoforge:components",
+    "items": [
+      "productivefrogs:configurable_froglight"
+    ],
+    "components": {
+      "productivefrogs:slime_variant": "productivefrogs:quartz_enriched_iron"
+    }
   },
-  "result": { "id": "refinedstorage:quartz_enriched_iron" },
+  "result": {
+    "id": "refinedstorage:quartz_enriched_iron"
+  },
   "experience": 0.7,
   "cookingtime": 200,
   "category": "misc",

@@ -13,9 +13,9 @@ import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -117,17 +117,20 @@ public final class SlimeChurnRecipeCategory implements IRecipeCategory<SlimeChur
 
     @Override
     public void draw(Recipe recipe, IRecipeSlotsView slotsView,
-                     GuiGraphics gui, double mouseX, double mouseY) {
+                     GuiGraphicsExtractor gui, double mouseX, double mouseY) {
         arrow.draw(gui, ARROW_X, ARROW_Y);
     }
 
     @Override
-    public ResourceLocation getRegistryName(Recipe recipe) {
+    public Identifier getRegistryName(Recipe recipe) {
         // Stable per-recipe id - keyed on the input milk bucket's variant
-        // (the item identity carries it, v1.8 per-variant items).
-        if (recipe.milkBucket().getItem() instanceof SlimeMilkBucketItem milk) {
-            return milk.variantId();
+        // (the SLIME_VARIANT component carries it, 26.1 R-1 single bucket).
+        if (recipe.milkBucket().getItem() instanceof SlimeMilkBucketItem) {
+            Identifier variant = SlimeMilkBucketItem.variantOf(recipe.milkBucket());
+            if (variant != null) {
+                return variant;
+            }
         }
-        return ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "slime_churn");
+        return Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "slime_churn");
     }
 }

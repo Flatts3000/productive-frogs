@@ -7,16 +7,19 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Containers;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
@@ -100,6 +103,11 @@ public class WitherSummonReceptacleBlockEntity extends BlockEntity {
         return insertOnly;
     }
 
+    /** The 26.1 {@code Capabilities.Item.BLOCK} view: insert-only over the single held slot. */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> heldResource() {
+        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(held, new int[] {0}, true, false);
+    }
+
     /** True when the receptacle holds its item. */
     public boolean isFilled() {
         return !held.getStackInSlot(0).isEmpty();
@@ -144,6 +152,20 @@ public class WitherSummonReceptacleBlockEntity extends BlockEntity {
         return held.getStackInSlot(0);
     }
 
+    // 26.1 port: the held item drops here (the BE still exists on the removal path), NOT in the
+    // block's affectNeighborsAfterRemoval, which runs after the BE is gone. This BE is not a
+    // vanilla Container, so the super default won't drop it - re-home the spill here.
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (this.level instanceof ServerLevel serverLevel) {
+            ItemStack held = contents();
+            if (!held.isEmpty()) {
+                Containers.dropItemStack(serverLevel, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, held);
+            }
+        }
+    }
+
     private void onChanged() {
         setChanged();
         if (level != null && !level.isClientSide()) {
@@ -159,27 +181,24 @@ public class WitherSummonReceptacleBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.put("Held", held.serializeNBT(registries));
-        tag.putString("Ritual", ritual.getName());
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        held.serialize(output.child("Held"));
+        output.putString("Ritual", ritual.getName());
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.contains("Held", Tag.TAG_COMPOUND)) {
-            held.deserializeNBT(registries, tag.getCompound("Held"));
-        }
-        Direction d = tag.contains("Ritual") ? Direction.byName(tag.getString("Ritual")) : null;
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        input.child("Held").ifPresent(held::deserialize);
+        String name = input.getStringOr("Ritual", "");
+        Direction d = name.isEmpty() ? null : Direction.byName(name);
         this.ritual = d != null && d.getAxis().isHorizontal() ? d : WitherAltarValidator.CANONICAL_RITUAL;
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries);
-        return tag;
+        return saveCustomOnly(registries);
     }
 
     @Override

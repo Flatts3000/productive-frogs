@@ -16,12 +16,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
@@ -32,6 +33,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -60,8 +63,8 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
     private static final int RECONCILE_INTERVAL = 20;
 
     /** Boss slime variant whose Froglight the altar pays out (smelts back to a Nether Star). */
-    private static final ResourceLocation NETHER_STAR_VARIANT =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star");
+    private static final Identifier NETHER_STAR_VARIANT =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star");
 
     private NonNullList<ItemStack> items = NonNullList.withSize(SIZE, ItemStack.EMPTY);
     private final InvWrapper itemHandler = new InvWrapper(this);
@@ -90,6 +93,18 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
      * Deposit a reward item, spilling any overflow as a returned leftover (the summon
      * decides what to do with it). Used by the summon state machine.
      */
+    /**
+     * The Apex dock (#281 Phase 4): the installed Wither Apex Frog + the
+     * Liquid Experience bank. Summon gate requires {@link AltarApexDock#armed()};
+     * breaking the hatch releases the real frog.
+     */
+    private final AltarApexDock dock =
+        new AltarApexDock(com.flatts.productivefrogs.data.FrogKind.Apex.WITHER, this::setChanged);
+
+    public AltarApexDock dock() {
+        return dock;
+    }
+
     public ItemStack deposit(ItemStack stack) {
         return ItemHandlerHelper.insertItem(itemHandler, stack, false);
     }
@@ -111,9 +126,10 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
         if (result.valid() && result.ritual() != null) {
             be.setRitual(result.ritual());
         }
-        reconcileFrog(server, pos, result);
-        // Start a summon once the altar is complete and all seven receptacles are loaded.
-        if (result.valid() && PFConfig.bossEnabled() && allReceptaclesFilled(server, pos, be.ritual)) {
+        reconcileFrog(server, pos, result.valid() && be.dock.armed(), result);
+        // Start a summon once the altar is complete, ARMED with its Wither Apex
+        // Frog (Phase 4 gate), and all seven receptacles are loaded.
+        if (result.valid() && PFConfig.bossEnabled() && be.dock.armed() && allReceptaclesFilled(server, pos, be.ritual)) {
             be.summonTicks = PFConfig.witherAltarSummonTicks();
             server.playSound(null, pos, SoundEvents.WITHER_SPAWN, SoundSource.HOSTILE, 1.0F, 1.0F);
             be.syncToClient();
@@ -163,13 +179,19 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
                 r.consume();
             }
         }
-        // Reward: XP at the hatch + the Nether Star Froglight (the boss-Froglight model)
-        // + whatever else the Wither is programmed to drop (its loot table, star stripped).
+        // Reward (Phase 4: the settled RAW-drops payout): XP banks as Liquid
+        // Experience in the dock (overflow -> orbs, never voided), and the
+        // Wither's own loot table pays out UNSTRIPPED - the raw Nether Star
+        // included (the Froglight payout is retired with the raw-drops ruling).
         int xp = PFConfig.witherAltarXpReward();
         if (xp > 0) {
-            ExperienceOrb.award(server, Vec3.atCenterOf(pos), xp);
+            be.dock.bankXp(server, Vec3.atCenterOf(pos), xp);
         }
-        spill(server, pos, be.deposit(FrogTongueDropHandler.buildFroglight(NETHER_STAR_VARIANT, null)));
+        // The star is paid explicitly (the loot table only drops it on a
+        // player-credited kill, which the phantom generic-kill roll is not) and
+        // stripped from the roll below so a table that DOES yield one can't
+        // double-pay.
+        spill(server, pos, be.deposit(new ItemStack(Items.NETHER_STAR)));
         rollWitherLoot(server, pos, be);
         server.playSound(null, pos, SoundEvents.WITHER_DEATH, SoundSource.HOSTILE, 1.0F, 1.0F);
     }
@@ -181,23 +203,36 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
      * Nether Star is stripped, because the star is paid out as the Nether Star Froglight.
      */
     private static void rollWitherLoot(ServerLevel server, BlockPos pos, WitherAltarHatchBlockEntity be) {
-        WitherBoss phantom = EntityType.WITHER.create(server);
+        WitherBoss phantom = EntityType.WITHER.create(server, EntitySpawnReason.MOB_SUMMONED);
         if (phantom == null) {
             return; // never added to the world; only the loot context needs it
         }
-        phantom.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
+        phantom.snapTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
         LootParams params = new LootParams.Builder(server)
             .withParameter(LootContextParams.THIS_ENTITY, phantom)
             .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
             .withParameter(LootContextParams.DAMAGE_SOURCE, server.damageSources().genericKill())
             .create(LootContextParamSets.ENTITY);
-        LootTable table = server.getServer().reloadableRegistries().getLootTable(EntityType.WITHER.getDefaultLootTable());
+        LootTable table = server.getServer().reloadableRegistries().getLootTable(EntityType.WITHER.getDefaultLootTable().orElseThrow());
         table.getRandomItems(params, server.getRandom().nextLong(), stack -> {
-            if (!stack.is(Items.NETHER_STAR)) { // the star only ever appears as the Froglight
+            if (!stack.is(Items.NETHER_STAR)) { // paid explicitly in completeSummon - no double-pay
                 spill(server, pos, be.deposit(stack));
             }
         });
         phantom.discard();
+    }
+
+    /** Hatch removal (Phase 4): spill the container, then release the installed Apex. */
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (this.level instanceof ServerLevel server) {
+            dock.releaseFrog(server, pos);
+            for (WitherbaneFrog frog : server.getEntitiesOfClass(
+                    WitherbaneFrog.class, new AABB(WitherAltarValidator.witherbanePos(pos)).inflate(1.0))) {
+                frog.discard();
+            }
+        }
     }
 
     private static void spill(ServerLevel server, BlockPos pos, ItemStack overflow) {
@@ -221,10 +256,11 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
      * and each receptacle is stamped with that direction so its held item renders facing
      * back into the arena regardless of which way the altar was built.
      */
-    private static void reconcileFrog(ServerLevel server, BlockPos pos, WitherAltarValidator.Result result) {
+    private static void reconcileFrog(ServerLevel server, BlockPos pos, boolean show,
+            WitherAltarValidator.Result result) {
         BlockPos perch = WitherAltarValidator.witherbanePos(pos);
         List<WitherbaneFrog> frogs = server.getEntitiesOfClass(WitherbaneFrog.class, new AABB(perch).inflate(0.5));
-        if (!result.valid()) {
+        if (!show) {
             for (WitherbaneFrog f : frogs) {
                 f.discard();
             }
@@ -242,16 +278,16 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
         double cy = perch.getY();
         double cz = perch.getZ() + 0.5;
         if (frogs.isEmpty()) {
-            WitherbaneFrog frog = WitherbaneFrog.type().create(server);
+            WitherbaneFrog frog = WitherbaneFrog.type().create(server, EntitySpawnReason.MOB_SUMMONED);
             if (frog != null) {
-                frog.moveTo(cx, cy, cz, yaw, 0.0F);
+                frog.snapTo(cx, cy, cz, yaw, 0.0F);
                 frog.setYBodyRot(yaw);
                 frog.setYHeadRot(yaw);
                 server.addFreshEntity(frog);
             }
         } else {
             WitherbaneFrog frog = frogs.get(0);
-            frog.moveTo(cx, cy, cz, yaw, 0.0F);
+            frog.snapTo(cx, cy, cz, yaw, 0.0F);
             frog.setYBodyRot(yaw);
             frog.setYHeadRot(yaw);
             frog.setDeltaMovement(Vec3.ZERO);
@@ -298,26 +334,29 @@ public class WitherAltarHatchBlockEntity extends BaseContainerBlockEntity {
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
         this.items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
-        ContainerHelper.loadAllItems(tag, this.items, registries);
-        this.summonTicks = tag.getInt("SummonTicks");
-        this.ritual = readRitual(tag);
+        ContainerHelper.loadAllItems(input, this.items);
+        this.summonTicks = input.getIntOr("SummonTicks", 0);
+        this.dock.load(input);
+        this.ritual = readRitual(input);
     }
 
     /** Read the cached ritual direction, defaulting to canonical (back-compat for pre-fix altars). */
-    private static Direction readRitual(CompoundTag tag) {
-        Direction d = tag.contains("Ritual") ? Direction.byName(tag.getString("Ritual")) : null;
+    private static Direction readRitual(ValueInput input) {
+        String name = input.getStringOr("Ritual", "");
+        Direction d = name.isEmpty() ? null : Direction.byName(name);
         return d != null && d.getAxis().isHorizontal() ? d : WitherAltarValidator.CANONICAL_RITUAL;
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        ContainerHelper.saveAllItems(tag, this.items, registries);
-        tag.putInt("SummonTicks", summonTicks);
-        tag.putString("Ritual", ritual.getName());
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        ContainerHelper.saveAllItems(output, this.items);
+        output.putInt("SummonTicks", summonTicks);
+        dock.save(output);
+        output.putString("Ritual", ritual.getName());
     }
 
     // Sync the summon progress AND the resolved ritual to the client (the chest contents

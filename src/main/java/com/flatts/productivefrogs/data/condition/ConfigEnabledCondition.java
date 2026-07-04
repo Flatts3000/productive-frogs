@@ -122,6 +122,14 @@ public record ConfigEnabledCondition(Key config) implements ICondition {
                 return PFConfig.FROG_NET_ENABLED.get();
             }
         },
+        // The predation system master (#281): gates the Ender Net, Slurry Press,
+        // and Mob Slurry Basin recipes (Phase 3).
+        PREDATORS("predators") {
+            @Override
+            boolean read() {
+                return PFConfig.PREDATORS_ENABLED.get();
+            }
+        },
         FROG_LEGS("frog_legs") {
             @Override
             boolean read() {

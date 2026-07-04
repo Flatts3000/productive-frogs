@@ -4,7 +4,7 @@ import com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockE
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFMenuTypes;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -47,7 +47,7 @@ public class TerrariumControllerMenu extends AbstractContainerMenu {
 
     /** The milk variant currently buffered (read off the synced client BE), or null when empty. */
     @Nullable
-    public ResourceLocation tankVariant() {
+    public Identifier tankVariant() {
         return be == null ? null : be.tankVariant();
     }
 
@@ -66,6 +66,18 @@ public class TerrariumControllerMenu extends AbstractContainerMenu {
     /** Index into {@link TerrariumControllerBlockEntity#PROBLEM_KEYS}, or -1. */
     public int problemIndex() {
         return dataAccess.get(TerrariumControllerBlockEntity.DATA_PROBLEM);
+    }
+
+    /** Absolute position of the first structural problem (synced on the client BE), or null. */
+    @Nullable
+    public BlockPos problemPos() {
+        return be == null ? null : be.clientProblemPos();
+    }
+
+    /** This controller's position - lets the in-world outline scope itself to the open screen. */
+    @Nullable
+    public BlockPos controllerPos() {
+        return be == null ? null : be.getBlockPos();
     }
 
     /** Sprinklers in the formed multiblock (0 when unformed). */

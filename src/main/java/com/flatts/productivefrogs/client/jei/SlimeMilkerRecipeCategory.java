@@ -13,9 +13,9 @@ import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -92,16 +92,16 @@ public final class SlimeMilkerRecipeCategory implements IRecipeCategory<SlimeMil
 
     @Override
     public void draw(Recipe recipe, IRecipeSlotsView slotsView,
-                     GuiGraphics gui, double mouseX, double mouseY) {
+                     GuiGraphicsExtractor gui, double mouseX, double mouseY) {
         arrow.draw(gui, ARROW_X, ARROW_Y);
     }
 
     @Override
-    public ResourceLocation getRegistryName(Recipe recipe) {
+    public Identifier getRegistryName(Recipe recipe) {
         // Stable per-recipe id so JEI bookmarks / recipe lookups resolve - keyed
         // on the output milk bucket's variant component (unique per variant).
-        ResourceLocation variant = recipe.output().get(PFDataComponents.SLIME_VARIANT.get());
+        Identifier variant = recipe.output().get(PFDataComponents.SLIME_VARIANT.get());
         return variant != null ? variant
-            : ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "slime_milker");
+            : Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "slime_milker");
     }
 }

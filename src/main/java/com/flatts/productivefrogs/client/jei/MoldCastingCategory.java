@@ -15,11 +15,12 @@ import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 /**
  * JEI category for the Casting Mold's solidify recipes: a sized molten fluid
@@ -80,15 +81,19 @@ public final class MoldCastingCategory implements IRecipeCategory<RecipeHolder<M
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, RecipeHolder<MoldCastingRecipe> holder, IFocusGroup focuses) {
         MoldCastingRecipe recipe = holder.value();
-        // getFluids() resolves the tag to concrete stacks already carrying the
+        // Resolve the fluid ingredient's tag to concrete stacks carrying the
         // recipe's mB, so the slot cycles exactly what this environment can
         // cast. A tag with no members renders a blank slot (JEI tolerates an
         // empty ingredient list) - unreachable for the shipped roster, whose
         // gated recipes only load alongside their providers.
+        int amount = recipe.fluid().amount();
+        List<FluidStack> fluids = recipe.fluid().ingredient().fluids().stream()
+            .map(fluid -> new FluidStack(fluid, amount))
+            .toList();
         builder.addSlot(RecipeIngredientRole.INPUT, INPUT_X, SLOT_Y)
             .setStandardSlotBackground()
-            .addIngredients(NeoForgeTypes.FLUID_STACK, List.of(recipe.fluid().getFluids()))
-            .setFluidRenderer(recipe.fluid().amount(), false, 16, 16);
+            .addIngredients(NeoForgeTypes.FLUID_STACK, fluids)
+            .setFluidRenderer(amount, false, 16, 16);
         builder.addSlot(RecipeIngredientRole.OUTPUT, OUTPUT_X, SLOT_Y)
             .setOutputSlotBackground()
             .addItemStack(recipe.result().copy());
@@ -96,12 +101,12 @@ public final class MoldCastingCategory implements IRecipeCategory<RecipeHolder<M
 
     @Override
     public void draw(RecipeHolder<MoldCastingRecipe> holder, IRecipeSlotsView slotsView,
-                     GuiGraphics gui, double mouseX, double mouseY) {
+                     GuiGraphicsExtractor gui, double mouseX, double mouseY) {
         arrow.draw(gui, ARROW_X, ARROW_Y);
     }
 
     @Override
-    public ResourceLocation getRegistryName(RecipeHolder<MoldCastingRecipe> holder) {
-        return holder.id();
+    public Identifier getRegistryName(RecipeHolder<MoldCastingRecipe> holder) {
+        return holder.id().identifier();
     }
 }

@@ -5,11 +5,11 @@ import com.flatts.productivefrogs.content.block.entity.SpawneryInventory;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -104,7 +104,7 @@ public class SpawneryBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(
+    protected InteractionResult useItemOn(
         ItemStack stack,
         BlockState state,
         Level level,
@@ -115,8 +115,8 @@ public class SpawneryBlock extends Block implements EntityBlock {
     ) {
         InteractionResult openResult = openMenu(level, pos, player);
         return openResult == InteractionResult.SUCCESS
-            ? ItemInteractionResult.SUCCESS
-            : ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            ? InteractionResult.SUCCESS
+            : InteractionResult.TRY_WITH_EMPTY_HAND;
     }
 
     private InteractionResult openMenu(Level level, BlockPos pos, Player player) {
@@ -132,11 +132,8 @@ public class SpawneryBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock())) {
-            level.updateNeighbourForOutputSignal(pos, this);
-        }
-        super.onRemove(state, level, pos, newState, movedByPiston);
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
+        level.updateNeighbourForOutputSignal(pos, this);
     }
 
     @Override

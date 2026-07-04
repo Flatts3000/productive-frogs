@@ -1,13 +1,16 @@
 {
   "neoforge:conditions": [
-    { "type": "productivefrogs:config_enabled", "config": "count_catalyst" }
+    {
+      "type": "productivefrogs:config_enabled",
+      "config": "count_catalyst"
+    }
   ],
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    { "item": "productivefrogs:sweetslime" },
-    { "item": "productivefrogs:sweetslime" },
-    { "item": "minecraft:bone_meal" }
+    "productivefrogs:sweetslime",
+    "productivefrogs:sweetslime",
+    "minecraft:bone_meal"
   ],
   "result": {
     "id": "productivefrogs:count_catalyst",

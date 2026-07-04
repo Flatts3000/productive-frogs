@@ -8,12 +8,11 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -30,6 +29,8 @@ import net.minecraft.world.item.ItemUtils;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -71,19 +72,19 @@ public class MimicSlime extends Slime implements Bucketable {
 
     /** The carried item id, or {@code null} if un-stamped. */
     @Nullable
-    public ResourceLocation getSynthesizedItem() {
+    public Identifier getSynthesizedItem() {
         String s = this.entityData.get(DATA_ITEM_ID);
-        return s.isEmpty() ? null : ResourceLocation.tryParse(s);
+        return s.isEmpty() ? null : Identifier.tryParse(s);
     }
 
-    public void setSynthesizedItem(@Nullable ResourceLocation itemId) {
+    public void setSynthesizedItem(@Nullable Identifier itemId) {
         this.entityData.set(DATA_ITEM_ID, itemId == null ? "" : itemId.toString());
     }
 
     /** The carried {@link Item}, or {@code null} if un-stamped or unknown. */
     @Nullable
     public Item getSynthesizedItemAsItem() {
-        ResourceLocation id = getSynthesizedItem();
+        Identifier id = getSynthesizedItem();
         return id == null ? null : BuiltInRegistries.ITEM.getOptional(id).orElse(null);
     }
 
@@ -123,22 +124,20 @@ public class MimicSlime extends Slime implements Bucketable {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
-        super.addAdditionalSaveData(tag);
-        ResourceLocation id = getSynthesizedItem();
+    public void addAdditionalSaveData(ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        Identifier id = getSynthesizedItem();
         if (id != null) {
-            tag.putString("SynthesizedItem", id.toString());
+            output.putString("SynthesizedItem", id.toString());
         }
-        tag.putBoolean("FromBucket", fromBucket());
+        output.putBoolean("FromBucket", fromBucket());
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag tag) {
-        super.readAdditionalSaveData(tag);
-        if (tag.contains("SynthesizedItem", Tag.TAG_STRING)) {
-            setSynthesizedItem(ResourceLocation.tryParse(tag.getString("SynthesizedItem")));
-        }
-        setFromBucket(tag.contains("FromBucket", Tag.TAG_BYTE) && tag.getBoolean("FromBucket"));
+    public void readAdditionalSaveData(ValueInput input) {
+        super.readAdditionalSaveData(input);
+        input.getString("SynthesizedItem").ifPresent(s -> setSynthesizedItem(Identifier.tryParse(s)));
+        setFromBucket(input.getBooleanOr("FromBucket", false));
     }
 
     // ---------------------------------------------------------------------
@@ -184,14 +183,14 @@ public class MimicSlime extends Slime implements Bucketable {
             CriteriaTriggers.FILLED_BUCKET.trigger(serverPlayer, filled);
         }
         this.discard();
-        return InteractionResult.sidedSuccess(level.isClientSide());
+        return InteractionResult.SUCCESS;
     }
 
     @Override
     @SuppressWarnings("deprecation")
     public void saveToBucketTag(ItemStack stack) {
         Bucketable.saveDefaultDataToBucketTag(this, stack);
-        ResourceLocation id = getSynthesizedItem();
+        Identifier id = getSynthesizedItem();
         if (id != null) {
             // Top-level component drives the bucket's ItemColor tint + display name.
             stack.set(PFDataComponents.SYNTHESIZED_ITEM.get(), id);
@@ -205,8 +204,8 @@ public class MimicSlime extends Slime implements Bucketable {
     @SuppressWarnings("deprecation")
     public void loadFromBucketTag(CompoundTag tag) {
         Bucketable.loadDefaultDataFromBucketTag(this, tag);
-        if (tag.contains("SynthesizedItem", Tag.TAG_STRING)) {
-            setSynthesizedItem(ResourceLocation.tryParse(tag.getString("SynthesizedItem")));
+        if (tag.contains("SynthesizedItem")) {
+            setSynthesizedItem(Identifier.tryParse(tag.getStringOr("SynthesizedItem", "")));
         }
         setSize(1, true);
         setFromBucket(true);

@@ -1,0 +1,5 @@
+{
+  "entity_type": "minecraft:salmon",
+  "predator": "gulper",
+  "handling": "swim"
+}

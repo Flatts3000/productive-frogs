@@ -1,0 +1,5 @@
+{
+  "entity_type": "minecraft:skeleton",
+  "predator": "prowler",
+  "handling": "walk"
+}

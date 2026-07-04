@@ -14,7 +14,7 @@ import com.flatts.productivefrogs.registry.PFRegistries;
 import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
@@ -78,7 +78,7 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
     /** Paid-for batch still to emit (Quantity catalyst > output stacksTo(1)). */
     private int pendingBatch = 0;
     /** For a variant batch: the variant id. For a Mimic batch (#253): the synthesized item id. */
-    @Nullable private ResourceLocation pendingVariant;
+    @Nullable private Identifier pendingVariant;
     /** Variant batch only; null for a Mimic batch (signalled by {@link #pendingMimic}). */
     @Nullable private Category pendingCategory;
     /** True when the pending batch is Mimic Slime Buckets (Equivalence lane, #253). */
@@ -152,9 +152,14 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
         // The key is the variant id for variant milk, or (Equivalence lane, #253)
         // the synthesized item id for Mimic Milk. Both run the same spawn economy.
         boolean mimic = milk.getItem() instanceof com.flatts.productivefrogs.content.item.MimicMilkBucketItem;
-        ResourceLocation variantId;
-        if (milk.getItem() instanceof SlimeMilkBucketItem milkItem) {
-            variantId = milkItem.variantId();
+        Identifier variantId;
+        if (milk.getItem() instanceof SlimeMilkBucketItem) {
+            variantId = SlimeMilkBucketItem.variantOf(milk);
+            if (variantId == null) {
+                be.resetInterval();
+                setWorking(level, pos, state, false);
+                return;
+            }
         } else if (mimic) {
             variantId = milk.get(PFDataComponents.SYNTHESIZED_ITEM.get());
             if (variantId == null) {
@@ -322,9 +327,8 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
 
     /** Resolve a variant from the datapack registry, or null when unknown. */
     @Nullable
-    private static SlimeVariant resolveVariant(Level level, ResourceLocation variantId) {
-        return level.registryAccess()
-            .registry(PFRegistries.SLIME_VARIANT).map(r -> r.get(variantId)).orElse(null);
+    private static SlimeVariant resolveVariant(Level level, Identifier variantId) {
+        return PFRegistries.variant(level.registryAccess(), variantId);
     }
 
     /**
@@ -333,7 +337,7 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
      * budget spend, logged once.
      */
     private static void failClosedUnknownVariant(Level level, BlockPos pos, BlockState state,
-            SlimeChurnBlockEntity be, ResourceLocation variantId) {
+            SlimeChurnBlockEntity be, Identifier variantId) {
         PFDebug.logOnce(PFDebug.Area.CHURN, "novariant#" + pos,
             () -> String.format("churn @%s fail-closed: unknown variant %s", pos, variantId));
         be.resetInterval();
@@ -426,42 +430,41 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
     // -------------------------------------------------------------------
 
     @Override
-    protected void saveAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.putInt("IntervalRemaining", intervalRemaining);
-        tag.putInt("IntervalTotal", intervalTotal);
+    protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
+        super.saveAdditional(output);
+        output.putInt("IntervalRemaining", intervalRemaining);
+        output.putInt("IntervalTotal", intervalTotal);
         // A variant batch needs both ids; a Mimic batch (#253) persists the item
         // id + the mimic flag (no category).
         if (pendingBatch > 0 && pendingVariant != null && (pendingMimic || pendingCategory != null)) {
-            tag.putInt("PendingBatch", pendingBatch);
-            tag.putString("PendingVariant", pendingVariant.toString());
+            output.putInt("PendingBatch", pendingBatch);
+            output.putString("PendingVariant", pendingVariant.toString());
             if (pendingMimic) {
-                tag.putBoolean("PendingMimic", true);
+                output.putBoolean("PendingMimic", true);
             } else {
-                tag.putString("PendingCategory", pendingCategory.name());
+                output.putString("PendingCategory", pendingCategory.name());
             }
         }
-        net.minecraft.nbt.CompoundTag invTag = new net.minecraft.nbt.CompoundTag();
-        inventory.serialize(invTag);
-        tag.put("Inventory", invTag);
+        inventory.serialize(output.child("Inventory"));
     }
 
     @Override
-    protected void loadAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    protected void loadAdditional(net.minecraft.world.level.storage.ValueInput input) {
+        super.loadAdditional(input);
         // Clamp on load: tampered/old saves must not stall the churn (a
         // negative remaining would never reach 0) - same posture as the
         // Milker's cookProgress clamp.
-        intervalTotal = Math.max(0, tag.getInt("IntervalTotal"));
-        intervalRemaining = Math.max(0, Math.min(tag.getInt("IntervalRemaining"), intervalTotal));
-        pendingBatch = Math.max(0, tag.getInt("PendingBatch"));
-        pendingVariant = tag.contains("PendingVariant", net.minecraft.nbt.Tag.TAG_STRING)
-            ? ResourceLocation.tryParse(tag.getString("PendingVariant")) : null;
-        pendingMimic = tag.getBoolean("PendingMimic");
+        intervalTotal = Math.max(0, input.getIntOr("IntervalTotal", 0));
+        intervalRemaining = Math.max(0, Math.min(input.getIntOr("IntervalRemaining", 0), intervalTotal));
+        pendingBatch = Math.max(0, input.getIntOr("PendingBatch", 0));
+        String pendingVariantId = input.getStringOr("PendingVariant", "");
+        pendingVariant = pendingVariantId.isEmpty() ? null : Identifier.tryParse(pendingVariantId);
+        pendingMimic = input.getBooleanOr("PendingMimic", false);
         pendingCategory = null;
-        if (tag.contains("PendingCategory", net.minecraft.nbt.Tag.TAG_STRING)) {
+        String pendingCategoryName = input.getStringOr("PendingCategory", "");
+        if (!pendingCategoryName.isEmpty()) {
             try {
-                pendingCategory = Category.valueOf(tag.getString("PendingCategory"));
+                pendingCategory = Category.valueOf(pendingCategoryName);
             } catch (IllegalArgumentException ignored) {
             }
         }
@@ -471,18 +474,14 @@ public class SlimeChurnBlockEntity extends BlockEntity implements MenuProvider {
             pendingBatch = 0;
             pendingMimic = false;
         }
-        if (tag.contains("Inventory", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
-            inventory.deserialize(tag.getCompound("Inventory"));
-        }
+        input.child("Inventory").ifPresent(inventory::deserialize);
     }
 
     // Client sync for chunk load (Jade/WTHIT read contents without opening
     // the GUI) - same posture as the Milker.
     @Override
     public net.minecraft.nbt.CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider registries) {
-        net.minecraft.nbt.CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries);
-        return tag;
+        return saveCustomOnly(registries);
     }
 
     @Override

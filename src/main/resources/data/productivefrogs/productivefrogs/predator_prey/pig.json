@@ -1,0 +1,5 @@
+{
+  "entity_type": "minecraft:pig",
+  "predator": "prowler",
+  "handling": "walk"
+}

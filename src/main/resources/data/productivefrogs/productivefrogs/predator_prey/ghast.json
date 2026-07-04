@@ -1,0 +1,5 @@
+{
+  "entity_type": "minecraft:ghast",
+  "predator": "cinder",
+  "handling": "fly"
+}

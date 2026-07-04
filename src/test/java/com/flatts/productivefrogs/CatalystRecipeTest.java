@@ -79,11 +79,9 @@ class CatalystRecipeTest {
         // The premium "final tier of the count line": its key must reference the
         // Count catalyst as an ingredient.
         JsonObject key = recipe.getAsJsonObject("key");
-        boolean usesCount = key.entrySet().stream().anyMatch(e -> {
-            JsonObject ing = e.getValue().getAsJsonObject();
-            return ing.has("item")
-                && "productivefrogs:count_catalyst".equals(ing.get("item").getAsString());
-        });
+        boolean usesCount = key.entrySet().stream().anyMatch(e ->
+            "productivefrogs:count_catalyst".equals(e.getValue().getAsString())
+        );
         assertTrue(usesCount, "infinite catalyst must be crafted from count catalysts");
     }
 

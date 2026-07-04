@@ -15,11 +15,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -31,6 +30,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +63,7 @@ public class SprinklerBlockEntity extends BlockEntity {
     public static volatile Integer cavitySlimeCapOverride = null;
 
     @Nullable
-    private ResourceLocation variantId;
+    private Identifier variantId;
     /** Equivalence lane (#253): true when {@link #variantId} is a synthesized item id, not a variant. */
     private boolean mimic;
     private int spawnsRemaining = UNINITIALIZED;
@@ -83,7 +84,7 @@ public class SprinklerBlockEntity extends BlockEntity {
     }
 
     @Nullable
-    public ResourceLocation getVariantId() {
+    public Identifier getVariantId() {
         return variantId;
     }
 
@@ -119,22 +120,22 @@ public class SprinklerBlockEntity extends BlockEntity {
     }
 
     /** A candidate for top-up: holds {@code variant}, not infinite, and draining low. */
-    public boolean wantsTopUp(ResourceLocation variant, int threshold) {
+    public boolean wantsTopUp(Identifier variant, int threshold) {
         return wantsTopUp(variant, false, threshold);
     }
 
     /** Top-up candidate, mimic-aware (#253): the synthesized-vs-variant kind must also match. */
-    public boolean wantsTopUp(ResourceLocation variant, boolean mimic, int threshold) {
+    public boolean wantsTopUp(Identifier variant, boolean mimic, int threshold) {
         return variant.equals(variantId) && this.mimic == mimic && !infinite && spawnsRemaining <= threshold;
     }
 
     /** Stamp a fresh variant charge (replaces whatever was here). */
-    public void loadCharge(ResourceLocation variant, MilkCharge charge) {
+    public void loadCharge(Identifier variant, MilkCharge charge) {
         loadCharge(variant, false, charge);
     }
 
     /** Stamp a fresh charge; {@code mimic} marks {@code variant} as a synthesized item id (#253). */
-    public void loadCharge(ResourceLocation variant, boolean mimic, MilkCharge charge) {
+    public void loadCharge(Identifier variant, boolean mimic, MilkCharge charge) {
         this.variantId = variant;
         this.mimic = mimic;
         this.spawnsRemaining = clampSpawns(charge.spawnsRemaining());
@@ -340,7 +341,7 @@ public class SprinklerBlockEntity extends BlockEntity {
             }
             // Equivalence lane (#253): spawn a Mimic Slime carrying the item, not a variant slime.
             com.flatts.productivefrogs.content.entity.MimicSlime m =
-                com.flatts.productivefrogs.registry.PFEntities.MIMIC_SLIME.get().create(level);
+                com.flatts.productivefrogs.registry.PFEntities.MIMIC_SLIME.get().create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
             if (m == null) {
                 return;
             }
@@ -353,7 +354,7 @@ public class SprinklerBlockEntity extends BlockEntity {
             return;
         }
         slime.setSize(1, true);
-        slime.moveTo(target.getX() + 0.5, target.getY(), target.getZ() + 0.5,
+        slime.snapTo(target.getX() + 0.5, target.getY(), target.getZ() + 0.5,
             level.getRandom().nextFloat() * 360F, 0F);
         level.addFreshEntity(slime);
     }
@@ -402,7 +403,7 @@ public class SprinklerBlockEntity extends BlockEntity {
      */
     private void sync() {
         setChanged();
-        if (level != null && !level.isClientSide) {
+        if (level != null && !level.isClientSide()) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
     }
@@ -453,36 +454,37 @@ public class SprinklerBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
         if (variantId != null) {
-            tag.putString("Variant", variantId.toString());
+            output.putString("Variant", variantId.toString());
             if (mimic) {
-                tag.putBoolean("Mimic", true);
+                output.putBoolean("Mimic", true);
             }
-            tag.putInt("SpawnsRemaining", spawnsRemaining);
-            tag.putInt("SpawnsCapacity", spawnsCapacity);
-            tag.putInt("SpeedLevel", speedLevel);
-            tag.putInt("QuantityLevel", quantityLevel);
-            tag.putBoolean("Infinite", infinite);
-            tag.putInt("IntervalRemaining", intervalRemaining);
-            tag.putInt("IntervalTotal", intervalTotal);
+            output.putInt("SpawnsRemaining", spawnsRemaining);
+            output.putInt("SpawnsCapacity", spawnsCapacity);
+            output.putInt("SpeedLevel", speedLevel);
+            output.putInt("QuantityLevel", quantityLevel);
+            output.putBoolean("Infinite", infinite);
+            output.putInt("IntervalRemaining", intervalRemaining);
+            output.putInt("IntervalTotal", intervalTotal);
         }
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.contains("Variant", Tag.TAG_STRING)) {
-            variantId = ResourceLocation.tryParse(tag.getString("Variant"));
-            mimic = tag.getBoolean("Mimic");
-            spawnsRemaining = clampSpawns(tag.getInt("SpawnsRemaining"));
-            spawnsCapacity = clampSpawns(Math.max(tag.getInt("SpawnsCapacity"), spawnsRemaining));
-            speedLevel = Mth.clamp(tag.getInt("SpeedLevel"), 0, PFConfig.catalystMaxSpeedLevel());
-            quantityLevel = Mth.clamp(tag.getInt("QuantityLevel"), 0, PFConfig.catalystMaxQuantityLevel());
-            infinite = tag.getBoolean("Infinite");
-            intervalTotal = Math.max(0, tag.getInt("IntervalTotal"));
-            intervalRemaining = Math.max(0, Math.min(tag.getInt("IntervalRemaining"), intervalTotal));
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        String variant = input.getStringOr("Variant", "");
+        if (!variant.isEmpty()) {
+            variantId = Identifier.tryParse(variant);
+            mimic = input.getBooleanOr("Mimic", false);
+            spawnsRemaining = clampSpawns(input.getIntOr("SpawnsRemaining", 0));
+            spawnsCapacity = clampSpawns(Math.max(input.getIntOr("SpawnsCapacity", 0), spawnsRemaining));
+            speedLevel = Mth.clamp(input.getIntOr("SpeedLevel", 0), 0, PFConfig.catalystMaxSpeedLevel());
+            quantityLevel = Mth.clamp(input.getIntOr("QuantityLevel", 0), 0, PFConfig.catalystMaxQuantityLevel());
+            infinite = input.getBooleanOr("Infinite", false);
+            intervalTotal = Math.max(0, input.getIntOr("IntervalTotal", 0));
+            intervalRemaining = Math.max(0, Math.min(input.getIntOr("IntervalRemaining", 0), intervalTotal));
         } else {
             variantId = null;
             mimic = false;
@@ -493,9 +495,7 @@ public class SprinklerBlockEntity extends BlockEntity {
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries); // sync variant + spawns for Jade + the FILLED visual
-        return tag;
+        return saveCustomOnly(registries); // sync variant + spawns for Jade + the FILLED visual
     }
 
     @Override

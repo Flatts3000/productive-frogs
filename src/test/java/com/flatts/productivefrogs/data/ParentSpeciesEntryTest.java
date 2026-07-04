@@ -9,7 +9,7 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import java.util.Optional;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -36,21 +36,21 @@ class ParentSpeciesEntryTest {
     @Test
     void decodesVanillaParentSpeciesEntry() {
         ParentSpeciesEntry entry = decode(JSON_VANILLA);
-        assertEquals(ResourceLocation.parse("minecraft:slime"), entry.entityType());
+        assertEquals(Identifier.parse("minecraft:slime"), entry.entityType());
         assertEquals(Category.BOG, entry.category());
     }
 
     @Test
     void decodesPfParentSpeciesEntry() {
         ParentSpeciesEntry entry = decode(JSON_PF);
-        assertEquals(ResourceLocation.parse("productivefrogs:cave_slime"), entry.entityType());
+        assertEquals(Identifier.parse("productivefrogs:cave_slime"), entry.entityType());
         assertEquals(Category.CAVE, entry.category());
     }
 
     @Test
     void codecRoundTrip() {
         ParentSpeciesEntry original = new ParentSpeciesEntry(
-            ResourceLocation.parse("productivefrogs:void_slime"),
+            Identifier.parse("productivefrogs:void_slime"),
             Category.VOID,
             Optional.empty()
         );
@@ -66,9 +66,9 @@ class ParentSpeciesEntryTest {
     @Test
     void codecRoundTripWithInnerBlock() {
         ParentSpeciesEntry original = new ParentSpeciesEntry(
-            ResourceLocation.parse("productivefrogs:cave_slime"),
+            Identifier.parse("productivefrogs:cave_slime"),
             Category.CAVE,
-            Optional.of(ResourceLocation.parse("minecraft:stone"))
+            Optional.of(Identifier.parse("minecraft:stone"))
         );
         JsonElement encoded = ParentSpeciesEntry.CODEC.encodeStart(JsonOps.INSTANCE, original)
             .result()
@@ -77,7 +77,7 @@ class ParentSpeciesEntryTest {
             .result()
             .orElseThrow();
         assertEquals(original, decoded);
-        assertEquals(Optional.of(ResourceLocation.parse("minecraft:stone")),
+        assertEquals(Optional.of(Identifier.parse("minecraft:stone")),
             decoded.innerBlock());
     }
 

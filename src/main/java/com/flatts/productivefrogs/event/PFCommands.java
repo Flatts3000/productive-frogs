@@ -60,9 +60,9 @@ public final class PFCommands {
         // Canonical root + short alias. A fresh subtree per root (a Brigadier
         // builder is consumed when built, so it can't be shared between roots).
         event.getDispatcher().register(
-            Commands.literal("productivefrogs").requires(src -> src.hasPermission(2)).then(debugSubtree()));
+            Commands.literal("productivefrogs").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)).then(debugSubtree()));
         event.getDispatcher().register(
-            Commands.literal("pf").requires(src -> src.hasPermission(2)).then(debugSubtree()));
+            Commands.literal("pf").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)).then(debugSubtree()));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> debugSubtree() {

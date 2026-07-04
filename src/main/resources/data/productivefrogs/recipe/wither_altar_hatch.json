@@ -1,6 +1,9 @@
 {
   "neoforge:conditions": [
-    { "type": "productivefrogs:config_enabled", "config": "boss" }
+    {
+      "type": "productivefrogs:config_enabled",
+      "config": "boss"
+    }
   ],
   "type": "minecraft:crafting_shaped",
   "category": "building",
@@ -11,8 +14,11 @@
     "OOO"
   ],
   "key": {
-    "O": { "item": "minecraft:obsidian" },
-    "C": { "item": "minecraft:chest" }
+    "O": "minecraft:obsidian",
+    "C": "minecraft:chest"
   },
-  "result": { "id": "productivefrogs:wither_altar_hatch", "count": 1 }
+  "result": {
+    "id": "productivefrogs:wither_altar_hatch",
+    "count": 1
+  }
 }

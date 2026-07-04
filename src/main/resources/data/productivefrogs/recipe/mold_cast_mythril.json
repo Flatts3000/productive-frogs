@@ -1,8 +1,16 @@
 {
   "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "mythicmetals" }
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mythicmetals"
+    }
   ],
   "type": "productivefrogs:mold_casting",
-  "fluid": { "tag": "c:molten_mythril", "amount": 90 },
-  "result": { "id": "mythicmetals:mythril_ingot" }
+  "fluid": {
+    "ingredient": "#c:molten_mythril",
+    "amount": 90
+  },
+  "result": {
+    "id": "mythicmetals:mythril_ingot"
+  }
 }

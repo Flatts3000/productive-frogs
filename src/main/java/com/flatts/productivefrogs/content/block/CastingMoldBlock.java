@@ -5,7 +5,6 @@ import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -16,7 +15,6 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,13 +51,14 @@ public class CastingMoldBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
             Player player, InteractionHand hand, BlockHitResult hit) {
-        if (stack.getCapability(Capabilities.FluidHandler.ITEM) != null
-                && FluidUtil.interactWithFluidHandler(player, hand, level, pos, hit.getDirection())) {
-            return ItemInteractionResult.sidedSuccess(level.isClientSide());
+        // FluidUtil resolves the held item's fluid handler internally and returns false for a
+        // non-fluid item, so it doubles as the "is this fluid-capable" guard.
+        if (FluidUtil.interactWithFluidHandler(player, hand, level, pos, hit.getDirection())) {
+            return InteractionResult.SUCCESS;
         }
-        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        return InteractionResult.TRY_WITH_EMPTY_HAND;
     }
 
     @Override
@@ -68,20 +67,12 @@ public class CastingMoldBlock extends Block implements EntityBlock {
                 && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
             serverPlayer.openMenu(mold, pos);
         }
-        return InteractionResult.sidedSuccess(level.isClientSide());
+        return InteractionResult.SUCCESS;
     }
 
-    @Override
-    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock())
-                && level.getBlockEntity(pos) instanceof CastingMoldBlockEntity mold) {
-            ItemStack out = mold.output().getStackInSlot(CastingMoldBlockEntity.OUTPUT_SLOT);
-            if (!out.isEmpty()) {
-                Block.popResource(level, pos, out);
-            }
-        }
-        super.onRemove(state, level, pos, newState, movedByPiston);
-    }
+    // 26.1 port: drop-on-break now lives in CastingMoldBlockEntity#preRemoveSideEffects (the BE
+    // still exists there, whereas it is gone by affectNeighborsAfterRemoval). This block has no
+    // BE-independent removal side effect, so no affectNeighborsAfterRemoval override is needed.
 
     @SuppressWarnings("unchecked")
     @Nullable

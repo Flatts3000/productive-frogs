@@ -5,15 +5,18 @@ import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
@@ -89,6 +92,11 @@ public class EndCrystalReceptacleBlockEntity extends BlockEntity {
         return insertOnly;
     }
 
+    /** The 26.1 {@code Capabilities.Item.BLOCK} view: insert-only over the single crystal slot. */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> crystalResource() {
+        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(crystal, new int[] {0}, true, false);
+    }
+
     /** True when a crystal is held. */
     public boolean isFilled() {
         return !crystal.getStackInSlot(0).isEmpty();
@@ -120,6 +128,20 @@ public class EndCrystalReceptacleBlockEntity extends BlockEntity {
         return crystal.getStackInSlot(0);
     }
 
+    // 26.1 port: the crystal drops here (the BE still exists on the removal path), NOT in the
+    // block's affectNeighborsAfterRemoval, which runs after the BE is gone. This BE is not a
+    // vanilla Container, so the super default won't drop it - re-home the spill here.
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (this.level instanceof ServerLevel serverLevel) {
+            ItemStack held = contents();
+            if (!held.isEmpty()) {
+                Containers.dropItemStack(serverLevel, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, held);
+            }
+        }
+    }
+
     private void onCrystalChanged() {
         setChanged();
         if (level != null && !level.isClientSide()) {
@@ -135,24 +157,20 @@ public class EndCrystalReceptacleBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.put("Crystal", crystal.serializeNBT(registries));
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        crystal.serialize(output.child("Crystal"));
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.contains("Crystal", Tag.TAG_COMPOUND)) {
-            crystal.deserializeNBT(registries, tag.getCompound("Crystal"));
-        }
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        input.child("Crystal").ifPresent(crystal::deserialize);
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries);
-        return tag;
+        return saveCustomOnly(registries);
     }
 
     @Override
