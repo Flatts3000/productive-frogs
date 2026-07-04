@@ -79,9 +79,11 @@ public final class AltarApexDock {
 
     /**
      * Try to install from a filled net: the captured entity must be a Resource
-     * Frog whose Kind is this altar's required Apex. On success the net NBT
-     * moves onto the dock (caller empties the net item). Returns false - net
-     * untouched - for an empty net, a non-frog, or the wrong kind.
+     * FROG (the entity-type check matters: a ResourceTadpole writes the same
+     * Kind NBT dialect, so kind alone would let an apex TADPOLE install and arm
+     * the altar) whose Kind is this altar's required Apex. On success the net
+     * NBT moves onto the dock (caller empties the net item). Returns false -
+     * net untouched - for an empty net, a non-frog, or the wrong kind.
      */
     public boolean tryInstall(ItemStack netStack) {
         if (isInstalled() || !EntityNetItem.isFilled(netStack)) {
@@ -92,6 +94,10 @@ public final class AltarApexDock {
             return false;
         }
         CompoundTag tag = data.copyTag();
+        String entityId = tag.getStringOr("entity", "");
+        if (!com.flatts.productivefrogs.registry.PFEntities.RESOURCE_FROG.getId().toString().equals(entityId)) {
+            return false; // a tadpole (or anything else) is not an installable Apex
+        }
         FrogKind kind = FrogKind.readFromTag(tag).orElse(null);
         if (kind != required) {
             return false;
@@ -112,9 +118,10 @@ public final class AltarApexDock {
             return;
         }
         // Rebuild exactly like EntityNetItem.entityFromStack: type id from the
-        // net dialect, whole-entity load, passengers stripped.
+        // net dialect, whole-entity load, passengers stripped. The stored NBT is
+        // cleared only AFTER a successful spawn - a failed rebuild must never
+        // void the installed entity (it stays docked for the next attempt).
         CompoundTag tag = installedFrogNbt;
-        installedFrogNbt = null;
         var type = net.minecraft.world.entity.EntityType.byString(tag.getStringOr("entity", "")).orElse(null);
         if (type == null) {
             return;
@@ -128,10 +135,11 @@ public final class AltarApexDock {
             net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), tag));
         if (!(frog instanceof ResourceFrog)) {
             frog.discard();
-            return;
+            return; // NBT retained - nothing is voided
         }
         frog.snapTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
         level.addFreshEntity(frog);
+        installedFrogNbt = null;
         onChanged.run();
     }
 

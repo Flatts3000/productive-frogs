@@ -212,6 +212,14 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
         if (!validateStructure(server, pos)) {
             return; // broken mid-summon - abort, fuel untouched
         }
+        // Re-check the fuel too: receptacles allow bare right-click retrieval and
+        // have no summon lock, so without this a player could start the summon,
+        // pull the fuel back out mid-window, and still collect the full payout
+        // (spendFuel silently no-ops on empty receptacles) - an infinite boss-loot
+        // exploit. Pulled fuel = broken ritual: abort with no payout.
+        if (!fuelReady(server, pos)) {
+            return;
+        }
         lashDisplay(server, pos);
         spendFuel(server, pos);
         // XP banks as Liquid Experience in the dock (overflow -> orbs, never voided).
