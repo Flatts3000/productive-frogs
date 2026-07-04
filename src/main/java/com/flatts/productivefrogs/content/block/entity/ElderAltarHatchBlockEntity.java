@@ -43,12 +43,16 @@ public class ElderAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
 
     @Override
     protected boolean validateStructure(ServerLevel server, BlockPos pos) {
-        return ElderAltarValidator.validate(server, pos).valid();
+        ElderAltarValidator.Result result = ElderAltarValidator.validate(server, pos);
+        if (result.valid()) {
+            setOrientation(result.interior());
+        }
+        return result.valid();
     }
 
     @Override
     protected boolean fuelReady(ServerLevel server, BlockPos pos) {
-        for (BlockPos rp : ElderAltarValidator.receptacles(pos)) {
+        for (BlockPos rp : ElderAltarValidator.receptacles(pos, orientation())) {
             if (!(server.getBlockEntity(rp) instanceof SummonReceptacleBlockEntity r) || !r.isFilled()) {
                 return false;
             }
@@ -58,7 +62,7 @@ public class ElderAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
 
     @Override
     protected void spendFuel(ServerLevel server, BlockPos pos) {
-        for (BlockPos rp : ElderAltarValidator.receptacles(pos)) {
+        for (BlockPos rp : ElderAltarValidator.receptacles(pos, orientation())) {
             if (server.getBlockEntity(rp) instanceof SummonReceptacleBlockEntity r) {
                 r.consume();
             }
@@ -67,18 +71,20 @@ public class ElderAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
 
     @Override
     protected void reconcileDisplay(ServerLevel server, BlockPos pos, boolean show) {
-        reconcileDisplayFrog(server, ElderAltarValidator.elderbanePos(pos), 180.0F, null,
+        // In the water in front of the wall-mounted Hatch, facing the tank center.
+        float yaw = orientation().toYRot();
+        reconcileDisplayFrog(server, ElderAltarValidator.elderbanePos(pos, orientation()), yaw, yaw,
             ElderbaneFrog.type(), ElderbaneFrog.class, show);
     }
 
     @Override
     protected void lashDisplay(ServerLevel server, BlockPos pos) {
-        lashDisplayFrog(server, ElderAltarValidator.elderbanePos(pos), ElderbaneFrog.class);
+        lashDisplayFrog(server, ElderAltarValidator.elderbanePos(pos, orientation()), ElderbaneFrog.class);
     }
 
     @Override
     protected void discardDisplay(ServerLevel server, BlockPos pos) {
-        discardDisplayFrog(server, ElderAltarValidator.elderbanePos(pos), ElderbaneFrog.class);
+        discardDisplayFrog(server, ElderAltarValidator.elderbanePos(pos, orientation()), ElderbaneFrog.class);
     }
 
     @Override

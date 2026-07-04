@@ -35,7 +35,11 @@ public class GrowingReplicaRenderer<T extends BossAltarHatchBlockEntity>
 
     private final EntityRenderDispatcher dispatcher;
     private final EntityType<?> replicaType;
-    /** Rest offset of the replica's feet from the hatch block origin. */
+    /**
+     * Rest offset of the replica's feet from the hatch block origin, authored in
+     * the validator's canonical frame (interior toward +Z / SOUTH); rotated per
+     * frame by the hatch's resolved orientation.
+     */
     private final Vec3 restOffset;
     /** How far below the rest position the replica starts (rises as the summon runs). */
     private final double riseDepth;
@@ -83,11 +87,26 @@ public class GrowingReplicaRenderer<T extends BossAltarHatchBlockEntity>
             return;
         }
         phantom.tickCount = (int) time; // advance idle animation
-        phantom.setYRot(180.0F);
+        // Face back toward the wall-mounted Hatch (canonical interior SOUTH -> face NORTH).
+        net.minecraft.core.Direction interior = be.orientation();
+        phantom.setYRot(interior.getOpposite().toYRot());
         EntityRenderState replica = dispatcher.extractEntity(phantom, partialTick);
         replica.shadowRadius = 0.0F; // suppress the shadow (it is a mirage)
         state.replica = replica;
         state.progress = progress;
+        // Rotate the canonical rest offset into the resolved frame.
+        state.offX = switch (interior) {
+            case WEST -> -restOffset.z;
+            case NORTH -> -restOffset.x;
+            case EAST -> restOffset.z;
+            default -> restOffset.x; // SOUTH identity
+        };
+        state.offZ = switch (interior) {
+            case WEST -> restOffset.x;
+            case NORTH -> -restOffset.z;
+            case EAST -> -restOffset.x;
+            default -> restOffset.z;
+        };
         state.active = true;
     }
 
@@ -101,9 +120,9 @@ public class GrowingReplicaRenderer<T extends BossAltarHatchBlockEntity>
         float scale = 0.05F + 0.95F * progress;
         poseStack.pushPose();
         poseStack.translate(
-            0.5 + restOffset.x,
+            0.5 + state.offX,
             restOffset.y - riseDepth * (1.0 - progress),
-            0.5 + restOffset.z);
+            0.5 + state.offZ);
         poseStack.scale(scale, scale, scale);
         dispatcher.submit(state.replica, camera, 0.0, 0.0, 0.0, poseStack, collector);
         poseStack.popPose();
@@ -114,5 +133,7 @@ public class GrowingReplicaRenderer<T extends BossAltarHatchBlockEntity>
         public boolean active;
         public EntityRenderState replica;
         public float progress;
+        public double offX;
+        public double offZ;
     }
 }

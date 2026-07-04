@@ -118,6 +118,18 @@ public class SummonReceptacleBlockEntity extends BlockEntity {
         return ritual;
     }
 
+    /**
+     * Player-chosen display face (the side the held item renders on): set from the
+     * clicked face on insert. A FORMED altar overrides it - the hatch re-stamps the
+     * ritual every validation pass, so the item snaps to the arena-facing side
+     * within a second; on an unformed altar the player's choice stands.
+     */
+    public void setDisplayFace(Direction face) {
+        if (face.getAxis().isHorizontal()) {
+            setRitual(face.getOpposite());
+        }
+    }
+
     /** Stamp the altar's ritual direction; sync to clients only on change. */
     public void setRitual(Direction dir) {
         if (this.ritual != dir && dir != null) {

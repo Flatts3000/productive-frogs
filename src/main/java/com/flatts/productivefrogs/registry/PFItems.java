@@ -709,6 +709,8 @@ public final class PFItems {
         registerSimpleBlockItem("tide_offering_receptacle", PFBlocks.TIDE_OFFERING_RECEPTACLE, new Item.Properties());
     public static final DeferredItem<BlockItem> MONUMENT_CORE =
         registerSimpleBlockItem("monument_core", PFBlocks.MONUMENT_CORE, new Item.Properties());
+    public static final DeferredItem<BlockItem> REINFORCED_LIGHT_BLUE_STAINED_GLASS =
+        registerSimpleBlockItem("reinforced_light_blue_stained_glass", PFBlocks.REINFORCED_LIGHT_BLUE_STAINED_GLASS, new Item.Properties());
 
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);

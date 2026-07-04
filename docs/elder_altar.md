@@ -6,22 +6,23 @@ no mining fatigue, no lasers, no thorns. Part of the #281 mob-drop redesign
 Supersedes the scrapped #248. Fourth altar on the shared
 `BossAltarHatchBlockEntity` machinery.
 
-## Shape - a sealed water tank
+## Shape - a sealed aquarium
 
 Altar rules: one Hatch, reinforced froglights, gated by one boss resource. The
 well is a 5x5x5 sealed tank, **4-fold symmetric**, anchored on the **Elder
 Altar Hatch** in the tank floor center:
 
 - **Floor** (`y-1`): 5x5 Reinforced Sponge Froglight.
-- **Walls** (`y0..2`): the 5x5 ring, Reinforced Prismarine Froglight, around a
-  3x3 cavity.
+- **Walls** (`y0..2`): the 5x5 ring, **Reinforced Light Blue Stained Glass** -
+  the aquarium view (maintainer ruling 2026-07-04): Elderbane and the summon
+  replica read from outside the tank.
 - **Roof** (`y3`): Reinforced Prismarine Froglight plate with the four **Tide
   Offering Receptacles** standing at the corners like monument spires and the
   **Monument Core** capstone at the center (crafted from a Wet Sponge - the
   Elder Guardian's signature drop).
 - **Interior**: every 3x3x3 cell (except the Hatch) must be a **water source**
   - the validator checks the flood, not just the shell. Elderbane, the display
-  frog, swims pinned above the Hatch.
+  frog, swims pinned in front of the Hatch.
 
 Canonical layout: `data/productivefrogs/structure/elder_altar.nbt`, locked by
 the `elder_altar_*` GameTests (including `elder_altar_rejects_drained_tank` -
@@ -59,6 +60,7 @@ resource.
 | Elder Altar Hatch | obsidian corners, prismarine brick edges, chest center |
 | Tide Offering Receptacle | obsidian corners, prismarine brick edges, sea lantern center |
 | Monument Core | 8 obsidian around a wet sponge |
+| Reinforced Light Blue Stained Glass | obsidian cross + light blue stained glass |
 | Reinforced Prismarine Froglight | obsidian cross + prismarine-variant Configurable Froglight |
 | Reinforced Sponge Froglight | obsidian cross + sponge-variant Configurable Froglight |
 

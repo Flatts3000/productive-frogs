@@ -258,6 +258,7 @@ public final class PFCreativeTabs {
                         // froglights, roof receptacles, hatch, and the Monument Core.
                         output.accept(PFItems.REINFORCED_PRISMARINE_FROGLIGHT.get());
                         output.accept(PFItems.REINFORCED_SPONGE_FROGLIGHT.get());
+                        output.accept(PFItems.REINFORCED_LIGHT_BLUE_STAINED_GLASS.get());
                         output.accept(PFItems.TIDE_OFFERING_RECEPTACLE.get());
                         output.accept(PFItems.ELDER_ALTAR_HATCH.get());
                         output.accept(PFItems.MONUMENT_CORE.get());
