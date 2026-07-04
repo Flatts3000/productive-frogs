@@ -188,6 +188,10 @@ public class PFShootTongue extends ShootTongue {
         prey.hurtServer(level, level.damageSources().playerAttack(killer), Float.MAX_VALUE);
         // Pace exactly like a slime eat: the Appetite cooldown gates the next hunt.
         frog.startEatCooldown();
+        // Predation milestone (#281 Phase 5): a mob farmed by a predator frog.
+        com.flatts.productivefrogs.registry.PFCriterionTriggers.PREDATION_MILESTONE.get().awardNearby(
+            level, frog.position(),
+            com.flatts.productivefrogs.advancement.PredationMilestoneTrigger.Milestone.MOB_FARMED);
         // Drop the sword reference so the fake player doesn't pin the enchanted
         // stack (the factory caches the player per level).
         killer.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);

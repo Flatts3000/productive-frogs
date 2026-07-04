@@ -1,11 +1,13 @@
 {
   "values": {
     "productivefrogs:lava": 3,
-    "productivefrogs:blaze": 6,
     "productivefrogs:blazing": {
       "value": 10,
       "neoforge:conditions": [
-        { "type": "neoforge:mod_loaded", "modid": "powah" }
+        {
+          "type": "neoforge:mod_loaded",
+          "modid": "powah"
+        }
       ]
     }
   }

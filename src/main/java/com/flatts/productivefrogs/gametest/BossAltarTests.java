@@ -31,9 +31,6 @@ final class BossAltarTests {
     }
 
     static void register() {
-        PFGameTests.test("boss_catalyst_altar_gate", 100, BossAltarTests::bossCatalystAltarGate);
-        PFGameTests.test("boss_altar_source_does_not_spawn_inside_the_source_block", 100,
-            BossAltarTests::bossAltarSourceDoesNotSpawnInsideTheSourceBlock);
         PFGameTests.test("dragon_altar_validates_when_built", "dragon_altar", 100, BossAltarTests::dragonAltarValidatesWhenBuilt);
         PFGameTests.test("dragon_altar_rejects_missing_froglight", "dragon_altar", 100, BossAltarTests::dragonAltarRejectsMissingFroglight);
         PFGameTests.test("dragon_altar_summon_deposits_drops", "dragon_altar", 320, BossAltarTests::dragonAltarSummonDepositsDrops);
@@ -85,117 +82,6 @@ final class BossAltarTests {
         return dock.tryInstall(net);
     }
 
-    /**
-     * Boss catalyst altar gate (#184, docs/boss_catalyst_altar.md). Tests the
-     * gate's decision logic directly via the public helpers (the spawn tick
-     * itself is scheduled + private; the predicate is the testable seam):
-     * (1) only spawn_catalyst variants are gated; (2) a 6-face count requires
-     * the MATCHING catalyst on all six faces; (3) a mismatched catalyst does
-     * not count.
-     */
-    private static void bossCatalystAltarGate(GameTestHelper helper) {
-        Identifier netherStar = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star");
-        Identifier iron = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
-
-        // (1) gating predicate: boss variant requires a catalyst, iron does not.
-        if (!com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock
-                .variantRequiresCatalyst(helper.getLevel(), netherStar)) {
-            helper.fail("nether_star (spawn_catalyst) should require a catalyst altar");
-            return;
-        }
-        if (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock
-                .variantRequiresCatalyst(helper.getLevel(), iron)) {
-            helper.fail("iron is not a boss variant and must not be altar-gated");
-            return;
-        }
-
-        // (2) surround a center with nether_star_catalyst on 5 of 6 faces.
-        BlockPos center = new BlockPos(2, 2, 2);
-        net.minecraft.world.level.block.Block starCat = PFBlocks.NETHER_STAR_CATALYST.get();
-        net.minecraft.core.Direction[] dirs = net.minecraft.core.Direction.values();
-        for (int i = 0; i < dirs.length - 1; i++) {
-            helper.setBlock(center.relative(dirs[i]), starCat);
-        }
-        int five = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock
-            .catalystFaceCount(helper.getLevel(), helper.absolutePos(center), netherStar);
-        // catalystFaceCount takes a WORLD pos; helper.setBlock takes relative.
-        // Re-count against the relative center mapped to world via absolutePos.
-        if (five != 5) {
-            helper.fail("5 catalyst faces should read 5, got " + five);
-            return;
-        }
-        // (3) the 6th face: a MISMATCHED catalyst must not count.
-        helper.setBlock(center.relative(dirs[5]), PFBlocks.DRAGON_EGG_CATALYST.get());
-        int stillFive = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock
-            .catalystFaceCount(helper.getLevel(), helper.absolutePos(center), netherStar);
-        if (stillFive != 5) {
-            helper.fail("a dragon_egg_catalyst must not count toward a nether_star altar, got " + stillFive);
-            return;
-        }
-        // The matching 6th completes it.
-        helper.setBlock(center.relative(dirs[5]), starCat);
-        int six = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock
-            .catalystFaceCount(helper.getLevel(), helper.absolutePos(center), netherStar);
-        if (six != 6) {
-            helper.fail("6 matching catalyst faces should read 6, got " + six);
-            return;
-        }
-        helper.succeed();
-    }
-
-    /**
-     * Boss altar spawn safety (docs/boss_catalyst_altar.md): a fully-sealed,
-     * altar-gated source must NOT spawn a slime inside its own (enclosed) milk
-     * source block. The altar is complete (6 matching catalyst faces, so the gate
-     * passes and the source would otherwise spawn) and the source is boxed in solid
-     * on every side - including the layer above the top shell - so chooseSpawnPos
-     * finds no free neighbour landing. The fix skips the spawn for an altar-gated
-     * source rather than falling back to the source cell (which would trap the slime
-     * inside the milk block). A non-altar source keeps that fallback.
-     */
-    private static void bossAltarSourceDoesNotSpawnInsideTheSourceBlock(GameTestHelper helper) {
-        BlockPos center = new BlockPos(2, 2, 2);
-        Identifier netherStar = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star");
-        // Seal the source in solid stone on every side, and cap the layer above the
-        // top shell (y up to 4), so no neighbour cell has an open block above it.
-        for (int x = 1; x <= 3; x++) {
-            for (int y = 1; y <= 4; y++) {
-                for (int z = 1; z <= 3; z++) {
-                    helper.setBlock(new BlockPos(x, y, z), Blocks.STONE);
-                }
-            }
-        }
-        // The six faces must be the MATCHING catalyst so the altar gate (>=6) passes.
-        net.minecraft.world.level.block.Block starCat = PFBlocks.NETHER_STAR_CATALYST.get();
-        for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
-            helper.setBlock(center.relative(dir), starCat);
-        }
-        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock block =
-            placeMilkSource(helper, center, "nether_star");
-
-        ServerLevel level = helper.getLevel();
-        BlockPos abs = helper.absolutePos(center);
-        helper.assertTrue(com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock
-                .catalystFaceCount(level, abs, netherStar) == 6,
-            "test setup: a sealed altar should read 6 catalyst faces");
-        // Drive a spawn tick directly (the gate passes, so without the fix this would
-        // fall back to spawning a slime inside the source block).
-        block.tick(level.getBlockState(abs), level, abs, level.getRandom());
-
-        helper.runAfterDelay(3, () -> {
-            int slimes = helper.getEntities(PFEntities.RESOURCE_SLIME.get()).size();
-            helper.assertTrue(slimes == 0,
-                "a sealed boss altar must not spawn a slime inside the milk source block, found " + slimes);
-            helper.succeed();
-        });
-    }
-
-    /**
-     * The shipped {@code dragon_altar} structure must validate as built. This pins
-     * {@link com.flatts.productivefrogs.content.multiblock.DragonAltarValidator} to the
-     * canonical structure: if either drifts (a layout edit without re-syncing the
-     * validator, or vice versa), this test fails.
-     */
     private static void dragonAltarValidatesWhenBuilt(GameTestHelper helper) {
         helper.succeedWhen(() -> {
             BlockPos hatch = findAltarHatch(helper);

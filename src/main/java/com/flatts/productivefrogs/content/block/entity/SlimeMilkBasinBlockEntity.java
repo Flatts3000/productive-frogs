@@ -45,9 +45,10 @@ public class SlimeMilkBasinBlockEntity extends AbstractBasinBlockEntity {
 
     @Override
     public boolean acceptsKey(ServerLevel level, Identifier key) {
-        // Boss (altar-gated) milk is refused; anything else - including the
-        // vanilla/magma sentinels, which createSlimeForVariant handles - works.
-        return !SlimeMilkSourceBlock.variantRequiresCatalyst(level, key);
+        // Anything works - including the vanilla/magma sentinels, which
+        // createSlimeForVariant handles. (The boss-milk refusal retired with
+        // the catalyst altars in Phase 5.)
+        return true;
     }
 
     @Override

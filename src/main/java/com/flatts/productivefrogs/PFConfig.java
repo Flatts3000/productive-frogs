@@ -94,21 +94,19 @@ public final class PFConfig {
 
     // Per-variant / per-category content scoping (#203). COMMON config: variants
     // are server/world state. The lists name what to force-OFF (empty = nothing
-    // disabled = the non-breaking default); bossVariantsEnabled is the convenience
-    // switch over the weight-0 prime-only boss tier (the half #200 consumes). The
-    // single read point is variantEnabled(id, category, weight); a disabled variant
-    // is unprimable, undiscoverable, and hidden from JEI + the creative tab. The
-    // registry entry stays (save-safe soft-hide), so re-enabling restores it.
+    // disabled = the non-breaking default). The single read point is
+    // variantEnabled(id, category, weight); a disabled variant is unprimable,
+    // undiscoverable, and hidden from JEI + the creative tab. The registry entry
+    // stays (save-safe soft-hide), so re-enabling restores it.
     public static final ModConfigSpec.ConfigValue<List<? extends String>> DISABLED_VARIANTS;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> DISABLED_CATEGORIES;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> DISABLED_INTEGRATIONS;
-    public static final ModConfigSpec.BooleanValue BOSS_VARIANTS_ENABLED;
 
-    // Boss-tier master (#200). One switch over the whole boss tier: the four
-    // weight-0 prime-only variants (ANDed with BOSS_VARIANTS_ENABLED), the four
-    // catalyst-altar block recipes, the boss Froglight smelt-backs, and creative
-    // visibility of the altar blocks. Toxic boss milk + the 6-face altar gate fall
-    // out transitively (no variant -> no source -> no milk). Default true.
+    // Boss-tier master (#200). One switch over the boss tier: the boss altars'
+    // block recipes and creative/JEI visibility, plus any pack-added weight-0
+    // prime-only variant. (The four shipped boss variants, the catalyst altars,
+    // and toxic boss milk retired in Phase 5 - the boss altars replaced them.)
+    // Default true.
     public static final ModConfigSpec.BooleanValue BOSS_ENABLED;
 
     // Predation system master switch (#281). Gates the predator tier's creation
@@ -766,15 +764,6 @@ public final class PFConfig {
             .defineListAllowEmpty("disabledIntegrations", List.of(), () -> "examplemod",
                 PFConfig::isValidIntegrationKey);
 
-        BOSS_VARIANTS_ENABLED = builder
-            .comment(
-                "Whether the boss tier's prime-only variants (weight 0: wither skull, nether star, dragon egg,",
-                "dragon breath) are enabled. Default true. When false they cannot be primed and are hidden from",
-                "JEI + the creative tab - the one-switch way to drop boss farming without listing each id.",
-                "(The catalyst altars and boss recipes have their own master under the boss section, #200.)"
-            )
-            .define("bossVariantsEnabled", true);
-
         builder.pop();
 
         builder.push("predators");
@@ -797,15 +786,11 @@ public final class PFConfig {
 
         BOSS_ENABLED = builder
             .comment(
-                "Master switch for the whole boss tier (#200). Default true. When false:",
-                "- the four prime-only boss variants (wither skull, nether star, dragon egg, dragon breath)",
-                "  are suppressed exactly like variants.bossVariantsEnabled=false (unprimable, undiscovered,",
-                "  hidden from JEI + the creative tab), which also removes their toxic milk and altar gating;",
-                "- the four catalyst-altar blocks become uncraftable and hidden from JEI + the creative tab;",
-                "- the boss Froglight smelt-back recipes are dropped.",
-                "Lets a pack run the standard froglight loop with no boss farming in one toggle. The narrower",
-                "variants.bossVariantsEnabled stays available to drop just the variants while keeping the altar",
-                "blocks craftable. Recipe gating needs a world reload."
+                "Master switch for the boss tier (#200). Default true. When false the boss-altar block",
+                "recipes are dropped and the altar blocks hide from JEI + the creative tab, and any",
+                "pack-added weight-0 prime-only variant is suppressed (unprimable, undiscovered, hidden).",
+                "Lets a pack run the standard froglight loop with no boss farming in one toggle.",
+                "Recipe gating needs a world reload."
             )
             .define("enabled", true);
 
@@ -1077,8 +1062,8 @@ public final class PFConfig {
      * open before the config loads (mod-init, title screen) so the default - and
      * any pre-config-load resolution - treats everything as enabled (non-breaking).
      *
-     * <p>Order: a {@code weight 0} boss variant is gated by {@link #bossVariantsEnabled()};
-     * then a disabled category; then an explicitly disabled id.
+     * <p>Order: a {@code weight 0} prime-only variant is gated by the boss master
+     * ({@code boss.enabled}); then a disabled category; then an explicitly disabled id.
      *
      * <p><b>Extending this (e.g. #204 per-integration force-off):</b> add the new
      * dimension <i>inside</i> {@link com.flatts.productivefrogs.data.SlimeVariant#isEnabled}
@@ -1095,22 +1080,13 @@ public final class PFConfig {
         }
         // A weight-0 boss variant is gated by BOTH the boss master (#200) and the
         // narrow per-variant switch (#203): either being off suppresses it.
-        if (weight == 0 && !(BOSS_ENABLED.get() && BOSS_VARIANTS_ENABLED.get())) {
+        if (weight == 0 && !BOSS_ENABLED.get()) {
             return false;
         }
         if (DISABLED_CATEGORIES.get().contains(category.id())) {
             return false;
         }
         return !DISABLED_VARIANTS.get().contains(id.toString());
-    }
-
-    /**
-     * Whether the boss-tier prime-only variants are effectively enabled - the boss
-     * master ({@code boss.enabled}, #200) AND the narrow switch
-     * ({@code variants.bossVariantsEnabled}, #203). Fallback true.
-     */
-    public static boolean bossVariantsEnabled() {
-        return !SPEC.isLoaded() || (BOSS_ENABLED.get() && BOSS_VARIANTS_ENABLED.get());
     }
 
     /** Whether the boss tier master is on ({@code boss.enabled}, #200); fallback true. */

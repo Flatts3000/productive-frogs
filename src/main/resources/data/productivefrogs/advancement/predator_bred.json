@@ -1,0 +1,31 @@
+{
+  "parent": "productivefrogs:root",
+  "display": {
+    "icon": {
+      "id": "productivefrogs:prowler_frog_egg"
+    },
+    "title": {
+      "translate": "advancement.productivefrogs.predator_bred.title"
+    },
+    "description": {
+      "translate": "advancement.productivefrogs.predator_bred.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "milestone": {
+      "trigger": "productivefrogs:predation_milestone",
+      "conditions": {
+        "milestone": "predator_bred"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "milestone"
+    ]
+  ]
+}

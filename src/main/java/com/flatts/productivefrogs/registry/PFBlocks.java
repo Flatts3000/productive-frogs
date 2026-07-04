@@ -407,20 +407,6 @@ public final class PFBlocks {
     );
 
     /**
-     * Boss-tier catalyst blocks (#184, {@code docs/boss_catalyst_altar.md}). A
-     * Slime Milk source whose variant declares {@code spawn_catalyst: true}
-     * spawns nothing until the matching catalyst block surrounds it on all six
-     * faces. Four distinct blocks (one per boss resource, bespoke art - NOT one
-     * tinted block), keyed to the variant they arm by {@link #CATALYST_FOR_VARIANT}.
-     * Plain full cubes; the spawn gate lives in {@code SlimeMilkSourceBlock#tick},
-     * so the catalyst itself needs no BlockEntity.
-     */
-    public static final DeferredBlock<Block> NETHER_STAR_CATALYST = registerCatalyst("nether_star_catalyst");
-    public static final DeferredBlock<Block> DRAGON_EGG_CATALYST = registerCatalyst("dragon_egg_catalyst");
-    public static final DeferredBlock<Block> WITHER_SKELETON_SKULL_CATALYST = registerCatalyst("wither_skeleton_skull_catalyst");
-    public static final DeferredBlock<Block> DRAGON_BREATH_CATALYST = registerCatalyst("dragon_breath_catalyst");
-
-    /**
      * Reinforced Froglights (#249) - the dragon altar's structural blocks, and the
      * main reason they exist. Bespoke, decorative apart from that role; crafted from
      * 4 obsidian + the matching resource Froglight (Obsidian / End Stone). Full-cube,
@@ -586,42 +572,6 @@ public final class PFBlocks {
             .lightLevel(state -> 10)
             .sound(SoundType.WET_SPONGE)
             .requiresCorrectToolForDrops());
-
-    /** Memoized {@link #catalystForVariant()} - the blocks are stable post-registration. */
-    private static Map<Identifier, Block> catalystMap;
-
-    /**
-     * Single source of truth wiring each boss variant id to the catalyst block
-     * that arms its source - read by the 6-face gate in {@code SlimeMilkSourceBlock}
-     * and the recipe generator. Built once on first call (the DeferredBlocks
-     * resolve only after registration), then memoized: the gate runs per
-     * milk-source tick, so rebuilding a 4-entry map each call was needless churn.
-     */
-    public static Map<Identifier, Block> catalystForVariant() {
-        Map<Identifier, Block> map = catalystMap;
-        if (map == null) {
-            map = Map.of(
-                Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star"), NETHER_STAR_CATALYST.get(),
-                Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_egg"), DRAGON_EGG_CATALYST.get(),
-                Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "wither_skeleton_skull"), WITHER_SKELETON_SKULL_CATALYST.get(),
-                Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_breath"), DRAGON_BREATH_CATALYST.get()
-            );
-            catalystMap = map;
-        }
-        return map;
-    }
-
-    private static DeferredBlock<Block> registerCatalyst(String name) {
-        return registerBlock(
-            name,
-            Block::new,
-            BlockBehaviour.Properties.of()
-                .mapColor(MapColor.COLOR_BLACK)
-                .strength(3.0F, 6.0F)
-                .sound(SoundType.STONE)
-                .requiresCorrectToolForDrops()
-        );
-    }
 
     /** Shared properties for the two Reinforced Froglights (#249). */
     private static BlockBehaviour.Properties reinforcedFroglightProperties() {

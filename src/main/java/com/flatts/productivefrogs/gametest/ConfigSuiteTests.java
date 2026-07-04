@@ -28,9 +28,7 @@ final class ConfigSuiteTests {
     static void register() {
         PFGameTests.test("disabled_variant_config_suppresses_resolution", 100, ConfigSuiteTests::disabledVariantConfigSuppressesResolution);
         PFGameTests.test("disabled_category_config_suppresses_pool", 100, ConfigSuiteTests::disabledCategoryConfigSuppressesPool);
-        PFGameTests.test("boss_variants_disabled_makes_them_unprimable", 100, ConfigSuiteTests::bossVariantsDisabledMakesThemUnprimable);
         PFGameTests.test("disabled_integration_suppresses_variants", 100, ConfigSuiteTests::disabledIntegrationSuppressesVariants);
-        PFGameTests.test("boss_master_disables_boss_variants", 100, ConfigSuiteTests::bossMasterDisablesBossVariants);
         PFGameTests.test("frog_stats_disabled_forces_baseline", 100, ConfigSuiteTests::frogStatsDisabledForcesBaseline);
     }
 
@@ -126,38 +124,6 @@ final class ConfigSuiteTests {
         helper.succeed();
     }
 
-    private static void bossVariantsDisabledMakesThemUnprimable(GameTestHelper helper) {
-        if (!com.flatts.productivefrogs.PFConfig.SPEC.isLoaded()) {
-            helper.fail("COMMON config must be loaded for the variant-disable tests to be meaningful");
-            return;
-        }
-        net.minecraft.core.HolderLookup.RegistryLookup<SlimeVariant> registry =
-            PFRegistries.variants(helper.getLevel().registryAccess());
-        Identifier netherStar = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "nether_star");
-        Identifier netherStarItem = Identifier.fromNamespaceAndPath("minecraft", "nether_star");
-
-        java.util.Map.Entry<Identifier, SlimeVariant> baseline =
-            SlimeVariant.findByPrimerItem(registry, netherStarItem);
-        if (baseline == null || !baseline.getKey().equals(netherStar)) {
-            helper.fail("baseline: nether_star should prime (prime-only, not unreachable)");
-            return;
-        }
-        try {
-            com.flatts.productivefrogs.PFConfig.BOSS_VARIANTS_ENABLED.set(false);
-            if (SlimeVariant.findByPrimerItem(registry, netherStarItem) != null) {
-                helper.fail("with the boss tier off, nether_star should be unprimable");
-                return;
-            }
-        } finally {
-            com.flatts.productivefrogs.PFConfig.BOSS_VARIANTS_ENABLED.set(true);
-        }
-        if (SlimeVariant.findByPrimerItem(registry, netherStarItem) == null) {
-            helper.fail("nether_star should prime again after re-enabling the boss tier");
-            return;
-        }
-        helper.succeed();
-    }
-
     private static void disabledIntegrationSuppressesVariants(GameTestHelper helper) {
         if (!com.flatts.productivefrogs.PFConfig.SPEC.isLoaded()) {
             helper.fail("COMMON config must be loaded for the variant-disable tests to be meaningful");
@@ -226,46 +192,6 @@ final class ConfigSuiteTests {
         }
         if (!dummy.isEnabled(tin) || !dummy.isEnabled(silicon)) {
             helper.fail("all variants should be enabled again after clearing disabledIntegrations");
-            return;
-        }
-        helper.succeed();
-    }
-
-    private static void bossMasterDisablesBossVariants(GameTestHelper helper) {
-        if (!com.flatts.productivefrogs.PFConfig.SPEC.isLoaded()) {
-            helper.fail("COMMON config must be loaded for the variant-disable tests to be meaningful");
-            return;
-        }
-        net.minecraft.core.HolderLookup.RegistryLookup<SlimeVariant> registry =
-            PFRegistries.variants(helper.getLevel().registryAccess());
-        Identifier netherStarItem = Identifier.fromNamespaceAndPath("minecraft", "nether_star");
-        Identifier ironItem = Identifier.fromNamespaceAndPath("minecraft", "iron_ingot");
-
-        if (SlimeVariant.findByPrimerItem(registry, netherStarItem) == null
-                || !com.flatts.productivefrogs.PFConfig.bossEnabled()) {
-            helper.fail("baseline: nether_star should prime and boss should be enabled");
-            return;
-        }
-        try {
-            com.flatts.productivefrogs.PFConfig.BOSS_ENABLED.set(false);
-            if (com.flatts.productivefrogs.PFConfig.bossEnabled()) {
-                helper.fail("bossEnabled() should be false when the master is off");
-                return;
-            }
-            if (SlimeVariant.findByPrimerItem(registry, netherStarItem) != null) {
-                helper.fail("with the boss master off, nether_star should be unprimable");
-                return;
-            }
-            // A normal (non-boss) variant is untouched by the boss master.
-            if (SlimeVariant.findByPrimerItem(registry, ironItem) == null) {
-                helper.fail("iron should still prime when only the boss master is off");
-                return;
-            }
-        } finally {
-            com.flatts.productivefrogs.PFConfig.BOSS_ENABLED.set(true);
-        }
-        if (SlimeVariant.findByPrimerItem(registry, netherStarItem) == null) {
-            helper.fail("nether_star should prime again after re-enabling the boss master");
             return;
         }
         helper.succeed();

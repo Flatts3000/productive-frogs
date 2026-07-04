@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Breaking - the 2.0 mob-drop redesign completes (Phase 5 of the predation epic)
+
+- **Mob-derived slime variants are retired.** Every variant that stood in for a mob's kill loot is removed: blaze rod, bone, breeze rod, ender pearl, feather, ghast tear, glow ink sac, gunpowder, ink sac, leather, magma cream, nautilus shell, phantom membrane, prismarine crystals, rotten flesh, shulker shell, string, and the boss tier (nether star, dragon's breath, dragon egg, wither skeleton skull). Those resources now come from **predator frogs eating the actual mobs** (player-credited loot, Looting from Bounty) and from the **four boss altars** (raw drops + Liquid Experience). As in the v1.6 retirement, existing items soften rather than break: buckets, froglights, and eggs of a retired variant lose their names and recipes but stay in your chests; nothing crashes and worlds load unchanged.
+- **The catalyst altars are retired with them.** The four catalyst blocks (Nether Star / Dragon Egg / Wither Skeleton Skull / Dragon Breath Catalyst), the six-face spawn gate, and toxic boss milk are gone - the boss altars replaced that whole loop. The `variants.bossVariantsEnabled` config folds into the `boss.enabled` master.
+- **Kept on purpose:** every ore, block, plant, and fluid variant, plus armadillo scute, turtle scute, and honeycomb (husbandry resources predation cannot supply). The Froglight Cleaver now crafts from a raw Nether Star and Dragon Egg - both renewable through the altars.
+
+### Added
+
+- **Predation milestones in the Advancements tab:** A New Appetite (first predator bred), Apex of the Food Chain (first Apex), Free-Range Farming (first mob devoured), and Boss on the Menu (first altar summon completed).
+- **JEI coverage for the predation chain:** Mob Slurry Buckets show one entry per mob, and the Slurry Press, both Basins, the Ender Net, Liquid Experience, and the four altar Hatches all have info pages.
+
 ## v1.24.2 - 2026-06-29 - Name Tags
 
 ### Changed

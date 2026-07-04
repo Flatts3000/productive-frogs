@@ -18,24 +18,8 @@
     "BDB"
   ],
   "key": {
-    "N": {
-      "neoforge:ingredient_type": "neoforge:components",
-      "items": [
-        "productivefrogs:configurable_froglight"
-      ],
-      "components": {
-        "productivefrogs:slime_variant": "productivefrogs:nether_star"
-      }
-    },
-    "D": {
-      "neoforge:ingredient_type": "neoforge:components",
-      "items": [
-        "productivefrogs:configurable_froglight"
-      ],
-      "components": {
-        "productivefrogs:slime_variant": "productivefrogs:dragon_egg"
-      }
-    },
+    "N": "minecraft:nether_star",
+    "D": "minecraft:dragon_egg",
     "B": "minecraft:dragon_breath"
   },
   "result": {

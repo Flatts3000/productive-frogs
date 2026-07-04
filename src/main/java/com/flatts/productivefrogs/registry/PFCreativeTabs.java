@@ -230,10 +230,6 @@ public final class PFCreativeTabs {
                     // Hidden when the boss master is off (#200); the boss variants'
                     // own entries hide via the per-variant isEnabled gate above.
                     if (PFConfig.bossEnabled()) {
-                        output.accept(PFItems.NETHER_STAR_CATALYST.get());
-                        output.accept(PFItems.DRAGON_EGG_CATALYST.get());
-                        output.accept(PFItems.WITHER_SKELETON_SKULL_CATALYST.get());
-                        output.accept(PFItems.DRAGON_BREATH_CATALYST.get());
                         // Dragon altar (#249): reinforced froglights, crystal socket, hatch.
                         output.accept(PFItems.REINFORCED_OBSIDIAN_FROGLIGHT.get());
                         output.accept(PFItems.REINFORCED_END_STONE_FROGLIGHT.get());
