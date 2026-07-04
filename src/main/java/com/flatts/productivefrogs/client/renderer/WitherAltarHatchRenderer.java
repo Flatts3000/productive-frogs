@@ -100,6 +100,10 @@ public class WitherAltarHatchRenderer
         phantom.yHeadRotO = yaw;
 
         double[] off = horizontalOffset(0.0, 1.2, ritual);
+        // Position the phantom at the replica's real world spot before extraction -
+        // the extracted lightmap samples at the entity position (unplaced = bad light).
+        phantom.setPos(be.getBlockPos().getX() + 0.5 + off[0], be.getBlockPos().getY(),
+            be.getBlockPos().getZ() + 0.5 + off[1]);
         EntityRenderState wither = dispatcher.extractEntity(phantom, partialTick);
         wither.shadowRadius = 0.0F;                 // suppress the shadow (was setRenderShadow(false))
         state.wither = wither;

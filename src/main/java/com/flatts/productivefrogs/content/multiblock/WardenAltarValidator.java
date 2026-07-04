@@ -35,8 +35,8 @@ public final class WardenAltarValidator {
     /** The canonical authoring frame: the pit interior lies this way from the Hatch. SOUTH is the identity. */
     public static final Direction CANONICAL_INTERIOR = Direction.SOUTH;
 
-    /** The Echoing Catalyst capstone, set into the floor beneath the pit center. */
-    private static final int[][] CAPSTONE = {{0, -1, 2}};
+    /** The Echoing Catalyst capstone, set into the floor one block beyond the pit center (away from the Hatch). */
+    private static final int[][] CAPSTONE = {{0, -1, 3}};
 
     /** Reinforced Sculk Froglight: the 5x5 pit floor (minus the capstone) + the shaft lining (minus the Hatch). */
     private static final int[][] SCULK = buildSculk();
@@ -61,8 +61,8 @@ public final class WardenAltarValidator {
         java.util.List<int[]> out = new java.util.ArrayList<>();
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = 0; dz <= 4; dz++) {
-                if (!(dx == 0 && dz == 2)) {
-                    out.add(new int[] {dx, -1, dz}); // floor (capstone at the center)
+                if (!(dx == 0 && dz == 3)) {
+                    out.add(new int[] {dx, -1, dz}); // floor (capstone one beyond the center)
                 }
                 if (isRing(dx, dz)) {
                     for (int dy = 0; dy <= 2; dy++) {
@@ -127,7 +127,7 @@ public final class WardenAltarValidator {
 
     private static Oriented validateOriented(LevelReader level, BlockPos hatch, Direction interior) {
         if (!allMatch(level, hatch, CAPSTONE, interior, PFBlocks.ECHOING_CATALYST.get())) {
-            return new Oriented(0, "missing the Echoing Catalyst beneath the pit center (defeat a Warden first)");
+            return new Oriented(0, "missing the Echoing Catalyst in the pit floor (defeat a Warden first)");
         }
         if (!allMatch(level, hatch, SCULK, interior, PFBlocks.REINFORCED_SCULK_FROGLIGHT.get())) {
             return new Oriented(1, "incomplete Reinforced Sculk Froglight floor/lining");

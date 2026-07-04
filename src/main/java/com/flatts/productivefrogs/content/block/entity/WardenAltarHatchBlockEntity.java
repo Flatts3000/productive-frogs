@@ -92,6 +92,14 @@ public class WardenAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
         server.playSound(null, pos, SoundEvents.WARDEN_EMERGE, SoundSource.HOSTILE, 1.0F, 1.0F);
     }
 
+    /** Heartbeat ambience while the replica claws its way out of the pit floor. */
+    @Override
+    protected void onSummonProgress(ServerLevel server, BlockPos pos, int elapsed, int total) {
+        if (elapsed > 0 && elapsed % 40 == 0 && elapsed < total - 10) {
+            server.playSound(null, pos, SoundEvents.WARDEN_HEARTBEAT, SoundSource.HOSTILE, 1.2F, 1.0F);
+        }
+    }
+
     /**
      * Data-driven supplemental drops (the dragon-altar precedent): packs/mods
      * override or add pools to {@code productivefrogs:warden_altar} to change
