@@ -61,6 +61,8 @@ public class SummonReceptacleRenderer
         }
         state.filled = true;
         state.ritualYaw = be.ritual().toYRot();
+        state.onTop = be.getBlockState().getBlock() instanceof SummonReceptacleBlock rb
+            && rb.displayMode() == SummonReceptacleBlock.DisplayMode.TOP;
         this.itemModelResolver.updateForTopItem(state.item, stack, ItemDisplayContext.FIXED,
             be.getLevel(), null, 0);
     }
@@ -72,6 +74,17 @@ public class SummonReceptacleRenderer
             return;
         }
         poseStack.pushPose();
+        if (state.onTop) {
+            // TOP mode (block-shaped fuel, e.g. the sculk shrieker): the held block
+            // stands on the receptacle's top surface, End-Crystal-receptacle style.
+            // FIXED context centers a block model on the translate point, so lift by
+            // half the scaled block above the top face.
+            poseStack.translate(0.5F, 1.0F + 0.35F, 0.5F);
+            poseStack.scale(0.7F, 0.7F, 0.7F);
+            state.item.submit(poseStack, collector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
+            poseStack.popPose();
+            return;
+        }
         // The held item sits on the receptacle face that points back toward the Hatch/arena,
         // so the loaded ritual reads at a glance. In the canonical (SOUTH ritual) frame that
         // is the -Z face and the wither skull's FIXED orientation already faces -Z. For any
@@ -90,6 +103,7 @@ public class SummonReceptacleRenderer
     /** Captured held-item render state for one frame. */
     public static class WitherSummonReceptacleRenderState extends BlockEntityRenderState {
         public boolean filled;
+        public boolean onTop;
         public float ritualYaw;
         public ItemStackRenderState item = new ItemStackRenderState();
     }

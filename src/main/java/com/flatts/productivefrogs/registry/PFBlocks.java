@@ -533,7 +533,8 @@ public final class PFBlocks {
             receptacleProperties());
     public static final DeferredBlock<SummonReceptacleBlock> SHRIEKER_RECEPTACLE =
         registerBlock("shrieker_receptacle",
-            p -> new SummonReceptacleBlock(p, Items.SCULK_SHRIEKER), receptacleProperties());
+            p -> new SummonReceptacleBlock(p, Items.SCULK_SHRIEKER,
+                SummonReceptacleBlock.DisplayMode.TOP), receptacleProperties());
     public static final DeferredBlock<Block> ECHOING_CATALYST =
         registerBlock("echoing_catalyst", Block::new, BlockBehaviour.Properties.of()
             .mapColor(MapColor.COLOR_CYAN)

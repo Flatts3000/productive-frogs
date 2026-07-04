@@ -34,12 +34,31 @@ public class SummonReceptacleBlock extends Block implements EntityBlock {
     /** True while the receptacle holds its item. */
     public static final BooleanProperty FILLED = BooleanProperty.create("filled");
 
+    /** Where the held item renders: flat against the ritual-facing side, or sitting on top. */
+    public enum DisplayMode {
+        /** Against the arena-facing face (the wither T: soul sand / skulls read at a glance). */
+        FACE,
+        /** Standing on the receptacle's top surface (block-shaped fuel: the sculk shrieker). */
+        TOP
+    }
+
     private final Item accepted;
+    private final DisplayMode displayMode;
 
     public SummonReceptacleBlock(Properties properties, Item accepted) {
+        this(properties, accepted, DisplayMode.FACE);
+    }
+
+    public SummonReceptacleBlock(Properties properties, Item accepted, DisplayMode displayMode) {
         super(properties);
         this.accepted = accepted;
+        this.displayMode = displayMode;
         this.registerDefaultState(this.stateDefinition.any().setValue(FILLED, Boolean.FALSE));
+    }
+
+    /** How the renderer presents the held item. */
+    public DisplayMode displayMode() {
+        return displayMode;
     }
 
     /** The single item this receptacle accepts (Soul Sand or a Wither Skeleton Skull). */
