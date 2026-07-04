@@ -134,16 +134,16 @@ public final class WardenAltarValidator {
     }
 
     private static Oriented validateOriented(LevelReader level, BlockPos hatch, Direction interior) {
-        if (!allMatch(level, hatch, CAPSTONE, interior, PFBlocks.ECHOING_CATALYST.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, CAPSTONE, interior, PFBlocks.ECHOING_CATALYST.get())) {
             return new Oriented(0, "missing the Echoing Catalyst in the pit floor (defeat a Warden first)");
         }
-        if (!allMatch(level, hatch, SCULK, interior, PFBlocks.REINFORCED_SCULK_FROGLIGHT.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, SCULK, interior, PFBlocks.REINFORCED_SCULK_FROGLIGHT.get())) {
             return new Oriented(1, "incomplete Reinforced Sculk Froglight floor/lining");
         }
-        if (!allMatch(level, hatch, ECHO_RIM, interior, PFBlocks.REINFORCED_ECHO_SHARD_FROGLIGHT.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, ECHO_RIM, interior, PFBlocks.REINFORCED_ECHO_SHARD_FROGLIGHT.get())) {
             return new Oriented(2, "incomplete Reinforced Echo Shard Froglight rim");
         }
-        if (!allMatch(level, hatch, RECEPTACLES, interior, PFBlocks.SHRIEKER_RECEPTACLE.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, RECEPTACLES, interior, PFBlocks.SHRIEKER_RECEPTACLE.get())) {
             return new Oriented(3, "missing a Shrieker Receptacle on the rim");
         }
         for (int[] o : AIR_REQUIRED) {
@@ -160,13 +160,7 @@ public final class WardenAltarValidator {
      * the identity (mirrors {@code WitherAltarValidator.rotateOffset}).
      */
     static BlockPos rotateOffset(int dx, int dy, int dz, Direction interior) {
-        return switch (interior) {
-            case SOUTH -> new BlockPos(dx, dy, dz);
-            case WEST -> new BlockPos(-dz, dy, dx);
-            case NORTH -> new BlockPos(-dx, dy, -dz);
-            case EAST -> new BlockPos(dz, dy, -dx);
-            default -> new BlockPos(dx, dy, dz); // UP/DOWN never passed (HORIZONTAL plane only)
-        };
+        return AltarGeometry.rotateOffset(dx, dy, dz, interior);
     }
 
     /** The four Shrieker Receptacle positions for a Hatch at {@code hatch} with the given interior direction. */
@@ -183,12 +177,4 @@ public final class WardenAltarValidator {
         return hatch.offset(rotateOffset(0, 0, 1, interior));
     }
 
-    private static boolean allMatch(LevelReader level, BlockPos hatch, int[][] offsets, Direction interior, Block block) {
-        for (int[] o : offsets) {
-            if (!level.getBlockState(hatch.offset(rotateOffset(o[0], o[1], o[2], interior))).is(block)) {
-                return false;
-            }
-        }
-        return true;
-    }
 }

@@ -116,12 +116,12 @@ public class CrucibleRenderer implements BlockEntityRenderer<CrucibleBlockEntity
         // translucent fluid) the old single-buffer path arranged by draw order.
         if (state.hasSolids) {
             collector.submitCustomGeometry(poseStack, Sheets.cutoutBlockSheet(),
-                (pose, buffer) -> drawSurface(pose, buffer, state.solidsSprite, state.solidsY,
+                (pose, buffer) -> FluidSurfaces.drawSurface(pose, buffer, state.solidsSprite, MIN_XZ, MAX_XZ, state.solidsY,
                     state.solidsColor, state.lightCoords));
         }
         if (state.hasFluid) {
             collector.submitCustomGeometry(poseStack, Sheets.translucentBlockSheet(),
-                (pose, buffer) -> drawSurface(pose, buffer, state.fluidSprite, state.fluidY,
+                (pose, buffer) -> FluidSurfaces.drawSurface(pose, buffer, state.fluidSprite, MIN_XZ, MAX_XZ, state.fluidY,
                     state.fluidColor, state.lightCoords));
         }
     }
@@ -136,26 +136,6 @@ public class CrucibleRenderer implements BlockEntityRenderer<CrucibleBlockEntity
         return v == null ? 0xFFFFFF : v.primaryColor();
     }
 
-    /** One upward-facing quad spanning the basin interior at height {@code y}. */
-    private static void drawSurface(PoseStack.Pose pose, VertexConsumer buffer, TextureAtlasSprite sprite,
-            float y, int argb, int packedLight) {
-        int r = (argb >> 16) & 0xFF;
-        int g = (argb >> 8) & 0xFF;
-        int b = argb & 0xFF;
-        int a = (argb >>> 24) & 0xFF;
-        float u0 = sprite.getU(MIN_XZ);
-        float u1 = sprite.getU(MAX_XZ);
-        float v0 = sprite.getV(MIN_XZ);
-        float v1 = sprite.getV(MAX_XZ);
-        buffer.addVertex(pose, MIN_XZ, y, MIN_XZ).setColor(r, g, b, a).setUv(u0, v0)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose, 0.0F, 1.0F, 0.0F);
-        buffer.addVertex(pose, MIN_XZ, y, MAX_XZ).setColor(r, g, b, a).setUv(u0, v1)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose, 0.0F, 1.0F, 0.0F);
-        buffer.addVertex(pose, MAX_XZ, y, MAX_XZ).setColor(r, g, b, a).setUv(u1, v1)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose, 0.0F, 1.0F, 0.0F);
-        buffer.addVertex(pose, MAX_XZ, y, MIN_XZ).setColor(r, g, b, a).setUv(u1, v0)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose, 0.0F, 1.0F, 0.0F);
-    }
 
     /** Captured basin fill state for one frame. */
     public static class CrucibleRenderState extends BlockEntityRenderState {

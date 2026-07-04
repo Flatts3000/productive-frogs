@@ -112,44 +112,28 @@ public final class WitherAltarValidator {
     }
 
     private static Oriented validateOriented(LevelReader level, BlockPos hatch, Direction ritual) {
-        if (!allMatch(level, hatch, CAPSTONE, ritual, PFBlocks.WITHERED_STAR.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, CAPSTONE, ritual, PFBlocks.WITHERED_STAR.get())) {
             return new Oriented(0, "missing the Withered Star (defeat the Wither first)", ritual);
         }
-        if (!allMatch(level, hatch, SOUL_SAND_FLOOR, ritual, PFBlocks.REINFORCED_SOUL_SAND_FROGLIGHT.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, SOUL_SAND_FLOOR, ritual, PFBlocks.REINFORCED_SOUL_SAND_FROGLIGHT.get())) {
             return new Oriented(1, "incomplete Reinforced Soul Sand Froglight floor", ritual);
         }
-        if (!allMatch(level, hatch, GLOWSTONE_SHELL, ritual, PFBlocks.REINFORCED_GLOWSTONE_FROGLIGHT.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, GLOWSTONE_SHELL, ritual, PFBlocks.REINFORCED_GLOWSTONE_FROGLIGHT.get())) {
             return new Oriented(2, "incomplete Reinforced Glowstone Froglight shell", ritual);
         }
-        if (!allMatch(level, hatch, SOUL_SAND_RECEPTACLES, ritual, PFBlocks.SOUL_SAND_RECEPTACLE.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, SOUL_SAND_RECEPTACLES, ritual, PFBlocks.SOUL_SAND_RECEPTACLE.get())) {
             return new Oriented(3, "missing a Soul Sand Receptacle", ritual);
         }
-        if (!allMatch(level, hatch, SKULL_RECEPTACLES, ritual, PFBlocks.WITHER_SKULL_RECEPTACLE.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, SKULL_RECEPTACLES, ritual, PFBlocks.WITHER_SKULL_RECEPTACLE.get())) {
             return new Oriented(4, "missing a Wither Skull Receptacle", ritual);
         }
-        if (!allAir(level, hatch, AIR_REQUIRED, ritual)) {
+        if (!AltarGeometry.allAir(level, hatch, AIR_REQUIRED, ritual)) {
             return new Oriented(5, "the summon cavity must be clear (keep the interior air)", ritual);
         }
         return new Oriented(6, "ready", ritual);
     }
 
-    private static boolean allMatch(LevelReader level, BlockPos hatch, int[][] offsets, Direction ritual, Block block) {
-        for (int[] o : offsets) {
-            if (!level.getBlockState(hatch.offset(rotateOffset(o[0], o[1], o[2], ritual))).is(block)) {
-                return false;
-            }
-        }
-        return true;
-    }
 
-    private static boolean allAir(LevelReader level, BlockPos hatch, int[][] offsets, Direction ritual) {
-        for (int[] o : offsets) {
-            if (!level.getBlockState(hatch.offset(rotateOffset(o[0], o[1], o[2], ritual))).isAir()) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     /**
      * Rotate an authored offset (canonical frame: ritual points +Z / SOUTH) about the
@@ -157,13 +141,7 @@ public final class WitherAltarValidator {
      * {@code dy} is unchanged. SOUTH is the identity. Package-visible for geometry tests.
      */
     static BlockPos rotateOffset(int dx, int dy, int dz, Direction ritual) {
-        return switch (ritual) {
-            case SOUTH -> new BlockPos(dx, dy, dz);
-            case WEST -> new BlockPos(-dz, dy, dx);
-            case NORTH -> new BlockPos(-dx, dy, -dz);
-            case EAST -> new BlockPos(dz, dy, -dx);
-            default -> new BlockPos(dx, dy, dz); // UP/DOWN never passed (HORIZONTAL plane only)
-        };
+        return AltarGeometry.rotateOffset(dx, dy, dz, ritual);
     }
 
     /**

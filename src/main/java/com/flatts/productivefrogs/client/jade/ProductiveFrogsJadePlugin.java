@@ -133,6 +133,11 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         // so fetch it per look, exactly like the milk source it mirrors.
         registration.registerBlockDataProvider(BASIN_DATA,
             com.flatts.productivefrogs.content.block.BasinBlock.class);
+        // Boss altar hatches (#281 Phase 4): the Apex-installed flag is server
+        // state fetched per look (review finding: a push-synced client mirror
+        // needed manual syncToClient discipline at every mutation site).
+        registration.registerBlockDataProvider(APPLIANCES_DATA,
+            com.flatts.productivefrogs.content.block.BossAltarHatchBlock.class);
     }
 
     @Override
@@ -215,8 +220,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             return UID;
         }
 
-        /** Per-altar validation outcome, normalized: the lang-key prefix + valid + detail. */
-        private record AltarStatus(String prefix, boolean valid, String detail) {
+        /** Per-altar validation outcome, normalized. */
+        private record AltarStatus(boolean valid, String detail) {
         }
 
         /** Dispatch the shared hatch BE to its altar's validator (pure client block-identity checks). */
@@ -226,21 +231,21 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             if (hatch instanceof com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity) {
                 var r = com.flatts.productivefrogs.content.multiblock.DragonAltarValidator.validate(
                     accessor.getLevel(), accessor.getPosition());
-                return new AltarStatus("productivefrogs.jade.dragon_altar", r.valid(), r.detail());
+                return new AltarStatus(r.valid(), r.detail());
             }
             if (hatch instanceof com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity) {
                 var r = com.flatts.productivefrogs.content.multiblock.WitherAltarValidator.validate(
                     accessor.getLevel(), accessor.getPosition());
-                return new AltarStatus("productivefrogs.jade.wither_altar", r.valid(), r.detail());
+                return new AltarStatus(r.valid(), r.detail());
             }
             if (hatch instanceof com.flatts.productivefrogs.content.block.entity.WardenAltarHatchBlockEntity) {
                 var r = com.flatts.productivefrogs.content.multiblock.WardenAltarValidator.validate(
                     accessor.getLevel(), accessor.getPosition());
-                return new AltarStatus("productivefrogs.jade.warden_altar", r.valid(), r.detail());
+                return new AltarStatus(r.valid(), r.detail());
             }
             var r = com.flatts.productivefrogs.content.multiblock.ElderAltarValidator.validate(
                 accessor.getLevel(), accessor.getPosition());
-            return new AltarStatus("productivefrogs.jade.elder_altar", r.valid(), r.detail());
+            return new AltarStatus(r.valid(), r.detail());
         }
 
         @Override
@@ -255,15 +260,21 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             // that has no Apex frog installed says so instead of reading "ready".
             if (be instanceof com.flatts.productivefrogs.content.block.entity.BossAltarHatchBlockEntity hatch) {
                 var status = altarStatus(hatch, accessor);
+                // The installed flag rides Jade's server data (fetched per look);
+                // default true so a missing payload never shows a false warning.
+                boolean installed = accessor.getServerData().getBooleanOr("ApexInstalled", true);
                 boolean unarmed = status.valid()
                     && com.flatts.productivefrogs.PFConfig.predatorsEnabled()
-                    && !hatch.apexInstalled();
+                    && !installed;
+                // One parameterized key set for all four altars (review finding:
+                // 12 per-altar keys carried 3 distinct texts); %s = the hatch name.
+                Component altarName = accessor.getBlock().getName();
                 if (unarmed) {
-                    tooltip.add(Component.translatable(status.prefix() + ".no_frog"));
+                    tooltip.add(Component.translatable("productivefrogs.jade.boss_altar.no_frog", altarName));
                 } else {
                     tooltip.add(Component.translatable(status.valid()
-                        ? status.prefix() + ".ready"
-                        : status.prefix() + ".incomplete", status.detail()));
+                        ? "productivefrogs.jade.boss_altar.ready"
+                        : "productivefrogs.jade.boss_altar.incomplete", altarName, status.detail()));
                 }
                 return;
             }
@@ -442,6 +453,12 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
 
         public void appendServerData(CompoundTag data, BlockAccessor accessor) {
             BlockState state = accessor.getBlockState();
+            // Boss altar hatches: the authoritative dock state, per look.
+            if (accessor.getBlockEntity()
+                    instanceof com.flatts.productivefrogs.content.block.entity.BossAltarHatchBlockEntity hatch) {
+                data.putBoolean("ApexInstalled", hatch.dock().isInstalled());
+                return;
+            }
             // Mimic Milk source (Equivalence lane, #253): a different block + BE.
             // Surface the carried item (for the name) + the spawns-left readout.
             if (state.getBlock() instanceof com.flatts.productivefrogs.content.block.MimicMilkSourceBlock) {

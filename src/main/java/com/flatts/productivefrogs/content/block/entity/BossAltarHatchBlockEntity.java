@@ -14,8 +14,8 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.Containers;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.Containers;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -84,8 +84,6 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
      * it doubles as the identity default.
      */
     private net.minecraft.core.Direction orientation = net.minecraft.core.Direction.SOUTH;
-    /** Client mirror of the dock's installed state (rides the update tag; the frog NBT itself never syncs). */
-    private boolean clientApexInstalled;
 
     protected BossAltarHatchBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, FrogKind.Apex apex) {
         super(type, pos, state);
@@ -155,14 +153,6 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
         return dock;
     }
 
-    /**
-     * Whether this altar's Apex frog is installed - server reads the dock, the
-     * client reads the update-tag mirror. Drives the Jade "waiting for its Apex
-     * Frog" warning on a structurally-complete but unarmed altar.
-     */
-    public boolean apexInstalled() {
-        return dock.isInstalled() || clientApexInstalled;
-    }
 
     /** Deposit a reward item, returning whatever did not fit (the caller spills it). */
     public ItemStack deposit(ItemStack stack) {
@@ -416,7 +406,6 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
         String dirName = input.getStringOr("Ritual", "");
         net.minecraft.core.Direction d = dirName.isEmpty() ? null : net.minecraft.core.Direction.byName(dirName);
         this.orientation = d != null && d.getAxis().isHorizontal() ? d : net.minecraft.core.Direction.SOUTH;
-        this.clientApexInstalled = input.getBooleanOr("ApexInstalled", false);
     }
 
     @Override
@@ -434,7 +423,6 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = super.getUpdateTag(registries);
         tag.putInt("SummonTicks", summonTicks);
-        tag.putBoolean("ApexInstalled", dock.isInstalled());
         tag.putString("Ritual", orientation.getName());
         return tag;
     }

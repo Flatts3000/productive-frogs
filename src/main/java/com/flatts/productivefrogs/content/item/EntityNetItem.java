@@ -186,7 +186,6 @@ public abstract class EntityNetItem extends Item {
             }
             if (hatch.dock().tryInstall(stack)) {
                 stack.remove(DataComponents.CUSTOM_DATA);
-                hatch.syncToClient(); // the Jade warning reads the installed state client-side
                 level.playSound(null, context.getClickedPos(), net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_CHIME,
                     net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 0.8F);
             } else {

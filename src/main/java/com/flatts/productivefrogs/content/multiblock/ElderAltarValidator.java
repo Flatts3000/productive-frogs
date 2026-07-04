@@ -145,19 +145,19 @@ public final class ElderAltarValidator {
     }
 
     private static Oriented validateOriented(LevelReader level, BlockPos hatch, Direction interior) {
-        if (!allMatch(level, hatch, CAPSTONE, interior, PFBlocks.MONUMENT_CORE.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, CAPSTONE, interior, PFBlocks.MONUMENT_CORE.get())) {
             return new Oriented(0, "missing the Monument Core at the roof center");
         }
-        if (!allMatch(level, hatch, SPONGE_FLOOR, interior, PFBlocks.REINFORCED_SPONGE_FROGLIGHT.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, SPONGE_FLOOR, interior, PFBlocks.REINFORCED_SPONGE_FROGLIGHT.get())) {
             return new Oriented(1, "incomplete Reinforced Sponge Froglight floor");
         }
-        if (!allMatch(level, hatch, GLASS_WALLS, interior, PFBlocks.REINFORCED_LIGHT_BLUE_STAINED_GLASS.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, GLASS_WALLS, interior, PFBlocks.REINFORCED_LIGHT_BLUE_STAINED_GLASS.get())) {
             return new Oriented(2, "incomplete Reinforced Light Blue Stained Glass walls");
         }
-        if (!allMatch(level, hatch, PRISMARINE_ROOF, interior, PFBlocks.REINFORCED_PRISMARINE_FROGLIGHT.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, PRISMARINE_ROOF, interior, PFBlocks.REINFORCED_PRISMARINE_FROGLIGHT.get())) {
             return new Oriented(3, "incomplete Reinforced Prismarine Froglight roof");
         }
-        if (!allMatch(level, hatch, RECEPTACLES, interior, PFBlocks.TIDE_OFFERING_RECEPTACLE.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, RECEPTACLES, interior, PFBlocks.TIDE_OFFERING_RECEPTACLE.get())) {
             return new Oriented(4, "missing a Tide Offering Receptacle at a roof corner");
         }
         for (int[] o : WATER_REQUIRED) {
@@ -171,13 +171,7 @@ public final class ElderAltarValidator {
 
     /** Rotate a canonical offset (interior = +Z / SOUTH) so the interior lies along {@code interior}. */
     static BlockPos rotateOffset(int dx, int dy, int dz, Direction interior) {
-        return switch (interior) {
-            case SOUTH -> new BlockPos(dx, dy, dz);
-            case WEST -> new BlockPos(-dz, dy, dx);
-            case NORTH -> new BlockPos(-dx, dy, -dz);
-            case EAST -> new BlockPos(dz, dy, -dx);
-            default -> new BlockPos(dx, dy, dz); // UP/DOWN never passed (HORIZONTAL plane only)
-        };
+        return AltarGeometry.rotateOffset(dx, dy, dz, interior);
     }
 
     /** The four Tide Offering Receptacle positions for a Hatch at {@code hatch} with the given interior direction. */
@@ -194,12 +188,4 @@ public final class ElderAltarValidator {
         return hatch.offset(rotateOffset(0, 0, 1, interior));
     }
 
-    private static boolean allMatch(LevelReader level, BlockPos hatch, int[][] offsets, Direction interior, Block block) {
-        for (int[] o : offsets) {
-            if (!level.getBlockState(hatch.offset(rotateOffset(o[0], o[1], o[2], interior))).is(block)) {
-                return false;
-            }
-        }
-        return true;
-    }
 }
