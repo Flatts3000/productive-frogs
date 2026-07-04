@@ -23,6 +23,14 @@ public final class PFEntityTags {
     public static final TagKey<EntityType<?>> FROGS = TagKey.create(
         Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "frogs"));
 
+    /**
+     * Mobs the Ender Net refuses to catch (#281 Phase 3, maintainer ruling):
+     * ships containing {@code #c:bosses} (wither, ender dragon, modded bosses),
+     * datapack-extensible for anything else a pack wants un-nettable.
+     */
+    public static final TagKey<EntityType<?>> ENDER_NET_DENYLIST = TagKey.create(
+        Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "ender_net_denylist"));
+
     private PFEntityTags() {
         // constants holder
     }

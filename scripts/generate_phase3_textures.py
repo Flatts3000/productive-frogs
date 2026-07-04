@@ -1,24 +1,31 @@
 #!/usr/bin/env python3
-"""Bake the predation Phase 3 textures (#281): the Ender Net, the Slurry
-Press, the two Basins, the Mob Slurry bucket, and the Slurry Press GUI.
+"""Bake the APPROVED predation Phase 3 textures (#281) into assets.
 
-All derived procedurally from existing art so the new blocks sit in the
-appliance family:
-  - ender_net(_filled): the frog_net art hue-shifted to the ender palette
-    (string -> purple, keeping luminance).
-  - slurry_press_*: the slime_churn set darkened + purple-shifted (obsidian
-    press with ender accents), idle + working.
-  - mob_slurry_basin_* / slime_milk_basin_*: procedural stone basin walls;
-    the inside floor carries the contents hue (ender purple / slime green).
-  - mob_slurry_bucket: the shared bucket base + contents overlay tinted the
-    slurry purple (PFClientEvents.MOB_SLURRY_PURPLE).
-  - gui/container/slurry_press.png: the slime_churn GUI (identical layout -
-    same slot geometry, same arrow inset) with the panel hue nudged purple.
+The maintainer reviewed candidates on the gen/ comparison page
+(scripts/generate_phase3_texture_candidates.py builds them) and approved,
+2026-07-03:
 
-Run from the repo root:  python scripts/generate_phase3_textures.py
+    ender_net / ender_net_filled   candidate 1  (green ring, darker purple
+                                   mesh; filled = shaded bulge, no eyes)
+    slurry_press (7 faces)         candidate 0  (obsidian + iron plate, TEAL
+                                   pearl core + vents)
+    mob_slurry_basin (4 faces)     candidate 0  (obsidian basin, TEAL studs
+                                   + pool floor)
+    slime_milk_basin (4 faces)     the single design (packed mud, moss rim,
+                                   slime-green pool)
+    mob_slurry_bucket              settled by ruling: bucket base + greyscale
+                                   contents layer, tinted per-mob at runtime
+                                   (SlurriedEntityTint) - baked separately in
+                                   this script.
+    slurry_press GUI               the recolored churn layout (same slot
+                                   geometry, purple cast).
+
+This script re-derives that exact set from the candidate generator's drawing
+functions, so the shipped art is reproducible from source. Re-run after
+editing the generator:  python scripts/generate_phase3_textures.py
 """
 
-import colorsys
+import importlib.util
 import sys
 from pathlib import Path
 
@@ -32,99 +39,59 @@ ITEM = ASSETS / "item"
 BLOCK = ASSETS / "block"
 GUI = ASSETS / "gui/container"
 
-SLURRY_PURPLE_HUE = 270 / 360.0
-SLIME_GREEN_HUE = 100 / 360.0
+spec = importlib.util.spec_from_file_location(
+    "phase3_candidates", REPO / "scripts/generate_phase3_texture_candidates.py")
+cand = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(cand)
 
-
-def hue_shift(img: Image.Image, hue: float, sat: float = 0.45, value_mul: float = 1.0) -> Image.Image:
-    """Re-hue every visible pixel to `hue`, keeping per-pixel luminance."""
-    out = img.convert("RGBA").copy()
-    px = out.load()
-    for y in range(out.height):
-        for x in range(out.width):
-            r, g, b, a = px[x, y]
-            if a == 0:
-                continue
-            _, _, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
-            nr, ng, nb = colorsys.hsv_to_rgb(hue, sat, min(1.0, v * value_mul))
-            px[x, y] = (round(nr * 255), round(ng * 255), round(nb * 255), a)
-    return out
-
-
-def basin_texture_set(name: str, inside_rgb: tuple[int, int, int]) -> None:
-    """Procedural stone basin: noisy grey walls, darker bottom, rim top, tinted inside."""
-    import random
-    rng = random.Random(name)  # deterministic per block
-
-    def stone(base: int, spread: int) -> Image.Image:
-        img = Image.new("RGBA", (16, 16))
-        px = img.load()
-        for y in range(16):
-            for x in range(16):
-                v = base + rng.randint(-spread, spread)
-                px[x, y] = (v, v, min(255, v + 4), 255)
-        return img
-
-    side = stone(96, 10)
-    # a darker footing band + a rim highlight row so the wall reads as a basin
-    spx = side.load()
-    for x in range(16):
-        for y in (0, 1):
-            r, g, b, a = spx[x, y]
-            spx[x, y] = (min(255, r + 24), min(255, g + 24), min(255, b + 24), a)
-        for y in (14, 15):
-            r, g, b, a = spx[x, y]
-            spx[x, y] = (max(0, r - 28), max(0, g - 28), max(0, b - 28), a)
-    bottom = stone(72, 8)
-    top = stone(108, 8)
-    inside = stone(84, 6)
-    ipx = inside.load()
-    ir, ig, ib = inside_rgb
-    for y in range(16):
-        for x in range(16):
-            r, g, b, a = ipx[x, y]
-            # multiply toward the contents hue so the floor hints what it holds
-            ipx[x, y] = (r * ir // 255, g * ig // 255, b * ib // 255, a)
-    side.save(BLOCK / f"{name}_side.png")
-    bottom.save(BLOCK / f"{name}_bottom.png")
-    top.save(BLOCK / f"{name}_top.png")
-    inside.save(BLOCK / f"{name}_inside.png")
-    print(f"wrote {name} block set")
+TEAL = 0  # approved accent variant for press + slurry basin
 
 
 def main() -> None:
-    # Ender Net: frog net re-hued to ender purple.
-    for src, dest in [("frog_net.png", "ender_net.png"), ("frog_net_filled.png", "ender_net_filled.png")]:
-        img = Image.open(ITEM / src)
-        hue_shift(img, SLURRY_PURPLE_HUE, sat=0.55).save(ITEM / dest)
-        print(f"wrote {dest}")
+    # Ender Net: approved candidate 1 (darker mesh / plain shaded bulge).
+    cand.ender_net(1, False).save(ITEM / "ender_net.png")
+    cand.ender_net(1, True).save(ITEM / "ender_net_filled.png")
+    print("wrote ender_net + ender_net_filled")
 
-    # Slurry Press: the churn set darkened + purple-shifted (idle + working).
-    for suffix in ["top", "bottom", "side", "front", "top_working", "side_working", "front_working"]:
-        src = BLOCK / f"slime_churn_{suffix}.png"
-        img = Image.open(src)
-        hue_shift(img, SLURRY_PURPLE_HUE, sat=0.40, value_mul=0.62).save(BLOCK / f"slurry_press_{suffix}.png")
-        print(f"wrote slurry_press_{suffix}.png")
+    # Slurry Press: approved candidate 0 (teal accents), all seven faces.
+    cand.press_front(TEAL, False).save(BLOCK / "slurry_press_front.png")
+    cand.press_front(TEAL, True).save(BLOCK / "slurry_press_front_working.png")
+    cand.press_side(TEAL, False).save(BLOCK / "slurry_press_side.png")
+    cand.press_side(TEAL, True).save(BLOCK / "slurry_press_side_working.png")
+    cand.press_top(TEAL, False).save(BLOCK / "slurry_press_top.png")
+    cand.press_top(TEAL, True).save(BLOCK / "slurry_press_top_working.png")
+    cand.press_bottom().save(BLOCK / "slurry_press_bottom.png")
+    print("wrote slurry_press set (teal)")
 
-    # Basins.
-    basin_texture_set("mob_slurry_basin", (0x9C, 0x6B, 0xC7))
-    basin_texture_set("slime_milk_basin", (0x5D, 0xDE, 0x36))
+    # Basins: slurry = approved candidate 0 (teal); milk = the single design.
+    slurry = cand.slurry_basin_set(TEAL)
+    milk = cand.milk_basin_set()
+    for face in ("side", "top", "inside", "bottom"):
+        slurry[face].save(BLOCK / f"mob_slurry_basin_{face}.png")
+        milk[face].save(BLOCK / f"slime_milk_basin_{face}.png")
+    print("wrote both basin sets")
 
-    # Mob Slurry bucket: bucket base + purple contents (the LE bucket recipe).
+    # Mob Slurry bucket: base bucket + normalized-greyscale contents (tinted
+    # per-mob at runtime by SlurriedEntityTint).
     base = Image.open(ITEM / "slime_milk_bucket.png").convert("RGBA")
-    contents = Image.open(ITEM / "slime_milk_bucket_milk.png").convert("RGBA")
-    tinted = contents.copy()
-    px = tinted.load()
+    base.save(ITEM / "mob_slurry_bucket.png")
+    contents = Image.open(ITEM / "slime_milk_bucket_milk.png").convert("RGBA").copy()
+    px = contents.load()
+    lums = [0.299 * r + 0.587 * g + 0.114 * b
+            for y in range(16) for x in range(16)
+            for r, g, b, a in [px[x, y]] if a > 0]
+    scale = 255.0 / max(lums) if lums else 1.0
     for y in range(16):
         for x in range(16):
             r, g, b, a = px[x, y]
-            px[x, y] = (r * 0x9C // 255, g * 0x6B // 255, b * 0xC7 // 255, a)
-    out = base.copy()
-    out.alpha_composite(tinted)
-    out.save(ITEM / "mob_slurry_bucket.png")
-    print("wrote mob_slurry_bucket.png")
+            if a > 0:
+                v = min(255, round((0.299 * r + 0.587 * g + 0.114 * b) * scale))
+                px[x, y] = (v, v, v, a)
+    contents.save(ITEM / "mob_slurry_bucket_contents.png")
+    print("wrote mob_slurry_bucket base + contents")
 
-    # Slurry Press GUI: the churn GUI (identical layout) nudged purple.
+    # Slurry Press GUI: the churn GUI layout (identical slot geometry) with a
+    # gentle purple cast.
     gui = Image.open(GUI / "slime_churn.png").convert("RGBA")
     px = gui.load()
     for y in range(gui.height):
@@ -132,7 +99,6 @@ def main() -> None:
             r, g, b, a = px[x, y]
             if a == 0:
                 continue
-            # gentle purple cast: lift blue+red slightly, drop green
             px[x, y] = (min(255, r + 6), max(0, g - 6), min(255, b + 12), a)
     gui.save(GUI / "slurry_press.png")
     print("wrote gui slurry_press.png")

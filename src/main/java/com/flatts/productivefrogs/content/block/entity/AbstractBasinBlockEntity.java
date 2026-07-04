@@ -338,6 +338,9 @@ public abstract class AbstractBasinBlockEntity extends BlockEntity {
         }
         be.resetInterval();
         be.setChanged();
+        // Sync the drained budget so the rendered fluid level drops with it
+        // (one packet per spawn EVENT - the interval cadence, not per tick).
+        be.syncToClients();
     }
 
     /**
@@ -551,12 +554,19 @@ public abstract class AbstractBasinBlockEntity extends BlockEntity {
         intervalRemaining = Math.max(0, Math.min(input.getIntOr("IntervalRemaining", 0), intervalTotal));
     }
 
-    // Sync the contained key to clients (render/Jade); budget details stay server-side.
+    // Sync the contained key + the budget to clients: the BasinRenderer draws
+    // the held fluid's surface at a height proportional to remaining/capacity
+    // (maintainer ruling: the Basin shows the fluid that's in it).
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider lookup) {
         CompoundTag tag = super.getUpdateTag(lookup);
         if (containedKey != null) {
             tag.putString("Contained", containedKey.toString());
+            tag.putInt("SpawnsRemaining", spawnsRemaining);
+            tag.putInt("SpawnsCapacity", spawnsCapacity);
+            if (infinite) {
+                tag.putBoolean("Infinite", true);
+            }
         }
         return tag;
     }
