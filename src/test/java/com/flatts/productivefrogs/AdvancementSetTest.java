@@ -35,6 +35,7 @@ class AdvancementSetTest {
     /** Trigger ids the set is allowed to use: our custom one + the vanilla item gate. */
     private static final Set<String> ALLOWED_TRIGGERS = Set.of(
         "productivefrogs:frog_produced",
+        "productivefrogs:predation_milestone",
         "minecraft:inventory_changed"
     );
 

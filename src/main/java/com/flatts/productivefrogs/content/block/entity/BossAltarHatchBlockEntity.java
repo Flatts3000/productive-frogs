@@ -220,6 +220,10 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
             dock.bankXp(server, Vec3.atCenterOf(pos), xp);
         }
         payOut(server, pos);
+        // Predation milestone (#281 Phase 5): a boss farmed through the altar loop.
+        com.flatts.productivefrogs.registry.PFCriterionTriggers.PREDATION_MILESTONE.get().awardNearby(
+            server, Vec3.atCenterOf(pos),
+            com.flatts.productivefrogs.advancement.PredationMilestoneTrigger.Milestone.BOSS_FARMED);
     }
 
     /** Hatch removal (Phase 4): the container spills (super), the installed Apex respawns, the display frog goes. */

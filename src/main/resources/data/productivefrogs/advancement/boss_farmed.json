@@ -1,0 +1,31 @@
+{
+  "parent": "productivefrogs:apex_bred",
+  "display": {
+    "icon": {
+      "id": "minecraft:nether_star"
+    },
+    "title": {
+      "translate": "advancement.productivefrogs.boss_farmed.title"
+    },
+    "description": {
+      "translate": "advancement.productivefrogs.boss_farmed.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "milestone": {
+      "trigger": "productivefrogs:predation_milestone",
+      "conditions": {
+        "milestone": "boss_farmed"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "milestone"
+    ]
+  ]
+}

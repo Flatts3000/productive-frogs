@@ -23,6 +23,10 @@ public final class PFCriterionTriggers {
     public static final Supplier<FrogProducedTrigger> FROG_PRODUCED =
         TRIGGERS.register("frog_produced", FrogProducedTrigger::new);
 
+    /** The predation-system milestones (#281 Phase 5): predator/apex bred, mob/boss farmed. */
+    public static final Supplier<com.flatts.productivefrogs.advancement.PredationMilestoneTrigger> PREDATION_MILESTONE =
+        TRIGGERS.register("predation_milestone", com.flatts.productivefrogs.advancement.PredationMilestoneTrigger::new);
+
     private PFCriterionTriggers() {
         // utility class
     }

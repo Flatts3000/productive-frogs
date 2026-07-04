@@ -129,6 +129,8 @@ The boss tier and the altar retrofit + two new altars.
 
 ## Phase 5 - Retirement sweep + polish + guide  (size: M)
 
+> **STATUS: DELIVERED** (2026-07-04, minus the Patchouli entries - still blocked on the 26.1 port, tracked separately). The 21 mob-derived variants and the whole catalyst-altar mechanism retired (kept by ruling: armadillo scute, turtle scute, honeycomb - husbandry, not kill loot); the four predation milestones shipped on the new `predation_milestone` trigger; JEI grew the Mob Slurry subtype + info pages for the predation chain; `variants.bossVariantsEnabled` folded into `boss.enabled`. Breaking note in CHANGELOG under [Unreleased].
+
 Close-out.
 
 **Ships:**

@@ -358,6 +358,16 @@ public class ResourceTadpole extends Tadpole {
         frog.fudgePositionAfterSizeChange(this.getDimensions(this.getPose()));
         this.playSound(SoundEvents.TADPOLE_GROW_UP, 0.15F, 1.0F);
         serverLevel.addFreshEntityWithPassengers(frog);
+        // Predation milestones (#281 Phase 5): the first predator/apex to mature.
+        if (frog.getKind() instanceof com.flatts.productivefrogs.data.FrogKind.Apex) {
+            com.flatts.productivefrogs.registry.PFCriterionTriggers.PREDATION_MILESTONE.get().awardNearby(
+                serverLevel, frog.position(),
+                com.flatts.productivefrogs.advancement.PredationMilestoneTrigger.Milestone.APEX_BRED);
+        } else if (frog.getKind() instanceof com.flatts.productivefrogs.data.FrogKind.Predator) {
+            com.flatts.productivefrogs.registry.PFCriterionTriggers.PREDATION_MILESTONE.get().awardNearby(
+                serverLevel, frog.position(),
+                com.flatts.productivefrogs.advancement.PredationMilestoneTrigger.Milestone.PREDATOR_BRED);
+        }
         this.discard();
     }
 

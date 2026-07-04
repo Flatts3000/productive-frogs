@@ -228,6 +228,15 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             }
         };
         registration.registerSubtypeInterpreter(PFItems.CONFIGURABLE_FROGLIGHT.get(), slimeVariantInterp);
+        // Mob Slurry Bucket (#281 Phase 3): keyed by SLURRIED_ENTITY so each
+        // mob's slurry is a distinct entry (mirrors the SLIME_VARIANT items).
+        registration.registerSubtypeInterpreter(PFItems.MOB_SLURRY_BUCKET.get(), new ISubtypeInterpreter<>() {
+            @Override
+            public Object getSubtypeData(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
+                Identifier v = stack.get(PFDataComponents.SLURRIED_ENTITY.get());
+                return v == null ? "" : v.toString();
+            }
+        });
         registration.registerSubtypeInterpreter(PFItems.RESOURCE_SLIME_SPAWN_EGG.get(), slimeVariantInterp);
         // The single Slime Milk bucket (26.1 R-1) carries its variant in SLIME_VARIANT,
         // so it uses the same interpreter - each variant becomes a distinct JEI row.
@@ -623,6 +632,28 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
                 new ItemStack(PFBlocks.SLIME_CHURN.get().asItem()),
                 VanillaTypes.ITEM_STACK,
                 Component.translatable("productivefrogs.jei.slime_churn.info"));
+        }
+
+        // Predation supply chain (#281): press, basins, nets, LE, altar hatches -
+        // gated with the predation/boss masters like their creative visibility.
+        if (com.flatts.productivefrogs.PFConfig.predatorsEnabled()) {
+            reg.addIngredientInfo(new ItemStack(PFBlocks.SLURRY_PRESS.get().asItem()),
+                VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.slurry_press.info"));
+            reg.addIngredientInfo(new ItemStack(PFBlocks.MOB_SLURRY_BASIN.get().asItem()),
+                VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.mob_slurry_basin.info"));
+            reg.addIngredientInfo(new ItemStack(PFBlocks.SLIME_MILK_BASIN.get().asItem()),
+                VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.slime_milk_basin.info"));
+            reg.addIngredientInfo(new ItemStack(PFItems.ENDER_NET.get()),
+                VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.ender_net.info"));
+            reg.addIngredientInfo(new ItemStack(PFItems.LIQUID_EXPERIENCE_BUCKET.get()),
+                VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.liquid_experience.info"));
+        }
+        if (com.flatts.productivefrogs.PFConfig.bossEnabled()) {
+            Component altarInfo = Component.translatable("productivefrogs.jei.boss_altar_hatch.info");
+            reg.addIngredientInfo(new ItemStack(PFBlocks.WITHER_ALTAR_HATCH.get().asItem()), VanillaTypes.ITEM_STACK, altarInfo);
+            reg.addIngredientInfo(new ItemStack(PFBlocks.END_DRAGON_ALTAR_HATCH.get().asItem()), VanillaTypes.ITEM_STACK, altarInfo);
+            reg.addIngredientInfo(new ItemStack(PFBlocks.WARDEN_ALTAR_HATCH.get().asItem()), VanillaTypes.ITEM_STACK, altarInfo);
+            reg.addIngredientInfo(new ItemStack(PFBlocks.ELDER_ALTAR_HATCH.get().asItem()), VanillaTypes.ITEM_STACK, altarInfo);
         }
 
         // Terrarium multiblock (#185) - one info page per machine block.
