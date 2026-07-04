@@ -22,7 +22,7 @@ Altar Hatch** in the tank floor center:
   Elder Guardian's signature drop).
 - **Interior**: every 3x3x3 cell (except the Hatch) must be a **water source**
   - the validator checks the flood, not just the shell. Elderbane, the display
-  frog, swims pinned above the Hatch.
+  frog, swims pinned in front of the Hatch.
 
 Canonical layout: `data/productivefrogs/structure/elder_altar.nbt`, locked by
 the `elder_altar_*` GameTests (including `elder_altar_rejects_drained_tank` -

@@ -76,30 +76,31 @@ def write(path, blocks, palette):
     print(f"wrote {path} ({len(blocks)} blocks, {len(palette)} palette entries)")
 
 PF = "productivefrogs:"
-# structure coords: hatch at (2,1,2); validator offset (dx,dy,dz) -> (2+dx, 1+dy, 2+dz)
+# structure coords: the Hatch sits IN THE WALL at (2,1,0) (canonical frame:
+# interior toward +Z); validator offset (dx,dy,dz) -> (2+dx, 1+dy, dz)
 def S(dx, dy, dz):
-    return (2 + dx, 1 + dy, 2 + dz)
+    return (2 + dx, 1 + dy, dz)
 
 # ---- Warden Altar (the Shrieker Pit) ----
 palette = [PF + "warden_altar_hatch", PF + "echoing_catalyst", PF + "reinforced_sculk_froglight",
            PF + "reinforced_echo_shard_froglight", PF + "shrieker_receptacle", "minecraft:air"]
 HATCH, CAPSTONE, SCULK, ECHO, RECEPT, AIR = range(6)
-blocks = [(S(0, 0, 0), HATCH), (S(0, -1, 0), CAPSTONE)]
+blocks = [(S(0, 0, 0), HATCH), (S(0, -1, 2), CAPSTONE)]
 for dx in range(-2, 3):
-    for dz in range(-2, 3):
-        ring = max(abs(dx), abs(dz)) == 2
-        if not (dx == 0 and dz == 0):
-            blocks.append((S(dx, -1, dz), SCULK))                 # floor
+    for dz in range(0, 5):
+        ring = max(abs(dx), abs(dz - 2)) == 2
+        if not (dx == 0 and dz == 2):
+            blocks.append((S(dx, -1, dz), SCULK))                 # floor (capstone at center)
         if ring:
             for dy in range(0, 3):
-                blocks.append((S(dx, dy, dz), SCULK))             # lining
-            cardinal = (dx == 0 and abs(dz) == 2) or (abs(dx) == 2 and dz == 0)
+                if not (dx == 0 and dy == 0 and dz == 0):         # the Hatch cell
+                    blocks.append((S(dx, dy, dz), SCULK))         # lining
+            cardinal = (dx == 0 and dz in (0, 4)) or (abs(dx) == 2 and dz == 2)
             blocks.append((S(dx, 3, dz), RECEPT if cardinal else ECHO))  # rim
 for dx in range(-1, 2):
-    for dz in range(-1, 2):
+    for dz in range(1, 4):
         for dy in range(0, 4):
-            if not (dx == 0 and dz == 0 and dy == 0):
-                blocks.append((S(dx, dy, dz), AIR))               # open shaft
+            blocks.append((S(dx, dy, dz), AIR))                   # open shaft
 write(f"{STRUCT_DIR}/warden_altar.nbt", blocks, palette)
 
 # ---- Elder Guardian Altar (the Monument Well) ----
@@ -107,23 +108,23 @@ palette = [PF + "elder_altar_hatch", PF + "monument_core", PF + "reinforced_spon
            PF + "reinforced_prismarine_froglight", PF + "tide_offering_receptacle", "minecraft:water",
            PF + "reinforced_light_blue_stained_glass"]
 HATCH, CORE, SPONGE, PRISM, RECEPT, WATER, GLASS = range(7)
-blocks = [(S(0, 0, 0), HATCH), (S(0, 3, 0), CORE)]
+blocks = [(S(0, 0, 0), HATCH), (S(0, 3, 2), CORE)]
 for dx in range(-2, 3):
-    for dz in range(-2, 3):
+    for dz in range(0, 5):
         blocks.append((S(dx, -1, dz), SPONGE))                    # floor
-        ring = max(abs(dx), abs(dz)) == 2
+        ring = max(abs(dx), abs(dz - 2)) == 2
         if ring:
             for dy in range(0, 3):
-                blocks.append((S(dx, dy, dz), GLASS))             # glass walls
-        corner = abs(dx) == 2 and abs(dz) == 2
-        center = dx == 0 and dz == 0
+                if not (dx == 0 and dy == 0 and dz == 0):         # the Hatch cell
+                    blocks.append((S(dx, dy, dz), GLASS))         # glass walls
+        corner = abs(dx) == 2 and dz in (0, 4)
+        center = dx == 0 and dz == 2
         if corner:
             blocks.append((S(dx, 3, dz), RECEPT))                 # roof corners
         elif not center:
             blocks.append((S(dx, 3, dz), PRISM))                  # roof plate
 for dx in range(-1, 2):
-    for dz in range(-1, 2):
+    for dz in range(1, 4):
         for dy in range(0, 3):
-            if not (dx == 0 and dz == 0 and dy == 0):
-                blocks.append((S(dx, dy, dz), WATER))             # flooded interior
+            blocks.append((S(dx, dy, dz), WATER))                 # flooded interior
 write(f"{STRUCT_DIR}/elder_altar.nbt", blocks, palette)

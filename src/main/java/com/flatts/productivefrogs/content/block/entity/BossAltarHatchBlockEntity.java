@@ -74,6 +74,16 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
     private int summonTicks;
     /** Client-only render state: game time when the renderer first saw this summon, for local growth animation. */
     public long clientSummonStartGameTime = -1L;
+
+    /**
+     * The altar's resolved build orientation, cached from the last successful
+     * validation and synced to the client. Semantics per altar: the wither's
+     * ritual-wall direction, or the direction from a wall-mounted Hatch toward
+     * the altar interior (#279/#280 - the Hatch sits in the wall so pipes reach
+     * its outer face). SOUTH is every validator's canonical authoring frame, so
+     * it doubles as the identity default.
+     */
+    private net.minecraft.core.Direction orientation = net.minecraft.core.Direction.SOUTH;
     /** Client mirror of the dock's installed state (rides the update tag; the frog NBT itself never syncs). */
     private boolean clientApexInstalled;
 
@@ -147,6 +157,20 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
     /** Summon progress for the client animation (0 = idle, else ticks remaining). */
     public int summonTicks() {
         return summonTicks;
+    }
+
+    /** The resolved build orientation (see the field javadoc); read by renderers and fuel lookups. */
+    public net.minecraft.core.Direction orientation() {
+        return orientation;
+    }
+
+    /** Cache the resolved orientation; sync to the client (renderers read it) only on change. */
+    protected void setOrientation(net.minecraft.core.Direction dir) {
+        if (dir != null && dir.getAxis().isHorizontal() && this.orientation != dir) {
+            this.orientation = dir;
+            setChanged();
+            syncToClient();
+        }
     }
 
     // ---- the summon state machine -----------------------------------------
@@ -336,6 +360,10 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
         ContainerHelper.loadAllItems(input, this.items);
         this.summonTicks = input.getIntOr("SummonTicks", 0);
         this.dock.load(input);
+        // "Ritual" is the historical key (the wither altar shipped it first).
+        String dirName = input.getStringOr("Ritual", "");
+        net.minecraft.core.Direction d = dirName.isEmpty() ? null : net.minecraft.core.Direction.byName(dirName);
+        this.orientation = d != null && d.getAxis().isHorizontal() ? d : net.minecraft.core.Direction.SOUTH;
         this.clientApexInstalled = input.getBooleanOr("ApexInstalled", false);
     }
 
@@ -344,6 +372,7 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
         super.saveAdditional(output);
         ContainerHelper.saveAllItems(output, this.items);
         output.putInt("SummonTicks", summonTicks);
+        output.putString("Ritual", orientation.getName());
         dock.save(output);
     }
 
@@ -354,6 +383,7 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
         CompoundTag tag = super.getUpdateTag(registries);
         tag.putInt("SummonTicks", summonTicks);
         tag.putBoolean("ApexInstalled", dock.isInstalled());
+        tag.putString("Ritual", orientation.getName());
         return tag;
     }
 

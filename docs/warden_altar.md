@@ -11,12 +11,15 @@ Apex gate + LE bank).
 
 The altar rules (maintainer, 2026-07-04): one Hatch, structure made of
 reinforced froglights, gated by one resource from the boss. The pit is 5x5
-footprint, five tall, **4-fold symmetric** (no facing-aware rotation pass -
-contrast the wither altar), anchored on the **Warden Altar Hatch** at the pit
-floor center:
+footprint, five tall, anchored on the **Warden Altar Hatch** set INTO the shaft
+wall at pit-floor level - its outer face sticks out of the structure so pipes
+reach it (the original floor-center anchor was pipe-unreachable). The validator
+is **facing-aware** (the wither pattern): the Hatch may sit in any of the four
+walls; the resolved interior direction drives the receptacle lookups, the
+Wardenbane perch, and the replica render.
 
 - **Floor** (`y-1`): 5x5 Reinforced Sculk Froglight, with the **Echoing
-  Catalyst** capstone set directly beneath the Hatch (crafted from a Sculk
+  Catalyst** capstone set beneath the pit center (crafted from a Sculk
   Catalyst - building the altar proves a first Warden kill; the altar pays
   catalysts thereafter).
 - **Shaft lining** (`y0..2`): the 5x5 ring, Reinforced Sculk Froglight, around
@@ -35,7 +38,7 @@ locked by the `warden_altar_*` GameTests - a layout edit without re-syncing
 
 1. Build the pit; **install the Warden Apex Frog** (Prowler x Rift cross) by
    shift-right-clicking the Hatch with a filled Frog Net. Wardenbane - the
-   display frog - perches on the Hatch while installed.
+   display frog - perches in the cavity in front of the Hatch while installed.
 2. Load each Shrieker Receptacle with one **Sculk Shrieker** (4 = warning level
    4, the vanilla summon trigger; renewable via sculk-catalyst farms, which the
    altar's own catalyst payout bootstraps).

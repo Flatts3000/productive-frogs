@@ -7,8 +7,6 @@ import com.flatts.productivefrogs.data.FrogKind;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -17,8 +15,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 /**
  * Wither Altar Hatch block entity (#247) on the shared
@@ -32,43 +28,30 @@ import net.minecraft.world.level.storage.ValueOutput;
  */
 public class WitherAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
 
-    /**
-     * The resolved ritual direction (the way the receptacle wall faces), cached from the
-     * last successful validate and synced to the client so the summon replica forms on the
-     * correct side. Defaults to the canonical {@link WitherAltarValidator#CANONICAL_RITUAL}.
-     */
-    private Direction ritual = WitherAltarValidator.CANONICAL_RITUAL;
-
     public WitherAltarHatchBlockEntity(BlockPos pos, BlockState state) {
         super(PFBlockEntities.WITHER_ALTAR_HATCH.get(), pos, state, FrogKind.Apex.WITHER);
     }
 
-    /** The resolved ritual direction (way the receptacle wall faces); read by the replica renderer. */
+    /**
+     * The resolved ritual direction (way the receptacle wall faces) - the wither's
+     * name for the base orientation; read by the replica renderer.
+     */
     public Direction ritual() {
-        return ritual;
-    }
-
-    /** Cache the resolved ritual direction; sync to the client (for the replica) only on change. */
-    private void setRitual(Direction dir) {
-        if (this.ritual != dir) {
-            this.ritual = dir;
-            setChanged();
-            syncToClient();
-        }
+        return orientation();
     }
 
     @Override
     protected boolean validateStructure(ServerLevel server, BlockPos pos) {
         WitherAltarValidator.Result result = WitherAltarValidator.validate(server, pos);
         if (result.valid() && result.ritual() != null) {
-            setRitual(result.ritual());
+            setOrientation(result.ritual());
         }
         return result.valid();
     }
 
     @Override
     protected boolean fuelReady(ServerLevel server, BlockPos pos) {
-        for (BlockPos rp : WitherAltarValidator.receptacles(pos, ritual)) {
+        for (BlockPos rp : WitherAltarValidator.receptacles(pos, ritual())) {
             if (!(server.getBlockEntity(rp) instanceof SummonReceptacleBlockEntity r) || !r.isFilled()) {
                 return false;
             }
@@ -79,7 +62,7 @@ public class WitherAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
     @Override
     protected void spendFuel(ServerLevel server, BlockPos pos) {
         // Spend all seven ritual receptacles (the full vanilla cost).
-        for (BlockPos rp : WitherAltarValidator.receptacles(pos, ritual)) {
+        for (BlockPos rp : WitherAltarValidator.receptacles(pos, ritual())) {
             if (server.getBlockEntity(rp) instanceof SummonReceptacleBlockEntity r) {
                 r.consume();
             }
@@ -94,13 +77,13 @@ public class WitherAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
     @Override
     protected void reconcileDisplay(ServerLevel server, BlockPos pos, boolean show) {
         if (show) {
-            for (BlockPos rp : WitherAltarValidator.receptacles(pos, ritual)) {
+            for (BlockPos rp : WitherAltarValidator.receptacles(pos, ritual())) {
                 if (server.getBlockEntity(rp) instanceof SummonReceptacleBlockEntity r) {
-                    r.setRitual(ritual);
+                    r.setRitual(ritual());
                 }
             }
         }
-        float yaw = ritual.toYRot();
+        float yaw = ritual().toYRot();
         reconcileDisplayFrog(server, WitherAltarValidator.witherbanePos(pos), yaw, yaw,
             WitherbaneFrog.type(), WitherbaneFrog.class, show);
     }
@@ -150,31 +133,5 @@ public class WitherAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
         return Component.translatable("block.productivefrogs.wither_altar_hatch");
     }
 
-    @Override
-    protected void loadAdditional(ValueInput input) {
-        super.loadAdditional(input);
-        this.ritual = readRitual(input);
-    }
-
-    /** Read the cached ritual direction, defaulting to canonical (back-compat for pre-fix altars). */
-    private static Direction readRitual(ValueInput input) {
-        String name = input.getStringOr("Ritual", "");
-        Direction d = name.isEmpty() ? null : Direction.byName(name);
-        return d != null && d.getAxis().isHorizontal() ? d : WitherAltarValidator.CANONICAL_RITUAL;
-    }
-
-    @Override
-    protected void saveAdditional(ValueOutput output) {
-        super.saveAdditional(output);
-        output.putString("Ritual", ritual.getName());
-    }
-
-    // The resolved ritual rides the update tag alongside the summon progress so the
-    // replica forms on the correct side.
-    @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
-        tag.putString("Ritual", ritual.getName());
-        return tag;
-    }
+    // orientation persistence + client sync (the "Ritual" key) lives in the base.
 }

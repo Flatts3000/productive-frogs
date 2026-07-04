@@ -33,12 +33,16 @@ public class WardenAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
 
     @Override
     protected boolean validateStructure(ServerLevel server, BlockPos pos) {
-        return WardenAltarValidator.validate(server, pos).valid();
+        WardenAltarValidator.Result result = WardenAltarValidator.validate(server, pos);
+        if (result.valid()) {
+            setOrientation(result.interior());
+        }
+        return result.valid();
     }
 
     @Override
     protected boolean fuelReady(ServerLevel server, BlockPos pos) {
-        for (BlockPos rp : WardenAltarValidator.receptacles(pos)) {
+        for (BlockPos rp : WardenAltarValidator.receptacles(pos, orientation())) {
             if (!(server.getBlockEntity(rp) instanceof SummonReceptacleBlockEntity r) || !r.isFilled()) {
                 return false;
             }
@@ -48,7 +52,7 @@ public class WardenAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
 
     @Override
     protected void spendFuel(ServerLevel server, BlockPos pos) {
-        for (BlockPos rp : WardenAltarValidator.receptacles(pos)) {
+        for (BlockPos rp : WardenAltarValidator.receptacles(pos, orientation())) {
             if (server.getBlockEntity(rp) instanceof SummonReceptacleBlockEntity r) {
                 r.consume();
             }
@@ -57,18 +61,20 @@ public class WardenAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
 
     @Override
     protected void reconcileDisplay(ServerLevel server, BlockPos pos, boolean show) {
-        reconcileDisplayFrog(server, WardenAltarValidator.wardenbanePos(pos), 180.0F, null,
+        // In front of the wall-mounted Hatch, facing the pit center (the replica).
+        float yaw = orientation().toYRot();
+        reconcileDisplayFrog(server, WardenAltarValidator.wardenbanePos(pos, orientation()), yaw, yaw,
             WardenbaneFrog.type(), WardenbaneFrog.class, show);
     }
 
     @Override
     protected void lashDisplay(ServerLevel server, BlockPos pos) {
-        lashDisplayFrog(server, WardenAltarValidator.wardenbanePos(pos), WardenbaneFrog.class);
+        lashDisplayFrog(server, WardenAltarValidator.wardenbanePos(pos, orientation()), WardenbaneFrog.class);
     }
 
     @Override
     protected void discardDisplay(ServerLevel server, BlockPos pos) {
-        discardDisplayFrog(server, WardenAltarValidator.wardenbanePos(pos), WardenbaneFrog.class);
+        discardDisplayFrog(server, WardenAltarValidator.wardenbanePos(pos, orientation()), WardenbaneFrog.class);
     }
 
     @Override

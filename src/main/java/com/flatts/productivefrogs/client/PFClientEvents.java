@@ -154,14 +154,14 @@ public final class PFClientEvents {
             com.flatts.productivefrogs.registry.PFBlockEntities.WARDEN_ALTAR_HATCH.get(),
             ctx -> new com.flatts.productivefrogs.client.renderer.GrowingReplicaRenderer<>(ctx,
                 net.minecraft.world.entity.EntityType.WARDEN,
-                new net.minecraft.world.phys.Vec3(0.0, 0.0, 0.0), 1.2,
+                new net.minecraft.world.phys.Vec3(0.0, 0.0, 2.0), 1.2,
                 com.flatts.productivefrogs.PFConfig::wardenAltarSummonTicks));
         // Elder Guardian Altar Hatch (#280): the Elder Guardian replica swelling mid-tank.
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.ELDER_ALTAR_HATCH.get(),
             ctx -> new com.flatts.productivefrogs.client.renderer.GrowingReplicaRenderer<>(ctx,
                 net.minecraft.world.entity.EntityType.ELDER_GUARDIAN,
-                new net.minecraft.world.phys.Vec3(0.0, 0.9, 0.0), 0.0,
+                new net.minecraft.world.phys.Vec3(0.0, 0.9, 2.0), 0.0,
                 com.flatts.productivefrogs.PFConfig::elderAltarSummonTicks));
         // Summon receptacles: the held item (soul sand / wither skull / shrieker /
         // prismarine crystals) rendered on the frog-facing face. One BE type backs
