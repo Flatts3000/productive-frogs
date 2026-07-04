@@ -80,6 +80,19 @@ Our side already exposes the variant through every standard capture path - NeoFo
    - `latest.log` snippet around the failure if it's a crash / log warning
 3. Tag the issue `bug` or `limitation` so it sorts cleanly against this doc.
 
+## Fluid-placer machines place variantless (inert) Slime Milk - 2.0 limitation
+
+The 2.0 line's single-fluid + component milk (R-1) preserves the variant through
+pipes, tanks, and every bucket fill - but **world placement through a fluid
+placer happens at the fluid level, below where components live**. A machine that
+places the milk FLUID (as opposed to using a bucket) creates a variantless
+source block: inert decoration, no spawns, no tint, and re-picking it up yields
+a plain bucket - the variant and remaining spawn budget are gone. On 1.21.1 this
+leg worked because every variant was its own fluid; the R-1 redesign trades that
+for component-preserving automation everywhere else. Workarounds: re-enter the
+world via bucket-using machines, the Slime Milk Basin, or the Terrarium
+Controller, all of which read the component. Tagged `limitation`.
+
 ---
 
-*Last updated: 2026-06-09 (logged the Building Gadgets Copy-Paste variant-loss as an upstream cross-mod limitation; no open issues remain).*
+*Last updated: 2026-07-04 (2.0 review: logged the fluid-placer variant-loss limitation; the plain-bucket fill leg was FIXED - ComponentCarryingFluidType copies the patch onto minted buckets).*
