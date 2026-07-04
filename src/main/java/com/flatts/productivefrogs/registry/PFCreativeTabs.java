@@ -16,6 +16,27 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 /**
  * Creative-mode tab registration. Productive Frogs gets a single dedicated tab
  * that aggregates every item the mod registers.
+ *
+ * <p><b>The accept ORDER here is the mod's public item ordering</b> (maintainer
+ * ruling, 2026-07-03): JEI builds its ingredient list from the creative tabs'
+ * display items (verified against JEI 29.x {@code ItemStackListFactory}), so
+ * this sequence is what players scroll in BOTH the tab and JEI. Items are
+ * grouped by what they are, in gameplay-progression order:
+ *
+ * <ol>
+ *   <li>Tools and hand items (nets, treats, food, weapon)</li>
+ *   <li>The frog lifecycle (egg bottles, frogspawn blocks, tadpole buckets)</li>
+ *   <li>Slimes in buckets (the long per-variant run stays contiguous)</li>
+ *   <li>Fluids and catalysts (milk per variant, mimic, slurry, XP, the four
+ *       catalysts that buff them)</li>
+ *   <li>Machines and automation (appliances, basins, EE machines, Terrarium)</li>
+ *   <li>Froglights (the per-variant production output)</li>
+ *   <li>Boss / endgame blocks (altars, receptacles, reinforced froglights)</li>
+ *   <li>Spawn eggs (frogs, tadpoles, slimes - vanilla keeps eggs last too)</li>
+ * </ol>
+ *
+ * Every config gate ({@code #196}/{@code #200}/{@code #201}/{@code #202} etc.)
+ * is unchanged - only the order moved.
  */
 public final class PFCreativeTabs {
 
@@ -37,158 +58,104 @@ public final class PFCreativeTabs {
                     // (standard for datapack-registry-driven creative entries).
                     var variantLookup = parameters.holders().lookup(PFRegistries.SLIME_VARIANT);
 
-                    // Default (unprimed) Frog Egg bottle, then one primed bottle
-                    // per category. The JEI plugin
-                    // (client/jei/ProductiveFrogsJeiPlugin) subtypes Frog Egg
-                    // by CONTAINED_CATEGORY, so each stamped stack here becomes
-                    // a distinct JEI entry.
+                    // ---------------- 1. Tools and hand items ----------------
+                    // The Frog Net - catch/release tool (#205); hidden when
+                    // config-disabled. Only the empty net is a creative entry.
+                    if (PFConfig.frogNetEnabled()) {
+                        output.accept(PFItems.FROG_NET.get());
+                    }
+                    // The Ender Net (#281 Phase 3) sits beside its sibling.
+                    if (PFConfig.predatorsEnabled()) {
+                        output.accept(PFItems.ENDER_NET.get());
+                    }
+                    // Sweetslime - the breeding treat; hidden when the frog-stat
+                    // layer is off (#202).
+                    if (PFConfig.frogStatsEnabled()) {
+                        output.accept(PFItems.SWEETSLIME.get());
+                    }
+                    // Sweetslimed Lily Pad - the frog perch (#214).
+                    if (PFConfig.lilyPadPerchEnabled()) {
+                        output.accept(PFItems.SWEETSLIMED_LILY_PAD.get());
+                    }
+                    // Princess's Kiss - the Ender Dragon drop (#216).
+                    if (PFConfig.princessKissEnabled()) {
+                        output.accept(PFItems.PRINCESS_KISS.get());
+                    }
+                    // Froglight Cleaver (#212) - hidden when its own toggle OR the
+                    // boss master is off (its recipe needs boss Froglights, #200).
+                    if (PFConfig.froglightWeaponEnabled() && PFConfig.bossEnabled()) {
+                        output.accept(PFItems.FROGLIGHT_CLEAVER.get());
+                    }
+                    // Frog Legs - the death-drop food chain (#194).
+                    if (PFConfig.frogLegsEnabled()) {
+                        output.accept(PFItems.RAW_FROG_LEGS.get());
+                        output.accept(PFItems.COOKED_FROG_LEGS.get());
+                        output.accept(PFItems.FROG_LEGS_SOUP.get());
+                    }
+
+                    // ---------------- 2. The frog lifecycle ----------------
+                    // Default (unprimed) Frog Egg bottle, then one primed bottle per
+                    // category (the JEI plugin subtypes by CONTAINED_CATEGORY).
                     output.accept(PFItems.FROG_EGG.get());
                     for (Category cat : Category.values()) {
                         ItemStack primed = new ItemStack(PFItems.FROG_EGG.get());
                         primed.set(PFDataComponents.CONTAINED_CATEGORY.get(), cat);
                         output.accept(primed);
                     }
-                    // Default empty Resource Tadpole Bucket, then one stamped
-                    // with each category. The bucket's category lives inside
-                    // BUCKET_ENTITY_DATA NBT (the JEI plugin keys the subtype
-                    // off that component).
+                    // The placed frogspawn blocks: six species + Midas (#253, a
+                    // frogspawn block, not a spawn egg).
+                    for (var entry : PFItems.PRIMED_FROG_EGG_ITEMS.values()) {
+                        output.accept(entry.get());
+                    }
+                    if (PFConfig.equivalenceEnabled()) {
+                        output.accept(PFItems.MIDAS_FROG_EGG.get());
+                    }
+                    // Default empty Resource Tadpole Bucket, then one stamped per
+                    // category (the JEI subtype keys off BUCKET_ENTITY_DATA).
                     output.accept(PFItems.RESOURCE_TADPOLE_BUCKET.get());
                     for (Category cat : Category.values()) {
                         output.accept(makeCategoryTadpoleBucket(cat));
                     }
-                    // Default empty Slime Bucket, then one stamped per variant.
-                    // Variant stamping mirrors what ResourceSlime.saveToBucketTag
-                    // writes when a player buckets a variant-locked slime
-                    // (Category + Variant strings in BUCKET_ENTITY_DATA).
+
+                    // ---------------- 3. Slimes in buckets ----------------
+                    // Default empty Slime Bucket, then one stamped per variant
+                    // (mirrors ResourceSlime.saveToBucketTag).
                     output.accept(PFItems.SLIME_BUCKET.get());
-                    // Mimic Slime Bucket + Mimic Milk Bucket (#253) - the EE lane,
-                    // hidden when the lane is disabled.
-                    if (PFConfig.equivalenceEnabled()) {
-                        output.accept(PFItems.MIMIC_SLIME_BUCKET.get());
-                        output.accept(PFItems.MIMIC_MILK_BUCKET.get());
-                    }
-                    // Liquid Experience bucket (#281 Phase 2) - the predation
-                    // system's XP fluid, hidden when predation is off.
-                    if (PFConfig.predatorsEnabled()) {
-                        output.accept(PFItems.LIQUID_EXPERIENCE_BUCKET.get());
-                    }
-                    // The predation supply chain (#281 Phase 3), hidden when
-                    // predation is off: net -> press -> slurry bucket -> basin.
-                    if (PFConfig.predatorsEnabled()) {
-                        output.accept(PFItems.ENDER_NET.get());
-                        output.accept(PFItems.SLURRY_PRESS.get());
-                        output.accept(PFItems.MOB_SLURRY_BUCKET.get());
-                        output.accept(PFItems.MOB_SLURRY_BASIN.get());
-                    }
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
                         if (h.value().isEnabled(h.key().identifier())) {
                             output.accept(PFItems.variantSlimeBucket(h.key().identifier(), h.value().category()));
                         }
                     }));
-                    // Milker / Churn appear only when enabled (config-gated, #196).
-                    if (!PFConfig.SPEC.isLoaded() || PFConfig.SLIME_MILKER_ENABLED.get()) {
-                        output.accept(PFItems.SLIME_MILKER.get());
-                    }
-                    // The Slime Churn (#187) sits right after its inverse.
-                    if (!PFConfig.SPEC.isLoaded() || PFConfig.SLIME_CHURN_ENABLED.get()) {
-                        output.accept(PFItems.SLIME_CHURN.get());
-                    }
-                    // The Slime Milk Basin (#281 Phase 3) - slime-side, ungated
-                    // (a general automation block, like the milk source it mirrors).
-                    output.accept(PFItems.SLIME_MILK_BASIN.get());
-                    // The Froglight Crucible + Casting Mold (v1.12) sit with
-                    // the other appliances; each appears only when enabled (#196).
-                    if (!PFConfig.SPEC.isLoaded() || PFConfig.CRUCIBLE_ENABLED.get()) {
-                        output.accept(PFItems.CRUCIBLE.get());
-                    }
-                    if (!PFConfig.SPEC.isLoaded() || PFConfig.CASTING_MOLD_ENABLED.get()) {
-                        output.accept(PFItems.CASTING_MOLD.get());
-                    }
-                    // Alembic + Distiller (#253) - the Equivalence lane's machines,
-                    // hidden when the lane is disabled.
+                    // Mimic Slime Bucket (#253) - the EE lane's slime, hidden when
+                    // the lane is disabled.
                     if (PFConfig.equivalenceEnabled()) {
-                        output.accept(PFItems.ALEMBIC.get());
-                        output.accept(PFItems.DISTILLER.get());
+                        output.accept(PFItems.MIMIC_SLIME_BUCKET.get());
                     }
-                    // Boss-tier catalyst altar blocks (#184), hidden when the boss
-                    // master is off (#200). The boss variants' own entries (buckets,
-                    // froglights, eggs) hide via the per-variant isEnabled gate.
-                    if (PFConfig.bossEnabled()) {
-                        output.accept(PFItems.NETHER_STAR_CATALYST.get());
-                        output.accept(PFItems.DRAGON_EGG_CATALYST.get());
-                        output.accept(PFItems.WITHER_SKELETON_SKULL_CATALYST.get());
-                        output.accept(PFItems.DRAGON_BREATH_CATALYST.get());
-                        // Reinforced Froglights (#249) - dragon-altar structural blocks,
-                        // crafted from boss Froglights so they ride the same boss gate.
-                        output.accept(PFItems.REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT.get());
-                        output.accept(PFItems.REINFORCED_NETHER_STAR_FROGLIGHT.get());
-                        // End Crystal Receptacle (#249) - dragon-altar crystal socket.
-                        output.accept(PFItems.END_CRYSTAL_RECEPTACLE.get());
-                        // End Dragon Altar Hatch (#249) - dragon-altar output.
-                        output.accept(PFItems.END_DRAGON_ALTAR_HATCH.get());
-                        // Wither Altar (#247) - Nether-themed reinforced froglights, the
-                        // summon receptacles, the hatch, and the Withered Star capstone.
-                        output.accept(PFItems.REINFORCED_SOUL_SAND_FROGLIGHT.get());
-                        output.accept(PFItems.REINFORCED_BLAZE_ROD_FROGLIGHT.get());
-                        output.accept(PFItems.SOUL_SAND_RECEPTACLE.get());
-                        output.accept(PFItems.WITHER_SKULL_RECEPTACLE.get());
-                        output.accept(PFItems.WITHER_ALTAR_HATCH.get());
-                        output.accept(PFItems.WITHERED_STAR.get());
+
+                    // ---------------- 4. Fluids and catalysts ----------------
+                    // One Slime Milk bucket per registry variant that has a fluid
+                    // (v1.8 -> R-1). A content-only variant has no bucket
+                    // (slimeMilkBucket returns EMPTY) - skip it.
+                    variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
+                        if (!h.value().isEnabled(h.key().identifier())) {
+                            return;
+                        }
+                        ItemStack milk = PFItems.slimeMilkBucket(h.key().identifier());
+                        if (!milk.isEmpty()) {
+                            output.accept(milk);
+                        }
+                    }));
+                    // Mimic Milk (#253), Mob Slurry + Liquid Experience (#281).
+                    if (PFConfig.equivalenceEnabled()) {
+                        output.accept(PFItems.MIMIC_MILK_BUCKET.get());
                     }
-                    // Terrarium multiblock machines (#185).
-                    output.accept(PFItems.TERRARIUM_CONTROLLER.get());
-                    output.accept(PFItems.SPRINKLER.get());
-                    output.accept(PFItems.INCUBATOR.get());
-                    output.accept(PFItems.HATCH.get());
-                    // Spawnery only appears in the tab when enabled (skyblock
-                    // bootstrap; off by default). isLoaded guards the title-screen
-                    // build before COMMON config is available.
-                    if (PFConfig.SPEC.isLoaded() && PFConfig.SPAWNERY_ENABLED.get()) {
-                        output.accept(PFItems.SPAWNERY.get());
+                    if (PFConfig.predatorsEnabled()) {
+                        output.accept(PFItems.MOB_SLURRY_BUCKET.get());
+                        output.accept(PFItems.LIQUID_EXPERIENCE_BUCKET.get());
                     }
-                    // The Sweetslime breeding treat (slime ball + sugar), placed
-                    // after the appliances so the two machines stay adjacent in the
-                    // tab. It's the hand-fed item that drives same-species breeding;
-                    // hidden when the frog-stat layer is off (#202).
-                    if (PFConfig.frogStatsEnabled()) {
-                        output.accept(PFItems.SWEETSLIME.get());
-                    }
-                    // The Frog Net - catch/release tool (#205); shown by default,
-                    // hidden when config-disabled. Only the empty net is a creative
-                    // entry (a half-stamped loaded net has no frog NBT to release).
-                    if (PFConfig.frogNetEnabled()) {
-                        output.accept(PFItems.FROG_NET.get());
-                    }
-                    // Froglight Cleaver - late-game harvest weapon (#212); shown by
-                    // default, hidden when its own toggle OR the boss master is off
-                    // (its recipe needs boss Froglights, so boss off makes it
-                    // uncraftable - keep creative in lockstep with the recipe, #200).
-                    if (PFConfig.froglightWeaponEnabled() && PFConfig.bossEnabled()) {
-                        output.accept(PFItems.FROGLIGHT_CLEAVER.get());
-                    }
-                    // Frog Legs - the death-drop food (#194); shown by default,
-                    // hidden when the feature is config-disabled.
-                    if (PFConfig.frogLegsEnabled()) {
-                        output.accept(PFItems.RAW_FROG_LEGS.get());
-                        output.accept(PFItems.COOKED_FROG_LEGS.get());
-                        output.accept(PFItems.FROG_LEGS_SOUP.get());
-                    }
-                    // Princess's Kiss - the Ender Dragon drop (#216); shown by
-                    // default, hidden when config-disabled.
-                    if (PFConfig.princessKissEnabled()) {
-                        output.accept(PFItems.PRINCESS_KISS.get());
-                    }
-                    // Sweetslimed Lily Pad - the frog perch (#214); shown by default,
-                    // hidden when config-disabled.
-                    if (PFConfig.lilyPadPerchEnabled()) {
-                        output.accept(PFItems.SWEETSLIMED_LILY_PAD.get());
-                    }
-                    // Slime Milk catalysts (drop into a source to buff it). Each
-                    // shows only when its own per-catalyst flag - ANDed with the
-                    // catalysts master inside the accessor - is on (#201); shown by
-                    // default, like the other default-on appliances above. The
-                    // accessors fail open until the config spec loads, so the
-                    // title-screen build shows them.
+                    // Slime Milk catalysts (buff a source / Basin). Each shows only
+                    // when its own flag - ANDed with the catalysts master - is on
+                    // (#201); the accessors fail open before the config spec loads.
                     if (PFConfig.catalystCountEnabled()) {
                         output.accept(PFItems.COUNT_CATALYST.get());
                     }
@@ -201,40 +168,49 @@ public final class PFCreativeTabs {
                     if (PFConfig.catalystInfiniteEnabled()) {
                         output.accept(PFItems.INFINITE_CATALYST.get());
                     }
-                    // One Slime Milk bucket per registry variant that has a
-                    // per-variant fluid (v1.8). A content-only variant (in the
-                    // slime_variant registry but not minted at mod-init - e.g. a
-                    // pack/world-datapack variant) has no bucket: slimeMilkBucket
-                    // returns EMPTY, so skip it rather than add an invisible entry.
-                    // (The vanilla/magma sentinels likewise have no bucket now.)
-                    // Empty at the title screen until a world's datapacks load.
-                    variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
-                        if (!h.value().isEnabled(h.key().identifier())) {
-                            return;
-                        }
-                        ItemStack milk = PFItems.slimeMilkBucket(h.key().identifier());
-                        if (!milk.isEmpty()) {
-                            output.accept(milk);
-                        }
-                    }));
-                    for (var entry : PFItems.PRIMED_FROG_EGG_ITEMS.values()) {
-                        output.accept(entry.get());
+
+                    // ---------------- 5. Machines and automation ----------------
+                    // The slime production chain first (#196 gates as before) ...
+                    if (!PFConfig.SPEC.isLoaded() || PFConfig.SLIME_MILKER_ENABLED.get()) {
+                        output.accept(PFItems.SLIME_MILKER.get());
                     }
-                    // Midas Frog Egg block (#253) groups with the species primed-egg
-                    // blocks (it's a frogspawn block, not a spawn egg); hidden when
-                    // the Equivalence lane is disabled.
+                    if (!PFConfig.SPEC.isLoaded() || PFConfig.SLIME_CHURN_ENABLED.get()) {
+                        output.accept(PFItems.SLIME_CHURN.get());
+                    }
+                    // The Slime Milk Basin (#281 Phase 3) - slime-side, ungated.
+                    output.accept(PFItems.SLIME_MILK_BASIN.get());
+                    // ... then the mob (predation) chain (#281 Phase 3) ...
+                    if (PFConfig.predatorsEnabled()) {
+                        output.accept(PFItems.SLURRY_PRESS.get());
+                        output.accept(PFItems.MOB_SLURRY_BASIN.get());
+                    }
+                    // ... the melt-and-cast lane (v1.12) ...
+                    if (!PFConfig.SPEC.isLoaded() || PFConfig.CRUCIBLE_ENABLED.get()) {
+                        output.accept(PFItems.CRUCIBLE.get());
+                    }
+                    if (!PFConfig.SPEC.isLoaded() || PFConfig.CASTING_MOLD_ENABLED.get()) {
+                        output.accept(PFItems.CASTING_MOLD.get());
+                    }
+                    // ... the Equivalence lane's machines (#253) ...
                     if (PFConfig.equivalenceEnabled()) {
-                        output.accept(PFItems.MIDAS_FROG_EGG.get());
+                        output.accept(PFItems.ALEMBIC.get());
+                        output.accept(PFItems.DISTILLER.get());
                     }
-                    // V1.5: the 6 broad-strokes category Froglight BlockItems
-                    // (bog_froglight, cave_froglight, …) were deleted entirely.
-                    // ResourceSlimes always carry a variant, so the no-variant
-                    // fallback drop path no longer exists. The only Froglight
-                    // is the variant-stamped configurable_froglight below.
-                    //
-                    // One configurable_froglight per shipped variant — each stack
-                    // carries its variant id in the SLIME_VARIANT data component so
-                    // creative testers can see what the production loop produces.
+                    // ... the Spawnery (skyblock bootstrap; off by default, #196;
+                    // isLoaded guards the title-screen build) ...
+                    if (PFConfig.SPEC.isLoaded() && PFConfig.SPAWNERY_ENABLED.get()) {
+                        output.accept(PFItems.SPAWNERY.get());
+                    }
+                    // ... and the Terrarium multiblock set (#185).
+                    output.accept(PFItems.TERRARIUM_CONTROLLER.get());
+                    output.accept(PFItems.SPRINKLER.get());
+                    output.accept(PFItems.INCUBATOR.get());
+                    output.accept(PFItems.HATCH.get());
+
+                    // ---------------- 6. Froglights ----------------
+                    // One configurable_froglight per shipped variant - each stack
+                    // carries its variant id (SLIME_VARIANT) so creative testers see
+                    // exactly what the production loop produces.
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
                         if (!h.value().isEnabled(h.key().identifier())) {
                             return;
@@ -243,18 +219,40 @@ public final class PFCreativeTabs {
                         stack.set(PFDataComponents.SLIME_VARIANT.get(), h.key().identifier());
                         output.accept(stack);
                     }));
-                    // Spawn eggs grouped at the end so they read as a single block
-                    // in the creative tab — frogs first, tadpoles after.
+
+                    // ---------------- 7. Boss / endgame blocks ----------------
+                    // Hidden when the boss master is off (#200); the boss variants'
+                    // own entries hide via the per-variant isEnabled gate above.
+                    if (PFConfig.bossEnabled()) {
+                        output.accept(PFItems.NETHER_STAR_CATALYST.get());
+                        output.accept(PFItems.DRAGON_EGG_CATALYST.get());
+                        output.accept(PFItems.WITHER_SKELETON_SKULL_CATALYST.get());
+                        output.accept(PFItems.DRAGON_BREATH_CATALYST.get());
+                        // Dragon altar (#249): reinforced froglights, crystal socket, hatch.
+                        output.accept(PFItems.REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT.get());
+                        output.accept(PFItems.REINFORCED_NETHER_STAR_FROGLIGHT.get());
+                        output.accept(PFItems.END_CRYSTAL_RECEPTACLE.get());
+                        output.accept(PFItems.END_DRAGON_ALTAR_HATCH.get());
+                        // Wither altar (#247): reinforced froglights, receptacles,
+                        // hatch, and the Withered Star capstone.
+                        output.accept(PFItems.REINFORCED_SOUL_SAND_FROGLIGHT.get());
+                        output.accept(PFItems.REINFORCED_BLAZE_ROD_FROGLIGHT.get());
+                        output.accept(PFItems.SOUL_SAND_RECEPTACLE.get());
+                        output.accept(PFItems.WITHER_SKULL_RECEPTACLE.get());
+                        output.accept(PFItems.WITHER_ALTAR_HATCH.get());
+                        output.accept(PFItems.WITHERED_STAR.get());
+                    }
+
+                    // ---------------- 8. Spawn eggs ----------------
+                    // Frogs first (species, Midas, predators), tadpoles after
+                    // (same order), then the slimes: per-variant Resource Slime
+                    // eggs, then the six upstream parent species.
                     for (var entry : PFItems.RESOURCE_FROG_SPAWN_EGGS.values()) {
                         output.accept(entry.get());
                     }
-                    // Midas frog spawn egg (#253) sits with the other frog spawn
-                    // eggs; hidden when the Equivalence lane is disabled. (Its egg
-                    // block is grouped with the primed-egg blocks above.)
                     if (PFConfig.equivalenceEnabled()) {
                         output.accept(PFItems.MIDAS_FROG_SPAWN_EGG.get());
                     }
-                    // Predator frog spawn eggs (#281) - hidden when predation is off.
                     if (PFConfig.predatorsEnabled()) {
                         for (var entry : PFItems.PREDATOR_FROG_SPAWN_EGGS.values()) {
                             output.accept(entry.get());
@@ -271,17 +269,14 @@ public final class PFCreativeTabs {
                             output.accept(entry.get());
                         }
                     }
-                    // One stamped stack per variant (no unstamped base egg — a
-                    // variant-less Resource Slime egg isn't a meaningful creative
-                    // entry; the item still counts as "in a tab" via these stacks).
+                    // One stamped stack per variant (no unstamped base egg - a
+                    // variant-less Resource Slime egg isn't a meaningful entry).
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
                         if (h.value().isEnabled(h.key().identifier())) {
                             output.accept(PFItems.resourceSlimeSpawnEgg(h.key().identifier()));
                         }
                     }));
-                    // Parent species spawn eggs (Cave / Geode / Tide / Void) —
-                    // not category-themed, kept after the variant eggs so the
-                    // tab reads as: variants first, then upstream sources.
+                    // Parent species spawn eggs - the upstream sources, last.
                     output.accept(PFItems.BOG_SLIME_SPAWN_EGG.get());
                     output.accept(PFItems.CAVE_SLIME_SPAWN_EGG.get());
                     output.accept(PFItems.GEODE_SLIME_SPAWN_EGG.get());
