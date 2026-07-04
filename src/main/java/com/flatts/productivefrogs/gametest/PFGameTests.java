@@ -91,6 +91,7 @@ public final class PFGameTests {
         PredatorBreedingTests.register();
         PredatorEatPathTests.register();
         LiquidExperienceTests.register();
+        PredationSupplyChainTests.register();
         TerrariumTests.register();
         EquivalenceLaneTests.register();
 

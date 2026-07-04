@@ -21,6 +21,7 @@ import com.flatts.productivefrogs.client.renderer.ResourceTadpoleRenderer;
 import com.flatts.productivefrogs.client.SynthesizedTint;
 import com.flatts.productivefrogs.client.screen.CastingMoldScreen;
 import com.flatts.productivefrogs.client.screen.SlimeChurnScreen;
+import com.flatts.productivefrogs.client.screen.SlurryPressScreen;
 import com.flatts.productivefrogs.client.screen.SlimeMilkerScreen;
 import com.flatts.productivefrogs.client.screen.SpawneryScreen;
 import com.flatts.productivefrogs.data.Category;
@@ -266,6 +267,12 @@ public final class PFClientEvents {
         event.register(new FluidModel.Unbaked(milkStill, milkFlow, null, constantFluidTint(LIQUID_EXPERIENCE_GREEN)),
             PFFluids.LIQUID_EXPERIENCE.get(), PFFluids.LIQUID_EXPERIENCE_FLOWING.get());
 
+        // Mob Slurry (#281 Phase 3): shared greyscale milk texture, constant
+        // ender-purple tint (the slurry's identity is its mob COMPONENT, not a
+        // colour; it also never exists in-world, so this only shows in tanks).
+        event.register(new FluidModel.Unbaked(milkStill, milkFlow, null, constantFluidTint(MOB_SLURRY_PURPLE)),
+            PFFluids.MOB_SLURRY.get(), PFFluids.MOB_SLURRY_FLOWING.get());
+
         Material moltenStill = new Material(id("block/molten_still"));
         Material moltenFlow = new Material(id("block/molten_flow"));
         for (Identifier mid : PFMoltenFluids.registeredMetals()) {
@@ -280,6 +287,9 @@ public final class PFClientEvents {
 
     /** Vanilla experience-orb green - the fixed Liquid Experience tint (and its bucket art). */
     private static final int LIQUID_EXPERIENCE_GREEN = 0x80FF20;
+
+    /** Ender purple - the fixed Mob Slurry tint (and its bucket art). */
+    private static final int MOB_SLURRY_PURPLE = 0x9C6BC7;
 
     /** A fixed-colour fluid tint (Liquid Experience - nothing per-instance to resolve). */
     private static FluidTintSource constantFluidTint(int rgb) {
@@ -362,6 +372,7 @@ public final class PFClientEvents {
     public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
         event.register(PFMenuTypes.SLIME_MILKER.get(), SlimeMilkerScreen::new);
         event.register(PFMenuTypes.SLIME_CHURN.get(), SlimeChurnScreen::new);
+        event.register(PFMenuTypes.SLURRY_PRESS.get(), SlurryPressScreen::new);
         event.register(PFMenuTypes.SPAWNERY.get(), SpawneryScreen::new);
         event.register(PFMenuTypes.CASTING_MOLD.get(), CastingMoldScreen::new);
         event.register(PFMenuTypes.DISTILLER.get(), com.flatts.productivefrogs.client.screen.DistillerScreen::new);

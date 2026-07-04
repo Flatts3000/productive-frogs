@@ -8,6 +8,7 @@ import com.flatts.productivefrogs.content.menu.HatchMenu;
 import com.flatts.productivefrogs.content.menu.IncubatorMenu;
 import com.flatts.productivefrogs.content.menu.SlimeChurnMenu;
 import com.flatts.productivefrogs.content.menu.SlimeMilkerMenu;
+import com.flatts.productivefrogs.content.menu.SlurryPressMenu;
 import com.flatts.productivefrogs.content.menu.SpawneryMenu;
 import com.flatts.productivefrogs.content.menu.TerrariumControllerMenu;
 import java.util.function.Supplier;
@@ -41,6 +42,12 @@ public final class PFMenuTypes {
         MENU_TYPES.register(
             "slime_churn",
             () -> IMenuTypeExtension.create(SlimeChurnMenu::new)
+        );
+
+    public static final Supplier<MenuType<SlurryPressMenu>> SLURRY_PRESS =
+        MENU_TYPES.register(
+            "slurry_press",
+            () -> IMenuTypeExtension.create(SlurryPressMenu::new)
         );
 
     public static final Supplier<MenuType<SpawneryMenu>> SPAWNERY =

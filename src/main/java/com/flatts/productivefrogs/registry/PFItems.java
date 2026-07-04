@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.item.ConfigurableFroglightItem;
+import com.flatts.productivefrogs.content.item.EnderNetItem;
 import com.flatts.productivefrogs.content.item.FrogEggItem;
 import com.flatts.productivefrogs.content.item.FrogNetItem;
 import com.flatts.productivefrogs.content.item.LiquidExperienceBucketItem;
@@ -9,6 +10,7 @@ import com.flatts.productivefrogs.content.item.MilkCatalyst;
 import com.flatts.productivefrogs.content.item.MilkCatalystItem;
 import com.flatts.productivefrogs.content.item.MimicMilkBucketItem;
 import com.flatts.productivefrogs.content.item.MimicSlimeBucketItem;
+import com.flatts.productivefrogs.content.item.MobSlurryBucketItem;
 import com.flatts.productivefrogs.content.item.ResourceSlimeSpawnEggItem;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.content.item.SlimeBucketItem;
@@ -79,6 +81,17 @@ public final class PFItems {
     public static final DeferredItem<FrogNetItem> FROG_NET = ITEMS.registerItem(
         "frog_net",
         props -> new FrogNetItem(props.stacksTo(1))
+    );
+
+    /**
+     * Ender Net (#281, predation Phase 3) - the any-mob counterpart to the Frog
+     * Net: catches any living mob whole-entity and releases it elsewhere, or
+     * feeds it to the Slurry Press. Boss mobs are catchable (relocation) but the
+     * Press refuses them.
+     */
+    public static final DeferredItem<EnderNetItem> ENDER_NET = ITEMS.registerItem(
+        "ender_net",
+        props -> new EnderNetItem(props.stacksTo(1))
     );
 
     /**
@@ -488,6 +501,40 @@ public final class PFItems {
         "slime_churn",
         PFBlocks.SLIME_CHURN,
         new Item.Properties()
+    );
+
+    /** Slurry Press BlockItem (#281, Phase 3) - places {@link PFBlocks#SLURRY_PRESS}. */
+    public static final DeferredItem<BlockItem> SLURRY_PRESS = registerSimpleBlockItem(
+        "slurry_press",
+        PFBlocks.SLURRY_PRESS,
+        new Item.Properties()
+    );
+
+    /** Mob Slurry Basin BlockItem (#281, Phase 3) - places {@link PFBlocks#MOB_SLURRY_BASIN}. */
+    public static final DeferredItem<BlockItem> MOB_SLURRY_BASIN = registerSimpleBlockItem(
+        "mob_slurry_basin",
+        PFBlocks.MOB_SLURRY_BASIN,
+        new Item.Properties()
+    );
+
+    /** Slime Milk Basin BlockItem (#281, Phase 3) - places {@link PFBlocks#SLIME_MILK_BASIN}. */
+    public static final DeferredItem<BlockItem> SLIME_MILK_BASIN = registerSimpleBlockItem(
+        "slime_milk_basin",
+        PFBlocks.SLIME_MILK_BASIN,
+        new Item.Properties()
+    );
+
+    /**
+     * The Mob Slurry bucket (#281, Phase 3) - one item; the condensed mob rides
+     * the {@code SLURRIED_ENTITY} component. Produced by the Slurry Press, spent
+     * in the Mob Slurry Basin. Never places a fluid (Mob Slurry has no world form).
+     */
+    public static final DeferredItem<MobSlurryBucketItem> MOB_SLURRY_BUCKET = ITEMS.registerItem(
+        "mob_slurry_bucket",
+        props -> new MobSlurryBucketItem(
+            PFFluids.MOB_SLURRY.get(),
+            props.stacksTo(1).craftRemainder(Items.BUCKET)
+        )
     );
 
     /**

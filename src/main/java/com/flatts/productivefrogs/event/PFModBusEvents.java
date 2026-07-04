@@ -284,6 +284,32 @@ public final class PFModBusEvents {
             (be, side) -> side == Direction.DOWN ? be.outputResource() : be.inputResource()
         );
 
+        // Slurry Press (#281, Phase 3): standard appliance hopper I/O - the down
+        // face pulls the outputs (Slurry bucket + returned net), every other
+        // face feeds nets + empty buckets (per-slot validity routes each item).
+        event.registerBlockEntity(
+            Capabilities.Item.BLOCK,
+            PFBlockEntities.SLURRY_PRESS.get(),
+            (be, side) -> side == Direction.DOWN
+                ? be.getInventory().outputResource()
+                : be.getInventory().inputResource()
+        );
+
+        // The two Basins (#281, Phase 3): fill-only fluid intake (exactly 1000 mB
+        // of the matching component-carrying fluid while empty; the key + budget
+        // components ride the FluidResource). Drain is a no-op - the empty-bucket
+        // right-click is the hand drain; pipes refill, they don't siphon.
+        event.registerBlockEntity(
+            Capabilities.Fluid.BLOCK,
+            PFBlockEntities.MOB_SLURRY_BASIN.get(),
+            (be, side) -> be.fluidResource()
+        );
+        event.registerBlockEntity(
+            Capabilities.Fluid.BLOCK,
+            PFBlockEntities.SLIME_MILK_BASIN.get(),
+            (be, side) -> be.fluidResource()
+        );
+
         // Terrarium Controller (#185): fill-only fluid intake for piped milk. The
         // catalyst components ride the FluidStack (via the milk bucket fluid
         // resource handler), so the Controller reads them back into a MilkCharge.
@@ -385,6 +411,25 @@ public final class PFModBusEvents {
             Capabilities.Fluid.ITEM,
             (stack, access) -> new net.neoforged.neoforge.transfer.fluid.BucketResourceHandler(access),
             PFItems.LIQUID_EXPERIENCE_BUCKET.get()
+        );
+
+        // Mob Slurry bucket (#281, Phase 3): a BucketItem subclass, so it needs the
+        // explicit Fluid.ITEM registration. Carries the mob key (SLURRIED_ENTITY)
+        // plus the budget/catalyst set onto the drained FluidResource - the same
+        // handler and component round-trip as milk, so tank/pipe automation moves
+        // slurry with its identity and upgrades intact (parity principle).
+        DataComponentType<?>[] slurryCarried = new DataComponentType<?>[] {
+            PFDataComponents.SLURRIED_ENTITY.get(),
+            PFDataComponents.SPAWNS_REMAINING.get(),
+            PFDataComponents.MILK_CAPACITY.get(),
+            PFDataComponents.MILK_SPEED.get(),
+            PFDataComponents.MILK_QUANTITY.get(),
+            PFDataComponents.MILK_INFINITE.get()
+        };
+        event.registerItem(
+            Capabilities.Fluid.ITEM,
+            (stack, access) -> new MilkBucketFluidResourceHandler(access, slurryCarried),
+            PFItems.MOB_SLURRY_BUCKET.get()
         );
 
         // PORT-DROP(2.0): the brewed-Froglight Curios item capability returns with

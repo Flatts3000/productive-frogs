@@ -72,6 +72,14 @@ public final class PFCreativeTabs {
                     if (PFConfig.predatorsEnabled()) {
                         output.accept(PFItems.LIQUID_EXPERIENCE_BUCKET.get());
                     }
+                    // The predation supply chain (#281 Phase 3), hidden when
+                    // predation is off: net -> press -> slurry bucket -> basin.
+                    if (PFConfig.predatorsEnabled()) {
+                        output.accept(PFItems.ENDER_NET.get());
+                        output.accept(PFItems.SLURRY_PRESS.get());
+                        output.accept(PFItems.MOB_SLURRY_BUCKET.get());
+                        output.accept(PFItems.MOB_SLURRY_BASIN.get());
+                    }
                     variantLookup.ifPresent(reg -> reg.listElements().forEach(h -> {
                         if (h.value().isEnabled(h.key().identifier())) {
                             output.accept(PFItems.variantSlimeBucket(h.key().identifier(), h.value().category()));
@@ -85,6 +93,9 @@ public final class PFCreativeTabs {
                     if (!PFConfig.SPEC.isLoaded() || PFConfig.SLIME_CHURN_ENABLED.get()) {
                         output.accept(PFItems.SLIME_CHURN.get());
                     }
+                    // The Slime Milk Basin (#281 Phase 3) - slime-side, ungated
+                    // (a general automation block, like the milk source it mirrors).
+                    output.accept(PFItems.SLIME_MILK_BASIN.get());
                     // The Froglight Crucible + Casting Mold (v1.12) sit with
                     // the other appliances; each appears only when enabled (#196).
                     if (!PFConfig.SPEC.isLoaded() || PFConfig.CRUCIBLE_ENABLED.get()) {

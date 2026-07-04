@@ -1,0 +1,24 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "productivefrogs:config_enabled",
+      "config": "predators"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "III",
+    "OEO",
+    "OOO"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "O": "minecraft:obsidian",
+    "E": "minecraft:ender_pearl"
+  },
+  "result": {
+    "id": "productivefrogs:slurry_press",
+    "count": 1
+  }
+}

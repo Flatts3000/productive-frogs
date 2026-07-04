@@ -709,5 +709,15 @@
   "fluid_type.productivefrogs.slime_milk": "Slime Milk",
   "item.productivefrogs.liquid_experience_bucket": "Bucket of Liquid Experience",
   "item.productivefrogs.liquid_experience_bucket.tooltip": "Drink to absorb 50 experience points.",
-  "fluid_type.productivefrogs.liquid_experience": "Liquid Experience"
+  "fluid_type.productivefrogs.liquid_experience": "Liquid Experience",
+  "block.productivefrogs.slurry_press": "Slurry Press",
+  "block.productivefrogs.mob_slurry_basin": "Mob Slurry Basin",
+  "block.productivefrogs.slime_milk_basin": "Slime Milk Basin",
+  "item.productivefrogs.ender_net": "Ender Net",
+  "productivefrogs.ender_net.empty": "Right-click any mob to catch it.",
+  "productivefrogs.ender_net.release": "Right-click a block to release, or press it into Mob Slurry.",
+  "item.productivefrogs.mob_slurry_bucket": "Mob Slurry Bucket",
+  "item.productivefrogs.mob_slurry_bucket.item": "Bucket of %s Slurry",
+  "productivefrogs.mob_slurry_bucket.pour": "Pour into a Mob Slurry Basin to respawn the mob.",
+  "fluid_type.productivefrogs.mob_slurry": "Mob Slurry"
 }

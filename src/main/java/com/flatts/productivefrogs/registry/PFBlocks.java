@@ -12,9 +12,11 @@ import com.flatts.productivefrogs.content.block.EndDragonAltarHatchBlock;
 import com.flatts.productivefrogs.content.block.HatchBlock;
 import com.flatts.productivefrogs.content.block.IncubatorBlock;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
+import com.flatts.productivefrogs.content.block.BasinBlock;
 import com.flatts.productivefrogs.content.block.SlimeChurnBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
+import com.flatts.productivefrogs.content.block.SlurryPressBlock;
 import com.flatts.productivefrogs.content.block.SpawneryBlock;
 import com.flatts.productivefrogs.content.block.SprinklerBlock;
 import com.flatts.productivefrogs.content.block.SweetslimedLilyPadBlock;
@@ -151,6 +153,53 @@ public final class PFBlocks {
             .mapColor(MapColor.WOOD)
             .strength(0.5F)
             .sound(SoundType.WOOD)
+    );
+
+    /**
+     * The Slurry Press (#281, predation Phase 3) - condenses a netted mob into
+     * a Mob Slurry bucket: filled Ender Net + empty bucket in, Slurry bucket +
+     * the emptied net out. Boss mobs rejected. Same appliance shape as the
+     * Churn; ender-themed identity (obsidian body, purpur accents).
+     */
+    public static final DeferredBlock<SlurryPressBlock> SLURRY_PRESS = registerBlock(
+        "slurry_press",
+        SlurryPressBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_BLACK)
+            .strength(1.5F)
+            .sound(SoundType.STONE)
+    );
+
+    /**
+     * The Mob Slurry Basin (#281, predation Phase 3) - a waterloggable
+     * container holding one bucket of Mob Slurry INSIDE the block, respawning
+     * that mob on the milk spawn economy (teleport-locked). Works wet or dry.
+     */
+    public static final DeferredBlock<BasinBlock> MOB_SLURRY_BASIN = registerBlock(
+        "mob_slurry_basin",
+        props -> new BasinBlock(props,
+            com.flatts.productivefrogs.content.block.entity.MobSlurryBasinBlockEntity::new,
+            () -> PFBlockEntities.MOB_SLURRY_BASIN.get()),
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_PURPLE)
+            .strength(1.5F)
+            .sound(SoundType.STONE)
+    );
+
+    /**
+     * The Slime Milk Basin (#281, predation Phase 3) - the slime-side sibling:
+     * holds any variant's Slime Milk, spawns its Resource Slimes. Additive to
+     * the placeable milk source (both coexist); refuses boss (altar-gated) milk.
+     */
+    public static final DeferredBlock<BasinBlock> SLIME_MILK_BASIN = registerBlock(
+        "slime_milk_basin",
+        props -> new BasinBlock(props,
+            com.flatts.productivefrogs.content.block.entity.SlimeMilkBasinBlockEntity::new,
+            () -> PFBlockEntities.SLIME_MILK_BASIN.get()),
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_LIGHT_GREEN)
+            .strength(1.5F)
+            .sound(SoundType.STONE)
     );
 
     /**

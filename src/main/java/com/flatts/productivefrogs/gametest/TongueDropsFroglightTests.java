@@ -194,7 +194,7 @@ final class TongueDropsFroglightTests {
             return;
         }
 
-        net.minecraft.world.entity.Entity rebuilt = com.flatts.productivefrogs.content.item.FrogNetItem
+        net.minecraft.world.entity.Entity rebuilt = com.flatts.productivefrogs.registry.PFItems.FROG_NET.get()
             .entityFromStack(net, helper.getLevel());
         if (!(rebuilt instanceof ResourceFrog restored)) {
             helper.fail("net should rebuild a Resource Frog on release, got " + rebuilt);
@@ -224,7 +224,7 @@ final class TongueDropsFroglightTests {
         com.flatts.productivefrogs.content.item.FrogNetItem.captureEntity(frog, netStack);
         frog.discard();
 
-        net.minecraft.world.entity.Entity rebuilt = com.flatts.productivefrogs.content.item.FrogNetItem
+        net.minecraft.world.entity.Entity rebuilt = com.flatts.productivefrogs.registry.PFItems.FROG_NET.get()
             .entityFromStack(netStack, helper.getLevel());
         if (rebuilt == null || rebuilt.getType() != net.minecraft.world.entity.EntityType.FROG) {
             helper.fail("net should rebuild a vanilla frog, got " + rebuilt);

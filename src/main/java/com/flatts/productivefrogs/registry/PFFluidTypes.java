@@ -61,6 +61,15 @@ public final class PFFluidTypes {
     public static final DeferredHolder<FluidType, FluidType> LIQUID_EXPERIENCE_TYPE =
         TYPES.register("liquid_experience", () -> new FluidType(experienceProperties()));
 
+    /**
+     * Mob Slurry (#281 Phase 3) - the mob-side twin of Slime Milk on the R-1
+     * model: ONE type; the mob rides the {@code SLURRIED_ENTITY} component.
+     * Shares the milk feel; like Liquid Experience it has no block form, so
+     * the in-world properties are academic.
+     */
+    public static final DeferredHolder<FluidType, FluidType> MOB_SLURRY_TYPE =
+        TYPES.register("mob_slurry", () -> new FluidType(milkProperties()));
+
     static FluidType.Properties milkProperties() {
         return FluidType.Properties.create()
             .density(1500)
