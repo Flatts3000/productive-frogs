@@ -46,6 +46,8 @@ final class BossAltarTests {
         PFGameTests.test("apex_install_reject_release_round_trip", "dragon_altar", 100,
             BossAltarTests::apexInstallRejectReleaseRoundTrip);
         PFGameTests.test("apex_eats_only_its_own_boss", 40, BossAltarTests::apexEatsOnlyItsOwnBoss);
+        PFGameTests.test("wither_altar_stamps_receptacle_faces", "wither_altar", Rotation.CLOCKWISE_90, 100,
+            BossAltarTests::witherAltarStampsReceptacleFaces);
         PFGameTests.test("warden_altar_validates_when_built", "warden_altar", 100, BossAltarTests::wardenAltarValidatesWhenBuilt);
         PFGameTests.test("warden_altar_rejects_missing_froglight", "warden_altar", 100, BossAltarTests::wardenAltarRejectsMissingFroglight);
         PFGameTests.test("warden_altar_summon_deposits_drops", "warden_altar", 320, BossAltarTests::wardenAltarSummonDepositsDrops);
@@ -503,6 +505,32 @@ final class BossAltarTests {
                 instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity be) {
             be.setVariantId(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantPath));
         }
+    }
+
+    /**
+     * A FORMED altar forces every receptacle's held-item face to the resolved
+     * ritual (player-picked faces only stand while unformed). Uses the rotated
+     * fixture so the stamped direction is a non-canonical one - the bug was
+     * items stuck on the default south face regardless of build orientation.
+     */
+    private static void witherAltarStampsReceptacleFaces(GameTestHelper helper) {
+        helper.succeedWhen(() -> {
+            BlockPos hatch = findWitherAltarHatch(helper);
+            helper.assertTrue(hatch != null, "no Wither Altar Hatch in the rotated structure");
+            BlockPos absHatch = helper.absolutePos(hatch);
+            com.flatts.productivefrogs.content.multiblock.WitherAltarValidator.Result r =
+                com.flatts.productivefrogs.content.multiblock.WitherAltarValidator
+                    .validate(helper.getLevel(), absHatch);
+            helper.assertTrue(r.valid(), "rotated altar must validate; validator says: " + r.detail());
+            // The hatch stamps on its validation pass (every 20 ticks, armed or not).
+            for (BlockPos rp : com.flatts.productivefrogs.content.multiblock.WitherAltarValidator
+                    .receptacles(absHatch, r.ritual())) {
+                helper.assertTrue(helper.getLevel().getBlockEntity(rp)
+                        instanceof com.flatts.productivefrogs.content.block.entity.SummonReceptacleBlockEntity be
+                        && be.ritual() == r.ritual(),
+                    "receptacle at " + rp + " not stamped with the resolved ritual " + r.ritual());
+            }
+        });
     }
 
     // ---- Warden Altar - the Shrieker Pit (#279) ------------------------------

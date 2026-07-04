@@ -64,6 +64,17 @@ public class EndCrystalReceptacleRenderer
             && be.getBlockState().getValue(EndCrystalReceptacleBlock.FILLED);
         long gameTime = be.getLevel() != null ? be.getLevel().getGameTime() : 0L;
         state.ageInTicks = (float) gameTime + partialTicks;
+        // The receptacle is a solid full cube, so the default lightCoords (sampled
+        // AT the BE position) is pitch black - sample above, where the crystal hovers.
+        if (be.getLevel() != null) {
+            net.minecraft.core.BlockPos above = be.getBlockPos().above();
+            int blockLight = be.getLevel().getBrightness(net.minecraft.world.level.LightLayer.BLOCK, above);
+            int skyLight = be.getLevel().getBrightness(net.minecraft.world.level.LightLayer.SKY, above);
+            // packed lightmap coords: (sky << 20) | (block << 4) - the stable wire format
+            state.crystalLight = (skyLight << 20) | (blockLight << 4);
+        } else {
+            state.crystalLight = state.lightCoords;
+        }
     }
 
     @Override
@@ -82,12 +93,14 @@ public class EndCrystalReceptacleRenderer
         poseStack.scale(PERCH_SCALE, PERCH_SCALE, PERCH_SCALE);
         poseStack.translate(0.0F, -0.5F, 0.0F);            // seat the model origin (mirrors vanilla)
         collector.submitModel(this.model, crystal, poseStack, TEXTURE,
-            state.lightCoords, OverlayTexture.NO_OVERLAY, 0, null);
+            state.crystalLight, OverlayTexture.NO_OVERLAY, 0, null);
         poseStack.popPose();
     }
 
     /** Captured fill state + animation clock for one frame. */
     public static class EndCrystalReceptacleRenderState extends BlockEntityRenderState {
+        /** Light sampled above the block (the receptacle itself is solid = dark). */
+        public int crystalLight;
         public boolean filled;
         public float ageInTicks;
     }

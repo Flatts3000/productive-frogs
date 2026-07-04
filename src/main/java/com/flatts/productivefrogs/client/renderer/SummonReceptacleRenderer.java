@@ -63,6 +63,20 @@ public class SummonReceptacleRenderer
         state.ritualYaw = be.ritual().toYRot();
         state.onTop = be.getBlockState().getBlock() instanceof SummonReceptacleBlock rb
             && rb.displayMode() == SummonReceptacleBlock.DisplayMode.TOP;
+        // The receptacle is a solid full cube, so the default lightCoords (sampled
+        // AT the BE position) is pitch black. Sample where the item actually
+        // renders: the block above (TOP) or the neighbor off the displayed face.
+        if (be.getLevel() != null) {
+            net.minecraft.core.BlockPos samplePos = state.onTop
+                ? be.getBlockPos().above()
+                : be.getBlockPos().relative(be.ritual().getOpposite());
+            int blockLight = be.getLevel().getBrightness(net.minecraft.world.level.LightLayer.BLOCK, samplePos);
+            int skyLight = be.getLevel().getBrightness(net.minecraft.world.level.LightLayer.SKY, samplePos);
+            // packed lightmap coords: (sky << 20) | (block << 4) - the stable wire format
+            state.itemLight = (skyLight << 20) | (blockLight << 4);
+        } else {
+            state.itemLight = state.lightCoords;
+        }
         this.itemModelResolver.updateForTopItem(state.item, stack, ItemDisplayContext.FIXED,
             be.getLevel(), null, 0);
     }
@@ -81,7 +95,7 @@ public class SummonReceptacleRenderer
             // half the scaled block above the top face.
             poseStack.translate(0.5F, 1.0F + 0.35F, 0.5F);
             poseStack.scale(0.7F, 0.7F, 0.7F);
-            state.item.submit(poseStack, collector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
+            state.item.submit(poseStack, collector, state.itemLight, OverlayTexture.NO_OVERLAY, 0);
             poseStack.popPose();
             return;
         }
@@ -96,7 +110,7 @@ public class SummonReceptacleRenderer
         poseStack.mulPose(Axis.YP.rotationDegrees(-state.ritualYaw));
         poseStack.translate(0.0F, 0.0F, -0.44F);
         poseStack.scale(0.7F, 0.7F, 0.7F);
-        state.item.submit(poseStack, collector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
+        state.item.submit(poseStack, collector, state.itemLight, OverlayTexture.NO_OVERLAY, 0);
         poseStack.popPose();
     }
 
@@ -105,6 +119,8 @@ public class SummonReceptacleRenderer
         public boolean filled;
         public boolean onTop;
         public float ritualYaw;
+        /** Light sampled at the item's render position (the block itself is solid = dark). */
+        public int itemLight;
         public ItemStackRenderState item = new ItemStackRenderState();
     }
 }

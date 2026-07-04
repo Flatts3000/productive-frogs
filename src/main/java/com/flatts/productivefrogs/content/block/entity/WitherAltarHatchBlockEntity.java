@@ -45,6 +45,15 @@ public class WitherAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
         WitherAltarValidator.Result result = WitherAltarValidator.validate(server, pos);
         if (result.valid() && result.ritual() != null) {
             setOrientation(result.ritual());
+            // A FORMED altar forces every receptacle's held item onto the
+            // arena-facing side, whatever face the player inserted it on
+            // (unformed altars keep the player's choice). Runs every
+            // validation pass, so a fresh insert snaps within a second.
+            for (BlockPos rp : WitherAltarValidator.receptacles(pos, result.ritual())) {
+                if (server.getBlockEntity(rp) instanceof SummonReceptacleBlockEntity r) {
+                    r.setRitual(result.ritual());
+                }
+            }
         }
         return result.valid();
     }
@@ -69,20 +78,9 @@ public class WitherAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
         }
     }
 
-    /**
-     * Witherbane pins on top of the Hatch facing the resolved ritual; each receptacle
-     * is stamped with that direction so its held item renders facing back into the
-     * arena regardless of which way the altar was built.
-     */
+    /** Witherbane pins on top of the Hatch facing the resolved ritual. */
     @Override
     protected void reconcileDisplay(ServerLevel server, BlockPos pos, boolean show) {
-        if (show) {
-            for (BlockPos rp : WitherAltarValidator.receptacles(pos, ritual())) {
-                if (server.getBlockEntity(rp) instanceof SummonReceptacleBlockEntity r) {
-                    r.setRitual(ritual());
-                }
-            }
-        }
         float yaw = ritual().toYRot();
         reconcileDisplayFrog(server, WitherAltarValidator.witherbanePos(pos), yaw, yaw,
             WitherbaneFrog.type(), WitherbaneFrog.class, show);
