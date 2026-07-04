@@ -68,13 +68,31 @@ public class SlimeMilkerInventory extends ItemStackHandler {
     }
 
     /** 26.1 {@code Capabilities.Item.BLOCK} input view: insert-only over the slime-bucket slot. */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResourceCached;
+
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResource() {
-        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(this, new int[] {INPUT_SLOT}, true, false);
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (inputResourceCached == null) {
+            inputResourceCached = new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(this, new int[] {INPUT_SLOT}, true, false);
+        }
+        return inputResourceCached;
     }
 
     /** 26.1 {@code Capabilities.Item.BLOCK} output view: extract-only over the milk-bucket slot. */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResourceCached;
+
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResource() {
-        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(this, new int[] {OUTPUT_SLOT}, false, true);
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (outputResourceCached == null) {
+            outputResourceCached = new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(this, new int[] {OUTPUT_SLOT}, false, true);
+        }
+        return outputResourceCached;
     }
 
     /**

@@ -88,15 +88,33 @@ public class SpawneryInventory extends ItemStackHandler {
     }
 
     /** 26.1 {@code Capabilities.Item.BLOCK} input view: insert-only over the three input slots (per-slot validity routes each item). */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResourceCached;
+
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResource() {
-        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (inputResourceCached == null) {
+            inputResourceCached = new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
             this, new int[] {BOTTLE_SLOT, FUEL_SLOT, PRIMER_SLOT}, true, false);
+        }
+        return inputResourceCached;
     }
 
     /** 26.1 {@code Capabilities.Item.BLOCK} output view: extract-only over the output slot. */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResourceCached;
+
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResource() {
-        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (outputResourceCached == null) {
+            outputResourceCached = new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
             this, new int[] {OUTPUT_SLOT}, false, true);
+        }
+        return outputResourceCached;
     }
 
     // 26.1: ItemStackHandler implements ValueIOSerializable; the BE hands us the

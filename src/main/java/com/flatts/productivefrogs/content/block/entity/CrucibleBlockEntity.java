@@ -226,9 +226,18 @@ public class CrucibleBlockEntity extends BlockEntity {
      * fill is a no-op by design). Wraps {@link #tank} with the snapshot transaction
      * discipline; commit fires the contents-changed sync.
      */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> fluidResourceCached;
+
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> fluidResource() {
-        return new com.flatts.productivefrogs.content.transfer.FluidTankResourceHandler(
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (fluidResourceCached == null) {
+            fluidResourceCached = new com.flatts.productivefrogs.content.transfer.FluidTankResourceHandler(
             tank, null, false, true, this::onContentsChanged);
+        }
+        return fluidResourceCached;
     }
 
     /** The hopper-facing insert-only item handler. */

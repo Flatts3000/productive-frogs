@@ -169,8 +169,21 @@ public abstract class AbstractBasinBlockEntity extends BlockEntity {
             Boolean.TRUE.equals(inf));
     }
 
-    /** Charge directly (the pipe intake + tests). Only meaningful while empty. */
+    /** Charge directly (the player bucket path + tests). Only meaningful while empty. */
     public void charge(Identifier key, int remaining, int capacity, int speed, int quantity, boolean infinite) {
+        chargeRaw(key, remaining, capacity, speed, quantity, infinite);
+        setChanged();
+        syncToClients();
+    }
+
+    /**
+     * Field-only charge for the TRANSACTIONAL pipe intake: no {@code setChanged}
+     * and no client sync here - those are irreversible side effects that must not
+     * escape an aborted transaction, so the intake's journal fires them once in
+     * {@code onRootCommit} (review finding: the old path synced pre-commit and
+     * then double-synced on commit).
+     */
+    private void chargeRaw(Identifier key, int remaining, int capacity, int speed, int quantity, boolean infinite) {
         this.containedKey = key;
         this.spawnsRemaining = Mth.clamp(remaining, 0, MAX_STORED_SPAWNS);
         this.spawnsCapacity = Mth.clamp(Math.max(capacity, this.spawnsRemaining), 0, MAX_STORED_SPAWNS);
@@ -179,8 +192,6 @@ public abstract class AbstractBasinBlockEntity extends BlockEntity {
         this.infinite = infinite;
         this.intervalRemaining = 0;
         this.intervalTotal = 0;
-        setChanged();
-        syncToClients();
     }
 
     /**
@@ -475,7 +486,7 @@ public abstract class AbstractBasinBlockEntity extends BlockEntity {
             Integer speed = resource.get(PFDataComponents.MILK_SPEED.get());
             Integer quantity = resource.get(PFDataComponents.MILK_QUANTITY.get());
             Boolean inf = resource.get(PFDataComponents.MILK_INFINITE.get());
-            charge(key,
+            chargeRaw(key,
                 remaining != null ? remaining : MilkSpawnEconomy.defaultSpawnCount(),
                 capacity != null ? capacity : MilkSpawnEconomy.defaultSpawnCount(),
                 speed != null ? speed : 0,

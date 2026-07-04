@@ -135,6 +135,21 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
         return itemHandler;
     }
 
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> itemResourceCached;
+
+    /**
+     * The 26.1 {@code Capabilities.Item.BLOCK} view over the chest. Cached: one
+     * handler = one set of journals (a fresh handler per capability lookup gives
+     * two lookups in one transaction independent journals over the same slots,
+     * and an abort then restores the last journal's snapshot - review finding).
+     */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> itemResource() {
+        if (itemResourceCached == null) {
+            itemResourceCached = com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler.ofAll(itemHandler, true, true);
+        }
+        return itemResourceCached;
+    }
+
     /** The Apex dock (#281 Phase 4): the installed Apex frog + the Liquid Experience bank. */
     public AltarApexDock dock() {
         return dock;

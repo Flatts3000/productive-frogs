@@ -104,8 +104,20 @@ public class SummonReceptacleBlockEntity extends BlockEntity {
     }
 
     /** The 26.1 {@code Capabilities.Item.BLOCK} view: insert-only over the single held slot. */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> heldResourceCached;
+
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> heldResource() {
-        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(held, new int[] {0}, true, false);
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (heldResourceCached == null) {
+            // The commit callback re-runs the world writes ONCE when a transaction
+            // commits (onChanged skips them while a transaction is open).
+            heldResourceCached = new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
+                held, new int[] {0}, true, false, this::onChangedNow);
+        }
+        return heldResourceCached;
     }
 
     /** True when the receptacle holds its item. */
@@ -179,6 +191,17 @@ public class SummonReceptacleBlockEntity extends BlockEntity {
     }
 
     private void onChanged() {
+        // Mid-transaction mutate/revert (the 26.1 transfer design) must leave NO
+        // world trace on abort: a simulated pipe probe previously strobed the
+        // FILLED blockstate true/false with real setBlock writes (review
+        // finding). Defer to the handler's onRootCommit callback instead.
+        if (net.neoforged.neoforge.transfer.transaction.Transaction.getCurrentOpenedTransaction() != null) {
+            return;
+        }
+        onChangedNow();
+    }
+
+    private void onChangedNow() {
         setChanged();
         if (level != null && !level.isClientSide()) {
             BlockState st = getBlockState();

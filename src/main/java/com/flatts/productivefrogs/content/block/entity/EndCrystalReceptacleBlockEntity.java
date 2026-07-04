@@ -93,8 +93,20 @@ public class EndCrystalReceptacleBlockEntity extends BlockEntity {
     }
 
     /** The 26.1 {@code Capabilities.Item.BLOCK} view: insert-only over the single crystal slot. */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> crystalResourceCached;
+
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> crystalResource() {
-        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(crystal, new int[] {0}, true, false);
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (crystalResourceCached == null) {
+            // The commit callback re-runs the world writes ONCE on commit
+            // (onCrystalChanged skips them while a transaction is open).
+            crystalResourceCached = new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
+                crystal, new int[] {0}, true, false, this::onCrystalChangedNow);
+        }
+        return crystalResourceCached;
     }
 
     /** True when a crystal is held. */
@@ -143,6 +155,16 @@ public class EndCrystalReceptacleBlockEntity extends BlockEntity {
     }
 
     private void onCrystalChanged() {
+        // Same transaction discipline as SummonReceptacleBlockEntity: no world
+        // writes while a transaction is open; the handler's onRootCommit fires
+        // onCrystalChangedNow once on commit (review finding).
+        if (net.neoforged.neoforge.transfer.transaction.Transaction.getCurrentOpenedTransaction() != null) {
+            return;
+        }
+        onCrystalChangedNow();
+    }
+
+    private void onCrystalChangedNow() {
         setChanged();
         if (level != null && !level.isClientSide()) {
             BlockState st = getBlockState();

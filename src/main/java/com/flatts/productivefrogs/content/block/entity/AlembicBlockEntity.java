@@ -309,14 +309,32 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     /** 26.1 {@code Capabilities.Item.BLOCK} input view: insert-only over the bucket + item slots (per-slot validity routes each). */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResourceCached;
+
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResource() {
-        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (inputResourceCached == null) {
+            inputResourceCached = new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
             items, new int[] {BUCKET_SLOT, ITEM_SLOT}, true, false);
+        }
+        return inputResourceCached;
     }
 
     /** 26.1 {@code Capabilities.Item.BLOCK} output view: extract-only over the Mimic Slime Bucket slot. */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResourceCached;
+
     public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResource() {
-        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(items, new int[] {OUTPUT_SLOT}, false, true);
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (outputResourceCached == null) {
+            outputResourceCached = new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(items, new int[] {OUTPUT_SLOT}, false, true);
+        }
+        return outputResourceCached;
     }
 
     public EnergyStorage energyStorage() {
@@ -324,8 +342,17 @@ public class AlembicBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     /** The 26.1 {@code Capabilities.Energy.BLOCK} view (receive-only); wraps {@link #energy}. */
+    private net.neoforged.neoforge.transfer.energy.EnergyHandler energyHandlerCached;
+
     public net.neoforged.neoforge.transfer.energy.EnergyHandler energyHandler() {
-        return new com.flatts.productivefrogs.content.transfer.ReceiveOnlyEnergyHandler(energy);
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (energyHandlerCached == null) {
+            energyHandlerCached = new com.flatts.productivefrogs.content.transfer.ReceiveOnlyEnergyHandler(energy);
+        }
+        return energyHandlerCached;
     }
 
     public int progress() {
