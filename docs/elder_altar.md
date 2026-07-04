@@ -44,6 +44,14 @@ one drained source invalidates the altar).
    (`boss.elder_altar.xpReward`, default 10) banks as Liquid Experience in the
    dock.
 
+## Pack extension point
+
+Beyond the boss's own table, each summon also rolls the data-driven
+`productivefrogs:elder_altar` loot table (the dragon-altar precedent). It ships
+empty; packs and mods override or add pools to extend the altar's yield
+without Java - e.g. extra sponges, nautilus shells, or a mod-gated ocean
+resource.
+
 ## Recipes (boss-gated)
 
 | Block | Recipe |

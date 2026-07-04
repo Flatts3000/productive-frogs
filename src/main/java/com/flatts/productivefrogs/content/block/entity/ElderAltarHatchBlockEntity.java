@@ -20,11 +20,22 @@ import net.minecraft.world.level.block.state.BlockState;
  * water-checked {@link ElderAltarValidator}, four Tide Offering Receptacles at
  * the roof corners as fuel (4 prismarine crystals - renewable through the
  * predation chain), Elderbane swimming above the Hatch, and the raw-drops
- * payout - the Elder Guardian's own loot roll covers everything (the Wet Sponge
- * is unconditional and the prismarine/cod pools carry no player-kill condition),
- * so no explicit top-up is needed.
+ * payout - one explicit Wet Sponge (its pool is killed_by_player-conditioned)
+ * plus the unconditioned rest of the Elder Guardian's loot roll, plus the
+ * data-driven {@code productivefrogs:elder_altar} supplemental table.
  */
 public class ElderAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
+
+    /**
+     * Data-driven supplemental drops (the dragon-altar precedent): packs/mods
+     * override or add pools to {@code productivefrogs:elder_altar} to change
+     * what the altar yields beyond the Elder Guardian's own table. Ships empty.
+     */
+    private static final net.minecraft.resources.ResourceKey<net.minecraft.world.level.storage.loot.LootTable>
+        ELDER_ALTAR_LOOT_TABLE = net.minecraft.resources.ResourceKey.create(
+            net.minecraft.core.registries.Registries.LOOT_TABLE,
+            net.minecraft.resources.Identifier.fromNamespaceAndPath(
+                com.flatts.productivefrogs.ProductiveFrogs.MOD_ID, "elder_altar"));
 
     public ElderAltarHatchBlockEntity(BlockPos pos, BlockState state) {
         super(PFBlockEntities.ELDER_ALTAR_HATCH.get(), pos, state, FrogKind.Apex.ELDER);
@@ -98,6 +109,7 @@ public class ElderAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
         rollLoot(server, pos, EntityType.ELDER_GUARDIAN,
             EntityType.ELDER_GUARDIAN.getDefaultLootTable().orElseThrow(),
             stack -> !stack.is(net.minecraft.world.item.Items.WET_SPONGE));
+        rollLoot(server, pos, EntityType.ELDER_GUARDIAN, ELDER_ALTAR_LOOT_TABLE, stack -> true);
         server.playSound(null, pos, SoundEvents.ELDER_GUARDIAN_DEATH, SoundSource.HOSTILE, 1.0F, 1.0F);
     }
 
