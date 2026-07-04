@@ -42,6 +42,66 @@ final class PredatorBreedingTests {
             PredatorBreedingTests::predatorsDisabledConfigBlocksCrossesAndBreedTrue);
         PFGameTests.test("apex_crosses_conceive_and_breed_true", 40,
             PredatorBreedingTests::apexCrossesConceiveAndBreedTrue);
+        PFGameTests.test("apex_kind_survives_egg_to_frog", 100,
+            PredatorBreedingTests::apexKindSurvivesEggToFrog);
+    }
+
+    /**
+     * Maintainer playtest question (2026-07-04): the Cinder x Prowler cross
+     * lays an INFERNAL-looking egg - is the Wither Apex lost? The egg block is
+     * only the CARRIER (an Apex rides its anchor chain's species egg, exactly
+     * like a predator rides its anchor species'); the BE kind stamp decides
+     * the hatch. This pins the whole pipeline: the apex-stamped carrier egg
+     * hatches Wither Apex tadpoles that mature into Wither Apex frogs with
+     * the bred stats.
+     */
+    private static void apexKindSurvivesEggToFrog(GameTestHelper helper) {
+        BlockPos eggPos = new BlockPos(2, 2, 2);
+        helper.setBlock(eggPos.below(), Blocks.WATER);
+        // The carrier the WITHER apex rides: its fallback chain's species egg -
+        // Apex.WITHER -> anchor CINDER -> Category.INFERNAL (what the maintainer saw).
+        PrimedFrogEggBlock eggBlock = PFBlocks.primedEgg(FrogKind.Apex.WITHER.fallbackCategory());
+        helper.setBlock(eggPos, eggBlock);
+
+        ServerLevel level = helper.getLevel();
+        BlockPos absEggPos = helper.absolutePos(eggPos);
+        if (!(level.getBlockEntity(absEggPos) instanceof PrimedFrogEggBlockEntity eggBe)) {
+            helper.fail("primed egg has no BlockEntity");
+            return;
+        }
+        eggBe.setKind(FrogKind.Apex.WITHER);
+        eggBe.setPendingStats(3, 5, 2);
+
+        eggBlock.tick(level.getBlockState(absEggPos), level, absEggPos, level.getRandom());
+
+        List<ResourceTadpole> tadpoles = helper.getEntities(PFEntities.RESOURCE_TADPOLE.get());
+        if (tadpoles.isEmpty()) {
+            helper.fail("expected hatched tadpoles");
+            return;
+        }
+        for (ResourceTadpole tadpole : tadpoles) {
+            if (tadpole.getKind() != FrogKind.Apex.WITHER) {
+                helper.fail("hatched tadpole kind is " + tadpole.getKind().id() + ", expected apex/wither");
+                return;
+            }
+        }
+        ResourceTadpole first = tadpoles.get(0);
+        first.ageUp();
+        List<ResourceFrog> frogs = helper.getEntities(PFEntities.RESOURCE_FROG.get());
+        if (frogs.isEmpty()) {
+            helper.fail("tadpole did not mature into a frog");
+            return;
+        }
+        ResourceFrog frog = frogs.get(0);
+        if (frog.getKind() != FrogKind.Apex.WITHER) {
+            helper.fail("matured frog kind is " + frog.getKind().id() + ", expected apex/wither");
+            return;
+        }
+        if (frog.getAppetite() != 3 || frog.getBounty() != 5 || frog.getReach() != 2) {
+            helper.fail("matured apex lost its bred stats");
+            return;
+        }
+        helper.succeed();
     }
 
     /**

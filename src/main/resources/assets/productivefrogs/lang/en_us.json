@@ -701,6 +701,7 @@
   "config.jade.plugin_productivefrogs.basin": "Productive Frogs Basins",
   "productivefrogs.jade.basin_contains": "Contains: %s",
   "productivefrogs.jade.basin_empty": "Empty",
+  "productivefrogs.jade.hatches": "Hatches: %s",
   "config.jade.plugin_productivefrogs.frog_stats": "Productive Frogs Frog Stats",
   "config.jade.plugin_productivefrogs.primed_egg_stats": "Productive Frogs Frog Egg Stats",
   "config.jade.plugin_productivefrogs.tadpole_stats": "Productive Frogs Tadpole Stats",
