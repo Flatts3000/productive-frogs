@@ -148,13 +148,13 @@ public class CrucibleRenderer implements BlockEntityRenderer<CrucibleBlockEntity
         float v0 = sprite.getV(MIN_XZ);
         float v1 = sprite.getV(MAX_XZ);
         buffer.addVertex(pose, MIN_XZ, y, MIN_XZ).setColor(r, g, b, a).setUv(u0, v0)
-            .setLight(packedLight).setNormal(pose, 0.0F, 1.0F, 0.0F);
+            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose, 0.0F, 1.0F, 0.0F);
         buffer.addVertex(pose, MIN_XZ, y, MAX_XZ).setColor(r, g, b, a).setUv(u0, v1)
-            .setLight(packedLight).setNormal(pose, 0.0F, 1.0F, 0.0F);
+            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose, 0.0F, 1.0F, 0.0F);
         buffer.addVertex(pose, MAX_XZ, y, MAX_XZ).setColor(r, g, b, a).setUv(u1, v1)
-            .setLight(packedLight).setNormal(pose, 0.0F, 1.0F, 0.0F);
+            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose, 0.0F, 1.0F, 0.0F);
         buffer.addVertex(pose, MAX_XZ, y, MIN_XZ).setColor(r, g, b, a).setUv(u1, v0)
-            .setLight(packedLight).setNormal(pose, 0.0F, 1.0F, 0.0F);
+            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(pose, 0.0F, 1.0F, 0.0F);
     }
 
     /** Captured basin fill state for one frame. */
