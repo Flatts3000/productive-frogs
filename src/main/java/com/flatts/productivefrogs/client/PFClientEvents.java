@@ -154,7 +154,7 @@ public final class PFClientEvents {
             com.flatts.productivefrogs.registry.PFBlockEntities.WARDEN_ALTAR_HATCH.get(),
             ctx -> new com.flatts.productivefrogs.client.renderer.GrowingReplicaRenderer<>(ctx,
                 net.minecraft.world.entity.EntityType.WARDEN,
-                new net.minecraft.world.phys.Vec3(0.0, 0.0, 2.0), 0.0,
+                new net.minecraft.world.phys.Vec3(0.0, 0.0, 2.0),
                 com.flatts.productivefrogs.PFConfig::wardenAltarSummonTicks,
                 false, // full-size: the vanilla emerge animation IS the reveal
                 (phantom, firstFrame) -> {
@@ -168,8 +168,9 @@ public final class PFClientEvents {
             com.flatts.productivefrogs.registry.PFBlockEntities.ELDER_ALTAR_HATCH.get(),
             ctx -> new com.flatts.productivefrogs.client.renderer.GrowingReplicaRenderer<>(ctx,
                 net.minecraft.world.entity.EntityType.ELDER_GUARDIAN,
-                new net.minecraft.world.phys.Vec3(0.0, 0.9, 2.0), 0.0,
-                com.flatts.productivefrogs.PFConfig::elderAltarSummonTicks));
+                new net.minecraft.world.phys.Vec3(0.0, 0.9, 2.0),
+                com.flatts.productivefrogs.PFConfig::elderAltarSummonTicks,
+                true, null));
         // Summon receptacles: the held item (soul sand / wither skull / shrieker /
         // prismarine crystals) rendered on the frog-facing face. One BE type backs
         // all four receptacle blocks, so this covers the Phase 4b receptacles too.

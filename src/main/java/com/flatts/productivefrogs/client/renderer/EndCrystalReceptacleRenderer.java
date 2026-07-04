@@ -68,10 +68,11 @@ public class EndCrystalReceptacleRenderer
         // AT the BE position) is pitch black - sample above, where the crystal hovers.
         if (be.getLevel() != null) {
             net.minecraft.core.BlockPos above = be.getBlockPos().above();
-            int blockLight = be.getLevel().getBrightness(net.minecraft.world.level.LightLayer.BLOCK, above);
-            int skyLight = be.getLevel().getBrightness(net.minecraft.world.level.LightLayer.SKY, above);
-            // packed lightmap coords: (sky << 20) | (block << 4) - the stable wire format
-            state.crystalLight = (skyLight << 20) | (blockLight << 4);
+            // LightCoordsUtil.pack is the vanilla owner of the lightmap wire format
+            // (review finding: this was a hand-rolled reimplementation).
+            state.crystalLight = net.minecraft.util.LightCoordsUtil.pack(
+                be.getLevel().getBrightness(net.minecraft.world.level.LightLayer.BLOCK, above),
+                be.getLevel().getBrightness(net.minecraft.world.level.LightLayer.SKY, above));
         } else {
             state.crystalLight = state.lightCoords;
         }
