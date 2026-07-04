@@ -2,8 +2,8 @@
 
 Procedural: a vanilla-style light blue stained glass pane (translucent pale
 blue fill + lighter streak highlights) framed by opaque obsidian corner
-brackets so it reads as the reinforced family. Provisional pending the
-comparison-page approval pass.
+brackets so it reads as the reinforced family. APPROVED by the maintainer
+2026-07-04 - this is the final texture; re-run only to reproduce it.
 
 Run from the repo root:  python scripts/generate_reinforced_glass_texture.py
 """
