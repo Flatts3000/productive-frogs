@@ -40,6 +40,61 @@ final class PredatorBreedingTests {
             PredatorBreedingTests::predatorTadpoleBucketRoundTripPreservesKind);
         PFGameTests.test("predators_disabled_config_blocks_crosses_and_breed_true", 40,
             PredatorBreedingTests::predatorsDisabledConfigBlocksCrossesAndBreedTrue);
+        PFGameTests.test("apex_crosses_conceive_and_breed_true", 40,
+            PredatorBreedingTests::apexCrossesConceiveAndBreedTrue);
+    }
+
+    /**
+     * Phase 4: the four designated cross-environment predator pairs conceive
+     * their Apex (both directions); an Apex breeds true with its own kind only
+     * and never back down the ladder (predator / species / Midas all refuse).
+     */
+    private static void apexCrossesConceiveAndBreedTrue(GameTestHelper helper) {
+        for (FrogKind.Apex apex : FrogKind.Apex.values()) {
+            ResourceFrog a = frogOf(helper, new BlockPos(2, 2, 1), apex.anchor());
+            ResourceFrog b = frogOf(helper, new BlockPos(2, 2, 3), apex.partner());
+            if (!a.canMate(b) || !b.canMate(a)) {
+                helper.fail(apex.anchor().id() + " x " + apex.partner().id()
+                    + " must mate in both directions (the " + apex.key() + " cross)");
+                return;
+            }
+            a.spawnChildFromBreeding(helper.getLevel(), b);
+            if (a.getPendingOffspringKind() != apex) {
+                helper.fail("the " + apex.anchor().id() + " x " + apex.partner().id()
+                    + " cross must conceive " + apex.id() + ", got " + a.getPendingOffspringKind().id());
+                return;
+            }
+            a.discard();
+            b.discard();
+        }
+        // Breed true + ladder gating.
+        ResourceFrog w1 = frogOf(helper, new BlockPos(1, 2, 1), FrogKind.Apex.WITHER);
+        ResourceFrog w2 = frogOf(helper, new BlockPos(1, 2, 3), FrogKind.Apex.WITHER);
+        if (!w1.canMate(w2)) {
+            helper.fail("two Wither Apexes must breed true");
+            return;
+        }
+        w1.spawnChildFromBreeding(helper.getLevel(), w2);
+        if (w1.getPendingOffspringKind() != FrogKind.Apex.WITHER) {
+            helper.fail("Wither Apex x Wither Apex must conceive a Wither Apex");
+            return;
+        }
+        ResourceFrog dragon = frogOf(helper, new BlockPos(3, 2, 1), FrogKind.Apex.DRAGON);
+        if (w1.canMate(dragon)) {
+            helper.fail("cross-kind Apex pairs must refuse");
+            return;
+        }
+        ResourceFrog prowler = frogOf(helper, new BlockPos(3, 2, 3), FrogKind.Predator.PROWLER);
+        if (w1.canMate(prowler) || prowler.canMate(w1)) {
+            helper.fail("an Apex must never mate back down the ladder with a predator");
+            return;
+        }
+        ResourceFrog species = frogOf(helper, new BlockPos(2, 2, 2), FrogKind.resource(Category.BOG));
+        if (w1.canMate(species) || species.canMate(w1)) {
+            helper.fail("an Apex must never mate a species frog");
+            return;
+        }
+        helper.succeed();
     }
 
     private static ResourceFrog frogOf(GameTestHelper helper, BlockPos pos, FrogKind kind) {

@@ -96,7 +96,16 @@ class FrogKindTest {
             assertTrue(p.canMateWith(p));
             assertSame(p, p.offspringWith(p));
             for (FrogKind.Predator other : FrogKind.Predator.values()) {
-                if (other != p) {
+                if (other == p) {
+                    continue;
+                }
+                // Phase 4: the four designated cross-environment pairs conceive
+                // their Apex; every other cross-kind predator pair still refuses.
+                FrogKind.Apex apex = FrogKind.Apex.fromCross(p, other);
+                if (apex != null) {
+                    assertTrue(p.canMateWith(other));
+                    assertSame(apex, p.offspringWith(other));
+                } else {
                     assertFalse(p.canMateWith(other));
                     assertNull(p.offspringWith(other));
                 }
@@ -105,6 +114,29 @@ class FrogKindTest {
             assertFalse(p.canMateWith(FrogKind.resource(p.fallbackCategory())));
             assertFalse(p.canMateWith(FrogKind.MIDAS));
             assertFalse(FrogKind.resource(p.fallbackCategory()).canMateWith(p));
+        }
+    }
+
+    @Test
+    void apexCrossesAreTheSettledPairsAndBreedTrue() {
+        // The four settled pairs (issue #281 Phase 4), unordered.
+        assertSame(FrogKind.Apex.WITHER, FrogKind.Apex.fromCross(FrogKind.Predator.CINDER, FrogKind.Predator.PROWLER));
+        assertSame(FrogKind.Apex.DRAGON, FrogKind.Apex.fromCross(FrogKind.Predator.RIFT, FrogKind.Predator.CINDER));
+        assertSame(FrogKind.Apex.ELDER, FrogKind.Apex.fromCross(FrogKind.Predator.GULPER, FrogKind.Predator.PROWLER));
+        assertSame(FrogKind.Apex.WARDEN, FrogKind.Apex.fromCross(FrogKind.Predator.PROWLER, FrogKind.Predator.RIFT));
+        assertSame(FrogKind.Apex.WITHER, FrogKind.Apex.fromCross(FrogKind.Predator.PROWLER, FrogKind.Predator.CINDER));
+        for (FrogKind.Apex a : FrogKind.Apex.values()) {
+            assertTrue(a.canMateWith(a));
+            assertSame(a, a.offspringWith(a));
+            for (FrogKind.Apex other : FrogKind.Apex.values()) {
+                if (other != a) {
+                    assertFalse(a.canMateWith(other));
+                }
+            }
+            // The top of the ladder: never back down.
+            assertFalse(a.canMateWith(a.anchor()));
+            assertFalse(a.canMateWith(FrogKind.resource(a.fallbackCategory())));
+            assertFalse(a.canMateWith(FrogKind.MIDAS));
         }
     }
 

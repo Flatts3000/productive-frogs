@@ -93,6 +93,19 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
      * Deposit a dragon-altar drop, spilling any overflow as a returned leftover
      * (the summon decides what to do with it). Used by the summon state machine.
      */
+    /**
+     * The Apex dock (#281 Phase 4): holds the installed Dragon Apex Frog's
+     * whole net NBT + the altar's Liquid Experience bank. The summon gate
+     * requires {@link AltarApexDock#armed()}; breaking the hatch releases the
+     * real frog ({@link #preRemoveSideEffects}).
+     */
+    private final AltarApexDock dock =
+        new AltarApexDock(com.flatts.productivefrogs.data.FrogKind.Apex.DRAGON, this::setChanged);
+
+    public AltarApexDock dock() {
+        return dock;
+    }
+
     public ItemStack deposit(ItemStack stack) {
         return ItemHandlerHelper.insertItem(itemHandler, stack, false);
     }
@@ -116,9 +129,12 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
         }
         be.tickCounter = 0;
         boolean valid = DragonAltarValidator.validate(server, pos).valid();
-        reconcileFrog(server, pos, valid);
-        // Start a summon once the altar is complete and all four crystals are loaded.
-        if (valid && PFConfig.bossEnabled() && allReceptaclesFilled(server, pos)) {
+        // The display frog IS the installed Apex's render (Phase 4): it shows
+        // only while the altar is armed (installed, or predation config-off).
+        reconcileFrog(server, pos, valid && be.dock.armed());
+        // Start a summon once the altar is complete, ARMED with its Dragon Apex
+        // Frog (Phase 4 gate), and all four crystals are loaded.
+        if (valid && PFConfig.bossEnabled() && be.dock.armed() && allReceptaclesFilled(server, pos)) {
             be.summonTicks = PFConfig.dragonAltarSummonTicks();
             server.levelEvent(LEVEL_EVENT_DRAGON_ROAR, pos, 0);
             be.syncToClient();
@@ -155,25 +171,41 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
                 r.consume();
             }
         }
-        // Reward, in three parts:
-        // 1. XP orbs at the hatch.
+        // Reward, in three parts (Phase 4: the settled RAW-drops payout - boss
+        // altars yield what the boss itself drops, not Froglights):
+        // 1. XP banks as Liquid Experience in the dock (20 mB/point); a full
+        //    bank overflows the remainder as orbs - never voided.
         int xp = PFConfig.dragonAltarXpReward();
         if (xp > 0) {
-            ExperienceOrb.award(server, Vec3.atCenterOf(pos), xp);
+            be.dock.bankXp(server, Vec3.atCenterOf(pos), xp);
         }
-        // 2. The boss Froglights - the altar's signature output. Like the rest of the
-        //    mod's frog loop it yields variant-stamped Froglights (smeltable back to the
-        //    resource), not the raw resource: a Dragon Breath Froglight always, and a
-        //    Dragon Egg Froglight when repeatableEgg is on (the renewable-egg lever, now
-        //    delivered as the froglight that smelts to an egg).
-        spill(server, pos, be.deposit(FrogTongueDropHandler.buildFroglight(DRAGON_BREATH_VARIANT, null)));
+        // 2. The raw boss materials: Dragon's Breath always, and a Dragon Egg
+        //    when repeatableEgg is on (the renewable-egg lever).
+        spill(server, pos, be.deposit(new ItemStack(net.minecraft.world.item.Items.DRAGON_BREATH)));
         if (PFConfig.dragonAltarRepeatableEgg()) {
-            spill(server, pos, be.deposit(FrogTongueDropHandler.buildFroglight(DRAGON_EGG_VARIANT, null)));
+            spill(server, pos, be.deposit(new ItemStack(net.minecraft.world.item.Items.DRAGON_EGG)));
         }
         // 3. Whatever the dragon itself drops - the data-driven productivefrogs:dragon_altar
         //    loot table (default: the Princess's Kiss). Packs edit/extend it without Java.
         rollDragonLoot(server, pos, be);
         server.levelEvent(LEVEL_EVENT_DRAGON_DEATH, pos, 0);
+    }
+
+    /**
+     * Hatch removal (Phase 4): after the container spills, the installed Apex
+     * frog RESPAWNS where the altar stood (the maintainer ruling's "the frog
+     * drops"), and the display frog is discarded (it is just the render).
+     */
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (this.level instanceof ServerLevel server) {
+            dock.releaseFrog(server, pos);
+            for (DragonsbaneFrog frog : server.getEntitiesOfClass(
+                    DragonsbaneFrog.class, new AABB(plinthFrogPos(pos)).inflate(1.0))) {
+                frog.discard();
+            }
+        }
     }
 
     /**
@@ -292,6 +324,7 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
         this.items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
         ContainerHelper.loadAllItems(input, this.items);
         this.summonTicks = input.getIntOr("SummonTicks", 0);
+        this.dock.load(input);
     }
 
     @Override
@@ -299,6 +332,7 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
         super.saveAdditional(output);
         ContainerHelper.saveAllItems(output, this.items);
         output.putInt("SummonTicks", summonTicks);
+        dock.save(output);
     }
 
     // Sync only the summon progress to the client (the chest contents ride the menu,

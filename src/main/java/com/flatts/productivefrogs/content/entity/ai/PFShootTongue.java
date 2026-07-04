@@ -74,7 +74,7 @@ public class PFShootTongue extends ShootTongue {
         // Species/Midas frogs run vanilla's own gate (no frozen copy to drift on
         // the next port); only the predator arm needs the replicated bookkeeping
         // with prey-registry edibility instead of Frog.canEat.
-        if (!(body instanceof ResourceFrog frog) || !(frog.getKind() instanceof FrogKind.Predator predator)) {
+        if (!(body instanceof ResourceFrog frog) || !isHunterKind(frog.getKind())) {
             return super.checkExtraStartConditions(level, body);
         }
         Optional<LivingEntity> memory = body.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET);
@@ -89,7 +89,39 @@ public class PFShootTongue extends ShootTongue {
             this.addUnreachableTargetToMemory(body, target);
         }
         return canPathfindToTarget && body.getPose() != Pose.CROAKING
-            && isEligiblePrey(frog, predator, target);
+            && isEligiblePrey(frog, frog.getKind(), target);
+    }
+
+    /** Kinds whose tongue bypasses vanilla's frog_food gate: predators + apex (Phase 4). */
+    private static boolean isHunterKind(FrogKind kind) {
+        return kind instanceof FrogKind.Predator || kind instanceof FrogKind.Apex;
+    }
+
+    /**
+     * Kind-dispatched edibility: a Predator's prey registry, or an Apex's ONE
+     * boss (Phase 4 - matched by entity type id). Species/Midas return false -
+     * their edibility is vanilla's own gate, never this path.
+     */
+    public static boolean isEligiblePrey(ResourceFrog frog, FrogKind kind, LivingEntity target) {
+        return switch (kind) {
+            case FrogKind.Predator p -> isEligiblePrey(frog, p, target);
+            case FrogKind.Apex a -> isEligiblePrey(frog, a, target);
+            case FrogKind.Resource r -> false;
+            case FrogKind.Midas m -> false;
+        };
+    }
+
+    /**
+     * Apex edibility (Phase 4): its one boss, by entity type id, with the
+     * predation system on. Bosses are usually farmed at the altar; this live
+     * gate is the both-layer guarantee that an Apex targets nothing else.
+     */
+    public static boolean isEligiblePrey(ResourceFrog frog, FrogKind.Apex apex, LivingEntity target) {
+        if (!PFConfig.predatorsEnabled() || !(target instanceof Mob) || !target.isAlive()) {
+            return false;
+        }
+        return net.minecraft.world.entity.EntityType.getKey(target.getType())
+            .toString().equals(apex.bossEntityId());
     }
 
     /**
@@ -115,11 +147,11 @@ public class PFShootTongue extends ShootTongue {
 
     @Override
     protected void eatEntity(ServerLevel level, Frog body) {
-        if (!(body instanceof ResourceFrog frog) || !(frog.getKind() instanceof FrogKind.Predator)) {
+        if (!(body instanceof ResourceFrog frog) || !isHunterKind(frog.getKind())) {
             super.eatEntity(level, body);
             return;
         }
-        // Predator eat: vanilla's own sound + target resolution, then the
+        // Predator/Apex eat: vanilla's own sound + target resolution, then the
         // fake-player kill instead of tongue damage.
         level.playSound(null, frog, net.minecraft.sounds.SoundEvents.FROG_EAT,
             net.minecraft.sounds.SoundSource.NEUTRAL, 2.0F, 1.0F);

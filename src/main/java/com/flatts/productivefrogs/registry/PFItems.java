@@ -365,21 +365,38 @@ public final class PFItems {
      * into ENTITY_DATA ({@code Kind}), which the entities' readAdditionalSaveData
      * resolves via {@code FrogKind.readFrom}.
      */
-    public static final Map<com.flatts.productivefrogs.data.FrogKind.Predator, DeferredItem<SpawnEggItem>>
-        PREDATOR_FROG_SPAWN_EGGS = buildPredatorSpawnEggs("frog", () -> PFEntities.RESOURCE_FROG.get());
+    public static final Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<SpawnEggItem>>
+        PREDATOR_FROG_SPAWN_EGGS = buildKindSpawnEggs("frog", () -> PFEntities.RESOURCE_FROG.get(),
+            java.util.List.of(com.flatts.productivefrogs.data.FrogKind.Predator.values()));
 
     /** Tadpole counterparts of {@link #PREDATOR_FROG_SPAWN_EGGS}. */
-    public static final Map<com.flatts.productivefrogs.data.FrogKind.Predator, DeferredItem<SpawnEggItem>>
-        PREDATOR_TADPOLE_SPAWN_EGGS = buildPredatorSpawnEggs("tadpole", () -> PFEntities.RESOURCE_TADPOLE.get());
+    public static final Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<SpawnEggItem>>
+        PREDATOR_TADPOLE_SPAWN_EGGS = buildKindSpawnEggs("tadpole", () -> PFEntities.RESOURCE_TADPOLE.get(),
+            java.util.List.of(com.flatts.productivefrogs.data.FrogKind.Predator.values()));
 
-    private static Map<com.flatts.productivefrogs.data.FrogKind.Predator, DeferredItem<SpawnEggItem>>
-            buildPredatorSpawnEggs(String noun, java.util.function.Supplier<EntityType<?>> typeSupplier) {
-        Map<com.flatts.productivefrogs.data.FrogKind.Predator, DeferredItem<SpawnEggItem>> eggs =
-            new java.util.EnumMap<>(com.flatts.productivefrogs.data.FrogKind.Predator.class);
-        for (com.flatts.productivefrogs.data.FrogKind.Predator kind
-                : com.flatts.productivefrogs.data.FrogKind.Predator.values()) {
+    /** Apex frog spawn eggs (#281 Phase 4) - one per boss tier kind, Kind NBT baked. */
+    public static final Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<SpawnEggItem>>
+        APEX_FROG_SPAWN_EGGS = buildKindSpawnEggs("frog", () -> PFEntities.RESOURCE_FROG.get(),
+            java.util.List.of(com.flatts.productivefrogs.data.FrogKind.Apex.values()));
+
+    /** Tadpole counterparts of {@link #APEX_FROG_SPAWN_EGGS}. */
+    public static final Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<SpawnEggItem>>
+        APEX_TADPOLE_SPAWN_EGGS = buildKindSpawnEggs("tadpole", () -> PFEntities.RESOURCE_TADPOLE.get(),
+            java.util.List.of(com.flatts.productivefrogs.data.FrogKind.Apex.values()));
+
+    /**
+     * Kind-keyed spawn eggs (predators, apex - any kind whose eggs are one item
+     * per kind). Item id = {@code <nameSuffix>_<noun>_spawn_egg}; the Kind rides
+     * baked ENTITY_DATA NBT, the same dialect the entity save reads.
+     */
+    private static Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<SpawnEggItem>>
+            buildKindSpawnEggs(String noun, java.util.function.Supplier<EntityType<?>> typeSupplier,
+                java.util.List<? extends com.flatts.productivefrogs.data.FrogKind> kinds) {
+        Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<SpawnEggItem>> eggs =
+            new LinkedHashMap<>();
+        for (com.flatts.productivefrogs.data.FrogKind kind : kinds) {
             eggs.put(kind, ITEMS.registerItem(
-                kind.key() + "_" + noun + "_spawn_egg",
+                kind.nameSuffix() + "_" + noun + "_spawn_egg",
                 props -> {
                     CompoundTag nbt = new CompoundTag();
                     nbt.putString("Kind", kind.id());

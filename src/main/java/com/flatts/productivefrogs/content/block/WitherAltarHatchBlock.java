@@ -51,6 +51,43 @@ public class WitherAltarHatchBlock extends Block implements EntityBlock {
         return serverType == clientType ? (BlockEntityTicker<A>) ticker : null;
     }
 
+    /**
+     * Apex install (#281 Phase 4, maintainer ruling): shift-right-click with a
+     * net holding THIS altar's Apex frog installs it - the whole net NBT moves
+     * onto the hatch's dock (the display frog renders while installed; breaking
+     * the hatch respawns the real frog) and the net comes back empty. The wrong
+     * frog (or any other kind) is refused with a no-thanks sound, nothing
+     * consumed. A plain right-click still opens the chest.
+     */
+    @Override
+    protected InteractionResult useItemOn(
+        net.minecraft.world.item.ItemStack stack,
+        BlockState state,
+        Level level,
+        BlockPos pos,
+        Player player,
+        net.minecraft.world.InteractionHand hand,
+        BlockHitResult hit
+    ) {
+        if (player.isShiftKeyDown()
+                && stack.getItem() instanceof com.flatts.productivefrogs.content.item.EntityNetItem
+                && com.flatts.productivefrogs.content.item.EntityNetItem.isFilled(stack)
+                && level.getBlockEntity(pos) instanceof com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity hatch) {
+            if (!level.isClientSide()) {
+                if (hatch.dock().tryInstall(stack)) {
+                    stack.remove(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+                    level.playSound(null, pos, net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_CHIME,
+                        net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 0.8F);
+                } else {
+                    level.playSound(null, pos, net.minecraft.sounds.SoundEvents.VILLAGER_NO,
+                        net.minecraft.sounds.SoundSource.BLOCKS, 0.6F, 1.0F);
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
+        return InteractionResult.TRY_WITH_EMPTY_HAND;
+    }
+
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!level.isClientSide()

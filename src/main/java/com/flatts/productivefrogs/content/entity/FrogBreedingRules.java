@@ -36,9 +36,13 @@ public final class FrogBreedingRules {
         return switch (mine) {
             case FrogKind.Midas m -> m.canMateWith(theirs);
             case FrogKind.Predator p -> PFConfig.predatorsEnabled() && p.canMateWith(theirs);
+            // Apex (Phase 4): breed-true only, and only while predation is on -
+            // the whole tier rides the predators.enabled master like predators.
+            case FrogKind.Apex a -> PFConfig.predatorsEnabled() && a.canMateWith(theirs);
             case FrogKind.Resource r -> switch (theirs) {
                 case FrogKind.Midas m2 -> false;
                 case FrogKind.Predator p2 -> false; // never back down the ladder
+                case FrogKind.Apex a2 -> false; // never back down the ladder
                 case FrogKind.Resource r2 -> {
                     if (!PFConfig.sameSpeciesOnly()) {
                         yield true; // vanilla fallback: any resource pair
@@ -66,7 +70,11 @@ public final class FrogBreedingRules {
      */
     public static FrogKind offspring(FrogKind pregnant, FrogKind mate) {
         FrogKind offspring = pregnant.offspringWith(mate);
-        if (offspring == null || (offspring instanceof FrogKind.Predator && !PFConfig.predatorsEnabled())) {
+        // A predator OR apex offspring is suppressed while predators.enabled is
+        // off (a config flip mid-love) - the conception breeds true instead.
+        if (offspring == null
+                || ((offspring instanceof FrogKind.Predator || offspring instanceof FrogKind.Apex)
+                    && !PFConfig.predatorsEnabled())) {
             return pregnant;
         }
         return offspring;

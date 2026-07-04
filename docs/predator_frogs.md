@@ -111,6 +111,11 @@ The supply chain that makes the eat path farmable.
 
 ## Phase 4 - Apex Frogs + boss altars  (size: L)
 
+> **STATUS: 4a IMPLEMENTED** on `feat/predator-frogs-phase4` (2026-07-03) - the Apex tier + the retrofit of the two shipped altars. The two NEW altars (#279 Warden, #280 Elder Guardian) are the remaining 4b slice. Notes:
+> - `FrogKind.Apex` is the sealed hierarchy's 4th permit - adding it made the compiler enumerate every decision site (lay carrier, sensor diet, breeding rules), exactly as the Phase 1 design promised. Apex breeds true; the four predator crosses (Cinder x Prowler -> Wither, Rift x Cinder -> Dragon, Gulper x Prowler -> Elder, Prowler x Rift -> Warden) conceive it; `bossEntityId()` keys each Apex to its boss.
+> - The altar retrofit is COMPOSITION: one shared `AltarApexDock` (installed-frog net NBT + the Liquid Experience bank + the armed() gate) owned by each hatch BE. Shift-right-click with a net holding the MATCHING Apex installs it (net returns empty); the display frog (Dragonsbane/Witherbane) now renders only while armed; breaking the hatch respawns the REAL frog, stats intact. When `predators.enabled` is off the requirement is waived so predation-disabled packs keep working altars.
+> - XP pays as Liquid Experience into the dock (20 mB/point, 64-bucket bank, extract-only `Fluid.BLOCK`; overflow -> orbs, never voided). Drops are RAW (the settled ruling): dragon's breath + egg, the wither's unstripped loot + an explicit raw Nether Star (the table only stars a player-credited kill, so it stays explicit + strip-guarded against double-pay).
+
 The boss tier and the altar retrofit + two new altars.
 
 **Ships:**

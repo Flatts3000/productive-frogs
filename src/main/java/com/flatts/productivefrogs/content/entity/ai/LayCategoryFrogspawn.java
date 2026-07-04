@@ -171,6 +171,9 @@ public final class LayCategoryFrogspawn {
             case FrogKind.Resource r -> PFBlocks.primedEgg(r.category());
             case FrogKind.Midas m -> PFBlocks.MIDAS_FROG_EGG.get();
             case FrogKind.Predator p -> PFBlocks.primedEgg(p.fallbackCategory());
+            // An Apex offspring (Phase 4) rides its anchor chain's species egg as
+            // the carrier, like a predator - the BE kind stamp decides the hatch.
+            case FrogKind.Apex a -> PFBlocks.primedEgg(a.fallbackCategory());
         }).defaultBlockState();
         level.setBlock(placePos, placed, 3);
         level.gameEvent(GameEvent.BLOCK_PLACE, placePos, GameEvent.Context.of(frog, placed));
