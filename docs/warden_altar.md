@@ -51,6 +51,14 @@ locked by the `warden_altar_*` GameTests - a layout edit without re-syncing
    (`boss.warden_altar.xpReward`, default 5) banks as Liquid Experience in the
    dock; pipes drain it from any face.
 
+## Pack extension point
+
+Beyond the boss's own table, each summon also rolls the data-driven
+`productivefrogs:warden_altar` loot table (the dragon-altar precedent). It ships
+empty; packs and mods override or add pools to extend the altar's yield
+without Java - e.g. a mod-gated Warden Tendril entry (#252) for Apothic
+Enchanting packs.
+
 ## Recipes (boss-gated)
 
 | Block | Recipe |

@@ -87,10 +87,22 @@ public class WardenAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
     }
 
     /**
+     * Data-driven supplemental drops (the dragon-altar precedent): packs/mods
+     * override or add pools to {@code productivefrogs:warden_altar} to change
+     * what the altar yields beyond the Warden's own table. Ships empty.
+     */
+    private static final net.minecraft.resources.ResourceKey<net.minecraft.world.level.storage.loot.LootTable>
+        WARDEN_ALTAR_LOOT_TABLE = net.minecraft.resources.ResourceKey.create(
+            net.minecraft.core.registries.Registries.LOOT_TABLE,
+            net.minecraft.resources.Identifier.fromNamespaceAndPath(
+                com.flatts.productivefrogs.ProductiveFrogs.MOD_ID, "warden_altar"));
+
+    /**
      * The raw-drops payout (#281 Phase 4): the Warden's loot roll (the Sculk
      * Catalyst carries no player-kill condition, so the phantom roll pays it)
      * plus one explicit Echo Shard - stripped from the roll so a pack table
-     * that adds shards can't double-pay.
+     * that adds shards can't double-pay - plus the data-driven
+     * {@code productivefrogs:warden_altar} supplemental table.
      */
     @Override
     protected void payOut(ServerLevel server, BlockPos pos) {
@@ -98,6 +110,7 @@ public class WardenAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
         rollLoot(server, pos, EntityType.WARDEN,
             EntityType.WARDEN.getDefaultLootTable().orElseThrow(),
             stack -> !stack.is(Items.ECHO_SHARD));
+        rollLoot(server, pos, EntityType.WARDEN, WARDEN_ALTAR_LOOT_TABLE, stack -> true);
         server.playSound(null, pos, SoundEvents.WARDEN_DEATH, SoundSource.HOSTILE, 1.0F, 1.0F);
     }
 
