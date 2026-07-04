@@ -134,6 +134,10 @@ public class GrowingReplicaRenderer<T extends BossAltarHatchBlockEntity>
         // yBodyRot, not yRot (the replica that faced away from the Hatch).
         float yaw = interior.getOpposite().toYRot();
         phantom.setYRot(yaw);
+        // Snap the OLD pos/rot to match: the light probe lerps old -> current by
+        // partial tick, so stale old fields (world origin) sample light along a
+        // line through unloaded chunks - the dark/blinking replica.
+        phantom.setOldPosAndRot();
         phantom.yRotO = yaw;
         if (phantom instanceof net.minecraft.world.entity.LivingEntity living) {
             living.yBodyRot = yaw;

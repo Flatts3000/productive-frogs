@@ -104,6 +104,7 @@ public class WitherAltarHatchRenderer
         // the extracted lightmap samples at the entity position (unplaced = bad light).
         phantom.setPos(be.getBlockPos().getX() + 0.5 + off[0], be.getBlockPos().getY(),
             be.getBlockPos().getZ() + 0.5 + off[1]);
+        phantom.setOldPosAndRot(); // the light probe lerps old -> current pos; keep them equal
         EntityRenderState wither = dispatcher.extractEntity(phantom, partialTick);
         wither.shadowRadius = 0.0F;                 // suppress the shadow (was setRenderShadow(false))
         state.wither = wither;

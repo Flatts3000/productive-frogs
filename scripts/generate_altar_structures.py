@@ -85,12 +85,12 @@ def S(dx, dy, dz):
 palette = [PF + "warden_altar_hatch", PF + "echoing_catalyst", PF + "reinforced_sculk_froglight",
            PF + "reinforced_echo_shard_froglight", PF + "shrieker_receptacle", "minecraft:air"]
 HATCH, CAPSTONE, SCULK, ECHO, RECEPT, AIR = range(6)
-blocks = [(S(0, 0, 0), HATCH), (S(0, -1, 3), CAPSTONE)]
+blocks = [(S(0, 0, 0), HATCH), (S(0, -1, 2), CAPSTONE)]
 for dx in range(-2, 3):
     for dz in range(0, 5):
         ring = max(abs(dx), abs(dz - 2)) == 2
-        if not (dx == 0 and dz == 3):
-            blocks.append((S(dx, -1, dz), SCULK))                 # floor (capstone one beyond center)
+        if not (dx == 0 and dz == 2):
+            blocks.append((S(dx, -1, dz), SCULK))                 # floor (capstone at center)
         if ring:
             for dy in range(0, 3):
                 if not (dx == 0 and dy == 0 and dz == 0):         # the Hatch cell
