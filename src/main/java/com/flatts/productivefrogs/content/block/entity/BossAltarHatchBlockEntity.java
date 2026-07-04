@@ -169,6 +169,17 @@ public abstract class BossAltarHatchBlockEntity extends BaseContainerBlockEntity
         return ItemHandlerHelper.insertItem(itemHandler, stack, false);
     }
 
+    /**
+     * A data-driven supplemental altar loot table key (the dragon-altar
+     * precedent): packs/mods override or add pools to
+     * {@code productivefrogs:<name>} to extend the altar's yield without Java.
+     */
+    protected static ResourceKey<LootTable> altarLootTable(String name) {
+        return ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE,
+            net.minecraft.resources.Identifier.fromNamespaceAndPath(
+                com.flatts.productivefrogs.ProductiveFrogs.MOD_ID, name));
+    }
+
     /** Summon progress for the client animation (0 = idle, else ticks remaining). */
     public int summonTicks() {
         return summonTicks;

@@ -110,6 +110,9 @@ public record SlimeVariant(
      * {@code textures/} prefix, no {@code .png}). Example:
      * {@code "minecraft:iron_block"}.
      */
+    /** Impossible-from-JSON weight marking a decoded spawn_catalyst (see the codec comment). */
+    private static final int RETIRED_SPAWN_CATALYST_SENTINEL = -1;
+
     public static final Codec<SlimeVariant> CODEC = RecordCodecBuilder.<SlimeVariant>create(
         instance -> instance.group(
             Identifier.CODEC.optionalFieldOf("primer_item").forGetter(SlimeVariant::primerItem),
@@ -119,9 +122,22 @@ public record SlimeVariant(
             Codec.intRange(0, 0xFFFFFF).fieldOf("secondary_color").forGetter(SlimeVariant::secondaryColor),
             Codec.intRange(0, Integer.MAX_VALUE).optionalFieldOf("weight", 1).forGetter(SlimeVariant::weight),
             Identifier.CODEC.optionalFieldOf("inner_block").forGetter(SlimeVariant::innerBlock),
-            Identifier.CODEC.optionalFieldOf("spawn_entity").forGetter(SlimeVariant::spawnEntity)
-        ).apply(instance, SlimeVariant::new)
+            Identifier.CODEC.optionalFieldOf("spawn_entity").forGetter(SlimeVariant::spawnEntity),
+            // RETIRED knob (2.0/Phase 5): spawn_catalyst gated the boss milk
+            // sources behind the catalyst altars, which the boss altars replaced.
+            // Record codecs silently ignore unknown keys, so without this a 1.x
+            // pack variant declaring it would load fully UNGATED (review finding).
+            // Decoded only to reject with a datapack-load ERROR (not a crash),
+            // per the repo's decode-time-error rule; the sentinel weight -1 is
+            // unreachable from real input (the weight codec floors at 0) and is
+            // converted to a DataResult failure in requirePrimer below.
+            Codec.BOOL.optionalFieldOf("spawn_catalyst", false).forGetter(v -> false)
+        ).apply(instance, (primerItem, primerTag, category, primaryColor, secondaryColor,
+                weight, innerBlock, spawnEntity, spawnCatalyst) ->
+            new SlimeVariant(primerItem, primerTag, category, primaryColor, secondaryColor,
+                spawnCatalyst ? RETIRED_SPAWN_CATALYST_SENTINEL : weight, innerBlock, spawnEntity))
     ).comapFlatMap(SlimeVariant::requirePrimer, Function.<SlimeVariant>identity());
+
 
     /**
      * Boundary validation for the codec: every variant must declare at least
@@ -134,6 +150,13 @@ public record SlimeVariant(
      * rather than a mystery unprimeable slime appearing at runtime.
      */
     private static DataResult<SlimeVariant> requirePrimer(SlimeVariant variant) {
+        if (variant.weight() == RETIRED_SPAWN_CATALYST_SENTINEL) {
+            return DataResult.error(() ->
+                "spawn_catalyst was retired in 2.0: the catalyst altars were replaced by the boss altars "
+                + "(docs/boss_catalyst_altar.md is the historical record). Remove the field; boss-style "
+                + "gating now ships as weight 0 + the boss altars.");
+        }
+
         if (variant.primerItem().isPresent() || variant.primerTag().isPresent()) {
             return DataResult.success(variant);
         }

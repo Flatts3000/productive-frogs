@@ -100,16 +100,9 @@ public class WardenAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
         }
     }
 
-    /**
-     * Data-driven supplemental drops (the dragon-altar precedent): packs/mods
-     * override or add pools to {@code productivefrogs:warden_altar} to change
-     * what the altar yields beyond the Warden's own table. Ships empty.
-     */
+    /** Supplemental drops ({@link #altarLootTable}); ships empty for packs to extend. */
     private static final net.minecraft.resources.ResourceKey<net.minecraft.world.level.storage.loot.LootTable>
-        WARDEN_ALTAR_LOOT_TABLE = net.minecraft.resources.ResourceKey.create(
-            net.minecraft.core.registries.Registries.LOOT_TABLE,
-            net.minecraft.resources.Identifier.fromNamespaceAndPath(
-                com.flatts.productivefrogs.ProductiveFrogs.MOD_ID, "warden_altar"));
+        WARDEN_ALTAR_LOOT_TABLE = altarLootTable("warden_altar");
 
     /**
      * The raw-drops payout (#281 Phase 4): the Warden's loot roll (the Sculk

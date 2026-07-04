@@ -138,24 +138,14 @@ public final class AltarApexDock {
         if (installedFrogNbt == null) {
             return;
         }
-        // Rebuild exactly like EntityNetItem.entityFromStack: type id from the
-        // net dialect, whole-entity load, passengers stripped. The stored NBT is
-        // cleared only AFTER a successful spawn - a failed rebuild must never
-        // void the installed entity (it stays docked for the next attempt).
-        CompoundTag tag = installedFrogNbt;
-        var type = net.minecraft.world.entity.EntityType.byString(tag.getStringOr("entity", "")).orElse(null);
-        if (type == null) {
-            return;
-        }
-        Entity frog = type.create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
+        // One rebuild path: EntityNetItem.rebuildCaptured owns the net-NBT
+        // whole-entity sequence; the dock's gate is "must be a Resource Frog"
+        // (tryInstall guarantees it, but the stored NBT is player-adjacent
+        // data - keep the gate). The stored NBT is cleared only AFTER a
+        // successful spawn - a failed rebuild must never void the entity.
+        Entity frog = EntityNetItem.rebuildCaptured(installedFrogNbt.copy(), level,
+            created -> created instanceof ResourceFrog);
         if (frog == null) {
-            return;
-        }
-        tag.remove("Passengers");
-        frog.load(net.minecraft.world.level.storage.TagValueInput.create(
-            net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), tag));
-        if (!(frog instanceof ResourceFrog)) {
-            frog.discard();
             return; // NBT retained - nothing is voided
         }
         frog.snapTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);

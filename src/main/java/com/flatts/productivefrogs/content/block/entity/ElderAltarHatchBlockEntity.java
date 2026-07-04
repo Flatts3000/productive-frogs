@@ -26,16 +26,9 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public class ElderAltarHatchBlockEntity extends BossAltarHatchBlockEntity {
 
-    /**
-     * Data-driven supplemental drops (the dragon-altar precedent): packs/mods
-     * override or add pools to {@code productivefrogs:elder_altar} to change
-     * what the altar yields beyond the Elder Guardian's own table. Ships empty.
-     */
+    /** Supplemental drops ({@link BossAltarHatchBlockEntity#altarLootTable}); ships empty for packs to extend. */
     private static final net.minecraft.resources.ResourceKey<net.minecraft.world.level.storage.loot.LootTable>
-        ELDER_ALTAR_LOOT_TABLE = net.minecraft.resources.ResourceKey.create(
-            net.minecraft.core.registries.Registries.LOOT_TABLE,
-            net.minecraft.resources.Identifier.fromNamespaceAndPath(
-                com.flatts.productivefrogs.ProductiveFrogs.MOD_ID, "elder_altar"));
+        ELDER_ALTAR_LOOT_TABLE = altarLootTable("elder_altar");
 
     public ElderAltarHatchBlockEntity(BlockPos pos, BlockState state) {
         super(PFBlockEntities.ELDER_ALTAR_HATCH.get(), pos, state, FrogKind.Apex.ELDER);
