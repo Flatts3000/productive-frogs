@@ -110,6 +110,12 @@ public final class PFCreativeTabs {
                     if (PFConfig.equivalenceEnabled()) {
                         output.accept(PFItems.MIDAS_FROG_EGG.get());
                     }
+                    // Per-kind egg blocks (predators + apex, 2026-07-04 ruling).
+                    if (PFConfig.predatorsEnabled()) {
+                        for (var entry : PFItems.KIND_FROG_EGG_ITEMS.values()) {
+                            output.accept(entry.get());
+                        }
+                    }
                     // Default empty Resource Tadpole Bucket, then one stamped per
                     // category (the JEI subtype keys off BUCKET_ENTITY_DATA).
                     output.accept(PFItems.RESOURCE_TADPOLE_BUCKET.get());

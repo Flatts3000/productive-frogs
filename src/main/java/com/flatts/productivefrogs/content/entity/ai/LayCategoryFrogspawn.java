@@ -162,19 +162,11 @@ public final class LayCategoryFrogspawn {
             return false;
         }
 
-        // The egg block is chosen by the OFFSPRING kind (#281): a species lays its
-        // category egg, Midas its own egg block, and a predator offspring (from a
-        // designated cross or a breed-true predator pair) rides its anchor
-        // species' egg as the carrier - the BE kind stamp below decides the hatch.
+        // The egg block is the OFFSPRING kind's OWN egg (2026-07-04 ruling: no
+        // carrier eggs) - a Cinder x Prowler cross lays a Wither Apex Frog Egg
+        // block. The BE stamp below still carries the bred stats.
         FrogKind offspring = frog.hasPendingOffspring() ? frog.getPendingOffspringKind() : frog.getKind();
-        BlockState placed = (switch (offspring) {
-            case FrogKind.Resource r -> PFBlocks.primedEgg(r.category());
-            case FrogKind.Midas m -> PFBlocks.MIDAS_FROG_EGG.get();
-            case FrogKind.Predator p -> PFBlocks.primedEgg(p.fallbackCategory());
-            // An Apex offspring (Phase 4) rides its anchor chain's species egg as
-            // the carrier, like a predator - the BE kind stamp decides the hatch.
-            case FrogKind.Apex a -> PFBlocks.primedEgg(a.fallbackCategory());
-        }).defaultBlockState();
+        BlockState placed = PFBlocks.primedEgg(offspring).defaultBlockState();
         level.setBlock(placePos, placed, 3);
         level.gameEvent(GameEvent.BLOCK_PLACE, placePos, GameEvent.Context.of(frog, placed));
         level.playSound(null, frog, SoundEvents.FROG_LAY_SPAWN, SoundSource.BLOCKS, 1.0F, 1.0F);

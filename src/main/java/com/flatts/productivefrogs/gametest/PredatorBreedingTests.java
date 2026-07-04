@@ -58,9 +58,8 @@ final class PredatorBreedingTests {
     private static void apexKindSurvivesEggToFrog(GameTestHelper helper) {
         BlockPos eggPos = new BlockPos(2, 2, 2);
         helper.setBlock(eggPos.below(), Blocks.WATER);
-        // The carrier the WITHER apex rides: its fallback chain's species egg -
-        // Apex.WITHER -> anchor CINDER -> Category.INFERNAL (what the maintainer saw).
-        PrimedFrogEggBlock eggBlock = PFBlocks.primedEgg(FrogKind.Apex.WITHER.fallbackCategory());
+        // The Wither Apex's OWN egg block (2026-07-04 ruling: no carrier eggs).
+        PrimedFrogEggBlock eggBlock = PFBlocks.primedEgg((FrogKind) FrogKind.Apex.WITHER);
         helper.setBlock(eggPos, eggBlock);
 
         ServerLevel level = helper.getLevel();
@@ -241,8 +240,8 @@ final class PredatorBreedingTests {
     private static void crossConceivedPredatorKindSurvivesEggToFrog(GameTestHelper helper) {
         BlockPos eggPos = new BlockPos(2, 2, 2);
         helper.setBlock(eggPos.below(), Blocks.WATER);
-        // The carrier a Prowler offspring rides: its anchor species' egg block.
-        PrimedFrogEggBlock eggBlock = PFBlocks.primedEgg(FrogKind.Predator.PROWLER.fallbackCategory());
+        // The Prowler's OWN egg block (2026-07-04 ruling: no carrier eggs).
+        PrimedFrogEggBlock eggBlock = PFBlocks.primedEgg((FrogKind) FrogKind.Predator.PROWLER);
         helper.setBlock(eggPos, eggBlock);
 
         ServerLevel level = helper.getLevel();

@@ -179,6 +179,12 @@ public final class PFClientEvents {
         event.register(
             List.of(new ConstantBlockTint(0xFFFFD700)),
             PFBlocks.MIDAS_FROG_EGG.get());
+        // Per-kind egg blocks (predators + apex): each tints its kind's colour.
+        for (var entry : PFBlocks.KIND_FROG_EGGS.entrySet()) {
+            event.register(
+                List.of(new ConstantBlockTint(entry.getKey().tintArgb())),
+                entry.getValue().get());
+        }
         // Variant-keyed configurable Froglight: reads the variant id from the BE,
         // looks up the matching SlimeVariant, returns its primary_color (or the
         // EE-lane synthesized item's sprite-average colour). Tint index 0.

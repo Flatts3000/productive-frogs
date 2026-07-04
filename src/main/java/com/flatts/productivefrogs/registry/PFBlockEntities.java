@@ -222,10 +222,13 @@ public final class PFBlockEntities {
             "primed_frog_egg",
             () -> new BlockEntityType<>(
                 PrimedFrogEggBlockEntity::new,
-                java.util.stream.Stream.concat(
+                java.util.stream.Stream.of(
                         PFBlocks.PRIMED_FROG_EGGS.values().stream().map(java.util.function.Supplier::get),
                         // The Midas egg (#253) shares this BE type.
-                        java.util.stream.Stream.of(PFBlocks.MIDAS_FROG_EGG.get()))
+                        java.util.stream.Stream.of(PFBlocks.MIDAS_FROG_EGG.get()),
+                        // The per-kind predator/apex eggs (2026-07-04 ruling) too.
+                        PFBlocks.KIND_FROG_EGGS.values().stream().map(java.util.function.Supplier::get))
+                    .flatMap(st -> st)
                     .toArray(net.minecraft.world.level.block.Block[]::new)
             )
         );

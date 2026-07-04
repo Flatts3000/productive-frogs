@@ -81,9 +81,33 @@ public final class PFBlocks {
      */
     public static final DeferredBlock<PrimedFrogEggBlock> MIDAS_FROG_EGG = registerBlock(
         "midas_frog_egg",
-        props -> new PrimedFrogEggBlock(Category.VOID, true, props),
+        props -> new PrimedFrogEggBlock(com.flatts.productivefrogs.data.FrogKind.MIDAS, props),
         primedEggProperties(Category.VOID)
     );
+
+    /**
+     * One egg block per predator + apex kind (2026-07-04 ruling: no carrier
+     * eggs - a cross lays ITS OWN egg block, named and tinted for what it
+     * hatches). Same frogspawn behaviour as the species eggs.
+     */
+    public static final Map<com.flatts.productivefrogs.data.FrogKind, DeferredBlock<PrimedFrogEggBlock>>
+        KIND_FROG_EGGS = buildKindEggs();
+
+    private static Map<com.flatts.productivefrogs.data.FrogKind, DeferredBlock<PrimedFrogEggBlock>> buildKindEggs() {
+        Map<com.flatts.productivefrogs.data.FrogKind, DeferredBlock<PrimedFrogEggBlock>> map =
+            new LinkedHashMap<>();
+        java.util.List<com.flatts.productivefrogs.data.FrogKind> kinds = new java.util.ArrayList<>();
+        kinds.addAll(java.util.List.of(com.flatts.productivefrogs.data.FrogKind.Predator.values()));
+        kinds.addAll(java.util.List.of(com.flatts.productivefrogs.data.FrogKind.Apex.values()));
+        for (com.flatts.productivefrogs.data.FrogKind kind : kinds) {
+            map.put(kind, registerBlock(
+                kind.nameSuffix() + "_frog_egg",
+                props -> new PrimedFrogEggBlock(kind, props),
+                primedEggProperties(kind.fallbackCategory())
+            ));
+        }
+        return java.util.Collections.unmodifiableMap(map);
+    }
 
     /**
      * The variant-keyed configurable Froglight block. One block, datapack-driven
@@ -527,7 +551,7 @@ public final class PFBlocks {
         for (Category cat : Category.values()) {
             map.put(cat, registerBlock(
                 cat.primedEggItemName(),
-                props -> new PrimedFrogEggBlock(cat, props),
+                props -> new PrimedFrogEggBlock(com.flatts.productivefrogs.data.FrogKind.resource(cat), props),
                 primedEggProperties(cat)
             ));
         }
@@ -572,5 +596,15 @@ public final class PFBlocks {
     /** Convenience: get the primed egg block for a given category. */
     public static PrimedFrogEggBlock primedEgg(Category category) {
         return PRIMED_FROG_EGGS.get(category).get();
+    }
+
+    /** The egg block for ANY kind - every kind has its own block (2026-07-04 ruling). */
+    public static PrimedFrogEggBlock primedEgg(com.flatts.productivefrogs.data.FrogKind kind) {
+        return switch (kind) {
+            case com.flatts.productivefrogs.data.FrogKind.Resource r -> primedEgg(r.category());
+            case com.flatts.productivefrogs.data.FrogKind.Midas m -> MIDAS_FROG_EGG.get();
+            case com.flatts.productivefrogs.data.FrogKind.Predator p -> KIND_FROG_EGGS.get(p).get();
+            case com.flatts.productivefrogs.data.FrogKind.Apex a -> KIND_FROG_EGGS.get(a).get();
+        };
     }
 }

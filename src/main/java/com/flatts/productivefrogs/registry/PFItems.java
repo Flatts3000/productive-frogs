@@ -597,6 +597,21 @@ public final class PFItems {
         props -> new PlaceOnWaterBlockItem(PFBlocks.MIDAS_FROG_EGG.get(), props.useBlockDescriptionPrefix())
     );
 
+    /** BlockItems for the per-kind egg blocks (predators + apex, 2026-07-04 ruling). */
+    public static final Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<BlockItem>>
+        KIND_FROG_EGG_ITEMS = buildKindEggItems();
+
+    private static Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<BlockItem>> buildKindEggItems() {
+        Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<BlockItem>> map = new LinkedHashMap<>();
+        for (var entry : PFBlocks.KIND_FROG_EGGS.entrySet()) {
+            map.put(entry.getKey(), ITEMS.registerItem(
+                entry.getKey().nameSuffix() + "_frog_egg",
+                props -> new PlaceOnWaterBlockItem(entry.getValue().get(), props.useBlockDescriptionPrefix())
+            ));
+        }
+        return java.util.Collections.unmodifiableMap(map);
+    }
+
     /**
      * Distiller BlockItem (#253) - places {@link PFBlocks#DISTILLER}, the
      * Equivalence lane's RF-powered extractor (Prismatic Froglight -> item).

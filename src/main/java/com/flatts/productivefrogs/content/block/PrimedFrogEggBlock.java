@@ -56,32 +56,34 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
     private static final int MIN_TADPOLES_SPAWN = 1;
     private static final int MAX_TADPOLES_SPAWN = 3;
 
-    private final Category category;
     /**
-     * Equivalence lane (#253): a Midas egg. It still carries a {@link Category}
-     * (VOID, the sentinel its tadpoles + frog use), but is its OWN block - natively
-     * named "Midas Egg", not a VOID egg - and stamps the {@code midas} marker so it
-     * hatches Midas. A standalone block, NOT a 7th Category.
+     * The kind this egg block hatches by default (the BE stamp still wins, for
+     * bred stats + datapack overrides). One block per kind - the maintainer
+     * ruling (2026-07-04) that killed the carrier-egg pattern: a Cinder x
+     * Prowler cross lays a WITHER egg block, not an Infernal egg wearing a
+     * hidden stamp. Finishes the FrogKind unification at the block layer
+     * (this used to be a Category + midas-boolean pair).
      */
-    private final boolean midas;
+    private final FrogKind kind;
 
-    public PrimedFrogEggBlock(Category category, Properties properties) {
-        this(category, false, properties);
-    }
-
-    public PrimedFrogEggBlock(Category category, boolean midas, Properties properties) {
+    public PrimedFrogEggBlock(FrogKind kind, Properties properties) {
         super(properties);
-        this.category = category;
-        this.midas = midas;
+        this.kind = kind;
     }
 
+    /** The kind this block hatches by default. */
+    public FrogKind getKind() {
+        return kind;
+    }
+
+    /** Legacy category surface (tints, primers): the kind's fallback chain. */
     public Category getCategory() {
-        return category;
+        return kind.fallbackCategory();
     }
 
     /** Whether this is the Midas egg block (#253). */
     public boolean isMidas() {
-        return midas;
+        return kind instanceof FrogKind.Midas;
     }
 
     @Override
@@ -112,9 +114,10 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
         // exposes no "ticks remaining"). The BE is created before onPlace runs.
         if (level.getBlockEntity(pos) instanceof PrimedFrogEggBlockEntity egg) {
             egg.setHatchGameTime(level.getGameTime() + delay);
-            if (midas) {
-                egg.setKind(FrogKind.MIDAS);
-            }
+            // Stamp the block's own kind so the BE is always authoritative
+            // (the lay behavior may overwrite with the conceived kind + stats
+            // right after; the values agree post-2026-07-04, one egg per kind).
+            egg.setKind(this.kind);
         }
     }
 
@@ -154,12 +157,11 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
         int appetite = carryStats ? eggBe.getAppetite() : 0;
         int bounty = carryStats ? eggBe.getBounty() : 0;
         int reach = carryStats ? eggBe.getReach() : 0;
-        // The hatch kind (#281): the BE's stamped kind wins (a cross-conceived
-        // predator, a laid/Kiss-primed Midas); otherwise the carrier block decides
-        // (its species, or Midas for the dedicated Midas egg block).
+        // The hatch kind (#281): the BE's stamped kind wins (bred stats travel
+        // with it; datapacks/legacy saves may stamp a carrier) - otherwise the
+        // block IS the kind (one egg block per kind, 2026-07-04 ruling).
         FrogKind beKind = eggBe != null ? eggBe.getKind() : null;
-        FrogKind kind = beKind != null ? beKind
-            : (this.midas ? FrogKind.MIDAS : FrogKind.resource(this.category));
+        FrogKind kind = beKind != null ? beKind : this.kind;
 
         destroy(level, pos);
         level.playSound(null, pos, SoundEvents.FROGSPAWN_HATCH, SoundSource.BLOCKS, 1.0F, 1.0F);
