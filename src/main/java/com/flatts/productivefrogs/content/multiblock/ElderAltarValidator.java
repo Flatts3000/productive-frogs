@@ -7,9 +7,10 @@ import net.minecraft.world.level.block.Block;
 
 /**
  * Validates the Elder Guardian Altar - the "Monument Well" (#280) - by anchoring
- * on its central Hatch in the tank floor. A sealed 5x5x5 prismarine water tank:
- * a Reinforced Sponge Froglight floor, Reinforced Prismarine Froglight walls and
- * roof, the four Tide Offering Receptacles standing at the roof corners like
+ * on its central Hatch in the tank floor. A sealed 5x5x5 water tank: a
+ * Reinforced Sponge Froglight floor, Reinforced Light Blue Stained Glass walls
+ * (the aquarium view - maintainer ruling 2026-07-04), a Reinforced Prismarine
+ * Froglight roof, the four Tide Offering Receptacles standing at the roof corners like
  * monument spires (the per-summon fuel: 4 prismarine crystals), and the Monument
  * Core capstone at the roof center (crafted from a Wet Sponge - the Elder
  * Guardian's signature drop). The 3x3x3 interior must be water source blocks;
@@ -33,8 +34,11 @@ public final class ElderAltarValidator {
     /** Reinforced Sponge Froglight: the 5x5 tank floor (the Hatch sits at its center, one above). */
     private static final int[][] SPONGE_FLOOR = buildFloor();
 
-    /** Reinforced Prismarine Froglight: the wall rings and the roof plate. */
-    private static final int[][] PRISMARINE = buildPrismarine();
+    /** Reinforced Light Blue Stained Glass: the three wall rings (the aquarium view). */
+    private static final int[][] GLASS_WALLS = buildWalls();
+
+    /** Reinforced Prismarine Froglight: the roof plate. */
+    private static final int[][] PRISMARINE_ROOF = buildRoof();
 
     /** The four Tide Offering Receptacles, at the roof corners (fuel: prismarine crystals). */
     private static final int[][] RECEPTACLES = {{2, 3, 2}, {2, 3, -2}, {-2, 3, 2}, {-2, 3, -2}};
@@ -55,15 +59,24 @@ public final class ElderAltarValidator {
         return out.toArray(int[][]::new);
     }
 
-    private static int[][] buildPrismarine() {
+    private static int[][] buildWalls() {
         java.util.List<int[]> out = new java.util.ArrayList<>();
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 if (Math.max(Math.abs(dx), Math.abs(dz)) == 2) {
                     for (int dy = 0; dy <= 2; dy++) {
-                        out.add(new int[] {dx, dy, dz}); // walls
+                        out.add(new int[] {dx, dy, dz});
                     }
                 }
+            }
+        }
+        return out.toArray(int[][]::new);
+    }
+
+    private static int[][] buildRoof() {
+        java.util.List<int[]> out = new java.util.ArrayList<>();
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
                 boolean corner = Math.abs(dx) == 2 && Math.abs(dz) == 2;
                 boolean center = dx == 0 && dz == 0;
                 if (!corner && !center) {
@@ -98,8 +111,11 @@ public final class ElderAltarValidator {
         if (!allMatch(level, hatch, SPONGE_FLOOR, PFBlocks.REINFORCED_SPONGE_FROGLIGHT.get())) {
             return new Result(false, "incomplete Reinforced Sponge Froglight floor");
         }
-        if (!allMatch(level, hatch, PRISMARINE, PFBlocks.REINFORCED_PRISMARINE_FROGLIGHT.get())) {
-            return new Result(false, "incomplete Reinforced Prismarine Froglight walls/roof");
+        if (!allMatch(level, hatch, GLASS_WALLS, PFBlocks.REINFORCED_LIGHT_BLUE_STAINED_GLASS.get())) {
+            return new Result(false, "incomplete Reinforced Light Blue Stained Glass walls");
+        }
+        if (!allMatch(level, hatch, PRISMARINE_ROOF, PFBlocks.REINFORCED_PRISMARINE_FROGLIGHT.get())) {
+            return new Result(false, "incomplete Reinforced Prismarine Froglight roof");
         }
         if (!allMatch(level, hatch, RECEPTACLES, PFBlocks.TIDE_OFFERING_RECEPTACLE.get())) {
             return new Result(false, "missing a Tide Offering Receptacle at a roof corner");

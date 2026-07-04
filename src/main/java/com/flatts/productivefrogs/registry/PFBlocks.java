@@ -558,6 +558,26 @@ public final class PFBlocks {
     public static final DeferredBlock<SummonReceptacleBlock> TIDE_OFFERING_RECEPTACLE =
         registerBlock("tide_offering_receptacle",
             p -> new SummonReceptacleBlock(p, Items.PRISMARINE_CRYSTALS), receptacleProperties());
+    /**
+     * Reinforced Light Blue Stained Glass - the Monument Well's walls (#280,
+     * maintainer ruling 2026-07-04: the tank walls are glass so the swimming
+     * Elderbane and the summon replica read from outside). Vanilla-glass render
+     * behavior (translucent, no occlusion) at obsidian-tier blast resistance;
+     * crafted like the reinforced family (obsidian cross + the vanilla pane).
+     */
+    public static final DeferredBlock<net.minecraft.world.level.block.TransparentBlock> REINFORCED_LIGHT_BLUE_STAINED_GLASS =
+        registerBlock("reinforced_light_blue_stained_glass",
+            net.minecraft.world.level.block.TransparentBlock::new,
+            BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_LIGHT_BLUE)
+                .strength(3.0F, 1200.0F)
+                .sound(SoundType.GLASS)
+                .noOcclusion()
+                .isValidSpawn((state, level, pos, type) -> false)
+                .isRedstoneConductor((state, level, pos) -> false)
+                .isSuffocating((state, level, pos) -> false)
+                .isViewBlocking((state, level, pos) -> false));
+
     public static final DeferredBlock<Block> MONUMENT_CORE =
         registerBlock("monument_core", Block::new, BlockBehaviour.Properties.of()
             .mapColor(MapColor.COLOR_CYAN)

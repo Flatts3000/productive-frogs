@@ -1,0 +1,24 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "productivefrogs:config_enabled",
+      "config": "boss"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "productivefrogs",
+  "pattern": [
+    " O ",
+    "OGO",
+    " O "
+  ],
+  "key": {
+    "O": "minecraft:obsidian",
+    "G": "minecraft:light_blue_stained_glass"
+  },
+  "result": {
+    "id": "productivefrogs:reinforced_light_blue_stained_glass",
+    "count": 1
+  }
+}
