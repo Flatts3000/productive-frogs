@@ -692,15 +692,6 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             if (!(accessor.getBlockEntity() instanceof PrimedFrogEggBlockEntity egg)) {
                 return;
             }
-            // The carried KIND when it differs from the carrier block's species
-            // (a predator/apex cross rides its anchor species' egg as the
-            // carrier - maintainer playtest 2026-07-04: a Cinder x Prowler
-            // "Infernal" egg gave no hint it hatches a Wither Apex).
-            com.flatts.productivefrogs.data.FrogKind kind = egg.getKind();
-            if (kind != null
-                    && !(kind instanceof com.flatts.productivefrogs.data.FrogKind.Resource)) {
-                data.putString("HatchKind", kind.nameSuffix());
-            }
             if (egg.hasStats()) {
                 writePendingStats(data, egg.getAppetite(), egg.getBounty(), egg.getReach());
             }
@@ -718,13 +709,6 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             CompoundTag data = accessor.getServerData();
             if (data == null) {
                 return;
-            }
-            // "Hatches: Wither Apex Frog" - the carrier block name says the
-            // SPECIES, so a cross-stamped egg declares what actually hatches.
-            String hatchKind = data.getStringOr("HatchKind", "");
-            if (!hatchKind.isEmpty()) {
-                tooltip.add(Component.translatable("productivefrogs.jade.hatches",
-                    Component.translatable("entity.productivefrogs.resource_frog." + hatchKind)));
             }
             appendPendingStats(tooltip, data);
             if (data.contains("HatchTicks")) {
