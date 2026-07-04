@@ -46,6 +46,8 @@ final class BossAltarTests {
         PFGameTests.test("apex_install_reject_release_round_trip", "dragon_altar", 100,
             BossAltarTests::apexInstallRejectReleaseRoundTrip);
         PFGameTests.test("apex_eats_only_its_own_boss", 40, BossAltarTests::apexEatsOnlyItsOwnBoss);
+        PFGameTests.test("apex_installs_via_net_use_on", "dragon_altar", 100,
+            BossAltarTests::apexInstallsViaNetUseOn);
         PFGameTests.test("wither_altar_stamps_receptacle_faces", "wither_altar", Rotation.CLOCKWISE_90, 100,
             BossAltarTests::witherAltarStampsReceptacleFaces);
         PFGameTests.test("warden_altar_validates_when_built", "warden_altar", 100, BossAltarTests::wardenAltarValidatesWhenBuilt);
@@ -686,6 +688,42 @@ final class BossAltarTests {
             }
         }
         return null;
+    }
+
+    /**
+     * The install gesture through the REAL interaction path: {@code EntityNetItem#useOn}
+     * on the Hatch (sneak+item skips block interaction on this MC line, so the item's
+     * useOn is the only reachable install site - the regression here was the net
+     * RELEASING the frog beside the altar instead of installing).
+     */
+    private static void apexInstallsViaNetUseOn(GameTestHelper helper) {
+        BlockPos hatch = findAltarHatch(helper);
+        helper.assertTrue(hatch != null, "no End Dragon Altar Hatch in the loaded structure");
+        BlockPos absHatch = helper.absolutePos(hatch);
+        com.flatts.productivefrogs.content.entity.ResourceFrog frog =
+            PFEntities.RESOURCE_FROG.get().create(helper.getLevel(), net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
+        helper.assertTrue(frog != null, "could not create the apex frog");
+        frog.setKind(com.flatts.productivefrogs.data.FrogKind.Apex.DRAGON);
+        ItemStack netStack = new ItemStack(PFItems.FROG_NET.get());
+        com.flatts.productivefrogs.content.item.EntityNetItem.captureEntity(frog, netStack);
+        frog.discard();
+        net.minecraft.world.entity.player.Player player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, netStack);
+        netStack.useOn(new net.minecraft.world.item.context.UseOnContext(player, net.minecraft.world.InteractionHand.MAIN_HAND,
+            new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(absHatch),
+                net.minecraft.core.Direction.UP, absHatch, false)));
+        helper.assertTrue(helper.getLevel().getBlockEntity(absHatch)
+                instanceof com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity hb
+                && hb.dock().isInstalled(),
+            "useOn a filled net on the Hatch must install the Apex");
+        helper.assertTrue(!com.flatts.productivefrogs.content.item.EntityNetItem.isFilled(netStack),
+            "the net must come back empty after install");
+        // The regression guard: the frog must NOT have been released beside the altar.
+        helper.assertTrue(helper.getLevel().getEntitiesOfClass(
+                com.flatts.productivefrogs.content.entity.ResourceFrog.class,
+                new net.minecraft.world.phys.AABB(absHatch).inflate(3.0)).isEmpty(),
+            "the net must not spill the frog onto the altar");
+        helper.succeed();
     }
 
     /** Find the altar Hatch within the loaded structure (relative pos), or null. */
