@@ -261,6 +261,32 @@ PEARL_HI = (142, 226, 184, 255)
 PEARL_DK = (16, 84, 66, 255)
 
 
+def shade_filled_bulge(img, px, interior, eyes):
+    """Deliberate shading for the captured-mob bulge (the flat recolor read as
+    a blob): edge pixels dark, a top-left highlight region, mid body elsewhere,
+    and optionally two bright 'ender eyes' so it reads as something IN the net."""
+    if not interior:
+        return
+    xs = [x for x, y in interior]
+    ys = [y for x, y in interior]
+    x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
+    inset = set(interior)
+    for x, y in interior:
+        edge = any((x + dx, y + dy) not in inset for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+        if edge:
+            px[x, y] = PURPLE_DK
+        else:
+            # diagonal light: top-left brightest
+            t = ((x - x0) / max(1, x1 - x0) + (y - y0) / max(1, y1 - y0)) / 2
+            px[x, y] = PURPLE_HI if t < 0.30 else (PURPLE if t < 0.72 else PURPLE_DK)
+    if eyes:
+        ex = x0 + (x1 - x0) // 2
+        ey = y0 + (y1 - y0) // 2
+        for cx in (ex - 1, ex + 1):
+            if (cx, ey) in inset:
+                px[cx, ey] = (246, 240, 255, 255)
+
+
 def ender_net(mesh_shade, filled):
     """Green RING with purple NET inside (maintainer ruling). The frog net's
     head pixels are classified geometrically: a visible non-wood pixel with a
@@ -299,7 +325,11 @@ def ender_net(mesh_shade, filled):
         else:
             px[x, y] = mesh_hi if lum > 170 else (mesh_main if lum > 90 else PURPLE_DK)
             interior.append((x, y))
-    if mesh_shade == 1 and interior:
+    if filled:
+        # mesh_shade repurposed for the filled art: 0 = shaded bulge with ender
+        # eyes, 1 = shaded bulge only.
+        shade_filled_bulge(img, px, interior, eyes=(mesh_shade == 0))
+    elif mesh_shade == 1 and interior:
         hx, hy = min(interior, key=lambda p: (p[0] - 8) ** 2 + (p[1] - 6) ** 2)
         px[hx, hy] = PURPLE_HI
     return img
@@ -354,7 +384,8 @@ def main():
     # pearl-green dominant, per the maintainer ruling).
     emit("ender_net", [ender_net(v, False) for v in (0, 1)])
     emit("ender_net_filled", [ender_net(v, True) for v in (0, 1)])
-    emit("mob_slurry_bucket", [slurry_bucket(v) for v in (0, 1)])
+    # mob_slurry_bucket: settled by ruling as base + greyscale contents layer
+    # tinted per-mob at runtime (SlurriedEntityTint) - no colour candidates.
 
     print("done - rebuild the review page with: powershell gen/scripts/build_comparison_page.ps1")
 

@@ -1,6 +1,7 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "productivefrogs:item/mob_slurry_bucket"
+    "layer0": "productivefrogs:item/mob_slurry_bucket",
+    "layer1": "productivefrogs:item/mob_slurry_bucket_contents"
   }
 }

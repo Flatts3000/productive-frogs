@@ -233,6 +233,7 @@ public final class PFClientEvents {
         event.register(id("synthesized_item"), SynthesizedItemTint.CODEC);
         event.register(id("configurable_froglight"), ConfigurableFroglightTint.CODEC);
         event.register(id("variant_color"), VariantColorTint.CODEC);
+        event.register(id("slurried_entity"), com.flatts.productivefrogs.client.color.SlurriedEntityTint.CODEC);
         event.register(id("resource_slime_egg"), ResourceSlimeEggTint.CODEC);
         event.register(id("category_color"), CategoryColorTint.CODEC);
     }
@@ -276,10 +277,12 @@ public final class PFClientEvents {
         event.register(new FluidModel.Unbaked(milkStill, milkFlow, null, constantFluidTint(LIQUID_EXPERIENCE_GREEN)),
             PFFluids.LIQUID_EXPERIENCE.get(), PFFluids.LIQUID_EXPERIENCE_FLOWING.get());
 
-        // Mob Slurry (#281 Phase 3): shared greyscale milk texture, constant
-        // ender-purple tint (the slurry's identity is its mob COMPONENT, not a
-        // colour; it also never exists in-world, so this only shows in tanks).
-        event.register(new FluidModel.Unbaked(milkStill, milkFlow, null, constantFluidTint(MOB_SLURRY_PURPLE)),
+        // Mob Slurry (#281 Phase 3): shared greyscale milk texture, coloured
+        // FOR THE MOB it condenses (maintainer ruling) - colorAsStack resolves
+        // the SLURRIED_ENTITY component through MobColors (spawn-egg sprite
+        // average); murky ender purple when unresolvable. The Basin's contents
+        // surface and any tank gauge route through colorAsStack.
+        event.register(new FluidModel.Unbaked(milkStill, milkFlow, null, mobSlurryFluidTint()),
             PFFluids.MOB_SLURRY.get(), PFFluids.MOB_SLURRY_FLOWING.get());
 
         Material moltenStill = new Material(id("block/molten_still"));
@@ -297,8 +300,33 @@ public final class PFClientEvents {
     /** Vanilla experience-orb green - the fixed Liquid Experience tint (and its bucket art). */
     private static final int LIQUID_EXPERIENCE_GREEN = 0x80FF20;
 
-    /** Ender purple - the fixed Mob Slurry tint (and its bucket art). */
-    private static final int MOB_SLURRY_PURPLE = 0x9C6BC7;
+    /**
+     * Mob Slurry tint: per-mob via the SLURRIED_ENTITY component (spawn-egg
+     * sprite average), murky ender purple fallback - the same resolution the
+     * bucket's SlurriedEntityTint uses, so bucket and fluid always agree.
+     */
+    private static FluidTintSource mobSlurryFluidTint() {
+        int fallback = Tints.opaque(com.flatts.productivefrogs.client.color.SlurriedEntityTint.FALLBACK_RGB);
+        return new FluidTintSource() {
+            @Override
+            public int color(FluidState state) {
+                return fallback;
+            }
+
+            @Override
+            public int colorAsStack(net.neoforged.neoforge.fluids.FluidStack stack) {
+                Identifier entityId = stack.get(
+                    com.flatts.productivefrogs.registry.PFDataComponents.SLURRIED_ENTITY.get());
+                if (entityId != null) {
+                    int argb = MobColors.colorFor(entityId);
+                    if (argb != -1) {
+                        return argb;
+                    }
+                }
+                return fallback;
+            }
+        };
+    }
 
     /** A fixed-colour fluid tint (Liquid Experience - nothing per-instance to resolve). */
     private static FluidTintSource constantFluidTint(int rgb) {
