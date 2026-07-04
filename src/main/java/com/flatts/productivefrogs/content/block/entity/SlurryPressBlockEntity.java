@@ -102,12 +102,16 @@ public class SlurryPressBlockEntity extends BlockEntity implements MenuProvider 
 
     /**
      * Whether a filled Ender Net's captured mob may be pressed: a known
-     * EntityType that is NOT a boss ({@code c:bosses}). Shared by the slot
-     * filter and the tick re-check.
+     * EntityType not on the {@code productivefrogs:slurry_denylist} tag -
+     * {@code #c:bosses} plus every PF mob (a Resource Slime pressed into
+     * slurry would bypass the milk economy and respawn variant-less husks;
+     * maintainer ruling 2026-07-03). Shared by the slot filter and the tick
+     * re-check.
      */
     public static boolean isPressable(ItemStack netStack) {
         EntityType<?> type = EntityNetItem.capturedType(netStack);
-        return type != null && !type.builtInRegistryHolder().is(Tags.EntityTypes.BOSSES);
+        return type != null && !type.builtInRegistryHolder().is(
+            com.flatts.productivefrogs.registry.PFEntityTags.SLURRY_DENYLIST);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, SlurryPressBlockEntity be) {
