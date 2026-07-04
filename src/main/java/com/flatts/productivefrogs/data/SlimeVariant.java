@@ -9,11 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-import net.minecraft.core.Holder;
-import net.minecraft.core.HolderLookup;
+import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
@@ -61,7 +60,7 @@ import org.jetbrains.annotations.Nullable;
  *       live block model in a separate render pass was removed: the slime's
  *       translucent shell depth-culled it, so it never appeared.) When absent,
  *       the variant falls back to the plain per-category slime texture.
- *       <br><b>Identifier format:</b> a plain block id (namespace +
+ *       <br><b>ResourceLocation format:</b> a plain block id (namespace +
  *       path, no {@code textures/} prefix, no {@code .png}). Example:
  *       {@code "minecraft:iron_block"}.</li>
  *   <li>{@code spawnEntity} - optional EntityType id that a Slime Milk source of
@@ -76,14 +75,14 @@ import org.jetbrains.annotations.Nullable;
  * </ul>
  */
 public record SlimeVariant(
-    Optional<Identifier> primerItem,
+    Optional<ResourceLocation> primerItem,
     Optional<TagKey<Item>> primerTag,
     Category category,
     int primaryColor,
     int secondaryColor,
     int weight,
-    Optional<Identifier> innerBlock,
-    Optional<Identifier> spawnEntity,
+    Optional<ResourceLocation> innerBlock,
+    Optional<ResourceLocation> spawnEntity,
     boolean spawnCatalyst
 ) {
 
@@ -92,9 +91,9 @@ public record SlimeVariant(
      * Lets the pre-#184 8-arg call sites (tests, any hand-construction) stand
      * unchanged - only the codec and boss variants exercise the new field.
      */
-    public SlimeVariant(Optional<Identifier> primerItem, Optional<TagKey<Item>> primerTag,
+    public SlimeVariant(Optional<ResourceLocation> primerItem, Optional<TagKey<Item>> primerTag,
             Category category, int primaryColor, int secondaryColor, int weight,
-            Optional<Identifier> innerBlock, Optional<Identifier> spawnEntity) {
+            Optional<ResourceLocation> innerBlock, Optional<ResourceLocation> spawnEntity) {
         this(primerItem, primerTag, category, primaryColor, secondaryColor, weight,
             innerBlock, spawnEntity, false);
     }
@@ -125,14 +124,14 @@ public record SlimeVariant(
      */
     public static final Codec<SlimeVariant> CODEC = RecordCodecBuilder.<SlimeVariant>create(
         instance -> instance.group(
-            Identifier.CODEC.optionalFieldOf("primer_item").forGetter(SlimeVariant::primerItem),
+            ResourceLocation.CODEC.optionalFieldOf("primer_item").forGetter(SlimeVariant::primerItem),
             TagKey.codec(Registries.ITEM).optionalFieldOf("primer_tag").forGetter(SlimeVariant::primerTag),
             Category.CODEC.fieldOf("category").forGetter(SlimeVariant::category),
             Codec.intRange(0, 0xFFFFFF).fieldOf("primary_color").forGetter(SlimeVariant::primaryColor),
             Codec.intRange(0, 0xFFFFFF).fieldOf("secondary_color").forGetter(SlimeVariant::secondaryColor),
             Codec.intRange(0, Integer.MAX_VALUE).optionalFieldOf("weight", 1).forGetter(SlimeVariant::weight),
-            Identifier.CODEC.optionalFieldOf("inner_block").forGetter(SlimeVariant::innerBlock),
-            Identifier.CODEC.optionalFieldOf("spawn_entity").forGetter(SlimeVariant::spawnEntity),
+            ResourceLocation.CODEC.optionalFieldOf("inner_block").forGetter(SlimeVariant::innerBlock),
+            ResourceLocation.CODEC.optionalFieldOf("spawn_entity").forGetter(SlimeVariant::spawnEntity),
             // #184: when true, the variant's Slime Milk source spawns nothing
             // until the matching catalyst block surrounds it on all 6 faces
             // (the boss-tier altar gate). Generic field; the catalyst BLOCKS
@@ -169,7 +168,7 @@ public record SlimeVariant(
      * so this is non-breaking by default. The id is passed in because the record
      * doesn't carry its own registry key.
      */
-    public boolean isEnabled(Identifier id) {
+    public boolean isEnabled(ResourceLocation id) {
         // Per-variant / category / boss gate (#203), then the per-integration
         // force-off (#204). Both fail open before the config loads. The
         // integration dimension lives here (not as a parameter on variantEnabled)
@@ -198,13 +197,13 @@ public record SlimeVariant(
      * <p>Linear scan over the registry; trivial next to the right-click handler.
      */
     @Nullable
-    public static Map.Entry<Identifier, SlimeVariant> findByPrimer(
-            HolderLookup.RegistryLookup<SlimeVariant> registry, ItemStack stack) {
-        Identifier itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        Map.Entry<Identifier, SlimeVariant> tagMatch = null;
-        for (Holder.Reference<SlimeVariant> entry : registry.listElements().toList()) {
-            SlimeVariant variant = entry.value();
-            Identifier loc = entry.key().identifier();
+    public static Map.Entry<ResourceLocation, SlimeVariant> findByPrimer(
+            Registry<SlimeVariant> registry, ItemStack stack) {
+        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        Map.Entry<ResourceLocation, SlimeVariant> tagMatch = null;
+        for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
+            SlimeVariant variant = entry.getValue();
+            ResourceLocation loc = entry.getKey().location();
             // A config-disabled variant (#203) is unprimable: skip it entirely so
             // priming its resource does nothing (and a disabled exact-item variant
             // can't shadow an enabled tag match below).
@@ -245,15 +244,15 @@ public record SlimeVariant(
      * cross-mod variants resolve too.
      */
     @Nullable
-    public static Map.Entry<Identifier, SlimeVariant> findByPrimerItem(
-            HolderLookup.RegistryLookup<SlimeVariant> registry, Identifier itemId) {
-        for (Holder.Reference<SlimeVariant> entry : registry.listElements().toList()) {
+    public static Map.Entry<ResourceLocation, SlimeVariant> findByPrimerItem(
+            Registry<SlimeVariant> registry, ResourceLocation itemId) {
+        for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
             // Skip config-disabled variants (#203) - a disabled resource is unprimable.
-            if (!entry.value().isEnabled(entry.key().identifier())) {
+            if (!entry.getValue().isEnabled(entry.getKey().location())) {
                 continue;
             }
-            if (entry.value().primerItem().filter(id -> id.equals(itemId)).isPresent()) {
-                return Map.entry(entry.key().identifier(), entry.value());
+            if (entry.getValue().primerItem().filter(id -> id.equals(itemId)).isPresent()) {
+                return Map.entry(entry.getKey().location(), entry.getValue());
             }
         }
         return null;
@@ -271,27 +270,27 @@ public record SlimeVariant(
      * the pick within it.
      */
     @Nullable
-    public static Map.Entry<Identifier, SlimeVariant> pickWeighted(
-            HolderLookup.RegistryLookup<SlimeVariant> registry, Category category, RandomSource random) {
-        List<Map.Entry<Identifier, SlimeVariant>> pool = new ArrayList<>();
+    public static Map.Entry<ResourceLocation, SlimeVariant> pickWeighted(
+            Registry<SlimeVariant> registry, Category category, RandomSource random) {
+        List<Map.Entry<ResourceLocation, SlimeVariant>> pool = new ArrayList<>();
         // Accumulate as long so a datapack with many high-weight variants
         // (each capped at Integer.MAX_VALUE individually) can't overflow.
         // RandomSource doesn't expose nextLong-with-bound directly, so cap
         // total + roll at Integer.MAX_VALUE — anything beyond is silly anyway.
         long totalWeight = 0L;
-        for (Holder.Reference<SlimeVariant> entry : registry.listElements().toList()) {
-            if (entry.value().category() != category) continue;
+        for (Map.Entry<net.minecraft.resources.ResourceKey<SlimeVariant>, SlimeVariant> entry : registry.entrySet()) {
+            if (entry.getValue().category() != category) continue;
             // Weight 0 = prime-only (#172/#173): excluded from the pool
             // entirely, so it can neither be rolled nor returned by the
             // defensive fallback, and an all-zero category cleanly yields null
             // (no nextInt(0) crash).
-            if (entry.value().weight() <= 0) continue;
+            if (entry.getValue().weight() <= 0) continue;
             // Config-disabled variants (#203) drop out of the discovery pool too;
             // a fully-disabled category then yields an empty pool -> null, exactly
             // like a category with no variants.
-            if (!entry.value().isEnabled(entry.key().identifier())) continue;
-            pool.add(Map.entry(entry.key().identifier(), entry.value()));
-            totalWeight += entry.value().weight();
+            if (!entry.getValue().isEnabled(entry.getKey().location())) continue;
+            pool.add(Map.entry(entry.getKey().location(), entry.getValue()));
+            totalWeight += entry.getValue().weight();
         }
         if (pool.isEmpty()) {
             return null;
@@ -299,7 +298,7 @@ public record SlimeVariant(
         int cap = (int) Math.min(totalWeight, Integer.MAX_VALUE);
         int roll = random.nextInt(cap);
         long cumulative = 0L;
-        for (Map.Entry<Identifier, SlimeVariant> entry : pool) {
+        for (Map.Entry<ResourceLocation, SlimeVariant> entry : pool) {
             cumulative += entry.getValue().weight();
             if (roll < cumulative) {
                 return entry;

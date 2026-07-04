@@ -225,27 +225,4 @@ class FrogStatsTest {
             prev = r;
         }
     }
-
-    /**
-     * The Bounty -> looting mapping the predation eat applies (#281): base
-     * Bounty rolls Looting 0, the cap rolls Looting III, linear in between.
-     */
-    @org.junit.jupiter.api.Test
-    void bountyLootingLevelSpansZeroToThree() {
-        int cap = 10;
-        org.junit.jupiter.api.Assertions.assertEquals(0, FrogStats.bountyLootingLevel(1, cap));
-        org.junit.jupiter.api.Assertions.assertEquals(3, FrogStats.bountyLootingLevel(10, cap));
-        // Monotonic, clamped, never outside 0..3.
-        int prev = 0;
-        for (int b = 1; b <= 10; b++) {
-            int level = FrogStats.bountyLootingLevel(b, cap);
-            org.junit.jupiter.api.Assertions.assertTrue(level >= prev, "monotonic at bounty " + b);
-            org.junit.jupiter.api.Assertions.assertTrue(level >= 0 && level <= 3, "range at bounty " + b);
-            prev = level;
-        }
-        org.junit.jupiter.api.Assertions.assertEquals(0, FrogStats.bountyLootingLevel(-5, cap), "clamps below");
-        org.junit.jupiter.api.Assertions.assertEquals(3, FrogStats.bountyLootingLevel(99, cap), "clamps above");
-        // A degenerate cap (cap <= min) maxes out rather than dividing by zero.
-        org.junit.jupiter.api.Assertions.assertEquals(3, FrogStats.bountyLootingLevel(1, 1));
-    }
 }

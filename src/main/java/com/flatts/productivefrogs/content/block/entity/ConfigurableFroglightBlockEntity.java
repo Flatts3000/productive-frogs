@@ -6,21 +6,22 @@ import com.flatts.productivefrogs.registry.PFBlockEntities;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+// Note: BlockEntity.DataComponentInput is protected so cannot be imported;
+// the applyImplicitComponents override uses it via parent-class scoping.
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,7 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * configurable-froglight model + the default tint.
      */
     @Nullable
-    private Identifier variantId;
+    private ResourceLocation variantId;
 
     /**
      * Synthesized item id (Equivalence lane #253), or {@code null}. When set, this
@@ -64,7 +65,7 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * drops, save, and client sync exactly like the variant.
      */
     @Nullable
-    private Identifier synthesizedItem;
+    private ResourceLocation synthesizedItem;
 
     /**
      * The captured potion effect (#162), or null for a plain Froglight. When
@@ -87,18 +88,18 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
     }
 
     @Nullable
-    public Identifier getVariantId() {
+    public ResourceLocation getVariantId() {
         return variantId;
     }
 
     /** The synthesized item id (#253), or null for a variant/plain Froglight. */
     @Nullable
-    public Identifier getSynthesizedItem() {
+    public ResourceLocation getSynthesizedItem() {
         return synthesizedItem;
     }
 
     /** Set/replace the synthesized item id (server-side; mirrors {@link #setVariantId}). */
-    public void setSynthesizedItem(@Nullable Identifier synthesizedItem) {
+    public void setSynthesizedItem(@Nullable ResourceLocation synthesizedItem) {
         if (java.util.Objects.equals(this.synthesizedItem, synthesizedItem)) {
             return;
         }
@@ -185,9 +186,9 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
         ColorParticleOption particle = ColorParticleOption.create(
             ParticleTypes.ENTITY_EFFECT, 0xFF000000 | e.effect().value().getColor());
         // One gentle wisp per burst, drifting up slowly.
-        double x = pos.getX() + 0.5 + (level.getRandom().nextDouble() - 0.5) * 1.0;
-        double y = pos.getY() + 0.9 + level.getRandom().nextDouble() * 0.3;
-        double z = pos.getZ() + 0.5 + (level.getRandom().nextDouble() - 0.5) * 1.0;
+        double x = pos.getX() + 0.5 + (level.random.nextDouble() - 0.5) * 1.0;
+        double y = pos.getY() + 0.9 + level.random.nextDouble() * 0.3;
+        double z = pos.getZ() + 0.5 + (level.random.nextDouble() - 0.5) * 1.0;
         level.addParticle(particle, x, y, z, 0.0, 0.01, 0.0);
     }
 
@@ -197,7 +198,7 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * be on the server — client-side mutations would be overwritten by the
      * next sync.
      */
-    public void setVariantId(@Nullable Identifier variantId) {
+    public void setVariantId(@Nullable ResourceLocation variantId) {
         if (java.util.Objects.equals(this.variantId, variantId)) {
             return;
         }
@@ -250,7 +251,7 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
      * clone to win.
      */
     @Override
-    protected void applyImplicitComponents(DataComponentGetter components) {
+    protected void applyImplicitComponents(DataComponentInput components) {
         super.applyImplicitComponents(components);
         this.variantId = components.get(PFDataComponents.SLIME_VARIANT.get());
         this.synthesizedItem = components.get(PFDataComponents.SYNTHESIZED_ITEM.get());
@@ -258,52 +259,74 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(ValueOutput output) {
-        super.saveAdditional(output);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
         if (variantId != null) {
-            output.putString("Variant", variantId.toString());
+            tag.putString("Variant", variantId.toString());
         }
         if (synthesizedItem != null) {
-            output.putString("SynthesizedItem", synthesizedItem.toString());
+            tag.putString("SynthesizedItem", synthesizedItem.toString());
         }
-        writeEffect(output);
+        writeEffect(tag);
     }
 
     @Override
-    protected void loadAdditional(ValueInput input) {
-        super.loadAdditional(input);
-        String variant = input.getStringOr("Variant", "");
-        variantId = variant.isEmpty() ? null : Identifier.tryParse(variant);
-        String synthesized = input.getStringOr("SynthesizedItem", "");
-        synthesizedItem = synthesized.isEmpty() ? null : Identifier.tryParse(synthesized);
-        readEffect(input);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        if (tag.contains("Variant", Tag.TAG_STRING)) {
+            variantId = ResourceLocation.tryParse(tag.getString("Variant"));
+        } else {
+            variantId = null;
+        }
+        if (tag.contains("SynthesizedItem", Tag.TAG_STRING)) {
+            synthesizedItem = ResourceLocation.tryParse(tag.getString("SynthesizedItem"));
+        } else {
+            synthesizedItem = null;
+        }
+        readEffect(tag);
     }
 
     /**
      * StoredEffect persists/syncs as a {@code StoredEffect} sub-tag via its
      * codec. The effect's MobEffect.CODEC encodes by registry name (a plain
-     * string), so no RegistryOps are needed. {@code storeNullable} writes
-     * nothing when the effect is null.
+     * string) so {@link NbtOps} is sufficient - no RegistryOps needed.
      */
-    private void writeEffect(ValueOutput output) {
-        output.storeNullable("StoredEffect", StoredEffect.CODEC, effect);
+    private void writeEffect(CompoundTag tag) {
+        if (effect != null) {
+            StoredEffect.CODEC.encodeStart(NbtOps.INSTANCE, effect)
+                .resultOrPartial(err -> {})
+                .ifPresent(encoded -> tag.put("StoredEffect", encoded));
+        }
     }
 
-    private void readEffect(ValueInput input) {
-        effect = input.read("StoredEffect", StoredEffect.CODEC).orElse(null);
+    private void readEffect(CompoundTag tag) {
+        if (tag.contains("StoredEffect", Tag.TAG_COMPOUND)) {
+            effect = StoredEffect.CODEC.parse(NbtOps.INSTANCE, tag.getCompound("StoredEffect"))
+                .resultOrPartial(err -> {})
+                .orElse(null);
+        } else {
+            effect = null;
+        }
     }
 
     /**
      * Initial chunk sync. The client needs the variant to pick the right
      * tint at first render — without this, the block would flash with the
-     * default tint until the BE caught up via a per-tick packet. The effect
-     * rides along too, so the client can draw aura particles and Jade can name
-     * the effect without a separate packet. The full custom save writes exactly
-     * the variant + synthesized item + effect.
+     * default tint until the BE caught up via a per-tick packet.
      */
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider lookup) {
-        return saveCustomOnly(lookup);
+        CompoundTag tag = super.getUpdateTag(lookup);
+        if (variantId != null) {
+            tag.putString("Variant", variantId.toString());
+        }
+        if (synthesizedItem != null) {
+            tag.putString("SynthesizedItem", synthesizedItem.toString());
+        }
+        // Effect rides the initial chunk sync too, so the client can draw aura
+        // particles and Jade can name the effect without a separate packet.
+        writeEffect(tag);
+        return tag;
     }
 
     /**

@@ -1,16 +1,9 @@
 {
   "type": "productivefrogs:crucible_melting",
   "ingredient": {
-    "neoforge:ingredient_type": "neoforge:components",
-    "items": [
-      "productivefrogs:configurable_froglight"
-    ],
-    "components": {
-      "productivefrogs:slime_variant": "productivefrogs:ice"
-    }
+    "type": "neoforge:components",
+    "items": [ "productivefrogs:configurable_froglight" ],
+    "components": { "productivefrogs:slime_variant": "productivefrogs:ice" }
   },
-  "result": {
-    "id": "minecraft:water",
-    "amount": 1000
-  }
+  "result": { "id": "minecraft:water", "amount": 1000 }
 }

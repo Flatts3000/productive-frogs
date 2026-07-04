@@ -10,10 +10,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -30,7 +30,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class SprinklerBlock extends Block implements EntityBlock {
 
-    public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
+    public static final DirectionProperty FACING = BlockStateProperties.FACING;
     public static final BooleanProperty FILLED = BooleanProperty.create("filled");
 
     public SprinklerBlock(Properties properties) {
@@ -95,7 +95,7 @@ public class SprinklerBlock extends Block implements EntityBlock {
         if (!(level.getBlockEntity(pos) instanceof SprinklerBlockEntity be) || be.isEmpty()) {
             return;
         }
-        Identifier variant = be.getVariantId();
+        ResourceLocation variant = be.getVariantId();
         int rgb;
         if (variant == null) {
             rgb = DEFAULT_MILK_RGB;
@@ -131,8 +131,13 @@ public class SprinklerBlock extends Block implements EntityBlock {
     /** Milky off-white fallback before the variant registry is available. */
     private static final int DEFAULT_MILK_RGB = 0xF0F0E0;
 
-    private static int variantColor(Level level, Identifier variant) {
-        SlimeVariant v = PFRegistries.variant(level.registryAccess(), variant);
+    private static int variantColor(Level level, ResourceLocation variant) {
+        Registry<SlimeVariant> registry = level.registryAccess()
+            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+        if (registry == null) {
+            return DEFAULT_MILK_RGB;
+        }
+        SlimeVariant v = registry.get(variant);
         return v == null ? DEFAULT_MILK_RGB : v.primaryColor();
     }
 
@@ -151,7 +156,7 @@ public class SprinklerBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
             Player player, InteractionHand hand, BlockHitResult hit) {
         // Empty bucket -> drain the held milk back to its per-variant bucket.
         if (stack.is(Items.BUCKET) && level.getBlockEntity(pos) instanceof SprinklerBlockEntity be && !be.isEmpty()) {
@@ -166,9 +171,9 @@ public class SprinklerBlock extends Block implements EntityBlock {
                         net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 1.0F);
                 }
             }
-            return InteractionResult.SUCCESS;
+            return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
-        return InteractionResult.TRY_WITH_EMPTY_HAND;
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
     @SuppressWarnings("unchecked")

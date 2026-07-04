@@ -6,19 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
-import com.flatts.productivefrogs.TestRegistryUtil;
 import com.flatts.productivefrogs.content.item.MilkCatalyst;
 import com.flatts.productivefrogs.content.multiblock.MilkCharge;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.ProblemReporter;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.storage.TagValueInput;
-import net.minecraft.world.level.storage.TagValueOutput;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -28,15 +22,10 @@ import org.junit.jupiter.api.Test;
  */
 class SprinklerBlockEntityTest {
 
-    @BeforeAll
-    static void bindComponents() {
-        TestRegistryUtil.bindComponents();
-    }
-
-    private static final Identifier IRON =
-        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
-    private static final Identifier COPPER =
-        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
+    private static final ResourceLocation IRON =
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+    private static final ResourceLocation COPPER =
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
 
     private static SprinklerBlockEntity newSprinkler() {
         return new SprinklerBlockEntity(BlockPos.ZERO, PFBlocks.SPRINKLER.get().defaultBlockState());
@@ -115,12 +104,11 @@ class SprinklerBlockEntityTest {
     void nbtRoundTripPreservesBudget() {
         SprinklerBlockEntity s = newSprinkler();
         s.loadCharge(IRON, new MilkCharge(7, 9, 2, 1, false));
-        TagValueOutput out = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, RegistryAccess.EMPTY);
-        s.saveAdditional(out);
-        CompoundTag tag = out.buildResult();
+        CompoundTag tag = new CompoundTag();
+        s.saveAdditional(tag, null);
 
         SprinklerBlockEntity reloaded = newSprinkler();
-        reloaded.loadAdditional(TagValueInput.create(ProblemReporter.DISCARDING, RegistryAccess.EMPTY, tag));
+        reloaded.loadAdditional(tag, null);
         assertEquals(IRON, reloaded.getVariantId());
         assertEquals(7, reloaded.getSpawnsRemaining());
         assertEquals(2, reloaded.getSpeedLevel());

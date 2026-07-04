@@ -8,18 +8,16 @@ import com.flatts.productivefrogs.registry.PFDataComponents;
 import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -56,7 +54,7 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
     public static final int MAX_STORED_SPAWNS = 1_000_000;
 
     @Nullable
-    private Identifier variantId;
+    private ResourceLocation variantId;
 
     private int spawnsRemaining = UNINITIALIZED;
     private int spawnsCapacity = UNINITIALIZED;
@@ -69,7 +67,7 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
     }
 
     @Nullable
-    public Identifier getVariantId() {
+    public ResourceLocation getVariantId() {
         return variantId;
     }
 
@@ -79,7 +77,7 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
      * default the first time a real variant is attached, so a freshly-placed
      * source starts with a full budget without needing a carried component.
      */
-    public void setVariantId(@Nullable Identifier variantId) {
+    public void setVariantId(@Nullable ResourceLocation variantId) {
         boolean changed = !Objects.equals(this.variantId, variantId);
         this.variantId = variantId;
         if (variantId != null) {
@@ -227,7 +225,7 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
         this.quantityLevel = Mth.clamp(quantityLevel, 0, PFConfig.catalystMaxQuantityLevel());
         this.infinite = infinite;
         setChanged();
-        if (this.level != null && !this.level.isClientSide()) {
+        if (this.level != null && !this.level.isClientSide) {
             this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);
         }
     }
@@ -252,7 +250,7 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void applyImplicitComponents(DataComponentGetter components) {
+    protected void applyImplicitComponents(DataComponentInput components) {
         super.applyImplicitComponents(components);
         this.variantId = components.get(PFDataComponents.SLIME_VARIANT.get());
         Integer remaining = components.get(PFDataComponents.SPAWNS_REMAINING.get());
@@ -272,40 +270,40 @@ public class SlimeMilkSourceBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(ValueOutput output) {
-        super.saveAdditional(output);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
         if (variantId != null) {
-            output.putString("Variant", variantId.toString());
+            tag.putString("Variant", variantId.toString());
         }
         if (spawnsRemaining != UNINITIALIZED) {
-            output.putInt("SpawnsRemaining", spawnsRemaining);
+            tag.putInt("SpawnsRemaining", spawnsRemaining);
         }
         if (spawnsCapacity != UNINITIALIZED) {
-            output.putInt("SpawnsCapacity", spawnsCapacity);
+            tag.putInt("SpawnsCapacity", spawnsCapacity);
         }
         if (speedLevel > 0) {
-            output.putInt("SpeedLevel", speedLevel);
+            tag.putInt("SpeedLevel", speedLevel);
         }
         if (quantityLevel > 0) {
-            output.putInt("QuantityLevel", quantityLevel);
+            tag.putInt("QuantityLevel", quantityLevel);
         }
         if (infinite) {
-            output.putBoolean("Infinite", true);
+            tag.putBoolean("Infinite", true);
         }
     }
 
     @Override
-    protected void loadAdditional(ValueInput input) {
-        super.loadAdditional(input);
-        String variant = input.getStringOr("Variant", "");
-        variantId = variant.isEmpty() ? null : Identifier.tryParse(variant);
-        int remaining = input.getIntOr("SpawnsRemaining", UNINITIALIZED);
-        spawnsRemaining = remaining == UNINITIALIZED ? UNINITIALIZED : Mth.clamp(remaining, 0, MAX_STORED_SPAWNS);
-        int capacity = input.getIntOr("SpawnsCapacity", UNINITIALIZED);
-        spawnsCapacity = capacity == UNINITIALIZED ? UNINITIALIZED : Mth.clamp(capacity, 0, MAX_STORED_SPAWNS);
-        speedLevel = Math.max(0, input.getIntOr("SpeedLevel", 0));
-        quantityLevel = Math.max(0, input.getIntOr("QuantityLevel", 0));
-        infinite = input.getBooleanOr("Infinite", false);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        variantId = tag.contains("Variant", Tag.TAG_STRING)
+            ? ResourceLocation.tryParse(tag.getString("Variant")) : null;
+        spawnsRemaining = tag.contains("SpawnsRemaining", Tag.TAG_INT)
+            ? Mth.clamp(tag.getInt("SpawnsRemaining"), 0, MAX_STORED_SPAWNS) : UNINITIALIZED;
+        spawnsCapacity = tag.contains("SpawnsCapacity", Tag.TAG_INT)
+            ? Mth.clamp(tag.getInt("SpawnsCapacity"), 0, MAX_STORED_SPAWNS) : UNINITIALIZED;
+        speedLevel = tag.contains("SpeedLevel", Tag.TAG_INT) ? Math.max(0, tag.getInt("SpeedLevel")) : 0;
+        quantityLevel = tag.contains("QuantityLevel", Tag.TAG_INT) ? Math.max(0, tag.getInt("QuantityLevel")) : 0;
+        infinite = tag.getBoolean("Infinite");
     }
 
     @Override

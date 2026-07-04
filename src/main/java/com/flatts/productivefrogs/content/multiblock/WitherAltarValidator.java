@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p><b>Strict:</b> every block of the canonical altar must be present at its exact
  * offset from the Hatch - the Withered Star capstone set into the floor, the Reinforced Soul
- * Sand Froglight floor, the Reinforced Glowstone Froglight pillars flanking the
+ * Sand Froglight floor, the Reinforced Blaze Rod Froglight pillars flanking the
  * ritual, and the vanilla Wither summon T rendered as receptacles (4 Soul Sand + 3
  * Wither Skull). Reads only block identity, so it runs client-side (Jade) and
  * server-side (the summon) alike.
@@ -46,8 +46,8 @@ public final class WitherAltarValidator {
         {0, -1, 0}, {0, -1, 1}, {0, -1, 3},
         {1, -1, 0}, {1, -1, 1}, {1, -1, 2}, {1, -1, 3}, {1, 0, 3}
     };
-    // Reinforced Glowstone Froglight shell (the arena frame).
-    private static final int[][] GLOWSTONE_SHELL = {
+    // Reinforced Blaze Rod Froglight shell (the arena frame).
+    private static final int[][] BLAZE_ROD_SHELL = {
         {-2, -1, -1}, {-2, -1, 0}, {-2, -1, 1}, {-2, -1, 2}, {-2, -1, 3}, {-2, 0, -1}, {-2, 0, 3},
         {-2, 1, -1}, {-2, 1, 3}, {-2, 2, -1}, {-2, 2, 3}, {-2, 3, -1}, {-2, 3, 0}, {-2, 3, 1}, {-2, 3, 2}, {-2, 3, 3},
         {-1, -1, -1}, {-1, 3, -1}, {-1, 3, 3}, {0, -1, -1}, {0, 3, -1}, {0, 3, 3}, {1, -1, -1}, {1, 3, -1}, {1, 3, 3},
@@ -105,8 +105,8 @@ public final class WitherAltarValidator {
         if (!allMatch(level, hatch, SOUL_SAND_FLOOR, ritual, PFBlocks.REINFORCED_SOUL_SAND_FROGLIGHT.get())) {
             return new Oriented(1, "incomplete Reinforced Soul Sand Froglight floor", ritual);
         }
-        if (!allMatch(level, hatch, GLOWSTONE_SHELL, ritual, PFBlocks.REINFORCED_GLOWSTONE_FROGLIGHT.get())) {
-            return new Oriented(2, "incomplete Reinforced Glowstone Froglight shell", ritual);
+        if (!allMatch(level, hatch, BLAZE_ROD_SHELL, ritual, PFBlocks.REINFORCED_BLAZE_ROD_FROGLIGHT.get())) {
+            return new Oriented(2, "incomplete Reinforced Blaze Rod Froglight shell", ritual);
         }
         if (!allMatch(level, hatch, SOUL_SAND_RECEPTACLES, ritual, PFBlocks.SOUL_SAND_RECEPTACLE.get())) {
             return new Oriented(3, "missing a Soul Sand Receptacle", ritual);

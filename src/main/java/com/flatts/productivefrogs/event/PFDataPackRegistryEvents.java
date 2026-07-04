@@ -5,10 +5,9 @@ import com.flatts.productivefrogs.data.ParentSpeciesEntry;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFRegistries;
 import com.flatts.productivefrogs.util.PFDebug;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.TagsUpdatedEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 
@@ -30,27 +29,12 @@ public final class PFDataPackRegistryEvents {
         // event handler, not instantiable
     }
 
-    /**
-     * Rebuild the predator-prey lookup index (#281) whenever datapack contents
-     * (re)load - fires on server start and /reload, on both sides. Keeps the
-     * hot-path predatorFor to a single map get.
-     */
-    @SubscribeEvent
-    public static void onTagsUpdated(TagsUpdatedEvent event) {
-        com.flatts.productivefrogs.data.PredatorPrey.rebuildIndex(event.getLookupProvider());
-    }
-
     @SubscribeEvent
     public static void onNewRegistry(DataPackRegistryEvent.NewRegistry event) {
         event.dataPackRegistry(
             PFRegistries.SLIME_VARIANT,
             SlimeVariant.CODEC,
             SlimeVariant.CODEC
-        );
-        event.dataPackRegistry(
-            PFRegistries.PREDATOR_PREY,
-            com.flatts.productivefrogs.data.PredatorPrey.CODEC,
-            com.flatts.productivefrogs.data.PredatorPrey.CODEC
         );
         event.dataPackRegistry(
             PFRegistries.PARENT_SPECIES,
@@ -71,21 +55,23 @@ public final class PFDataPackRegistryEvents {
             return;
         }
         var access = event.getServer().registryAccess();
-        var variants = PFRegistries.variants(access);
-        PFDebug.log(PFDebug.Area.REGISTRY, "slime_variant: {} entries loaded", variants.listElements().count());
-        variants.listElements().forEach(ref -> {
-            var v = ref.value();
-            String primer = v.primerItem().map(Identifier::toString)
-                .or(() -> v.primerTag().map(t -> "#" + t.location()))
-                .orElse("(none)");
-            PFDebug.log(PFDebug.Area.REGISTRY,
-                "  slime_variant {} -> category={} primer={}",
-                ref.key().identifier(), v.category(), primer);
+        access.registry(PFRegistries.SLIME_VARIANT).ifPresent(registry -> {
+            PFDebug.log(PFDebug.Area.REGISTRY, "slime_variant: {} entries loaded", registry.size());
+            registry.entrySet().forEach(entry -> {
+                var v = entry.getValue();
+                String primer = v.primerItem().map(ResourceLocation::toString)
+                    .or(() -> v.primerTag().map(t -> "#" + t.location()))
+                    .orElse("(none)");
+                PFDebug.log(PFDebug.Area.REGISTRY,
+                    "  slime_variant {} -> category={} primer={}",
+                    entry.getKey().location(), v.category(), primer);
+            });
         });
-        var parents = PFRegistries.parentSpeciesLookup(access);
-        PFDebug.log(PFDebug.Area.REGISTRY, "parent_species: {} entries loaded", parents.listElements().count());
-        parents.listElements().forEach(ref -> PFDebug.log(PFDebug.Area.REGISTRY,
-            "  parent_species {} -> entity_type={} category={}",
-            ref.key().identifier(), ref.value().entityType(), ref.value().category()));
+        access.registry(PFRegistries.PARENT_SPECIES).ifPresent(registry -> {
+            PFDebug.log(PFDebug.Area.REGISTRY, "parent_species: {} entries loaded", registry.size());
+            registry.entrySet().forEach(entry -> PFDebug.log(PFDebug.Area.REGISTRY,
+                "  parent_species {} -> entity_type={} category={}",
+                entry.getKey().location(), entry.getValue().entityType(), entry.getValue().category()));
+        });
     }
 }

@@ -3,17 +3,15 @@ package com.flatts.productivefrogs.content.item;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
-import com.flatts.productivefrogs.TestRegistryUtil;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -30,11 +28,6 @@ import org.junit.jupiter.params.provider.ValueSource;
  * Java-side resolution chain.
  */
 class SlimeBucketItemTest {
-
-    @BeforeAll
-    static void bindComponents() {
-        TestRegistryUtil.bindComponents();
-    }
 
     @Test
     void emptyBucketUsesBaseDescriptionId() {
@@ -67,7 +60,7 @@ class SlimeBucketItemTest {
     })
     void variantStampedBucketResolvesPerVariantKey(String variantName) {
         ItemStack stack = new ItemStack(PFItems.SLIME_BUCKET.get());
-        Identifier variantId = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName);
+        ResourceLocation variantId = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantName);
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
             // Real captured buckets also carry Category, but the resolver
             // reads Variant first — write only Variant here to pin the
@@ -83,8 +76,8 @@ class SlimeBucketItemTest {
         // more specific variant key — otherwise iron / copper / gold
         // METALLIC slimes would all read "Bucket of Bog Slime".
         ItemStack stack = new ItemStack(PFItems.SLIME_BUCKET.get());
-        Identifier variantId =
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
+        ResourceLocation variantId =
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
             tag.putString("Category", Category.BOG.name());
             tag.putString("Variant", variantId.toString());

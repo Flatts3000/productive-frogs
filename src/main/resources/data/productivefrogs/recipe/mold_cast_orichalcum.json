@@ -1,16 +1,8 @@
 {
   "neoforge:conditions": [
-    {
-      "type": "neoforge:mod_loaded",
-      "modid": "mythicmetals"
-    }
+    { "type": "neoforge:mod_loaded", "modid": "mythicmetals" }
   ],
   "type": "productivefrogs:mold_casting",
-  "fluid": {
-    "ingredient": "#c:molten_orichalcum",
-    "amount": 90
-  },
-  "result": {
-    "id": "mythicmetals:orichalcum_ingot"
-  }
+  "fluid": { "tag": "c:molten_orichalcum", "amount": 90 },
+  "result": { "id": "mythicmetals:orichalcum_ingot" }
 }

@@ -3,12 +3,10 @@ package com.flatts.productivefrogs.content.block.entity;
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
-import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.util.PFDebug;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.UUIDUtil;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.Brain;
@@ -17,8 +15,6 @@ import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,15 +75,17 @@ public class SweetslimedLilyPadBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(ValueOutput output) {
-        super.saveAdditional(output);
-        output.storeNullable("Claimant", UUIDUtil.CODEC, claimant);
+    protected void saveAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        if (claimant != null) {
+            tag.putUUID("Claimant", claimant);
+        }
     }
 
     @Override
-    protected void loadAdditional(ValueInput input) {
-        super.loadAdditional(input);
-        claimant = input.read("Claimant", UUIDUtil.CODEC).orElse(null);
+    protected void loadAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        claimant = tag.hasUUID("Claimant") ? tag.getUUID("Claimant") : null;
     }
 
     /** Set the claimed frog (or null), marking the BE dirty so the claim persists across a reload. */
@@ -98,39 +96,8 @@ public class SweetslimedLilyPadBlockEntity extends BlockEntity {
         }
     }
 
-    /** Release our claimed frog (clear its perch) and forget the claimant. */
-    private void releaseClaim(ServerLevel server) {
-        if (claimant != null) {
-            if (server.getEntity(claimant) instanceof ResourceFrog frog) {
-                frog.releasePerch();
-            }
-            setClaimant(null);
-        }
-    }
-
-    /**
-     * Pad broken: release our claimed frog's perch immediately. 26.1 fires
-     * {@code preRemoveSideEffects} while the BE still exists, so we can resolve the
-     * claimant here. Belt-and-suspenders with the serverTick guard below.
-     */
-    @Override
-    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
-        super.preRemoveSideEffects(pos, state);
-        if (getLevel() instanceof ServerLevel server) {
-            releaseClaim(server);
-        }
-    }
-
     public static void serverTick(Level level, BlockPos pos, BlockState state, SweetslimedLilyPadBlockEntity be) {
         if (!(level instanceof ServerLevel server) || !PFConfig.lilyPadPerchEnabled()) {
-            return;
-        }
-        // The pad BE's ticker can fire one or more times AFTER the block is removed
-        // (deregistration lag). Never operate - or re-assert a claim - without our block
-        // present: if it is gone, release the claim and stop. This is the deterministic
-        // release; the BE-stops-ticking + claim-TTL decay is only a backstop.
-        if (!server.getBlockState(pos).is(PFBlocks.SWEETSLIMED_LILY_PAD.get())) {
-            be.releaseClaim(server);
             return;
         }
         int range = PFConfig.lilyPadPerchRange();
@@ -242,7 +209,7 @@ public class SweetslimedLilyPadBlockEntity extends BlockEntity {
         frog.setDeltaMovement(0.0, 0.0, 0.0);
         // moveTo (not setPos) so the prev-position resets too - a clean instant
         // teleport with no client-side glide. Keep its yaw so it can still face prey.
-        frog.snapTo(cx, py, cz, frog.getYRot(), frog.getXRot());
+        frog.moveTo(cx, py, cz, frog.getYRot(), frog.getXRot());
         frog.setOnGround(true);
     }
 }

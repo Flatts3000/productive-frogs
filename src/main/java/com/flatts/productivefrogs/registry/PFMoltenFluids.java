@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
@@ -16,9 +16,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Dynamic molten-metal fluids for the Crucible's wave-2 melt lane
- * ({@code docs/froglight_crucible.md}), registered at mod-init like the former v1.8
- * per-variant Slime Milk ({@code PFVariantMilk}, since collapsed in R-1) but
- * deliberately leaner: a
+ * ({@code docs/froglight_crucible.md}), registered at mod-init like the v1.8
+ * per-variant Slime Milk ({@link PFVariantMilk}) but deliberately leaner: a
  * {@code FluidType} + source/flowing {@code Fluid} only - <b>no source block
  * (not placeable) and no bucket</b>; molten metal exists for the
  * tank -> pipe -> Casting Mold loop.
@@ -74,9 +73,9 @@ public final class PFMoltenFluids {
 
     private static final String ATO_MODID = "alltheores";
 
-    private static final Map<Identifier, DeferredHolder<FluidType, FluidType>> TYPES = new LinkedHashMap<>();
-    private static final Map<Identifier, DeferredHolder<Fluid, BaseFlowingFluid.Source>> SOURCES = new LinkedHashMap<>();
-    private static final Map<Identifier, DeferredHolder<Fluid, BaseFlowingFluid.Flowing>> FLOWINGS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, DeferredHolder<FluidType, FluidType>> TYPES = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, DeferredHolder<Fluid, BaseFlowingFluid.Source>> SOURCES = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, DeferredHolder<Fluid, BaseFlowingFluid.Flowing>> FLOWINGS = new LinkedHashMap<>();
 
     private static boolean bootstrapped = false;
 
@@ -109,7 +108,7 @@ public final class PFMoltenFluids {
     }
 
     private static void registerMetal(String metal) {
-        Identifier vid = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, metal);
+        ResourceLocation vid = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, metal);
         String base = "molten_" + metal;
 
         DeferredHolder<FluidType, FluidType> type =
@@ -139,25 +138,18 @@ public final class PFMoltenFluids {
     // ---- accessors (variant-id keyed, like PFVariantMilk) ----
 
     /** Variant ids that received a PF molten fluid this launch. */
-    public static Set<Identifier> registeredMetals() {
+    public static Set<ResourceLocation> registeredMetals() {
         return Collections.unmodifiableSet(SOURCES.keySet());
     }
 
     @Nullable
-    public static Fluid sourceFluid(Identifier variantId) {
+    public static Fluid sourceFluid(ResourceLocation variantId) {
         DeferredHolder<Fluid, BaseFlowingFluid.Source> h = SOURCES.get(variantId);
         return h == null ? null : h.get();
     }
 
-    /** The metal's flowing fluid (pairs with {@link #sourceFluid}); used by the client FluidModel registration. */
     @Nullable
-    public static Fluid flowingFluid(Identifier variantId) {
-        DeferredHolder<Fluid, BaseFlowingFluid.Flowing> h = FLOWINGS.get(variantId);
-        return h == null ? null : h.get();
-    }
-
-    @Nullable
-    public static FluidType fluidType(Identifier variantId) {
+    public static FluidType fluidType(ResourceLocation variantId) {
         DeferredHolder<FluidType, FluidType> h = TYPES.get(variantId);
         return h == null ? null : h.get();
     }

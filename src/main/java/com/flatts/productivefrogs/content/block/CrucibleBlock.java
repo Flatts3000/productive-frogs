@@ -4,7 +4,7 @@ import com.flatts.productivefrogs.content.block.entity.CrucibleBlockEntity;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -115,19 +115,18 @@ public class CrucibleBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
             Player player, InteractionHand hand, BlockHitResult hit) {
         if (!(level.getBlockEntity(pos) instanceof CrucibleBlockEntity crucible)) {
-            return InteractionResult.TRY_WITH_EMPTY_HAND;
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         // Anything fluid-capable (buckets) -> direct tank interaction. The
         // handler is extract-only, so this fills empty buckets and no-ops on
         // full ones.
-        if (stack.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.ITEM,
-                net.neoforged.neoforge.transfer.access.ItemAccess.forStack(stack)) != null) {
+        if (stack.getCapability(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.ITEM) != null) {
             return FluidUtil.interactWithFluidHandler(player, hand, crucible.fluidHandler())
-                ? InteractionResult.SUCCESS
-                : InteractionResult.TRY_WITH_EMPTY_HAND;
+                ? ItemInteractionResult.sidedSuccess(level.isClientSide())
+                : ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         // Glass bottle pulls a water bottle when the tank holds water
         // (Ex Deorum parity).
@@ -143,7 +142,7 @@ public class CrucibleBlock extends Block implements EntityBlock {
                 level.playSound(null, pos, net.minecraft.sounds.SoundEvents.BOTTLE_FILL,
                     net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 1.0F);
             }
-            return InteractionResult.SUCCESS;
+            return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
         // Anything with a melt recipe -> queue as solids. This is a Configurable
         // Froglight (the melt-and-cast lane) OR a raw block like cobblestone /
@@ -160,13 +159,13 @@ public class CrucibleBlock extends Block implements EntityBlock {
                         stack.shrink(1);
                     }
                 }
-                return InteractionResult.SUCCESS;
+                return ItemInteractionResult.sidedSuccess(level.isClientSide());
             }
             case FULL -> {
-                return InteractionResult.SUCCESS;
+                return ItemInteractionResult.sidedSuccess(level.isClientSide());
             }
             default -> {
-                return InteractionResult.TRY_WITH_EMPTY_HAND;
+                return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
             }
         }
     }

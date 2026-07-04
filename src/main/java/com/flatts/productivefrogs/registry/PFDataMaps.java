@@ -4,7 +4,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.registries.datamaps.DataMapType;
 
@@ -28,7 +28,7 @@ import net.neoforged.neoforge.registries.datamaps.DataMapType;
 public final class PFDataMaps {
 
     public static final DataMapType<Block, Integer> CRUCIBLE_HEAT = DataMapType.builder(
-        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "crucible_heat"),
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "crucible_heat"),
         Registries.BLOCK,
         Codec.intRange(0, 1024)
     )
@@ -52,7 +52,7 @@ public final class PFDataMaps {
      */
     public static final DataMapType<com.flatts.productivefrogs.data.SlimeVariant, Integer> FROGLIGHT_HEAT =
         DataMapType.builder(
-            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "froglight_heat"),
+            ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "froglight_heat"),
             PFRegistries.SLIME_VARIANT,
             Codec.intRange(0, 1024)
         )

@@ -2,5 +2,11 @@
   "parent": "minecraft:item/generated",
   "textures": {
     "layer0": "productivefrogs:item/frog_net"
-  }
+  },
+  "overrides": [
+    {
+      "predicate": { "productivefrogs:filled": 1 },
+      "model": "productivefrogs:item/frog_net_filled"
+    }
+  ]
 }

@@ -54,18 +54,11 @@ public class IncubatorMenu extends AbstractContainerMenu {
         return dataAccess.get(IncubatorBlockEntity.DATA_STATE);
     }
 
-    /** The kind currently incubating (species, Midas, or a predator), or null when empty. */
-    @Nullable
-    public com.flatts.productivefrogs.data.FrogKind incubatingKind() {
-        return com.flatts.productivefrogs.data.FrogKind.bySyncIndex(
-            dataAccess.get(IncubatorBlockEntity.DATA_KIND));
-    }
-
-    /** The incubating kind's fallback category (legacy readout), or null when empty. */
+    /** The species currently incubating, or null when empty. */
     @Nullable
     public Category incubatingCategory() {
-        com.flatts.productivefrogs.data.FrogKind kind = incubatingKind();
-        return kind == null ? null : kind.fallbackCategory();
+        int ordinal = dataAccess.get(IncubatorBlockEntity.DATA_CATEGORY);
+        return ordinal < 0 ? null : Category.fromOrdinalOrDefault(ordinal);
     }
 
     /** Live frogs in this Incubator's cavity. */

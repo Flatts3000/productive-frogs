@@ -1,9 +1,6 @@
 {
   "neoforge:conditions": [
-    {
-      "type": "productivefrogs:config_enabled",
-      "config": "slime_milker"
-    }
+    { "type": "productivefrogs:config_enabled", "config": "slime_milker" }
   ],
   "type": "minecraft:crafting_shaped",
   "category": "misc",
@@ -13,9 +10,9 @@
     "CCC"
   ],
   "key": {
-    "C": "minecraft:cobblestone",
-    "S": "minecraft:slime_ball",
-    "P": "#minecraft:planks"
+    "C": { "item": "minecraft:cobblestone" },
+    "S": { "item": "minecraft:slime_ball" },
+    "P": { "tag": "minecraft:planks" }
   },
   "result": {
     "id": "productivefrogs:slime_milker",

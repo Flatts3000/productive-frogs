@@ -1,0 +1,9 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "alltheores" }
+  ],
+  "primer_tag": "c:ingots/osmium",
+  "category": "cave",
+  "primary_color": 4892360,
+  "secondary_color": 3112346
+}

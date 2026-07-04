@@ -1,15 +1,11 @@
 package com.flatts.productivefrogs.content.block.entity;
 
-import com.flatts.productivefrogs.data.FrogKind;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * BlockEntity for a {@link com.flatts.productivefrogs.content.block.PrimedFrogEggBlock}.
@@ -43,13 +39,11 @@ public class PrimedFrogEggBlockEntity extends BlockEntity {
     private int bounty;
     private int reach;
 
-    // The kind this egg hatches (#281) - overrides the carrier block's species
-    // when set. Stamped by the lay behavior (a designated cross stamps its
-    // predator; a Midas lay / the Kiss-priming handler stamps Midas, folding in
-    // the pre-2.0 midas boolean). Null = the carrier block decides (a non-bred /
-    // creative placement hatches the block's own species). Server-only state.
-    @Nullable
-    private FrogKind kind;
+    // Midas marker (Equivalence lane, #253). A Midas egg reuses a species egg
+    // block as its carrier (the VOID block) but carries this flag so it hatches
+    // Midas tadpoles instead of that species'. Set by the Kiss-priming handler
+    // or by a Midas frog's lay; read at hatch. Server-only state.
+    private boolean midas;
 
     // Absolute level game-time the egg is scheduled to hatch, stamped at
     // placement by PrimedFrogEggBlock#onPlace. Lets the Jade readout show a
@@ -68,21 +62,15 @@ public class PrimedFrogEggBlockEntity extends BlockEntity {
         return hasStats;
     }
 
-    /** The kind this egg hatches, or null when the carrier block decides (#281). */
-    @Nullable
-    public FrogKind getKind() {
-        return kind;
-    }
-
-    /** Stamp the hatch kind (server-side; persisted). Null clears back to carrier-block default. */
-    public void setKind(@Nullable FrogKind kind) {
-        this.kind = kind;
-        setChanged();
-    }
-
-    /** Whether this egg hatches Midas (#253). Derived from the kind. */
+    /** Whether this is a Midas egg (#253) - hatches Midas tadpoles regardless of the carrier block. */
     public boolean isMidas() {
-        return kind instanceof FrogKind.Midas;
+        return midas;
+    }
+
+    /** Mark this egg as a Midas egg (server-side; persisted). */
+    public void setMidas(boolean midas) {
+        this.midas = midas;
+        setChanged();
     }
 
     /** Absolute level game-time the egg hatches, or 0 if unknown. Drives the Jade countdown. */
@@ -122,36 +110,32 @@ public class PrimedFrogEggBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(ValueOutput output) {
-        super.saveAdditional(output);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
         if (hasStats) {
-            output.putBoolean("HasStats", true);
-            output.putInt("Appetite", appetite);
-            output.putInt("Bounty", bounty);
-            output.putInt("Reach", reach);
+            tag.putBoolean("HasStats", true);
+            tag.putInt("Appetite", appetite);
+            tag.putInt("Bounty", bounty);
+            tag.putInt("Reach", reach);
         }
         if (hatchGameTime > 0) {
-            output.putLong("HatchGameTime", hatchGameTime);
+            tag.putLong("HatchGameTime", hatchGameTime);
         }
-        if (kind != null) {
-            output.putString("Kind", kind.id());
+        if (midas) {
+            tag.putBoolean("Midas", true);
         }
     }
 
     @Override
-    protected void loadAdditional(ValueInput input) {
-        super.loadAdditional(input);
-        hasStats = input.getBooleanOr("HasStats", false);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        hasStats = tag.getBoolean("HasStats");
         if (hasStats) {
-            appetite = input.getIntOr("Appetite", 0);
-            bounty = input.getIntOr("Bounty", 0);
-            reach = input.getIntOr("Reach", 0);
+            appetite = tag.getInt("Appetite");
+            bounty = tag.getInt("Bounty");
+            reach = tag.getInt("Reach");
         }
-        hatchGameTime = input.getLongOr("HatchGameTime", 0L);
-        // "Kind" id, with the legacy pre-2.0 "Midas" boolean folded in. No
-        // legacy "Category" read here - the carrier block already encodes the
-        // species, so only an explicit override is ever persisted.
-        kind = input.getString("Kind").map(FrogKind::byId)
-            .orElseGet(() -> input.getBooleanOr("Midas", false) ? FrogKind.MIDAS : null);
+        hatchGameTime = tag.getLong("HatchGameTime");
+        midas = tag.getBoolean("Midas");
     }
 }

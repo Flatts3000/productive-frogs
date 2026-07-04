@@ -1,9 +1,6 @@
 {
   "neoforge:conditions": [
-    {
-      "type": "productivefrogs:config_enabled",
-      "config": "boss"
-    }
+    { "type": "productivefrogs:config_enabled", "config": "boss" }
   ],
   "type": "minecraft:crafting_shaped",
   "category": "building",
@@ -14,11 +11,8 @@
     "OOO"
   ],
   "key": {
-    "O": "minecraft:obsidian",
-    "N": "minecraft:nether_star"
+    "O": { "item": "minecraft:obsidian" },
+    "N": { "item": "minecraft:nether_star" }
   },
-  "result": {
-    "id": "productivefrogs:withered_star",
-    "count": 1
-  }
+  "result": { "id": "productivefrogs:withered_star", "count": 1 }
 }

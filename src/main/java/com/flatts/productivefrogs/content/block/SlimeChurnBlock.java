@@ -4,7 +4,6 @@ import com.flatts.productivefrogs.content.block.entity.SlimeChurnBlockEntity;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -104,7 +103,7 @@ public class SlimeChurnBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected net.minecraft.world.InteractionResult useItemOn(
+    protected net.minecraft.world.ItemInteractionResult useItemOn(
         ItemStack stack,
         BlockState state,
         Level level,
@@ -115,8 +114,8 @@ public class SlimeChurnBlock extends Block implements EntityBlock {
     ) {
         InteractionResult openResult = openChurnMenu(level, pos, player);
         return openResult == InteractionResult.SUCCESS
-            ? net.minecraft.world.InteractionResult.SUCCESS
-            : net.minecraft.world.InteractionResult.TRY_WITH_EMPTY_HAND;
+            ? net.minecraft.world.ItemInteractionResult.SUCCESS
+            : net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
     private InteractionResult openChurnMenu(Level level, BlockPos pos, Player player) {
@@ -132,8 +131,11 @@ public class SlimeChurnBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
-        level.updateNeighbourForOutputSignal(pos, this);
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock())) {
+            level.updateNeighbourForOutputSignal(pos, this);
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     @Override

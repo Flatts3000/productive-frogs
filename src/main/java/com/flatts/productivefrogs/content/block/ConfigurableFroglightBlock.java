@@ -91,7 +91,7 @@ public class ConfigurableFroglightBlock extends RotatedPillarBlock implements En
                 nowOn ? SoundEvents.BEACON_ACTIVATE : SoundEvents.BEACON_DEACTIVATE,
                 SoundSource.BLOCKS, 0.4F, 1.5F);
         }
-        return InteractionResult.SUCCESS;
+        return InteractionResult.sidedSuccess(level.isClientSide());
     }
 
     /**
@@ -101,8 +101,8 @@ public class ConfigurableFroglightBlock extends RotatedPillarBlock implements En
      * (untinted, effectless) Froglight.
      */
     @Override
-    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData) {
-        ItemStack stack = super.getCloneItemStack(level, pos, state, includeData);
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
+        ItemStack stack = super.getCloneItemStack(level, pos, state);
         if (level.getBlockEntity(pos) instanceof ConfigurableFroglightBlockEntity froglight) {
             if (froglight.getVariantId() != null) {
                 stack.set(PFDataComponents.SLIME_VARIANT.get(), froglight.getVariantId());

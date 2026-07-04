@@ -1,0 +1,9 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "powah" }
+  ],
+  "primer_item": "powah:uraninite",
+  "category": "cave",
+  "primary_color": 1151814,
+  "secondary_color": 812849
+}

@@ -4,14 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.flatts.productivefrogs.TestRegistryUtil;
 import com.flatts.productivefrogs.content.block.MilkSpawnEconomy;
 import com.flatts.productivefrogs.registry.PFDataComponents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.FluidStack;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -21,11 +19,6 @@ import org.junit.jupiter.api.Test;
  * default (or its compile-time fallback in the bare test JVM).
  */
 class MilkChargeTest {
-
-    @BeforeAll
-    static void bindComponents() {
-        TestRegistryUtil.bindComponents();
-    }
 
     @Test
     void tagRoundTripPreservesAllFields() {

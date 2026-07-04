@@ -4,7 +4,6 @@ import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import com.flatts.productivefrogs.data.Category;
-import com.flatts.productivefrogs.data.FrogKind;
 import com.flatts.productivefrogs.registry.PFEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -12,12 +11,11 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
@@ -56,34 +54,32 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
     private static final int MIN_TADPOLES_SPAWN = 1;
     private static final int MAX_TADPOLES_SPAWN = 3;
 
+    private final Category category;
     /**
-     * The kind this egg block hatches by default (the BE stamp still wins, for
-     * bred stats + datapack overrides). One block per kind - the maintainer
-     * ruling (2026-07-04) that killed the carrier-egg pattern: a Cinder x
-     * Prowler cross lays a WITHER egg block, not an Infernal egg wearing a
-     * hidden stamp. Finishes the FrogKind unification at the block layer
-     * (this used to be a Category + midas-boolean pair).
+     * Equivalence lane (#253): a Midas egg. It still carries a {@link Category}
+     * (VOID, the sentinel its tadpoles + frog use), but is its OWN block - natively
+     * named "Midas Egg", not a VOID egg - and stamps the {@code midas} marker so it
+     * hatches Midas. A standalone block, NOT a 7th Category.
      */
-    private final FrogKind kind;
+    private final boolean midas;
 
-    public PrimedFrogEggBlock(FrogKind kind, Properties properties) {
+    public PrimedFrogEggBlock(Category category, Properties properties) {
+        this(category, false, properties);
+    }
+
+    public PrimedFrogEggBlock(Category category, boolean midas, Properties properties) {
         super(properties);
-        this.kind = kind;
+        this.category = category;
+        this.midas = midas;
     }
 
-    /** The kind this block hatches by default. */
-    public FrogKind getKind() {
-        return kind;
-    }
-
-    /** Legacy category surface (tints, primers): the kind's fallback chain. */
     public Category getCategory() {
-        return kind.fallbackCategory();
+        return category;
     }
 
     /** Whether this is the Midas egg block (#253). */
     public boolean isMidas() {
-        return kind instanceof FrogKind.Midas;
+        return midas;
     }
 
     @Override
@@ -114,10 +110,9 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
         // exposes no "ticks remaining"). The BE is created before onPlace runs.
         if (level.getBlockEntity(pos) instanceof PrimedFrogEggBlockEntity egg) {
             egg.setHatchGameTime(level.getGameTime() + delay);
-            // Stamp the block's own kind so the BE is always authoritative
-            // (the lay behavior may overwrite with the conceived kind + stats
-            // right after; the values agree post-2026-07-04, one egg per kind).
-            egg.setKind(this.kind);
+            if (midas) {
+                egg.setMidas(true);
+            }
         }
     }
 
@@ -128,13 +123,12 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
     }
 
     @Override
-    public BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess ticks, BlockPos pos,
-                                  Direction directionToNeighbour, BlockPos neighbourPos, BlockState neighbourState,
-                                  RandomSource random) {
+    public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
+                                  LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
         if (!canSurvive(state, level, pos)) {
             return Blocks.AIR.defaultBlockState();
         }
-        return super.updateShape(state, level, ticks, pos, directionToNeighbour, neighbourPos, neighbourState, random);
+        return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
     }
 
     @Override
@@ -157,22 +151,20 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
         int appetite = carryStats ? eggBe.getAppetite() : 0;
         int bounty = carryStats ? eggBe.getBounty() : 0;
         int reach = carryStats ? eggBe.getReach() : 0;
-        // The hatch kind (#281): the BE's stamped kind wins (bred stats travel
-        // with it; datapacks/legacy saves may stamp a carrier) - otherwise the
-        // block IS the kind (one egg block per kind, 2026-07-04 ruling).
-        FrogKind beKind = eggBe != null ? eggBe.getKind() : null;
-        FrogKind kind = beKind != null ? beKind : this.kind;
+        // Midas egg (#253): hatches Midas tadpoles regardless of the carrier block's category.
+        boolean midas = eggBe != null && eggBe.isMidas();
 
         destroy(level, pos);
         level.playSound(null, pos, SoundEvents.FROGSPAWN_HATCH, SoundSource.BLOCKS, 1.0F, 1.0F);
 
         int count = random.nextInt(MIN_TADPOLES_SPAWN, MAX_TADPOLES_SPAWN + 1);
         for (int i = 0; i < count; i++) {
-            ResourceTadpole tadpole = PFEntities.RESOURCE_TADPOLE.get().create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
+            ResourceTadpole tadpole = PFEntities.RESOURCE_TADPOLE.get().create(level);
             if (tadpole == null) {
                 continue;
             }
-            tadpole.setKind(kind);
+            tadpole.setCategory(this.category);
+            tadpole.setMidas(midas);
             if (carryStats) {
                 tadpole.setPendingStats(appetite, bounty, reach);
             }
@@ -181,7 +173,7 @@ public final class PrimedFrogEggBlock extends Block implements EntityBlock {
             double z = pos.getZ() + clampedOffset(random);
             float yaw = random.nextInt(1, 361);
 
-            tadpole.snapTo(x, pos.getY() - 0.5, z, yaw, 0.0F);
+            tadpole.moveTo(x, pos.getY() - 0.5, z, yaw, 0.0F);
             tadpole.setPersistenceRequired();
             level.addFreshEntity(tadpole);
         }

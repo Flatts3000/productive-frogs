@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "productivefrogs:block/reinforced_wither_skeleton_skull_froglight"
+  }
+}

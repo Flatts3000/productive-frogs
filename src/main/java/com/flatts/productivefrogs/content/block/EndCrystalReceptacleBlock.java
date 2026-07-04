@@ -2,12 +2,12 @@ package com.flatts.productivefrogs.content.block;
 
 import com.flatts.productivefrogs.content.block.entity.EndCrystalReceptacleBlockEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -51,12 +51,12 @@ public class EndCrystalReceptacleBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
             Player player, InteractionHand hand, BlockHitResult hit) {
         if (!stack.is(Items.END_CRYSTAL)
                 || !(level.getBlockEntity(pos) instanceof EndCrystalReceptacleBlockEntity be)
                 || be.isFilled()) {
-            return InteractionResult.TRY_WITH_EMPTY_HAND;
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (!level.isClientSide()) {
             be.tryInsert(stack);
@@ -65,7 +65,7 @@ public class EndCrystalReceptacleBlock extends Block implements EntityBlock {
             }
             level.playSound(null, pos, SoundEvents.END_PORTAL_FRAME_FILL, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
-        return InteractionResult.SUCCESS;
+        return ItemInteractionResult.sidedSuccess(level.isClientSide());
     }
 
     @Override
@@ -80,10 +80,17 @@ public class EndCrystalReceptacleBlock extends Block implements EntityBlock {
             }
             level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 0.6F, 1.2F);
         }
-        return InteractionResult.SUCCESS;
+        return InteractionResult.sidedSuccess(level.isClientSide());
     }
 
-    // 26.1 port: drop-on-break now lives in EndCrystalReceptacleBlockEntity#preRemoveSideEffects
-    // (the BE still exists there, whereas it is gone by affectNeighborsAfterRemoval). This block
-    // has no BE-independent removal side effect, so no affectNeighborsAfterRemoval override is needed.
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof EndCrystalReceptacleBlockEntity be) {
+            ItemStack held = be.contents();
+            if (!held.isEmpty()) {
+                Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, held);
+            }
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
+    }
 }

@@ -1,13 +1,10 @@
 {
   "neoforge:conditions": [
-    {
-      "type": "productivefrogs:config_enabled",
-      "config": "boss"
-    }
+    { "type": "productivefrogs:config_enabled", "config": "boss" }
   ],
   "type": "minecraft:smelting",
   "ingredient": {
-    "neoforge:ingredient_type": "neoforge:components",
+    "type": "neoforge:components",
     "items": [
       "productivefrogs:configurable_froglight"
     ],

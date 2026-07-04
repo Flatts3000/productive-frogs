@@ -1,0 +1,12 @@
+{
+  "name": "Geode Slime",
+  "icon": "productivefrogs:geode_slime_spawn_egg",
+  "category": "productivefrogs:spawning_slimes",
+  "sortnum": 10,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Geode Slimes spawn high in the mountains - on Stony Peaks, Jagged Peaks, and Frozen Peaks.$(br2)Prime one with a matching resource to make a Geode Resource Slime for a Geode Frog."
+    }
+  ]
+}

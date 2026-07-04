@@ -13,8 +13,8 @@ import net.minecraft.world.level.block.Blocks;
  * kill); the player adds the crystal receptacles and the reinforced froglights.
  *
  * <p><b>Strict:</b> every block of the canonical altar must be present at its
- * exact offset from the Hatch - all Obsidian froglights, all 4
- * End Stone froglights, all 4 receptacles, the dragon-egg capstone, and the
+ * exact offset from the Hatch - all Wither Skeleton Skull froglights, all 4
+ * Nether Star froglights, all 4 receptacles, the dragon-egg capstone, and the
  * complete exit portal (20 end_portal cells + the 41-cell bedrock fountain, which
  * also carries the central plinth). Offsets are generated from the captured
  * {@code dragon_altar} structure, not hand-typed. Reads only block identity, so
@@ -41,8 +41,8 @@ public final class DragonAltarValidator {
         {2, -7, -1}, {2, -7, 0}, {2, -7, 1}
     };
     private static final int[][] RECEPTACLES = {{-3, -6, 0}, {0, -6, -3}, {0, -6, 3}, {3, -6, 0}};
-    private static final int[][] END_STONE = {{-2, -3, -2}, {-2, -3, 2}, {2, -3, -2}, {2, -3, 2}};
-    private static final int[][] OBSIDIAN = {
+    private static final int[][] NETHER_STAR = {{-2, -3, -2}, {-2, -3, 2}, {2, -3, -2}, {2, -3, 2}};
+    private static final int[][] WSS = {
         {-3, -6, -1}, {-3, -6, 1}, {-2, -6, -2}, {-2, -6, 2}, {-2, -5, -2}, {-2, -5, 2}, {-2, -4, -2}, {-2, -4, 2},
         {-1, -6, -3}, {-1, -6, 3}, {1, -6, -3}, {1, -6, 3}, {2, -6, -2}, {2, -6, 2}, {2, -5, -2}, {2, -5, 2},
         {2, -4, -2}, {2, -4, 2}, {3, -6, -1}, {3, -6, 1}
@@ -64,11 +64,11 @@ public final class DragonAltarValidator {
         if (!allMatch(level, hatch, RECEPTACLES, PFBlocks.END_CRYSTAL_RECEPTACLE.get())) {
             return new Result(false, "missing an End Crystal Receptacle");
         }
-        if (!allMatch(level, hatch, END_STONE, PFBlocks.REINFORCED_END_STONE_FROGLIGHT.get())) {
-            return new Result(false, "missing a Reinforced End Stone Froglight");
+        if (!allMatch(level, hatch, NETHER_STAR, PFBlocks.REINFORCED_NETHER_STAR_FROGLIGHT.get())) {
+            return new Result(false, "missing a Reinforced Nether Star Froglight");
         }
-        if (!allMatch(level, hatch, OBSIDIAN, PFBlocks.REINFORCED_OBSIDIAN_FROGLIGHT.get())) {
-            return new Result(false, "missing a Reinforced Obsidian Froglight");
+        if (!allMatch(level, hatch, WSS, PFBlocks.REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT.get())) {
+            return new Result(false, "missing a Reinforced Wither Skeleton Skull Froglight");
         }
         return new Result(true, "ready");
     }

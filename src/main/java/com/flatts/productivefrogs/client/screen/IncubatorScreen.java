@@ -4,7 +4,7 @@ import com.flatts.productivefrogs.content.menu.IncubatorMenu;
 import com.flatts.productivefrogs.data.Category;
 import java.util.Locale;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
@@ -23,11 +23,9 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
     private static final int BAR_TRACK = 0xFF8B8B8B;
     private static final int BAR_WAITING = 0xFFD9BE73; // soft honey: matured, held at cap
     private static final int SWATCH_BORDER = 0xFF2B2B2B;
-    // 26.1 GuiGraphicsExtractor.text() skips drawing when the alpha channel is 0
-    // (the old GuiGraphics.drawString auto-promoted alpha); carry full alpha here.
-    private static final int TEXT = 0xFF404040;
-    private static final int MATURED_TEXT = 0xFF6E5210; // dark goldenrod, readable on the grey panel
-    private static final int EMPTY_TEXT = 0xFF707070;
+    private static final int TEXT = 0x404040;
+    private static final int MATURED_TEXT = 0x6E5210; // dark goldenrod, readable on the grey panel
+    private static final int EMPTY_TEXT = 0x707070;
 
     private static final int SWATCH_X = 9;
     private static final int SWATCH_Y = 19;
@@ -38,12 +36,13 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
     private static final int BAR_H = 14;
 
     public IncubatorScreen(IncubatorMenu menu, Inventory playerInv, Component title) {
-        super(menu, playerInv, title, 176, 92);
+        super(menu, playerInv, title);
+        this.imageWidth = 176;
+        this.imageHeight = 92;
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor gui, int mouseX, int mouseY, float partialTick) {
-        super.extractBackground(gui, mouseX, mouseY, partialTick);
+    protected void renderBg(GuiGraphics gui, float partialTick, int mouseX, int mouseY) {
         int x = this.leftPos;
         int y = this.topPos;
         gui.fill(x, y, x + this.imageWidth, y + this.imageHeight, PANEL);
@@ -53,15 +52,14 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
         gui.fill(x + this.imageWidth - 1, y, x + this.imageWidth, y + this.imageHeight, BEVEL_DARK);
 
         int state = this.menu.state();
-        com.flatts.productivefrogs.data.FrogKind kind = this.menu.incubatingKind();
+        Category cat = this.menu.incubatingCategory();
 
-        // Kind colour swatch (only while it holds a seed) - a predator seed shows
-        // its own hue, not its anchor species' (review finding #7).
-        if (kind != null) {
+        // Species colour swatch (only while it holds a seed).
+        if (cat != null) {
             int sx = x + SWATCH_X;
             int sy = y + SWATCH_Y;
             gui.fill(sx - 1, sy - 1, sx + SWATCH + 1, sy + SWATCH + 1, SWATCH_BORDER);
-            gui.fill(sx, sy, sx + SWATCH, sy + SWATCH, kind.tintArgb());
+            gui.fill(sx, sy, sx + SWATCH, sy + SWATCH, 0xFF000000 | cat.tintRgb());
         }
 
         // Growth bar: recessed track + category-tinted fill (amber when held at cap).
@@ -73,7 +71,7 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
         if (state == 1 && total > 0) {
             int done = total - this.menu.growthRemaining();
             int filled = Math.max(0, Math.min(BAR_W, done * BAR_W / total));
-            int fill = kind != null ? kind.tintArgb() : BAR_WAITING;
+            int fill = cat != null ? (0xFF000000 | cat.tintRgb()) : BAR_WAITING;
             gui.fill(bx, by, bx + filled, by + BAR_H, fill);
         } else if (state == 2) {
             gui.fill(bx, by, bx + BAR_W, by + BAR_H, BAR_WAITING);
@@ -81,12 +79,12 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
     }
 
     @Override
-    protected void extractLabels(GuiGraphicsExtractor gui, int mouseX, int mouseY) {
-        gui.text(this.font, this.title, this.titleLabelX, this.titleLabelY, TEXT, false);
+    protected void renderLabels(GuiGraphics gui, int mouseX, int mouseY) {
+        gui.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, TEXT, false);
         int state = this.menu.state();
 
-        // Status line (swatch is drawn in extractBackground; text sits beside it when seeded).
-        int statusX = this.menu.incubatingKind() != null ? SWATCH_X + SWATCH + 4 : SWATCH_X;
+        // Status line (swatch is drawn in renderBg; text sits beside it when seeded).
+        int statusX = this.menu.incubatingCategory() != null ? SWATCH_X + SWATCH + 4 : SWATCH_X;
         Component status = switch (state) {
             case 1 -> Component.translatable("productivefrogs.gui.incubator.growing", speciesName());
             case 2 -> Component.translatable("productivefrogs.gui.incubator.waiting");
@@ -97,15 +95,15 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
             case 2 -> MATURED_TEXT;
             default -> EMPTY_TEXT;
         };
-        gui.text(this.font, status, statusX, SWATCH_Y + 1, statusColor, false);
+        gui.drawString(this.font, status, statusX, SWATCH_Y + 1, statusColor, false);
 
         int belowBar = BAR_Y + BAR_H + 4;
         if (state == 1 && this.menu.growthTotal() > 0) {
             // Percent overlaid centered on the bar.
             int done = this.menu.growthTotal() - this.menu.growthRemaining();
             int pct = Math.max(0, Math.min(100, done * 100 / this.menu.growthTotal()));
-            gui.centeredText(this.font, pct + "%", BAR_X + BAR_W / 2, BAR_Y + 3, 0xFFFFFFFF);
-            gui.text(this.font,
+            gui.drawCenteredString(this.font, pct + "%", BAR_X + BAR_W / 2, BAR_Y + 3, 0xFFFFFFFF);
+            gui.drawString(this.font,
                 Component.translatable("productivefrogs.gui.incubator.time", formatTime(this.menu.growthRemaining())),
                 BAR_X, belowBar, TEXT, false);
             // Hint: feed a Sweetslime to hurry it along.
@@ -113,7 +111,7 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
                 .withStyle(ChatFormatting.DARK_GRAY), BAR_X, belowBar + 12);
         } else if (state == 2) {
             // Waiting at the cap: show the population so the hold is self-explanatory.
-            gui.text(this.font,
+            gui.drawString(this.font,
                 Component.translatable("productivefrogs.gui.incubator.population",
                     this.menu.frogCount(), this.menu.frogCap()),
                 BAR_X, belowBar, TEXT, false);
@@ -125,20 +123,20 @@ public class IncubatorScreen extends PFContainerScreen<IncubatorMenu> {
     }
 
     /** Draw a hint wrapped to the panel width so long / localized strings never overflow. */
-    private void drawWrapped(GuiGraphicsExtractor gui, Component text, int x, int y) {
+    private void drawWrapped(GuiGraphics gui, Component text, int x, int y) {
         int maxWidth = this.imageWidth - x - 8;
         for (FormattedCharSequence line : this.font.split(text, maxWidth)) {
-            gui.text(this.font, line, x, y, TEXT, false);
+            gui.drawString(this.font, line, x, y, TEXT, false);
             y += this.font.lineHeight;
         }
     }
 
     /** Display name of the species being incubated (e.g. "Cave Frog"); blank when empty. */
     private Component speciesName() {
-        com.flatts.productivefrogs.data.FrogKind kind = this.menu.incubatingKind();
-        return kind == null
+        Category cat = this.menu.incubatingCategory();
+        return cat == null
             ? Component.empty()
-            : Component.translatable("entity.productivefrogs.resource_frog." + kind.nameSuffix());
+            : Component.translatable("entity.productivefrogs.resource_frog." + cat.name().toLowerCase(Locale.ROOT));
     }
 
     /** Ticks -> "m:ss" (20 ticks = 1 second). */

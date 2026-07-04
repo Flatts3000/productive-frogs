@@ -1,6 +1,6 @@
 # Forward Port to Minecraft 26.1 / NeoForge 26.1
 
-> **STATUS: port code-complete on `port/mc-26.1`; CI green (build + gameTest); pending merge to `main` (Phase 9).** Phases 0-8 below are done. **Scope note (2026-07-03):** 2.0.0 is no longer "the bare port" - the mob-predation system ([`predator_frogs.md`](./predator_frogs.md), epic #281) is 2.0.0's defining feature and gates the release; the port is its platform *foundation*. Forward port of Productive Frogs from MC 1.21.1 / NeoForge 21.1.x to **MC 26.1 / NeoForge 26.1.2.76** (ATM11's target), shipping as **PF 2.0.0**. This plan is grounded in the four-track research sweep recorded in [`port_mc_26_1_research.md`](./port_mc_26_1_research.md) - read that first; it is the authoritative API/ecosystem reference and this plan derives from it. Companion history: [`port_mc_1_21_1.md`](./port_mc_1_21_1.md) (the original 1.21.11 -> 1.21.1 backport, which this port partially reverses). Authored 2026-06-29, revised post-research.
+> **STATUS: PLANNED (not started).** Forward port of Productive Frogs from MC 1.21.1 / NeoForge 21.1.x to **MC 26.1 / NeoForge 26.1.2.76** (ATM11's target), shipping as **PF 2.0.0**. This plan is grounded in the four-track research sweep recorded in [`port_mc_26_1_research.md`](./port_mc_26_1_research.md) - read that first; it is the authoritative API/ecosystem reference and this plan derives from it. Companion history: [`port_mc_1_21_1.md`](./port_mc_1_21_1.md) (the original 1.21.11 -> 1.21.1 backport, which this port partially reverses). Authored 2026-06-29, revised post-research.
 
 ## Why this is happening
 
@@ -110,7 +110,7 @@ Whatever the phases didn't catch: `Item.Properties` now **requires `setId(...)`*
 
 - Squash-merge `port/mc-26.1` -> `main`. Update `CLAUDE.md`, `ROADMAP.md`, `versioning.md` for the 26.1 target + the 1.x/2.x split + the integrations-deferred scope. Mark this doc DONE.
 - Confirm `mc-1.21.1` protection is live.
-- **Release `2.0.0` once the mob-predation system lands** ([`predator_frogs.md`](./predator_frogs.md), epic #281) - the port merge is the *foundation*, not the release. It does **not** wait on partner mods (no cross-mod content ships in 2.0; integrations return as 2.x minors).
+- Release `2.0.0` once the build is green and soaked - it does **not** wait on partner mods (no cross-mod content ships in 2.0).
 
 ## Risks
 

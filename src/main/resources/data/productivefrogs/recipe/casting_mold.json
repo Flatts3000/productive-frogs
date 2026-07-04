@@ -1,9 +1,6 @@
 {
   "neoforge:conditions": [
-    {
-      "type": "productivefrogs:config_enabled",
-      "config": "casting_mold"
-    }
+    { "type": "productivefrogs:config_enabled", "config": "casting_mold" }
   ],
   "type": "minecraft:crafting_shaped",
   "category": "misc",
@@ -14,11 +11,8 @@
     "III"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
-    "B": "minecraft:brick"
+    "I": { "item": "minecraft:iron_ingot" },
+    "B": { "item": "minecraft:brick" }
   },
-  "result": {
-    "id": "productivefrogs:casting_mold",
-    "count": 1
-  }
+  "result": { "id": "productivefrogs:casting_mold", "count": 1 }
 }

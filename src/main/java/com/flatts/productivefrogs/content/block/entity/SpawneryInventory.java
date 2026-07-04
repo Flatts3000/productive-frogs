@@ -1,8 +1,8 @@
 package com.flatts.productivefrogs.content.block.entity;
 
 import com.flatts.productivefrogs.registry.PFItemTags;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -87,26 +87,12 @@ public class SpawneryInventory extends ItemStackHandler {
         return outputView;
     }
 
-    /** 26.1 {@code Capabilities.Item.BLOCK} input view: insert-only over the three input slots (per-slot validity routes each item). */
-    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResource() {
-        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
-            this, new int[] {BOTTLE_SLOT, FUEL_SLOT, PRIMER_SLOT}, true, false);
+    public void serialize(CompoundTag tag) {
+        tag.merge(serializeNBT(RegistryAccess.EMPTY));
     }
 
-    /** 26.1 {@code Capabilities.Item.BLOCK} output view: extract-only over the output slot. */
-    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResource() {
-        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(
-            this, new int[] {OUTPUT_SLOT}, false, true);
-    }
-
-    // 26.1: ItemStackHandler implements ValueIOSerializable; the BE hands us the
-    // ValueOutput/ValueInput child (legacy serializeNBT(RegistryAccess) is gone).
-    public void serialize(ValueOutput output) {
-        super.serialize(output);
-    }
-
-    public void deserialize(ValueInput input) {
-        super.deserialize(input);
+    public void deserialize(CompoundTag tag) {
+        deserializeNBT(RegistryAccess.EMPTY, tag);
     }
 
 }

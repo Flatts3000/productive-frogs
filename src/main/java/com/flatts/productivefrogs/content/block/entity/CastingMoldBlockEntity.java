@@ -8,11 +8,11 @@ import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
@@ -27,8 +27,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
@@ -208,26 +206,8 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
         return fluidHandler;
     }
 
-    /**
-     * The 26.1 {@code Capabilities.Fluid.BLOCK} view: fill-only (molten in, never
-     * back out), recipe-gated by {@link #acceptsFluid}. Wraps {@link #tank} with the
-     * snapshot transaction discipline; commit fires setChanged + sync.
-     */
-    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> fluidResource() {
-        return new com.flatts.productivefrogs.content.transfer.FluidTankResourceHandler(
-            tank, this::acceptsFluid, true, false, () -> {
-                setChanged();
-                syncToClients();
-            });
-    }
-
     public IItemHandler outputView() {
         return outputView;
-    }
-
-    /** 26.1 {@code Capabilities.Item.BLOCK} view: extract-only over the cast-item output slot. */
-    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResource() {
-        return new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(output, new int[] {OUTPUT_SLOT}, false, true);
     }
 
     public ItemStackHandler output() {
@@ -241,20 +221,6 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
 
     public int progress() {
         return progress;
-    }
-
-    // 26.1 port: the cast output drops here (the BE still exists on the removal path), NOT in the
-    // block's affectNeighborsAfterRemoval, which runs after the BE is gone. The output handler is
-    // not a vanilla Container, so the super default won't drop it - re-home the pop here.
-    @Override
-    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
-        super.preRemoveSideEffects(pos, state);
-        if (this.level instanceof ServerLevel serverLevel) {
-            ItemStack out = output.getStackInSlot(OUTPUT_SLOT);
-            if (!out.isEmpty()) {
-                Block.popResource(serverLevel, pos, out);
-            }
-        }
     }
 
     /**
@@ -293,16 +259,13 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
      */
     @Nullable
     private MoldCastingRecipe recipeForType(FluidStack stack) {
-        RecipeManager manager = level.recipeAccess() instanceof RecipeManager rm ? rm : null;
-        if (manager == null) {
-            return null;
-        }
+        RecipeManager manager = level.getRecipeManager();
         if (manager == cachedRecipeManager && cachedRecipe != null
                 && cachedRecipe.fluid().ingredient().test(stack)) {
             return cachedRecipe;
         }
         cachedRecipeManager = manager;
-        cachedRecipe = manager.recipeMap().byType(PFRecipeTypes.MOLD_CASTING.get()).stream()
+        cachedRecipe = manager.getAllRecipesFor(PFRecipeTypes.MOLD_CASTING.get()).stream()
             .map(RecipeHolder::value)
             .filter(recipe -> recipe.fluid().ingredient().test(stack))
             .findFirst()
@@ -382,24 +345,31 @@ public class CastingMoldBlockEntity extends BlockEntity implements MenuProvider 
     // -------------------------------------------------------------------
 
     @Override
-    protected void saveAdditional(ValueOutput output) {
-        super.saveAdditional(output);
-        tank.serialize(output.child("Tank"));
-        this.output.serialize(output.child("Output"));
-        output.putInt("Progress", progress);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        tag.put("Tank", tank.writeToNBT(registries, new CompoundTag()));
+        tag.put("Output", output.serializeNBT(registries));
+        tag.putInt("Progress", progress);
     }
 
     @Override
-    protected void loadAdditional(ValueInput input) {
-        super.loadAdditional(input);
-        input.child("Tank").ifPresent(tank::deserialize);
-        input.child("Output").ifPresent(output::deserialize);
-        progress = Math.max(0, Math.min(input.getIntOr("Progress", 0), CAST_TIME));
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        if (tag.contains("Tank", Tag.TAG_COMPOUND)) {
+            tank.readFromNBT(registries, tag.getCompound("Tank"));
+        }
+        if (tag.contains("Output", Tag.TAG_COMPOUND)) {
+            output.deserializeNBT(registries, tag.getCompound("Output"));
+        }
+        int loaded = tag.contains("Progress", Tag.TAG_INT) ? tag.getInt("Progress") : 0;
+        progress = Math.max(0, Math.min(loaded, CAST_TIME));
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        return saveCustomOnly(registries);
+        CompoundTag tag = super.getUpdateTag(registries);
+        saveAdditional(tag, registries);
+        return tag;
     }
 
     @Override

@@ -17,11 +17,10 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
 import net.minecraft.world.ContainerHelper;
-import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
@@ -31,8 +30,6 @@ import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -64,13 +61,13 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
 
     /** Data-driven drop list for the altar (pack-overridable); see {@code loot_table/dragon_altar.json}. */
     private static final ResourceKey<LootTable> DRAGON_ALTAR_LOOT_TABLE = ResourceKey.create(
-        Registries.LOOT_TABLE, Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_altar"));
+        Registries.LOOT_TABLE, ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_altar"));
 
     /** Boss slime variants whose Froglights the altar pays out (each smelts back to the resource). */
-    private static final Identifier DRAGON_BREATH_VARIANT =
-        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_breath");
-    private static final Identifier DRAGON_EGG_VARIANT =
-        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_egg");
+    private static final ResourceLocation DRAGON_BREATH_VARIANT =
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_breath");
+    private static final ResourceLocation DRAGON_EGG_VARIANT =
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "dragon_egg");
 
     private NonNullList<ItemStack> items = NonNullList.withSize(SIZE, ItemStack.EMPTY);
     private final InvWrapper itemHandler = new InvWrapper(this);
@@ -93,19 +90,6 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
      * Deposit a dragon-altar drop, spilling any overflow as a returned leftover
      * (the summon decides what to do with it). Used by the summon state machine.
      */
-    /**
-     * The Apex dock (#281 Phase 4): holds the installed Dragon Apex Frog's
-     * whole net NBT + the altar's Liquid Experience bank. The summon gate
-     * requires {@link AltarApexDock#armed()}; breaking the hatch releases the
-     * real frog ({@link #preRemoveSideEffects}).
-     */
-    private final AltarApexDock dock =
-        new AltarApexDock(com.flatts.productivefrogs.data.FrogKind.Apex.DRAGON, this::setChanged);
-
-    public AltarApexDock dock() {
-        return dock;
-    }
-
     public ItemStack deposit(ItemStack stack) {
         return ItemHandlerHelper.insertItem(itemHandler, stack, false);
     }
@@ -129,12 +113,9 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
         }
         be.tickCounter = 0;
         boolean valid = DragonAltarValidator.validate(server, pos).valid();
-        // The display frog IS the installed Apex's render (Phase 4): it shows
-        // only while the altar is armed (installed, or predation config-off).
-        reconcileFrog(server, pos, valid && be.dock.armed());
-        // Start a summon once the altar is complete, ARMED with its Dragon Apex
-        // Frog (Phase 4 gate), and all four crystals are loaded.
-        if (valid && PFConfig.bossEnabled() && be.dock.armed() && allReceptaclesFilled(server, pos)) {
+        reconcileFrog(server, pos, valid);
+        // Start a summon once the altar is complete and all four crystals are loaded.
+        if (valid && PFConfig.bossEnabled() && allReceptaclesFilled(server, pos)) {
             be.summonTicks = PFConfig.dragonAltarSummonTicks();
             server.levelEvent(LEVEL_EVENT_DRAGON_ROAR, pos, 0);
             be.syncToClient();
@@ -171,41 +152,25 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
                 r.consume();
             }
         }
-        // Reward, in three parts (Phase 4: the settled RAW-drops payout - boss
-        // altars yield what the boss itself drops, not Froglights):
-        // 1. XP banks as Liquid Experience in the dock (20 mB/point); a full
-        //    bank overflows the remainder as orbs - never voided.
+        // Reward, in three parts:
+        // 1. XP orbs at the hatch.
         int xp = PFConfig.dragonAltarXpReward();
         if (xp > 0) {
-            be.dock.bankXp(server, Vec3.atCenterOf(pos), xp);
+            ExperienceOrb.award(server, Vec3.atCenterOf(pos), xp);
         }
-        // 2. The raw boss materials: Dragon's Breath always, and a Dragon Egg
-        //    when repeatableEgg is on (the renewable-egg lever).
-        spill(server, pos, be.deposit(new ItemStack(net.minecraft.world.item.Items.DRAGON_BREATH)));
+        // 2. The boss Froglights - the altar's signature output. Like the rest of the
+        //    mod's frog loop it yields variant-stamped Froglights (smeltable back to the
+        //    resource), not the raw resource: a Dragon Breath Froglight always, and a
+        //    Dragon Egg Froglight when repeatableEgg is on (the renewable-egg lever, now
+        //    delivered as the froglight that smelts to an egg).
+        spill(server, pos, be.deposit(FrogTongueDropHandler.buildFroglight(DRAGON_BREATH_VARIANT, null)));
         if (PFConfig.dragonAltarRepeatableEgg()) {
-            spill(server, pos, be.deposit(new ItemStack(net.minecraft.world.item.Items.DRAGON_EGG)));
+            spill(server, pos, be.deposit(FrogTongueDropHandler.buildFroglight(DRAGON_EGG_VARIANT, null)));
         }
         // 3. Whatever the dragon itself drops - the data-driven productivefrogs:dragon_altar
         //    loot table (default: the Princess's Kiss). Packs edit/extend it without Java.
         rollDragonLoot(server, pos, be);
         server.levelEvent(LEVEL_EVENT_DRAGON_DEATH, pos, 0);
-    }
-
-    /**
-     * Hatch removal (Phase 4): after the container spills, the installed Apex
-     * frog RESPAWNS where the altar stood (the maintainer ruling's "the frog
-     * drops"), and the display frog is discarded (it is just the render).
-     */
-    @Override
-    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
-        super.preRemoveSideEffects(pos, state);
-        if (this.level instanceof ServerLevel server) {
-            dock.releaseFrog(server, pos);
-            for (DragonsbaneFrog frog : server.getEntitiesOfClass(
-                    DragonsbaneFrog.class, new AABB(plinthFrogPos(pos)).inflate(1.0))) {
-                frog.discard();
-            }
-        }
     }
 
     /**
@@ -218,11 +183,11 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
      * the world (no portal / boss bar / gateway).
      */
     private static void rollDragonLoot(ServerLevel server, BlockPos pos, EndDragonAltarHatchBlockEntity be) {
-        EnderDragon phantom = EntityType.ENDER_DRAGON.create(server, EntitySpawnReason.MOB_SUMMONED);
+        EnderDragon phantom = EntityType.ENDER_DRAGON.create(server);
         if (phantom == null) {
             return; // never added to the world; only the loot context needs it
         }
-        phantom.snapTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
+        phantom.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
         LootParams params = new LootParams.Builder(server)
             .withParameter(LootContextParams.THIS_ENTITY, phantom)
             .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
@@ -265,16 +230,16 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
         double cy = plinth.getY();
         double cz = plinth.getZ() + 0.5;
         if (frogs.isEmpty()) {
-            DragonsbaneFrog frog = DragonsbaneFrog.type().create(server, EntitySpawnReason.MOB_SUMMONED);
+            DragonsbaneFrog frog = DragonsbaneFrog.type().create(server);
             if (frog != null) {
-                frog.snapTo(cx, cy, cz, 180.0F, 0.0F);
+                frog.moveTo(cx, cy, cz, 180.0F, 0.0F);
                 frog.setYBodyRot(180.0F);
                 frog.setYHeadRot(180.0F);
                 server.addFreshEntity(frog);
             }
         } else {
             DragonsbaneFrog frog = frogs.get(0);
-            frog.snapTo(cx, cy, cz, frog.getYRot(), 0.0F);
+            frog.moveTo(cx, cy, cz, frog.getYRot(), 0.0F);
             frog.setDeltaMovement(Vec3.ZERO);
             for (int i = 1; i < frogs.size(); i++) {
                 frogs.get(i).discard();
@@ -319,20 +284,18 @@ public class EndDragonAltarHatchBlockEntity extends BaseContainerBlockEntity {
     }
 
     @Override
-    protected void loadAdditional(ValueInput input) {
-        super.loadAdditional(input);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
         this.items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
-        ContainerHelper.loadAllItems(input, this.items);
-        this.summonTicks = input.getIntOr("SummonTicks", 0);
-        this.dock.load(input);
+        ContainerHelper.loadAllItems(tag, this.items, registries);
+        this.summonTicks = tag.getInt("SummonTicks");
     }
 
     @Override
-    protected void saveAdditional(ValueOutput output) {
-        super.saveAdditional(output);
-        ContainerHelper.saveAllItems(output, this.items);
-        output.putInt("SummonTicks", summonTicks);
-        dock.save(output);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        ContainerHelper.saveAllItems(tag, this.items, registries);
+        tag.putInt("SummonTicks", summonTicks);
     }
 
     // Sync only the summon progress to the client (the chest contents ride the menu,

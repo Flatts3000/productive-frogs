@@ -1,16 +1,13 @@
 {
   "neoforge:conditions": [
-    {
-      "type": "productivefrogs:config_enabled",
-      "config": "quantity_catalyst"
-    }
+    { "type": "productivefrogs:config_enabled", "config": "quantity_catalyst" }
   ],
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    "productivefrogs:sweetslime",
-    "productivefrogs:sweetslime",
-    "minecraft:glowstone_dust"
+    { "item": "productivefrogs:sweetslime" },
+    { "item": "productivefrogs:sweetslime" },
+    { "item": "minecraft:glowstone_dust" }
   ],
   "result": {
     "id": "productivefrogs:quantity_catalyst",

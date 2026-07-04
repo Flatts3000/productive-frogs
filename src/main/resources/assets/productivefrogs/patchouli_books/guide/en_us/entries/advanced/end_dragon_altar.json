@@ -1,0 +1,53 @@
+{
+  "name": "End Dragon Altar",
+  "icon": "productivefrogs:end_dragon_altar_hatch",
+  "category": "productivefrogs:advanced",
+  "sortnum": 110,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The End Dragon Altar turns the one-time dragon fight into a repeatable farm. It is built right on the vanilla End exit portal, so you must defeat the Ender Dragon the normal way first. That fight leaves the portal and its Dragon Egg - and the egg is the altar's capstone, and its gate: no egg, no altar."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The bedrock fountain and the exit portal are already there from the fight. You add the rest: four End Crystal Receptacles around the portal, a cage of Reinforced Wither Skeleton Skull Froglights, four Reinforced Nether Star Froglights set higher, and the End Dragon Altar Hatch at the centre with the Dragon Egg resting on top.$(br2)The next page shows the whole structure."
+    },
+    {
+      "type": "patchouli:multiblock",
+      "name": "The End Dragon Altar",
+      "text": "Bedrock and the End Portal are the vanilla exit structure; you place the receptacles, froglights, and Hatch. There is no controller - priming the crystals starts it.",
+      "multiblock": {
+        "mapping": {
+          "A": "minecraft:air",
+          "0": "productivefrogs:end_dragon_altar_hatch",
+          "E": "minecraft:dragon_egg",
+          "B": "minecraft:bedrock",
+          "P": "minecraft:end_portal",
+          "R": "productivefrogs:end_crystal_receptacle",
+          "N": "productivefrogs:reinforced_nether_star_froglight",
+          "W": "productivefrogs:reinforced_wither_skeleton_skull_froglight"
+        },
+        "pattern": [
+          ["AAAAAAA", "AAAAAAA", "AAAAAAA", "AAAEAAA", "AAAAAAA", "AAAAAAA", "AAAAAAA"],
+          ["AAAAAAA", "AAAAAAA", "AAAAAAA", "AAA0AAA", "AAAAAAA", "AAAAAAA", "AAAAAAA"],
+          ["AAAAAAA", "AAAAAAA", "AAAAAAA", "AAAAAAA", "AAAAAAA", "AAAAAAA", "AAAAAAA"],
+          ["AAAAAAA", "AAAAAAA", "AAAAAAA", "AAAAAAA", "AAAAAAA", "AAAAAAA", "AAAAAAA"],
+          ["AAAAAAA", "ANAAANA", "AAAAAAA", "AAAAAAA", "AAAAAAA", "ANAAANA", "AAAAAAA"],
+          ["AAAAAAA", "AWAAAWA", "AAAAAAA", "AAABAAA", "AAAAAAA", "AWAAAWA", "AAAAAAA"],
+          ["AAAAAAA", "AWAAAWA", "AAAAAAA", "AAABAAA", "AAAAAAA", "AWAAAWA", "AAAAAAA"],
+          ["AAWRWAA", "AWAAAWA", "WAAAAAW", "RAABAAR", "WAAAAAW", "AWAAAWA", "AAWRWAA"],
+          ["AABBBAA", "ABPPPBA", "BPPPPPB", "BPPBPPB", "BPPPPPB", "ABPPPBA", "AABBBAA"],
+          ["AAAAAAA", "AABBBAA", "ABBBBBA", "ABBBBBA", "ABBBBBA", "AABBBAA", "AAAAAAA"]
+        ]
+      }
+    },
+    {
+      "type": "patchouli:text",
+      "text": "To run it, drop an End Crystal into each of the four receptacles - by hand, or piped in with a hopper. The receptacle changes texture and shows a hovering crystal once loaded.$(br2)With all four primed, a replica Ender Dragon rises over the Hatch and grows as beams converge on it. Then the altar's frog - Dragonsbane - devours it. The four crystals are spent each summon."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Each summon fills the Hatch with a Dragon Breath Froglight and a Dragon Egg Froglight (both smelt back to the resource), plus the dragon's own drop, the Princess's Kiss, and it grants experience."
+    }
+  ]
+}

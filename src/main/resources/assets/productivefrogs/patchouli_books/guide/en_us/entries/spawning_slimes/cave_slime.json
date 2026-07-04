@@ -1,0 +1,12 @@
+{
+  "name": "Cave Slime",
+  "icon": "productivefrogs:cave_slime_spawn_egg",
+  "category": "productivefrogs:spawning_slimes",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Cave Slimes spawn underground, in Dripstone Caves and Lush Caves.$(br2)Prime one with a matching resource to make a Cave Resource Slime - the food a Cave Frog turns into Froglights."
+    }
+  ]
+}

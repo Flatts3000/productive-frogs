@@ -126,13 +126,13 @@ class SpawneryRecipeTest {
     }
 
     private static void assertIngredientItem(JsonObject recipe, String key, String item) {
-        String ing = recipe.getAsJsonObject("key").get(key).getAsString();
-        assertEquals(item, ing, "key '" + key + "' item");
+        JsonObject ing = recipe.getAsJsonObject("key").getAsJsonObject(key);
+        assertEquals(item, ing.get("item").getAsString(), "key '" + key + "' item");
     }
 
     private static void assertIngredientTag(JsonObject recipe, String key, String tag) {
-        String ing = recipe.getAsJsonObject("key").get(key).getAsString();
-        assertEquals("#" + tag, ing, "key '" + key + "' tag");
+        JsonObject ing = recipe.getAsJsonObject("key").getAsJsonObject(key);
+        assertEquals(tag, ing.get("tag").getAsString(), "key '" + key + "' tag");
     }
 
     private static void assertResultId(JsonObject recipe, String id) {

@@ -4,7 +4,7 @@ Where the mod is going. This is the canonical "what's shipped, what's coming, wh
 
 Living document. Anything below a "shipped" version can move between tracks based on player feedback, modpack-author requests, or scope realities.
 
-**Two lines.** This branch (`port/mc-26.1` -> `main`) is the **2.x line**, targeting **Minecraft 26.1.2 / NeoForge 26.1.2.76 / Java 25**. The frozen **1.x line** (MC 1.21.1 / NeoForge 21.1.230 / Java 21) lives on `mc-1.21.1`, hotfix-only (its runbook, `docs/maintenance_1_21_1.md`, lives on that branch). The Shipped section below is the 1.x history the 2.x line builds on.
+Targets Minecraft 1.21.1 / NeoForge 21.1.230 / Java 21.
 
 ---
 
@@ -164,16 +164,21 @@ The post-capstone transmutation lane - an opt-in, RF-powered equivalent-exchange
 
 ---
 
-## 2.0: the 26.1 era + mob predation
+## v2: automation
 
-2.0.0 is the first release of the modern line (MC 26.1 / NeoForge 26.1). Two things define it:
+The scale-up release. v1 lives unchanged; v2 layers automation on top. A player who never crafts a v2 block still has every v1 capability.
 
-1. **The 26.1 platform port** - the whole 1.x feature set forward-ported to 26.1 as a standalone mod (decoupled from Sky Frogs, which stays on 1.21.1). This is the *foundation*; on its own it would be "1.x on 26.1," not a major version. Port plan: [docs/port_mc_26_1.md](./docs/port_mc_26_1.md).
-2. **Mob predation** - the feature that earns the major bump. All mob drops come from a frog eating the mob: a new **Predator / Apex frog tier** bred from the six species, the **Ender Net + Slurry Press** supply chain, three **class enclosures** (Aviary / Aquarium / Endarium for fly / swim / teleport mobs), **Liquid Experience** (XP as a `c:experience` fluid), and the boss altars gated behind bred Apex frogs. The mob-derived slime variants retire; those resources now come only from eating the mob. Spec: epic #281. Delivery roadmap: [docs/predator_frogs.md](./docs/predator_frogs.md).
+**Buffered / auto-upgrading Slime Milker:** the v1 Milker and Spawnery already expose basic hopper I/O (`Capabilities.ItemHandler.BLOCK`), so hoppers can feed and drain them today. The v2 layer is the buffered upgrade - internal slime/milk buffers and auto-cycling so a line keeps running without per-item hopper handoff.
 
-**2.0.0 releases when predation lands, not on the bare port.** Cross-mod integrations are deferred to additive **2.x minors** as partner mods reach 26.1.
+**Frog Terrarium / Habitat block:** SHIPPED in v1.16.0 (see Shipped above) - it landed in the 1.x line per "V2 is just a name, not a rule."
 
-> Automation (the Terrarium, appliance hopper I/O) already shipped in the **1.x** line - "V2 is just a name, not a rule." The former "v2 = automation" framing is retired. Remaining automation ideas (buffered auto-cycling Milker, auto-feeders, capacity/efficiency upgrades, FE / NeoForge Energy power compat) carry forward as **2.x** candidates layered on the 26.1 base.
+**Auto-feeders:** hopper-fed slime delivery to nearby frogs (the frog side, not the appliance side - distinct from the appliance hopper I/O that already shipped in v1). Alternative to milk-spawn proximity.
+
+**Capacity / efficiency upgrades** for habitat blocks.
+
+**Pipe / hopper-aware fluid handling** for Slime Milk.
+
+**Potential:** FE / NeoForge Energy power compat.
 
 ---
 
@@ -190,10 +195,9 @@ Captured during v1 design. Not on the schedule; revisited when v2 ships and we k
 
 ## Compatibility promise
 
-- The **1.x and 2.x lines are separate game versions** (MC 1.21.1 vs 26.1) on separate branches - they do not share worlds, and fixes flow old -> new only (`mc-1.21.1` -> `main`).
-- **Within the 2.x line**, later minors won't break earlier 2.x worlds, and optional machines stay optional (a player who never crafts a 2.x block keeps every 2.0 capability).
-- **2.0 is a hard break from 1.x** by design - new MC version, and the mob-derived slime variants retire (their resources move to the predation path). This is the one intended migration; it does not carry backward to the frozen 1.x line.
-- Cross-mod compat datapacks are independent of the release split.
+- v2 datapacks won't break v1 worlds.
+- v2 machines remain optional. Every v1 capability stays usable without them.
+- Cross-mod compat datapacks are independent of the v1 / v2 split.
 
 ---
 

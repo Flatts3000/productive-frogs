@@ -2,10 +2,9 @@ package com.flatts.productivefrogs.client.screen;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.menu.SpawneryMenu;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
@@ -20,7 +19,7 @@ import net.minecraft.world.entity.player.Inventory;
  */
 public class SpawneryScreen extends PFContainerScreen<SpawneryMenu> {
 
-    private static final Identifier BACKGROUND = Identifier.fromNamespaceAndPath(
+    private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath(
         ProductiveFrogs.MOD_ID, "textures/gui/container/spawnery.png");
 
     // Cook-progress arrow: vanilla furnace burn_progress sprite (24x16) re-inlined
@@ -44,14 +43,15 @@ public class SpawneryScreen extends PFContainerScreen<SpawneryMenu> {
 
     public SpawneryScreen(SpawneryMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
+        this.imageWidth = 176;
+        this.imageHeight = 166;
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor gui, int mouseX, int mouseY, float partialTick) {
-        super.extractBackground(gui, mouseX, mouseY, partialTick);
+    protected void renderBg(GuiGraphics gui, float partialTick, int mouseX, int mouseY) {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
-        gui.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND, x, y, 0.0F, 0.0F, this.imageWidth, this.imageHeight,
+        gui.blit(BACKGROUND, x, y, 0.0F, 0.0F, this.imageWidth, this.imageHeight,
                  BG_TEX_WIDTH, BG_TEX_HEIGHT);
 
         // Burn flame - shrinks from the top as burnTime drops. litPixels is the
@@ -64,9 +64,9 @@ public class SpawneryScreen extends PFContainerScreen<SpawneryMenu> {
             int litPixels = Math.min(FLAME_SIZE, burn * FLAME_SIZE / burnTotal);
             if (litPixels > 0) {
                 int top = FLAME_SIZE - litPixels;
-                gui.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND,
+                gui.blit(BACKGROUND,
                          x + FLAME_BG_X, y + FLAME_BG_Y + top,
-                         (float) FLAME_SRC_X, (float) top,
+                         FLAME_SRC_X, top,
                          FLAME_SIZE, litPixels,
                          BG_TEX_WIDTH, BG_TEX_HEIGHT);
             }
@@ -77,9 +77,9 @@ public class SpawneryScreen extends PFContainerScreen<SpawneryMenu> {
         int total = this.menu.getCookTotal();
         if (progress > 0 && total > 0) {
             int filled = Math.min(ARROW_WIDTH, (progress * ARROW_WIDTH) / total);
-            gui.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND,
+            gui.blit(BACKGROUND,
                      x + ARROW_BG_X, y + ARROW_BG_Y,
-                     (float) ARROW_SRC_X, (float) ARROW_SRC_Y,
+                     ARROW_SRC_X, ARROW_SRC_Y,
                      filled, ARROW_HEIGHT,
                      BG_TEX_WIDTH, BG_TEX_HEIGHT);
         }
