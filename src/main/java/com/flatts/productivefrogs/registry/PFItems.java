@@ -660,10 +660,10 @@ public final class PFItems {
         registerSimpleBlockItem("dragon_breath_catalyst", PFBlocks.DRAGON_BREATH_CATALYST, new Item.Properties());
 
     // Reinforced Froglights (#249) - the dragon altar's structural blocks.
-    public static final DeferredItem<BlockItem> REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT =
-        registerSimpleBlockItem("reinforced_wither_skeleton_skull_froglight", PFBlocks.REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT, new Item.Properties());
-    public static final DeferredItem<BlockItem> REINFORCED_NETHER_STAR_FROGLIGHT =
-        registerSimpleBlockItem("reinforced_nether_star_froglight", PFBlocks.REINFORCED_NETHER_STAR_FROGLIGHT, new Item.Properties());
+    public static final DeferredItem<BlockItem> REINFORCED_OBSIDIAN_FROGLIGHT =
+        registerSimpleBlockItem("reinforced_obsidian_froglight", PFBlocks.REINFORCED_OBSIDIAN_FROGLIGHT, new Item.Properties());
+    public static final DeferredItem<BlockItem> REINFORCED_END_STONE_FROGLIGHT =
+        registerSimpleBlockItem("reinforced_end_stone_froglight", PFBlocks.REINFORCED_END_STONE_FROGLIGHT, new Item.Properties());
 
     // End Crystal Receptacle (#249) - the dragon altar's crystal sockets.
     public static final DeferredItem<BlockItem> END_CRYSTAL_RECEPTACLE =
@@ -675,8 +675,18 @@ public final class PFItems {
     // Wither Altar (#247) - the Nether-themed reinforced froglights, receptacles, hatch, and capstone.
     public static final DeferredItem<BlockItem> REINFORCED_SOUL_SAND_FROGLIGHT =
         registerSimpleBlockItem("reinforced_soul_sand_froglight", PFBlocks.REINFORCED_SOUL_SAND_FROGLIGHT, new Item.Properties());
-    public static final DeferredItem<BlockItem> REINFORCED_BLAZE_ROD_FROGLIGHT =
-        registerSimpleBlockItem("reinforced_blaze_rod_froglight", PFBlocks.REINFORCED_BLAZE_ROD_FROGLIGHT, new Item.Properties());
+    public static final DeferredItem<BlockItem> REINFORCED_GLOWSTONE_FROGLIGHT =
+        registerSimpleBlockItem("reinforced_glowstone_froglight", PFBlocks.REINFORCED_GLOWSTONE_FROGLIGHT, new Item.Properties());
+
+    // Phase 4b altars (#279/#280) - the Shrieker Pit + Monument Well structural blocks.
+    public static final DeferredItem<BlockItem> REINFORCED_SCULK_FROGLIGHT =
+        registerSimpleBlockItem("reinforced_sculk_froglight", PFBlocks.REINFORCED_SCULK_FROGLIGHT, new Item.Properties());
+    public static final DeferredItem<BlockItem> REINFORCED_ECHO_SHARD_FROGLIGHT =
+        registerSimpleBlockItem("reinforced_echo_shard_froglight", PFBlocks.REINFORCED_ECHO_SHARD_FROGLIGHT, new Item.Properties());
+    public static final DeferredItem<BlockItem> REINFORCED_PRISMARINE_FROGLIGHT =
+        registerSimpleBlockItem("reinforced_prismarine_froglight", PFBlocks.REINFORCED_PRISMARINE_FROGLIGHT, new Item.Properties());
+    public static final DeferredItem<BlockItem> REINFORCED_SPONGE_FROGLIGHT =
+        registerSimpleBlockItem("reinforced_sponge_froglight", PFBlocks.REINFORCED_SPONGE_FROGLIGHT, new Item.Properties());
     public static final DeferredItem<BlockItem> SOUL_SAND_RECEPTACLE =
         registerSimpleBlockItem("soul_sand_receptacle", PFBlocks.SOUL_SAND_RECEPTACLE, new Item.Properties());
     public static final DeferredItem<BlockItem> WITHER_SKULL_RECEPTACLE =

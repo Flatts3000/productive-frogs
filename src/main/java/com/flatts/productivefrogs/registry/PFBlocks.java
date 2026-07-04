@@ -424,16 +424,21 @@ public final class PFBlocks {
     /**
      * Reinforced Froglights (#249) - the dragon altar's structural blocks, and the
      * main reason they exist. Bespoke, decorative apart from that role; crafted from
-     * 4 obsidian + the matching boss Froglight (Wither Skeleton Skull / Nether Star).
-     * Full-cube, <b>non-directional</b> blocks (no axis state) with vanilla Froglight
+     * 4 obsidian + the matching resource Froglight (Obsidian / End Stone). Full-cube,
+     * <b>non-directional</b> blocks (no axis state) with vanilla Froglight
      * light (15) and obsidian-tier blast resistance so the altar reads as dragon-proof.
      * No BlockEntity and no variant component - each is its own fixed block, unlike the
      * data-driven {@link ConfigurableFroglightBlock}.
+     *
+     * <p><b>Resource variants only</b> (#279/#280 re-key, maintainer ruling): every
+     * reinforced froglight is crafted from a froglight of a variant that survives the
+     * Phase 5 mob-variant retirement (block/ore resources), never a mob-drop variant
+     * (the original blaze rod / nether star / skull versions are retired).
      */
-    public static final DeferredBlock<Block> REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT =
-        registerBlock("reinforced_wither_skeleton_skull_froglight", Block::new, reinforcedFroglightProperties());
-    public static final DeferredBlock<Block> REINFORCED_NETHER_STAR_FROGLIGHT =
-        registerBlock("reinforced_nether_star_froglight", Block::new, reinforcedFroglightProperties());
+    public static final DeferredBlock<Block> REINFORCED_OBSIDIAN_FROGLIGHT =
+        registerBlock("reinforced_obsidian_froglight", Block::new, reinforcedFroglightProperties());
+    public static final DeferredBlock<Block> REINFORCED_END_STONE_FROGLIGHT =
+        registerBlock("reinforced_end_stone_froglight", Block::new, reinforcedFroglightProperties());
 
     /**
      * End Crystal Receptacle (#249) - the dragon altar's four crystal sockets, at
@@ -455,13 +460,28 @@ public final class PFBlocks {
     /**
      * Reinforced Froglights for the Wither Altar (#247) - the Nether-themed structural
      * blocks, mirroring the dragon altar's pair. Crafted from 4 obsidian + the matching
-     * Froglight (Soul Sand / Blaze). Same shape as the dragon altar's reinforced
-     * froglights: full-cube, non-directional, light 15, obsidian-tier blast resistance.
+     * resource Froglight (Soul Sand / Glowstone). Same shape as the dragon altar's
+     * reinforced froglights: full-cube, non-directional, light 15, obsidian-tier blast
+     * resistance.
      */
     public static final DeferredBlock<Block> REINFORCED_SOUL_SAND_FROGLIGHT =
         registerBlock("reinforced_soul_sand_froglight", Block::new, reinforcedFroglightProperties());
-    public static final DeferredBlock<Block> REINFORCED_BLAZE_ROD_FROGLIGHT =
-        registerBlock("reinforced_blaze_rod_froglight", Block::new, reinforcedFroglightProperties());
+    public static final DeferredBlock<Block> REINFORCED_GLOWSTONE_FROGLIGHT =
+        registerBlock("reinforced_glowstone_froglight", Block::new, reinforcedFroglightProperties());
+
+    /**
+     * Reinforced Froglights for the Phase 4b altars (#279 Warden / #280 Elder
+     * Guardian): sculk + echo shard line the Shrieker Pit; prismarine + sponge build
+     * the Monument Well. Same shape as the rest of the reinforced family.
+     */
+    public static final DeferredBlock<Block> REINFORCED_SCULK_FROGLIGHT =
+        registerBlock("reinforced_sculk_froglight", Block::new, reinforcedFroglightProperties());
+    public static final DeferredBlock<Block> REINFORCED_ECHO_SHARD_FROGLIGHT =
+        registerBlock("reinforced_echo_shard_froglight", Block::new, reinforcedFroglightProperties());
+    public static final DeferredBlock<Block> REINFORCED_PRISMARINE_FROGLIGHT =
+        registerBlock("reinforced_prismarine_froglight", Block::new, reinforcedFroglightProperties());
+    public static final DeferredBlock<Block> REINFORCED_SPONGE_FROGLIGHT =
+        registerBlock("reinforced_sponge_froglight", Block::new, reinforcedFroglightProperties());
 
     /**
      * The two Wither Altar summon receptacles (#247) - the vanilla summon T rendered as

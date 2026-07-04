@@ -235,18 +235,25 @@ public final class PFCreativeTabs {
                         output.accept(PFItems.WITHER_SKELETON_SKULL_CATALYST.get());
                         output.accept(PFItems.DRAGON_BREATH_CATALYST.get());
                         // Dragon altar (#249): reinforced froglights, crystal socket, hatch.
-                        output.accept(PFItems.REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT.get());
-                        output.accept(PFItems.REINFORCED_NETHER_STAR_FROGLIGHT.get());
+                        output.accept(PFItems.REINFORCED_OBSIDIAN_FROGLIGHT.get());
+                        output.accept(PFItems.REINFORCED_END_STONE_FROGLIGHT.get());
                         output.accept(PFItems.END_CRYSTAL_RECEPTACLE.get());
                         output.accept(PFItems.END_DRAGON_ALTAR_HATCH.get());
                         // Wither altar (#247): reinforced froglights, receptacles,
                         // hatch, and the Withered Star capstone.
                         output.accept(PFItems.REINFORCED_SOUL_SAND_FROGLIGHT.get());
-                        output.accept(PFItems.REINFORCED_BLAZE_ROD_FROGLIGHT.get());
+                        output.accept(PFItems.REINFORCED_GLOWSTONE_FROGLIGHT.get());
                         output.accept(PFItems.SOUL_SAND_RECEPTACLE.get());
                         output.accept(PFItems.WITHER_SKULL_RECEPTACLE.get());
                         output.accept(PFItems.WITHER_ALTAR_HATCH.get());
                         output.accept(PFItems.WITHERED_STAR.get());
+                        // Phase 4b altars (#279/#280): the Shrieker Pit + Monument
+                        // Well reinforced froglights (their receptacles/hatches/
+                        // capstones join here as they land).
+                        output.accept(PFItems.REINFORCED_SCULK_FROGLIGHT.get());
+                        output.accept(PFItems.REINFORCED_ECHO_SHARD_FROGLIGHT.get());
+                        output.accept(PFItems.REINFORCED_PRISMARINE_FROGLIGHT.get());
+                        output.accept(PFItems.REINFORCED_SPONGE_FROGLIGHT.get());
                     }
 
                     // ---------------- 8. Spawn eggs ----------------
