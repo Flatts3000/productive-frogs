@@ -1,0 +1,12 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "productivefrogs:item/wither_frog_spawn_egg",
+    "tints": [
+      {
+        "type": "minecraft:constant",
+        "value": -11907496
+      }
+    ]
+  }
+}

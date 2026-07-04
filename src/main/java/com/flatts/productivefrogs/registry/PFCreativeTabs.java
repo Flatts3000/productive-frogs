@@ -257,6 +257,9 @@ public final class PFCreativeTabs {
                         for (var entry : PFItems.PREDATOR_FROG_SPAWN_EGGS.values()) {
                             output.accept(entry.get());
                         }
+                        for (var entry : PFItems.APEX_FROG_SPAWN_EGGS.values()) {
+                            output.accept(entry.get());
+                        }
                     }
                     for (var entry : PFItems.RESOURCE_TADPOLE_SPAWN_EGGS.values()) {
                         output.accept(entry.get());
@@ -266,6 +269,9 @@ public final class PFCreativeTabs {
                     }
                     if (PFConfig.predatorsEnabled()) {
                         for (var entry : PFItems.PREDATOR_TADPOLE_SPAWN_EGGS.values()) {
+                            output.accept(entry.get());
+                        }
+                        for (var entry : PFItems.APEX_TADPOLE_SPAWN_EGGS.values()) {
                             output.accept(entry.get());
                         }
                     }

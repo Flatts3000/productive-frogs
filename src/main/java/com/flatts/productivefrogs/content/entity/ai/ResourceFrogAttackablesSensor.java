@@ -93,6 +93,12 @@ public class ResourceFrogAttackablesSensor extends FrogAttackablesSensor {
                 return PFShootTongue.isEligiblePrey(frog, p, target)
                     && target.closerThan(frog, reachRadius(frog));
             }
+            case com.flatts.productivefrogs.data.FrogKind.Apex a -> {
+                // An Apex eats ONLY its own boss (Phase 4) - in practice at its
+                // altar, but the gate holds anywhere (shared with the tongue).
+                return PFShootTongue.isEligiblePrey(frog, a, target)
+                    && target.closerThan(frog, reachRadius(frog));
+            }
             case com.flatts.productivefrogs.data.FrogKind.Resource r -> {
                 if (!Frog.canEat(target)) {
                     return false;

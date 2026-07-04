@@ -26,7 +26,11 @@ import org.jetbrains.annotations.Nullable;
  *       {@code midas} flag. Eats Mimic Slimes, breeds true with itself only.</li>
  *   <li>{@link Predator} - the four tier-2 predator frogs (#281): Prowler
  *       (overworld), Cinder (nether), Gulper (aquatic), Rift (end). Obtained by a
- *       designated resource-species cross; breeds true with its own kind.</li>
+ *       designated resource-species cross; breeds true with its own kind, plus
+ *       the four designated predator crosses that produce Apex frogs (Phase 4).</li>
+ *   <li>{@link Apex} - the four tier-3 boss frogs (#281 Phase 4): Wither, Dragon,
+ *       Elder, Warden. Obtained by a designated cross-environment predator pair;
+ *       breeds true; each is the key that arms its boss's altar.</li>
  * </ul>
  *
  * <p><b>Identity string.</b> {@link #id()} is the stable serialized form used in
@@ -45,7 +49,7 @@ import org.jetbrains.annotations.Nullable;
  * Midas falls back to VOID (its historical carrier), a predator to its breeding
  * pair's anchor species.
  */
-public sealed interface FrogKind permits FrogKind.Resource, FrogKind.Midas, FrogKind.Predator {
+public sealed interface FrogKind permits FrogKind.Resource, FrogKind.Midas, FrogKind.Predator, FrogKind.Apex {
 
     /** Stable serialized id, e.g. {@code "resource/bog"}, {@code "midas"}, {@code "predator/prowler"}. */
     String id();
@@ -326,14 +330,19 @@ public sealed interface FrogKind permits FrogKind.Resource, FrogKind.Midas, Frog
 
         @Override
         public boolean canMateWith(FrogKind other) {
-            // Predators breed true with their own kind only.
-            return other == this;
+            // Breed true with our own kind, or one of the four designated
+            // cross-environment predator pairs that conceive an Apex (Phase 4).
+            return other == this
+                || (other instanceof Predator p && Apex.fromCross(this, p) != null);
         }
 
         @Override
         @Nullable
         public FrogKind offspringWith(FrogKind mate) {
-            return mate == this ? this : null;
+            if (mate == this) {
+                return this;
+            }
+            return mate instanceof Predator p ? Apex.fromCross(this, p) : null;
         }
 
         /**
@@ -346,6 +355,103 @@ public sealed interface FrogKind permits FrogKind.Resource, FrogKind.Midas, Frog
             for (Predator p : values()) {
                 if ((p.anchor == a && p.partner == b) || (p.anchor == b && p.partner == a)) {
                     return p;
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * The four tier-3 Apex Frogs (#281 Phase 4), one per boss, each mapped to
+     * the designated cross-environment predator pair that produces it (settled
+     * on #281): Cinder x Prowler -> Wither, Rift x Cinder -> Dragon,
+     * Gulper x Prowler -> Elder, Prowler x Rift -> Warden. An Apex breeds true
+     * with its own kind; installed on its boss's altar it is the key that lets
+     * the altar run (Phase 4 retrofit). {@link #bossEntityId()} names the boss
+     * it is keyed to - the altar's install gate matches on it.
+     */
+    enum Apex implements FrogKind {
+        WITHER("wither", Predator.CINDER, Predator.PROWLER, "minecraft:wither", 0xFF4A4E58),
+        DRAGON("dragon", Predator.RIFT, Predator.CINDER, "minecraft:ender_dragon", 0xFF2D2540),
+        ELDER("elder", Predator.GULPER, Predator.PROWLER, "minecraft:elder_guardian", 0xFF4FA79B),
+        WARDEN("warden", Predator.PROWLER, Predator.RIFT, "minecraft:warden", 0xFF0F4A52);
+
+        private final String key;
+        private final String id;
+        private final Predator anchor;
+        private final Predator partner;
+        private final String bossEntityId;
+        private final int tintArgb;
+
+        Apex(String key, Predator anchor, Predator partner, String bossEntityId, int tintArgb) {
+            this.key = key;
+            this.id = "apex/" + key;
+            this.anchor = anchor;
+            this.partner = partner;
+            this.bossEntityId = bossEntityId;
+            this.tintArgb = tintArgb;
+        }
+
+        /** The lang/registry key fragment ({@code wither}, {@code dragon}, ...). */
+        public String key() {
+            return key;
+        }
+
+        /** The designated predator breeding pair, anchor first (also the fallback chain). */
+        public Predator anchor() {
+            return anchor;
+        }
+
+        public Predator partner() {
+            return partner;
+        }
+
+        /** The boss this Apex is keyed to ({@code minecraft:wither}, ...); the altar install gate matches on it. */
+        public String bossEntityId() {
+            return bossEntityId;
+        }
+
+        @Override
+        public String id() {
+            return id;
+        }
+
+        @Override
+        public String nameSuffix() {
+            return key;
+        }
+
+        @Override
+        public Category fallbackCategory() {
+            return anchor.fallbackCategory();
+        }
+
+        @Override
+        public int tintArgb() {
+            return tintArgb;
+        }
+
+        @Override
+        public boolean canMateWith(FrogKind other) {
+            // Apex frogs breed true with their own kind only - the top of the ladder.
+            return other == this;
+        }
+
+        @Override
+        @Nullable
+        public FrogKind offspringWith(FrogKind mate) {
+            return mate == this ? this : null;
+        }
+
+        /**
+         * The Apex a designated cross-environment predator pair produces, or null
+         * when {@code (a, b)} is not one of the four settled pairs. Unordered.
+         */
+        @Nullable
+        public static Apex fromCross(Predator a, Predator b) {
+            for (Apex apex : values()) {
+                if ((apex.anchor == a && apex.partner == b) || (apex.anchor == b && apex.partner == a)) {
+                    return apex;
                 }
             }
             return null;
@@ -370,6 +476,7 @@ public sealed interface FrogKind permits FrogKind.Resource, FrogKind.Midas, Frog
             }
             all.add(MIDAS);
             all.addAll(java.util.List.of(Predator.values()));
+            all.addAll(java.util.List.of(Apex.values()));
             ALL = java.util.List.copyOf(all);
             for (FrogKind k : ALL) {
                 BY_ID.put(k.id(), k);

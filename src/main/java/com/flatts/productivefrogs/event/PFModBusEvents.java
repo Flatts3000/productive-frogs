@@ -336,6 +336,20 @@ public final class PFModBusEvents {
             (be, side) -> be.crystalResource()
         );
 
+        // Boss altar Liquid Experience banks (#281 Phase 4): extract-only -
+        // the altar's XP payout accumulates as liquid_experience in the hatch
+        // dock; pipes drain it from any face. Insert is a no-op.
+        event.registerBlockEntity(
+            Capabilities.Fluid.BLOCK,
+            PFBlockEntities.END_DRAGON_ALTAR_HATCH.get(),
+            (be, side) -> be.dock().fluidResource()
+        );
+        event.registerBlockEntity(
+            Capabilities.Fluid.BLOCK,
+            PFBlockEntities.WITHER_ALTAR_HATCH.get(),
+            (be, side) -> be.dock().fluidResource()
+        );
+
         // End Dragon Altar Hatch (#249): the altar's output - pipes pull the
         // dragon's drops from any face (chest-style inventory).
         event.registerBlockEntity(

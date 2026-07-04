@@ -41,6 +41,34 @@ final class BossAltarTests {
         PFGameTests.test("wither_altar_validates_when_rotated", "wither_altar", Rotation.CLOCKWISE_90, 100, BossAltarTests::witherAltarValidatesWhenRotated);
         PFGameTests.test("wither_altar_rejects_missing_froglight", "wither_altar", 100, BossAltarTests::witherAltarRejectsMissingFroglight);
         PFGameTests.test("wither_altar_summon_deposits_drops", "wither_altar", 320, BossAltarTests::witherAltarSummonDepositsDrops);
+        PFGameTests.test("dragon_altar_without_apex_never_summons", "dragon_altar", 100,
+            BossAltarTests::dragonAltarWithoutApexNeverSummons);
+        PFGameTests.test("apex_install_reject_release_round_trip", "dragon_altar", 100,
+            BossAltarTests::apexInstallRejectReleaseRoundTrip);
+        PFGameTests.test("apex_eats_only_its_own_boss", 40, BossAltarTests::apexEatsOnlyItsOwnBoss);
+    }
+
+    /**
+     * Build a filled net around a fresh (never world-added) Apex frog with the
+     * given stats and install it on {@code dock}. The install path is the real
+     * one (net NBT -> dock), so stats ride along for the release round-trip.
+     */
+    private static boolean installApex(GameTestHelper helper,
+            com.flatts.productivefrogs.content.block.entity.AltarApexDock dock,
+            com.flatts.productivefrogs.data.FrogKind.Apex apex, int appetite, int bounty, int reach) {
+        com.flatts.productivefrogs.content.entity.ResourceFrog frog =
+            com.flatts.productivefrogs.registry.PFEntities.RESOURCE_FROG.get()
+                .create(helper.getLevel(), net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
+        if (frog == null) {
+            helper.fail("could not create the apex frog");
+            return false;
+        }
+        frog.setKind(apex);
+        frog.setStats(appetite, bounty, reach);
+        ItemStack net = new ItemStack(PFItems.FROG_NET.get());
+        com.flatts.productivefrogs.content.item.EntityNetItem.captureEntity(frog, net);
+        frog.discard();
+        return dock.tryInstall(net);
     }
 
     /**
@@ -190,6 +218,16 @@ final class BossAltarTests {
         BlockPos hatch = findAltarHatch(helper);
         helper.assertTrue(hatch != null, "no End Dragon Altar Hatch in the loaded structure");
         BlockPos absHatch = helper.absolutePos(hatch);
+        // Phase 4: the altar runs only with its Dragon Apex Frog installed.
+        if (helper.getLevel().getBlockEntity(absHatch)
+                instanceof com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity hb) {
+            helper.assertTrue(installApex(helper, hb.dock(),
+                    com.flatts.productivefrogs.data.FrogKind.Apex.DRAGON, 1, 1, 1),
+                "Dragon Apex install failed");
+        } else {
+            helper.fail("hatch block entity missing before install");
+            return;
+        }
         // Ensure all four receptacles are primed with an End Crystal - this triggers the
         // summon. (The fixture may already ship armed; only fill the empty ones.)
         for (BlockPos rp : com.flatts.productivefrogs.content.multiblock.DragonAltarValidator.receptacles(absHatch)) {
@@ -209,8 +247,15 @@ final class BossAltarTests {
                 "hatch block entity missing");
             net.minecraft.world.Container c = (net.minecraft.world.Container) be;
             helper.assertTrue(containerHas(c, PFItems.PRINCESS_KISS.get()), "hatch missing the Princess's Kiss after summon");
-            helper.assertTrue(containsFroglightVariant(c, "dragon_breath"), "hatch missing the Dragon Breath Froglight after summon");
-            helper.assertTrue(containsFroglightVariant(c, "dragon_egg"), "hatch missing the Dragon Egg Froglight after summon");
+            // Phase 4 raw-drops ruling: the boss materials land raw, not as Froglights.
+            helper.assertTrue(containerHas(c, Items.DRAGON_BREATH), "hatch missing raw Dragon's Breath after summon");
+            helper.assertTrue(containerHas(c, Items.DRAGON_EGG), "hatch missing the raw Dragon Egg after summon");
+            // Phase 4 LE ruling: the XP payout banks as Liquid Experience (20 mB/point).
+            var dock = ((com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity) be).dock();
+            int expectedMb = com.flatts.productivefrogs.content.fluid.LiquidExperienceFluid
+                .pointsToMb(com.flatts.productivefrogs.PFConfig.dragonAltarXpReward());
+            helper.assertTrue(dock.liquidXpMb() == expectedMb,
+                "LE bank holds " + dock.liquidXpMb() + " mB, expected " + expectedMb);
         });
     }
 
@@ -265,6 +310,16 @@ final class BossAltarTests {
         BlockPos hatch = findWitherAltarHatch(helper);
         helper.assertTrue(hatch != null, "no Wither Altar Hatch in the loaded structure");
         BlockPos absHatch = helper.absolutePos(hatch);
+        // Phase 4: the altar runs only with its Wither Apex Frog installed.
+        if (helper.getLevel().getBlockEntity(absHatch)
+                instanceof com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity hb) {
+            helper.assertTrue(installApex(helper, hb.dock(),
+                    com.flatts.productivefrogs.data.FrogKind.Apex.WITHER, 1, 1, 1),
+                "Wither Apex install failed");
+        } else {
+            helper.fail("hatch block entity missing before install");
+            return;
+        }
         // Prime each receptacle with its accepted item (soul sand or a wither skeleton skull).
         for (BlockPos rp : com.flatts.productivefrogs.content.multiblock.WitherAltarValidator.receptacles(absHatch)) {
             if (helper.getLevel().getBlockState(rp).getBlock()
@@ -284,12 +339,138 @@ final class BossAltarTests {
             helper.assertTrue(be instanceof com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity,
                 "hatch block entity missing");
             net.minecraft.world.Container c = (net.minecraft.world.Container) be;
-            helper.assertTrue(containsFroglightVariant(c, "nether_star"),
-                "hatch missing the Nether Star Froglight after summon");
-            // The star is paid out only as the Froglight - a raw Nether Star must be stripped.
-            helper.assertTrue(!containerHas(c, Items.NETHER_STAR),
-                "raw Nether Star leaked into the hatch (should be stripped from the wither loot)");
+            // Phase 4 raw-drops ruling: the wither's own loot pays out UNSTRIPPED -
+            // the raw Nether Star included, and no Froglight payout.
+            helper.assertTrue(containerHas(c, Items.NETHER_STAR),
+                "hatch missing the raw Nether Star after summon");
+            var dock = ((com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity) be).dock();
+            int expectedMb = com.flatts.productivefrogs.content.fluid.LiquidExperienceFluid
+                .pointsToMb(com.flatts.productivefrogs.PFConfig.witherAltarXpReward());
+            helper.assertTrue(dock.liquidXpMb() == expectedMb,
+                "LE bank holds " + dock.liquidXpMb() + " mB, expected " + expectedMb);
         });
+    }
+
+    /**
+     * Phase 4 gate: a complete, fully-fuelled altar with NO Apex installed
+     * never summons. Ticks the summon brain manually well past a full summon
+     * cycle - the receptacles stay loaded and nothing is paid out.
+     */
+    private static void dragonAltarWithoutApexNeverSummons(GameTestHelper helper) {
+        BlockPos hatch = findAltarHatch(helper);
+        helper.assertTrue(hatch != null, "no End Dragon Altar Hatch in the loaded structure");
+        BlockPos absHatch = helper.absolutePos(hatch);
+        for (BlockPos rp : com.flatts.productivefrogs.content.multiblock.DragonAltarValidator.receptacles(absHatch)) {
+            if (helper.getLevel().getBlockEntity(rp)
+                    instanceof com.flatts.productivefrogs.content.block.entity.EndCrystalReceptacleBlockEntity r) {
+                if (!r.isFilled()) {
+                    r.tryInsert(new ItemStack(Items.END_CRYSTAL));
+                }
+            }
+        }
+        if (!(helper.getLevel().getBlockEntity(absHatch)
+                instanceof com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity hb)) {
+            helper.fail("hatch block entity missing");
+            return;
+        }
+        // The shipped fixture bakes leftover chest contents; assert from clean.
+        ((net.minecraft.world.Container) hb).clearContent();
+        int cycle = com.flatts.productivefrogs.PFConfig.dragonAltarSummonTicks() + 60;
+        for (int i = 0; i < cycle; i++) {
+            com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity.serverTick(
+                helper.getLevel(), absHatch, helper.getLevel().getBlockState(absHatch), hb);
+        }
+        net.minecraft.world.Container c = (net.minecraft.world.Container) hb;
+        helper.assertTrue(!containerHas(c, Items.DRAGON_BREATH),
+            "un-armed altar paid out (no Apex installed)");
+        helper.assertTrue(hb.dock().liquidXpMb() == 0, "un-armed altar banked XP");
+        for (BlockPos rp : com.flatts.productivefrogs.content.multiblock.DragonAltarValidator.receptacles(absHatch)) {
+            if (helper.getLevel().getBlockEntity(rp)
+                    instanceof com.flatts.productivefrogs.content.block.entity.EndCrystalReceptacleBlockEntity r) {
+                helper.assertTrue(r.isFilled(), "un-armed altar consumed a crystal at " + rp);
+            }
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Install round-trip (Phase 4): the WRONG Apex is refused; the right one
+     * installs; breaking the hatch respawns the REAL frog where the altar
+     * stood, kind + bred stats intact (the #210 conservation rule).
+     */
+    private static void apexInstallRejectReleaseRoundTrip(GameTestHelper helper) {
+        BlockPos hatch = findAltarHatch(helper);
+        helper.assertTrue(hatch != null, "no End Dragon Altar Hatch in the loaded structure");
+        BlockPos absHatch = helper.absolutePos(hatch);
+        if (!(helper.getLevel().getBlockEntity(absHatch)
+                instanceof com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockEntity hb)) {
+            helper.fail("hatch block entity missing");
+            return;
+        }
+        // Wrong kind: a Wither Apex on the DRAGON altar must be refused.
+        helper.assertTrue(!installApex(helper, hb.dock(),
+                com.flatts.productivefrogs.data.FrogKind.Apex.WITHER, 1, 1, 1),
+            "the Dragon altar accepted a Wither Apex");
+        // Right kind, with distinctive bred stats for the conservation check.
+        helper.assertTrue(installApex(helper, hb.dock(),
+                com.flatts.productivefrogs.data.FrogKind.Apex.DRAGON, 4, 6, 2),
+            "the Dragon altar refused its own Apex");
+        // Break the hatch: the real frog respawns where the altar stood.
+        helper.destroyBlock(hatch);
+        helper.succeedWhen(() -> {
+            var frogs = helper.getLevel().getEntitiesOfClass(
+                com.flatts.productivefrogs.content.entity.ResourceFrog.class,
+                new net.minecraft.world.phys.AABB(absHatch).inflate(2));
+            helper.assertTrue(!frogs.isEmpty(), "no frog released from the broken hatch");
+            var frog = frogs.get(0);
+            helper.assertTrue(frog.getKind() == com.flatts.productivefrogs.data.FrogKind.Apex.DRAGON,
+                "released frog kind is " + frog.getKind().id());
+            helper.assertTrue(frog.getAppetite() == 4 && frog.getBounty() == 6 && frog.getReach() == 2,
+                "released frog lost its stats: A" + frog.getAppetite()
+                    + "/B" + frog.getBounty() + "/R" + frog.getReach());
+        });
+    }
+
+    /**
+     * Apex eat gating (Phase 4, both-layer rule): an Apex's edibility admits
+     * ONLY its own boss - never another boss, never a predator's prey - and a
+     * predator never admits a boss (bosses are altar prey, not registry prey).
+     */
+    private static void apexEatsOnlyItsOwnBoss(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var frog = com.flatts.productivefrogs.registry.PFEntities.RESOURCE_FROG.get()
+            .create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
+        var wither = net.minecraft.world.entity.EntityType.WITHER
+            .create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
+        var zombie = net.minecraft.world.entity.EntityType.ZOMBIE
+            .create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
+        if (frog == null || wither == null || zombie == null) {
+            helper.fail("entity creation failed");
+            return;
+        }
+        try {
+            frog.setKind(com.flatts.productivefrogs.data.FrogKind.Apex.WITHER);
+            var apexWither = com.flatts.productivefrogs.data.FrogKind.Apex.WITHER;
+            var apexDragon = com.flatts.productivefrogs.data.FrogKind.Apex.DRAGON;
+            helper.assertTrue(
+                com.flatts.productivefrogs.content.entity.ai.PFShootTongue.isEligiblePrey(frog, apexWither, wither),
+                "the Wither Apex must admit the Wither");
+            helper.assertTrue(
+                !com.flatts.productivefrogs.content.entity.ai.PFShootTongue.isEligiblePrey(frog, apexWither, zombie),
+                "the Wither Apex must not admit ordinary prey");
+            helper.assertTrue(
+                !com.flatts.productivefrogs.content.entity.ai.PFShootTongue.isEligiblePrey(frog, apexDragon, wither),
+                "the Dragon Apex must not admit the Wither");
+            helper.assertTrue(
+                !com.flatts.productivefrogs.content.entity.ai.PFShootTongue.isEligiblePrey(
+                    frog, com.flatts.productivefrogs.data.FrogKind.Predator.PROWLER, wither),
+                "a predator must never admit a boss");
+        } finally {
+            frog.discard();
+            wither.discard();
+            zombie.discard();
+        }
+        helper.succeed();
     }
 
     // ---- Shared helpers (carried from the 1.21.1 PFGameTests monolith) ----
