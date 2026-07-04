@@ -96,6 +96,11 @@ public final class PFClientEvents {
         // Witherbane (#247): the Wither Altar's oversized, infernal-tinted display frog.
         event.registerEntityRenderer(PFEntities.WITHERBANE.get(),
             com.flatts.productivefrogs.client.renderer.WitherbaneFrogRenderer::new);
+        // Wardenbane (#279) + Elderbane (#280): the Phase 4b altars' display frogs.
+        event.registerEntityRenderer(PFEntities.WARDENBANE.get(),
+            com.flatts.productivefrogs.client.renderer.WardenbaneFrogRenderer::new);
+        event.registerEntityRenderer(PFEntities.ELDERBANE.get(),
+            com.flatts.productivefrogs.client.renderer.ElderbaneFrogRenderer::new);
         event.registerEntityRenderer(PFEntities.RESOURCE_SLIME.get(), ResourceSlimeRenderer::new);
         // Mimic Slime (#253): vanilla body + an item-tinted translucent shell.
         event.registerEntityRenderer(PFEntities.MIMIC_SLIME.get(),
@@ -143,11 +148,27 @@ public final class PFClientEvents {
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.WITHER_ALTAR_HATCH.get(),
             com.flatts.productivefrogs.client.renderer.WitherAltarHatchRenderer::new);
-        // Wither summon receptacles (#247): the held item (soul sand / wither skull)
-        // rendered on the frog-facing face. See client/renderer/WitherSummonReceptacleRenderer.
+        // Warden Altar Hatch (#279): the Warden replica rising out of the pit floor.
+        // One generic GrowingReplicaRenderer serves both Phase 4b altars.
+        event.registerBlockEntityRenderer(
+            com.flatts.productivefrogs.registry.PFBlockEntities.WARDEN_ALTAR_HATCH.get(),
+            ctx -> new com.flatts.productivefrogs.client.renderer.GrowingReplicaRenderer<>(ctx,
+                net.minecraft.world.entity.EntityType.WARDEN,
+                new net.minecraft.world.phys.Vec3(0.0, 0.0, 0.0), 1.2,
+                com.flatts.productivefrogs.PFConfig::wardenAltarSummonTicks));
+        // Elder Guardian Altar Hatch (#280): the Elder Guardian replica swelling mid-tank.
+        event.registerBlockEntityRenderer(
+            com.flatts.productivefrogs.registry.PFBlockEntities.ELDER_ALTAR_HATCH.get(),
+            ctx -> new com.flatts.productivefrogs.client.renderer.GrowingReplicaRenderer<>(ctx,
+                net.minecraft.world.entity.EntityType.ELDER_GUARDIAN,
+                new net.minecraft.world.phys.Vec3(0.0, 0.9, 0.0), 0.0,
+                com.flatts.productivefrogs.PFConfig::elderAltarSummonTicks));
+        // Summon receptacles: the held item (soul sand / wither skull / shrieker /
+        // prismarine crystals) rendered on the frog-facing face. One BE type backs
+        // all four receptacle blocks, so this covers the Phase 4b receptacles too.
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.WITHER_SUMMON_RECEPTACLE.get(),
-            com.flatts.productivefrogs.client.renderer.WitherSummonReceptacleRenderer::new);
+            com.flatts.productivefrogs.client.renderer.SummonReceptacleRenderer::new);
         // Terrarium Controller: a red outline around the shell block the validator
         // flagged, shown while diagnosing. See client/renderer/TerrariumControllerRenderer.
         event.registerBlockEntityRenderer(

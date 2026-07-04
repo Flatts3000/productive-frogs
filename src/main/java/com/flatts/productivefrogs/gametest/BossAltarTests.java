@@ -46,6 +46,12 @@ final class BossAltarTests {
         PFGameTests.test("apex_install_reject_release_round_trip", "dragon_altar", 100,
             BossAltarTests::apexInstallRejectReleaseRoundTrip);
         PFGameTests.test("apex_eats_only_its_own_boss", 40, BossAltarTests::apexEatsOnlyItsOwnBoss);
+        PFGameTests.test("warden_altar_validates_when_built", "warden_altar", 100, BossAltarTests::wardenAltarValidatesWhenBuilt);
+        PFGameTests.test("warden_altar_rejects_missing_froglight", "warden_altar", 100, BossAltarTests::wardenAltarRejectsMissingFroglight);
+        PFGameTests.test("warden_altar_summon_deposits_drops", "warden_altar", 320, BossAltarTests::wardenAltarSummonDepositsDrops);
+        PFGameTests.test("elder_altar_validates_when_built", "elder_altar", 100, BossAltarTests::elderAltarValidatesWhenBuilt);
+        PFGameTests.test("elder_altar_rejects_drained_tank", "elder_altar", 100, BossAltarTests::elderAltarRejectsDrainedTank);
+        PFGameTests.test("elder_altar_summon_deposits_drops", "elder_altar", 360, BossAltarTests::elderAltarSummonDepositsDrops);
     }
 
     /**
@@ -323,9 +329,9 @@ final class BossAltarTests {
         // Prime each receptacle with its accepted item (soul sand or a wither skeleton skull).
         for (BlockPos rp : com.flatts.productivefrogs.content.multiblock.WitherAltarValidator.receptacles(absHatch)) {
             if (helper.getLevel().getBlockState(rp).getBlock()
-                        instanceof com.flatts.productivefrogs.content.block.WitherSummonReceptacleBlock wb
+                        instanceof com.flatts.productivefrogs.content.block.SummonReceptacleBlock wb
                     && helper.getLevel().getBlockEntity(rp)
-                        instanceof com.flatts.productivefrogs.content.block.entity.WitherSummonReceptacleBlockEntity r) {
+                        instanceof com.flatts.productivefrogs.content.block.entity.SummonReceptacleBlockEntity r) {
                 if (!r.isFilled()) {
                     r.tryInsert(new ItemStack(wb.accepted()));
                 }
@@ -493,6 +499,155 @@ final class BossAltarTests {
                 instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity be) {
             be.setVariantId(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, variantPath));
         }
+    }
+
+    // ---- Warden Altar - the Shrieker Pit (#279) ------------------------------
+
+    /** The shipped warden_altar fixture must validate (locks layout <-> validator agreement). */
+    private static void wardenAltarValidatesWhenBuilt(GameTestHelper helper) {
+        helper.succeedWhen(() -> {
+            BlockPos hatch = findHatch(helper, PFBlocks.WARDEN_ALTAR_HATCH.get());
+            helper.assertTrue(hatch != null, "no Warden Altar Hatch in the loaded structure");
+            com.flatts.productivefrogs.content.multiblock.WardenAltarValidator.Result r =
+                com.flatts.productivefrogs.content.multiblock.WardenAltarValidator
+                    .validate(helper.getLevel(), helper.absolutePos(hatch));
+            helper.assertTrue(r.valid(), "warden_altar must validate at " + hatch + "; validator says: " + r.detail());
+        });
+    }
+
+    /** Strictness: knocking out one lining froglight must make the pit fail validation. */
+    private static void wardenAltarRejectsMissingFroglight(GameTestHelper helper) {
+        BlockPos hatch = findHatch(helper, PFBlocks.WARDEN_ALTAR_HATCH.get());
+        helper.assertTrue(hatch != null, "no Warden Altar Hatch in the loaded structure");
+        helper.setBlock(hatch.offset(2, 0, 0), Blocks.AIR); // a shaft-lining sculk froglight
+        helper.assertTrue(
+            !com.flatts.productivefrogs.content.multiblock.WardenAltarValidator
+                .validate(helper.getLevel(), helper.absolutePos(hatch)).valid(),
+            "a warden altar missing a lining froglight must not validate (strictness)");
+        helper.succeed();
+    }
+
+    /**
+     * End-to-end: an armed pit with all four Shrieker Receptacles loaded runs a
+     * summon and deposits the explicit Echo Shard (the renewable-shards payout)
+     * with the XP banked as Liquid Experience.
+     */
+    private static void wardenAltarSummonDepositsDrops(GameTestHelper helper) {
+        BlockPos hatch = findHatch(helper, PFBlocks.WARDEN_ALTAR_HATCH.get());
+        helper.assertTrue(hatch != null, "no Warden Altar Hatch in the loaded structure");
+        BlockPos absHatch = helper.absolutePos(hatch);
+        if (helper.getLevel().getBlockEntity(absHatch)
+                instanceof com.flatts.productivefrogs.content.block.entity.WardenAltarHatchBlockEntity hb) {
+            helper.assertTrue(installApex(helper, hb.dock(),
+                    com.flatts.productivefrogs.data.FrogKind.Apex.WARDEN, 1, 1, 1),
+                "Warden Apex install failed");
+        } else {
+            helper.fail("hatch block entity missing before install");
+            return;
+        }
+        primeReceptacles(helper,
+            com.flatts.productivefrogs.content.multiblock.WardenAltarValidator.receptacles(absHatch));
+        helper.succeedWhen(() -> {
+            net.minecraft.world.level.block.entity.BlockEntity be = helper.getLevel().getBlockEntity(absHatch);
+            helper.assertTrue(be instanceof com.flatts.productivefrogs.content.block.entity.WardenAltarHatchBlockEntity,
+                "hatch block entity missing");
+            net.minecraft.world.Container c = (net.minecraft.world.Container) be;
+            helper.assertTrue(containerHas(c, Items.ECHO_SHARD),
+                "hatch missing the explicit Echo Shard after summon");
+            var dock = ((com.flatts.productivefrogs.content.block.entity.WardenAltarHatchBlockEntity) be).dock();
+            int expectedMb = com.flatts.productivefrogs.content.fluid.LiquidExperienceFluid
+                .pointsToMb(com.flatts.productivefrogs.PFConfig.wardenAltarXpReward());
+            helper.assertTrue(dock.liquidXpMb() == expectedMb,
+                "LE bank holds " + dock.liquidXpMb() + " mB, expected " + expectedMb);
+        });
+    }
+
+    // ---- Elder Guardian Altar - the Monument Well (#280) ----------------------
+
+    /** The shipped elder_altar fixture must validate (locks layout <-> validator agreement, incl. the water fill). */
+    private static void elderAltarValidatesWhenBuilt(GameTestHelper helper) {
+        helper.succeedWhen(() -> {
+            BlockPos hatch = findHatch(helper, PFBlocks.ELDER_ALTAR_HATCH.get());
+            helper.assertTrue(hatch != null, "no Elder Altar Hatch in the loaded structure");
+            com.flatts.productivefrogs.content.multiblock.ElderAltarValidator.Result r =
+                com.flatts.productivefrogs.content.multiblock.ElderAltarValidator
+                    .validate(helper.getLevel(), helper.absolutePos(hatch));
+            helper.assertTrue(r.valid(), "elder_altar must validate at " + hatch + "; validator says: " + r.detail());
+        });
+    }
+
+    /** The tank must actually be flooded: draining one interior source must fail validation. */
+    private static void elderAltarRejectsDrainedTank(GameTestHelper helper) {
+        BlockPos hatch = findHatch(helper, PFBlocks.ELDER_ALTAR_HATCH.get());
+        helper.assertTrue(hatch != null, "no Elder Altar Hatch in the loaded structure");
+        helper.setBlock(hatch.offset(1, 1, 1), Blocks.AIR); // drain one interior water source
+        helper.assertTrue(
+            !com.flatts.productivefrogs.content.multiblock.ElderAltarValidator
+                .validate(helper.getLevel(), helper.absolutePos(hatch)).valid(),
+            "a drained monument well must not validate");
+        helper.succeed();
+    }
+
+    /**
+     * End-to-end: an armed well with all four Tide Offering Receptacles loaded runs
+     * a summon and deposits the Elder Guardian loot (the unconditional Wet
+     * Sponge) with the XP banked as Liquid Experience.
+     */
+    private static void elderAltarSummonDepositsDrops(GameTestHelper helper) {
+        BlockPos hatch = findHatch(helper, PFBlocks.ELDER_ALTAR_HATCH.get());
+        helper.assertTrue(hatch != null, "no Elder Altar Hatch in the loaded structure");
+        BlockPos absHatch = helper.absolutePos(hatch);
+        if (helper.getLevel().getBlockEntity(absHatch)
+                instanceof com.flatts.productivefrogs.content.block.entity.ElderAltarHatchBlockEntity hb) {
+            helper.assertTrue(installApex(helper, hb.dock(),
+                    com.flatts.productivefrogs.data.FrogKind.Apex.ELDER, 1, 1, 1),
+                "Elder Apex install failed");
+        } else {
+            helper.fail("hatch block entity missing before install");
+            return;
+        }
+        primeReceptacles(helper,
+            com.flatts.productivefrogs.content.multiblock.ElderAltarValidator.receptacles(absHatch));
+        helper.succeedWhen(() -> {
+            net.minecraft.world.level.block.entity.BlockEntity be = helper.getLevel().getBlockEntity(absHatch);
+            helper.assertTrue(be instanceof com.flatts.productivefrogs.content.block.entity.ElderAltarHatchBlockEntity,
+                "hatch block entity missing");
+            net.minecraft.world.Container c = (net.minecraft.world.Container) be;
+            helper.assertTrue(containerHas(c, Items.WET_SPONGE),
+                "hatch missing the Wet Sponge after summon");
+            var dock = ((com.flatts.productivefrogs.content.block.entity.ElderAltarHatchBlockEntity) be).dock();
+            int expectedMb = com.flatts.productivefrogs.content.fluid.LiquidExperienceFluid
+                .pointsToMb(com.flatts.productivefrogs.PFConfig.elderAltarXpReward());
+            helper.assertTrue(dock.liquidXpMb() == expectedMb,
+                "LE bank holds " + dock.liquidXpMb() + " mB, expected " + expectedMb);
+        });
+    }
+
+    /** Load every summon receptacle at {@code positions} with one of its accepted item. */
+    private static void primeReceptacles(GameTestHelper helper, BlockPos[] positions) {
+        for (BlockPos rp : positions) {
+            if (helper.getLevel().getBlockState(rp).getBlock()
+                        instanceof com.flatts.productivefrogs.content.block.SummonReceptacleBlock rb
+                    && helper.getLevel().getBlockEntity(rp)
+                        instanceof com.flatts.productivefrogs.content.block.entity.SummonReceptacleBlockEntity r) {
+                if (!r.isFilled()) {
+                    r.tryInsert(new ItemStack(rb.accepted()));
+                }
+                helper.assertTrue(r.isFilled(), "receptacle at " + rp + " could not be primed");
+            } else {
+                helper.fail("no summon receptacle at " + rp);
+            }
+        }
+    }
+
+    /** Find a Hatch of {@code block} within the loaded 5x5x5 structure (relative pos), or null. */
+    private static BlockPos findHatch(GameTestHelper helper, net.minecraft.world.level.block.Block block) {
+        for (BlockPos p : BlockPos.betweenClosed(new BlockPos(0, 0, 0), new BlockPos(4, 4, 4))) {
+            if (helper.getBlockState(p).is(block)) {
+                return p.immutable();
+            }
+        }
+        return null;
     }
 
     /** Find the altar Hatch within the loaded structure (relative pos), or null. */

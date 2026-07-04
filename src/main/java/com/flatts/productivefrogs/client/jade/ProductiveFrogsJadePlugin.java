@@ -146,10 +146,10 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             com.flatts.productivefrogs.content.block.CastingMoldBlock.class);
         registration.registerBlockComponent(provider,
             com.flatts.productivefrogs.content.block.ConfigurableFroglightBlock.class);
+        // One shared BossAltarHatchBlock backs every altar hatch; the provider
+        // dispatches on the hatch BE subclass.
         registration.registerBlockComponent(provider,
-            com.flatts.productivefrogs.content.block.EndDragonAltarHatchBlock.class);
-        registration.registerBlockComponent(provider,
-            com.flatts.productivefrogs.content.block.WitherAltarHatchBlock.class);
+            com.flatts.productivefrogs.content.block.BossAltarHatchBlock.class);
         registration.registerBlockComponent(provider,
             com.flatts.productivefrogs.content.block.TerrariumControllerBlock.class);
         registration.registerBlockComponent(provider,
@@ -241,6 +241,26 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 tooltip.add(Component.translatable(r.valid()
                     ? "productivefrogs.jade.wither_altar.ready"
                     : "productivefrogs.jade.wither_altar.incomplete", r.detail()));
+                return;
+            }
+            // Warden Altar Hatch (#279) + Elder Guardian Altar Hatch (#280): same
+            // pure client block-identity structure checks.
+            if (be instanceof com.flatts.productivefrogs.content.block.entity.WardenAltarHatchBlockEntity) {
+                com.flatts.productivefrogs.content.multiblock.WardenAltarValidator.Result r =
+                    com.flatts.productivefrogs.content.multiblock.WardenAltarValidator.validate(
+                        accessor.getLevel(), accessor.getPosition());
+                tooltip.add(Component.translatable(r.valid()
+                    ? "productivefrogs.jade.warden_altar.ready"
+                    : "productivefrogs.jade.warden_altar.incomplete", r.detail()));
+                return;
+            }
+            if (be instanceof com.flatts.productivefrogs.content.block.entity.ElderAltarHatchBlockEntity) {
+                com.flatts.productivefrogs.content.multiblock.ElderAltarValidator.Result r =
+                    com.flatts.productivefrogs.content.multiblock.ElderAltarValidator.validate(
+                        accessor.getLevel(), accessor.getPosition());
+                tooltip.add(Component.translatable(r.valid()
+                    ? "productivefrogs.jade.elder_altar.ready"
+                    : "productivefrogs.jade.elder_altar.incomplete", r.detail()));
                 return;
             }
             net.minecraft.nbt.CompoundTag data = accessor.getServerData();

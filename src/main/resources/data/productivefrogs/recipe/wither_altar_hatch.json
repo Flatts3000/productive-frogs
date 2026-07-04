@@ -9,12 +9,13 @@
   "category": "building",
   "group": "productivefrogs",
   "pattern": [
-    "OOO",
-    "OCO",
-    "OOO"
+    "OSO",
+    "SCS",
+    "OSO"
   ],
   "key": {
     "O": "minecraft:obsidian",
+    "S": "minecraft:soul_soil",
     "C": "minecraft:chest"
   },
   "result": {

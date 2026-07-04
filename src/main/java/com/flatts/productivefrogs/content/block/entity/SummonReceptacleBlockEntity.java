@@ -1,6 +1,6 @@
 package com.flatts.productivefrogs.content.block.entity;
 
-import com.flatts.productivefrogs.content.block.WitherSummonReceptacleBlock;
+import com.flatts.productivefrogs.content.block.SummonReceptacleBlock;
 import com.flatts.productivefrogs.content.multiblock.WitherAltarValidator;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -24,14 +24,14 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
- * BlockEntity for the {@link WitherSummonReceptacleBlock} (#247). Holds exactly one
- * of its block's {@linkplain WitherSummonReceptacleBlock#accepted() accepted item}
+ * BlockEntity for the {@link SummonReceptacleBlock} (#247). Holds exactly one
+ * of its block's {@linkplain SummonReceptacleBlock#accepted() accepted item}
  * (Soul Sand or a Wither Skeleton Skull). One BE class backs both receptacle blocks;
  * the accepted item is read from the block at construction. Insert-only automation
  * view (the summon spends the contents, so nothing pulls them back out). The
- * {@link WitherSummonReceptacleBlock#FILLED} blockstate mirrors "has its item".
+ * {@link SummonReceptacleBlock#FILLED} blockstate mirrors "has its item".
  */
-public class WitherSummonReceptacleBlockEntity extends BlockEntity {
+public class SummonReceptacleBlockEntity extends BlockEntity {
 
     private final Item accepted;
 
@@ -56,7 +56,7 @@ public class WitherSummonReceptacleBlockEntity extends BlockEntity {
 
         @Override
         protected void onContentsChanged(int slot) {
-            WitherSummonReceptacleBlockEntity.this.onChanged();
+            SummonReceptacleBlockEntity.this.onChanged();
         }
     };
 
@@ -93,9 +93,9 @@ public class WitherSummonReceptacleBlockEntity extends BlockEntity {
         }
     };
 
-    public WitherSummonReceptacleBlockEntity(BlockPos pos, BlockState state) {
+    public SummonReceptacleBlockEntity(BlockPos pos, BlockState state) {
         super(PFBlockEntities.WITHER_SUMMON_RECEPTACLE.get(), pos, state);
-        this.accepted = state.getBlock() instanceof WitherSummonReceptacleBlock b ? b.accepted() : Items.AIR;
+        this.accepted = state.getBlock() instanceof SummonReceptacleBlock b ? b.accepted() : Items.AIR;
     }
 
     /** The insert-only handler exposed to automation via {@code Capabilities.ItemHandler.BLOCK}. */
@@ -171,9 +171,9 @@ public class WitherSummonReceptacleBlockEntity extends BlockEntity {
         if (level != null && !level.isClientSide()) {
             BlockState st = getBlockState();
             boolean filled = isFilled();
-            if (st.hasProperty(WitherSummonReceptacleBlock.FILLED)
-                    && st.getValue(WitherSummonReceptacleBlock.FILLED) != filled) {
-                level.setBlock(worldPosition, st.setValue(WitherSummonReceptacleBlock.FILLED, filled), Block.UPDATE_CLIENTS);
+            if (st.hasProperty(SummonReceptacleBlock.FILLED)
+                    && st.getValue(SummonReceptacleBlock.FILLED) != filled) {
+                level.setBlock(worldPosition, st.setValue(SummonReceptacleBlock.FILLED, filled), Block.UPDATE_CLIENTS);
             } else {
                 level.sendBlockUpdated(worldPosition, st, st, Block.UPDATE_CLIENTS);
             }

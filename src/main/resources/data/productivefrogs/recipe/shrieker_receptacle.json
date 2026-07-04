@@ -1,0 +1,25 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "productivefrogs:config_enabled",
+      "config": "boss"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "productivefrogs",
+  "pattern": [
+    "OSO",
+    "SUS",
+    "OSO"
+  ],
+  "key": {
+    "O": "minecraft:obsidian",
+    "S": "minecraft:sculk",
+    "U": "minecraft:sculk_sensor"
+  },
+  "result": {
+    "id": "productivefrogs:shrieker_receptacle",
+    "count": 1
+  }
+}

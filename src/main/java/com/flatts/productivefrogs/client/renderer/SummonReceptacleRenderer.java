@@ -1,7 +1,7 @@
 package com.flatts.productivefrogs.client.renderer;
 
-import com.flatts.productivefrogs.content.block.WitherSummonReceptacleBlock;
-import com.flatts.productivefrogs.content.block.entity.WitherSummonReceptacleBlockEntity;
+import com.flatts.productivefrogs.content.block.SummonReceptacleBlock;
+import com.flatts.productivefrogs.content.block.entity.SummonReceptacleBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -19,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * Renders the held item (Soul Sand or a Wither Skeleton Skull) on a filled
- * {@link WitherSummonReceptacleBlock} (#247), flat against the block's -Z face -
+ * {@link SummonReceptacleBlock} (#247), flat against the block's -Z face -
  * the face toward Witherbane and the player at the Hatch end - so the loaded ritual
  * is visible at a glance. Empty receptacles draw nothing.
  *
@@ -33,12 +33,12 @@ import net.minecraft.world.phys.Vec3;
  * {@code Held} update tag, so it appears the moment an item is inserted). Transform
  * constants are a first pass that may want a {@code runClient} tuning nudge.
  */
-public class WitherSummonReceptacleRenderer
-        implements BlockEntityRenderer<WitherSummonReceptacleBlockEntity, WitherSummonReceptacleRenderer.WitherSummonReceptacleRenderState> {
+public class SummonReceptacleRenderer
+        implements BlockEntityRenderer<SummonReceptacleBlockEntity, SummonReceptacleRenderer.WitherSummonReceptacleRenderState> {
 
     private final ItemModelResolver itemModelResolver;
 
-    public WitherSummonReceptacleRenderer(BlockEntityRendererProvider.Context ctx) {
+    public SummonReceptacleRenderer(BlockEntityRendererProvider.Context ctx) {
         this.itemModelResolver = ctx.itemModelResolver();
     }
 
@@ -48,12 +48,12 @@ public class WitherSummonReceptacleRenderer
     }
 
     @Override
-    public void extractRenderState(WitherSummonReceptacleBlockEntity be, WitherSummonReceptacleRenderState state,
+    public void extractRenderState(SummonReceptacleBlockEntity be, WitherSummonReceptacleRenderState state,
             float partialTicks, Vec3 cameraPosition, ModelFeatureRenderer.CrumblingOverlay breakProgress) {
         BlockEntityRenderer.super.extractRenderState(be, state, partialTicks, cameraPosition, breakProgress);
         state.item = new ItemStackRenderState();
-        boolean filled = be.getBlockState().hasProperty(WitherSummonReceptacleBlock.FILLED)
-            && be.getBlockState().getValue(WitherSummonReceptacleBlock.FILLED);
+        boolean filled = be.getBlockState().hasProperty(SummonReceptacleBlock.FILLED)
+            && be.getBlockState().getValue(SummonReceptacleBlock.FILLED);
         ItemStack stack = be.contents();
         if (!filled || stack.isEmpty()) {
             state.filled = false;

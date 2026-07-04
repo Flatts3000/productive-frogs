@@ -129,6 +129,10 @@ public final class PFConfig {
     // vanilla-spawn charge) and the XP reward per summon.
     public static final ModConfigSpec.IntValue WITHER_ALTAR_SUMMON_TICKS;
     public static final ModConfigSpec.IntValue WITHER_ALTAR_XP_REWARD;
+    public static final ModConfigSpec.IntValue WARDEN_ALTAR_SUMMON_TICKS;
+    public static final ModConfigSpec.IntValue WARDEN_ALTAR_XP_REWARD;
+    public static final ModConfigSpec.IntValue ELDER_ALTAR_SUMMON_TICKS;
+    public static final ModConfigSpec.IntValue ELDER_ALTAR_XP_REWARD;
 
     // Deterministic, config-exposed lifecycle timings (docs/known_issues.md).
     // These are fixed (non-random) delays for the MODDED frog lifecycle; vanilla
@@ -182,6 +186,10 @@ public final class PFConfig {
     // Wither Altar defaults: 220 matches the vanilla invulnerable spawn; 50 XP a Wither's value.
     public static final int DEFAULT_WITHER_ALTAR_SUMMON_TICKS = 220;
     public static final int DEFAULT_WITHER_ALTAR_XP_REWARD = 50;
+    public static final int DEFAULT_WARDEN_ALTAR_SUMMON_TICKS = 168;
+    public static final int DEFAULT_WARDEN_ALTAR_XP_REWARD = 5;
+    public static final int DEFAULT_ELDER_ALTAR_SUMMON_TICKS = 200;
+    public static final int DEFAULT_ELDER_ALTAR_XP_REWARD = 10;
 
     public static final ModConfigSpec SPEC;
 
@@ -848,6 +856,44 @@ public final class PFConfig {
 
         builder.pop();
 
+        builder.push("warden_altar");
+
+        WARDEN_ALTAR_SUMMON_TICKS = builder
+            .comment(
+                "Warden Altar (#279): length in ticks of the summon - the replica Warden rising from the",
+                "pit floor before Wardenbane devours it. Default 168 (the vanilla emerge animation). The",
+                "rewards land at the end regardless."
+            )
+            .defineInRange("summonTicks", DEFAULT_WARDEN_ALTAR_SUMMON_TICKS, 1, 24000);
+
+        WARDEN_ALTAR_XP_REWARD = builder
+            .comment(
+                "Experience granted per completed Warden Altar summon. Default 5 (a vanilla Warden's value).",
+                "Set 0 to grant no XP."
+            )
+            .defineInRange("xpReward", DEFAULT_WARDEN_ALTAR_XP_REWARD, 0, 100000);
+
+        builder.pop();
+
+        builder.push("elder_altar");
+
+        ELDER_ALTAR_SUMMON_TICKS = builder
+            .comment(
+                "Elder Guardian Altar (#280): length in ticks of the summon - the replica Elder Guardian",
+                "forming in the flooded tank before Elderbane devours it. Default 200. The rewards land",
+                "at the end regardless."
+            )
+            .defineInRange("summonTicks", DEFAULT_ELDER_ALTAR_SUMMON_TICKS, 1, 24000);
+
+        ELDER_ALTAR_XP_REWARD = builder
+            .comment(
+                "Experience granted per completed Elder Guardian Altar summon. Default 10 (a vanilla Elder",
+                "Guardian's value). Set 0 to grant no XP."
+            )
+            .defineInRange("xpReward", DEFAULT_ELDER_ALTAR_XP_REWARD, 0, 100000);
+
+        builder.pop();
+
         builder.pop();
 
         SPEC = builder.build();
@@ -1111,6 +1157,26 @@ public final class PFConfig {
     /** XP granted per completed Wither Altar summon ({@code boss.wither_altar.xpReward}, #247); fallback {@value #DEFAULT_WITHER_ALTAR_XP_REWARD}. */
     public static int witherAltarXpReward() {
         return SPEC.isLoaded() ? WITHER_ALTAR_XP_REWARD.get() : DEFAULT_WITHER_ALTAR_XP_REWARD;
+    }
+
+    /** Warden Altar summon length in ticks ({@code boss.warden_altar.summonTicks}, #279); fallback {@value #DEFAULT_WARDEN_ALTAR_SUMMON_TICKS}. */
+    public static int wardenAltarSummonTicks() {
+        return SPEC.isLoaded() ? WARDEN_ALTAR_SUMMON_TICKS.get() : DEFAULT_WARDEN_ALTAR_SUMMON_TICKS;
+    }
+
+    /** XP granted per completed Warden Altar summon ({@code boss.warden_altar.xpReward}, #279); fallback {@value #DEFAULT_WARDEN_ALTAR_XP_REWARD}. */
+    public static int wardenAltarXpReward() {
+        return SPEC.isLoaded() ? WARDEN_ALTAR_XP_REWARD.get() : DEFAULT_WARDEN_ALTAR_XP_REWARD;
+    }
+
+    /** Elder Guardian Altar summon length in ticks ({@code boss.elder_altar.summonTicks}, #280); fallback {@value #DEFAULT_ELDER_ALTAR_SUMMON_TICKS}. */
+    public static int elderAltarSummonTicks() {
+        return SPEC.isLoaded() ? ELDER_ALTAR_SUMMON_TICKS.get() : DEFAULT_ELDER_ALTAR_SUMMON_TICKS;
+    }
+
+    /** XP granted per completed Elder Guardian Altar summon ({@code boss.elder_altar.xpReward}, #280); fallback {@value #DEFAULT_ELDER_ALTAR_XP_REWARD}. */
+    public static int elderAltarXpReward() {
+        return SPEC.isLoaded() ? ELDER_ALTAR_XP_REWARD.get() : DEFAULT_ELDER_ALTAR_XP_REWARD;
     }
 
     /**

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "productivefrogs:block/tide_offering_receptacle"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "productivefrogs:config_enabled",
+      "config": "boss"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "productivefrogs",
+  "pattern": [
+    "OOO",
+    "OWO",
+    "OOO"
+  ],
+  "key": {
+    "O": "minecraft:obsidian",
+    "W": "minecraft:wet_sponge"
+  },
+  "result": {
+    "id": "productivefrogs:monument_core",
+    "count": 1
+  }
+}

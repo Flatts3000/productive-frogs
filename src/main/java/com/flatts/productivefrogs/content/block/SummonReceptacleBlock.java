@@ -1,6 +1,6 @@
 package com.flatts.productivefrogs.content.block;
 
-import com.flatts.productivefrogs.content.block.entity.WitherSummonReceptacleBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.SummonReceptacleBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -25,18 +25,18 @@ import net.minecraft.world.phys.BlockHitResult;
  * a full T of 4 soul sand + 3 skulls fires the altar's summon, which spends them.
  *
  * <p>Parameterized rather than one class per item: both receptacle types share this
- * block (and {@link WitherSummonReceptacleBlockEntity}), differing only in the item
+ * block (and {@link SummonReceptacleBlockEntity}), differing only in the item
  * they accept. The {@link #FILLED} blockstate flips the texture / on-top render.
  * No ticker - passive storage the summon state machine reads. Contents drop on break.
  */
-public class WitherSummonReceptacleBlock extends Block implements EntityBlock {
+public class SummonReceptacleBlock extends Block implements EntityBlock {
 
     /** True while the receptacle holds its item. */
     public static final BooleanProperty FILLED = BooleanProperty.create("filled");
 
     private final Item accepted;
 
-    public WitherSummonReceptacleBlock(Properties properties, Item accepted) {
+    public SummonReceptacleBlock(Properties properties, Item accepted) {
         super(properties);
         this.accepted = accepted;
         this.registerDefaultState(this.stateDefinition.any().setValue(FILLED, Boolean.FALSE));
@@ -54,14 +54,14 @@ public class WitherSummonReceptacleBlock extends Block implements EntityBlock {
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new WitherSummonReceptacleBlockEntity(pos, state);
+        return new SummonReceptacleBlockEntity(pos, state);
     }
 
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
             Player player, InteractionHand hand, BlockHitResult hit) {
         if (!stack.is(accepted)
-                || !(level.getBlockEntity(pos) instanceof WitherSummonReceptacleBlockEntity be)
+                || !(level.getBlockEntity(pos) instanceof SummonReceptacleBlockEntity be)
                 || be.isFilled()) {
             return InteractionResult.TRY_WITH_EMPTY_HAND;
         }
@@ -77,7 +77,7 @@ public class WitherSummonReceptacleBlock extends Block implements EntityBlock {
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!(level.getBlockEntity(pos) instanceof WitherSummonReceptacleBlockEntity be) || !be.isFilled()) {
+        if (!(level.getBlockEntity(pos) instanceof SummonReceptacleBlockEntity be) || !be.isFilled()) {
             return InteractionResult.PASS;
         }
         if (!level.isClientSide()) {
@@ -90,7 +90,7 @@ public class WitherSummonReceptacleBlock extends Block implements EntityBlock {
         return InteractionResult.SUCCESS;
     }
 
-    // 26.1: the held-item drop lives in WitherSummonReceptacleBlockEntity#preRemoveSideEffects
+    // 26.1: the held-item drop lives in SummonReceptacleBlockEntity#preRemoveSideEffects
     // (which fires while the BE still exists, unlike affectNeighborsAfterRemoval where it is
     // already gone). This block has no BE-independent removal side effect, so no override here.
 }

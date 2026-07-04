@@ -1,0 +1,24 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "productivefrogs:config_enabled",
+      "config": "boss"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "productivefrogs",
+  "pattern": [
+    "OOO",
+    "OCO",
+    "OOO"
+  ],
+  "key": {
+    "O": "minecraft:obsidian",
+    "C": "minecraft:sculk_catalyst"
+  },
+  "result": {
+    "id": "productivefrogs:echoing_catalyst",
+    "count": 1
+  }
+}

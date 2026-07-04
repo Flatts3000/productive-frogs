@@ -18,6 +18,12 @@
     "productivefrogs:reinforced_sculk_froglight",
     "productivefrogs:reinforced_echo_shard_froglight",
     "productivefrogs:reinforced_prismarine_froglight",
-    "productivefrogs:reinforced_sponge_froglight"
+    "productivefrogs:reinforced_sponge_froglight",
+    "productivefrogs:warden_altar_hatch",
+    "productivefrogs:elder_altar_hatch",
+    "productivefrogs:echoing_catalyst",
+    "productivefrogs:monument_core",
+    "productivefrogs:shrieker_receptacle",
+    "productivefrogs:tide_offering_receptacle"
   ]
 }

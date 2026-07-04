@@ -1,0 +1,25 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "productivefrogs:config_enabled",
+      "config": "boss"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "productivefrogs",
+  "pattern": [
+    "OPO",
+    "PCP",
+    "OPO"
+  ],
+  "key": {
+    "O": "minecraft:obsidian",
+    "P": "minecraft:prismarine_bricks",
+    "C": "minecraft:chest"
+  },
+  "result": {
+    "id": "productivefrogs:elder_altar_hatch",
+    "count": 1
+  }
+}

@@ -696,6 +696,20 @@ public final class PFItems {
     public static final DeferredItem<BlockItem> WITHERED_STAR =
         registerSimpleBlockItem("withered_star", PFBlocks.WITHERED_STAR, new Item.Properties());
 
+    // Warden Altar (#279) + Elder Guardian Altar (#280) - hatches, receptacles, capstones.
+    public static final DeferredItem<BlockItem> WARDEN_ALTAR_HATCH =
+        registerSimpleBlockItem("warden_altar_hatch", PFBlocks.WARDEN_ALTAR_HATCH, new Item.Properties());
+    public static final DeferredItem<BlockItem> SHRIEKER_RECEPTACLE =
+        registerSimpleBlockItem("shrieker_receptacle", PFBlocks.SHRIEKER_RECEPTACLE, new Item.Properties());
+    public static final DeferredItem<BlockItem> ECHOING_CATALYST =
+        registerSimpleBlockItem("echoing_catalyst", PFBlocks.ECHOING_CATALYST, new Item.Properties());
+    public static final DeferredItem<BlockItem> ELDER_ALTAR_HATCH =
+        registerSimpleBlockItem("elder_altar_hatch", PFBlocks.ELDER_ALTAR_HATCH, new Item.Properties());
+    public static final DeferredItem<BlockItem> TIDE_OFFERING_RECEPTACLE =
+        registerSimpleBlockItem("tide_offering_receptacle", PFBlocks.TIDE_OFFERING_RECEPTACLE, new Item.Properties());
+    public static final DeferredItem<BlockItem> MONUMENT_CORE =
+        registerSimpleBlockItem("monument_core", PFBlocks.MONUMENT_CORE, new Item.Properties());
+
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {

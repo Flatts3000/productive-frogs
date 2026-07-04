@@ -70,6 +70,9 @@ public final class PFModBusEvents {
         event.put(PFEntities.DRAGONSBANE.get(), net.minecraft.world.entity.animal.frog.Frog.createAttributes().build());
         // Witherbane (#247), the Wither Altar's display frog, likewise.
         event.put(PFEntities.WITHERBANE.get(), net.minecraft.world.entity.animal.frog.Frog.createAttributes().build());
+        // Wardenbane (#279) + Elderbane (#280): vanilla frog attribute tables, like their siblings.
+        event.put(PFEntities.WARDENBANE.get(), net.minecraft.world.entity.animal.frog.Frog.createAttributes().build());
+        event.put(PFEntities.ELDERBANE.get(), net.minecraft.world.entity.animal.frog.Frog.createAttributes().build());
         // ResourceSlime uses the standard Monster attribute table — same baseline
         // vanilla EntityType.SLIME uses (via Monster.createMonsterAttributes).
         // Per-size HP/movement scaling happens in Slime#setSize at runtime,
@@ -349,6 +352,16 @@ public final class PFModBusEvents {
             PFBlockEntities.WITHER_ALTAR_HATCH.get(),
             (be, side) -> be.dock().fluidResource()
         );
+        event.registerBlockEntity(
+            Capabilities.Fluid.BLOCK,
+            PFBlockEntities.WARDEN_ALTAR_HATCH.get(),
+            (be, side) -> be.dock().fluidResource()
+        );
+        event.registerBlockEntity(
+            Capabilities.Fluid.BLOCK,
+            PFBlockEntities.ELDER_ALTAR_HATCH.get(),
+            (be, side) -> be.dock().fluidResource()
+        );
 
         // End Dragon Altar Hatch (#249): the altar's output - pipes pull the
         // dragon's drops from any face (chest-style inventory).
@@ -371,6 +384,19 @@ public final class PFModBusEvents {
         event.registerBlockEntity(
             Capabilities.Item.BLOCK,
             PFBlockEntities.WITHER_ALTAR_HATCH.get(),
+            (be, side) -> RestrictedItemResourceHandler.ofAll(be.itemHandler(), true, true)
+        );
+
+        // Warden Altar Hatch (#279) + Elder Guardian Altar Hatch (#280): same
+        // chest-style output surface as their siblings.
+        event.registerBlockEntity(
+            Capabilities.Item.BLOCK,
+            PFBlockEntities.WARDEN_ALTAR_HATCH.get(),
+            (be, side) -> RestrictedItemResourceHandler.ofAll(be.itemHandler(), true, true)
+        );
+        event.registerBlockEntity(
+            Capabilities.Item.BLOCK,
+            PFBlockEntities.ELDER_ALTAR_HATCH.get(),
             (be, side) -> RestrictedItemResourceHandler.ofAll(be.itemHandler(), true, true)
         );
 
