@@ -46,7 +46,12 @@ PAIRS = [
 
 
 def normalized_greyscale(img: Image.Image) -> Image.Image:
-    """Luminance greyscale, scaled so the brightest opaque pixel is white."""
+    """Luminance greyscale, scaled so the brightest visible pixel is white.
+
+    Visible = any alpha > 0: a semi-transparent pixel (antialiased edge in
+    future source art) both counts toward the peak and gets greyscaled, so
+    the whole visible creature tints uniformly.
+    """
     out = img.copy()
     px = out.load()
     lums = []
