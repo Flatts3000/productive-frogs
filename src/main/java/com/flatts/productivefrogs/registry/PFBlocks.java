@@ -519,6 +519,52 @@ public final class PFBlocks {
             .sound(SoundType.METAL)
             .requiresCorrectToolForDrops());
 
+    /**
+     * Warden Altar - the Shrieker Pit (#279). The Hatch anchors the pit floor; the
+     * four Shrieker Receptacles on the rim take one sculk shrieker each (warning
+     * level 4 = a summon); the Echoing Catalyst capstone (crafted from a Sculk
+     * Catalyst - proof of a first Warden kill) sits beneath the Hatch.
+     */
+    public static final DeferredBlock<BossAltarHatchBlock> WARDEN_ALTAR_HATCH =
+        registerBlock("warden_altar_hatch",
+            p -> new BossAltarHatchBlock(p,
+                () -> PFBlockEntities.WARDEN_ALTAR_HATCH.get(),
+                com.flatts.productivefrogs.content.block.entity.WardenAltarHatchBlockEntity::new),
+            receptacleProperties());
+    public static final DeferredBlock<SummonReceptacleBlock> SHRIEKER_RECEPTACLE =
+        registerBlock("shrieker_receptacle",
+            p -> new SummonReceptacleBlock(p, Items.SCULK_SHRIEKER), receptacleProperties());
+    public static final DeferredBlock<Block> ECHOING_CATALYST =
+        registerBlock("echoing_catalyst", Block::new, BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_CYAN)
+            .strength(3.0F, 1200.0F)
+            .lightLevel(state -> 10)
+            .sound(SoundType.SCULK_CATALYST)
+            .requiresCorrectToolForDrops());
+
+    /**
+     * Elder Guardian Altar - the Monument Well (#280). The Hatch anchors the tank
+     * floor; the four Tide Offering Receptacles at the roof corners take one
+     * prismarine crystal each; the Monument Core capstone (crafted from a Wet
+     * Sponge - the Elder's signature drop) crowns the roof center.
+     */
+    public static final DeferredBlock<BossAltarHatchBlock> ELDER_ALTAR_HATCH =
+        registerBlock("elder_altar_hatch",
+            p -> new BossAltarHatchBlock(p,
+                () -> PFBlockEntities.ELDER_ALTAR_HATCH.get(),
+                com.flatts.productivefrogs.content.block.entity.ElderAltarHatchBlockEntity::new),
+            receptacleProperties());
+    public static final DeferredBlock<SummonReceptacleBlock> TIDE_OFFERING_RECEPTACLE =
+        registerBlock("tide_offering_receptacle",
+            p -> new SummonReceptacleBlock(p, Items.PRISMARINE_CRYSTALS), receptacleProperties());
+    public static final DeferredBlock<Block> MONUMENT_CORE =
+        registerBlock("monument_core", Block::new, BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_CYAN)
+            .strength(3.0F, 1200.0F)
+            .lightLevel(state -> 10)
+            .sound(SoundType.WET_SPONGE)
+            .requiresCorrectToolForDrops());
+
     /** Memoized {@link #catalystForVariant()} - the blocks are stable post-registration. */
     private static Map<Identifier, Block> catalystMap;
 

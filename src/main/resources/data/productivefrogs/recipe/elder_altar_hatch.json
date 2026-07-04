@@ -9,17 +9,17 @@
   "category": "building",
   "group": "productivefrogs",
   "pattern": [
-    "OSO",
-    "SCS",
-    "OSO"
+    "OPO",
+    "PCP",
+    "OPO"
   ],
   "key": {
     "O": "minecraft:obsidian",
-    "S": "minecraft:soul_soil",
+    "P": "minecraft:prismarine_bricks",
     "C": "minecraft:chest"
   },
   "result": {
-    "id": "productivefrogs:wither_altar_hatch",
+    "id": "productivefrogs:elder_altar_hatch",
     "count": 1
   }
 }

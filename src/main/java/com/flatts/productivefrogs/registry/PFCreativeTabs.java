@@ -247,13 +247,20 @@ public final class PFCreativeTabs {
                         output.accept(PFItems.WITHER_SKULL_RECEPTACLE.get());
                         output.accept(PFItems.WITHER_ALTAR_HATCH.get());
                         output.accept(PFItems.WITHERED_STAR.get());
-                        // Phase 4b altars (#279/#280): the Shrieker Pit + Monument
-                        // Well reinforced froglights (their receptacles/hatches/
-                        // capstones join here as they land).
+                        // Warden altar (#279): the Shrieker Pit - reinforced froglights,
+                        // rim receptacles, hatch, and the Echoing Catalyst capstone.
                         output.accept(PFItems.REINFORCED_SCULK_FROGLIGHT.get());
                         output.accept(PFItems.REINFORCED_ECHO_SHARD_FROGLIGHT.get());
+                        output.accept(PFItems.SHRIEKER_RECEPTACLE.get());
+                        output.accept(PFItems.WARDEN_ALTAR_HATCH.get());
+                        output.accept(PFItems.ECHOING_CATALYST.get());
+                        // Elder Guardian altar (#280): the Monument Well - reinforced
+                        // froglights, roof receptacles, hatch, and the Monument Core.
                         output.accept(PFItems.REINFORCED_PRISMARINE_FROGLIGHT.get());
                         output.accept(PFItems.REINFORCED_SPONGE_FROGLIGHT.get());
+                        output.accept(PFItems.TIDE_OFFERING_RECEPTACLE.get());
+                        output.accept(PFItems.ELDER_ALTAR_HATCH.get());
+                        output.accept(PFItems.MONUMENT_CORE.get());
                     }
 
                     // ---------------- 8. Spawn eggs ----------------

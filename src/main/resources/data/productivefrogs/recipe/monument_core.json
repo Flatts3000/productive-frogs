@@ -9,17 +9,16 @@
   "category": "building",
   "group": "productivefrogs",
   "pattern": [
-    "OSO",
-    "SCS",
-    "OSO"
+    "OOO",
+    "OWO",
+    "OOO"
   ],
   "key": {
     "O": "minecraft:obsidian",
-    "S": "minecraft:soul_soil",
-    "C": "minecraft:chest"
+    "W": "minecraft:wet_sponge"
   },
   "result": {
-    "id": "productivefrogs:wither_altar_hatch",
+    "id": "productivefrogs:monument_core",
     "count": 1
   }
 }

@@ -22,6 +22,8 @@ import com.flatts.productivefrogs.content.block.entity.SpawneryBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SweetslimedLilyPadBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.ElderAltarHatchBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.WardenAltarHatchBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SummonReceptacleBlockEntity;
 import java.util.function.Supplier;
@@ -127,7 +129,8 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "wither_summon_receptacle",
             () -> new BlockEntityType<>(SummonReceptacleBlockEntity::new,
-                PFBlocks.SOUL_SAND_RECEPTACLE.get(), PFBlocks.WITHER_SKULL_RECEPTACLE.get())
+                PFBlocks.SOUL_SAND_RECEPTACLE.get(), PFBlocks.WITHER_SKULL_RECEPTACLE.get(),
+                PFBlocks.SHRIEKER_RECEPTACLE.get(), PFBlocks.TIDE_OFFERING_RECEPTACLE.get())
         );
 
     /** BE type for the {@code wither_altar_hatch} (#247) - the altar's output + summon brain. */
@@ -135,6 +138,20 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "wither_altar_hatch",
             () -> new BlockEntityType<>(WitherAltarHatchBlockEntity::new, PFBlocks.WITHER_ALTAR_HATCH.get())
+        );
+
+    /** BE type for the {@code warden_altar_hatch} (#279) - the Shrieker Pit's output + summon brain. */
+    public static final Supplier<BlockEntityType<WardenAltarHatchBlockEntity>> WARDEN_ALTAR_HATCH =
+        BLOCK_ENTITIES.register(
+            "warden_altar_hatch",
+            () -> new BlockEntityType<>(WardenAltarHatchBlockEntity::new, PFBlocks.WARDEN_ALTAR_HATCH.get())
+        );
+
+    /** BE type for the {@code elder_altar_hatch} (#280) - the Monument Well's output + summon brain. */
+    public static final Supplier<BlockEntityType<ElderAltarHatchBlockEntity>> ELDER_ALTAR_HATCH =
+        BLOCK_ENTITIES.register(
+            "elder_altar_hatch",
+            () -> new BlockEntityType<>(ElderAltarHatchBlockEntity::new, PFBlocks.ELDER_ALTAR_HATCH.get())
         );
 
     /**

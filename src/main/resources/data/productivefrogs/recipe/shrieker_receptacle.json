@@ -10,16 +10,16 @@
   "group": "productivefrogs",
   "pattern": [
     "OSO",
-    "SCS",
+    "SUS",
     "OSO"
   ],
   "key": {
     "O": "minecraft:obsidian",
-    "S": "minecraft:soul_soil",
-    "C": "minecraft:chest"
+    "S": "minecraft:sculk",
+    "U": "minecraft:sculk_sensor"
   },
   "result": {
-    "id": "productivefrogs:wither_altar_hatch",
+    "id": "productivefrogs:shrieker_receptacle",
     "count": 1
   }
 }

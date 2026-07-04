@@ -15,11 +15,11 @@
   ],
   "key": {
     "O": "minecraft:obsidian",
-    "S": "minecraft:soul_soil",
+    "S": "minecraft:sculk",
     "C": "minecraft:chest"
   },
   "result": {
-    "id": "productivefrogs:wither_altar_hatch",
+    "id": "productivefrogs:warden_altar_hatch",
     "count": 1
   }
 }

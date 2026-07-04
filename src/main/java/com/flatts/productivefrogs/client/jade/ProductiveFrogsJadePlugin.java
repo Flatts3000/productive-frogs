@@ -243,6 +243,26 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                     : "productivefrogs.jade.wither_altar.incomplete", r.detail()));
                 return;
             }
+            // Warden Altar Hatch (#279) + Elder Guardian Altar Hatch (#280): same
+            // pure client block-identity structure checks.
+            if (be instanceof com.flatts.productivefrogs.content.block.entity.WardenAltarHatchBlockEntity) {
+                com.flatts.productivefrogs.content.multiblock.WardenAltarValidator.Result r =
+                    com.flatts.productivefrogs.content.multiblock.WardenAltarValidator.validate(
+                        accessor.getLevel(), accessor.getPosition());
+                tooltip.add(Component.translatable(r.valid()
+                    ? "productivefrogs.jade.warden_altar.ready"
+                    : "productivefrogs.jade.warden_altar.incomplete", r.detail()));
+                return;
+            }
+            if (be instanceof com.flatts.productivefrogs.content.block.entity.ElderAltarHatchBlockEntity) {
+                com.flatts.productivefrogs.content.multiblock.ElderAltarValidator.Result r =
+                    com.flatts.productivefrogs.content.multiblock.ElderAltarValidator.validate(
+                        accessor.getLevel(), accessor.getPosition());
+                tooltip.add(Component.translatable(r.valid()
+                    ? "productivefrogs.jade.elder_altar.ready"
+                    : "productivefrogs.jade.elder_altar.incomplete", r.detail()));
+                return;
+            }
             net.minecraft.nbt.CompoundTag data = accessor.getServerData();
             if (be instanceof SlimeMilkerBlockEntity milker) {
                 int progress = milker.getCookProgress();

@@ -9,12 +9,13 @@
   "category": "building",
   "group": "productivefrogs",
   "pattern": [
-    "OOO",
-    "OCO",
-    "OOO"
+    "OEO",
+    "ECE",
+    "OEO"
   ],
   "key": {
     "O": "minecraft:obsidian",
+    "E": "minecraft:end_stone_bricks",
     "C": "minecraft:chest"
   },
   "result": {

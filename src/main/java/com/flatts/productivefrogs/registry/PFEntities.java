@@ -12,6 +12,8 @@ import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import com.flatts.productivefrogs.content.entity.TideSlime;
 import com.flatts.productivefrogs.content.entity.VoidSlime;
+import com.flatts.productivefrogs.content.entity.ElderbaneFrog;
+import com.flatts.productivefrogs.content.entity.WardenbaneFrog;
 import com.flatts.productivefrogs.content.entity.WitherbaneFrog;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -84,6 +86,33 @@ public final class PFEntities {
                 .sized(0.5F, 0.5F)
                 .eyeHeight(0.4F)
                 .build(key("witherbane"))
+        );
+
+    /**
+     * The Warden Altar's display frog (#279) - "Wardenbane". Same lifecycle role as
+     * {@link DragonsbaneFrog}: a {@code MISC}-category display entity the altar spawns
+     * when valid + armed and removes when broken.
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<WardenbaneFrog>> WARDENBANE =
+        ENTITIES.register(
+            "wardenbane",
+            () -> EntityType.Builder.<WardenbaneFrog>of(WardenbaneFrog::new, MobCategory.MISC)
+                .sized(0.5F, 0.5F)
+                .eyeHeight(0.4F)
+                .build(key("wardenbane"))
+        );
+
+    /**
+     * The Elder Guardian Altar's display frog (#280) - "Elderbane". Same lifecycle role
+     * as {@link DragonsbaneFrog}; it swims pinned in the Monument Well's water cavity.
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<ElderbaneFrog>> ELDERBANE =
+        ENTITIES.register(
+            "elderbane",
+            () -> EntityType.Builder.<ElderbaneFrog>of(ElderbaneFrog::new, MobCategory.MISC)
+                .sized(0.5F, 0.5F)
+                .eyeHeight(0.4F)
+                .build(key("elderbane"))
         );
 
     /**

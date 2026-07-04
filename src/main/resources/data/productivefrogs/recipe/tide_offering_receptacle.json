@@ -9,17 +9,17 @@
   "category": "building",
   "group": "productivefrogs",
   "pattern": [
-    "OSO",
-    "SCS",
-    "OSO"
+    "OPO",
+    "PUP",
+    "OPO"
   ],
   "key": {
     "O": "minecraft:obsidian",
-    "S": "minecraft:soul_soil",
-    "C": "minecraft:chest"
+    "P": "minecraft:prismarine_bricks",
+    "U": "minecraft:sea_lantern"
   },
   "result": {
-    "id": "productivefrogs:wither_altar_hatch",
+    "id": "productivefrogs:tide_offering_receptacle",
     "count": 1
   }
 }
