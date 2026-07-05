@@ -96,7 +96,7 @@ NeoForge only; no Fabric port planned.
 
 ## Links
 
-* [Community Discord](https://discord.gg/r6MhZ73nsM) - #pf-2x for the new line, #pf-1x for the stable line
+* [Community Discord](https://discord.gg/r6MhZ73nsM) - #version-2-mc-26 for the new line, #version-1-mc-1-21 for the stable line
 * [GitHub repository](https://github.com/Flatts3000/productive-frogs)
 * [Issue tracker](https://github.com/Flatts3000/productive-frogs/issues)
 * [Full version history (CHANGELOG)](https://github.com/Flatts3000/productive-frogs/blob/main/CHANGELOG.md)

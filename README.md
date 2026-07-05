@@ -4,7 +4,7 @@ A content mod for **Minecraft 26.1 / NeoForge** (the 2.x line; the frozen 1.21.1
 
 **Download:** [CurseForge](https://www.curseforge.com/minecraft/mc-mods/productive-frogs) (preferred) | [GitHub Releases](https://github.com/Flatts3000/productive-frogs/releases) (mirror)
 
-**Community:** [Discord](https://discord.gg/r6MhZ73nsM) - `#pf-2x` for the 2.x line (Minecraft 26.1, alpha), `#pf-1x` for the 1.24.x line Sky Frogs runs. Bugs are tracked on [GitHub issues](https://github.com/Flatts3000/productive-frogs/issues); Discord is for questions and discussion.
+**Community:** [Discord](https://discord.gg/r6MhZ73nsM) - `#version-2-mc-26` for the 2.x line (Minecraft 26.1, alpha), `#version-1-mc-1-21` for the 1.24.x line Sky Frogs runs. Bugs are tracked on [GitHub issues](https://github.com/Flatts3000/productive-frogs/issues); Discord is for questions and discussion.
 
 ## Concept
 
