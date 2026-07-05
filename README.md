@@ -2,7 +2,11 @@
 
 A content mod for **Minecraft 1.21.1 / NeoForge 21.1.230**. The latest release is whatever sits at the top of the [CHANGELOG](CHANGELOG.md).
 
-**Download:** [CurseForge](https://www.curseforge.com/minecraft/mc-mods/productive-frogs) (preferred) | [GitHub Releases](https://github.com/Flatts3000/productive-frogs/releases) (mirror)
+> **This is the frozen 1.x maintenance line** (versions `1.24.x`) - the one the **Sky Frogs** modpack runs, marked stable on CurseForge. It receives bug fixes only; active development (Productive Frogs 2.x, Minecraft 26.1: predator frogs, boss altars) lives on [`main`](https://github.com/Flatts3000/productive-frogs/tree/main). Maintenance rules: [docs/maintenance_1_21_1.md](./docs/maintenance_1_21_1.md).
+
+**Download:** [CurseForge](https://www.curseforge.com/minecraft/mc-mods/productive-frogs) (pick the **1.21.1** file) | [GitHub Releases](https://github.com/Flatts3000/productive-frogs/releases) (mirror)
+
+**Community:** [Discord](https://discord.gg/r6MhZ73nsM) - `#version-1-mc-1-21` covers this line; `#version-2-mc-26` covers the new one. Bugs go to [GitHub issues](https://github.com/Flatts3000/productive-frogs/issues) (say you're on 1.x).
 
 ## Concept
 
@@ -67,7 +71,16 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 
 ## Status
 
-**Latest release: v1.21.0 - the in-game guide book and a frog perch (stable; out of beta since v1.20.0, beta ran v1.9.1 through v1.19.2).** The full V1 design (hand-operated production loop, six species, the data-driven variant roster) is live, plus cross-mod variant pools, cross-mod crush yields, the Spawnery, frog stat breeding, Slime Milk catalysts, fully pipeable per-variant Slime Milk, the Froglight Crucible + Casting Mold melt-and-cast lane, Brewed Froglights, and the boss/endgame tier. v1.15 adds the Slime Churn (milk back into captured slimes) and Just Dire Things support. **v1.16 adds the Terrarium** - a sealed multiblock that automates the whole loop end to end: pipe Slime Milk into the Controller, ceiling Sprinklers rain slimes into the cavity, frogs raised in Incubators eat them, and the Froglights collect in the Hatch for piping out. **v1.17 adds Frog Legs** (a renewable meat), the Froglight Cleaver, Princess's Kiss, the Frog Net, and a config sweep that lets a pack ship a subset of features. **v1.18 adds the pre-release config suite** - disable individual variants, whole species, a host mod's variants, the boss tier, or the stat-breeding layer. **v1.19 makes Lava Froglights burn as furnace fuel and the Crucible melt stone to lava** (Ex Deorum heated-crucible parity); **v1.19.1 speeds up frog stat breeding** (a breed improves a stat ~78% of the time, up from ~49%); **v1.19.2 fixes fluid spills** (the Slime Bucket no longer places water, and fluids no longer wash away Slime Milk sources) **and adds an advancement set**. **v1.20.0 promotes the mod to a stable release** (out of beta). **v1.21.0 adds an in-game Patchouli guide book** (extensible by modpacks via resource packs) **and the Sweetslimed Lily Pad frog perch** (pin a frog over a collection point), reworks frog breeding into a no-regression blend-then-climb inheritance (at least one stat improves every breed), and fixes a fully enclosed boss altar spawning its slime inside the sealed Slime Milk source block.
+**Latest release: v1.24.6 "Fresh Coat"** - the sharper bucket and Slime Milk
+art from the 2.x line, backported. The full 1.x design is live and complete:
+the six-species production loop, the data-driven variant roster, cross-mod
+variant pools and crush yields, the Spawnery, frog stat breeding, Slime Milk
+catalysts and per-variant automatable milk, the Froglight Crucible + Casting
+Mold melt-and-cast lane, Brewed Froglights + Curios, the boss/catalyst-altar
+tier, the Slime Churn, the Terrarium automation multiblock, Frog Legs and the
+fairy-tale items, the config suite, the in-game Patchouli guide book, Apex
+Predators, the Equivalence lane, and the Wither + Ender Dragon boss altars.
+This line is **feature-complete and frozen**: from here it takes fixes only.
 
 | Version line | Scope | Status |
 |---|---|---|
@@ -93,7 +106,10 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 | v1.19 | Lava Froglight furnace fuel; Crucible melts stone to lava (Ex Deorum parity) | ✅ shipped |
 | v1.20 | Stable release - promoted out of beta | ✅ shipped |
 | v1.21 | In-game Patchouli guide book; Sweetslimed Lily Pad frog perch; blend-then-climb breeding | ✅ shipped |
-| v2 | Further automation: power, buffered appliances, auto-feeders | 🔭 future |
+| v1.22 | Apex Predators (frog stat capstone) | ✅ shipped |
+| v1.23 | The Equivalence lane (opt-in transmutation, Midas) | ✅ shipped |
+| v1.24 | Wither + Dragon altars, Sprinkler redstone control, fixes, the 2.x art backport | ✅ shipped (current) |
+| 2.x | The mob-drop redesign on Minecraft 26.1 - predator frogs, four boss altars, Liquid Experience | 🚀 lives on [`main`](https://github.com/Flatts3000/productive-frogs/tree/main) |
 
 Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope rationale: [`docs/versioning.md`](./docs/versioning.md).
 

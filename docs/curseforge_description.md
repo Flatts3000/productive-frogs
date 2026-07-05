@@ -1,5 +1,9 @@
 <!--
-This file is the canonical source for the CurseForge project Description.
+This file WAS the canonical source for the CurseForge project Description.
+SUPERSEDED (2026-07-05): the canonical copy now lives on the `main` branch
+(the 2.x line), which describes BOTH release lines - the one CF page serves
+both. Do not edit or mirror from this branch's copy; it is kept as the 1.x
+historical record.
 
 Workflow:
   1. Edit this file when you want to update the CF page.
