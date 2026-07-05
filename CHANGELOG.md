@@ -2,16 +2,79 @@
 
 ## [Unreleased]
 
-### Breaking - the 2.0 mob-drop redesign completes (Phase 5 of the predation epic)
+## v2.0.0-alpha.1 - 2026-07-05 - Leap Forward
 
-- **Mob-derived slime variants are retired.** Every variant that stood in for a mob's kill loot is removed: blaze rod, bone, breeze rod, ender pearl, feather, ghast tear, glow ink sac, gunpowder, ink sac, leather, magma cream, nautilus shell, phantom membrane, prismarine crystals, rotten flesh, shulker shell, string, and the boss tier (nether star, dragon's breath, dragon egg, wither skeleton skull). Those resources now come from **predator frogs eating the actual mobs** (player-credited loot, Looting from Bounty) and from the **four boss altars** (raw drops + Liquid Experience). As in the v1.6 retirement, existing items soften rather than break: buckets, froglights, and eggs of a retired variant lose their names and recipes but stay in your chests; nothing crashes and worlds load unchanged.
-- **The catalyst altars are retired with them.** The four catalyst blocks (Nether Star / Dragon Egg / Wither Skeleton Skull / Dragon Breath Catalyst), the six-face spawn gate, and toxic boss milk are gone - the boss altars replaced that whole loop. The `variants.bossVariantsEnabled` config folds into the `boss.enabled` master.
-- **Kept on purpose:** every ore, block, plant, and fluid variant, plus armadillo scute, turtle scute, and honeycomb (husbandry resources predation cannot supply). The Froglight Cleaver now crafts from a raw Nether Star and Dragon Egg - both renewable through the altars.
+**Productive Frogs 2.0 - the first release of the new line.** The mod moves to
+Minecraft 26.1 (NeoForge) as a standalone mod, rebuilt around one idea: frogs
+should eat the real thing. This is an **alpha**: the core loop is complete and
+tested, but expect rough edges, balance passes, and additions before stable.
+The Minecraft 1.21.1 releases (v1.24.x) remain available and supported with
+fixes; 1.x worlds cannot migrate (different Minecraft version).
 
-### Added
+### The mob-drop redesign
 
-- **Predation milestones in the Advancements tab:** A New Appetite (first predator bred), Apex of the Food Chain (first Apex), Free-Range Farming (first mob devoured), and Boss on the Menu (first altar summon completed).
-- **JEI coverage for the predation chain:** Mob Slurry Buckets show one entry per mob, and the Slurry Press, both Basins, the Ender Net, Liquid Experience, and the four altar Hatches all have info pages.
+- **Predator frogs hunt real mobs.** Breed two different frog species and you
+  can get a **predator frog** - it ignores slimes and hunts actual mobs,
+  dropping their genuine kill loot (counted as player kills, so rare drops
+  work; the Bounty stat adds Looting). Cross two predators into an **Apex
+  Frog**, the top of the food chain.
+- **Farm any mob through the milk loop.** Capture a mob's essence as **Mob
+  Slurry** with the **Slurry Press**, bucket or pipe it like milk, and spawn
+  that mob from a **Basin** for your predators to hunt. The **Ender Net**
+  captures and relocates mobs whole.
+- **Bottled experience.** Kills pay **Liquid Experience** - a real fluid
+  (20 mB per XP point) you can tank, pipe, and drink back.
+- **Four boss altars.** The Wither, the Ender Dragon, the Warden, and the
+  Elder Guardian each get a buildable arena: construct the structure, install
+  an Apex Frog in the wall-mounted Hatch with an Entity Net, feed it the boss's
+  own trophies as fuel, and it summons and harvests the boss for **raw boss
+  drops and Liquid Experience** - no fight, fully automatable by pipe.
+- **Mob-derived slime variants are retired.** Every variant that stood in for
+  a mob's kill loot is removed: blaze rod, bone, breeze rod, ender pearl,
+  feather, ghast tear, glow ink sac, gunpowder, ink sac, leather, magma cream,
+  nautilus shell, phantom membrane, prismarine crystals, rotten flesh, shulker
+  shell, string, and the boss tier (nether star, dragon's breath, dragon egg,
+  wither skeleton skull). Those resources now come from predation and the
+  altars. **Kept on purpose:** every ore, block, plant, and fluid variant,
+  plus armadillo scute, turtle scute, and honeycomb (husbandry resources
+  predation cannot supply). The Froglight Cleaver now crafts from a raw Nether
+  Star and Dragon Egg - both renewable through the altars.
+- **The catalyst altars are retired.** The four catalyst blocks, the six-face
+  spawn gate, and toxic boss milk are gone - the boss altars replaced that
+  whole loop. The `variants.bossVariantsEnabled` config folds into the
+  `boss.enabled` master.
+- **Predation milestones in the Advancements tab:** A New Appetite (first
+  predator bred), Apex of the Food Chain (first Apex), Free-Range Farming
+  (first mob devoured), and Boss on the Menu (first altar summon completed).
+
+### Carried over and simplified
+
+- **Everything else made the jump:** the six species, the data-driven variant
+  roster, all the appliances (Milker, Churn, Spawnery, Crucible, Casting Mold),
+  the Terrarium, frog stat breeding, milk catalysts, Brewed Froglights, the
+  Equivalence lane, Frog Legs, and the fairy-tale items.
+- **Slime Milk is one fluid again.** Instead of a separate fluid per variant,
+  Slime Milk now remembers its variant on the fluid itself - it survives
+  every bucket, tank, and pipe round-trip on this Minecraft version's new
+  fluid API, with far fewer registered fluids cluttering JEI.
+- **Molten metal is first-party.** The Crucible melts metal Froglights into
+  Productive Frogs' own molten fluids and the Casting Mold casts them back;
+  the recipes key on the standard `c:molten_<metal>` tags for interop.
+- **JEI coverage for the predation chain:** Mob Slurry Buckets show one entry
+  per mob, and the Slurry Press, both Basins, the Ender Net, Liquid
+  Experience, and the four altar Hatches all have info pages.
+
+### Known alpha gaps
+
+- **Integrations ship as JEI + Jade only.** Support for other mods (metals,
+  crystals, processors, the Curios charm slot) returns closer to stable, as
+  those mods settle on this Minecraft version.
+- **No in-game guide book yet.** The guide engine the 1.x book used has no
+  build for this Minecraft version; the guide returns closer to stable.
+- Placing a component-carrying fluid directly with a pipe's world-placer
+  bypasses the bucket and loses the variant identity - a documented engine
+  limitation; Productive Frogs' own machines are unaffected.
+
 
 ## v1.24.2 - 2026-06-29 - Name Tags
 

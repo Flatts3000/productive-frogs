@@ -308,10 +308,10 @@ tasks.register('publishCurseForge', net.darkhax.curseforgegradle.TaskPublishCurs
     apiToken = resolveCfApiToken()
 
     def primary = upload(1552728, tasks.jar.archiveFile)
-    // Stable (Release) as of v1.20.0: beta from v1.9.1 through v1.19.2 soaked the V1
-    // scope + cross-mod compat (Mekanism, Create, AE2, Refined Storage, ...) in-pack;
-    // the pre-release config suite (#200/#202/#203/#204) shipped in v1.18, clearing the
-    // last stable blocker. Promoted out of beta.
+    // Alpha for the 2.x line (from v2.0.0-alpha.1): a new-Minecraft-version
+    // rewrite soaking in the wild. Promote to beta once the redesign settles,
+    // stable closer to a pack launch. (The 1.24.x line publishes as Release
+    // from its own mc-1.21.1 branch.)
     primary.releaseType = 'alpha'
     primary.addGameVersion('26.1.2')
     primary.addModLoader('NeoForge')
