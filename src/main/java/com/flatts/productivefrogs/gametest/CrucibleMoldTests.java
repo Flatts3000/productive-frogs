@@ -363,11 +363,10 @@ final class CrucibleMoldTests {
     }
 
     /**
-     * Wave-2 molten lane, ATM-interop direction included: an iron Froglight melts
-     * to 180 mB (2 ingots' worth) of molten iron - and WHICH molten iron is
-     * environment-derived, mirroring the mod_loaded conditions on the generated
-     * recipes: AllTheOres loaded -> {@code alltheores:molten_iron}; lean env (CI)
-     * -> the PF-minted {@code productivefrogs:molten_iron} fallback.
+     * The molten lane: an iron Froglight melts to 180 mB (2 ingots' worth) of
+     * {@code productivefrogs:molten_iron} - PF's own fluid regardless of
+     * environment (ATO 4.x dropped its fluid system on 26.1, so the old
+     * ATO-loaded conditional output is gone; the melt recipe is unconditional).
      */
     private static void crucibleMeltsMetalFroglightToMoltenFluid(GameTestHelper helper) {
         BlockPos base = new BlockPos(2, 1, 2);
@@ -383,9 +382,7 @@ final class CrucibleMoldTests {
             helper.fail("iron Froglight should queue (every metal has a molten mapping in wave 2)");
             return;
         }
-        Identifier expected = net.neoforged.fml.ModList.get().isLoaded("alltheores")
-            ? Identifier.parse("alltheores:molten_iron")
-            : Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "molten_iron");
+        Identifier expected = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "molten_iron");
         helper.succeedWhen(() -> {
             net.neoforged.neoforge.fluids.FluidStack fluid = crucible.fluid();
             Identifier actual = BuiltInRegistries.FLUID.getKey(fluid.getFluid());
@@ -603,9 +600,7 @@ final class CrucibleMoldTests {
         }
         // ...then a different castable molten must bounce (single-fluid buffer).
         net.minecraft.world.level.material.Fluid copper = BuiltInRegistries.FLUID.getValue(
-            net.neoforged.fml.ModList.get().isLoaded("alltheores")
-                ? Identifier.parse("alltheores:molten_copper")
-                : Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "molten_copper"));
+            Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "molten_copper"));
         if (fillCommit(cap, copper, 45) != 0) {
             helper.fail("molten copper must be refused while the buffer holds molten iron (single-fluid rule)");
             return;
@@ -633,11 +628,12 @@ final class CrucibleMoldTests {
         }
     }
 
-    /** The molten-iron fluid this environment mints (mirrors the recipe conditions). */
+    /**
+     * PF's own molten iron - the only molten iron on the 2.0 line (ATO 4.x
+     * ships no fluids on 26.1; PF mints unconditionally for iron).
+     */
     private static net.minecraft.world.level.material.Fluid envMoltenIron() {
-        Identifier id = net.neoforged.fml.ModList.get().isLoaded("alltheores")
-            ? Identifier.parse("alltheores:molten_iron")
-            : Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "molten_iron");
+        Identifier id = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "molten_iron");
         // 26.1: Registry value-by-id lookup is getValue(Identifier) (was get(Identifier)).
         return BuiltInRegistries.FLUID.getValue(id);
     }
