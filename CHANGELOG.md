@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## v1.24.6 - 2026-07-05 - Fresh Coat
+
 ### Changed
 
 - **Sharper bucket and Slime Milk art, backported from the 2.x line.** The
