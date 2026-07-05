@@ -11,7 +11,7 @@ PF is feature-complete on 1.21.1 (v1.24.2, stable on CurseForge). Two decisions 
 
 ## 2.0 scope - standalone, JEI + Jade only
 
-**PF 2.0 ships with no cross-mod integrations.** This sidesteps the research's biggest finding (Mekanism, Create, Industrial Foregoing, and Flux Networks aren't ported to 26.1, so their content is untestable) and sharply cuts port surface.
+**PF 2.0 ships with no cross-mod integrations.** This sidesteps the research's biggest finding (Mekanism, Create, Industrial Foregoing, and Flux Networks aren't ported to 26.1, so their content is untestable) and sharply cuts port surface. *(Post-port status: the strip held through v2.0.0-alpha.1, but the end state is 1.21.1 PARITY - wave-1 work for the 26.1-available partners is complete and parked until closer to release; see cross_mod_compat.md and #317.)*
 
 **In 2.0:** the six species, the **vanilla** resource roster, all four appliances (Milker / Churn / Spawnery / Casting Mold), the Froglight Crucible + the melt-and-cast lane, the Terrarium multiblock, the boss/endgame tier + altars, the Equivalence (EE) lane, frog stat breeding, Frog Legs / fairy-tale content, the advancements tab. **Plus JEI** (recipe + info pages) and **Jade** (look-at tooltips) - both have 26.1 builds (JEI beta, Jade stable).
 
@@ -125,14 +125,14 @@ Whatever the phases didn't catch: `Item.Properties` now **requires `setId(...)`*
 
 ## Success criteria
 
-- [ ] `mc-1.21.1` cut, pushed, protected; 1.21.1 hotfixes ship independently.
-- [ ] `./gradlew build` green on `port/mc-26.1` (NeoForge 26.1.2.76, Java 25).
-- [ ] `./gradlew runGameTestServer` green - all 158 GameTests pass (and the discovered-test count is asserted).
-- [ ] Manual creative-tab sweep: every item with correct tint + name (tint completeness gate passes).
-- [ ] Full milk pipeline, Crucible/Mold lane, Terrarium loop, boss altars, EE lane verified by hand.
-- [ ] JEI + Jade load and work; no cross-mod / Curios / Patchouli references remain in the 2.0 tree.
-- [ ] Jar names carry the MC version; CF upload tags `26.1.2` on project 1552728.
-- [ ] `port/mc-26.1` merged to `main`; load-bearing docs updated; `2.0.0` released.
+- [x] `mc-1.21.1` cut, pushed, protected; 1.21.1 hotfixes ship independently (v1.24.x line).
+- [x] `./gradlew build` green (NeoForge 26.1.2.76, Java 25).
+- [x] `./gradlew runGameTestServer` green - the suite grew to 202 required GameTests by release.
+- [x] Manual creative-tab sweep: every item with correct tint + name (tint completeness gate passes).
+- [x] Full milk pipeline, Crucible/Mold lane, Terrarium loop, boss altars, EE lane verified by hand (the phase-4b playtest).
+- [x] JEI + Jade load and work. *(The "no cross-mod / Curios references" clause was superseded: cross-mod wave 1 + Curios were built at 1.21.1 parity, then HELD until closer to release by maintainer ruling 2026-07-05 - parked on `feat/crossmod-wave1` / `feat/curios-26.1`, tracked in #317. Patchouli alone remains out - no 26.1 build; guidebook tracked in #318.)*
+- [x] Jar names carry the MC version; CF upload tags `26.1.2` on project 1552728.
+- [x] `port/mc-26.1` merged to `main` (PR #316, 2026-07-05); load-bearing docs updated; **v2.0.0-alpha.1 "Leap Forward" released** (GitHub + CurseForge alpha).
 
 ## Backwards compatibility
 

@@ -28,7 +28,7 @@ These aren't dependencies of the mod itself, but they make in-game testing much 
 - Search by name or mod (filter by `@productivefrogs` to see only our content).
 - View recipes by clicking an item (smelting recipes are auto-discovered). The mod also ships a JEI plugin (`client/jei/ProductiveFrogsJeiPlugin`) that subtypes variant/category items and adds Information pages, so each variant shows as a distinct entry.
 
-Pinned version: `mezz.jei:jei-1.21.1-neoforge:19.27.0.340` (1.21.1 line), with a matching `api` artifact `compileOnly` for the plugin. Bump in `build.gradle` if a newer 1.21.1-compatible build is needed.
+Pinned version: the 26.1 line (`mezz.jei:jei-26.1.2-neoforge`, 29.6.x), with a matching `api` artifact `compileOnly` for the plugin. Bump in `build.gradle` if a newer 26.1-compatible build is needed.
 
 ### Jade - drop-in install (manual)
 
@@ -36,25 +36,25 @@ Pinned version: `mezz.jei:jei-1.21.1-neoforge:19.27.0.340` (1.21.1 line), with a
 
 Jade is a `compileOnly` API dependency in `build.gradle` (Modrinth maven), which is what our `@WailaPlugin` (`client/jade/ProductiveFrogsJadePlugin`) compiles against. It is *not* a runtime dependency: adding it `runtimeOnly` would double-load against the drop-in below and trip NeoForge's duplicate-modid check. So Jade still needs a manual run/mods drop-in to actually run in the dev client. Install once into the dev environment:
 
-1. Download the 1.21.1 NeoForge build from [the CurseForge page](https://www.curseforge.com/minecraft/mc-mods/jade). (The 1.21.x line ships a separate jar per minor version - pick the 1.21.1 file specifically, not 1.21.11.)
+1. Download the 26.1 NeoForge build from [the CurseForge page](https://www.curseforge.com/minecraft/mc-mods/jade) (pick the file matching this line's Minecraft version exactly).
 2. Drop the jar into `run/mods/` (create the directory if it doesn't exist).
 3. `./gradlew runClient` - Jade loads alongside JEI and Productive Frogs.
 
 Steps 1-2 are one-time setup; the jar stays in `run/mods/` across runs.
 
-## Smoke-testing the cross-mod crush recipes (pre-release)
+## Smoke-testing cross-mod content (when the hold lifts)
 
-The v1.3 crush recipes (`data/productivefrogs/recipe/<modid>/`) are `mod_loaded`-gated, so they are inert - and untestable - unless an actual crusher mod is present. CI can't install Mekanism / Immersive Engineering / EnderIO (heavy, version-churning, and it would cut against the no-hard-mod-dependency rule), so this is a **manual `runClient` pass before each release** - the same posture as the client-tint work that GameTest is blind to. `CrushRecipeTest` already pins the JSON shape; this confirms the recipes actually *load and run* with the mods present.
+Cross-mod content is **held until closer to release** on the 2.0 line (maintainer ruling 2026-07-05; tracking issue #317) - the shipped tree has no `mod_loaded`-gated partner content to smoke-test. The machinery below stays for when it returns.
 
-These mods are **not** dependencies of Productive Frogs - they are drop-ins for the dev run, exactly like Jade above.
+Partner-mod jars are **not** dependencies of Productive Frogs - they are drop-ins for the dev run, exactly like Jade above.
 
-### 1. Fetch the crusher mods
+### 1. Fetch the partner mods
 
 ```
 python scripts/fetch_dev_mods.py
 ```
 
-Fetches the latest 1.21.1 / NeoForge build of every smoke-testable provider mod into `run/mods/`: Mekanism, Immersive Engineering, EnderIO, AllTheOres, Flux Networks, Powah, and Industrial Foregoing (+ required deps). **CurseForge is the default source** (the canonical channel and what Sky Frogs pins - Modrinth burned us once with an `mr_`-prefixed repack modid that silently failed every `mod_loaded` gate); Modrinth is the exception for official distributions whose required deps need its transitive resolution (Powah, Industrial Foregoing), SHA-1 verified. Re-runnable (skips files already present). Manual alternative: download the 1.21.1 NeoForge jar for each from its CurseForge page into `run/mods/` - and verify the `modId` inside any jar you fetch by hand.
+Fetches the pinned 26.1 / NeoForge builds of the dev-runtime mods into `run/mods/` (currently just Curios; the wave-1 partner roster lives in the script's history on `feat/crossmod-wave1`). **CurseForge is the default source** (the canonical channel - Modrinth burned us once with an `mr_`-prefixed repack modid that silently failed every `mod_loaded` gate); Modrinth is the exception for official distributions whose required deps need its transitive resolution, SHA-1 verified. Re-runnable (skips files already present). Manual alternative: download the 26.1 NeoForge jar from each mod's CurseForge page into `run/mods/` - and verify the `modId` inside any jar you fetch by hand.
 
 ### 2. Launch and verify
 

@@ -13,6 +13,20 @@ Slime variants, with no hard dependencies, no crashes when a mod is absent, and
 > lumium, enderium) are deferred until it ports. Builds on the data-driven
 > variant refactor (PR #108).
 
+> **2.0 / 26.1 status (2026-07-05):** the 26.1 port shipped v2.0.0-alpha.1 with
+> NO cross-mod content (JEI + Jade only) - but the end state is **1.21.1
+> parity**, held until closer to release by maintainer ruling. Wave-1 work for
+> the 26.1-available partners (AllTheOres, Powah, Just Dire Things, Refined
+> Storage, AE2, Curios, Apothic Enchanting - 29 variants, smelt-backs, melt
+> lanes, the Curios slot, the warden-tendril altar pool) is complete and
+> parked on `feat/crossmod-wave1` / `feat/curios-26.1`; tracking issue #317.
+> Wave 2 (Mekanism, Create, Industrial Foregoing, EnderIO, Immersive
+> Engineering, Oritech) waits on those mods' 26.1 ports. Excluded by ruling:
+> Mystical Agriculture (permanent), Flux Networks (upstream dead). Note for
+> the melt lane: AllTheOres 4.x dropped its fluid system on 26.1, so PF now
+> mints all molten fluids first-party (see froglight_crucible.md); the ATM 11
+> molten backbone is Productive Metalworks, a possible future defer target.
+
 > **Modpack authors:** [modpack_integration.md](./modpack_integration.md) is the consolidated, pack-facing entry point (config flags, variants, Spawnery primers, crush yields, the drop-in guarantee). This doc is the deep dive on the cross-mod variant strategy specifically.
 
 ## TL;DR

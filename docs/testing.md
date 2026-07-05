@@ -82,47 +82,22 @@ GameTests run real headless Minecraft scenarios in scripted plots. They're the r
 
 **Takeaway:** if you touch any of `client/`, `assets/<modid>/`, `Category.tintArgb`, item-model JSON, block-model JSON, lang files, or particle/sound code, schedule a manual `./gradlew runClient` pass and walk the affected surface before marking the work done. Document the playtest matrix in the PR description so the reviewer knows what was eyeballed.
 
-### Registration pattern (MC 1.21.1)
+### Registration pattern (MC 26.1 - registry-based; the annotation form is GONE)
 
-MC 1.21.1 uses NeoForge's annotation-based GameTest discovery. Three pieces:
+The 1.21.1 `@GameTestHolder` + `@GameTest` annotation/reflection discovery no longer exists on 26.1 (R-6 port decision). A test is now two halves:
 
-1. **Class-level `@GameTestHolder`** marks the holder class as a source of tests, with a namespace prefix that scopes the test ids:
+1. **The body** - a `Consumer<GameTestHelper>` registered in a `DeferredRegister` on `Registries.TEST_FUNCTION`.
+2. **The metadata** - a `TestData` (structure id, timeout, rotation, required flag) carried by a `FunctionGameTestInstance`, registered through `RegisterGameTestsEvent`, plus a shared `TestEnvironmentDefinition`.
 
-   ```java
-   @GameTestHolder(ProductiveFrogs.MOD_ID)
-   @PrefixGameTestTemplate(false)
-   public final class PFGameTests { ... }
-   ```
+`PFGameTests.test(name, [structure, rotation,] maxTicks, body)` hides the two-step; each per-domain test class (`SpeciesCategoryTests`, `BossAltarTests`, `PredatorEatPathTests`, ...) is a set of bodies plus one `register()` line in `PFGameTests.register`. Keep `required = true` / `manualOnly = false` or the CI job silently skips the test.
 
-   `@PrefixGameTestTemplate(false)` opts out of NeoForge's default prefix on the structure id, so `template = "empty_5x5x5"` resolves to `productivefrogs:empty_5x5x5` directly.
-
-2. **Method-level `@GameTest`** marks each test. The annotated method must be `public static` and take a single `GameTestHelper`. Per-test attributes (template, timeout, required, etc.) live on the annotation:
-
-   ```java
-   @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
-   public static void mySlimeTest(GameTestHelper helper) {
-       // ... scenario setup + assertions
-   }
-   ```
-
-3. **Holder registration** in a `RegisterGameTestsEvent` listener. Discovery walks the holder for `@GameTest` methods:
-
-   ```java
-   @SubscribeEvent
-   public static void onRegisterGameTests(RegisterGameTestsEvent event) {
-       event.register(PFGameTests.class);
-   }
-   ```
-
-4. **Structure NBT** - lives at `data/<modid>/structure/<name>.nbt` (singular `structure/` in this codebase - `tags/entity_type/`, `loot_table/`, `recipe/` are also singular). Defines the test plot bounds. For tests that build their scenario programmatically via `helper.setBlock`, an all-air structure of suitable size is enough. We ship `empty_5x5x5.nbt` for that.
-
-The canonical reference pattern lives in `PFGameTests.java`; copy its `@GameTest` annotation pattern for new tests.
+**Structure NBT** lives at `data/<modid>/structure/<name>.nbt` (singular `structure/` - `tags/entity_type/`, `loot_table/`, `recipe/` are also singular). For tests that build their scenario programmatically via `helper.setBlock`, the shared all-air `empty_5x5x5.nbt` plot is enough. Altar/multiblock layouts ship their own NBT and a validator-passes GameTest locks them (layout drift fails CI); `scripts/generate_altar_structures.py` regenerates the altar fixtures from the validator offsets.
 
 ### Adding a new GameTest
 
-1. Write the test method as `public static void myTest(GameTestHelper helper) { ... }` in `PFGameTests`.
-2. Annotate it: `@GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)`.
-3. If the test needs a custom plot (vs the default `empty_5x5x5`), ship a new NBT at `data/productivefrogs/structure/<name>.nbt` and pass that identifier through `TestData`.
+1. Write the body as a `private static void myTest(GameTestHelper helper) { ... }` in the matching per-domain class under `gametest/` (new domain = new class + one `register()` call in `PFGameTests.register`).
+2. Register it in that class's `register()` via `PFGameTests.test("my_test", maxTicks, MyDomainTests::myTest)` (add the structure id + rotation overload when not using the default empty plot).
+3. If the test needs a custom plot, ship a new NBT at `data/productivefrogs/structure/<name>.nbt`.
 4. Run `./gradlew runGameTestServer` locally to verify.
 5. Push - CI's `gameTest` job runs all tests.
 

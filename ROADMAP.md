@@ -158,20 +158,28 @@ The in-game guide book and a new frog perch. A **Patchouli guide book** (#243) -
 
 Two contained, repeatable boss farms. The **End Dragon Altar** (#249) is built on the End exit portal: ring it with End Crystal Receptacles and reinforced froglights under a Dragon Egg capstone, drop an end crystal into each receptacle, and a replica dragon rises and is devoured by **Dragonsbane**, a display frog at the altar's heart - the loot (Dragon Breath Froglight, renewable Dragon Egg Froglight, the Princess's Kiss, XP) lands in the hatch, with no real dragon, boss bar, or portal regrowth. The **Wither Altar** (#247) does the same for the Wither: a soul-forged arena of Reinforced Soul Sand and Blaze Rod Froglights loaded with the full vanilla summon, a replica Wither that charges exactly like a real spawn until **Witherbane** devours it, out comes a Nether Star Froglight (smelts back to a star) and XP - no boss bar, no exploding blocks. Both are boss-tier, gated behind the boss config (`boss.dragon_altar` / `boss.wither_altar`).
 
-### Unreleased (merged to `main`): the Equivalence lane (#253)
+### v1.23.0 (shipped 2026-06-29): the Equivalence lane (#253)
 
-The post-capstone transmutation lane - an opt-in, RF-powered equivalent-exchange engine for **off-roster** items (anything with no Resource Slime variant). Alembic (item + bucket + power -> Mimic Slime Bucket) -> Milker -> Mimic Milk -> Mimic Slimes -> **Midas** (a Kiss-primed frog that eats only Mimic Slimes) -> Prismatic Froglight -> Distiller (+ power) -> the original item, with duplication along the loop the player balances via milk catalysts and breeding. Machines need a Nether Star to craft (endgame-gated); the whole lane is **off by default** (`equivalence.enabled`) and wholly inert when disabled. Merged via PR #258; ships dark in the next release. Design: `docs/equivalence_lane.md`.
+The post-capstone transmutation lane - an opt-in, RF-powered equivalent-exchange engine for **off-roster** items (anything with no Resource Slime variant). Alembic (item + bucket + power -> Mimic Slime Bucket) -> Milker -> Mimic Milk -> Mimic Slimes -> **Midas** (a Kiss-primed frog that eats only Mimic Slimes) -> Prismatic Froglight -> Distiller (+ power) -> the original item, with duplication along the loop the player balances via milk catalysts and breeding. Machines need a Nether Star to craft (endgame-gated); the whole lane is **off by default** (`equivalence.enabled`) and wholly inert when disabled. Shipped as v1.23.0 "The Midas Touch"; the 1.x line then closed out with v1.24.x (Sprinkler redstone control, naming fixes, tadpole fixes) before the line froze on `mc-1.21.1`. Design: `docs/equivalence_lane.md`.
 
 ---
 
 ## 2.0: the 26.1 era + mob predation
 
-2.0.0 is the first release of the modern line (MC 26.1 / NeoForge 26.1). Two things define it:
+### v2.0.0-alpha.1 (shipped 2026-07-05): Leap Forward
 
-1. **The 26.1 platform port** - the whole 1.x feature set forward-ported to 26.1 as a standalone mod (decoupled from Sky Frogs, which stays on 1.21.1). This is the *foundation*; on its own it would be "1.x on 26.1," not a major version. Port plan: [docs/port_mc_26_1.md](./docs/port_mc_26_1.md).
-2. **Mob predation** - the feature that earns the major bump. All mob drops come from a frog eating the mob: a new **Predator / Apex frog tier** bred from the six species, the **Ender Net + Slurry Press** supply chain, three **class enclosures** (Aviary / Aquarium / Endarium for fly / swim / teleport mobs), **Liquid Experience** (XP as a `c:experience` fluid), and the boss altars gated behind bred Apex frogs. The mob-derived slime variants retire; those resources now come only from eating the mob. Spec: epic #281. Delivery roadmap: [docs/predator_frogs.md](./docs/predator_frogs.md).
+**The first release of the modern line** (MC 26.1.2 / NeoForge 26.1.2.76, alpha on CurseForge). Two things define it:
 
-**2.0.0 releases when predation lands, not on the bare port.** Cross-mod integrations are deferred to additive **2.x minors** as partner mods reach 26.1.
+1. **The 26.1 platform re-implementation** - the whole 1.x feature set forward-ported to 26.1 as a standalone mod (decoupled from Sky Frogs, which stays on 1.21.1). Port record: [docs/port_mc_26_1.md](./docs/port_mc_26_1.md) + [docs/port_mc_26_1_reimplementation.md](./docs/port_mc_26_1_reimplementation.md).
+2. **Mob predation** (epic #281, delivered in full) - all mob drops come from a frog eating the mob: the **Predator / Apex frog tier** bred from the six species, the **Ender Net + Slurry Press + Basin** supply chain (no enclosure blocks - Basin-spawned teleport-disable + frog abilities handle the hard classes), **Liquid Experience** (XP as a `c:experience` fluid), and the **four boss altars** (Wither / Ender Dragon / Warden / Elder Guardian) armed by bred Apex frogs and paying raw boss drops. The 21 mob-derived slime variants and the v1.14 catalyst-altar mechanism retired. Design record: [docs/predator_frogs.md](./docs/predator_frogs.md).
+
+### Toward 2.0.0 stable
+
+Held until closer to release by maintainer ruling (2026-07-05), tracked in #317/#318:
+
+- **Cross-mod integrations** beyond JEI + Jade - wave-1 parity work (AllTheOres, Powah, Just Dire Things, Refined Storage, AE2, Curios, Apothic Enchanting) is complete and parked on `feat/crossmod-wave1` / `feat/curios-26.1`; wave 2 waits on partner-mod 26.1 ports.
+- **The in-game guide book** - Patchouli has no 26.1 build; engine survey done (Modonomicon leading candidate), content rewrite pending.
+- Release-type promotion (alpha -> beta -> release) as the line soaks.
 
 > Automation (the Terrarium, appliance hopper I/O) already shipped in the **1.x** line - "V2 is just a name, not a rule." The former "v2 = automation" framing is retired. Remaining automation ideas (buffered auto-cycling Milker, auto-feeders, capacity/efficiency upgrades, FE / NeoForge Energy power compat) carry forward as **2.x** candidates layered on the 26.1 base.
 
