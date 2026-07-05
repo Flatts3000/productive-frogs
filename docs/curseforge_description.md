@@ -49,7 +49,7 @@ No power, no pipes required, and hoppers feed and drain it. Toss **catalysts** i
 
 ## Melt and cast
 
-Froglights are not just decor. Build a **Froglight Crucible** and park it over a heat source - a torch works on day one, lava and fire melt faster:
+Every Froglight melts back down. Build a **Froglight Crucible** and park it over a heat source - a torch works on day one, lava and fire melt faster:
 
 * Water and Lava Froglights melt into real, bucketable water and lava. Renewable lava on a skyblock, no nether trips.
 * Metal Froglights melt into molten metal worth two ingots each. Stack a **Casting Mold** on top and it casts the molten straight back into ingots - a three-block smelting tower with no power and no pipes.
@@ -69,7 +69,7 @@ There is a tier past the everyday loop. Splash a potion onto a slime before a fr
 
 ## Learn as you play
 
-New to the mod? Craft the in-game guide book (a book plus a slime ball) for an illustrated walkthrough of the whole thing, from your first slime to the boss altars, with build diagrams for the Terrarium and each altar. It needs [Patchouli](https://www.curseforge.com/minecraft/mc-mods/patchouli) installed, and modpack authors can extend it with their own pages.
+New to the mod? Craft the in-game guide book (a book plus a slime ball) for an illustrated walkthrough of the whole thing, with build diagrams for the Terrarium and each altar. It needs [Patchouli](https://www.curseforge.com/minecraft/mc-mods/patchouli) installed, and modpack authors can extend it with their own pages.
 
 ## Modpack-friendly
 
@@ -81,18 +81,22 @@ Full authoring guide: [docs on GitHub](https://github.com/Flatts3000/productive-
 
 * **[JEI](https://www.curseforge.com/minecraft/mc-mods/jei)**: Information pages on every Productive Frogs item explain the production role, who hunts what, and what smelts to what. Hover an item, press **U** or **R**.
 * **[Jade](https://www.curseforge.com/minecraft/mc-mods/jade)**: shows the species and variant in the in-world tooltip.
-* **[Patchouli](https://www.curseforge.com/minecraft/mc-mods/patchouli)**: unlocks the in-game guide book.
+* **[Patchouli](https://www.curseforge.com/minecraft/mc-mods/patchouli)**: adds the in-game guide book.
 
 They are all optional. The mod works fine without them; you just lose the contextual UI and the in-game guide.
 
 ## Platform
 
-* **Minecraft:** 1.21.1
-* **Loader:** NeoForge 21.1.230 (NeoForge only; no Fabric port planned)
-* **Java:** 21
+Two release lines, one project - pick the file matching your Minecraft version:
+
+* **2.x (alpha):** Minecraft 26.1 / NeoForge / Java 25 - the new line: predator frogs, boss altars, and everything that made the jump.
+* **1.24.x (stable):** Minecraft 1.21.1 / NeoForge 21.1.230 / Java 21 - the frozen line Sky Frogs runs; bug fixes only.
+
+NeoForge only; no Fabric port planned.
 
 ## Links
 
+* [Community Discord](https://discord.gg/r6MhZ73nsM) - #pf-2x for the new line, #pf-1x for the stable line
 * [GitHub repository](https://github.com/Flatts3000/productive-frogs)
 * [Issue tracker](https://github.com/Flatts3000/productive-frogs/issues)
 * [Full version history (CHANGELOG)](https://github.com/Flatts3000/productive-frogs/blob/main/CHANGELOG.md)
