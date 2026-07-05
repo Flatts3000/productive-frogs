@@ -78,8 +78,10 @@ variant pools and crush yields, the Spawnery, frog stat breeding, Slime Milk
 catalysts and per-variant automatable milk, the Froglight Crucible + Casting
 Mold melt-and-cast lane, Brewed Froglights + Curios, the boss/catalyst-altar
 tier, the Slime Churn, the Terrarium automation multiblock, Frog Legs and the
-fairy-tale items, the config suite, the in-game Patchouli guide book, Apex
-Predators, the Equivalence lane, and the Wither + Ender Dragon boss altars.
+fairy-tale items, the config suite, the in-game Patchouli guide book, the
+Equivalence lane, and the Wither + Ender Dragon boss altars (replica boss
+farms paying Froglights - this line's boss endgame; the 2.x predator/Apex
+frog system does not exist here).
 This line is **feature-complete and frozen**: from here it takes fixes only.
 
 | Version line | Scope | Status |
@@ -106,9 +108,9 @@ This line is **feature-complete and frozen**: from here it takes fixes only.
 | v1.19 | Lava Froglight furnace fuel; Crucible melts stone to lava (Ex Deorum parity) | ✅ shipped |
 | v1.20 | Stable release - promoted out of beta | ✅ shipped |
 | v1.21 | In-game Patchouli guide book; Sweetslimed Lily Pad frog perch; blend-then-climb breeding | ✅ shipped |
-| v1.22 | Apex Predators (frog stat capstone) | ✅ shipped |
+| v1.22 | "Apex Predators": the Wither + End Dragon boss altars (replica boss farms paying Froglights) | ✅ shipped |
 | v1.23 | The Equivalence lane (opt-in transmutation, Midas) | ✅ shipped |
-| v1.24 | Wither + Dragon altars, Sprinkler redstone control, fixes, the 2.x art backport | ✅ shipped (current) |
+| v1.24 | Sprinkler redstone control, naming + tadpole fixes, the 2.x art backport | ✅ shipped (current) |
 | 2.x | The mob-drop redesign on Minecraft 26.1 - predator frogs, four boss altars, Liquid Experience | 🚀 lives on [`main`](https://github.com/Flatts3000/productive-frogs/tree/main) |
 
 Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope rationale: [`docs/versioning.md`](./docs/versioning.md).
