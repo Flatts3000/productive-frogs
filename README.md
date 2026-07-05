@@ -34,12 +34,12 @@ Variant Slime Bucket → Slime Milker → Slime Milk bucket
 
 | Species | Biome | Matching frog | Example variants |
 |---|---|---|---|
-| **Bog Slime** | swamps, mangrove swamps | Bog Frog | clay, dirt, mud, moss, mycelium, lily pad, leather |
+| **Bog Slime** | swamps, mangrove swamps | Bog Frog | clay, dirt, mud, moss, mycelium, lily pad, honeycomb |
 | **Cave Slime** | dripstone caves, lush caves | Cave Frog | iron, copper, gold, redstone, coal |
 | **Geode Slime** | mountain peaks (stony / jagged / frozen) | Geode Frog | emerald, diamond, amethyst, lapis, tuff, calcite |
-| **Tide Slime** | deep oceans, warm + lukewarm oceans | Tide Frog | prismarine, sponge, sea pickle, nautilus shell |
-| **Infernal Slime** | nether wastes, basalt deltas, soul sand valley | Infernal Frog | blaze, quartz, glowstone, soul sand, obsidian, netherite scrap |
-| **Void Slime** | end islands | Void Frog | ender pearl, echo shard, sculk, end stone |
+| **Tide Slime** | deep oceans, warm + lukewarm oceans | Tide Frog | prismarine, sponge, sea pickle, turtle scute |
+| **Infernal Slime** | nether wastes, basalt deltas, soul sand valley | Infernal Frog | quartz, glowstone, soul sand, netherrack, obsidian, netherite scrap |
+| **Void Slime** | end islands | Void Frog | chorus fruit, echo shard, sculk, end stone |
 
 Six parent species spawn naturally in their biomes. Vanilla `minecraft:slime` and `minecraft:magma_cube` are NOT part of the production system - only the PF parent species can be infused into Resource Slimes.
 
@@ -66,6 +66,8 @@ Both are optional. Without them, the mod still works - just no JEI sidebar and n
 7. Smelt the Froglight → iron ingot.
 
 For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Milk. Place the milk source block; it spawns more Iron Slimes nearby.
+
+When you're ready for the endgame: breed two **different** frog species for a chance at a **predator frog** (it hunts real mobs for their real drops), cross two predators into an **Apex Frog**, and build that Apex a boss altar.
 
 ## Status
 
@@ -98,9 +100,11 @@ Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope ra
 | [slime_sourcing.md](./docs/slime_sourcing.md) | How players obtain Resource Slimes |
 | [farming.md](./docs/farming.md) | Slime Milker production loop |
 | [slime_milk_catalysts.md](./docs/slime_milk_catalysts.md) | Catalysts that buff a placed Slime Milk source (count / speed / quantity / infinite) |
+| [predator_frogs.md](./docs/predator_frogs.md) | The 2.0 mob-drop redesign - predator/Apex frogs, Mob Slurry, Liquid Experience |
+| [wither_altar.md](./docs/wither_altar.md) | The boss altars (dragon_altar / warden_altar / elder_altar are siblings) |
 | [architecture.md](./docs/architecture.md) | Data-driven variant system, tag layout, JSON registries |
 | [cross_mod_compat.md](./docs/cross_mod_compat.md) | Strategy for Mekanism, Create, Mythic Metals, and more |
-| [versioning.md](./docs/versioning.md) | V1 / V2 scope split |
+| [versioning.md](./docs/versioning.md) | Release-line scope + engineering rationale (1.x history, the 2.0 era) |
 | [textures_and_models.md](./docs/textures_and_models.md) | Tint pipeline + texture roster |
 | [dev_setup.md](./docs/dev_setup.md) | Local dev environment + companion mod install |
 | [curseforge_description.md](./docs/curseforge_description.md) | Canonical source for the CurseForge project Description (mirror manually when changed) |
@@ -109,7 +113,7 @@ Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope ra
 
 - **Minecraft**: 26.1.2 (2.x line; 1.21.1 served by the frozen v1.24.x line)
 - **Loader**: NeoForge 26.1.2.76 (NeoForge-only - no Fabric port planned)
-- **Java**: 21
+- **Java**: 25
 - **Gradle**: 9.5.1 with `net.neoforged.moddev` 2.0.141
 
 ## Building from source
