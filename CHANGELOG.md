@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **Sharper bucket and Slime Milk art, backported from the 2.x line.** The
+  Slime Bucket and Tadpole Bucket get the improved contents art plus a proper
+  bucket base of their own, and the Slime Milk fluid textures (which tint
+  per-variant, so every milk in the mod benefits) get the same upgrade.
+  Purely cosmetic - no recipes, data, or saves change.
+
 ## v1.24.5 - 2026-07-03 - Deep Breath
 
 ### Fixed
