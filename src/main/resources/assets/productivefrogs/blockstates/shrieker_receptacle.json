@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "filled=false": {
+      "model": "productivefrogs:block/shrieker_receptacle"
+    },
+    "filled=true": {
+      "model": "productivefrogs:block/shrieker_receptacle"
+    }
+  }
+}

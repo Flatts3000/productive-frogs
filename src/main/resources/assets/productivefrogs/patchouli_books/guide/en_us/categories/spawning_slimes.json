@@ -1,6 +1,0 @@
-{
-  "name": "Spawning Slimes",
-  "description": "Where the six parent slimes spawn in the world - the slimes you prime into Resource Slimes.",
-  "icon": "productivefrogs:cave_slime_spawn_egg",
-  "sortnum": 150
-}

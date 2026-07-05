@@ -1,0 +1,5 @@
+{
+  "entity_type": "minecraft:squid",
+  "predator": "gulper",
+  "handling": "swim"
+}

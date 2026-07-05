@@ -11,16 +11,21 @@ import com.flatts.productivefrogs.content.block.entity.EndDragonAltarHatchBlockE
 import com.flatts.productivefrogs.content.block.entity.HatchBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.MimicMilkSourceBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.MobSlurryBasinBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeChurnBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.SlimeMilkBasinBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.SlurryPressBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SpawneryBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SweetslimedLilyPadBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.ElderAltarHatchBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.WardenAltarHatchBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity;
-import com.flatts.productivefrogs.content.block.entity.WitherSummonReceptacleBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.SummonReceptacleBlockEntity;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -34,7 +39,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  *
  * <p>Productive Bees' centrifuge is the closest reference shape, but they
  * lean heavily on their {@code productivelib} utility module. We register
- * the BE directly here through {@code BlockEntityType.Builder.of(...).build(null)}
+ * the BE directly here through {@code new BlockEntityType<>(...)}
  * — the canonical 1.21.1 vanilla entry point. The Builder takes a {@code DSL.Type}
  * data-fixer arg ({@code null} is fine for mod content not subject to vanilla
  * data-fixer-upper migrations).
@@ -47,7 +52,7 @@ public final class PFBlockEntities {
     public static final Supplier<BlockEntityType<SlimeMilkerBlockEntity>> SLIME_MILKER =
         BLOCK_ENTITIES.register(
             "slime_milker",
-            () -> BlockEntityType.Builder.of(SlimeMilkerBlockEntity::new, PFBlocks.SLIME_MILKER.get()).build(null)
+            () -> new BlockEntityType<>(SlimeMilkerBlockEntity::new, PFBlocks.SLIME_MILKER.get())
         );
 
     /**
@@ -58,7 +63,37 @@ public final class PFBlockEntities {
     public static final Supplier<BlockEntityType<SlimeChurnBlockEntity>> SLIME_CHURN =
         BLOCK_ENTITIES.register(
             "slime_churn",
-            () -> BlockEntityType.Builder.of(SlimeChurnBlockEntity::new, PFBlocks.SLIME_CHURN.get()).build(null)
+            () -> new BlockEntityType<>(SlimeChurnBlockEntity::new, PFBlocks.SLIME_CHURN.get())
+        );
+
+    /**
+     * BE type for the {@code slurry_press} block (#281, Phase 3) - the 2-in/2-out
+     * inventory and the flat press-cycle progress. See {@link SlurryPressBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<SlurryPressBlockEntity>> SLURRY_PRESS =
+        BLOCK_ENTITIES.register(
+            "slurry_press",
+            () -> new BlockEntityType<>(SlurryPressBlockEntity::new, PFBlocks.SLURRY_PRESS.get())
+        );
+
+    /**
+     * BE type for the {@code mob_slurry_basin} (#281, Phase 3) - the held slurry
+     * charge + spawn economy. See {@link MobSlurryBasinBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<MobSlurryBasinBlockEntity>> MOB_SLURRY_BASIN =
+        BLOCK_ENTITIES.register(
+            "mob_slurry_basin",
+            () -> new BlockEntityType<>(MobSlurryBasinBlockEntity::new, PFBlocks.MOB_SLURRY_BASIN.get())
+        );
+
+    /**
+     * BE type for the {@code slime_milk_basin} (#281, Phase 3) - the held milk
+     * charge + spawn economy. See {@link SlimeMilkBasinBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<SlimeMilkBasinBlockEntity>> SLIME_MILK_BASIN =
+        BLOCK_ENTITIES.register(
+            "slime_milk_basin",
+            () -> new BlockEntityType<>(SlimeMilkBasinBlockEntity::new, PFBlocks.SLIME_MILK_BASIN.get())
         );
 
     /**
@@ -69,52 +104,66 @@ public final class PFBlockEntities {
     public static final Supplier<BlockEntityType<ConfigurableFroglightBlockEntity>> CONFIGURABLE_FROGLIGHT =
         BLOCK_ENTITIES.register(
             "configurable_froglight",
-            () -> BlockEntityType.Builder.of(ConfigurableFroglightBlockEntity::new, PFBlocks.CONFIGURABLE_FROGLIGHT.get()).build(null)
+            () -> new BlockEntityType<>(ConfigurableFroglightBlockEntity::new, PFBlocks.CONFIGURABLE_FROGLIGHT.get())
         );
 
     /** BE type for the {@code end_crystal_receptacle} (#249) - holds one End Crystal. */
     public static final Supplier<BlockEntityType<EndCrystalReceptacleBlockEntity>> END_CRYSTAL_RECEPTACLE =
         BLOCK_ENTITIES.register(
             "end_crystal_receptacle",
-            () -> BlockEntityType.Builder.of(EndCrystalReceptacleBlockEntity::new, PFBlocks.END_CRYSTAL_RECEPTACLE.get()).build(null)
+            () -> new BlockEntityType<>(EndCrystalReceptacleBlockEntity::new, PFBlocks.END_CRYSTAL_RECEPTACLE.get())
         );
 
     /** BE type for the {@code end_dragon_altar_hatch} (#249) - the altar's chest-style output. */
     public static final Supplier<BlockEntityType<EndDragonAltarHatchBlockEntity>> END_DRAGON_ALTAR_HATCH =
         BLOCK_ENTITIES.register(
             "end_dragon_altar_hatch",
-            () -> BlockEntityType.Builder.of(EndDragonAltarHatchBlockEntity::new, PFBlocks.END_DRAGON_ALTAR_HATCH.get()).build(null)
+            () -> new BlockEntityType<>(EndDragonAltarHatchBlockEntity::new, PFBlocks.END_DRAGON_ALTAR_HATCH.get())
         );
 
     /**
      * One BE type backing both Wither Altar (#247) summon receptacles (soul sand +
      * wither skull) - each holds one item; the accepted item is read from the block.
      */
-    public static final Supplier<BlockEntityType<WitherSummonReceptacleBlockEntity>> WITHER_SUMMON_RECEPTACLE =
+    public static final Supplier<BlockEntityType<SummonReceptacleBlockEntity>> WITHER_SUMMON_RECEPTACLE =
         BLOCK_ENTITIES.register(
             "wither_summon_receptacle",
-            () -> BlockEntityType.Builder.of(WitherSummonReceptacleBlockEntity::new,
-                PFBlocks.SOUL_SAND_RECEPTACLE.get(), PFBlocks.WITHER_SKULL_RECEPTACLE.get()).build(null)
+            () -> new BlockEntityType<>(SummonReceptacleBlockEntity::new,
+                PFBlocks.SOUL_SAND_RECEPTACLE.get(), PFBlocks.WITHER_SKULL_RECEPTACLE.get(),
+                PFBlocks.SHRIEKER_RECEPTACLE.get(), PFBlocks.TIDE_OFFERING_RECEPTACLE.get())
         );
 
     /** BE type for the {@code wither_altar_hatch} (#247) - the altar's output + summon brain. */
     public static final Supplier<BlockEntityType<WitherAltarHatchBlockEntity>> WITHER_ALTAR_HATCH =
         BLOCK_ENTITIES.register(
             "wither_altar_hatch",
-            () -> BlockEntityType.Builder.of(WitherAltarHatchBlockEntity::new, PFBlocks.WITHER_ALTAR_HATCH.get()).build(null)
+            () -> new BlockEntityType<>(WitherAltarHatchBlockEntity::new, PFBlocks.WITHER_ALTAR_HATCH.get())
+        );
+
+    /** BE type for the {@code warden_altar_hatch} (#279) - the Shrieker Pit's output + summon brain. */
+    public static final Supplier<BlockEntityType<WardenAltarHatchBlockEntity>> WARDEN_ALTAR_HATCH =
+        BLOCK_ENTITIES.register(
+            "warden_altar_hatch",
+            () -> new BlockEntityType<>(WardenAltarHatchBlockEntity::new, PFBlocks.WARDEN_ALTAR_HATCH.get())
+        );
+
+    /** BE type for the {@code elder_altar_hatch} (#280) - the Monument Well's output + summon brain. */
+    public static final Supplier<BlockEntityType<ElderAltarHatchBlockEntity>> ELDER_ALTAR_HATCH =
+        BLOCK_ENTITIES.register(
+            "elder_altar_hatch",
+            () -> new BlockEntityType<>(ElderAltarHatchBlockEntity::new, PFBlocks.ELDER_ALTAR_HATCH.get())
         );
 
     /**
-     * One BE type backing every per-variant Slime Milk source block (v1.8). The
-     * valid-blocks set is all per-variant blocks minted by {@link PFVariantMilk};
-     * resolved lazily here (after bootstrap), so the BE stores the spawn economy +
-     * catalyst upgrades while the block carries the variant (see
-     * {@link SlimeMilkSourceBlockEntity}).
+     * BE type backing the single Slime Milk source block (26.1 R-1). Stores the
+     * variant it spawns (seeded from the placing bucket's {@code SLIME_VARIANT}
+     * component) plus the spawn economy + catalyst upgrades. Replaces the v1.8
+     * per-variant block set. See {@link SlimeMilkSourceBlockEntity}.
      */
     public static final Supplier<BlockEntityType<SlimeMilkSourceBlockEntity>> SLIME_MILK_SOURCE =
         BLOCK_ENTITIES.register(
             "slime_milk_source",
-            () -> BlockEntityType.Builder.of(SlimeMilkSourceBlockEntity::new, PFVariantMilk.allBlocksArray()).build(null)
+            () -> new BlockEntityType<>(SlimeMilkSourceBlockEntity::new, PFBlocks.SLIME_MILK_SOURCE.get())
         );
 
     /**
@@ -125,7 +174,7 @@ public final class PFBlockEntities {
     public static final Supplier<BlockEntityType<CrucibleBlockEntity>> CRUCIBLE =
         BLOCK_ENTITIES.register(
             "crucible",
-            () -> BlockEntityType.Builder.of(CrucibleBlockEntity::new, PFBlocks.CRUCIBLE.get()).build(null)
+            () -> new BlockEntityType<>(CrucibleBlockEntity::new, PFBlocks.CRUCIBLE.get())
         );
 
     /**
@@ -136,7 +185,7 @@ public final class PFBlockEntities {
     public static final Supplier<BlockEntityType<CastingMoldBlockEntity>> CASTING_MOLD =
         BLOCK_ENTITIES.register(
             "casting_mold",
-            () -> BlockEntityType.Builder.of(CastingMoldBlockEntity::new, PFBlocks.CASTING_MOLD.get()).build(null)
+            () -> new BlockEntityType<>(CastingMoldBlockEntity::new, PFBlocks.CASTING_MOLD.get())
         );
 
     /**
@@ -147,7 +196,7 @@ public final class PFBlockEntities {
     public static final Supplier<BlockEntityType<DistillerBlockEntity>> DISTILLER =
         BLOCK_ENTITIES.register(
             "distiller",
-            () -> BlockEntityType.Builder.of(DistillerBlockEntity::new, PFBlocks.DISTILLER.get()).build(null)
+            () -> new BlockEntityType<>(DistillerBlockEntity::new, PFBlocks.DISTILLER.get())
         );
 
     /**
@@ -157,7 +206,7 @@ public final class PFBlockEntities {
     public static final Supplier<BlockEntityType<MimicMilkSourceBlockEntity>> MIMIC_MILK_SOURCE =
         BLOCK_ENTITIES.register(
             "mimic_slime_milk_source",
-            () -> BlockEntityType.Builder.of(MimicMilkSourceBlockEntity::new, PFBlocks.MIMIC_MILK.get()).build(null)
+            () -> new BlockEntityType<>(MimicMilkSourceBlockEntity::new, PFBlocks.MIMIC_MILK.get())
         );
 
     /**
@@ -167,14 +216,14 @@ public final class PFBlockEntities {
     public static final Supplier<BlockEntityType<AlembicBlockEntity>> ALEMBIC =
         BLOCK_ENTITIES.register(
             "alembic",
-            () -> BlockEntityType.Builder.of(AlembicBlockEntity::new, PFBlocks.ALEMBIC.get()).build(null)
+            () -> new BlockEntityType<>(AlembicBlockEntity::new, PFBlocks.ALEMBIC.get())
         );
 
     /** BE type for the {@code spawnery} block - holds the 4-slot inventory + cook/burn timers. */
     public static final Supplier<BlockEntityType<SpawneryBlockEntity>> SPAWNERY =
         BLOCK_ENTITIES.register(
             "spawnery",
-            () -> BlockEntityType.Builder.of(SpawneryBlockEntity::new, PFBlocks.SPAWNERY.get()).build(null)
+            () -> new BlockEntityType<>(SpawneryBlockEntity::new, PFBlocks.SPAWNERY.get())
         );
 
     /**
@@ -188,14 +237,17 @@ public final class PFBlockEntities {
     public static final Supplier<BlockEntityType<PrimedFrogEggBlockEntity>> PRIMED_FROG_EGG =
         BLOCK_ENTITIES.register(
             "primed_frog_egg",
-            () -> BlockEntityType.Builder.of(
+            () -> new BlockEntityType<>(
                 PrimedFrogEggBlockEntity::new,
-                java.util.stream.Stream.concat(
+                java.util.stream.Stream.of(
                         PFBlocks.PRIMED_FROG_EGGS.values().stream().map(java.util.function.Supplier::get),
                         // The Midas egg (#253) shares this BE type.
-                        java.util.stream.Stream.of(PFBlocks.MIDAS_FROG_EGG.get()))
+                        java.util.stream.Stream.of(PFBlocks.MIDAS_FROG_EGG.get()),
+                        // The per-kind predator/apex eggs (2026-07-04 ruling) too.
+                        PFBlocks.KIND_FROG_EGGS.values().stream().map(java.util.function.Supplier::get))
+                    .flatMap(st -> st)
                     .toArray(net.minecraft.world.level.block.Block[]::new)
-            ).build(null)
+            )
         );
 
     /**
@@ -206,28 +258,28 @@ public final class PFBlockEntities {
     public static final Supplier<BlockEntityType<TerrariumControllerBlockEntity>> TERRARIUM_CONTROLLER =
         BLOCK_ENTITIES.register(
             "terrarium_controller",
-            () -> BlockEntityType.Builder.of(TerrariumControllerBlockEntity::new, PFBlocks.TERRARIUM_CONTROLLER.get()).build(null)
+            () -> new BlockEntityType<>(TerrariumControllerBlockEntity::new, PFBlocks.TERRARIUM_CONTROLLER.get())
         );
 
     /** BE type for the Sprinkler (#185). Inert in phase 1; spawn loop lands in phase 2. */
     public static final Supplier<BlockEntityType<SprinklerBlockEntity>> SPRINKLER =
         BLOCK_ENTITIES.register(
             "sprinkler",
-            () -> BlockEntityType.Builder.of(SprinklerBlockEntity::new, PFBlocks.SPRINKLER.get()).build(null)
+            () -> new BlockEntityType<>(SprinklerBlockEntity::new, PFBlocks.SPRINKLER.get())
         );
 
     /** BE type for the Incubator (#185). Inert in phase 1; stat relay lands in phase 4. */
     public static final Supplier<BlockEntityType<IncubatorBlockEntity>> INCUBATOR =
         BLOCK_ENTITIES.register(
             "incubator",
-            () -> BlockEntityType.Builder.of(IncubatorBlockEntity::new, PFBlocks.INCUBATOR.get()).build(null)
+            () -> new BlockEntityType<>(IncubatorBlockEntity::new, PFBlocks.INCUBATOR.get())
         );
 
     /** BE type for the Hatch (#185). Inert in phase 1; output inventory lands in phase 3. */
     public static final Supplier<BlockEntityType<HatchBlockEntity>> HATCH =
         BLOCK_ENTITIES.register(
             "hatch",
-            () -> BlockEntityType.Builder.of(HatchBlockEntity::new, PFBlocks.HATCH.get()).build(null)
+            () -> new BlockEntityType<>(HatchBlockEntity::new, PFBlocks.HATCH.get())
         );
 
     /**
@@ -238,7 +290,7 @@ public final class PFBlockEntities {
     public static final Supplier<BlockEntityType<SweetslimedLilyPadBlockEntity>> SWEETSLIMED_LILY_PAD =
         BLOCK_ENTITIES.register(
             "sweetslimed_lily_pad",
-            () -> BlockEntityType.Builder.of(SweetslimedLilyPadBlockEntity::new, PFBlocks.SWEETSLIMED_LILY_PAD.get()).build(null)
+            () -> new BlockEntityType<>(SweetslimedLilyPadBlockEntity::new, PFBlocks.SWEETSLIMED_LILY_PAD.get())
         );
 
     private PFBlockEntities() {

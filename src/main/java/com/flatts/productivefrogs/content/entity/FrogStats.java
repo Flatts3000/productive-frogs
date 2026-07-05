@@ -175,4 +175,20 @@ public final class FrogStats {
         double radius = minRadius + t * (maxRadius - minRadius);
         return Math.max(1, (int) Math.round(radius));
     }
+
+    /**
+     * Map a Bounty stat to the looting level a Predator Frog's eat applies to
+     * the prey's player-kill loot roll (#281: "looting = Bounty" - base Bounty
+     * -> Looting 0, the cap -> Looting III, linear in between). The same stat
+     * that scales Froglight drops on the slime side scales rare-drop odds on
+     * the predation side, so bred investment carries across both.
+     */
+    public static int bountyLootingLevel(int bounty, int cap) {
+        int b = clamp(bounty, cap);
+        if (cap <= STAT_MIN) {
+            return 3;
+        }
+        double t = (double) (b - STAT_MIN) / (cap - STAT_MIN);
+        return (int) Math.round(t * 3.0);
+    }
 }

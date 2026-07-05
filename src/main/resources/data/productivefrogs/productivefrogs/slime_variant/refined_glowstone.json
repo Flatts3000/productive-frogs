@@ -1,9 +1,0 @@
-{
-  "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "mekanism" }
-  ],
-  "primer_tag": "c:ingots/refined_glowstone",
-  "category": "infernal",
-  "primary_color": 16773554,
-  "secondary_color": 10122820
-}

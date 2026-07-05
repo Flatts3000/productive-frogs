@@ -2,15 +2,19 @@ package com.flatts.productivefrogs.registry;
 
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.item.ConfigurableFroglightItem;
+import com.flatts.productivefrogs.content.item.EnderNetItem;
 import com.flatts.productivefrogs.content.item.FrogEggItem;
 import com.flatts.productivefrogs.content.item.FrogNetItem;
+import com.flatts.productivefrogs.content.item.LiquidExperienceBucketItem;
 import com.flatts.productivefrogs.content.item.MilkCatalyst;
 import com.flatts.productivefrogs.content.item.MilkCatalystItem;
 import com.flatts.productivefrogs.content.item.MimicMilkBucketItem;
 import com.flatts.productivefrogs.content.item.MimicSlimeBucketItem;
+import com.flatts.productivefrogs.content.item.MobSlurryBucketItem;
 import com.flatts.productivefrogs.content.item.ResourceSlimeSpawnEggItem;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.content.item.SlimeBucketItem;
+import com.flatts.productivefrogs.content.item.SlimeMilkBucketItem;
 import com.flatts.productivefrogs.data.Category;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -20,10 +24,9 @@ import java.util.function.Supplier;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.BucketItem;
@@ -33,9 +36,10 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MobBucketItem;
 import net.minecraft.world.item.PlaceOnWaterBlockItem;
 import net.minecraft.world.item.SpawnEggItem;
-import net.minecraft.world.item.SwordItem;
-import net.minecraft.world.item.Tiers;
+import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.TypedEntityData;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -80,18 +84,28 @@ public final class PFItems {
     );
 
     /**
+     * Ender Net (#281, predation Phase 3) - the any-mob counterpart to the Frog
+     * Net: catches any living mob whole-entity and releases it elsewhere, or
+     * feeds it to the Slurry Press. Boss mobs are catchable (relocation) but the
+     * Press refuses them.
+     */
+    public static final DeferredItem<EnderNetItem> ENDER_NET = ITEMS.registerItem(
+        "ender_net",
+        props -> new EnderNetItem(props.stacksTo(1))
+    );
+
+    /**
      * Froglight Cleaver (#212) - a late-game sword that drops a slime's Froglight
      * when it kills it (handled by {@code FroglightWeaponHandler}), the active-play
-     * counterpart to the passive frog loop. Netherite-tier {@link SwordItem} but
+     * counterpart to the passive frog loop. A netherite-tier weapon {@link Item} but
      * clearly stronger: +7 attack-damage bonus (12 displayed, vs netherite's 8) and
      * fire-resistant (it's forged from boss froglights + dragon's breath). The
      * harvest behaviour is event-driven. Gated by boss Froglights in its recipe
      * (`froglight_weapon`), so it's pure endgame and the extra power is earned.
      */
-    public static final DeferredItem<SwordItem> FROGLIGHT_CLEAVER = ITEMS.registerItem(
+    public static final DeferredItem<Item> FROGLIGHT_CLEAVER = ITEMS.registerItem(
         "froglight_cleaver",
-        props -> new SwordItem(Tiers.NETHERITE,
-            props.fireResistant().attributes(SwordItem.createAttributes(Tiers.NETHERITE, 7, -2.4F)))
+        props -> new Item(props.fireResistant().sword(ToolMaterial.NETHERITE, 7, -2.4F))
     );
 
     /**
@@ -118,7 +132,7 @@ public final class PFItems {
      */
     public static final DeferredItem<PlaceOnWaterBlockItem> SWEETSLIMED_LILY_PAD = ITEMS.registerItem(
         "sweetslimed_lily_pad",
-        props -> new PlaceOnWaterBlockItem(PFBlocks.SWEETSLIMED_LILY_PAD.get(), props)
+        props -> new PlaceOnWaterBlockItem(PFBlocks.SWEETSLIMED_LILY_PAD.get(), props.useBlockDescriptionPrefix())
     );
 
     /**
@@ -161,12 +175,13 @@ public final class PFItems {
      * {@code frog_legs} config gate.
      */
     public static final FoodProperties FROG_LEGS_SOUP_FOOD =
-        new FoodProperties.Builder().nutrition(10).saturationModifier(0.6F)
-            .usingConvertsTo(Items.BOWL).build();
+        new FoodProperties.Builder().nutrition(10).saturationModifier(0.6F).build();
 
+    // 26.1: the bowl "converts to" remainder moved off FoodProperties.Builder onto
+    // Item.Properties.usingConvertsTo(Item).
     public static final DeferredItem<Item> FROG_LEGS_SOUP = ITEMS.registerItem(
         "frog_legs_soup",
-        props -> new Item(props.stacksTo(1).food(FROG_LEGS_SOUP_FOOD))
+        props -> new Item(props.stacksTo(1).food(FROG_LEGS_SOUP_FOOD).usingConvertsTo(Items.BOWL))
     );
 
     /**
@@ -240,6 +255,36 @@ public final class PFItems {
     );
 
     /**
+     * The single Slime Milk bucket (26.1 R-1) - places the single Slime Milk source
+     * block; carries the variant as a top-level {@code SLIME_VARIANT} component (tint
+     * + name) and writes it to the placed source's BE. Replaces the v1.8 per-variant
+     * milk buckets ({@code PFVariantMilk}, deleted). Mint variant-stamped stacks via
+     * {@link SlimeMilkBucketItem#forVariant}. See {@code docs/port_mc_26_1_reimplementation.md}.
+     */
+    public static final DeferredItem<SlimeMilkBucketItem> SLIME_MILK_BUCKET = ITEMS.registerItem(
+        "slime_milk_bucket",
+        props -> new SlimeMilkBucketItem(
+            PFFluids.SLIME_MILK.get(),
+            props.stacksTo(1).craftRemainder(Items.BUCKET)
+        )
+    );
+
+    /**
+     * Liquid Experience bucket (#281 Phase 2). Right-click drinks it - the player
+     * absorbs exactly 50 XP points (one bucket at the {@code c:experience}
+     * 20 mB/point standard) and keeps the empty bucket. Never places a fluid
+     * block (Liquid Experience has none); tanks/pipes move it via
+     * {@code Capabilities.Fluid.ITEM} (wired in {@code PFModBusEvents}).
+     */
+    public static final DeferredItem<LiquidExperienceBucketItem> LIQUID_EXPERIENCE_BUCKET = ITEMS.registerItem(
+        "liquid_experience_bucket",
+        props -> new LiquidExperienceBucketItem(
+            PFFluids.LIQUID_EXPERIENCE.get(),
+            props.stacksTo(1).craftRemainder(Items.BUCKET)
+        )
+    );
+
+    /**
      * Resource Tadpole bucket. Mirrors vanilla {@code tadpole_bucket} but
      * preserves the tadpole's category across bucket-and-release. Display
      * name varies by the stored category.
@@ -294,11 +339,8 @@ public final class PFItems {
         props -> {
             EntityType<?> type = PFEntities.RESOURCE_FROG.get();
             CompoundTag nbt = new CompoundTag();
-            nbt.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
-            nbt.putString("Category", Category.VOID.name());
-            nbt.putBoolean("Midas", true);
-            return new SpawnEggItem((EntityType<? extends Mob>) type, 0xFFD700, 0xB8860B,
-                new Item.Properties().component(DataComponents.ENTITY_DATA, CustomData.of(nbt)));
+            nbt.putString("Kind", com.flatts.productivefrogs.data.FrogKind.MIDAS.id());
+            return new SpawnEggItem(props.component(DataComponents.ENTITY_DATA, TypedEntityData.of(type, nbt)));
         });
 
     /**
@@ -312,18 +354,64 @@ public final class PFItems {
         props -> {
             EntityType<?> type = PFEntities.RESOURCE_TADPOLE.get();
             CompoundTag nbt = new CompoundTag();
-            nbt.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
-            nbt.putString("Category", Category.VOID.name());
-            nbt.putBoolean("Midas", true);
-            return new SpawnEggItem((EntityType<? extends Mob>) type, 0xFFD700, 0xB8860B,
-                new Item.Properties().component(DataComponents.ENTITY_DATA, CustomData.of(nbt)));
+            nbt.putString("Kind", com.flatts.productivefrogs.data.FrogKind.MIDAS.id());
+            return new SpawnEggItem(props.component(DataComponents.ENTITY_DATA, TypedEntityData.of(type, nbt)));
         });
+
+    /**
+     * Predator spawn eggs (#281) - one frog + one tadpole egg per predator kind
+     * (Prowler / Cinder / Gulper / Rift), the creative/testing counterpart to
+     * the breeding crosses (the survival acquisition). Each stamps the kind id
+     * into ENTITY_DATA ({@code Kind}), which the entities' readAdditionalSaveData
+     * resolves via {@code FrogKind.readFrom}.
+     */
+    public static final Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<SpawnEggItem>>
+        PREDATOR_FROG_SPAWN_EGGS = buildKindSpawnEggs("frog", () -> PFEntities.RESOURCE_FROG.get(),
+            java.util.List.of(com.flatts.productivefrogs.data.FrogKind.Predator.values()));
+
+    /** Tadpole counterparts of {@link #PREDATOR_FROG_SPAWN_EGGS}. */
+    public static final Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<SpawnEggItem>>
+        PREDATOR_TADPOLE_SPAWN_EGGS = buildKindSpawnEggs("tadpole", () -> PFEntities.RESOURCE_TADPOLE.get(),
+            java.util.List.of(com.flatts.productivefrogs.data.FrogKind.Predator.values()));
+
+    /** Apex frog spawn eggs (#281 Phase 4) - one per boss tier kind, Kind NBT baked. */
+    public static final Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<SpawnEggItem>>
+        APEX_FROG_SPAWN_EGGS = buildKindSpawnEggs("frog", () -> PFEntities.RESOURCE_FROG.get(),
+            java.util.List.of(com.flatts.productivefrogs.data.FrogKind.Apex.values()));
+
+    /** Tadpole counterparts of {@link #APEX_FROG_SPAWN_EGGS}. */
+    public static final Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<SpawnEggItem>>
+        APEX_TADPOLE_SPAWN_EGGS = buildKindSpawnEggs("tadpole", () -> PFEntities.RESOURCE_TADPOLE.get(),
+            java.util.List.of(com.flatts.productivefrogs.data.FrogKind.Apex.values()));
+
+    /**
+     * Kind-keyed spawn eggs (predators, apex - any kind whose eggs are one item
+     * per kind). Item id = {@code <nameSuffix>_<noun>_spawn_egg}; the Kind rides
+     * baked ENTITY_DATA NBT, the same dialect the entity save reads.
+     */
+    private static Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<SpawnEggItem>>
+            buildKindSpawnEggs(String noun, java.util.function.Supplier<EntityType<?>> typeSupplier,
+                java.util.List<? extends com.flatts.productivefrogs.data.FrogKind> kinds) {
+        Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<SpawnEggItem>> eggs =
+            new LinkedHashMap<>();
+        for (com.flatts.productivefrogs.data.FrogKind kind : kinds) {
+            eggs.put(kind, ITEMS.registerItem(
+                kind.nameSuffix() + "_" + noun + "_spawn_egg",
+                props -> {
+                    CompoundTag nbt = new CompoundTag();
+                    nbt.putString("Kind", kind.id());
+                    return new SpawnEggItem(props.component(
+                        DataComponents.ENTITY_DATA, TypedEntityData.of(typeSupplier.get(), nbt)));
+                }));
+        }
+        return java.util.Collections.unmodifiableMap(eggs);
+    }
 
     /**
      * The single Resource Slime spawn egg. One registered item whose variant
      * identity lives in the {@code SLIME_VARIANT} data component (see
      * {@link ResourceSlimeSpawnEggItem}). Per-variant stacks are built by
-     * {@link #resourceSlimeSpawnEgg(ResourceLocation)}; the creative tab + JEI
+     * {@link #resourceSlimeSpawnEgg(Identifier)}; the creative tab + JEI
      * enumerate variants from the {@code SLIME_VARIANT} datapack registry, so
      * adding a variant needs no spawn-egg Java edit (CR-9).
      *
@@ -335,8 +423,7 @@ public final class PFItems {
     public static final DeferredItem<ResourceSlimeSpawnEggItem> RESOURCE_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "resource_slime_spawn_egg",
         props -> new ResourceSlimeSpawnEggItem(
-            PFEntities.RESOURCE_SLIME.get(),
-            Category.BOG.tintRgb(), darker(Category.BOG.tintRgb()), props)
+            PFEntities.RESOURCE_SLIME.get(), props)
     );
 
     /**
@@ -352,9 +439,10 @@ public final class PFItems {
      */
     public static final DeferredItem<ConfigurableFroglightItem> CONFIGURABLE_FROGLIGHT = ITEMS.registerItem(
         "configurable_froglight",
-        // 1.21.1: no Item.Properties.useBlockDescriptionPrefix(); ConfigurableFroglightItem
-        // overrides getDescriptionId itself to fall through to the block translation key.
-        props -> new ConfigurableFroglightItem(PFBlocks.CONFIGURABLE_FROGLIGHT.get(), props)
+        // useBlockDescriptionPrefix: every froglight lang key (base AND the
+        // per-variant "block...configurable_froglight.<variant>" suffixes the
+        // item's getName builds) lives under the block.* prefix.
+        props -> new ConfigurableFroglightItem(PFBlocks.CONFIGURABLE_FROGLIGHT.get(), props.useBlockDescriptionPrefix())
     );
 
     /**
@@ -365,43 +453,37 @@ public final class PFItems {
      */
     public static final DeferredItem<SpawnEggItem> CAVE_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "cave_slime_spawn_egg",
-        props -> new SpawnEggItem(PFEntities.CAVE_SLIME.get(),
-            Category.CAVE.tintRgb(), darker(Category.CAVE.tintRgb()), props)
+        props -> new SpawnEggItem(props.spawnEgg(PFEntities.CAVE_SLIME.get()))
     );
 
     /** Geode Slime spawn egg — GEODE parent species. Mirrors Cave Slime. */
     public static final DeferredItem<SpawnEggItem> GEODE_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "geode_slime_spawn_egg",
-        props -> new SpawnEggItem(PFEntities.GEODE_SLIME.get(),
-            Category.GEODE.tintRgb(), darker(Category.GEODE.tintRgb()), props)
+        props -> new SpawnEggItem(props.spawnEgg(PFEntities.GEODE_SLIME.get()))
     );
 
     /** Tide Slime spawn egg — TIDE parent species. Mirrors Cave Slime. */
     public static final DeferredItem<SpawnEggItem> TIDE_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "tide_slime_spawn_egg",
-        props -> new SpawnEggItem(PFEntities.TIDE_SLIME.get(),
-            Category.TIDE.tintRgb(), darker(Category.TIDE.tintRgb()), props)
+        props -> new SpawnEggItem(props.spawnEgg(PFEntities.TIDE_SLIME.get()))
     );
 
     /** Void Slime spawn egg — VOID parent species. Mirrors Cave Slime. */
     public static final DeferredItem<SpawnEggItem> VOID_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "void_slime_spawn_egg",
-        props -> new SpawnEggItem(PFEntities.VOID_SLIME.get(),
-            Category.VOID.tintRgb(), darker(Category.VOID.tintRgb()), props)
+        props -> new SpawnEggItem(props.spawnEgg(PFEntities.VOID_SLIME.get()))
     );
 
     /** Bog Slime spawn egg — BOG parent species. V1.5 addition. */
     public static final DeferredItem<SpawnEggItem> BOG_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "bog_slime_spawn_egg",
-        props -> new SpawnEggItem(PFEntities.BOG_SLIME.get(),
-            Category.BOG.tintRgb(), darker(Category.BOG.tintRgb()), props)
+        props -> new SpawnEggItem(props.spawnEgg(PFEntities.BOG_SLIME.get()))
     );
 
     /** Infernal Slime spawn egg — INFERNAL parent species. V1.5 addition. */
     public static final DeferredItem<SpawnEggItem> INFERNAL_SLIME_SPAWN_EGG = ITEMS.registerItem(
         "infernal_slime_spawn_egg",
-        props -> new SpawnEggItem(PFEntities.INFERNAL_SLIME.get(),
-            Category.INFERNAL.tintRgb(), darker(Category.INFERNAL.tintRgb()), props)
+        props -> new SpawnEggItem(props.spawnEgg(PFEntities.INFERNAL_SLIME.get()))
     );
 
     /**
@@ -418,21 +500,11 @@ public final class PFItems {
     }
 
     /**
-     * Slime Milk buckets are <b>per-variant</b> ({@code <variant>_slime_milk_bucket}),
-     * minted dynamically at mod-init by {@link PFVariantMilk} - there is no single
-     * milk bucket item. Each is a vanilla {@code BucketItem} whose content is its
-     * own variant fluid, so tank mods round-trip it with vanilla handling. The
-     * {@link com.flatts.productivefrogs.content.block.SlimeMilkerBlock} outputs the
-     * input variant's bucket via {@code PFVariantMilk.bucket(variantId)}. See
-     * {@code docs/automated_milk_variants.md}.
-     */
-
-    /**
      * Slime Milker BlockItem — places {@link PFBlocks#SLIME_MILKER}. The block
      * is the V1 production keystone (right-click with slime bucket → milk
      * bucket out). See {@link com.flatts.productivefrogs.content.block.SlimeMilkerBlock}.
      */
-    public static final DeferredItem<BlockItem> SLIME_MILKER = ITEMS.registerSimpleBlockItem(
+    public static final DeferredItem<BlockItem> SLIME_MILKER = registerSimpleBlockItem(
         "slime_milker",
         PFBlocks.SLIME_MILKER,
         new Item.Properties()
@@ -443,10 +515,44 @@ public final class PFItems {
      * Milker's inverse (milk bucket + empty buckets -> captured Slime Buckets
      * on the placed-source spawn economy).
      */
-    public static final DeferredItem<BlockItem> SLIME_CHURN = ITEMS.registerSimpleBlockItem(
+    public static final DeferredItem<BlockItem> SLIME_CHURN = registerSimpleBlockItem(
         "slime_churn",
         PFBlocks.SLIME_CHURN,
         new Item.Properties()
+    );
+
+    /** Slurry Press BlockItem (#281, Phase 3) - places {@link PFBlocks#SLURRY_PRESS}. */
+    public static final DeferredItem<BlockItem> SLURRY_PRESS = registerSimpleBlockItem(
+        "slurry_press",
+        PFBlocks.SLURRY_PRESS,
+        new Item.Properties()
+    );
+
+    /** Mob Slurry Basin BlockItem (#281, Phase 3) - places {@link PFBlocks#MOB_SLURRY_BASIN}. */
+    public static final DeferredItem<BlockItem> MOB_SLURRY_BASIN = registerSimpleBlockItem(
+        "mob_slurry_basin",
+        PFBlocks.MOB_SLURRY_BASIN,
+        new Item.Properties()
+    );
+
+    /** Slime Milk Basin BlockItem (#281, Phase 3) - places {@link PFBlocks#SLIME_MILK_BASIN}. */
+    public static final DeferredItem<BlockItem> SLIME_MILK_BASIN = registerSimpleBlockItem(
+        "slime_milk_basin",
+        PFBlocks.SLIME_MILK_BASIN,
+        new Item.Properties()
+    );
+
+    /**
+     * The Mob Slurry bucket (#281, Phase 3) - one item; the condensed mob rides
+     * the {@code SLURRIED_ENTITY} component. Produced by the Slurry Press, spent
+     * in the Mob Slurry Basin. Never places a fluid (Mob Slurry has no world form).
+     */
+    public static final DeferredItem<MobSlurryBucketItem> MOB_SLURRY_BUCKET = ITEMS.registerItem(
+        "mob_slurry_bucket",
+        props -> new MobSlurryBucketItem(
+            PFFluids.MOB_SLURRY.get(),
+            props.stacksTo(1).craftRemainder(Items.BUCKET)
+        )
     );
 
     /**
@@ -454,7 +560,7 @@ public final class PFItems {
      * craftable + shown in JEI/creative when {@code spawnery.enabled} is true (the
      * item is always registered so a placed block functions if obtained via /give).
      */
-    public static final DeferredItem<BlockItem> SPAWNERY = ITEMS.registerSimpleBlockItem(
+    public static final DeferredItem<BlockItem> SPAWNERY = registerSimpleBlockItem(
         "spawnery",
         PFBlocks.SPAWNERY,
         new Item.Properties()
@@ -464,7 +570,7 @@ public final class PFItems {
      * Froglight Crucible BlockItem (v1.12 wave 1) - places {@link PFBlocks#CRUCIBLE},
      * the GUI-less heated basin that melts Froglights into fluids.
      */
-    public static final DeferredItem<BlockItem> CRUCIBLE = ITEMS.registerSimpleBlockItem(
+    public static final DeferredItem<BlockItem> CRUCIBLE = registerSimpleBlockItem(
         "crucible",
         PFBlocks.CRUCIBLE,
         new Item.Properties()
@@ -474,7 +580,7 @@ public final class PFItems {
      * Casting Mold BlockItem (v1.12 wave 2) - places {@link PFBlocks#CASTING_MOLD},
      * the molten-to-ingot solidifier that completes the Crucible tower.
      */
-    public static final DeferredItem<BlockItem> CASTING_MOLD = ITEMS.registerSimpleBlockItem(
+    public static final DeferredItem<BlockItem> CASTING_MOLD = registerSimpleBlockItem(
         "casting_mold",
         PFBlocks.CASTING_MOLD,
         new Item.Properties()
@@ -488,14 +594,29 @@ public final class PFItems {
      */
     public static final DeferredItem<BlockItem> MIDAS_FROG_EGG = ITEMS.registerItem(
         "midas_frog_egg",
-        props -> new PlaceOnWaterBlockItem(PFBlocks.MIDAS_FROG_EGG.get(), props)
+        props -> new PlaceOnWaterBlockItem(PFBlocks.MIDAS_FROG_EGG.get(), props.useBlockDescriptionPrefix())
     );
+
+    /** BlockItems for the per-kind egg blocks (predators + apex, 2026-07-04 ruling). */
+    public static final Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<BlockItem>>
+        KIND_FROG_EGG_ITEMS = buildKindEggItems();
+
+    private static Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<BlockItem>> buildKindEggItems() {
+        Map<com.flatts.productivefrogs.data.FrogKind, DeferredItem<BlockItem>> map = new LinkedHashMap<>();
+        for (var entry : PFBlocks.KIND_FROG_EGGS.entrySet()) {
+            map.put(entry.getKey(), ITEMS.registerItem(
+                entry.getKey().nameSuffix() + "_frog_egg",
+                props -> new PlaceOnWaterBlockItem(entry.getValue().get(), props.useBlockDescriptionPrefix())
+            ));
+        }
+        return java.util.Collections.unmodifiableMap(map);
+    }
 
     /**
      * Distiller BlockItem (#253) - places {@link PFBlocks#DISTILLER}, the
      * Equivalence lane's RF-powered extractor (Prismatic Froglight -> item).
      */
-    public static final DeferredItem<BlockItem> DISTILLER = ITEMS.registerSimpleBlockItem(
+    public static final DeferredItem<BlockItem> DISTILLER = registerSimpleBlockItem(
         "distiller",
         PFBlocks.DISTILLER,
         new Item.Properties()
@@ -505,7 +626,7 @@ public final class PFItems {
      * Alembic BlockItem (#253) - places {@link PFBlocks#ALEMBIC}, the Equivalence
      * lane's RF-powered synthesizer (item -> Mimic Slime Bucket).
      */
-    public static final DeferredItem<BlockItem> ALEMBIC = ITEMS.registerSimpleBlockItem(
+    public static final DeferredItem<BlockItem> ALEMBIC = registerSimpleBlockItem(
         "alembic",
         PFBlocks.ALEMBIC,
         new Item.Properties()
@@ -516,54 +637,72 @@ public final class PFItems {
      * habitat - Controller / Sprinkler / Incubator / Hatch.
      */
     public static final DeferredItem<BlockItem> TERRARIUM_CONTROLLER =
-        ITEMS.registerSimpleBlockItem("terrarium_controller", PFBlocks.TERRARIUM_CONTROLLER, new Item.Properties());
+        registerSimpleBlockItem("terrarium_controller", PFBlocks.TERRARIUM_CONTROLLER, new Item.Properties());
     public static final DeferredItem<BlockItem> SPRINKLER =
-        ITEMS.registerSimpleBlockItem("sprinkler", PFBlocks.SPRINKLER, new Item.Properties());
+        registerSimpleBlockItem("sprinkler", PFBlocks.SPRINKLER, new Item.Properties());
     public static final DeferredItem<BlockItem> INCUBATOR =
-        ITEMS.registerSimpleBlockItem("incubator", PFBlocks.INCUBATOR, new Item.Properties());
+        registerSimpleBlockItem("incubator", PFBlocks.INCUBATOR, new Item.Properties());
     public static final DeferredItem<BlockItem> HATCH =
-        ITEMS.registerSimpleBlockItem("hatch", PFBlocks.HATCH, new Item.Properties());
+        registerSimpleBlockItem("hatch", PFBlocks.HATCH, new Item.Properties());
 
     /**
      * Boss-tier catalyst BlockItems (#184). Placing the matching catalyst on all
      * six faces of a boss-variant Slime Milk source arms it. See
      * {@code docs/boss_catalyst_altar.md}.
      */
-    public static final DeferredItem<BlockItem> NETHER_STAR_CATALYST =
-        ITEMS.registerSimpleBlockItem("nether_star_catalyst", PFBlocks.NETHER_STAR_CATALYST, new Item.Properties());
-    public static final DeferredItem<BlockItem> DRAGON_EGG_CATALYST =
-        ITEMS.registerSimpleBlockItem("dragon_egg_catalyst", PFBlocks.DRAGON_EGG_CATALYST, new Item.Properties());
-    public static final DeferredItem<BlockItem> WITHER_SKELETON_SKULL_CATALYST =
-        ITEMS.registerSimpleBlockItem("wither_skeleton_skull_catalyst", PFBlocks.WITHER_SKELETON_SKULL_CATALYST, new Item.Properties());
-    public static final DeferredItem<BlockItem> DRAGON_BREATH_CATALYST =
-        ITEMS.registerSimpleBlockItem("dragon_breath_catalyst", PFBlocks.DRAGON_BREATH_CATALYST, new Item.Properties());
 
     // Reinforced Froglights (#249) - the dragon altar's structural blocks.
-    public static final DeferredItem<BlockItem> REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT =
-        ITEMS.registerSimpleBlockItem("reinforced_wither_skeleton_skull_froglight", PFBlocks.REINFORCED_WITHER_SKELETON_SKULL_FROGLIGHT, new Item.Properties());
-    public static final DeferredItem<BlockItem> REINFORCED_NETHER_STAR_FROGLIGHT =
-        ITEMS.registerSimpleBlockItem("reinforced_nether_star_froglight", PFBlocks.REINFORCED_NETHER_STAR_FROGLIGHT, new Item.Properties());
+    public static final DeferredItem<BlockItem> REINFORCED_OBSIDIAN_FROGLIGHT =
+        registerSimpleBlockItem("reinforced_obsidian_froglight", PFBlocks.REINFORCED_OBSIDIAN_FROGLIGHT, new Item.Properties());
+    public static final DeferredItem<BlockItem> REINFORCED_END_STONE_FROGLIGHT =
+        registerSimpleBlockItem("reinforced_end_stone_froglight", PFBlocks.REINFORCED_END_STONE_FROGLIGHT, new Item.Properties());
 
     // End Crystal Receptacle (#249) - the dragon altar's crystal sockets.
     public static final DeferredItem<BlockItem> END_CRYSTAL_RECEPTACLE =
-        ITEMS.registerSimpleBlockItem("end_crystal_receptacle", PFBlocks.END_CRYSTAL_RECEPTACLE, new Item.Properties());
+        registerSimpleBlockItem("end_crystal_receptacle", PFBlocks.END_CRYSTAL_RECEPTACLE, new Item.Properties());
     // End Dragon Altar Hatch (#249) - the dragon altar's output.
     public static final DeferredItem<BlockItem> END_DRAGON_ALTAR_HATCH =
-        ITEMS.registerSimpleBlockItem("end_dragon_altar_hatch", PFBlocks.END_DRAGON_ALTAR_HATCH, new Item.Properties());
+        registerSimpleBlockItem("end_dragon_altar_hatch", PFBlocks.END_DRAGON_ALTAR_HATCH, new Item.Properties());
 
     // Wither Altar (#247) - the Nether-themed reinforced froglights, receptacles, hatch, and capstone.
     public static final DeferredItem<BlockItem> REINFORCED_SOUL_SAND_FROGLIGHT =
-        ITEMS.registerSimpleBlockItem("reinforced_soul_sand_froglight", PFBlocks.REINFORCED_SOUL_SAND_FROGLIGHT, new Item.Properties());
-    public static final DeferredItem<BlockItem> REINFORCED_BLAZE_ROD_FROGLIGHT =
-        ITEMS.registerSimpleBlockItem("reinforced_blaze_rod_froglight", PFBlocks.REINFORCED_BLAZE_ROD_FROGLIGHT, new Item.Properties());
+        registerSimpleBlockItem("reinforced_soul_sand_froglight", PFBlocks.REINFORCED_SOUL_SAND_FROGLIGHT, new Item.Properties());
+    public static final DeferredItem<BlockItem> REINFORCED_GLOWSTONE_FROGLIGHT =
+        registerSimpleBlockItem("reinforced_glowstone_froglight", PFBlocks.REINFORCED_GLOWSTONE_FROGLIGHT, new Item.Properties());
+
+    // Phase 4b altars (#279/#280) - the Shrieker Pit + Monument Well structural blocks.
+    public static final DeferredItem<BlockItem> REINFORCED_SCULK_FROGLIGHT =
+        registerSimpleBlockItem("reinforced_sculk_froglight", PFBlocks.REINFORCED_SCULK_FROGLIGHT, new Item.Properties());
+    public static final DeferredItem<BlockItem> REINFORCED_ECHO_SHARD_FROGLIGHT =
+        registerSimpleBlockItem("reinforced_echo_shard_froglight", PFBlocks.REINFORCED_ECHO_SHARD_FROGLIGHT, new Item.Properties());
+    public static final DeferredItem<BlockItem> REINFORCED_PRISMARINE_FROGLIGHT =
+        registerSimpleBlockItem("reinforced_prismarine_froglight", PFBlocks.REINFORCED_PRISMARINE_FROGLIGHT, new Item.Properties());
+    public static final DeferredItem<BlockItem> REINFORCED_SPONGE_FROGLIGHT =
+        registerSimpleBlockItem("reinforced_sponge_froglight", PFBlocks.REINFORCED_SPONGE_FROGLIGHT, new Item.Properties());
     public static final DeferredItem<BlockItem> SOUL_SAND_RECEPTACLE =
-        ITEMS.registerSimpleBlockItem("soul_sand_receptacle", PFBlocks.SOUL_SAND_RECEPTACLE, new Item.Properties());
+        registerSimpleBlockItem("soul_sand_receptacle", PFBlocks.SOUL_SAND_RECEPTACLE, new Item.Properties());
     public static final DeferredItem<BlockItem> WITHER_SKULL_RECEPTACLE =
-        ITEMS.registerSimpleBlockItem("wither_skull_receptacle", PFBlocks.WITHER_SKULL_RECEPTACLE, new Item.Properties());
+        registerSimpleBlockItem("wither_skull_receptacle", PFBlocks.WITHER_SKULL_RECEPTACLE, new Item.Properties());
     public static final DeferredItem<BlockItem> WITHER_ALTAR_HATCH =
-        ITEMS.registerSimpleBlockItem("wither_altar_hatch", PFBlocks.WITHER_ALTAR_HATCH, new Item.Properties());
+        registerSimpleBlockItem("wither_altar_hatch", PFBlocks.WITHER_ALTAR_HATCH, new Item.Properties());
     public static final DeferredItem<BlockItem> WITHERED_STAR =
-        ITEMS.registerSimpleBlockItem("withered_star", PFBlocks.WITHERED_STAR, new Item.Properties());
+        registerSimpleBlockItem("withered_star", PFBlocks.WITHERED_STAR, new Item.Properties());
+
+    // Warden Altar (#279) + Elder Guardian Altar (#280) - hatches, receptacles, capstones.
+    public static final DeferredItem<BlockItem> WARDEN_ALTAR_HATCH =
+        registerSimpleBlockItem("warden_altar_hatch", PFBlocks.WARDEN_ALTAR_HATCH, new Item.Properties());
+    public static final DeferredItem<BlockItem> SHRIEKER_RECEPTACLE =
+        registerSimpleBlockItem("shrieker_receptacle", PFBlocks.SHRIEKER_RECEPTACLE, new Item.Properties());
+    public static final DeferredItem<BlockItem> ECHOING_CATALYST =
+        registerSimpleBlockItem("echoing_catalyst", PFBlocks.ECHOING_CATALYST, new Item.Properties());
+    public static final DeferredItem<BlockItem> ELDER_ALTAR_HATCH =
+        registerSimpleBlockItem("elder_altar_hatch", PFBlocks.ELDER_ALTAR_HATCH, new Item.Properties());
+    public static final DeferredItem<BlockItem> TIDE_OFFERING_RECEPTACLE =
+        registerSimpleBlockItem("tide_offering_receptacle", PFBlocks.TIDE_OFFERING_RECEPTACLE, new Item.Properties());
+    public static final DeferredItem<BlockItem> MONUMENT_CORE =
+        registerSimpleBlockItem("monument_core", PFBlocks.MONUMENT_CORE, new Item.Properties());
+    public static final DeferredItem<BlockItem> REINFORCED_LIGHT_BLUE_STAINED_GLASS =
+        registerSimpleBlockItem("reinforced_light_blue_stained_glass", PFBlocks.REINFORCED_LIGHT_BLUE_STAINED_GLASS, new Item.Properties());
 
     private static Map<Category, DeferredItem<BlockItem>> buildPrimedEggItems() {
         EnumMap<Category, DeferredItem<BlockItem>> map = new EnumMap<>(Category.class);
@@ -575,10 +714,13 @@ public final class PFItems {
             // the water block and then fails canSurvive). Without this, the
             // primed egg block items can't be placed at all.
             Category catCopy = cat;
+            // useBlockDescriptionPrefix: the name comes from the BLOCK lang key
+            // (block.productivefrogs.<cat>_frog_egg) - a bare registerItem would
+            // mint an item.* description id no lang entry covers.
             map.put(cat, ITEMS.registerItem(
                 cat.primedEggItemName(),
                 props -> new PlaceOnWaterBlockItem(
-                    PFBlocks.PRIMED_FROG_EGGS.get(catCopy).get(), props)
+                    PFBlocks.PRIMED_FROG_EGGS.get(catCopy).get(), props.useBlockDescriptionPrefix())
             ));
         }
         return map;
@@ -592,8 +734,6 @@ public final class PFItems {
         EnumMap<Category, DeferredItem<SpawnEggItem>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {
             String name = cat.id() + "_" + entitySuffix + "_spawn_egg";
-            int primary = cat.tintRgb();
-            int secondary = darker(primary);
             // 1.21.1 NeoForge has no Supplier<Properties> registerItem overload —
             // do the EntityType.get() lookup inside the Function lambda, which runs
             // at registry-build time (post-PFEntities binding).
@@ -601,22 +741,26 @@ public final class PFItems {
                 name,
                 props -> {
                     EntityType<?> type = entityTypeSupplier.get();
-                    return new SpawnEggItem(
-                        (EntityType<? extends Mob>) type,
-                        primary, secondary,
-                        applySpawnEggProps(props, type, cat));
+                    return new SpawnEggItem(applySpawnEggProps(props, type, cat));
                 }
             ));
         }
         return map;
     }
 
+    // NOTE (26.1 port): the per-species spawn-egg primary/secondary tint (cat.tintRgb()
+    // + darker()) no longer rides the SpawnEggItem constructor - 26.1 moved spawn-egg
+    // colour off the item. Re-wire the category tint through the item-colour handler in
+    // PFClientEvents (RegisterColorHandlersEvent) when that file lands.
     private static Item.Properties applySpawnEggProps(Item.Properties props, EntityType<?> type, Category category) {
         CompoundTag nbt = new CompoundTag();
-        nbt.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
-        nbt.putString("Category", category.name());
+        // Modern "Kind" id (26.1 TypedEntityData.loadInto merges this tag over a
+        // full entity save, so the egg must speak the same dialect the entity
+        // persists - see FrogKind.readFrom's legacy-precedence note).
+        nbt.putString("Kind", com.flatts.productivefrogs.data.FrogKind.resource(category).id());
         return props
-            .component(DataComponents.ENTITY_DATA, CustomData.of(nbt))
+            .component(DataComponents.ENTITY_DATA, TypedEntityData.of(type, nbt))
+            .requiredFeatures(type.requiredFeatures())
             .component(PFDataComponents.CONTAINED_CATEGORY.get(), category);
     }
 
@@ -629,12 +773,11 @@ public final class PFItems {
      * resolves its category from the variant registry on spawn). The entity
      * type id is embedded so vanilla {@code SpawnEggItem} semantics resolve.
      */
-    public static ItemStack resourceSlimeSpawnEgg(ResourceLocation variantId) {
+    public static ItemStack resourceSlimeSpawnEgg(Identifier variantId) {
         ItemStack stack = new ItemStack(RESOURCE_SLIME_SPAWN_EGG.get());
         CompoundTag nbt = new CompoundTag();
-        nbt.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(PFEntities.RESOURCE_SLIME.get()).toString());
         nbt.putString("Variant", variantId.toString());
-        stack.set(DataComponents.ENTITY_DATA, CustomData.of(nbt));
+        stack.set(DataComponents.ENTITY_DATA, TypedEntityData.of(PFEntities.RESOURCE_SLIME.get(), nbt));
         stack.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
         return stack;
     }
@@ -647,7 +790,7 @@ public final class PFItems {
      * names; shared by the creative tab and the JEI plugin so all display stacks
      * stay consistent with real captured buckets.
      */
-    public static ItemStack variantSlimeBucket(ResourceLocation variantId, Category category) {
+    public static ItemStack variantSlimeBucket(Identifier variantId, Category category) {
         ItemStack stack = new ItemStack(SLIME_BUCKET.get());
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
             tag.putString("Category", category.name());
@@ -657,14 +800,23 @@ public final class PFItems {
     }
 
     /**
-     * The variant's own Slime Milk bucket stack (per-variant fluids, v1.8). The
-     * item identity carries the variant, so no component stamp is needed. Returns
-     * {@link ItemStack#EMPTY} for a variant with no per-variant fluid (one not
-     * declared at mod-init) - such variants get no milk.
+     * A Slime Milk bucket stack for {@code variantId} (26.1 R-1, single bucket). The
+     * variant rides the {@code SLIME_VARIANT} component; every variant can be milked,
+     * so this always returns a non-empty stack (there is no per-variant fluid gate
+     * any more).
      */
-    public static ItemStack slimeMilkBucket(ResourceLocation variantId) {
-        net.minecraft.world.item.Item bucket = PFVariantMilk.bucket(variantId);
-        return bucket == null ? ItemStack.EMPTY : new ItemStack(bucket);
+    public static ItemStack slimeMilkBucket(Identifier variantId) {
+        return SlimeMilkBucketItem.forVariant(variantId);
+    }
+
+    /**
+     * Adapter for the 26.1 {@code registerSimpleBlockItem} signature, which now
+     * takes a {@code Supplier<Item.Properties>} rather than a Properties instance.
+     * Call sites keep passing a Properties instance; this wraps it in a supplier.
+     */
+    private static DeferredItem<BlockItem> registerSimpleBlockItem(
+            String name, Supplier<? extends Block> block, Item.Properties properties) {
+        return ITEMS.registerSimpleBlockItem(name, block, () -> properties);
     }
 
     private PFItems() {

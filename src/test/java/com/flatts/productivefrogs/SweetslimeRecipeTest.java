@@ -52,7 +52,7 @@ class SweetslimeRecipeTest {
         assertEquals(2, ingredients.size(), "exactly two ingredients (slime ball + sugar)");
         Set<String> items = new HashSet<>();
         for (JsonElement e : ingredients) {
-            items.add(e.getAsJsonObject().get("item").getAsString());
+            items.add(e.getAsString());
         }
         assertTrue(items.contains("minecraft:slime_ball"), "must include a slime ball");
         assertTrue(items.contains("minecraft:sugar"), "must include sugar");

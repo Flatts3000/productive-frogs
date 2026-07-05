@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -53,11 +53,11 @@ public final class PFDataComponents {
      * data lives in the datapack registry; this component stores the lookup
      * key only.
      */
-    public static final Supplier<DataComponentType<ResourceLocation>> SLIME_VARIANT = COMPONENTS.register(
+    public static final Supplier<DataComponentType<Identifier>> SLIME_VARIANT = COMPONENTS.register(
         "slime_variant",
-        () -> DataComponentType.<ResourceLocation>builder()
-            .persistent(ResourceLocation.CODEC)
-            .networkSynchronized(ResourceLocation.STREAM_CODEC)
+        () -> DataComponentType.<Identifier>builder()
+            .persistent(Identifier.CODEC)
+            .networkSynchronized(Identifier.STREAM_CODEC)
             .build()
     );
 
@@ -69,11 +69,27 @@ public final class PFDataComponents {
      * exclusive with SLIME_VARIANT (synthesized content carries this; variant content
      * carries that).
      */
-    public static final Supplier<DataComponentType<ResourceLocation>> SYNTHESIZED_ITEM = COMPONENTS.register(
+    public static final Supplier<DataComponentType<Identifier>> SYNTHESIZED_ITEM = COMPONENTS.register(
         "synthesized_item",
-        () -> DataComponentType.<ResourceLocation>builder()
-            .persistent(ResourceLocation.CODEC)
-            .networkSynchronized(ResourceLocation.STREAM_CODEC)
+        () -> DataComponentType.<Identifier>builder()
+            .persistent(Identifier.CODEC)
+            .networkSynchronized(Identifier.STREAM_CODEC)
+            .build()
+    );
+
+    /**
+     * EntityType id carried by Mob Slurry content (#281, predation Phase 3) - the
+     * Slurry bucket and the Mob Slurry Basin's held charge. The R-1 pattern a
+     * third time: ONE {@code mob_slurry} fluid, the mob it condenses riding as
+     * this component (the 26.1 transfer API preserves it through tanks/pipes).
+     * Mutually exclusive with {@link #SLIME_VARIANT} / {@link #SYNTHESIZED_ITEM}
+     * (slurry is keyed on a mob, not a variant or an item).
+     */
+    public static final Supplier<DataComponentType<Identifier>> SLURRIED_ENTITY = COMPONENTS.register(
+        "slurried_entity",
+        () -> DataComponentType.<Identifier>builder()
+            .persistent(Identifier.CODEC)
+            .networkSynchronized(Identifier.STREAM_CODEC)
             .build()
     );
 

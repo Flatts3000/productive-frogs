@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "productivefrogs:block/nether_star_catalyst"
-  }
-}

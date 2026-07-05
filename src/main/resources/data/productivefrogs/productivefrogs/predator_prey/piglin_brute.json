@@ -1,0 +1,5 @@
+{
+  "entity_type": "minecraft:piglin_brute",
+  "predator": "cinder",
+  "handling": "walk"
+}

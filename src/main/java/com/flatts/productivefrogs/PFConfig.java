@@ -2,7 +2,7 @@ package com.flatts.productivefrogs;
 
 import com.flatts.productivefrogs.data.Category;
 import java.util.List;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
@@ -94,22 +94,27 @@ public final class PFConfig {
 
     // Per-variant / per-category content scoping (#203). COMMON config: variants
     // are server/world state. The lists name what to force-OFF (empty = nothing
-    // disabled = the non-breaking default); bossVariantsEnabled is the convenience
-    // switch over the weight-0 prime-only boss tier (the half #200 consumes). The
-    // single read point is variantEnabled(id, category, weight); a disabled variant
-    // is unprimable, undiscoverable, and hidden from JEI + the creative tab. The
-    // registry entry stays (save-safe soft-hide), so re-enabling restores it.
+    // disabled = the non-breaking default). The single read point is
+    // variantEnabled(id, category, weight); a disabled variant is unprimable,
+    // undiscoverable, and hidden from JEI + the creative tab. The registry entry
+    // stays (save-safe soft-hide), so re-enabling restores it.
     public static final ModConfigSpec.ConfigValue<List<? extends String>> DISABLED_VARIANTS;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> DISABLED_CATEGORIES;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> DISABLED_INTEGRATIONS;
-    public static final ModConfigSpec.BooleanValue BOSS_VARIANTS_ENABLED;
 
-    // Boss-tier master (#200). One switch over the whole boss tier: the four
-    // weight-0 prime-only variants (ANDed with BOSS_VARIANTS_ENABLED), the four
-    // catalyst-altar block recipes, the boss Froglight smelt-backs, and creative
-    // visibility of the altar blocks. Toxic boss milk + the 6-face altar gate fall
-    // out transitively (no variant -> no source -> no milk). Default true.
+    // Boss-tier master (#200). One switch over the boss tier: the boss altars'
+    // block recipes and creative/JEI visibility, plus any pack-added weight-0
+    // prime-only variant. (The four shipped boss variants, the catalyst altars,
+    // and toxic boss milk retired in Phase 5 - the boss altars replaced them.)
+    // Default true.
     public static final ModConfigSpec.BooleanValue BOSS_ENABLED;
+
+    // Predation system master switch (#281). Gates the predator tier's creation
+    // surfaces: the designated resource-species breeding crosses and predator
+    // breed-true pairings refuse while off. Existing predator frogs stay alive
+    // (a freeze, like frog_stats) but produce no offspring. Default true - core
+    // 2.0 content.
+    public static final ModConfigSpec.BooleanValue PREDATORS_ENABLED;
 
     // End Dragon Altar (#249) tunables, under the boss section. Summon length (the
     // beam-and-grow show), the XP reward per summon, and whether the Dragon Egg is
@@ -122,6 +127,10 @@ public final class PFConfig {
     // vanilla-spawn charge) and the XP reward per summon.
     public static final ModConfigSpec.IntValue WITHER_ALTAR_SUMMON_TICKS;
     public static final ModConfigSpec.IntValue WITHER_ALTAR_XP_REWARD;
+    public static final ModConfigSpec.IntValue WARDEN_ALTAR_SUMMON_TICKS;
+    public static final ModConfigSpec.IntValue WARDEN_ALTAR_XP_REWARD;
+    public static final ModConfigSpec.IntValue ELDER_ALTAR_SUMMON_TICKS;
+    public static final ModConfigSpec.IntValue ELDER_ALTAR_XP_REWARD;
 
     // Deterministic, config-exposed lifecycle timings (docs/known_issues.md).
     // These are fixed (non-random) delays for the MODDED frog lifecycle; vanilla
@@ -175,6 +184,10 @@ public final class PFConfig {
     // Wither Altar defaults: 220 matches the vanilla invulnerable spawn; 50 XP a Wither's value.
     public static final int DEFAULT_WITHER_ALTAR_SUMMON_TICKS = 220;
     public static final int DEFAULT_WITHER_ALTAR_XP_REWARD = 50;
+    public static final int DEFAULT_WARDEN_ALTAR_SUMMON_TICKS = 168;
+    public static final int DEFAULT_WARDEN_ALTAR_XP_REWARD = 5;
+    public static final int DEFAULT_ELDER_ALTAR_SUMMON_TICKS = 200;
+    public static final int DEFAULT_ELDER_ALTAR_XP_REWARD = 10;
 
     public static final ModConfigSpec SPEC;
 
@@ -751,14 +764,21 @@ public final class PFConfig {
             .defineListAllowEmpty("disabledIntegrations", List.of(), () -> "examplemod",
                 PFConfig::isValidIntegrationKey);
 
-        BOSS_VARIANTS_ENABLED = builder
+        builder.pop();
+
+        builder.push("predators");
+
+        PREDATORS_ENABLED = builder
             .comment(
-                "Whether the boss tier's prime-only variants (weight 0: wither skull, nether star, dragon egg,",
-                "dragon breath) are enabled. Default true. When false they cannot be primed and are hidden from",
-                "JEI + the creative tab - the one-switch way to drop boss farming without listing each id.",
-                "(The catalyst altars and boss recipes have their own master under the boss section, #200.)"
+                "Master switch for the predation system (#281, Productive Frogs 2.0). Default true.",
+                "When false the predator tier's creation surfaces shut off: the four designated",
+                "resource-species breeding crosses (Bog x Cave, Infernal x Geode, Tide x Bog,",
+                "Void x Geode) refuse to mate, and predator frogs no longer breed true. Existing",
+                "predator frogs stay in the world unchanged (a freeze, not a delete), and eggs",
+                "already conceived before the flip still hatch their predator (in-flight content",
+                "completes; only NEW conceptions are gated)."
             )
-            .define("bossVariantsEnabled", true);
+            .define("enabled", true);
 
         builder.pop();
 
@@ -766,15 +786,11 @@ public final class PFConfig {
 
         BOSS_ENABLED = builder
             .comment(
-                "Master switch for the whole boss tier (#200). Default true. When false:",
-                "- the four prime-only boss variants (wither skull, nether star, dragon egg, dragon breath)",
-                "  are suppressed exactly like variants.bossVariantsEnabled=false (unprimable, undiscovered,",
-                "  hidden from JEI + the creative tab), which also removes their toxic milk and altar gating;",
-                "- the four catalyst-altar blocks become uncraftable and hidden from JEI + the creative tab;",
-                "- the boss Froglight smelt-back recipes are dropped.",
-                "Lets a pack run the standard froglight loop with no boss farming in one toggle. The narrower",
-                "variants.bossVariantsEnabled stays available to drop just the variants while keeping the altar",
-                "blocks craftable. Recipe gating needs a world reload."
+                "Master switch for the boss tier (#200). Default true. When false the boss-altar block",
+                "recipes are dropped and the altar blocks hide from JEI + the creative tab, and any",
+                "pack-added weight-0 prime-only variant is suppressed (unprimable, undiscovered, hidden).",
+                "Lets a pack run the standard froglight loop with no boss farming in one toggle.",
+                "Recipe gating needs a world reload."
             )
             .define("enabled", true);
 
@@ -825,6 +841,44 @@ public final class PFConfig {
 
         builder.pop();
 
+        builder.push("warden_altar");
+
+        WARDEN_ALTAR_SUMMON_TICKS = builder
+            .comment(
+                "Warden Altar (#279): length in ticks of the summon - the replica Warden rising from the",
+                "pit floor before Wardenbane devours it. Default 168 (the vanilla emerge animation). The",
+                "rewards land at the end regardless."
+            )
+            .defineInRange("summonTicks", DEFAULT_WARDEN_ALTAR_SUMMON_TICKS, 1, 24000);
+
+        WARDEN_ALTAR_XP_REWARD = builder
+            .comment(
+                "Experience granted per completed Warden Altar summon. Default 5 (a vanilla Warden's value).",
+                "Set 0 to grant no XP."
+            )
+            .defineInRange("xpReward", DEFAULT_WARDEN_ALTAR_XP_REWARD, 0, 100000);
+
+        builder.pop();
+
+        builder.push("elder_altar");
+
+        ELDER_ALTAR_SUMMON_TICKS = builder
+            .comment(
+                "Elder Guardian Altar (#280): length in ticks of the summon - the replica Elder Guardian",
+                "forming in the flooded tank before Elderbane devours it. Default 200. The rewards land",
+                "at the end regardless."
+            )
+            .defineInRange("summonTicks", DEFAULT_ELDER_ALTAR_SUMMON_TICKS, 1, 24000);
+
+        ELDER_ALTAR_XP_REWARD = builder
+            .comment(
+                "Experience granted per completed Elder Guardian Altar summon. Default 10 (a vanilla Elder",
+                "Guardian's value). Set 0 to grant no XP."
+            )
+            .defineInRange("xpReward", DEFAULT_ELDER_ALTAR_XP_REWARD, 0, 100000);
+
+        builder.pop();
+
         builder.pop();
 
         SPEC = builder.build();
@@ -839,7 +893,7 @@ public final class PFConfig {
      * name a pack/datapack variant not present this launch.
      */
     private static boolean isValidVariantId(Object o) {
-        return o instanceof String s && ResourceLocation.tryParse(s) != null;
+        return o instanceof String s && Identifier.tryParse(s) != null;
     }
 
     /** True if {@code o} is one of the six lowercase {@link Category} names. */
@@ -1008,8 +1062,8 @@ public final class PFConfig {
      * open before the config loads (mod-init, title screen) so the default - and
      * any pre-config-load resolution - treats everything as enabled (non-breaking).
      *
-     * <p>Order: a {@code weight 0} boss variant is gated by {@link #bossVariantsEnabled()};
-     * then a disabled category; then an explicitly disabled id.
+     * <p>Order: a {@code weight 0} prime-only variant is gated by the boss master
+     * ({@code boss.enabled}); then a disabled category; then an explicitly disabled id.
      *
      * <p><b>Extending this (e.g. #204 per-integration force-off):</b> add the new
      * dimension <i>inside</i> {@link com.flatts.productivefrogs.data.SlimeVariant#isEnabled}
@@ -1020,13 +1074,13 @@ public final class PFConfig {
      * {@code variant.isEnabled(id)}, so a clause added there is picked up by all of
      * them with no call-site changes.
      */
-    public static boolean variantEnabled(ResourceLocation id, Category category, int weight) {
+    public static boolean variantEnabled(Identifier id, Category category, int weight) {
         if (!SPEC.isLoaded()) {
             return true;
         }
         // A weight-0 boss variant is gated by BOTH the boss master (#200) and the
         // narrow per-variant switch (#203): either being off suppresses it.
-        if (weight == 0 && !(BOSS_ENABLED.get() && BOSS_VARIANTS_ENABLED.get())) {
+        if (weight == 0 && !BOSS_ENABLED.get()) {
             return false;
         }
         if (DISABLED_CATEGORIES.get().contains(category.id())) {
@@ -1035,18 +1089,25 @@ public final class PFConfig {
         return !DISABLED_VARIANTS.get().contains(id.toString());
     }
 
-    /**
-     * Whether the boss-tier prime-only variants are effectively enabled - the boss
-     * master ({@code boss.enabled}, #200) AND the narrow switch
-     * ({@code variants.bossVariantsEnabled}, #203). Fallback true.
-     */
-    public static boolean bossVariantsEnabled() {
-        return !SPEC.isLoaded() || (BOSS_ENABLED.get() && BOSS_VARIANTS_ENABLED.get());
-    }
-
     /** Whether the boss tier master is on ({@code boss.enabled}, #200); fallback true. */
     public static boolean bossEnabled() {
         return !SPEC.isLoaded() || BOSS_ENABLED.get();
+    }
+
+    /**
+     * Test-only override for {@link #predatorsEnabled()} - the GameTests that pin
+     * the predators-off behavior set this (mirrors {@code equivalenceEnabledOverride}).
+     * Null in production.
+     */
+    @org.jetbrains.annotations.Nullable
+    public static Boolean predatorsEnabledOverride;
+
+    /** Whether the predation system is on ({@code predators.enabled}, #281); fallback true. */
+    public static boolean predatorsEnabled() {
+        if (predatorsEnabledOverride != null) {
+            return predatorsEnabledOverride;
+        }
+        return !SPEC.isLoaded() || PREDATORS_ENABLED.get();
     }
 
     /** End Dragon Altar summon length in ticks ({@code boss.dragon_altar.summonTicks}, #249); fallback {@value #DEFAULT_DRAGON_ALTAR_SUMMON_TICKS}. */
@@ -1074,13 +1135,33 @@ public final class PFConfig {
         return SPEC.isLoaded() ? WITHER_ALTAR_XP_REWARD.get() : DEFAULT_WITHER_ALTAR_XP_REWARD;
     }
 
+    /** Warden Altar summon length in ticks ({@code boss.warden_altar.summonTicks}, #279); fallback {@value #DEFAULT_WARDEN_ALTAR_SUMMON_TICKS}. */
+    public static int wardenAltarSummonTicks() {
+        return SPEC.isLoaded() ? WARDEN_ALTAR_SUMMON_TICKS.get() : DEFAULT_WARDEN_ALTAR_SUMMON_TICKS;
+    }
+
+    /** XP granted per completed Warden Altar summon ({@code boss.warden_altar.xpReward}, #279); fallback {@value #DEFAULT_WARDEN_ALTAR_XP_REWARD}. */
+    public static int wardenAltarXpReward() {
+        return SPEC.isLoaded() ? WARDEN_ALTAR_XP_REWARD.get() : DEFAULT_WARDEN_ALTAR_XP_REWARD;
+    }
+
+    /** Elder Guardian Altar summon length in ticks ({@code boss.elder_altar.summonTicks}, #280); fallback {@value #DEFAULT_ELDER_ALTAR_SUMMON_TICKS}. */
+    public static int elderAltarSummonTicks() {
+        return SPEC.isLoaded() ? ELDER_ALTAR_SUMMON_TICKS.get() : DEFAULT_ELDER_ALTAR_SUMMON_TICKS;
+    }
+
+    /** XP granted per completed Elder Guardian Altar summon ({@code boss.elder_altar.xpReward}, #280); fallback {@value #DEFAULT_ELDER_ALTAR_XP_REWARD}. */
+    public static int elderAltarXpReward() {
+        return SPEC.isLoaded() ? ELDER_ALTAR_XP_REWARD.get() : DEFAULT_ELDER_ALTAR_XP_REWARD;
+    }
+
     /**
      * Whether {@code id}'s provider integration is force-disabled
      * ({@code variants.disabledIntegrations}, #204). True only for a known cross-mod
      * variant whose every provider mod is listed; fails closed (not disabled) before
      * the config loads. Consulted by {@link com.flatts.productivefrogs.data.SlimeVariant#isEnabled}.
      */
-    public static boolean integrationDisabled(ResourceLocation id) {
+    public static boolean integrationDisabled(Identifier id) {
         return SPEC.isLoaded()
             && com.flatts.productivefrogs.setup.VariantIntegrations.allProvidersDisabled(id, DISABLED_INTEGRATIONS.get());
     }

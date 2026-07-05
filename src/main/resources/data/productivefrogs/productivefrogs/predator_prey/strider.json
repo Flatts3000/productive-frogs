@@ -1,0 +1,5 @@
+{
+  "entity_type": "minecraft:strider",
+  "predator": "cinder",
+  "handling": "walk"
+}

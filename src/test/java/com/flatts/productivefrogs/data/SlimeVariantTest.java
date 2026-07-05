@@ -8,7 +8,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import java.util.Optional;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -82,7 +82,7 @@ class SlimeVariantTest {
     @Test
     void codecDecodesVariantWithoutOptionalInnerBlockField() {
         SlimeVariant decoded = decode(WITHOUT_INNER_BLOCK);
-        assertEquals(Optional.of(ResourceLocation.parse("minecraft:iron_ingot")), decoded.primerItem());
+        assertEquals(Optional.of(Identifier.parse("minecraft:iron_ingot")), decoded.primerItem());
         assertTrue(decoded.primerTag().isEmpty(), "primer_tag absent for an item-primed variant");
         assertEquals(Category.CAVE, decoded.category());
         assertEquals(12895428, decoded.primaryColor());
@@ -95,21 +95,21 @@ class SlimeVariantTest {
     @Test
     void codecDecodesVariantWithInnerBlockField() {
         SlimeVariant decoded = decode(WITH_INNER_BLOCK);
-        Optional<ResourceLocation> innerBlock = decoded.innerBlock();
+        Optional<Identifier> innerBlock = decoded.innerBlock();
         assertTrue(innerBlock.isPresent(), "inner_block must be present when the JSON includes the field");
-        assertEquals(ResourceLocation.parse("minecraft:iron_block"), innerBlock.get());
+        assertEquals(Identifier.parse("minecraft:iron_block"), innerBlock.get());
     }
 
     @Test
     void codecRoundTripsVariantWithInnerBlock() {
         SlimeVariant original = new SlimeVariant(
-            Optional.of(ResourceLocation.parse("minecraft:copper_ingot")),
+            Optional.of(Identifier.parse("minecraft:copper_ingot")),
             Optional.empty(),
             Category.CAVE,
             14188339,
             16432204,
             1,
-            Optional.of(ResourceLocation.parse("minecraft:copper_block")),
+            Optional.of(Identifier.parse("minecraft:copper_block")),
             Optional.empty()
         );
         JsonElement encoded = SlimeVariant.CODEC.encodeStart(JsonOps.INSTANCE, original)
@@ -124,7 +124,7 @@ class SlimeVariantTest {
     @Test
     void codecRoundTripsVariantWithoutInnerBlock() {
         SlimeVariant original = new SlimeVariant(
-            Optional.of(ResourceLocation.parse("minecraft:gold_ingot")),
+            Optional.of(Identifier.parse("minecraft:gold_ingot")),
             Optional.empty(),
             Category.CAVE,
             16777045,

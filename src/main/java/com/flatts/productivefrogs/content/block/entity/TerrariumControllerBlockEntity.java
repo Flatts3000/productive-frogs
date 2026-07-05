@@ -10,7 +10,8 @@ import com.flatts.productivefrogs.content.multiblock.TerrariumValidationResult;
 import com.flatts.productivefrogs.content.multiblock.TerrariumValidator;
 import com.flatts.productivefrogs.content.menu.TerrariumControllerMenu;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
-import com.flatts.productivefrogs.registry.PFVariantMilk;
+import com.flatts.productivefrogs.registry.PFDataComponents;
+import com.flatts.productivefrogs.registry.PFFluids;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
@@ -18,10 +19,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -32,6 +33,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.Nullable;
@@ -82,10 +85,19 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
     /** FIFO buffer of milk charges; all share {@link #tankVariant}. */
     private final Deque<MilkCharge> charges = new ArrayDeque<>();
     @Nullable
-    private ResourceLocation tankVariant;
+    private Identifier tankVariant;
     /** Equivalence lane (#253): true when {@link #tankVariant} is a synthesized item id (Mimic Milk). */
     private boolean tankMimic;
     private int distributeCursor;
+
+    /**
+     * Client-only: absolute position of the first structural problem, synced via
+     * {@link #getUpdateTag} (never persisted to disk). Drives the status GUI's
+     * coordinate readout and the in-world problem outline; null when the terrarium
+     * is formed or the current problem carries no position.
+     */
+    @Nullable
+    private BlockPos clientProblemPos;
 
     private final ControllerFluidIntake fluidIntake = new ControllerFluidIntake();
 
@@ -194,6 +206,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
     // ---- validation (phase 1) ------------------------------------------
 
     public TerrariumValidationResult runValidation(ServerLevel level, BlockPos pos, BlockState state) {
+        BlockPos prevProblem = problemPosOf(this.lastResult);
         TerrariumValidationResult result = TerrariumValidator.validate(level, pos, state);
         this.lastResult = result;
         if (result.formed()) {
@@ -203,9 +216,20 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
         }
         if (result.formed() != this.formed) {
             this.formed = result.formed();
+            // setBlock(UPDATE_ALL) re-sends the BE update tag (incl. the problem pos) to clients.
             level.setBlock(pos, state.setValue(TerrariumControllerBlock.FORMED, this.formed), Block.UPDATE_ALL);
+        } else if (!java.util.Objects.equals(prevProblem, problemPosOf(result))) {
+            // Still unformed, but the offending block moved: refresh clients so the GUI
+            // coordinates and the in-world outline track the current problem.
+            syncToClients();
         }
         return result;
+    }
+
+    /** The first structural problem's position for {@code result}, or null (formed / positionless problem). */
+    @Nullable
+    private static BlockPos problemPosOf(@Nullable TerrariumValidationResult result) {
+        return result != null && result.firstProblem() != null ? result.firstProblem().at() : null;
     }
 
     public TerrariumValidationResult forceValidate(ServerLevel level, BlockPos pos) {
@@ -225,29 +249,32 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
         TerrariumManager.deregister(level, pos);
     }
 
+    // 26.1 port: multiblock teardown runs here (the BE still exists on the removal path), NOT in
+    // the block's affectNeighborsAfterRemoval, which runs after the BE is gone and could no longer
+    // read it. Deregisters from TerrariumManager so the formed structure is torn down on break.
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (this.level instanceof ServerLevel serverLevel) {
+            onBroken(serverLevel, pos);
+        }
+    }
+
     // ---- milk funnel (phase 2) -----------------------------------------
 
     /**
      * Whether the buffer can take another charge of {@code variant}: buffer not
-     * full, reject-until-empty on variant, AND not a boss-tier ({@code spawn_catalyst})
-     * variant. Boss milk is refused outright - a Sprinkler can't reproduce the
-     * source's 6-face catalyst altar gate, so the Terrarium must not become an
-     * altar bypass (issue #184). All intake paths (bucket, pipe fill, isFluidValid)
-     * funnel through here.
+     * full, reject-until-empty on variant. All intake paths (bucket, pipe fill,
+     * isFluidValid) funnel through here. (The boss-milk refusal retired with the
+     * catalyst altars in Phase 5 - no spawn_catalyst variants exist on 2.0.)
      */
-    public boolean canAccept(ResourceLocation variant) {
+    public boolean canAccept(Identifier variant) {
         return charges.size() < PFConfig.terrariumControllerBufferDepth()
             // A variant (Slime Milk) charge can't mix with a buffered mimic charge,
             // even on an unlikely id collision (defense-in-depth; canAcceptBucket
             // already enforces this single-kind rule for the bucket path).
             && !tankMimic
-            && (tankVariant == null || tankVariant.equals(variant))
-            && !requiresCatalystAltar(variant);
-    }
-
-    /** Boss-tier variants ({@code spawn_catalyst}) are altar-gated; the Controller refuses them. */
-    private boolean requiresCatalystAltar(ResourceLocation variant) {
-        return level != null && SlimeMilkSourceBlock.variantRequiresCatalyst(level, variant);
+            && (tankVariant == null || tankVariant.equals(variant));
     }
 
     /**
@@ -267,7 +294,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
                 com.flatts.productivefrogs.registry.PFDataComponents.SYNTHESIZED_ITEM.get());
             tankMimic = true;
         } else {
-            tankVariant = ((SlimeMilkBucketItem) milkBucket.getItem()).variantId();
+            tankVariant = SlimeMilkBucketItem.variantOf(milkBucket);
             tankMimic = false;
         }
         charges.addLast(MilkCharge.fromBucket(milkBucket));
@@ -283,14 +310,14 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
      */
     public boolean canAcceptBucket(ItemStack bucket) {
         if (bucket.getItem() instanceof com.flatts.productivefrogs.content.item.MimicMilkBucketItem) {
-            ResourceLocation item = bucket.get(
+            Identifier item = bucket.get(
                 com.flatts.productivefrogs.registry.PFDataComponents.SYNTHESIZED_ITEM.get());
             return item != null
                 && charges.size() < PFConfig.terrariumControllerBufferDepth()
                 && (tankVariant == null || (tankMimic && tankVariant.equals(item)));
         }
-        if (bucket.getItem() instanceof SlimeMilkBucketItem milk) {
-            ResourceLocation variant = milk.variantId();
+        if (bucket.getItem() instanceof SlimeMilkBucketItem) {
+            Identifier variant = SlimeMilkBucketItem.variantOf(bucket);
             return variant != null && !tankMimic && canAccept(variant);
         }
         return false;
@@ -299,7 +326,7 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
     /** Mark dirty AND push a BE update so the GUI/Jade see the buffered variant (not just the int charge count). */
     private void syncToClients() {
         setChanged();
-        if (level != null && !level.isClientSide) {
+        if (level != null && !level.isClientSide()) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
     }
@@ -354,6 +381,126 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
         return fluidIntake;
     }
 
+    /**
+     * The 26.1 {@code Capabilities.Fluid.BLOCK} view: a fill-only milk funnel (drain
+     * is a no-op; contents live as {@link MilkCharge}s, not a reservoir). It has no
+     * tank, so the journal snapshots the charge buffer + tank variant directly to
+     * stay transaction-correct; the sync is deferred to commit.
+     */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> fluidResource() {
+        return new ControllerFluidResource();
+    }
+
+    /**
+     * The variant a milk {@link net.neoforged.neoforge.transfer.fluid.FluidResource}
+     * carries (26.1 R-1), or null when it isn't Slime Milk. With one component-carrying
+     * fluid the variant rides the {@code SLIME_VARIANT} component (copied on by the milk
+     * bucket resource handler), so the funnel reads it directly instead of a per-variant
+     * fluid reverse lookup.
+     */
+    @Nullable
+    private static Identifier milkVariantOf(net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+        if (resource.getFluid() != PFFluids.SLIME_MILK.get()) {
+            return null;
+        }
+        return resource.get(PFDataComponents.SLIME_VARIANT.get());
+    }
+
+    /** The variant a milk {@link FluidStack} carries (legacy IFluidHandler path), or null. */
+    @Nullable
+    private static Identifier milkVariantOf(FluidStack stack) {
+        if (stack.getFluid() != PFFluids.SLIME_MILK.get()) {
+            return null;
+        }
+        return stack.get(PFDataComponents.SLIME_VARIANT.get());
+    }
+
+    /** Snapshot of the funnel state the fluid intake mutates, for transaction rollback. */
+    private record FunnelSnapshot(java.util.ArrayDeque<MilkCharge> charges, Identifier tankVariant) {}
+
+    private final class ControllerFluidResource
+            implements net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> {
+
+        private final FunnelJournal journal = new FunnelJournal();
+
+        @Override
+        public int size() {
+            return 1;
+        }
+
+        @Override
+        public net.neoforged.neoforge.transfer.fluid.FluidResource getResource(int index) {
+            return net.neoforged.neoforge.transfer.fluid.FluidResource.EMPTY;
+        }
+
+        @Override
+        public long getAmountAsLong(int index) {
+            return 0L;
+        }
+
+        @Override
+        public long getCapacityAsLong(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+            return (long) PFConfig.terrariumControllerBufferDepth() * 1000L;
+        }
+
+        @Override
+        public boolean isValid(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+            Identifier variant = milkVariantOf(resource);
+            return variant != null && canAccept(variant);
+        }
+
+        @Override
+        public int insert(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount,
+                net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+            if (amount <= 0) {
+                return 0;
+            }
+            Identifier variant = milkVariantOf(resource);
+            if (variant == null || !canAccept(variant)) {
+                return 0;
+            }
+            int room = PFConfig.terrariumControllerBufferDepth() - charges.size();
+            int chargesToFill = Math.min(room, amount / 1000);
+            if (chargesToFill <= 0) {
+                return 0;
+            }
+            journal.updateSnapshots(transaction);
+            tankVariant = variant;
+            net.neoforged.neoforge.fluids.FluidStack stack = resource.toStack(amount);
+            for (int i = 0; i < chargesToFill; i++) {
+                charges.addLast(MilkCharge.fromFluid(stack));
+            }
+            return chargesToFill * 1000;
+        }
+
+        @Override
+        public int extract(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount,
+                net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+            return 0;
+        }
+
+        private final class FunnelJournal
+                extends net.neoforged.neoforge.transfer.transaction.SnapshotJournal<FunnelSnapshot> {
+
+            @Override
+            protected FunnelSnapshot createSnapshot() {
+                return new FunnelSnapshot(new java.util.ArrayDeque<>(charges), tankVariant);
+            }
+
+            @Override
+            protected void revertToSnapshot(FunnelSnapshot snapshot) {
+                charges.clear();
+                charges.addAll(snapshot.charges());
+                tankVariant = snapshot.tankVariant();
+            }
+
+            @Override
+            protected void onRootCommit(FunnelSnapshot originalState) {
+                syncToClients();
+            }
+        }
+    }
+
     /** Test seam: current buffered charge count. */
     public int bufferedCharges() {
         return charges.size();
@@ -361,8 +508,14 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
 
     /** Test seam: the variant the buffer currently holds, or null. */
     @Nullable
-    public ResourceLocation tankVariant() {
+    public Identifier tankVariant() {
         return tankVariant;
+    }
+
+    /** Client-only: the first structural problem's position for the GUI/outline, or null. */
+    @Nullable
+    public BlockPos clientProblemPos() {
+        return clientProblemPos;
     }
 
     private final class ControllerFluidIntake implements IFluidHandler {
@@ -383,13 +536,13 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
 
         @Override
         public boolean isFluidValid(int tank, FluidStack stack) {
-            ResourceLocation variant = PFVariantMilk.variantOf(stack.getFluid());
+            Identifier variant = milkVariantOf(stack);
             return variant != null && canAccept(variant);
         }
 
         @Override
         public int fill(FluidStack resource, FluidAction action) {
-            ResourceLocation variant = PFVariantMilk.variantOf(resource.getFluid());
+            Identifier variant = milkVariantOf(resource);
             if (variant == null || !canAccept(variant)) {
                 return 0;
             }
@@ -422,12 +575,12 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
     // ---- serialization -------------------------------------------------
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
         if (tankVariant != null) {
-            tag.putString("TankVariant", tankVariant.toString());
+            output.putString("TankVariant", tankVariant.toString());
             if (tankMimic) {
-                tag.putBoolean("TankMimic", true);
+                output.putBoolean("TankMimic", true);
             }
         }
         if (!charges.isEmpty()) {
@@ -435,32 +588,38 @@ public class TerrariumControllerBlockEntity extends BlockEntity implements MenuP
             for (MilkCharge charge : charges) {
                 list.add(charge.toTag());
             }
-            tag.put("Charges", list);
+            output.store("Charges", ExtraCodecs.NBT, list);
         }
         // distributeCursor is a transient round-robin position; it self-establishes
         // within one distribute cycle, so it is intentionally not persisted.
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        tankVariant = tag.contains("TankVariant", Tag.TAG_STRING)
-            ? ResourceLocation.tryParse(tag.getString("TankVariant")) : null;
-        tankMimic = tag.getBoolean("TankMimic");
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        String tank = input.getStringOr("TankVariant", "");
+        tankVariant = tank.isEmpty() ? null : Identifier.tryParse(tank);
+        tankMimic = input.getBooleanOr("TankMimic", false);
         charges.clear();
-        if (tag.contains("Charges", Tag.TAG_LIST)) {
-            ListTag list = tag.getList("Charges", Tag.TAG_COMPOUND);
-            for (int i = 0; i < list.size(); i++) {
-                charges.addLast(MilkCharge.fromTag(list.getCompound(i)));
+        input.read("Charges", ExtraCodecs.NBT).ifPresent(tag -> {
+            if (tag instanceof ListTag list) {
+                list.compoundStream().forEach(charge -> charges.addLast(MilkCharge.fromTag(charge)));
             }
-        }
+        });
         distributeCursor = 0;
+        // Client-only render/GUI hint (absent on disk loads -> null); see getUpdateTag.
+        long problem = input.getLongOr("ProblemPos", Long.MIN_VALUE);
+        clientProblemPos = problem == Long.MIN_VALUE ? null : BlockPos.of(problem);
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries); // sync tankVariant + charge count for Jade
+        CompoundTag tag = saveCustomOnly(registries); // sync tankVariant + charge count for Jade
+        // Client-only hint (deliberately NOT written by saveAdditional, so it never
+        // persists to disk): the offending block for the status GUI's coordinates and
+        // the in-world problem outline. Long.MIN_VALUE encodes "no positioned problem".
+        BlockPos problem = formed ? null : problemPosOf(lastResult);
+        tag.putLong("ProblemPos", problem == null ? Long.MIN_VALUE : problem.asLong());
         return tag;
     }
 

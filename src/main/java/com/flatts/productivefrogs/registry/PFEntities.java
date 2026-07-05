@@ -12,8 +12,12 @@ import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import com.flatts.productivefrogs.content.entity.TideSlime;
 import com.flatts.productivefrogs.content.entity.VoidSlime;
+import com.flatts.productivefrogs.content.entity.ElderbaneFrog;
+import com.flatts.productivefrogs.content.entity.WardenbaneFrog;
 import com.flatts.productivefrogs.content.entity.WitherbaneFrog;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.animal.frog.Tadpole;
@@ -43,7 +47,7 @@ public final class PFEntities {
                 .eyeHeight(Tadpole.HITBOX_HEIGHT * 0.5F)
                 // 1.21.1 EntityType.Builder.build takes the registry id String,
                 // not a ResourceKey (that signature change came in 1.21.4+).
-                .build(ProductiveFrogs.MOD_ID + ":resource_tadpole")
+                .build(key("resource_tadpole"))
         );
 
     public static final DeferredHolder<EntityType<?>, EntityType<ResourceFrog>> RESOURCE_FROG =
@@ -52,7 +56,7 @@ public final class PFEntities {
             () -> EntityType.Builder.<ResourceFrog>of(ResourceFrog::new, MobCategory.CREATURE)
                 .sized(0.5F, 0.5F)
                 .eyeHeight(0.4F)
-                .build(ProductiveFrogs.MOD_ID + ":resource_frog")
+                .build(key("resource_frog"))
         );
 
     /**
@@ -67,7 +71,7 @@ public final class PFEntities {
             () -> EntityType.Builder.<DragonsbaneFrog>of(DragonsbaneFrog::new, MobCategory.MISC)
                 .sized(0.5F, 0.5F)
                 .eyeHeight(0.4F)
-                .build(ProductiveFrogs.MOD_ID + ":dragonsbane")
+                .build(key("dragonsbane"))
         );
 
     /**
@@ -81,7 +85,34 @@ public final class PFEntities {
             () -> EntityType.Builder.<WitherbaneFrog>of(WitherbaneFrog::new, MobCategory.MISC)
                 .sized(0.5F, 0.5F)
                 .eyeHeight(0.4F)
-                .build(ProductiveFrogs.MOD_ID + ":witherbane")
+                .build(key("witherbane"))
+        );
+
+    /**
+     * The Warden Altar's display frog (#279) - "Wardenbane". Same lifecycle role as
+     * {@link DragonsbaneFrog}: a {@code MISC}-category display entity the altar spawns
+     * when valid + armed and removes when broken.
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<WardenbaneFrog>> WARDENBANE =
+        ENTITIES.register(
+            "wardenbane",
+            () -> EntityType.Builder.<WardenbaneFrog>of(WardenbaneFrog::new, MobCategory.MISC)
+                .sized(0.5F, 0.5F)
+                .eyeHeight(0.4F)
+                .build(key("wardenbane"))
+        );
+
+    /**
+     * The Elder Guardian Altar's display frog (#280) - "Elderbane". Same lifecycle role
+     * as {@link DragonsbaneFrog}; it swims pinned in the Monument Well's water cavity.
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<ElderbaneFrog>> ELDERBANE =
+        ENTITIES.register(
+            "elderbane",
+            () -> EntityType.Builder.<ElderbaneFrog>of(ElderbaneFrog::new, MobCategory.MISC)
+                .sized(0.5F, 0.5F)
+                .eyeHeight(0.4F)
+                .build(key("elderbane"))
         );
 
     /**
@@ -110,7 +141,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build(ProductiveFrogs.MOD_ID + ":resource_slime")
+                .build(key("resource_slime"))
         );
 
     /**
@@ -129,7 +160,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build(ProductiveFrogs.MOD_ID + ":cave_slime")
+                .build(key("cave_slime"))
         );
 
     /**
@@ -147,7 +178,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build(ProductiveFrogs.MOD_ID + ":geode_slime")
+                .build(key("geode_slime"))
         );
 
     /**
@@ -165,7 +196,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build(ProductiveFrogs.MOD_ID + ":tide_slime")
+                .build(key("tide_slime"))
         );
 
     /**
@@ -183,7 +214,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build(ProductiveFrogs.MOD_ID + ":void_slime")
+                .build(key("void_slime"))
         );
 
     /**
@@ -198,7 +229,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build(ProductiveFrogs.MOD_ID + ":bog_slime")
+                .build(key("bog_slime"))
         );
 
     /**
@@ -214,7 +245,7 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build(ProductiveFrogs.MOD_ID + ":infernal_slime")
+                .build(key("infernal_slime"))
         );
 
     /**
@@ -232,11 +263,21 @@ public final class PFEntities {
                 .eyeHeight(0.325F)
                 .spawnDimensionsScale(4.0F)
                 .clientTrackingRange(10)
-                .build(ProductiveFrogs.MOD_ID + ":mimic_slime")
+                .build(key("mimic_slime"))
         );
 
     private PFEntities() {
         // utility class
+    }
+
+    /**
+     * Build the {@link ResourceKey} an {@code EntityType.Builder.build} requires
+     * on 26.1 (the 1.21.1 String-id overload is gone). The path matches each
+     * type's {@code ENTITIES.register} name.
+     */
+    private static ResourceKey<EntityType<?>> key(String name) {
+        return ResourceKey.create(
+            Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, name));
     }
 
     public static void register(IEventBus modEventBus) {

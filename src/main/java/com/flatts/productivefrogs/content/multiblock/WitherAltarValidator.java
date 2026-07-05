@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p><b>Strict:</b> every block of the canonical altar must be present at its exact
  * offset from the Hatch - the Withered Star capstone set into the floor, the Reinforced Soul
- * Sand Froglight floor, the Reinforced Blaze Rod Froglight pillars flanking the
+ * Sand Froglight floor, the Reinforced Glowstone Froglight pillars flanking the
  * ritual, and the vanilla Wither summon T rendered as receptacles (4 Soul Sand + 3
  * Wither Skull). Reads only block identity, so it runs client-side (Jade) and
  * server-side (the summon) alike.
@@ -46,8 +46,8 @@ public final class WitherAltarValidator {
         {0, -1, 0}, {0, -1, 1}, {0, -1, 3},
         {1, -1, 0}, {1, -1, 1}, {1, -1, 2}, {1, -1, 3}, {1, 0, 3}
     };
-    // Reinforced Blaze Rod Froglight shell (the arena frame).
-    private static final int[][] BLAZE_ROD_SHELL = {
+    // Reinforced Glowstone Froglight shell (the arena frame).
+    private static final int[][] GLOWSTONE_SHELL = {
         {-2, -1, -1}, {-2, -1, 0}, {-2, -1, 1}, {-2, -1, 2}, {-2, -1, 3}, {-2, 0, -1}, {-2, 0, 3},
         {-2, 1, -1}, {-2, 1, 3}, {-2, 2, -1}, {-2, 2, 3}, {-2, 3, -1}, {-2, 3, 0}, {-2, 3, 1}, {-2, 3, 2}, {-2, 3, 3},
         {-1, -1, -1}, {-1, 3, -1}, {-1, 3, 3}, {0, -1, -1}, {0, 3, -1}, {0, 3, 3}, {1, -1, -1}, {1, 3, -1}, {1, 3, 3},
@@ -73,8 +73,21 @@ public final class WitherAltarValidator {
     }
 
     public static Result validate(LevelReader level, BlockPos hatch) {
+        return validate(level, hatch, null);
+    }
+
+    /**
+     * Validate with an orientation hint: a formed altar's direction virtually
+     * never changes, so the hatch passes its cached orientation and the common
+     * case is ONE full pass instead of scanning up to four rotations every
+     * reconcile (review finding).
+     */
+    public static Result validate(LevelReader level, BlockPos hatch, @Nullable Direction hint) {
         if (!level.getBlockState(hatch).is(PFBlocks.WITHER_ALTAR_HATCH.get())) {
             return new Result(false, "no hatch", null);
+        }
+        if (hint != null && hint.getAxis().isHorizontal() && validateOriented(level, hatch, hint).valid()) {
+            return new Result(true, "ready", hint);
         }
         // Try each horizontal orientation; accept the first that fully matches. On
         // failure, report the orientation that got furthest (the player-facing problem).
@@ -99,44 +112,28 @@ public final class WitherAltarValidator {
     }
 
     private static Oriented validateOriented(LevelReader level, BlockPos hatch, Direction ritual) {
-        if (!allMatch(level, hatch, CAPSTONE, ritual, PFBlocks.WITHERED_STAR.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, CAPSTONE, ritual, PFBlocks.WITHERED_STAR.get())) {
             return new Oriented(0, "missing the Withered Star (defeat the Wither first)", ritual);
         }
-        if (!allMatch(level, hatch, SOUL_SAND_FLOOR, ritual, PFBlocks.REINFORCED_SOUL_SAND_FROGLIGHT.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, SOUL_SAND_FLOOR, ritual, PFBlocks.REINFORCED_SOUL_SAND_FROGLIGHT.get())) {
             return new Oriented(1, "incomplete Reinforced Soul Sand Froglight floor", ritual);
         }
-        if (!allMatch(level, hatch, BLAZE_ROD_SHELL, ritual, PFBlocks.REINFORCED_BLAZE_ROD_FROGLIGHT.get())) {
-            return new Oriented(2, "incomplete Reinforced Blaze Rod Froglight shell", ritual);
+        if (!AltarGeometry.allMatch(level, hatch, GLOWSTONE_SHELL, ritual, PFBlocks.REINFORCED_GLOWSTONE_FROGLIGHT.get())) {
+            return new Oriented(2, "incomplete Reinforced Glowstone Froglight shell", ritual);
         }
-        if (!allMatch(level, hatch, SOUL_SAND_RECEPTACLES, ritual, PFBlocks.SOUL_SAND_RECEPTACLE.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, SOUL_SAND_RECEPTACLES, ritual, PFBlocks.SOUL_SAND_RECEPTACLE.get())) {
             return new Oriented(3, "missing a Soul Sand Receptacle", ritual);
         }
-        if (!allMatch(level, hatch, SKULL_RECEPTACLES, ritual, PFBlocks.WITHER_SKULL_RECEPTACLE.get())) {
+        if (!AltarGeometry.allMatch(level, hatch, SKULL_RECEPTACLES, ritual, PFBlocks.WITHER_SKULL_RECEPTACLE.get())) {
             return new Oriented(4, "missing a Wither Skull Receptacle", ritual);
         }
-        if (!allAir(level, hatch, AIR_REQUIRED, ritual)) {
+        if (!AltarGeometry.allAir(level, hatch, AIR_REQUIRED, ritual)) {
             return new Oriented(5, "the summon cavity must be clear (keep the interior air)", ritual);
         }
         return new Oriented(6, "ready", ritual);
     }
 
-    private static boolean allMatch(LevelReader level, BlockPos hatch, int[][] offsets, Direction ritual, Block block) {
-        for (int[] o : offsets) {
-            if (!level.getBlockState(hatch.offset(rotateOffset(o[0], o[1], o[2], ritual))).is(block)) {
-                return false;
-            }
-        }
-        return true;
-    }
 
-    private static boolean allAir(LevelReader level, BlockPos hatch, int[][] offsets, Direction ritual) {
-        for (int[] o : offsets) {
-            if (!level.getBlockState(hatch.offset(rotateOffset(o[0], o[1], o[2], ritual))).isAir()) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     /**
      * Rotate an authored offset (canonical frame: ritual points +Z / SOUTH) about the
@@ -144,13 +141,7 @@ public final class WitherAltarValidator {
      * {@code dy} is unchanged. SOUTH is the identity. Package-visible for geometry tests.
      */
     static BlockPos rotateOffset(int dx, int dy, int dz, Direction ritual) {
-        return switch (ritual) {
-            case SOUTH -> new BlockPos(dx, dy, dz);
-            case WEST -> new BlockPos(-dz, dy, dx);
-            case NORTH -> new BlockPos(-dx, dy, -dz);
-            case EAST -> new BlockPos(dz, dy, -dx);
-            default -> new BlockPos(dx, dy, dz); // UP/DOWN never passed (HORIZONTAL plane only)
-        };
+        return AltarGeometry.rotateOffset(dx, dy, dz, ritual);
     }
 
     /**

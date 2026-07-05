@@ -1,0 +1,25 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "productivefrogs:config_enabled",
+      "config": "boss"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "productivefrogs",
+  "pattern": [
+    "OPO",
+    "PUP",
+    "OPO"
+  ],
+  "key": {
+    "O": "minecraft:obsidian",
+    "P": "minecraft:prismarine_bricks",
+    "U": "minecraft:sea_lantern"
+  },
+  "result": {
+    "id": "productivefrogs:tide_offering_receptacle",
+    "count": 1
+  }
+}

@@ -16,7 +16,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLPaths;
 
@@ -63,8 +63,8 @@ public final class VariantFluidDiscovery {
      * registration order is deterministic across launches. Never throws - a read
      * failure logs and yields an empty/partial set rather than aborting mod load.
      */
-    public static Set<ResourceLocation> discover() {
-        Set<ResourceLocation> ids = new LinkedHashSet<>();
+    public static Set<Identifier> discover() {
+        Set<Identifier> ids = new LinkedHashSet<>();
         collectBuiltins(ids);
         // NOTE: the config/productivefrogs/variants folder (collectPackAdditions) is
         // NOT scanned yet. Minting a fluid for a pack-added variant only helps if the
@@ -78,13 +78,13 @@ public final class VariantFluidDiscovery {
         return ids;
     }
 
-    private static void collectBuiltins(Set<ResourceLocation> ids) {
+    private static void collectBuiltins(Set<Identifier> ids) {
         for (String name : bundledVariantNames()) {
             JsonObject variantJson = readJsonResource(BUILTIN_VARIANT_DIR + name + ".json");
             if (variantJson != null && !conditionsMet(variantJson)) {
                 continue;
             }
-            ids.add(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, name));
+            ids.add(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, name));
         }
     }
 
@@ -120,7 +120,7 @@ public final class VariantFluidDiscovery {
         return names;
     }
 
-    private static void collectPackAdditions(Set<ResourceLocation> ids) {
+    private static void collectPackAdditions(Set<Identifier> ids) {
         Path dir;
         try {
             // FMLPaths may be uninitialized in a bare unit-test JVM; guard the access.
@@ -139,7 +139,7 @@ public final class VariantFluidDiscovery {
                 if (json != null && !conditionsMet(json)) {
                     return;
                 }
-                ids.add(ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, name));
+                ids.add(Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, name));
             });
         } catch (Exception e) {
             ProductiveFrogs.LOGGER.warn("failed listing pack variant folder {}: {}", dir, e.toString());

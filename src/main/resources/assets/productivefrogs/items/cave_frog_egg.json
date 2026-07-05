@@ -1,0 +1,12 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "productivefrogs:item/cave_frog_egg",
+    "tints": [
+      {
+        "type": "minecraft:constant",
+        "value": -4889315
+      }
+    ]
+  }
+}

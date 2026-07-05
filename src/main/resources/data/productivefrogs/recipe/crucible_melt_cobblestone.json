@@ -1,5 +1,8 @@
 {
   "type": "productivefrogs:crucible_melting",
-  "ingredient": { "tag": "c:cobblestones" },
-  "result": { "id": "minecraft:lava", "amount": 250 }
+  "ingredient": "#c:cobblestones",
+  "result": {
+    "id": "minecraft:lava",
+    "amount": 250
+  }
 }

@@ -174,14 +174,24 @@ work unchanged; the only code change was widening the right-click insert from
 ## Molten fluids (wave 2)
 
 **PF mints its own `molten_<variant>` fluids** through the same dynamic
-per-variant registration the v1.8 Slime Milk pipeline uses (`PFVariantMilk`-style
-bootstrap off `variants_index.json`): one greyscale molten still/flow texture
-set, tinted per variant `primary_color`. Pre-build check: a quick v1.3-style
-provider scan to confirm no 1.21.1 NeoForge mod ships molten metals worth
-deferring to (none known - Tinkers does not exist on NeoForge 1.21.1); if one
-surfaces, key outputs on its `c:` fluid tags behind `mod_loaded` instead of
-minting duplicates. Cross-mod interop (tagging PF molten fluids `c:molten_iron`
+per-variant registration the v1.8 Slime Milk pipeline used (`PFVariantMilk`-style
+bootstrap): one greyscale molten still/flow texture set, tinted per variant
+`primary_color`. Cross-mod interop (tagging PF molten fluids `c:molten_iron`
 etc. so other mods' machinery accepts them) ships as pure data.
+
+> **26.1 / 2.0 note:** the 1.21.1 line deferred to AllTheOres' molten fluids
+> wherever ATO was loaded (conditional recipe pairs, ATO-covered minting
+> rules). **ATO 4.x dropped its fluid system entirely** - no fluids, buckets,
+> or `c:molten_*` tags in alltheores-4.0.4 (verified 2026-07-04) - so keeping
+> the defer would have KILLED the molten lane in any pack with ATO installed
+> (the ATO-gated recipe referenced a fluid that no longer exists while the PF
+> fallback was conditioned off). On 2.0 PF mints every molten fluid itself:
+> unconditionally for iron/copper/gold, provider-gated for the wave-2 metals
+> (Create brass, Mekanism steel/refined obsidian, Mythic Metals). The recipe
+> pairs collapsed to single recipes outputting `productivefrogs:molten_<metal>`,
+> and PF's datapack is the sole source of the `c:molten_<metal>` tags the
+> Casting Mold recipes key on. (Productive Metalworks mints tag-compatible
+> molten on 26.1 - a future defer, held with the rest of cross-mod.)
 
 Molten fluids are **not placeable** as world blocks in v1.12 (no source-block
 behavior to design or test); they exist for the tank -> pipe -> Mold loop. They

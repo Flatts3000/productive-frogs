@@ -1,0 +1,31 @@
+{
+  "parent": "productivefrogs:predator_bred",
+  "display": {
+    "icon": {
+      "id": "productivefrogs:wither_frog_egg"
+    },
+    "title": {
+      "translate": "advancement.productivefrogs.apex_bred.title"
+    },
+    "description": {
+      "translate": "advancement.productivefrogs.apex_bred.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "milestone": {
+      "trigger": "productivefrogs:predation_milestone",
+      "conditions": {
+        "milestone": "apex_bred"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "milestone"
+    ]
+  ]
+}

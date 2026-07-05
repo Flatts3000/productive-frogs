@@ -2,19 +2,25 @@ package com.flatts.productivefrogs.content.entity;
 
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.data.FrogKind;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.animal.AbstractFish;
+import net.minecraft.world.entity.animal.fish.AbstractFish;
 import net.minecraft.world.entity.animal.frog.Tadpole;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
@@ -40,14 +46,12 @@ import net.neoforged.neoforge.event.EventHooks;
  */
 public class ResourceTadpole extends Tadpole {
 
-    private static final EntityDataAccessor<Integer> DATA_CATEGORY =
-        SynchedEntityData.defineId(ResourceTadpole.class, EntityDataSerializers.INT);
-    // Midas marker (Equivalence lane, #253). Synced because getName() runs on the
-    // client (entity nameplate / F3 / Jade): a server-only flag would leave the
-    // client falling through to the category name ("Void Tadpole") instead of
-    // "Midas Tadpole". Mirrors ResourceFrog.DATA_MIDAS.
-    private static final EntityDataAccessor<Boolean> DATA_MIDAS =
-        SynchedEntityData.defineId(ResourceTadpole.class, EntityDataSerializers.BOOLEAN);
+    // The unified identity (#281) - mirrors ResourceFrog.DATA_KIND. Synced because
+    // getName() runs on the client (entity nameplate / F3 / Jade). Persisted as
+    // "Kind" with the legacy Category+Midas read (FrogKind.readFrom) for pre-Kind
+    // NBT writers like the baked spawn-egg ENTITY_DATA.
+    private static final EntityDataAccessor<String> DATA_KIND =
+        SynchedEntityData.defineId(ResourceTadpole.class, EntityDataSerializers.STRING);
 
     @SuppressWarnings("unchecked")
     public ResourceTadpole(EntityType<? extends ResourceTadpole> type, Level level) {
@@ -60,8 +64,34 @@ public class ResourceTadpole extends Tadpole {
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
-        builder.define(DATA_CATEGORY, Category.BOG.ordinal());
-        builder.define(DATA_MIDAS, false);
+        builder.define(DATA_KIND, FrogKind.resource(Category.BOG).id());
+    }
+
+    // Parsed cache of DATA_KIND (see ResourceFrog.cachedKind - render extract
+    // reads the kind tint per frame). Invalidated in onSyncedDataUpdated.
+    @org.jetbrains.annotations.Nullable
+    private FrogKind cachedKind;
+
+    /** The unified identity (#281) - what this tadpole matures into. Never null. */
+    public FrogKind getKind() {
+        FrogKind kind = cachedKind;
+        if (kind == null) {
+            kind = FrogKind.byIdOrDefault(this.entityData.get(DATA_KIND), FrogKind.resource(Category.BOG));
+            cachedKind = kind;
+        }
+        return kind;
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> accessor) {
+        super.onSyncedDataUpdated(accessor);
+        if (DATA_KIND.equals(accessor)) {
+            cachedKind = null;
+        }
+    }
+
+    public void setKind(FrogKind kind) {
+        this.entityData.set(DATA_KIND, kind.id());
     }
 
     // Pending breeding stats inherited at conception, carried from the hatched
@@ -78,11 +108,9 @@ public class ResourceTadpole extends Tadpole {
     // Transient: losing the sub-tick remainder across a reload is negligible.
     private double growthCarry;
 
+    /** The kind's fallback category - legacy read surface; identity comparisons use {@link #getKind()}. */
     public Category getCategory() {
-        // Defensive: synced data can be set to any int via modded packets or
-        // corrupted save data. fromOrdinalOrDefault falls back to BOG rather
-        // than crashing if the ordinal is out of range.
-        return Category.fromOrdinalOrDefault(this.entityData.get(DATA_CATEGORY));
+        return getKind().fallbackCategory();
     }
 
     /**
@@ -155,8 +183,9 @@ public class ResourceTadpole extends Tadpole {
         return (int) ((long) ageTicksLeft * effectiveTarget / vanillaTicks);
     }
 
+    /** Sugar: re-kind this tadpole to the given species. */
     public void setCategory(Category category) {
-        this.entityData.set(DATA_CATEGORY, category.ordinal());
+        setKind(FrogKind.resource(category));
     }
 
     /**
@@ -176,13 +205,9 @@ public class ResourceTadpole extends Tadpole {
         return hasPendingStats;
     }
 
-    /** Whether this tadpole matures into a Midas frog (#253). */
+    /** Whether this tadpole matures into a Midas frog (#253). Derived from the kind. */
     public boolean isMidas() {
-        return this.entityData.get(DATA_MIDAS);
-    }
-
-    public void setMidas(boolean midas) {
-        this.entityData.set(DATA_MIDAS, midas);
+        return getKind() instanceof FrogKind.Midas;
     }
 
     /**
@@ -211,46 +236,33 @@ public class ResourceTadpole extends Tadpole {
         if (this.hasCustomName()) {
             return super.getName();
         }
-        if (isMidas()) {
-            return net.minecraft.network.chat.Component.translatable(getType().getDescriptionId() + ".midas");
-        }
         return net.minecraft.network.chat.Component.translatable(
-            getType().getDescriptionId() + "." + getCategory().id()
+            getType().getDescriptionId() + "." + getKind().nameSuffix()
         );
     }
 
     @Override
-    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
-        super.addAdditionalSaveData(tag);
-        tag.putString("Category", getCategory().name());
+    public void addAdditionalSaveData(net.minecraft.world.level.storage.ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        output.putString("Kind", getKind().id());
         if (hasPendingStats) {
-            tag.putBoolean("HasPendingStats", true);
-            tag.putInt("PendingAppetite", pendingAppetite);
-            tag.putInt("PendingBounty", pendingBounty);
-            tag.putInt("PendingReach", pendingReach);
-        }
-        if (isMidas()) {
-            tag.putBoolean("Midas", true);
+            output.putBoolean("HasPendingStats", true);
+            output.putInt("PendingAppetite", pendingAppetite);
+            output.putInt("PendingBounty", pendingBounty);
+            output.putInt("PendingReach", pendingReach);
         }
     }
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
-        super.readAdditionalSaveData(tag);
-        if (tag.contains("Category", net.minecraft.nbt.Tag.TAG_STRING)) {
-            try {
-                setCategory(Category.valueOf(tag.getString("Category")));
-            } catch (IllegalArgumentException ignored) {
-                // Unknown category in save data — leave default.
-            }
-        }
-        hasPendingStats = tag.getBoolean("HasPendingStats");
+    public void readAdditionalSaveData(net.minecraft.world.level.storage.ValueInput input) {
+        super.readAdditionalSaveData(input);
+        FrogKind.readFrom(input).ifPresent(this::setKind);
+        hasPendingStats = input.getBooleanOr("HasPendingStats", false);
         if (hasPendingStats) {
-            pendingAppetite = tag.getInt("PendingAppetite");
-            pendingBounty = tag.getInt("PendingBounty");
-            pendingReach = tag.getInt("PendingReach");
+            pendingAppetite = input.getIntOr("PendingAppetite", 0);
+            pendingBounty = input.getIntOr("PendingBounty", 0);
+            pendingReach = input.getIntOr("PendingReach", 0);
         }
-        setMidas(tag.getBoolean("Midas"));
     }
 
     @Override
@@ -261,9 +273,9 @@ public class ResourceTadpole extends Tadpole {
     @Override
     public void saveToBucketTag(ItemStack stack) {
         super.saveToBucketTag(stack);
-        Category category = getCategory();
+        FrogKind kind = getKind();
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
-            tag.putString("Category", category.name());
+            tag.putString("Kind", kind.id());
             // Carry the inherited (pending) breeding stats through the bucket the
             // same way addAdditionalSaveData carries them through a world save -
             // otherwise scooping a bred tadpole and re-placing it drops its stats,
@@ -276,33 +288,25 @@ public class ResourceTadpole extends Tadpole {
                 tag.putInt("PendingBounty", pendingBounty);
                 tag.putInt("PendingReach", pendingReach);
             }
-            if (isMidas()) {
-                tag.putBoolean("Midas", true);
-            }
         });
     }
 
     @Override
     public void loadFromBucketTag(CompoundTag tag) {
         super.loadFromBucketTag(tag);
-        if (tag.contains("Category", net.minecraft.nbt.Tag.TAG_STRING)) {
-            try {
-                setCategory(Category.valueOf(tag.getString("Category")));
-            } catch (IllegalArgumentException ignored) {
-                // Unknown category in bucket NBT — leave default.
-            }
-        }
+        // "Kind" with the legacy Category+Midas fallback (FrogKind.readFrom) so
+        // pre-Kind buckets and item NBT writers still round-trip correctly.
+        FrogKind.readFromTag(tag).ifPresent(this::setKind);
         // Assign the flag unconditionally (mirrors readAdditionalSaveData exactly,
         // not via setPendingStats) so an old/category-only bucket explicitly clears
         // it to false rather than leaving a prior value - keeps the two load paths
         // mechanically interchangeable.
-        hasPendingStats = tag.getBoolean("HasPendingStats");
+        hasPendingStats = tag.getBooleanOr("HasPendingStats", false);
         if (hasPendingStats) {
-            pendingAppetite = tag.getInt("PendingAppetite");
-            pendingBounty = tag.getInt("PendingBounty");
-            pendingReach = tag.getInt("PendingReach");
+            pendingAppetite = tag.getIntOr("PendingAppetite", 0);
+            pendingBounty = tag.getIntOr("PendingBounty", 0);
+            pendingReach = tag.getIntOr("PendingReach", 0);
         }
-        setMidas(tag.getBoolean("Midas"));
     }
 
     /**
@@ -321,17 +325,15 @@ public class ResourceTadpole extends Tadpole {
             return;
         }
 
-        ResourceFrog frog = target.create(this.level());
+        ResourceFrog frog = target.create(this.level(), net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
         if (frog == null) return;
         EventHooks.onLivingConvert(this, frog);
-        Category category = getCategory();
-        frog.setCategory(category);
-        frog.setMidas(isMidas());
-        frog.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
+        frog.setKind(getKind());
+        frog.snapTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
         frog.finalizeSpawn(
             serverLevel,
             serverLevel.getCurrentDifficultyAt(frog.blockPosition()),
-            MobSpawnType.CONVERSION,
+            EntitySpawnReason.CONVERSION,
             null
         );
         // Apply inherited stats AFTER finalizeSpawn so they override the
@@ -347,8 +349,61 @@ public class ResourceTadpole extends Tadpole {
             frog.setCustomNameVisible(this.isCustomNameVisible());
         }
         frog.setPersistenceRequired();
+        // PF re-implements maturation manually (create + snapTo) instead of going
+        // through vanilla Tadpole.ageUp's convertTo path, so we must call vanilla's
+        // own size-change reposition ourselves (#276) - otherwise the larger frog
+        // can spawn embedded in a block and suffocate. fudgePositionAfterSizeChange
+        // runs a findFreePosition voxel search and nudges the frog to where it fits;
+        // mirrors the call vanilla makes at the tail of its own Tadpole.ageUp.
+        frog.fudgePositionAfterSizeChange(this.getDimensions(this.getPose()));
         this.playSound(SoundEvents.TADPOLE_GROW_UP, 0.15F, 1.0F);
         serverLevel.addFreshEntityWithPassengers(frog);
+        // Predation milestones (#281 Phase 5): the first predator/apex to mature.
+        if (frog.getKind() instanceof com.flatts.productivefrogs.data.FrogKind.Apex) {
+            com.flatts.productivefrogs.registry.PFCriterionTriggers.PREDATION_MILESTONE.get().awardNearby(
+                serverLevel, frog.position(),
+                com.flatts.productivefrogs.advancement.PredationMilestoneTrigger.Milestone.APEX_BRED);
+        } else if (frog.getKind() instanceof com.flatts.productivefrogs.data.FrogKind.Predator) {
+            com.flatts.productivefrogs.registry.PFCriterionTriggers.PREDATION_MILESTONE.get().awardNearby(
+                serverLevel, frog.position(),
+                com.flatts.productivefrogs.advancement.PredationMilestoneTrigger.Milestone.PREDATOR_BRED);
+        }
         this.discard();
+    }
+
+    /**
+     * Resource Tadpoles accept {@link PFItems#SWEETSLIME} (the Resource-Frog treat)
+     * to speed growth, in addition to the slimeball they inherit via
+     * {@code #minecraft:frog_food} (#277). Vanilla {@code Tadpole#isFood}/{@code feed}
+     * are private, so Sweetslime is handled here - replicating vanilla's feed
+     * (consume one + the standard feeding age boost + happy-villager particles);
+     * everything else (the slimeball feed, bucket pickup) defers to super.
+     *
+     * <p>The boost mirrors vanilla {@code Tadpole.feed} exactly:
+     * {@code getSpeedUpSecondsWhenFeeding} returns seconds and vanilla's private
+     * {@code ageUp(int)} multiplies by 20 to reach ticks - omitting the {@code * 20}
+     * makes the feed 20x too weak.
+     */
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (!stack.is(PFItems.SWEETSLIME.get())) {
+            return super.mobInteract(player, hand);
+        }
+        if (this.level().isClientSide()) {
+            // Server does the consume + age mutation; client just animates the swing.
+            return InteractionResult.SUCCESS;
+        }
+        stack.consume(1, player);
+        int boostTicks = AgeableMob.getSpeedUpSecondsWhenFeeding(
+            Math.max(0, Tadpole.ticksToBeFrog - this.age)) * 20;
+        this.age = Math.min(Tadpole.ticksToBeFrog, this.age + boostTicks);
+        if (this.age >= Tadpole.ticksToBeFrog) {
+            this.ageUp();
+        }
+        ((ServerLevel) this.level()).sendParticles(ParticleTypes.HAPPY_VILLAGER,
+            this.getRandomX(1.0), this.getRandomY() + 0.5, this.getRandomZ(1.0),
+            5, 0.0, 0.0, 0.0, 0.0);
+        return InteractionResult.SUCCESS;
     }
 }

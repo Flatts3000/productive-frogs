@@ -9,7 +9,7 @@ import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFRegistries;
 import java.util.EnumSet;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -53,11 +53,7 @@ public final class FroglightProductionTracker {
         if (player.tickCount % SCAN_INTERVAL_TICKS != 0) {
             return;
         }
-        Registry<SlimeVariant> registry = player.level().registryAccess()
-            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
-        if (registry == null) {
-            return;
-        }
+        var variants = PFRegistries.variants(player.level().registryAccess());
         EnumSet<Category> produced = EnumSet.noneOf(Category.class);
         Inventory inventory = player.getInventory();
         for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
@@ -65,11 +61,11 @@ public final class FroglightProductionTracker {
             if (!stack.is(PFItems.CONFIGURABLE_FROGLIGHT.get())) {
                 continue;
             }
-            ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+            Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
             if (variantId == null) {
                 continue;
             }
-            SlimeVariant variant = registry.get(variantId);
+            SlimeVariant variant = PFRegistries.variant(variants, variantId);
             if (variant != null) {
                 produced.add(variant.category());
             }

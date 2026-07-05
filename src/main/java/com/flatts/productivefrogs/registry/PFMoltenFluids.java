@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
@@ -16,34 +16,29 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Dynamic molten-metal fluids for the Crucible's wave-2 melt lane
- * ({@code docs/froglight_crucible.md}), registered at mod-init like the v1.8
- * per-variant Slime Milk ({@link PFVariantMilk}) but deliberately leaner: a
+ * ({@code docs/froglight_crucible.md}), registered at mod-init like the former v1.8
+ * per-variant Slime Milk ({@code PFVariantMilk}, since collapsed in R-1) but
+ * deliberately leaner: a
  * {@code FluidType} + source/flowing {@code Fluid} only - <b>no source block
  * (not placeable) and no bucket</b>; molten metal exists for the
  * tank -> pipe -> Casting Mold loop.
  *
- * <p><b>ATM interop is the design center.</b> AllTheOres 3.x mints its own
- * molten metals ({@code alltheores:molten_iron} etc., tagged
- * {@code c:molten_<metal>}), so PF defers to those wherever they exist:
- * <ul>
- *   <li>Metals whose variants are themselves ATO-gated (tin, lead, osmium,
- *       nickel, silver, zinc, aluminum, uranium) NEVER get a PF fluid - the
- *       variant only exists when ATO does, and the melt recipe outputs ATO's
- *       molten directly.</li>
- *   <li>Metals that exist without ATO (vanilla iron/copper/gold, Create's
- *       brass, Mekanism's steel) get a PF fluid ONLY when ATO is absent; with
- *       ATO present the melt recipes output ATO's molten and the PF fluid is
- *       not registered (no duplicate registry entries, no duplicate JEI rows).</li>
- *   <li>Metals ATO doesn't cover (refined obsidian, mythril, orichalcum) get a
- *       PF fluid whenever their provider mod is loaded.</li>
- * </ul>
- * Every PF molten fluid is tagged into the same {@code c:molten_<metal>} tags
- * ATO uses ({@code required: false} entries, shipped in our datapack), so
- * downstream machinery that keys on the common tags accepts either source -
- * and the Casting Mold's solidify recipes take the TAG, accepting ATO molten
- * too. The melt recipes pick the concrete output fluid with
- * {@code mod_loaded} / {@code not(mod_loaded)} conditions that mirror the
- * minting rules here, so recipe and registry can never disagree.
+ * <p><b>PF mints every molten fluid itself.</b> The 1.21.1 line deferred to
+ * AllTheOres' molten metals wherever ATO was loaded, but ATO 4.x (26.1)
+ * dropped its fluid system entirely - no molten fluids, no buckets, no
+ * {@code c:molten_*} tags (verified against alltheores-4.0.4.jar, 2026-07-04) -
+ * so the defer would leave a pack with ATO installed and NO molten iron at
+ * all (the ATO-gated recipe referenced a fluid that no longer exists while
+ * the PF fallback was conditioned off). On the 2.0 line the rule is simply:
+ * a metal's PF fluid is minted whenever its variant can exist -
+ * unconditionally for the vanilla metals (iron/copper/gold), gated on the
+ * provider mod for the wave-2 metals whose providers have no 26.1 port yet.
+ *
+ * <p>Every PF molten fluid is tagged {@code c:molten_<metal>} in our datapack
+ * ({@code required: false} entries), and the Casting Mold's solidify recipes
+ * take the TAG - so if a partner mod ever reintroduces its own molten
+ * (Productive Metalworks mints tag-compatible molten on 26.1), packs can
+ * accept either source without touching PF recipes.
  *
  * <p>Like milk, the per-metal colour is applied at render time from the
  * variant's {@code primary_color} (one greyscale molten texture set, see
@@ -53,29 +48,28 @@ public final class PFMoltenFluids {
 
     /**
      * The melt roster's PF-minted candidates: metal id (== variant id path) ->
-     * minting rule. {@code atoCovered} metals skip minting when AllTheOres is
-     * present; {@code providerModid} (nullable = vanilla) must be loaded for
-     * the variant to exist at all.
+     * minting rule. {@code providerModid} (nullable = vanilla) must be loaded
+     * for the variant to exist at all.
      */
-    private record Spec(String metal, boolean atoCovered, @Nullable String providerModid) {
+    private record Spec(String metal, @Nullable String providerModid) {
     }
 
     private static final Spec[] SPECS = {
-        new Spec("iron", true, null),
-        new Spec("copper", true, null),
-        new Spec("gold", true, null),
-        new Spec("brass", true, "create"),
-        new Spec("steel", true, "mekanism"),
-        new Spec("refined_obsidian", false, "mekanism"),
-        new Spec("mythril", false, "mythicmetals"),
-        new Spec("orichalcum", false, "mythicmetals"),
+        new Spec("iron", null),
+        new Spec("copper", null),
+        new Spec("gold", null),
+        // wave 2: providers with no 26.1 port yet - these mint the day the
+        // partner mod ports (and its variant returns), no PF code change needed.
+        new Spec("brass", "create"),
+        new Spec("steel", "mekanism"),
+        new Spec("refined_obsidian", "mekanism"),
+        new Spec("mythril", "mythicmetals"),
+        new Spec("orichalcum", "mythicmetals"),
     };
 
-    private static final String ATO_MODID = "alltheores";
-
-    private static final Map<ResourceLocation, DeferredHolder<FluidType, FluidType>> TYPES = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, DeferredHolder<Fluid, BaseFlowingFluid.Source>> SOURCES = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, DeferredHolder<Fluid, BaseFlowingFluid.Flowing>> FLOWINGS = new LinkedHashMap<>();
+    private static final Map<Identifier, DeferredHolder<FluidType, FluidType>> TYPES = new LinkedHashMap<>();
+    private static final Map<Identifier, DeferredHolder<Fluid, BaseFlowingFluid.Source>> SOURCES = new LinkedHashMap<>();
+    private static final Map<Identifier, DeferredHolder<Fluid, BaseFlowingFluid.Flowing>> FLOWINGS = new LinkedHashMap<>();
 
     private static boolean bootstrapped = false;
 
@@ -93,22 +87,18 @@ public final class PFMoltenFluids {
             return;
         }
         bootstrapped = true;
-        boolean atoLoaded = isLoaded(ATO_MODID);
         for (Spec spec : SPECS) {
-            if (spec.atoCovered() && atoLoaded) {
-                continue;
-            }
             if (spec.providerModid() != null && !isLoaded(spec.providerModid())) {
                 continue;
             }
             registerMetal(spec.metal());
         }
         PFDebug.log(PFDebug.Area.REGISTRY, () -> "PFMoltenFluids: minted " + SOURCES.size()
-            + " molten fluids (alltheores loaded: " + atoLoaded + ") " + SOURCES.keySet());
+            + " molten fluids " + SOURCES.keySet());
     }
 
     private static void registerMetal(String metal) {
-        ResourceLocation vid = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, metal);
+        Identifier vid = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, metal);
         String base = "molten_" + metal;
 
         DeferredHolder<FluidType, FluidType> type =
@@ -138,18 +128,25 @@ public final class PFMoltenFluids {
     // ---- accessors (variant-id keyed, like PFVariantMilk) ----
 
     /** Variant ids that received a PF molten fluid this launch. */
-    public static Set<ResourceLocation> registeredMetals() {
+    public static Set<Identifier> registeredMetals() {
         return Collections.unmodifiableSet(SOURCES.keySet());
     }
 
     @Nullable
-    public static Fluid sourceFluid(ResourceLocation variantId) {
+    public static Fluid sourceFluid(Identifier variantId) {
         DeferredHolder<Fluid, BaseFlowingFluid.Source> h = SOURCES.get(variantId);
         return h == null ? null : h.get();
     }
 
+    /** The metal's flowing fluid (pairs with {@link #sourceFluid}); used by the client FluidModel registration. */
     @Nullable
-    public static FluidType fluidType(ResourceLocation variantId) {
+    public static Fluid flowingFluid(Identifier variantId) {
+        DeferredHolder<Fluid, BaseFlowingFluid.Flowing> h = FLOWINGS.get(variantId);
+        return h == null ? null : h.get();
+    }
+
+    @Nullable
+    public static FluidType fluidType(Identifier variantId) {
         DeferredHolder<FluidType, FluidType> h = TYPES.get(variantId);
         return h == null ? null : h.get();
     }

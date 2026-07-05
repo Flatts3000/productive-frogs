@@ -1,0 +1,5 @@
+{
+  "entity_type": "minecraft:snow_golem",
+  "predator": "prowler",
+  "handling": "walk"
+}

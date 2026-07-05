@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "filled=false": {
+      "model": "productivefrogs:block/tide_offering_receptacle"
+    },
+    "filled=true": {
+      "model": "productivefrogs:block/tide_offering_receptacle"
+    }
+  }
+}

@@ -1,9 +1,0 @@
-{
-  "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "mythicmetals" }
-  ],
-  "primer_tag": "c:ingots/orichalcum",
-  "category": "void",
-  "primary_color": 4176016,
-  "secondary_color": 2786664
-}

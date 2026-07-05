@@ -1,36 +1,30 @@
 package com.flatts.productivefrogs.content.fluid;
 
-import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 
 /**
- * The Slime Milk fluid, subclassed only to make its <b>spread gentler than
- * water's</b>. Flowing milk normally washes away any non-solid block in its
- * path the way flowing water sweeps off a plant - that destroyed frogspawn,
- * water source blocks, and neighboring Slime Milk source blocks in the
- * production pools milk is meant to fill (docs/known_issues.md).
+ * The Slime Milk fluid. As of the 26.1 re-implementation (R-1,
+ * {@code docs/port_mc_26_1_reimplementation.md}) there is ONE {@code slime_milk}
+ * fluid; the variant it represents rides as the {@code SLIME_VARIANT} data
+ * component on the bucket {@code ItemStack} / {@code FluidResource} and on the
+ * placed source block's {@link com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity}.
+ * The 26.1 transfer API ({@code ResourceHandler<FluidResource>}) preserves that
+ * component through tanks/pipes, so per-variant fluids (v1.8) are no longer
+ * needed. This mirrors the Mimic Milk lane exactly.
  *
- * <p>Both the {@link Source} and {@link Flowing} forms override
- * {@link net.minecraft.world.level.material.FlowingFluid#canSpreadTo} - the
- * single choke point vanilla checks before {@code spreadTo} replaces (and so
- * destroys) the block already at a target position - and refuse to spread into:
- * <ul>
- *   <li><b>frogspawn / Primed Frog Eggs</b> - so a running milk pool can't wash
- *       away spawn before it hatches;</li>
- *   <li><b>any fluid SOURCE block</b> ({@link FluidState#isSource()}) - so milk
- *       never overwrites a water source or a neighboring milk source.</li>
- * </ul>
- * Everything else (flowing-into-flowing, empty air, the normal slope/level
- * math) defers to {@code super}, so the only behavioral change is the refusal
- * to destroy those protected blocks.
+ * <p><b>Source-only / non-flowing by design</b> (maintainer decision 2026-06-29).
+ * Both forms override {@link net.minecraft.world.level.material.FlowingFluid#spreadTo}
+ * to refuse <i>all</i> spread, so a placed Slime Milk block stays exactly one
+ * source cell. Milk's real roles (transport as a {@code FluidResource}, automation,
+ * and source-spawning) never needed vanilla-style spreading pools, and dropping
+ * spreading removes the one wrinkle a single shared fluid has: a flowing cell has
+ * no BE and so cannot resolve its per-variant tint. Every Slime Milk block is now
+ * a BE-backed source whose tint + spawn variant read straight off that BE.
  */
 public final class SlimeMilkFluid {
 
@@ -38,57 +32,27 @@ public final class SlimeMilkFluid {
         // holder for the two fluid subclasses
     }
 
-    /**
-     * Shared guard: true when flowing milk must NOT spread into (and thus
-     * destroy) the block currently at the target position.
-     */
-    private static boolean isProtected(BlockState spreadState, FluidState fluidState) {
-        if (spreadState.is(Blocks.FROGSPAWN) || spreadState.getBlock() instanceof PrimedFrogEggBlock) {
-            return true;
-        }
-        // Never displace a WATER source or another Slime Milk source - the two
-        // cases reported. Scoped to those two fluids on purpose: a blanket
-        // isSource() check would also wall milk out of (and refuse to interact
-        // with) every modded fluid source, which is a cross-mod surprise. Flowing
-        // fluid (isSource() == false) is left to vanilla displacement.
-        if (!fluidState.isSource()) {
-            return false;
-        }
-        // Any per-variant Slime Milk source counts (v1.8): match the fluid class,
-        // not a single registry object, so an iron pool won't displace a copper
-        // source next to it.
-        return fluidState.is(Fluids.WATER) || fluidState.getType() instanceof Source;
-    }
-
-    /** The placeable source fluid. */
+    /** The placeable source fluid. Never spreads. */
     public static final class Source extends BaseFlowingFluid.Source {
         public Source(Properties properties) {
             super(properties);
         }
 
         @Override
-        protected boolean canSpreadTo(BlockGetter level, BlockPos pos, BlockState state, Direction direction,
-                                      BlockPos spreadPos, BlockState spreadState, FluidState fluidState, Fluid fluid) {
-            if (isProtected(spreadState, fluidState)) {
-                return false;
-            }
-            return super.canSpreadTo(level, pos, state, direction, spreadPos, spreadState, fluidState, fluid);
+        protected void spreadTo(LevelAccessor level, BlockPos pos, BlockState state, Direction direction, FluidState target) {
+            // never spread
         }
     }
 
-    /** The flowing form spread from a source. */
+    /** The flowing form - registered for completeness but never manifests (no spread). */
     public static final class Flowing extends BaseFlowingFluid.Flowing {
         public Flowing(Properties properties) {
             super(properties);
         }
 
         @Override
-        protected boolean canSpreadTo(BlockGetter level, BlockPos pos, BlockState state, Direction direction,
-                                      BlockPos spreadPos, BlockState spreadState, FluidState fluidState, Fluid fluid) {
-            if (isProtected(spreadState, fluidState)) {
-                return false;
-            }
-            return super.canSpreadTo(level, pos, state, direction, spreadPos, spreadState, fluidState, fluid);
+        protected void spreadTo(LevelAccessor level, BlockPos pos, BlockState state, Direction direction, FluidState target) {
+            // never spread
         }
     }
 }

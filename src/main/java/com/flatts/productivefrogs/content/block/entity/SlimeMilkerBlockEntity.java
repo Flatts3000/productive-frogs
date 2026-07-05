@@ -3,11 +3,11 @@ package com.flatts.productivefrogs.content.block.entity;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
 import com.flatts.productivefrogs.content.menu.SlimeMilkerMenu;
 import com.flatts.productivefrogs.registry.PFBlockEntities;
+import com.flatts.productivefrogs.content.item.SlimeMilkBucketItem;
 import com.flatts.productivefrogs.registry.PFItems;
-import com.flatts.productivefrogs.registry.PFVariantMilk;
 import com.flatts.productivefrogs.util.PFDebug;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -16,8 +16,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.item.BucketItem;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -172,22 +170,17 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
             return null;
         }
         if (input.is(PFItems.SLIME_BUCKET.get())) {
-            ResourceLocation variantId = SlimeMilkerBlock.readBucketVariantId(input);
+            Identifier variantId = SlimeMilkerBlock.readBucketVariantId(input);
             if (variantId == null) {
                 PFDebug.logOnce(PFDebug.Area.MILKER, "failclosed#" + pos,
                     () -> String.format("milker @%s fail-closed: input bucket carries no variant", pos));
                 return null;
             }
-            Item milkBucketItem = PFVariantMilk.bucket(variantId);
-            if (milkBucketItem == null) {
-                PFDebug.logOnce(PFDebug.Area.MILKER, "nomilk#" + pos,
-                    () -> String.format("milker @%s fail-closed: no per-variant milk fluid for %s", pos, variantId));
-                return null;
-            }
-            return new ItemStack(milkBucketItem);
+            // 26.1 R-1: one Slime Milk bucket item, variant stamped as SLIME_VARIANT.
+            return SlimeMilkBucketItem.forVariant(variantId);
         }
         if (input.is(PFItems.MIMIC_SLIME_BUCKET.get())) {
-            ResourceLocation itemId = input.get(
+            Identifier itemId = input.get(
                 com.flatts.productivefrogs.registry.PFDataComponents.SYNTHESIZED_ITEM.get());
             if (itemId == null) {
                 return null;
@@ -224,27 +217,22 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
     // -------------------------------------------------------------------
 
     @Override
-    protected void saveAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.putInt("CookProgress", cookProgress);
-        net.minecraft.nbt.CompoundTag invTag = new net.minecraft.nbt.CompoundTag();
-        inventory.serialize(invTag);
-        tag.put("Inventory", invTag);
+    protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
+        super.saveAdditional(output);
+        output.putInt("CookProgress", cookProgress);
+        inventory.serialize(output.child("Inventory"));
     }
 
     @Override
-    protected void loadAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    protected void loadAdditional(net.minecraft.world.level.storage.ValueInput input) {
+        super.loadAdditional(input);
         // Clamp on load: a tampered/old save could carry a negative or
         // overlarge value. A negative cookProgress would never reach
         // COOK_TIME_TOTAL until it wrapped through Integer.MAX_VALUE, stalling
         // the block "working" forever; clamp into [0, COOK_TIME_TOTAL].
-        int loaded = tag.contains("CookProgress", net.minecraft.nbt.Tag.TAG_INT)
-            ? tag.getInt("CookProgress") : 0;
+        int loaded = input.getIntOr("CookProgress", 0);
         cookProgress = Math.max(0, Math.min(loaded, COOK_TIME_TOTAL));
-        if (tag.contains("Inventory", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
-            inventory.deserialize(tag.getCompound("Inventory"));
-        }
+        input.child("Inventory").ifPresent(inventory::deserialize);
     }
 
     // Client sync: without these, a closed milker's inventory + cook progress
@@ -253,9 +241,7 @@ public class SlimeMilkerBlockEntity extends BlockEntity implements MenuProvider 
     // need; reuse it for the update tag.
     @Override
     public net.minecraft.nbt.CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider registries) {
-        net.minecraft.nbt.CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries);
-        return tag;
+        return saveCustomOnly(registries);
     }
 
     @Override

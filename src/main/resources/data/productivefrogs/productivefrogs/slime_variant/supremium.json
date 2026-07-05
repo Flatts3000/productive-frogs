@@ -1,9 +1,0 @@
-{
-  "neoforge:conditions": [
-    { "type": "neoforge:mod_loaded", "modid": "mysticalagriculture" }
-  ],
-  "primer_item": "mysticalagriculture:supremium_essence",
-  "category": "void",
-  "primary_color": 14703226,
-  "secondary_color": 12074842
-}

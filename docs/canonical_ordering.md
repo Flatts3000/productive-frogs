@@ -12,7 +12,7 @@ Productive Frogs' canonical species order is the progression order of the flagsh
 | 2 | **GEODE** | Gems & crystals - emerald, diamond, amethyst, tuff, calcite, certus quartz, fluix, ... |
 | 3 | **BOG** | Organic & swamp - clay, mud, moss, dirt, mycelium, lily pad, leather, pink slime, ... |
 | 4 | **TIDE** | Aquatic - sponge, prismarine, sea pickle, nautilus shell, ink sac, ice, snow, ... |
-| 5 | **INFERNAL** | Nether - blaze, nether quartz, soul sand, netherrack, glowstone, obsidian, netherite scrap |
+| 5 | **INFERNAL** | Nether - nether quartz, soul sand, netherrack, glowstone, obsidian, netherite scrap |
 | 6 | **VOID** | End & endgame - ender pearl, chorus fruit, shulker shell, echo shard, sculk, end stone, ... |
 
 Each species is a gated tier; players complete one to unlock the next. Presenting the mod's objects in this order makes creative tabs, JEI, and the recipe book read in journey order.

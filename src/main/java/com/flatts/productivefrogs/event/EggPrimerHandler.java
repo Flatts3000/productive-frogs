@@ -9,7 +9,7 @@ import com.flatts.productivefrogs.util.PFDebug;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
@@ -86,7 +86,7 @@ public final class EggPrimerHandler {
         }
 
         // Exact variant primer match required (Q4: Path A only).
-        Map.Entry<ResourceLocation, SlimeVariant> variantEntry = findVariantForHeldItem(level, held);
+        Map.Entry<Identifier, SlimeVariant> variantEntry = findVariantForHeldItem(level, held);
         if (variantEntry == null) {
             return;  // no primer match — silent no-op (no rejection feedback for frogspawn)
         }
@@ -110,11 +110,8 @@ public final class EggPrimerHandler {
         level.playSound(null, pos, SoundEvents.BUBBLE_COLUMN_BUBBLE_POP, SoundSource.BLOCKS, 0.6F, 1.0F);
     }
 
-    private static Map.Entry<ResourceLocation, SlimeVariant> findVariantForHeldItem(
+    private static Map.Entry<Identifier, SlimeVariant> findVariantForHeldItem(
             Level level, ItemStack stack) {
-        Registry<SlimeVariant> registry = level.registryAccess()
-            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
-        if (registry == null) return null;
-        return SlimeVariant.findByPrimer(registry, stack);
+        return SlimeVariant.findByPrimer(PFRegistries.variants(level.registryAccess()), stack);
     }
 }

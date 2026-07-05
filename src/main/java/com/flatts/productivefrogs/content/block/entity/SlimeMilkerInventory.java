@@ -1,9 +1,9 @@
 package com.flatts.productivefrogs.content.block.entity;
 
 import com.flatts.productivefrogs.registry.PFItems;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
@@ -67,17 +67,45 @@ public class SlimeMilkerInventory extends ItemStackHandler {
         return outputView;
     }
 
-    /**
-     * Snapshot the inventory state into a passed CompoundTag using the
-     * RegistryAccess.EMPTY provider. The BE owns the parent tag's key
-     * ("Inventory") so we just write our handler's NBT directly.
-     */
-    public void serialize(CompoundTag tag) {
-        tag.merge(serializeNBT(net.minecraft.core.RegistryAccess.EMPTY));
+    /** 26.1 {@code Capabilities.Item.BLOCK} input view: insert-only over the slime-bucket slot. */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResourceCached;
+
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResource() {
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (inputResourceCached == null) {
+            inputResourceCached = new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(this, new int[] {INPUT_SLOT}, true, false);
+        }
+        return inputResourceCached;
     }
 
-    public void deserialize(CompoundTag tag) {
-        deserializeNBT(net.minecraft.core.RegistryAccess.EMPTY, tag);
+    /** 26.1 {@code Capabilities.Item.BLOCK} output view: extract-only over the milk-bucket slot. */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResourceCached;
+
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResource() {
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (outputResourceCached == null) {
+            outputResourceCached = new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(this, new int[] {OUTPUT_SLOT}, false, true);
+        }
+        return outputResourceCached;
+    }
+
+    /**
+     * Write our handler's slots into the BE-owned {@code "Inventory"} child.
+     * 26.1: ItemStackHandler implements ValueIOSerializable, so the BE hands us a
+     * ValueOutput/ValueInput (the legacy serializeNBT(RegistryAccess) form is gone).
+     */
+    public void serialize(ValueOutput output) {
+        super.serialize(output);
+    }
+
+    public void deserialize(ValueInput input) {
+        super.deserialize(input);
     }
 
     /**

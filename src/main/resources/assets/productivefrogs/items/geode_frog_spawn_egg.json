@@ -1,0 +1,12 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "productivefrogs:item/geode_frog_spawn_egg",
+    "tints": [
+      {
+        "type": "productivefrogs:category_color",
+        "category": "geode"
+      }
+    ]
+  }
+}

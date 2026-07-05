@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -45,14 +45,14 @@ public final class PFItemTags {
      */
     public static final TagKey<Item> ALEMBIC_DENIED = TagKey.create(
         Registries.ITEM,
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "alembic/denied"));
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "alembic/denied"));
 
     private static Map<Category, TagKey<Item>> buildSpawneryPrimers() {
         EnumMap<Category, TagKey<Item>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {
             map.put(cat, TagKey.create(
                 Registries.ITEM,
-                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "spawnery_primer/" + cat.id())));
+                Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "spawnery_primer/" + cat.id())));
         }
         return Collections.unmodifiableMap(map);
     }

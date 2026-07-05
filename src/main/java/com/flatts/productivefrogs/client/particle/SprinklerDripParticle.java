@@ -3,10 +3,11 @@ package com.flatts.productivefrogs.client.particle;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
-import net.minecraft.client.particle.ParticleRenderType;
+import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.client.particle.SpriteSet;
-import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.particles.ColorParticleOption;
+import net.minecraft.util.RandomSource;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -16,10 +17,10 @@ import org.jetbrains.annotations.Nullable;
  * variant's hue instead of the fixed water/lava colours the vanilla dripstone
  * particles are locked to.
  */
-public class SprinklerDripParticle extends TextureSheetParticle {
+public class SprinklerDripParticle extends SingleQuadParticle {
 
-    protected SprinklerDripParticle(ClientLevel level, double x, double y, double z, ColorParticleOption color) {
-        super(level, x, y, z);
+    protected SprinklerDripParticle(ClientLevel level, double x, double y, double z, ColorParticleOption color, TextureAtlasSprite sprite) {
+        super(level, x, y, z, 0.0, 0.0, 0.0, sprite);
         this.setColor(color.getRed(), color.getGreen(), color.getBlue());
         this.gravity = 0.06F;       // hangs a moment, then accelerates down like a drip
         this.xd = 0.0;
@@ -31,8 +32,8 @@ public class SprinklerDripParticle extends TextureSheetParticle {
     }
 
     @Override
-    public ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_OPAQUE;
+    protected SingleQuadParticle.Layer getLayer() {
+        return SingleQuadParticle.Layer.OPAQUE;
     }
 
     /** Client factory bound in {@code PFClientEvents.onRegisterParticleProviders}. */
@@ -47,10 +48,8 @@ public class SprinklerDripParticle extends TextureSheetParticle {
         @Nullable
         @Override
         public Particle createParticle(ColorParticleOption type, ClientLevel level,
-                double x, double y, double z, double dx, double dy, double dz) {
-            SprinklerDripParticle particle = new SprinklerDripParticle(level, x, y, z, type);
-            particle.pickSprite(sprites);
-            return particle;
+                double x, double y, double z, double dx, double dy, double dz, RandomSource random) {
+            return new SprinklerDripParticle(level, x, y, z, type, this.sprites.get(random));
         }
     }
 }

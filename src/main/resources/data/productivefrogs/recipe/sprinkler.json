@@ -7,9 +7,12 @@
     " H "
   ],
   "key": {
-    "N": { "item": "minecraft:nether_brick" },
-    "Q": { "item": "minecraft:quartz" },
-    "H": { "item": "minecraft:hopper" }
+    "N": "minecraft:nether_brick",
+    "Q": "minecraft:quartz",
+    "H": "minecraft:hopper"
   },
-  "result": { "id": "productivefrogs:sprinkler", "count": 4 }
+  "result": {
+    "id": "productivefrogs:sprinkler",
+    "count": 4
+  }
 }

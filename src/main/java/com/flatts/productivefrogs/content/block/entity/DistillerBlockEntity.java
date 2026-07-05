@@ -9,12 +9,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
@@ -28,6 +28,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -160,9 +162,39 @@ public class DistillerBlockEntity extends BlockEntity implements MenuProvider {
      * Receive-only RF buffer. {@code maxExtract = 0} so cables can't pull power
      * back out; the distill loop spends it internally via {@link #consume(int)}.
      */
-    private final class ReceiveOnlyEnergy extends EnergyStorage {
+    private final class ReceiveOnlyEnergy extends EnergyStorage
+            implements com.flatts.productivefrogs.content.transfer.ReceiveOnlyEnergyHandler.Source {
         ReceiveOnlyEnergy() {
             super(ENERGY_CAPACITY, ENERGY_MAX_RECEIVE, 0);
+        }
+
+        // 26.1 EnergyHandler journal window (see ReceiveOnlyEnergyHandler): the
+        // adapter reads + writes the stored energy directly to support
+        // read-your-writes plus abort-rollback, which the receive-only public
+        // API cannot do. setEnergy fires no callback; the commit one does.
+        @Override
+        public int currentEnergy() {
+            return this.energy;
+        }
+
+        @Override
+        public void setEnergy(int amount) {
+            this.energy = Math.max(0, Math.min(this.capacity, amount));
+        }
+
+        @Override
+        public int energyCapacity() {
+            return this.capacity;
+        }
+
+        @Override
+        public int maxInsertPerOp() {
+            return this.maxReceive;
+        }
+
+        @Override
+        public void onEnergyCommitted() {
+            setChanged();
         }
 
         @Override
@@ -234,12 +266,72 @@ public class DistillerBlockEntity extends BlockEntity implements MenuProvider {
         return outputView;
     }
 
+    /** 26.1 {@code Capabilities.Item.BLOCK} input view: insert-only over the Prismatic Froglight slot. */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResourceCached;
+
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> inputResource() {
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (inputResourceCached == null) {
+            inputResourceCached = new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(items, new int[] {INPUT_SLOT}, true, false);
+        }
+        return inputResourceCached;
+    }
+
+    /** 26.1 {@code Capabilities.Item.BLOCK} output view: extract-only over the distilled-item slot. */
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResourceCached;
+
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> outputResource() {
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (outputResourceCached == null) {
+            outputResourceCached = new com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler(items, new int[] {OUTPUT_SLOT}, false, true);
+        }
+        return outputResourceCached;
+    }
+
     public EnergyStorage energyStorage() {
         return energy;
     }
 
+    /** The 26.1 {@code Capabilities.Energy.BLOCK} view (receive-only); wraps {@link #energy}. */
+    private net.neoforged.neoforge.transfer.energy.EnergyHandler energyHandlerCached;
+
+    public net.neoforged.neoforge.transfer.energy.EnergyHandler energyHandler() {
+        // Cached: one handler = one SnapshotJournal. A fresh handler per capability
+        // lookup would give two lookups in one transaction independent journals over
+        // the same state, and an abort then restores the LAST journal's snapshot -
+        // leaking the first mutation (review finding).
+        if (energyHandlerCached == null) {
+            energyHandlerCached = new com.flatts.productivefrogs.content.transfer.ReceiveOnlyEnergyHandler(energy);
+        }
+        return energyHandlerCached;
+    }
+
     public int progress() {
         return progress;
+    }
+
+    // 26.1 port: the held stacks drop here (the BE still exists on the removal path), NOT in the
+    // block's affectNeighborsAfterRemoval, which runs after the BE is gone. The handler is not a
+    // vanilla Container, so the super default won't drop it - re-home the input + output pops here.
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (this.level instanceof ServerLevel serverLevel) {
+            ItemStack in = items.getStackInSlot(INPUT_SLOT);
+            if (!in.isEmpty()) {
+                Block.popResource(serverLevel, pos, in);
+            }
+            ItemStack out = items.getStackInSlot(OUTPUT_SLOT);
+            if (!out.isEmpty()) {
+                Block.popResource(serverLevel, pos, out);
+            }
+        }
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, DistillerBlockEntity be) {
@@ -249,7 +341,7 @@ public class DistillerBlockEntity extends BlockEntity implements MenuProvider {
             return;
         }
         ItemStack in = be.items.getStackInSlot(INPUT_SLOT);
-        ResourceLocation itemId = DistillerBlockEntity.isPrismatic(in)
+        Identifier itemId = DistillerBlockEntity.isPrismatic(in)
             ? in.get(PFDataComponents.SYNTHESIZED_ITEM.get())
             : null;
         if (itemId == null) {
@@ -309,31 +401,24 @@ public class DistillerBlockEntity extends BlockEntity implements MenuProvider {
     // -------------------------------------------------------------------
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.put("Items", items.serializeNBT(registries));
-        tag.putInt("Energy", energy.getEnergyStored());
-        tag.putInt("Progress", progress);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        items.serialize(output.child("Items"));
+        output.putInt("Energy", energy.getEnergyStored());
+        output.putInt("Progress", progress);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.contains("Items", Tag.TAG_COMPOUND)) {
-            items.deserializeNBT(registries, tag.getCompound("Items"));
-        }
-        if (tag.contains("Energy", Tag.TAG_INT)) {
-            energy.load(tag.getInt("Energy"));
-        }
-        int loaded = tag.contains("Progress", Tag.TAG_INT) ? tag.getInt("Progress") : 0;
-        progress = Math.max(0, Math.min(loaded, DISTILL_TIME));
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        input.child("Items").ifPresent(items::deserialize);
+        energy.load(input.getIntOr("Energy", 0));
+        progress = Math.max(0, Math.min(input.getIntOr("Progress", 0), DISTILL_TIME));
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries);
-        return tag;
+        return saveCustomOnly(registries);
     }
 
     @Override

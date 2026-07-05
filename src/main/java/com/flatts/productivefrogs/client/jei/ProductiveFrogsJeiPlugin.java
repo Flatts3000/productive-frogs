@@ -26,14 +26,19 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.crafting.RecipeMap;
 import net.minecraft.world.level.Level;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RecipesReceivedEvent;
 
 /**
  * JEI plugin for Productive Frogs. Surfaces three things:
@@ -72,11 +77,11 @@ import net.minecraft.world.level.Level;
 @JeiPlugin
 public final class ProductiveFrogsJeiPlugin implements IModPlugin {
 
-    private static final ResourceLocation PLUGIN_UID =
-        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "jei_plugin");
+    private static final Identifier PLUGIN_UID =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "jei_plugin");
 
     @Override
-    public ResourceLocation getPluginUid() {
+    public Identifier getPluginUid() {
         return PLUGIN_UID;
     }
 
@@ -154,15 +159,6 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         if (!PFConfig.froglightWeaponEnabled() || !PFConfig.bossEnabled()) {
             hidden.add(new ItemStack(PFItems.FROGLIGHT_CLEAVER.get()));
         }
-        // Boss-tier catalyst altar blocks (#200): hide the four altar blocks when the
-        // boss master is off. (The boss variants' own items - buckets, milk, froglights,
-        // eggs - hide transitively via the per-variant isEnabled gate in the loops above.)
-        if (!PFConfig.bossEnabled()) {
-            hidden.add(new ItemStack(PFItems.NETHER_STAR_CATALYST.get()));
-            hidden.add(new ItemStack(PFItems.DRAGON_EGG_CATALYST.get()));
-            hidden.add(new ItemStack(PFItems.WITHER_SKELETON_SKULL_CATALYST.get()));
-            hidden.add(new ItemStack(PFItems.DRAGON_BREATH_CATALYST.get()));
-        }
         // Frog Legs (#194) + Soup (#217): hide all when the feature is disabled.
         if (!PFConfig.frogLegsEnabled()) {
             hidden.add(new ItemStack(PFItems.RAW_FROG_LEGS.get()));
@@ -176,6 +172,11 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         // Sweetslime (#202): hide when the frog-stat / breeding layer is off.
         if (!PFConfig.frogStatsEnabled()) {
             hidden.add(new ItemStack(PFItems.SWEETSLIME.get()));
+        }
+        // Liquid Experience bucket (#281 Phase 2): hide when predation is off,
+        // the same posture as the creative tab.
+        if (!PFConfig.predatorsEnabled()) {
+            hidden.add(new ItemStack(PFItems.LIQUID_EXPERIENCE_BUCKET.get()));
         }
         if (!hidden.isEmpty()) {
             jeiRuntime.getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hidden);
@@ -212,10 +213,6 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             public Object getSubtypeData(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
                 return bucketSubtypeKey(stack);
             }
-            @Override
-            public String getLegacyStringSubtypeInfo(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
-                return bucketSubtypeKey(stack);
-            }
         };
         registration.registerSubtypeInterpreter(PFItems.SLIME_BUCKET.get(), bucketInterp);
         registration.registerSubtypeInterpreter(PFItems.RESOURCE_TADPOLE_BUCKET.get(), bucketInterp);
@@ -226,19 +223,24 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         ISubtypeInterpreter<ItemStack> slimeVariantInterp = new ISubtypeInterpreter<>() {
             @Override
             public Object getSubtypeData(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
-                ResourceLocation v = stack.get(PFDataComponents.SLIME_VARIANT.get());
+                Identifier v = stack.get(PFDataComponents.SLIME_VARIANT.get());
                 return v == null ? "" : v.toString();
-            }
-            @Override
-            public String getLegacyStringSubtypeInfo(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
-                return (String) getSubtypeData(stack, ctx);
             }
         };
         registration.registerSubtypeInterpreter(PFItems.CONFIGURABLE_FROGLIGHT.get(), slimeVariantInterp);
+        // Mob Slurry Bucket (#281 Phase 3): keyed by SLURRIED_ENTITY so each
+        // mob's slurry is a distinct entry (mirrors the SLIME_VARIANT items).
+        registration.registerSubtypeInterpreter(PFItems.MOB_SLURRY_BUCKET.get(), new ISubtypeInterpreter<>() {
+            @Override
+            public Object getSubtypeData(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
+                Identifier v = stack.get(PFDataComponents.SLURRIED_ENTITY.get());
+                return v == null ? "" : v.toString();
+            }
+        });
         registration.registerSubtypeInterpreter(PFItems.RESOURCE_SLIME_SPAWN_EGG.get(), slimeVariantInterp);
-        // Slime Milk buckets are per-variant distinct items (v1.8) - no subtype
-        // interpreter needed; each <variant>_slime_milk_bucket is already its own
-        // JEI entry.
+        // The single Slime Milk bucket (26.1 R-1) carries its variant in SLIME_VARIANT,
+        // so it uses the same interpreter - each variant becomes a distinct JEI row.
+        registration.registerSubtypeInterpreter(PFItems.SLIME_MILK_BUCKET.get(), slimeVariantInterp);
 
         // Frog Egg bottle — subtype by CONTAINED_CATEGORY.
         registration.registerSubtypeInterpreter(PFItems.FROG_EGG.get(), new ISubtypeInterpreter<>() {
@@ -246,10 +248,6 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             public Object getSubtypeData(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
                 Category c = stack.get(PFDataComponents.CONTAINED_CATEGORY.get());
                 return c == null ? "" : c.name();
-            }
-            @Override
-            public String getLegacyStringSubtypeInfo(ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext ctx) {
-                return (String) getSubtypeData(stack, ctx);
             }
         });
     }
@@ -267,7 +265,12 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             return "";
         }
         CompoundTag tag = data.copyTag();
-        return tag.getString("Category") + "|" + tag.getString("Variant");
+        // Kind-aware (#281): tadpole buckets write "Kind"; slime buckets and
+        // legacy data write "Category"(+"Midas") - FrogKind.readFromTag resolves
+        // both dialects to one canonical id so every stack keys consistently.
+        String kind = com.flatts.productivefrogs.data.FrogKind.readFromTag(tag)
+            .map(com.flatts.productivefrogs.data.FrogKind::id).orElse("");
+        return kind + "|" + tag.getStringOr("Variant", "");
     }
 
     @Override
@@ -279,7 +282,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             return;
         }
         Registry<SlimeVariant> variants = level.registryAccess()
-            .registry(PFRegistries.SLIME_VARIANT).orElse(null);
+            .lookup(PFRegistries.SLIME_VARIANT).orElse(null);
         if (variants == null) {
             return;
         }
@@ -298,14 +301,18 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         // Melt + cast recipes ride their real recipe types, so datapack additions
         // (molten metals, nugget/block casts) surface with no code change. Gated by
         // the Crucible/Mold toggles (#196) so a disabled lane leaves no JEI category.
+        // 26.1: the client no longer holds a full RecipeManager - vanilla syncs
+        // only recipe-book displays. NeoForge re-syncs the full recipe content and
+        // fires RecipesReceivedEvent, which ClientRecipes caches into a RecipeMap.
+        RecipeMap recipeMap = ClientRecipes.recipeMap();
         if (crucibleEnabled()) {
             addCrucibleHeatEntries(reg, variants);
-            reg.addRecipes(CrucibleMeltCategory.TYPE, level.getRecipeManager()
-                .getAllRecipesFor(com.flatts.productivefrogs.registry.PFRecipeTypes.CRUCIBLE_MELTING.get()));
+            reg.addRecipes(CrucibleMeltCategory.TYPE, List.copyOf(recipeMap.byType(
+                com.flatts.productivefrogs.registry.PFRecipeTypes.CRUCIBLE_MELTING.get())));
         }
         if (castingMoldEnabled()) {
-            reg.addRecipes(MoldCastingCategory.TYPE, level.getRecipeManager()
-                .getAllRecipesFor(com.flatts.productivefrogs.registry.PFRecipeTypes.MOLD_CASTING.get()));
+            reg.addRecipes(MoldCastingCategory.TYPE, List.copyOf(recipeMap.byType(
+                com.flatts.productivefrogs.registry.PFRecipeTypes.MOLD_CASTING.get())));
         }
     }
 
@@ -324,7 +331,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         java.util.Set<net.minecraft.world.item.Item> seen = new java.util.HashSet<>();
         for (var e : blockRegistry.getDataMap(
                 com.flatts.productivefrogs.registry.PFDataMaps.CRUCIBLE_HEAT).entrySet()) {
-            net.minecraft.world.level.block.Block block = blockRegistry.get(e.getKey());
+            net.minecraft.world.level.block.Block block = blockRegistry.getValue(e.getKey());
             if (block == null) {
                 continue;
             }
@@ -332,7 +339,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             if (display.isEmpty() || !seen.add(display.getItem())) {
                 continue;
             }
-            entries.add(new CrucibleHeatCategory.Entry(display, e.getValue(), e.getKey().location()));
+            entries.add(new CrucibleHeatCategory.Entry(display, e.getValue(), e.getKey().identifier()));
         }
         // Placed Froglight heat sources ride the variant-keyed froglight_heat
         // data map (lava/blaze/blazing by default) - enumerate it the same way
@@ -340,17 +347,17 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         // variant, not item, so they bypass the `seen` set.
         for (var e : variants.getDataMap(
                 com.flatts.productivefrogs.registry.PFDataMaps.FROGLIGHT_HEAT).entrySet()) {
-            SlimeVariant sv = variants.get(e.getKey());
+            SlimeVariant sv = variants.getValue(e.getKey());
             // Skip a config-disabled variant (#203); also skip a null lookup
             // defensively - a froglight-heat data-map key should always back a
             // registry entry, but an orphan key shouldn't mint a variant-less entry.
-            if (sv == null || !sv.isEnabled(e.getKey().location())) {
+            if (sv == null || !sv.isEnabled(e.getKey().identifier())) {
                 continue;
             }
             ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
-            froglight.set(PFDataComponents.SLIME_VARIANT.get(), e.getKey().location());
+            froglight.set(PFDataComponents.SLIME_VARIANT.get(), e.getKey().identifier());
             entries.add(new CrucibleHeatCategory.Entry(froglight, e.getValue(),
-                e.getKey().location().withSuffix("_froglight_heat")));
+                e.getKey().identifier().withSuffix("_froglight_heat")));
         }
         entries.sort(java.util.Comparator
             .comparingInt(CrucibleHeatCategory.Entry::heat)
@@ -404,7 +411,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
     private static void addMilkerRecipes(IRecipeRegistration reg, Registry<SlimeVariant> variants) {
         List<SlimeMilkerRecipeCategory.Recipe> recipes = new ArrayList<>();
         for (java.util.Map.Entry<ResourceKey<SlimeVariant>, SlimeVariant> entry : variants.entrySet()) {
-            ResourceLocation variantId = entry.getKey().location();
+            Identifier variantId = entry.getKey().identifier();
             if (!entry.getValue().isEnabled(variantId)) {
                 continue; // disabled variant (#203): no Milker recipe in JEI
             }
@@ -430,7 +437,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
     private static void addChurnRecipes(IRecipeRegistration reg, Registry<SlimeVariant> variants) {
         List<SlimeChurnRecipeCategory.Recipe> recipes = new ArrayList<>();
         for (java.util.Map.Entry<ResourceKey<SlimeVariant>, SlimeVariant> entry : variants.entrySet()) {
-            ResourceLocation variantId = entry.getKey().location();
+            Identifier variantId = entry.getKey().identifier();
             if (!entry.getValue().isEnabled(variantId)) {
                 continue; // disabled variant (#203): no Churn recipe in JEI
             }
@@ -477,7 +484,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
     /** Every item in a species' {@code spawnery_primer/<species>} tag, as stacks. */
     private static List<ItemStack> primerStacks(Category cat) {
         TagKey<Item> tag = PFItemTags.spawneryPrimer(cat);
-        return BuiltInRegistries.ITEM.getTag(tag)
+        return BuiltInRegistries.ITEM.get(tag)
             .map(set -> set.stream().map(h -> new ItemStack(h.value())).toList())
             .orElse(List.of());
     }
@@ -490,10 +497,10 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
      */
     private static void addVariantInfoPages(IRecipeRegistration reg, Registry<SlimeVariant> variants) {
         for (java.util.Map.Entry<ResourceKey<SlimeVariant>, SlimeVariant> entry : variants.entrySet()) {
-            if (!entry.getValue().isEnabled(entry.getKey().location())) {
+            if (!entry.getValue().isEnabled(entry.getKey().identifier())) {
                 continue; // disabled variant (#203): no JEI info page
             }
-            String variantName = entry.getKey().location().getPath(); // "iron", "copper", etc.
+            String variantName = entry.getKey().identifier().getPath(); // "iron", "copper", etc.
             SlimeVariant variant = entry.getValue();
 
             Component frogName = Component.translatable(
@@ -503,22 +510,22 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             // info pages below don't surface the raw translation key.
             Component variantSlimeName = Component.translatableWithFallback(
                 "entity.productivefrogs.resource_slime." + variantName,
-                com.flatts.productivefrogs.util.VariantNames.titleCase(entry.getKey().location()) + " Slime");
+                com.flatts.productivefrogs.util.VariantNames.titleCase(entry.getKey().identifier()) + " Slime");
             Component info = Component.translatable(
                 "productivefrogs.jei.variant_slime.info", variantSlimeName, frogName);
 
             // 1. Resource Slime spawn egg (per-variant stack of the single item)
             reg.addIngredientInfo(
-                PFItems.resourceSlimeSpawnEgg(entry.getKey().location()),
+                PFItems.resourceSlimeSpawnEgg(entry.getKey().identifier()),
                 VanillaTypes.ITEM_STACK, info);
 
             // 2. Variant-stamped Slime Bucket
-            ItemStack bucket = PFItems.variantSlimeBucket(entry.getKey().location(), variant.category());
+            ItemStack bucket = PFItems.variantSlimeBucket(entry.getKey().identifier(), variant.category());
             reg.addIngredientInfo(bucket, VanillaTypes.ITEM_STACK, info);
 
             // 3. Variant-stamped Configurable Froglight
             ItemStack froglight = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
-            froglight.set(PFDataComponents.SLIME_VARIANT.get(), entry.getKey().location());
+            froglight.set(PFDataComponents.SLIME_VARIANT.get(), entry.getKey().identifier());
             Component froglightInfo = Component.translatable(
                 "productivefrogs.jei.variant_froglight.info", frogName, variantSlimeName);
             reg.addIngredientInfo(froglight, VanillaTypes.ITEM_STACK, froglightInfo);
@@ -526,7 +533,7 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             // 4. The variant's own Slime Milk bucket (per-variant, v1.8). A
             // content-only variant with no milk fluid yields EMPTY - JEI rejects an
             // empty ingredient, so only add the info page when a bucket exists.
-            ItemStack milkBucket = PFItems.slimeMilkBucket(entry.getKey().location());
+            ItemStack milkBucket = PFItems.slimeMilkBucket(entry.getKey().identifier());
             if (!milkBucket.isEmpty()) {
                 Component milkInfo = Component.translatable(
                     "productivefrogs.jei.slime_milk.info", variantSlimeName);
@@ -627,6 +634,28 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
                 Component.translatable("productivefrogs.jei.slime_churn.info"));
         }
 
+        // Predation supply chain (#281): press, basins, nets, LE, altar hatches -
+        // gated with the predation/boss masters like their creative visibility.
+        if (com.flatts.productivefrogs.PFConfig.predatorsEnabled()) {
+            reg.addIngredientInfo(new ItemStack(PFBlocks.SLURRY_PRESS.get().asItem()),
+                VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.slurry_press.info"));
+            reg.addIngredientInfo(new ItemStack(PFBlocks.MOB_SLURRY_BASIN.get().asItem()),
+                VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.mob_slurry_basin.info"));
+            reg.addIngredientInfo(new ItemStack(PFBlocks.SLIME_MILK_BASIN.get().asItem()),
+                VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.slime_milk_basin.info"));
+            reg.addIngredientInfo(new ItemStack(PFItems.ENDER_NET.get()),
+                VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.ender_net.info"));
+            reg.addIngredientInfo(new ItemStack(PFItems.LIQUID_EXPERIENCE_BUCKET.get()),
+                VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.liquid_experience.info"));
+        }
+        if (com.flatts.productivefrogs.PFConfig.bossEnabled()) {
+            Component altarInfo = Component.translatable("productivefrogs.jei.boss_altar_hatch.info");
+            reg.addIngredientInfo(new ItemStack(PFBlocks.WITHER_ALTAR_HATCH.get().asItem()), VanillaTypes.ITEM_STACK, altarInfo);
+            reg.addIngredientInfo(new ItemStack(PFBlocks.END_DRAGON_ALTAR_HATCH.get().asItem()), VanillaTypes.ITEM_STACK, altarInfo);
+            reg.addIngredientInfo(new ItemStack(PFBlocks.WARDEN_ALTAR_HATCH.get().asItem()), VanillaTypes.ITEM_STACK, altarInfo);
+            reg.addIngredientInfo(new ItemStack(PFBlocks.ELDER_ALTAR_HATCH.get().asItem()), VanillaTypes.ITEM_STACK, altarInfo);
+        }
+
         // Terrarium multiblock (#185) - one info page per machine block.
         reg.addIngredientInfo(new ItemStack(PFBlocks.TERRARIUM_CONTROLLER.get().asItem()),
             VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.terrarium_controller.info"));
@@ -678,6 +707,33 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
         if (PFConfig.catalystInfiniteEnabled()) {
             reg.addIngredientInfo(new ItemStack(PFItems.INFINITE_CATALYST.get()),
                 VanillaTypes.ITEM_STACK, Component.translatable("productivefrogs.jei.infinite_catalyst.info"));
+        }
+    }
+
+    /**
+     * Client-side cache of the synced recipe content (26.1). Vanilla no longer
+     * ships the full recipe list to the client - only recipe-book displays - so
+     * {@code level.getRecipeManager()} is gone client-side. NeoForge re-syncs the
+     * full recipe content and fires {@link RecipesReceivedEvent}; we cache its
+     * {@link RecipeMap} so {@link #registerRecipes} can enumerate PF's custom
+     * Crucible-melt and Mold-cast recipe types. The payload arrives during login,
+     * before world join, so the map is populated by the time JEI registers.
+     */
+    @EventBusSubscriber(modid = ProductiveFrogs.MOD_ID, value = Dist.CLIENT)
+    public static final class ClientRecipes {
+
+        private static volatile RecipeMap recipeMap = RecipeMap.EMPTY;
+
+        private ClientRecipes() {
+        }
+
+        static RecipeMap recipeMap() {
+            return recipeMap;
+        }
+
+        @SubscribeEvent
+        static void onRecipesReceived(RecipesReceivedEvent event) {
+            recipeMap = event.getRecipeMap();
         }
     }
 }
