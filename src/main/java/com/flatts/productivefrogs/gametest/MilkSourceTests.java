@@ -67,6 +67,8 @@ final class MilkSourceTests {
             MilkSourceTests::catalystAtCapIsNotConsumed);
         PFGameTests.test("catalyst_upgrades_survive_bucket_round_trip", 100,
             MilkSourceTests::catalystUpgradesSurviveBucketRoundTrip);
+        PFGameTests.test("dispenser_scoop_keeps_milk_variant_and_upgrades", 100,
+            MilkSourceTests::dispenserScoopKeepsMilkVariantAndUpgrades);
     }
 
     /**
@@ -839,5 +841,78 @@ final class MilkSourceTests {
     private static int getMilkSpawns(GameTestHelper helper, BlockPos pos) {
         var be = milkBE(helper, pos);
         return be != null ? be.getSpawnsRemaining() : -1;
+    }
+
+    /**
+     * A dispenser scooping a buffed milk source keeps the stamped components
+     * (#326). Vanilla's empty-bucket dispense behavior re-mints the pickup as
+     * {@code new ItemStack(item)}, discarding what {@code pickupBlock} stamps -
+     * on this line that loses the {@code SLIME_VARIANT} itself (R-1 single
+     * fluid), not just the catalyst upgrades. PF replaces that behavior on
+     * common setup ({@code MilkDispensePickupBehavior}); this drives a REAL
+     * dispenser pulse (not a direct pickupBlock call) and asserts the bucket
+     * that lands back in the dispenser carries the variant + full upgrade set.
+     */
+    private static void dispenserScoopKeepsMilkVariantAndUpgrades(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 1);
+        BlockPos dispenserPos = new BlockPos(2, 2, 2);
+        ServerLevel level = helper.getLevel();
+        Identifier iron = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+
+        // A buffed iron source: stamp the variant via the placement hook, then
+        // 5/12 budget, Rapid II, Teeming I, Endless straight onto the BE.
+        helper.setBlock(sourcePos, PFBlocks.SLIME_MILK_SOURCE.get().defaultBlockState());
+        ItemStack placeBucket = milkBucket("iron");
+        ((SlimeMilkBucketItem) PFItems.SLIME_MILK_BUCKET.get())
+            .checkExtraContent(null, level, placeBucket, helper.absolutePos(sourcePos));
+        if (!(level.getBlockEntity(helper.absolutePos(sourcePos))
+                instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity be)
+            || !iron.equals(be.getVariantId())) {
+            helper.fail("the source BE should report variant iron after placement");
+            return;
+        }
+        be.restoreUpgrades(5, 12, 2, 1, true);
+
+        // A dispenser facing the source, loaded with one empty bucket.
+        helper.setBlock(dispenserPos, Blocks.DISPENSER.defaultBlockState()
+            .setValue(net.minecraft.world.level.block.DispenserBlock.FACING, net.minecraft.core.Direction.NORTH));
+        if (!(level.getBlockEntity(helper.absolutePos(dispenserPos))
+                instanceof net.minecraft.world.level.block.entity.DispenserBlockEntity dispenser)) {
+            helper.fail("dispenser should have its BlockEntity after placement");
+            return;
+        }
+        dispenser.setItem(0, new ItemStack(net.minecraft.world.item.Items.BUCKET));
+
+        helper.pulseRedstone(dispenserPos.above(), 2);
+
+        helper.succeedWhen(() -> {
+            // consumeWithRemainder puts the filled bucket back into the dispenser.
+            ItemStack result = ItemStack.EMPTY;
+            for (int i = 0; i < dispenser.getContainerSize(); i++) {
+                if (!dispenser.getItem(i).isEmpty()) {
+                    result = dispenser.getItem(i);
+                    break;
+                }
+            }
+            helper.assertFalse(result.isEmpty(), "the dispenser should hold the scooped milk bucket");
+            Identifier variant = result.get(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get());
+            Integer remaining = result.get(com.flatts.productivefrogs.registry.PFDataComponents.SPAWNS_REMAINING.get());
+            Integer capacity = result.get(com.flatts.productivefrogs.registry.PFDataComponents.MILK_CAPACITY.get());
+            Integer speed = result.get(com.flatts.productivefrogs.registry.PFDataComponents.MILK_SPEED.get());
+            Integer quantity = result.get(com.flatts.productivefrogs.registry.PFDataComponents.MILK_QUANTITY.get());
+            Boolean infinite = result.get(com.flatts.productivefrogs.registry.PFDataComponents.MILK_INFINITE.get());
+            helper.assertTrue(iron.equals(variant),
+                "SLIME_VARIANT should survive the dispenser scoop (want iron, got " + variant + ")");
+            helper.assertTrue(remaining != null && remaining == 5,
+                "SPAWNS_REMAINING should survive the dispenser scoop (want 5, got " + remaining + ")");
+            helper.assertTrue(capacity != null && capacity == 12,
+                "MILK_CAPACITY should survive the dispenser scoop (want 12, got " + capacity + ")");
+            helper.assertTrue(speed != null && speed == 2,
+                "MILK_SPEED should survive the dispenser scoop (want 2, got " + speed + ")");
+            helper.assertTrue(quantity != null && quantity == 1,
+                "MILK_QUANTITY should survive the dispenser scoop (want 1, got " + quantity + ")");
+            helper.assertTrue(Boolean.TRUE.equals(infinite),
+                "MILK_INFINITE should survive the dispenser scoop (got " + infinite + ")");
+        });
     }
 }
