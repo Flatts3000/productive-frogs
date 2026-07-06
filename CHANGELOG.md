@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **A dispenser scooping up placed Slime Milk no longer wipes it back to a
+  plain bucket.** Vanilla's dispenser hands back a bare bucket when it picks
+  up a fluid - on this version that lost not just the catalyst upgrades and
+  spawn budget but the milk's variant itself. The bucket a dispenser scoops
+  now keeps everything, exactly like picking it up by hand. Applies to Mimic
+  Milk too. (#326)
+
 ## v2.0.0-alpha.1 - 2026-07-05 - Leap Forward
 
 **Productive Frogs 2.0 - the first release of the new line.** The mod moves to
