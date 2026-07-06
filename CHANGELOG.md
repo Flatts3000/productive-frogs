@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **A dispenser scooping up placed Slime Milk no longer resets its upgrades.**
+  Vanilla's dispenser hands back a bare bucket when it picks up a fluid,
+  wiping the catalyst buffs (Rapid / Teeming / Endless) and the remaining
+  spawn budget the milk was carrying - "when a dispenser picks up Frogmilk
+  its upgrades get reset". The bucket a dispenser scoops now keeps everything,
+  exactly like picking it up by hand. Applies to Mimic Milk too. (#326)
+
 ## v1.24.6 - 2026-07-05 - Fresh Coat
 
 ### Changed

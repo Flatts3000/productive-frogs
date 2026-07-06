@@ -109,6 +109,9 @@ public final class ProductiveFrogs {
         // Dispenser releasing a Slime Bucket spawns the slime (no water). The
         // dispenser registry isn't thread-safe, so register on the main thread.
         event.enqueueWork(com.flatts.productivefrogs.content.item.SlimeBucketItem::registerDispenseBehavior);
+        // Dispenser scooping a milk source keeps its stamped upgrades (#326) -
+        // vanilla's empty-bucket behavior discards the pickup stack's components.
+        event.enqueueWork(com.flatts.productivefrogs.content.block.MilkDispensePickupBehavior::register);
         // ModConfigSpec has no cross-field validator, so warn here (config is
         // loaded by common-setup time) if the spawn interval is inverted.
         // SlimeMilkSourceBlock.scheduleNextSpawnTick falls back to a fixed
