@@ -2420,6 +2420,74 @@ public final class PFGameTests {
     }
 
     /**
+     * A dispenser scooping a buffed milk source keeps the stamped upgrades
+     * (#326). Vanilla's empty-bucket dispense behavior re-mints the pickup as
+     * {@code new ItemStack(item)}, discarding the components
+     * {@code pickupBlock} stamps - "when a dispenser picks up Frogmilk its
+     * upgrades get reset". PF replaces that behavior on common setup
+     * ({@code MilkDispensePickupBehavior}); this drives a REAL dispenser pulse
+     * (not a direct pickupBlock call) and asserts the bucket that lands back in
+     * the dispenser still carries the full upgrade set.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void dispenserScoopKeepsMilkUpgrades(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 1);
+        BlockPos dispenserPos = new BlockPos(2, 2, 2);
+        ServerLevel level = helper.getLevel();
+        ResourceLocation iron = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+
+        // A buffed iron source: 5/12 budget, Rapid II, Teeming I, Endless.
+        helper.setBlock(sourcePos, PFVariantMilk.block(iron).defaultBlockState());
+        if (!(level.getBlockEntity(helper.absolutePos(sourcePos))
+                instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity be)) {
+            helper.fail("milk source should have its BlockEntity after placement");
+            return;
+        }
+        be.restoreUpgrades(5, 12, 2, 1, true);
+
+        // A dispenser facing the source, loaded with one empty bucket.
+        helper.setBlock(dispenserPos, Blocks.DISPENSER.defaultBlockState()
+            .setValue(net.minecraft.world.level.block.DispenserBlock.FACING, net.minecraft.core.Direction.NORTH));
+        if (!(level.getBlockEntity(helper.absolutePos(dispenserPos))
+                instanceof net.minecraft.world.level.block.entity.DispenserBlockEntity dispenser)) {
+            helper.fail("dispenser should have its BlockEntity after placement");
+            return;
+        }
+        dispenser.setItem(0, new ItemStack(Items.BUCKET));
+
+        helper.pulseRedstone(dispenserPos.above(), 2);
+
+        helper.succeedWhen(() -> {
+            // consumeWithRemainder puts the filled bucket back into the dispenser.
+            ItemStack result = ItemStack.EMPTY;
+            for (int i = 0; i < dispenser.getContainerSize(); i++) {
+                if (!dispenser.getItem(i).isEmpty()) {
+                    result = dispenser.getItem(i);
+                    break;
+                }
+            }
+            helper.assertFalse(result.isEmpty(), "the dispenser should hold the scooped milk bucket");
+            helper.assertTrue(result.getItem() == PFVariantMilk.bucket(iron),
+                "the scooped bucket should be the iron milk bucket, got " + result);
+            Integer remaining = result.get(com.flatts.productivefrogs.registry.PFDataComponents.SPAWNS_REMAINING.get());
+            Integer capacity = result.get(com.flatts.productivefrogs.registry.PFDataComponents.MILK_CAPACITY.get());
+            Integer speed = result.get(com.flatts.productivefrogs.registry.PFDataComponents.MILK_SPEED.get());
+            Integer quantity = result.get(com.flatts.productivefrogs.registry.PFDataComponents.MILK_QUANTITY.get());
+            Boolean infinite = result.get(com.flatts.productivefrogs.registry.PFDataComponents.MILK_INFINITE.get());
+            helper.assertTrue(remaining != null && remaining == 5,
+                "SPAWNS_REMAINING should survive the dispenser scoop (want 5, got " + remaining + ")");
+            helper.assertTrue(capacity != null && capacity == 12,
+                "MILK_CAPACITY should survive the dispenser scoop (want 12, got " + capacity + ")");
+            helper.assertTrue(speed != null && speed == 2,
+                "MILK_SPEED should survive the dispenser scoop (want 2, got " + speed + ")");
+            helper.assertTrue(quantity != null && quantity == 1,
+                "MILK_QUANTITY should survive the dispenser scoop (want 1, got " + quantity + ")");
+            helper.assertTrue(Boolean.TRUE.equals(infinite),
+                "MILK_INFINITE should survive the dispenser scoop (got " + infinite + ")");
+        });
+    }
+
+    /**
      * A Primed Frog Egg schedules a <b>deterministic</b> hatch delay equal to the
      * config-exposed {@link com.flatts.productivefrogs.PFConfig#hatchTicks()}, not
      * vanilla's random {@code [3600, 12000)} window (docs/known_issues.md).
