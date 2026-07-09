@@ -66,6 +66,11 @@ public final class PFGameTests {
 
     private static final String EMPTY_STRUCTURE = ProductiveFrogs.MOD_ID + ":empty_5x5x5";
 
+    private static final com.mojang.authlib.GameProfile SHIFT_CLICK_TEST_PROFILE =
+        new com.mojang.authlib.GameProfile(
+            java.util.UUID.nameUUIDFromBytes("pf_hatch_shift_click".getBytes(java.nio.charset.StandardCharsets.UTF_8)),
+            "pf_hatch_shift_click");
+
     private PFGameTests() {
         // static-only
     }
@@ -6982,5 +6987,65 @@ public final class PFGameTests {
                 helper.fail("matured Midas tadpole did not produce a Midas frog");
             }
         });
+    }
+
+    /**
+     * The froglight dupe: shift-clicking a stackable stack in the Hatch GUI must
+     * MOVE it, never duplicate it. Drives the real
+     * {@link com.flatts.productivefrogs.content.menu.HatchMenu#quickMoveStack}
+     * with a fake player - a hotbar-slot source (menu index 45) whose old
+     * destination range {@code [18, 54)} included itself, so vanilla
+     * {@code moveItemStackTo} merged the stack into its own slot
+     * ({@code count + count}). Asserts the total item count is conserved.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 20)
+    public static void hatchShiftClickDoesNotDupeStackableItems(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos hatchRel = new BlockPos(1, 1, 1);
+        helper.setBlock(hatchRel, PFBlocks.HATCH.get().defaultBlockState());
+        if (!(helper.getLevel().getBlockEntity(helper.absolutePos(hatchRel))
+                instanceof com.flatts.productivefrogs.content.block.entity.HatchBlockEntity hatch)) {
+            helper.fail("no Hatch block entity at " + hatchRel);
+            return;
+        }
+        net.neoforged.neoforge.common.util.FakePlayer player =
+            net.neoforged.neoforge.common.util.FakePlayerFactory.get(level, SHIFT_CLICK_TEST_PROFILE);
+        player.getInventory().clearContent();
+        // A stackable stack in hotbar slot 0. The dupe only hit stackable items;
+        // Froglights are the reported case.
+        ItemStack seed = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get(), 5);
+        player.getInventory().setItem(0, seed);
+
+        com.flatts.productivefrogs.content.menu.HatchMenu menu =
+            new com.flatts.productivefrogs.content.menu.HatchMenu(1, player.getInventory(), hatch);
+        int before = countFroglights(player);
+        if (before != 5) {
+            helper.fail("expected 5 seeded froglights, counted " + before);
+            return;
+        }
+        // Hotbar slot 0 maps to menu index 45 (18 hatch + 27 main rows).
+        menu.quickMoveStack(player, 45);
+        int after = countFroglights(player);
+        if (after != before) {
+            helper.fail("shift-click duped the stack: " + before + " -> " + after + " (froglight dupe)");
+            return;
+        }
+        if (!player.getInventory().getItem(0).isEmpty()) {
+            helper.fail("shift-click should have moved the stack out of the source slot");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** Total Froglights across the whole player inventory (dupe conservation check). */
+    private static int countFroglights(net.neoforged.neoforge.common.util.FakePlayer player) {
+        int total = 0;
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack s = player.getInventory().getItem(i);
+            if (s.is(PFItems.CONFIGURABLE_FROGLIGHT.get())) {
+                total += s.getCount();
+            }
+        }
+        return total;
     }
 }
