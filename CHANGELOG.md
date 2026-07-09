@@ -2,8 +2,14 @@
 
 ## [Unreleased]
 
+## v2.0.0-alpha.2 - 2026-07-09 - Closing the Hatch
+
 ### Fixed
 
+- **Shift-clicking a stack in the Terrarium Hatch no longer duplicates it.**
+  With the Hatch screen open, shift-clicking a stackable item (Froglights, or
+  anything else) doubled the stack on every click, up to a full stack. Shift-
+  click now just moves the stack like it does in any other container. (#331)
 - **A dispenser scooping up placed Slime Milk no longer wipes it back to a
   plain bucket.** Vanilla's dispenser hands back a bare bucket when it picks
   up a fluid - on this version that lost not just the catalyst upgrades and
