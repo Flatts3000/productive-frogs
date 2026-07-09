@@ -91,6 +91,31 @@ public class HatchMenu extends AbstractContainerMenu {
         return AbstractContainerMenu.stillValid(access, player, PFBlocks.HATCH.get());
     }
 
+    /**
+     * The destination slot range {@code [start, end)} for a shift-click that
+     * originates at {@code sourceIndex}. The range MUST NOT contain the source
+     * slot: an overlapping range makes vanilla {@code moveItemStackTo} merge a
+     * stackable stack into its own slot (the froglight dupe - the stack doubles
+     * on every shift-click). Hatch slots are output-only, so they move into the
+     * whole player region; a player slot moves into the OTHER player region
+     * (main rows and hotbar swap) so it never targets itself.
+     *
+     * @param sourceIndex the shift-clicked slot index
+     * @return {@code {start, end}} destination range (end exclusive)
+     */
+    static int[] shiftClickDestRange(int sourceIndex) {
+        int playerStart = SLOTS;        // 18: first player (main-inventory) slot
+        int mainEnd = SLOTS + 27;       // 45: end of the 3 main rows / start of the hotbar
+        int playerEnd = SLOTS + 36;     // 54: end of the hotbar
+        if (sourceIndex < SLOTS) {
+            return new int[] {playerStart, playerEnd}; // hatch (output) -> whole player region
+        }
+        if (sourceIndex < mainEnd) {
+            return new int[] {mainEnd, playerEnd};     // main rows -> hotbar (never itself)
+        }
+        return new int[] {playerStart, mainEnd};        // hotbar -> main rows (never itself)
+    }
+
     @Override
     public ItemStack quickMoveStack(Player player, int slotIndex) {
         ItemStack copy = ItemStack.EMPTY;
@@ -98,19 +123,11 @@ public class HatchMenu extends AbstractContainerMenu {
         if (slot.hasItem()) {
             ItemStack stack = slot.getItem();
             copy = stack.copy();
-            int playerStart = SLOTS;
-            int playerEnd = SLOTS + 36;
-            if (slotIndex < SLOTS) {
-                // From the hatch -> into the player inventory.
-                if (!moveItemStackTo(stack, playerStart, playerEnd, true)) {
-                    return ItemStack.EMPTY;
-                }
-            } else {
-                // Player slots only shuffle among themselves (nothing inserts into
-                // the output-only hatch).
-                if (!moveItemStackTo(stack, playerStart, playerEnd, false)) {
-                    return ItemStack.EMPTY;
-                }
+            int[] dest = shiftClickDestRange(slotIndex);
+            // Hatch -> player fills from the far end (reverse); player shuffles forward.
+            boolean reverse = slotIndex < SLOTS;
+            if (!moveItemStackTo(stack, dest[0], dest[1], reverse)) {
+                return ItemStack.EMPTY;
             }
             if (stack.isEmpty()) {
                 slot.setByPlayer(ItemStack.EMPTY);
