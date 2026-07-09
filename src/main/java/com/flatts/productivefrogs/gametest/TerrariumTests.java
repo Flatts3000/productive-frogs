@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.gametest;
 import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
+import com.flatts.productivefrogs.content.menu.HatchMenu;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFEntities;
@@ -48,7 +49,13 @@ final class TerrariumTests {
         PFGameTests.test("terrarium_frog_cap_holds_in_incubator", "empty_9x9x9", 100, TerrariumTests::terrariumFrogCapHoldsInIncubator);
         PFGameTests.test("terrarium_hatch_vacuums_cavity_items", "empty_9x9x9", 100, TerrariumTests::terrariumHatchVacuumsCavityItems);
         PFGameTests.test("terrarium_forms_without_incubator", "empty_9x9x9", 100, TerrariumTests::terrariumFormsWithoutIncubator);
+        PFGameTests.test("terrarium_hatch_shift_click_does_not_dupe", 100, TerrariumTests::terrariumHatchShiftClickDoesNotDupe);
     }
+
+    private static final com.mojang.authlib.GameProfile SHIFT_CLICK_TEST_PROFILE =
+        new com.mojang.authlib.GameProfile(
+            java.util.UUID.nameUUIDFromBytes("pf_hatch_shift_click".getBytes(java.nio.charset.StandardCharsets.UTF_8)),
+            "pf_hatch_shift_click");
 
     /**
      * A complete, valid Terrarium forms: the Controller validates, registers in
@@ -586,6 +593,64 @@ final class TerrariumTests {
             return;
         }
         helper.succeed();
+    }
+
+    /**
+     * The froglight dupe (#331): shift-clicking a stackable stack in the Hatch
+     * GUI must MOVE it, never duplicate it. Drives the real
+     * {@link HatchMenu#quickMoveStack} with a fake player - a hotbar-slot source
+     * (menu index 45) whose old destination range {@code [18, 54)} included
+     * itself, so vanilla {@code moveItemStackTo} merged the stack into its own
+     * slot ({@code count + count}). Asserts the total item count is conserved.
+     */
+    private static void terrariumHatchShiftClickDoesNotDupe(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos hatchRel = new BlockPos(2, 1, 2);
+        helper.setBlock(hatchRel, PFBlocks.HATCH.get().defaultBlockState());
+        if (!(helper.getLevel().getBlockEntity(helper.absolutePos(hatchRel))
+                instanceof com.flatts.productivefrogs.content.block.entity.HatchBlockEntity hatch)) {
+            helper.fail("no Hatch block entity at " + hatchRel);
+            return;
+        }
+        net.neoforged.neoforge.common.util.FakePlayer player =
+            net.neoforged.neoforge.common.util.FakePlayerFactory.get(level, SHIFT_CLICK_TEST_PROFILE);
+        player.getInventory().clearContent();
+        // A stackable stack in hotbar slot 0. The dupe only ever hit stackable
+        // items (the reporter confirmed); Froglights are the reported case.
+        ItemStack seed = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get(), 5);
+        player.getInventory().setItem(0, seed);
+
+        HatchMenu menu = new HatchMenu(1, player.getInventory(), hatch);
+        int before = countFroglights(player);
+        if (before != 5) {
+            helper.fail("expected 5 seeded froglights, counted " + before);
+            return;
+        }
+        // Hotbar slot 0 maps to menu index 45 (18 hatch + 27 main rows).
+        menu.quickMoveStack(player, 45);
+        int after = countFroglights(player);
+        if (after != before) {
+            helper.fail("shift-click duped the stack: " + before + " -> " + after
+                + " (froglight dupe, #331)");
+            return;
+        }
+        if (!player.getInventory().getItem(0).isEmpty()) {
+            helper.fail("shift-click should have moved the stack out of the source slot");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** Total Froglights across the whole player inventory (dupe conservation check). */
+    private static int countFroglights(net.neoforged.neoforge.common.util.FakePlayer player) {
+        int total = 0;
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack s = player.getInventory().getItem(i);
+            if (s.is(PFItems.CONFIGURABLE_FROGLIGHT.get())) {
+                total += s.getCount();
+            }
+        }
+        return total;
     }
 
     /**
