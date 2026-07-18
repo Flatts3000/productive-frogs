@@ -18,7 +18,12 @@ one frog, fed its feedstock, dropping product, in something you tuck into a wall
    animations). Both crafted independently; **both required**; they **form** when the Dome
    sits directly on the Processor and **unform** if either is broken. This is a trivial
    two-block adjacency, not a validated multiblock like the physical Terrarium.
-2. **No power.** It runs passively off the feedstock you feed it. (RF considered, ruled out.)
+2. **No power for the core loop; RF powers the opt-in upgrades.** The frog-eating
+   virtualization runs passively - no power. RF is drawn only by opt-in upgrades: the
+   **Smelter/Melter** (auto-processing) and the **Overclock** (a flat +50% speed). The
+   Processor gains a receive-only energy buffer (`Capabilities.Energy.BLOCK`, like the EE
+   lane's Alembic/Distiller), used *only* while a powered upgrade is installed. No such
+   upgrade -> no power needed at all.
 3. **One frog at the normal per-frog rate.** An un-upgraded frog on plain feedstock matches a
    single physical-Terrarium frog; a maxed physical Terrarium (up to 8 frogs) still out-produces
    one Virtual Terrarium, so both stay worth building. Upgrades and catalyst-buffed feedstock
@@ -119,7 +124,9 @@ there is no separate slurry-catalyst item.
 ### Upgrades
 
 A **vertical column** of slots accepts a **new family of dedicated upgrade items** (Productive
-Bees style), installed persistently, returned on break. Three groups:
+Bees style), installed persistently, returned on break. Upgrades are **single-tier** (no I/II/III
+crafts) - install several of a lever across the slots to stack its effect, up to a cap. Three
+groups:
 
 **Stat upgrades** stack on the frog's own stats in the formula (a good frog + good upgrades
 compound; each type stacks up to a cap):
@@ -137,11 +144,20 @@ refuses both):
 | **Smelter** | auto-smelts each Froglight/drop the instant it is made - the output holds the **smelted result** (iron Froglight -> iron ingot), via the item's vanilla smelting recipe |
 | **Melter** | auto-melts each Froglight (Crucible logic) into its **molten fluid**; the item output routes to a **molten tank** (see Output) |
 
-Items with no smelting/melting result **pass through unprocessed**. Auto-processing is free (no
-fuel/heat) - an ergonomic convenience, flagged as a balance point.
+Items with no smelting/melting result **pass through unprocessed**. Auto-processing **draws RF**
+(the one place the block needs power - a receive-only buffer, see decision 2): with no power
+buffered, processing pauses and the raw Froglights/loot pass through instead, and Jade says
+"needs power to smelt/melt". (Unpowered behavior - graceful raw pass-through vs a hard stall -
+is an open sub-decision; lead is pass-through.)
 
 **Economy upgrades** (from the milk model): **Capacity** raises the feedstock budget the tank
 holds; **Everflow** stops depletion.
+
+**Overclock upgrade (RF-powered):** while the energy buffer has power, the **whole cycle runs
+50% faster** - a flat block-wide boost stacking on top of the frog's Appetite and any Rapid
+catalyst. Unpowered, it is inert. This (with Smelter/Melter) is why the Processor carries an RF
+buffer. (Whether multiple Overclocks stack or +50% is a single flat cap is an open sub-decision;
+lead: single flat +50%.)
 
 The upgrade item family (names, textures, recipes, tiers) is an open sub-decision.
 
@@ -189,16 +205,19 @@ active output form (item grid / molten gauge / XP gauge).
 | Frog kind/stats off a net stack | `EntityNetItem.isFilled`, `CUSTOM_DATA`, `FrogKind.readFromTag` |
 | Slurry catalysts = milk catalysts | `MilkCatalyst` + `AbstractBasinBlockEntity.applyCatalyst` |
 | Block + capability wiring | Slime Milker (`SlimeMilkerBlock`/BE/Inventory/Menu/Screen); `PFModBusEvents.registerCapabilities`; `content/transfer/` adapters; the Terrarium Controller's fill-only tank + `SnapshotJournal` |
+| RF buffer for Smelter/Melter | `ReceiveOnlyEnergyHandler` + `Capabilities.Energy.BLOCK` (EE lane Alembic/Distiller) |
+| Mob's real XP | `Entity.getExperienceReward` (per-entity) off the loot phantom, then `LiquidExperienceFluid.pointsToMb` |
 | Display-frog rendering | the altar display frogs (Dragonsbane/... BER) |
 
 ### Predator-path caveats (documented, not bugs)
 
-- **Loot-table only.** `rollLoot` rolls the mob's loot table; it **misses code-side
+- **Loot-table only (ACCEPTED).** `rollLoot` rolls the mob's loot table; it **misses code-side
   `dropCustomDeathLoot`** drops (some mobs add drops in code, not the table). The open predator
-  eat gets these free via the real death pipeline; the virtual kill will not. Acceptable for a
-  convenience block; note it in the guide.
-- **XP must be derived.** Boss altars pay a *fixed config* XP; there is no helper for a mob's
-  real XP. Derive it (a mob-XP helper or a config default) for the Liquid Experience payout.
+  eat gets these free via the real death pipeline; the virtual kill will not. Maintainer ruling:
+  accept it, document the gap in the guide.
+- **XP is the mob's real reward (DECIDED).** Not a fixed value - derive each mob's actual XP
+  (vanilla exposes it per-entity via `getExperienceReward`; read it off the phantom or an
+  equivalent per-type lookup) and pay it as Liquid Experience via `LiquidExperienceFluid.pointsToMb`.
 - **Phantom sees default state.** Loot conditions reading live entity flags (on fire, in water)
   see a freshly-created phantom, so a few state-keyed drops may differ from a real kill.
 - **No default table** -> that mob produces no loot (handle the empty `Optional`).
@@ -274,13 +293,13 @@ active output form (item grid / molten gauge / XP gauge).
 
 ## Decisions to finalize (before build)
 
-1. **Upgrade item family** - names, textures, recipes, tiers. The levers are set (Bounty,
-   Appetite, Smelter, Melter, Capacity, Everflow); only the item design is open.
-2. **Predator XP payout** - derive from the mob's real XP (a helper) vs a config default per mob
-   / a flat value. And confirm the loot-table-only divergence (missing `dropCustomDeathLoot`) is
-   acceptable, or whether a short allowlist of code-side drops is worth adding.
+1. **Upgrade item family** - names, textures, recipes (single-tier stacking is settled).
+2. **Unpowered Smelter/Melter behavior** - raw pass-through when the RF buffer is empty (lead)
+   vs a hard stall.
 3. **Cadence basis** - Appetite-cooldown (lead) vs feedstock spawn interval vs a blend.
 4. **Slot counts** - upgrade slots (lead 4-6), item-output slots (lead 9).
-5. **Auto-process balance** - free Smelter/Melter (lead, for ergonomics) vs a small cost.
-6. **Void-tier recipes** - the actual ingredient lists for both blocks + the upgrade items.
-7. **Config gate** - ship `virtualTerrarium.enabled`? (Lead: yes, default on.)
+5. **Void-tier recipes** - the actual ingredient lists for both blocks + the upgrade items.
+6. **Config gate** - ship `virtualTerrarium.enabled`? (Lead: yes, default on.)
+
+*Settled this round:* predator XP = real mob XP; loot-table-only gap accepted; Smelter/Melter
+draw RF; upgrades are single-tier.
