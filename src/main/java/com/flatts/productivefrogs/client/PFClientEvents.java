@@ -460,6 +460,8 @@ public final class PFClientEvents {
     @SubscribeEvent
     public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
         event.register(PFMenuTypes.SLIME_MILKER.get(), SlimeMilkerScreen::new);
+        event.register(PFMenuTypes.VIRTUAL_TERRARIUM.get(),
+            com.flatts.productivefrogs.client.screen.VirtualTerrariumScreen::new);
         event.register(PFMenuTypes.SLIME_CHURN.get(), SlimeChurnScreen::new);
         event.register(PFMenuTypes.SLURRY_PRESS.get(), SlurryPressScreen::new);
         event.register(PFMenuTypes.SPAWNERY.get(), SpawneryScreen::new);

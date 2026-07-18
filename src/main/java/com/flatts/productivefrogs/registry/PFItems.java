@@ -510,6 +510,13 @@ public final class PFItems {
         new Item.Properties()
     );
 
+    /** Virtual Terrarium Processor BlockItem (docs/virtual_terrarium.md). */
+    public static final DeferredItem<BlockItem> VIRTUAL_TERRARIUM = registerSimpleBlockItem(
+        "virtual_terrarium",
+        PFBlocks.VIRTUAL_TERRARIUM,
+        new Item.Properties()
+    );
+
     /**
      * Slime Churn BlockItem (#187) - places {@link PFBlocks#SLIME_CHURN}, the
      * Milker's inverse (milk bucket + empty buckets -> captured Slime Buckets

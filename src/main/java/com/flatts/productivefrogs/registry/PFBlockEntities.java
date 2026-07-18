@@ -55,6 +55,14 @@ public final class PFBlockEntities {
             () -> new BlockEntityType<>(SlimeMilkerBlockEntity::new, PFBlocks.SLIME_MILKER.get())
         );
 
+    public static final Supplier<BlockEntityType<com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity>> VIRTUAL_TERRARIUM =
+        BLOCK_ENTITIES.register(
+            "virtual_terrarium",
+            () -> new BlockEntityType<>(
+                com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity::new,
+                PFBlocks.VIRTUAL_TERRARIUM.get())
+        );
+
     /**
      * BE type for the {@code slime_churn} block (#187) - owns the 2-in/2-out
      * inventory, the spawn-interval countdown, and the pending-batch state.

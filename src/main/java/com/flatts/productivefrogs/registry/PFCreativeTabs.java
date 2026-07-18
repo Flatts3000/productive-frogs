@@ -180,6 +180,7 @@ public final class PFCreativeTabs {
                     if (!PFConfig.SPEC.isLoaded() || PFConfig.SLIME_MILKER_ENABLED.get()) {
                         output.accept(PFItems.SLIME_MILKER.get());
                     }
+                    output.accept(PFItems.VIRTUAL_TERRARIUM.get());
                     if (!PFConfig.SPEC.isLoaded() || PFConfig.SLIME_CHURN_ENABLED.get()) {
                         output.accept(PFItems.SLIME_CHURN.get());
                     }
