@@ -181,6 +181,14 @@ public final class PFCreativeTabs {
                         output.accept(PFItems.SLIME_MILKER.get());
                     }
                     output.accept(PFItems.VIRTUAL_TERRARIUM.get());
+                    output.accept(PFItems.VIRTUAL_TERRARIUM_DOME.get());
+                    output.accept(PFItems.VT_UPGRADE_BOUNTY.get());
+                    output.accept(PFItems.VT_UPGRADE_APPETITE.get());
+                    output.accept(PFItems.VT_UPGRADE_SMELTER.get());
+                    output.accept(PFItems.VT_UPGRADE_MELTER.get());
+                    output.accept(PFItems.VT_UPGRADE_CAPACITY.get());
+                    output.accept(PFItems.VT_UPGRADE_EVERFLOW.get());
+                    output.accept(PFItems.VT_UPGRADE_OVERCLOCK.get());
                     if (!PFConfig.SPEC.isLoaded() || PFConfig.SLIME_CHURN_ENABLED.get()) {
                         output.accept(PFItems.SLIME_CHURN.get());
                     }

@@ -517,6 +517,29 @@ public final class PFItems {
         new Item.Properties()
     );
 
+    /** Virtual Terrarium Display Dome BlockItem. */
+    public static final DeferredItem<BlockItem> VIRTUAL_TERRARIUM_DOME = registerSimpleBlockItem(
+        "virtual_terrarium_dome",
+        PFBlocks.VIRTUAL_TERRARIUM_DOME,
+        new Item.Properties()
+    );
+
+    // Virtual Terrarium upgrade items (single-tier; stack in the upgrade slots).
+    public static final DeferredItem<Item> VT_UPGRADE_BOUNTY =
+        ITEMS.registerItem("vt_upgrade_bounty", props -> new Item(props));
+    public static final DeferredItem<Item> VT_UPGRADE_APPETITE =
+        ITEMS.registerItem("vt_upgrade_appetite", props -> new Item(props));
+    public static final DeferredItem<Item> VT_UPGRADE_SMELTER =
+        ITEMS.registerItem("vt_upgrade_smelter", props -> new Item(props));
+    public static final DeferredItem<Item> VT_UPGRADE_MELTER =
+        ITEMS.registerItem("vt_upgrade_melter", props -> new Item(props));
+    public static final DeferredItem<Item> VT_UPGRADE_CAPACITY =
+        ITEMS.registerItem("vt_upgrade_capacity", props -> new Item(props));
+    public static final DeferredItem<Item> VT_UPGRADE_EVERFLOW =
+        ITEMS.registerItem("vt_upgrade_everflow", props -> new Item(props));
+    public static final DeferredItem<Item> VT_UPGRADE_OVERCLOCK =
+        ITEMS.registerItem("vt_upgrade_overclock", props -> new Item(props));
+
     /**
      * Slime Churn BlockItem (#187) - places {@link PFBlocks#SLIME_CHURN}, the
      * Milker's inverse (milk bucket + empty buckets -> captured Slime Buckets

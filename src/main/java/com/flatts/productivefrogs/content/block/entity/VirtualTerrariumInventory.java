@@ -3,7 +3,9 @@ package com.flatts.productivefrogs.content.block.entity;
 import com.flatts.productivefrogs.content.item.EntityNetItem;
 import com.flatts.productivefrogs.content.item.FrogNetItem;
 import com.flatts.productivefrogs.content.transfer.RestrictedItemResourceHandler;
+import com.flatts.productivefrogs.registry.PFItemTags;
 import com.flatts.productivefrogs.registry.PFItems;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -24,7 +26,9 @@ public class VirtualTerrariumInventory extends net.neoforged.neoforge.items.Item
     public static final int FROG_SLOT = 0;
     public static final int OUTPUT_START = 1;
     public static final int OUTPUT_COUNT = 6;
-    public static final int SLOT_COUNT = OUTPUT_START + OUTPUT_COUNT;
+    public static final int UPGRADE_START = OUTPUT_START + OUTPUT_COUNT;
+    public static final int UPGRADE_COUNT = 4;
+    public static final int SLOT_COUNT = UPGRADE_START + UPGRADE_COUNT;
 
     private final Runnable onChanged;
 
@@ -35,9 +39,42 @@ public class VirtualTerrariumInventory extends net.neoforged.neoforge.items.Item
 
     @Override
     public boolean isItemValid(int slot, ItemStack stack) {
-        // Only the frog slot accepts inserts, and only a filled Frog Net.
-        return slot == FROG_SLOT && !stack.isEmpty()
-            && stack.getItem() instanceof FrogNetItem && EntityNetItem.isFilled(stack);
+        if (stack.isEmpty()) {
+            return false;
+        }
+        if (slot == FROG_SLOT) {
+            return stack.getItem() instanceof FrogNetItem && EntityNetItem.isFilled(stack);
+        }
+        if (slot >= UPGRADE_START && slot < UPGRADE_START + UPGRADE_COUNT) {
+            if (!stack.is(PFItemTags.VIRTUAL_TERRARIUM_UPGRADE)) {
+                return false;
+            }
+            // Smelter and Melter are mutually exclusive.
+            if (stack.is(PFItems.VT_UPGRADE_SMELTER.get()) && countUpgrade(PFItems.VT_UPGRADE_MELTER.get()) > 0) {
+                return false;
+            }
+            if (stack.is(PFItems.VT_UPGRADE_MELTER.get()) && countUpgrade(PFItems.VT_UPGRADE_SMELTER.get()) > 0) {
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /** Total installed count of an upgrade item across the upgrade slots. */
+    public int countUpgrade(Item upgrade) {
+        int total = 0;
+        for (int i = UPGRADE_START; i < UPGRADE_START + UPGRADE_COUNT; i++) {
+            ItemStack stack = getStackInSlot(i);
+            if (stack.is(upgrade)) {
+                total += stack.getCount();
+            }
+        }
+        return total;
+    }
+
+    public boolean hasUpgrade(Item upgrade) {
+        return countUpgrade(upgrade) > 0;
     }
 
     @Override

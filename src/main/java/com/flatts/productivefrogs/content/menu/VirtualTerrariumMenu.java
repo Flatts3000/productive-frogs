@@ -33,6 +33,8 @@ public class VirtualTerrariumMenu extends AbstractContainerMenu {
     public static final int FROG_SLOT_Y = 35;
     public static final int OUTPUT_START_X = 62;
     public static final int OUTPUT_Y = 35;
+    public static final int UPGRADE_X = 152;
+    public static final int UPGRADE_START_Y = 17;
 
     private final ContainerLevelAccess access;
     private final ContainerData dataAccess;
@@ -60,6 +62,10 @@ public class VirtualTerrariumMenu extends AbstractContainerMenu {
                     }
                 });
             }
+            for (int i = 0; i < VirtualTerrariumInventory.UPGRADE_COUNT; i++) {
+                addSlot(new SlotItemHandler(inv, VirtualTerrariumInventory.UPGRADE_START + i,
+                    UPGRADE_X, UPGRADE_START_Y + i * 18));
+            }
         } else {
             SimpleContainer dummy = new SimpleContainer(VirtualTerrariumInventory.SLOT_COUNT);
             addSlot(new Slot(dummy, VirtualTerrariumInventory.FROG_SLOT, FROG_SLOT_X, FROG_SLOT_Y));
@@ -68,6 +74,14 @@ public class VirtualTerrariumMenu extends AbstractContainerMenu {
                     @Override
                     public boolean mayPlace(ItemStack stack) {
                         return false;
+                    }
+                });
+            }
+            for (int i = 0; i < VirtualTerrariumInventory.UPGRADE_COUNT; i++) {
+                addSlot(new Slot(dummy, VirtualTerrariumInventory.UPGRADE_START + i, UPGRADE_X, UPGRADE_START_Y + i * 18) {
+                    @Override
+                    public boolean mayPlace(ItemStack stack) {
+                        return stack.is(com.flatts.productivefrogs.registry.PFItemTags.VIRTUAL_TERRARIUM_UPGRADE);
                     }
                 });
             }
@@ -116,6 +130,11 @@ public class VirtualTerrariumMenu extends AbstractContainerMenu {
             } else if (VirtualTerrariumInventory.isFrogNet(stack)) {
                 if (!moveItemStackTo(stack, VirtualTerrariumInventory.FROG_SLOT,
                         VirtualTerrariumInventory.FROG_SLOT + 1, false)) {
+                    return ItemStack.EMPTY;
+                }
+            } else if (stack.is(com.flatts.productivefrogs.registry.PFItemTags.VIRTUAL_TERRARIUM_UPGRADE)) {
+                if (!moveItemStackTo(stack, VirtualTerrariumInventory.UPGRADE_START,
+                        VirtualTerrariumInventory.UPGRADE_START + VirtualTerrariumInventory.UPGRADE_COUNT, false)) {
                     return ItemStack.EMPTY;
                 }
             } else if (slotIndex < playerMainEnd) {
