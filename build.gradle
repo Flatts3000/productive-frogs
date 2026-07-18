@@ -142,8 +142,9 @@ dependencies {
     // `productivefrogs:guide`) is pure datapack data + assets under
     // data/productivefrogs/modonomicon/books/guide/ - there is no compile-time
     // reference, so no compileOnly is needed. Book data lives at
-    // data/productivefrogs/productivefrogs/books/guide/ (Modonomicon's
-    // double-namespace datapack convention). We pull Modonomicon into the dev
+    // data/productivefrogs/modonomicon/books/guide/ (Modonomicon scans the fixed
+    // `modonomicon/books` + `modonomicon/multiblocks` folders under every datapack
+    // namespace - NOT a <ns>/<ns> double-namespace). We pull Modonomicon into the dev
     // runtime purely so runClient renders the book for manual verification (the
     // build + gameTest jobs are blind to client render, same as the 1.x Patchouli
     // book). Soft-dep posture (docs/guidebook.md): the book is inert data if the

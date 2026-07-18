@@ -45,9 +45,9 @@ class GuidebookTest {
 
     private static final Path RESOURCES_ROOT = resourcesRoot();
     private static final Path BOOK_DIR =
-        RESOURCES_ROOT.resolve("data/productivefrogs/productivefrogs/books/guide");
+        RESOURCES_ROOT.resolve("data/productivefrogs/modonomicon/books/guide");
     private static final Path TERRARIUM_MULTIBLOCK =
-        RESOURCES_ROOT.resolve("data/productivefrogs/productivefrogs/multiblocks/terrarium.json");
+        RESOURCES_ROOT.resolve("data/productivefrogs/modonomicon/multiblocks/terrarium.json");
     private static final Path LANG =
         RESOURCES_ROOT.resolve("assets/productivefrogs/lang/en_us.json");
 
@@ -123,6 +123,35 @@ class GuidebookTest {
             throw new UncheckedIOException(e);
         }
         assertTrue(missing.isEmpty(), "book JSON references undefined lang keys: " + missing);
+    }
+
+    @Test
+    void everyEntryDeclaresIdMatchingItsPath() {
+        // Modonomicon requires each entry to carry an explicit `id` equal to
+        // <namespace>:<path-under-entries> (it is NOT derived from the file path at
+        // decode time); a missing id fails the entry decode and cascades into
+        // "Page file references unknown entry" errors, and the book silently ships
+        // broken. Entry files live directly under entries/; page files sit in a
+        // pages/ subfolder and are skipped here.
+        Path entries = BOOK_DIR.resolve("entries");
+        List<String> problems = new ArrayList<>();
+        try (Stream<Path> files = Files.walk(entries)) {
+            for (Path file : files
+                    .filter(p -> p.toString().endsWith(".json"))
+                    .filter(p -> !p.toString().replace('\\', '/').contains("/pages/"))
+                    .sorted().toList()) {
+                String rel = entries.relativize(file).toString().replace('\\', '/');
+                String expected = "productivefrogs:" + rel.substring(0, rel.length() - ".json".length());
+                JsonObject entry = readJson(file).getAsJsonObject();
+                String id = entry.has("id") ? entry.get("id").getAsString() : "<missing>";
+                if (!expected.equals(id)) {
+                    problems.add(rel + " has id=" + id + ", expected " + expected);
+                }
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        assertTrue(problems.isEmpty(), "entry id must match its path: " + problems);
     }
 
     private static long count(String s, char c) {

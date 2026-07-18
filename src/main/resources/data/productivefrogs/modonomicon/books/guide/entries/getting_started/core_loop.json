@@ -1,5 +1,6 @@
 {
   "type": "modonomicon:content",
+  "id": "productivefrogs:getting_started/core_loop",
   "category": "productivefrogs:getting_started",
   "name": "book.productivefrogs.guide.getting_started.core_loop.name",
   "icon": { "id": "minecraft:slime_ball" },
