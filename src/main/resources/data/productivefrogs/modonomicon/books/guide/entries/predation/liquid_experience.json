@@ -1,0 +1,14 @@
+{
+  "type": "modonomicon:content",
+  "id": "productivefrogs:predation/liquid_experience",
+  "category": "productivefrogs:predation",
+  "name": "book.productivefrogs.guide.predation.liquid_experience.name",
+  "icon": { "id": "productivefrogs:liquid_experience_bucket" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
+  "x": 3,
+  "y": 0
+}

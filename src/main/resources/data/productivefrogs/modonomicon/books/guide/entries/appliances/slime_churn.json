@@ -1,0 +1,14 @@
+{
+  "type": "modonomicon:content",
+  "id": "productivefrogs:appliances/slime_churn",
+  "category": "productivefrogs:appliances",
+  "name": "book.productivefrogs.guide.appliances.slime_churn.name",
+  "icon": { "id": "productivefrogs:slime_churn" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
+  "x": 1,
+  "y": 0
+}

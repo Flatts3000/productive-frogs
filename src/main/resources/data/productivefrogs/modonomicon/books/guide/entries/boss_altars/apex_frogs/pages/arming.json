@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:text",
+  "id": "arming",
+  "sort_number": 1,
+  "show_title_separator": true,
+  "title": "book.productivefrogs.guide.boss_altars.apex_frogs.arming.title",
+  "text": "book.productivefrogs.guide.boss_altars.apex_frogs.arming.text"
+}

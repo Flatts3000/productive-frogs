@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:spotlight",
+  "id": "block",
+  "sort_number": 0,
+  "item": "productivefrogs:incubator",
+  "title": "book.productivefrogs.guide.terrarium.incubator.block.title",
+  "text": "book.productivefrogs.guide.terrarium.incubator.block.text"
+}

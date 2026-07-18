@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:text",
+  "id": "types",
+  "sort_number": 1,
+  "show_title_separator": true,
+  "title": "book.productivefrogs.guide.slimes_and_milk.catalysts.types.title",
+  "text": "book.productivefrogs.guide.slimes_and_milk.catalysts.types.text"
+}

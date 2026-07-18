@@ -1,0 +1,14 @@
+{
+  "type": "modonomicon:content",
+  "id": "productivefrogs:terrarium/sprinkler",
+  "category": "productivefrogs:terrarium",
+  "name": "book.productivefrogs.guide.terrarium.sprinkler.name",
+  "icon": { "id": "productivefrogs:sprinkler" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
+  "x": 2,
+  "y": 0
+}

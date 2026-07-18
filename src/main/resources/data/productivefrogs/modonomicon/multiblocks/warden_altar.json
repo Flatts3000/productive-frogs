@@ -1,0 +1,62 @@
+{
+  "type": "modonomicon:dense",
+  "pattern": [
+    [
+      "44544",
+      "4   4",
+      "5   5",
+      "4   4",
+      "44544"
+    ],
+    [
+      "33333",
+      "3   3",
+      "3   3",
+      "3   3",
+      "33333"
+    ],
+    [
+      "33333",
+      "3   3",
+      "3   3",
+      "3   3",
+      "33333"
+    ],
+    [
+      "33033",
+      "3   3",
+      "3   3",
+      "3   3",
+      "33333"
+    ],
+    [
+      "33333",
+      "33333",
+      "33233",
+      "33333",
+      "33333"
+    ]
+  ],
+  "mapping": {
+    "2": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:echoing_catalyst"
+    },
+    "3": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:reinforced_sculk_froglight"
+    },
+    "4": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:reinforced_echo_shard_froglight"
+    },
+    "5": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:shrieker_receptacle"
+    },
+    "0": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:warden_altar_hatch"
+    }
+  }
+}

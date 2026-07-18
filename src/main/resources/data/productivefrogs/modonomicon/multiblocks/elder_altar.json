@@ -1,0 +1,70 @@
+{
+  "type": "modonomicon:dense",
+  "pattern": [
+    [
+      "54445",
+      "44444",
+      "44244",
+      "44444",
+      "54445"
+    ],
+    [
+      "77777",
+      "76667",
+      "76667",
+      "76667",
+      "77777"
+    ],
+    [
+      "77777",
+      "76667",
+      "76667",
+      "76667",
+      "77777"
+    ],
+    [
+      "77077",
+      "76667",
+      "76667",
+      "76667",
+      "77777"
+    ],
+    [
+      "33333",
+      "33333",
+      "33333",
+      "33333",
+      "33333"
+    ]
+  ],
+  "mapping": {
+    "2": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:monument_core"
+    },
+    "3": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:reinforced_sponge_froglight"
+    },
+    "4": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:reinforced_prismarine_froglight"
+    },
+    "5": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:tide_offering_receptacle"
+    },
+    "6": {
+      "type": "modonomicon:block",
+      "block": "minecraft:water"
+    },
+    "7": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:reinforced_light_blue_stained_glass"
+    },
+    "0": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:elder_altar_hatch"
+    }
+  }
+}

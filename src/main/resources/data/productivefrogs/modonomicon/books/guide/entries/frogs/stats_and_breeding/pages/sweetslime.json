@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:spotlight",
+  "id": "sweetslime",
+  "sort_number": 1,
+  "item": "productivefrogs:sweetslime",
+  "title": "book.productivefrogs.guide.frogs.stats_and_breeding.sweetslime.title",
+  "text": "book.productivefrogs.guide.frogs.stats_and_breeding.sweetslime.text"
+}

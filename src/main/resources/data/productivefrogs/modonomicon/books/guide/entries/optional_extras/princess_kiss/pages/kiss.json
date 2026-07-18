@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:spotlight",
+  "id": "kiss",
+  "sort_number": 0,
+  "item": "productivefrogs:princess_kiss",
+  "title": "book.productivefrogs.guide.optional_extras.princess_kiss.kiss.title",
+  "text": "book.productivefrogs.guide.optional_extras.princess_kiss.kiss.text"
+}

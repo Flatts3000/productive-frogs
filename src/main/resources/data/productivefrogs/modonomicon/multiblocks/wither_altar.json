@@ -1,0 +1,66 @@
+{
+  "type": "modonomicon:dense",
+  "pattern": [
+    [
+      "11111",
+      "1   1",
+      "1   1",
+      "1   1",
+      "11111"
+    ],
+    [
+      "1   1",
+      "     ",
+      "     ",
+      "     ",
+      "17771"
+    ],
+    [
+      "1   1",
+      "     ",
+      "     ",
+      "     ",
+      "16661"
+    ],
+    [
+      "1   1",
+      "  0  ",
+      "     ",
+      "     ",
+      "12621"
+    ],
+    [
+      "11111",
+      "12221",
+      "12221",
+      "12321",
+      "12221"
+    ]
+  ],
+  "mapping": {
+    "1": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:reinforced_glowstone_froglight"
+    },
+    "2": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:reinforced_soul_sand_froglight"
+    },
+    "3": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:withered_star"
+    },
+    "6": {
+      "type": "modonomicon:blockstate",
+      "block": "productivefrogs:soul_sand_receptacle[filled=false]"
+    },
+    "7": {
+      "type": "modonomicon:blockstate",
+      "block": "productivefrogs:wither_skull_receptacle[filled=false]"
+    },
+    "0": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:wither_altar_hatch"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:spotlight",
+  "id": "cooked",
+  "sort_number": 1,
+  "item": "productivefrogs:cooked_frog_legs",
+  "title": "book.productivefrogs.guide.optional_extras.frog_legs.cooked.title",
+  "text": "book.productivefrogs.guide.optional_extras.frog_legs.cooked.text"
+}

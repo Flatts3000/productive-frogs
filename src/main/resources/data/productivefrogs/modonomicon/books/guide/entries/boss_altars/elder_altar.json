@@ -1,0 +1,14 @@
+{
+  "type": "modonomicon:content",
+  "id": "productivefrogs:boss_altars/elder_altar",
+  "category": "productivefrogs:boss_altars",
+  "name": "book.productivefrogs.guide.boss_altars.elder_altar.name",
+  "icon": { "id": "productivefrogs:elder_altar_hatch" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
+  "x": 4,
+  "y": 0
+}

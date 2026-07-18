@@ -1,7 +1,7 @@
 {
-  "name": "book.productivefrogs.guide.category.terrarium",
-  "icon": { "id": "productivefrogs:terrarium_controller" },
-  "sort_number": 600,
+  "name": "book.productivefrogs.guide.category.optional_extras",
+  "icon": { "id": "productivefrogs:cooked_frog_legs" },
+  "sort_number": 900,
   "background": "modonomicon:textures/gui/dark_slate_seamless.png",
   "background_width": 512,
   "background_height": 512,

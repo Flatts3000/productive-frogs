@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:text",
+  "id": "feed",
+  "sort_number": 1,
+  "show_title_separator": true,
+  "title": "book.productivefrogs.guide.terrarium.sprinkler.feed.title",
+  "text": "book.productivefrogs.guide.terrarium.sprinkler.feed.text"
+}

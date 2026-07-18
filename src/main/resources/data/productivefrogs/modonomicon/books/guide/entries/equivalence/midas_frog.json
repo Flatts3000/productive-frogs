@@ -1,0 +1,14 @@
+{
+  "type": "modonomicon:content",
+  "id": "productivefrogs:equivalence/midas_frog",
+  "category": "productivefrogs:equivalence",
+  "name": "book.productivefrogs.guide.equivalence.midas_frog.name",
+  "icon": { "id": "productivefrogs:midas_frog_spawn_egg" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
+  "x": 3,
+  "y": 0
+}

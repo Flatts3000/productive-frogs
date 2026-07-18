@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:text",
+  "id": "run",
+  "sort_number": 1,
+  "show_title_separator": true,
+  "title": "book.productivefrogs.guide.appliances.slime_churn.run.title",
+  "text": "book.productivefrogs.guide.appliances.slime_churn.run.text"
+}

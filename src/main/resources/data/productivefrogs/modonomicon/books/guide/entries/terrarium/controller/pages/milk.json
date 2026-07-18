@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:text",
+  "id": "milk",
+  "sort_number": 1,
+  "show_title_separator": true,
+  "title": "book.productivefrogs.guide.terrarium.controller.milk.title",
+  "text": "book.productivefrogs.guide.terrarium.controller.milk.text"
+}

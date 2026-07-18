@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:text",
+  "id": "full",
+  "sort_number": 1,
+  "show_title_separator": true,
+  "title": "book.productivefrogs.guide.terrarium.hatch.full.title",
+  "text": "book.productivefrogs.guide.terrarium.hatch.full.text"
+}

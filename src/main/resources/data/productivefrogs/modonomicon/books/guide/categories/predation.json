@@ -1,7 +1,7 @@
 {
-  "name": "book.productivefrogs.guide.category.terrarium",
-  "icon": { "id": "productivefrogs:terrarium_controller" },
-  "sort_number": 600,
+  "name": "book.productivefrogs.guide.category.predation",
+  "icon": { "id": "productivefrogs:ender_net" },
+  "sort_number": 400,
   "background": "modonomicon:textures/gui/dark_slate_seamless.png",
   "background_width": 512,
   "background_height": 512,

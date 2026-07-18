@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:spotlight",
+  "id": "block",
+  "sort_number": 0,
+  "item": "productivefrogs:hatch",
+  "title": "book.productivefrogs.guide.terrarium.hatch.block.title",
+  "text": "book.productivefrogs.guide.terrarium.hatch.block.text"
+}

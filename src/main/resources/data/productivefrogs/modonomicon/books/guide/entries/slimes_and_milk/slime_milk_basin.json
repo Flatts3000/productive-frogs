@@ -1,0 +1,14 @@
+{
+  "type": "modonomicon:content",
+  "id": "productivefrogs:slimes_and_milk/slime_milk_basin",
+  "category": "productivefrogs:slimes_and_milk",
+  "name": "book.productivefrogs.guide.slimes_and_milk.slime_milk_basin.name",
+  "icon": { "id": "productivefrogs:slime_milk_basin" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
+  "x": 4,
+  "y": 0
+}

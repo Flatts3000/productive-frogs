@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:spotlight",
+  "id": "froglight",
+  "sort_number": 1,
+  "item": "productivefrogs:configurable_froglight",
+  "title": "book.productivefrogs.guide.equivalence.distiller.froglight.title",
+  "text": "book.productivefrogs.guide.equivalence.distiller.froglight.text"
+}

@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:spotlight",
+  "id": "soup",
+  "sort_number": 2,
+  "item": "productivefrogs:frog_legs_soup",
+  "title": "book.productivefrogs.guide.optional_extras.frog_legs.soup.title",
+  "text": "book.productivefrogs.guide.optional_extras.frog_legs.soup.text"
+}
