@@ -242,6 +242,11 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
         return moltenTank;
     }
 
+    /** The receive-only RF buffer (GameTest / Jade read access; cables fill it via the capability). */
+    public EnergyStorage energyStorage() {
+        return energy;
+    }
+
     public ContainerData getDataAccess() {
         return dataAccess;
     }

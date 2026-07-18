@@ -87,11 +87,30 @@ public class VirtualTerrariumInventory extends net.neoforged.neoforge.items.Item
         return getStackInSlot(FROG_SLOT);
     }
 
-    /** Insert one produced stack into the first free/mergeable output slot; returns the leftover. */
+    /**
+     * Insert one produced stack into the first free/mergeable output slot; returns
+     * the leftover. Writes via {@code setStackInSlot} rather than {@code insertItem}
+     * because the output slots reject {@link #isItemValid} inserts (that guard blocks
+     * GUI / hopper deposits into the output row); the internal eat loop must bypass it.
+     */
     public ItemStack pushOutput(ItemStack produced) {
-        ItemStack remaining = produced;
-        for (int i = OUTPUT_START; i < SLOT_COUNT && !remaining.isEmpty(); i++) {
-            remaining = insertItem(i, remaining, false);
+        ItemStack remaining = produced.copy();
+        for (int i = OUTPUT_START; i < UPGRADE_START && !remaining.isEmpty(); i++) {
+            ItemStack existing = getStackInSlot(i);
+            if (existing.isEmpty()) {
+                int move = Math.min(remaining.getCount(), Math.min(remaining.getMaxStackSize(), getSlotLimit(i)));
+                setStackInSlot(i, remaining.copyWithCount(move));
+                remaining.shrink(move);
+            } else if (ItemStack.isSameItemSameComponents(existing, remaining)) {
+                int room = Math.min(existing.getMaxStackSize(), getSlotLimit(i)) - existing.getCount();
+                int move = Math.min(Math.max(0, room), remaining.getCount());
+                if (move > 0) {
+                    ItemStack merged = existing.copy();
+                    merged.grow(move);
+                    setStackInSlot(i, merged);
+                    remaining.shrink(move);
+                }
+            }
         }
         return remaining;
     }
@@ -99,7 +118,7 @@ public class VirtualTerrariumInventory extends net.neoforged.neoforge.items.Item
     /** Count of completely empty output slots (conservative backpressure for multi-drop loot). */
     public int emptyOutputSlots() {
         int free = 0;
-        for (int i = OUTPUT_START; i < SLOT_COUNT; i++) {
+        for (int i = OUTPUT_START; i < UPGRADE_START; i++) {
             if (getStackInSlot(i).isEmpty()) {
                 free++;
             }
@@ -107,12 +126,15 @@ public class VirtualTerrariumInventory extends net.neoforged.neoforge.items.Item
         return free;
     }
 
-    /** True when every output slot is full (production backpressure). */
+    /** True when no output slot can accept the sample (production backpressure). */
     public boolean outputFull(ItemStack sample) {
-        ItemStack probe = sample.copy();
-        for (int i = OUTPUT_START; i < SLOT_COUNT; i++) {
-            probe = insertItem(i, probe, true);
-            if (probe.isEmpty()) {
+        for (int i = OUTPUT_START; i < UPGRADE_START; i++) {
+            ItemStack existing = getStackInSlot(i);
+            if (existing.isEmpty()) {
+                return false;
+            }
+            if (ItemStack.isSameItemSameComponents(existing, sample)
+                    && existing.getCount() < Math.min(existing.getMaxStackSize(), getSlotLimit(i))) {
                 return false;
             }
         }
