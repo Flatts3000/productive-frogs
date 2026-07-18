@@ -30,9 +30,9 @@ public class VirtualTerrariumInventory extends net.neoforged.neoforge.items.Item
     public static final int UPGRADE_COUNT = 4;
     public static final int SLOT_COUNT = UPGRADE_START + UPGRADE_COUNT;
 
-    private final Runnable onChanged;
+    private final java.util.function.IntConsumer onChanged;
 
-    public VirtualTerrariumInventory(Runnable onChanged) {
+    public VirtualTerrariumInventory(java.util.function.IntConsumer onChanged) {
         super(SLOT_COUNT);
         this.onChanged = onChanged;
     }
@@ -79,7 +79,7 @@ public class VirtualTerrariumInventory extends net.neoforged.neoforge.items.Item
 
     @Override
     protected void onContentsChanged(int slot) {
-        onChanged.run();
+        onChanged.accept(slot);
     }
 
     /** The filled Frog Net in the frog slot, or EMPTY. */
@@ -113,6 +113,21 @@ public class VirtualTerrariumInventory extends net.neoforged.neoforge.items.Item
             }
         }
         return remaining;
+    }
+
+    /** Total room across the output slots for the given unit item (distributes a batch across slots). */
+    public int outputCapacity(ItemStack unit) {
+        int cap = 0;
+        for (int i = OUTPUT_START; i < UPGRADE_START; i++) {
+            ItemStack existing = getStackInSlot(i);
+            int slotMax = Math.min(unit.getMaxStackSize(), getSlotLimit(i));
+            if (existing.isEmpty()) {
+                cap += slotMax;
+            } else if (ItemStack.isSameItemSameComponents(existing, unit)) {
+                cap += Math.max(0, slotMax - existing.getCount());
+            }
+        }
+        return cap;
     }
 
     /** Count of completely empty output slots (conservative backpressure for multi-drop loot). */

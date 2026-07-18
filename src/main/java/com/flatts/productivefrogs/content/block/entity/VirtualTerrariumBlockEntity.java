@@ -106,14 +106,12 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
 
     public static final int DATA_PROGRESS = 0;
     public static final int DATA_INTERVAL = 1;
-    public static final int DATA_ENERGY = 2;
-    public static final int DATA_ENERGY_CAP = 3;
-    public static final int DATA_COUNT = 4;
+    public static final int DATA_COUNT = 2;
 
     private static final GameProfile VT_PROFILE =
         new GameProfile(UUID.fromString("b0551a15-4a15-4a15-8a15-711711711711"), "[PF Virtual Terrarium]");
 
-    private final VirtualTerrariumInventory inventory = new VirtualTerrariumInventory(this::setChanged);
+    private final VirtualTerrariumInventory inventory = new VirtualTerrariumInventory(this::onSlotChanged);
 
     private final FluidTank feedstock = new FluidTank(FEEDSTOCK_CAPACITY,
         fluid -> fluid.is(PFFluids.SLIME_MILK.get())
@@ -201,8 +199,6 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
             return switch (index) {
                 case DATA_PROGRESS -> progress;
                 case DATA_INTERVAL -> interval;
-                case DATA_ENERGY -> energy.getEnergyStored();
-                case DATA_ENERGY_CAP -> energy.getMaxEnergyStored();
                 default -> 0;
             };
         }
@@ -297,7 +293,7 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
             setWorking(level, pos, state, false);
             return;
         }
-        be.progress++;
+        be.progress = Math.min(be.progress + 1, be.interval);
         be.setChanged();
         if (be.progress >= be.interval) {
             be.produce(serverLevel);
@@ -346,12 +342,13 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
     }
 
     private void produce(ServerLevel level) {
-        int rfCost = rfCostPerCycle();
+        FrogKind kind = loadedFrogKind();
+        boolean froglightPath = kind instanceof FrogKind.Resource || kind instanceof FrogKind.Midas;
+        int rfCost = rfCostPerCycle(froglightPath);
         if (rfCost > 0 && energy.getEnergyStored() < rfCost) {
             return; // hard stall: a powered upgrade can't be paid
         }
         FluidStack fluid = feedstock.getFluid();
-        FrogKind kind = loadedFrogKind();
         boolean produced;
         if (kind instanceof FrogKind.Resource) {
             Identifier variantId = fluid.get(PFDataComponents.SLIME_VARIANT.get());
@@ -382,10 +379,13 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
             FluidStack molten = meltOne(level, single);
             if (!molten.isEmpty()) {
                 FluidStack batch = molten.copyWithAmount(molten.getAmount() * total);
-                if (moltenTank.fill(batch, IFluidHandler.FluidAction.SIMULATE) != batch.getAmount()) {
+                int accepted = moltenTank.fill(batch, IFluidHandler.FluidAction.SIMULATE);
+                if (accepted <= 0) {
                     return false; // molten tank full or holds a different fluid: pause
                 }
-                moltenTank.fill(batch, IFluidHandler.FluidAction.EXECUTE);
+                // Fill what fits - a nearly-full tank produces a partial batch rather than
+                // stalling forever when one cycle's molten exceeds the tank capacity.
+                moltenTank.fill(batch.copyWithAmount(accepted), IFluidHandler.FluidAction.EXECUTE);
                 return true;
             }
             // no melt recipe for this variant: fall through and output the raw Froglight
@@ -398,12 +398,12 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
                 unit = smelted;
             }
         }
-        int count = Math.min(unit.getCount() * total, unit.getMaxStackSize());
-        ItemStack out = unit.copyWithCount(count);
-        if (inventory.outputFull(out)) {
+        // Distribute the batch across the output slots (up to their combined capacity).
+        int count = Math.min(unit.getCount() * total, inventory.outputCapacity(unit));
+        if (count <= 0) {
             return false;
         }
-        inventory.pushOutput(out);
+        inventory.pushOutput(unit.copyWithCount(count));
         return true;
     }
 
@@ -535,12 +535,14 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
         return Math.max(25, (int) Math.round(FEEDSTOCK_PER_CYCLE * factor));
     }
 
-    private int rfCostPerCycle() {
+    private int rfCostPerCycle(boolean froglightPath) {
         int cost = 0;
         if (inventory.hasUpgrade(PFItems.VT_UPGRADE_SMELTER.get())) {
             cost += SMELTER_RF_PER_CYCLE;
         }
-        if (inventory.hasUpgrade(PFItems.VT_UPGRADE_MELTER.get())) {
+        // The Melter only melts Froglights; it does nothing on the predator loot path,
+        // so don't charge its RF there.
+        if (froglightPath && inventory.hasUpgrade(PFItems.VT_UPGRADE_MELTER.get())) {
             cost += MELTER_RF_PER_CYCLE;
         }
         cost += Math.min(MAX_OVERCLOCK, inventory.countUpgrade(PFItems.VT_UPGRADE_OVERCLOCK.get())) * OVERCLOCK_RF_PER_CYCLE;
@@ -611,6 +613,59 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
             }
         }
         return 0;
+    }
+
+    /** Inventory change hook: mark dirty, and when an upgrade slot changes, invalidate the
+     *  block's capabilities so a Melter insert/remove flips the DOWN fluid handler for pipes. */
+    private void onSlotChanged(int slot) {
+        setChanged();
+        Level lvl = getLevel();
+        if (slot >= VirtualTerrariumInventory.UPGRADE_START && lvl != null && !lvl.isClientSide()) {
+            lvl.invalidateCapabilities(worldPosition);
+        }
+    }
+
+    /** Refund the feedstock and banked Liquid Experience as buckets on break (nothing voided).
+     *  Molten metals are bucket-less by design, so the transient molten tank is not refunded. */
+    public void dropFluids(Level lvl, BlockPos pos) {
+        dropFluidAsBuckets(lvl, pos, feedstock.getFluid());
+        dropFluidAsBuckets(lvl, pos, xpTank.getFluid());
+    }
+
+    private static void dropFluidAsBuckets(Level lvl, BlockPos pos, FluidStack fluid) {
+        ItemStack bucket = bucketFor(fluid);
+        if (bucket.isEmpty()) {
+            return;
+        }
+        int buckets = fluid.getAmount() / net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME;
+        for (int i = 0; i < buckets; i++) {
+            net.minecraft.world.Containers.dropItemStack(lvl, pos.getX(), pos.getY(), pos.getZ(), bucket.copy());
+        }
+    }
+
+    private static ItemStack bucketFor(FluidStack fluid) {
+        if (fluid.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        if (fluid.is(PFFluids.SLIME_MILK.get())) {
+            Identifier v = fluid.get(PFDataComponents.SLIME_VARIANT.get());
+            return v == null ? ItemStack.EMPTY
+                : com.flatts.productivefrogs.content.item.SlimeMilkBucketItem.forVariant(v);
+        }
+        if (fluid.is(PFFluids.MIMIC_MILK.get())) {
+            Identifier itm = fluid.get(PFDataComponents.SYNTHESIZED_ITEM.get());
+            return itm == null ? ItemStack.EMPTY
+                : com.flatts.productivefrogs.content.item.MimicMilkBucketItem.forItem(itm);
+        }
+        if (fluid.is(PFFluids.MOB_SLURRY.get())) {
+            Identifier mob = fluid.get(PFDataComponents.SLURRIED_ENTITY.get());
+            return mob == null ? ItemStack.EMPTY
+                : com.flatts.productivefrogs.content.item.MobSlurryBucketItem.forEntity(mob);
+        }
+        if (fluid.is(PFFluids.LIQUID_EXPERIENCE.get())) {
+            return new ItemStack(PFItems.LIQUID_EXPERIENCE_BUCKET.get());
+        }
+        return ItemStack.EMPTY;
     }
 
     private void resetProgress() {

@@ -123,6 +123,7 @@ public class VirtualTerrariumProcessorBlock extends Block implements EntityBlock
                     Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack);
                 }
             }
+            be.dropFluids(level, pos);
         }
         return super.playerWillDestroy(level, pos, state, player);
     }
