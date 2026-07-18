@@ -1,0 +1,14 @@
+{
+  "type": "modonomicon:content",
+  "id": "productivefrogs:frogs/species",
+  "category": "productivefrogs:frogs",
+  "name": "book.productivefrogs.guide.frogs.species.name",
+  "icon": { "id": "productivefrogs:frog_egg" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
+  "x": 0,
+  "y": 0
+}

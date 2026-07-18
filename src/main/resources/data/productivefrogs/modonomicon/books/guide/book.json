@@ -1,0 +1,9 @@
+{
+  "name": "book.productivefrogs.guide.name",
+  "tooltip": "book.productivefrogs.guide.tooltip",
+  "generate_book_item": true,
+  "model": "modonomicon:modonomicon_green",
+  "display_mode": "node",
+  "page_display_mode": "double_page",
+  "creative_tab": "productivefrogs:productive_frogs"
+}

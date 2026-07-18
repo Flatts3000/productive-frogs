@@ -1,0 +1,14 @@
+{
+  "type": "modonomicon:content",
+  "id": "productivefrogs:froglights/froglights",
+  "category": "productivefrogs:froglights",
+  "name": "book.productivefrogs.guide.froglights.froglights.name",
+  "icon": { "id": "productivefrogs:configurable_froglight" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
+  "x": 0,
+  "y": 0
+}

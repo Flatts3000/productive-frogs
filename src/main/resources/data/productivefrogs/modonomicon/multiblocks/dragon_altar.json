@@ -1,0 +1,133 @@
+{
+  "type": "modonomicon:dense",
+  "pattern": [
+    [
+      "       ",
+      "       ",
+      "       ",
+      "   5   ",
+      "       ",
+      "       ",
+      "       "
+    ],
+    [
+      "       ",
+      "       ",
+      "       ",
+      "   0   ",
+      "       ",
+      "       ",
+      "       "
+    ],
+    [
+      "       ",
+      "       ",
+      "       ",
+      "       ",
+      "       ",
+      "       ",
+      "       "
+    ],
+    [
+      "       ",
+      "       ",
+      "       ",
+      "       ",
+      "       ",
+      "       ",
+      "       "
+    ],
+    [
+      "       ",
+      " 4   4 ",
+      "       ",
+      "       ",
+      "       ",
+      " 4   4 ",
+      "       "
+    ],
+    [
+      "       ",
+      " 3   3 ",
+      "       ",
+      "   2   ",
+      "       ",
+      " 3   3 ",
+      "       "
+    ],
+    [
+      "       ",
+      " 3   3 ",
+      "       ",
+      "   2   ",
+      "       ",
+      " 3   3 ",
+      "       "
+    ],
+    [
+      "  383  ",
+      " 3   3 ",
+      "3     3",
+      "8  2  8",
+      "3     3",
+      " 3   3 ",
+      "  383  "
+    ],
+    [
+      " 122211",
+      "1277721",
+      "2777772",
+      "2772772",
+      "2777772",
+      "1277721",
+      "1122211"
+    ],
+    [
+      "6111111",
+      "1122211",
+      "1222221",
+      "1222221",
+      "1222221",
+      "1122211",
+      "1111111"
+    ]
+  ],
+  "mapping": {
+    "1": {
+      "type": "modonomicon:block",
+      "block": "minecraft:end_stone"
+    },
+    "2": {
+      "type": "modonomicon:block",
+      "block": "minecraft:bedrock"
+    },
+    "3": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:reinforced_obsidian_froglight"
+    },
+    "4": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:reinforced_end_stone_froglight"
+    },
+    "5": {
+      "type": "modonomicon:block",
+      "block": "minecraft:dragon_egg"
+    },
+    "6": {
+      "type": "modonomicon:blockstate",
+      "block": "minecraft:structure_block[mode=save]"
+    },
+    "7": {
+      "type": "modonomicon:block",
+      "block": "minecraft:end_portal"
+    },
+    "8": {
+      "type": "modonomicon:blockstate",
+      "block": "productivefrogs:end_crystal_receptacle[filled=true]"
+    },
+    "0": {
+      "type": "modonomicon:block",
+      "block": "productivefrogs:end_dragon_altar_hatch"
+    }
+  }
+}

@@ -97,6 +97,13 @@ repositories {
         url = 'https://api.modrinth.com/maven'
         content { includeGroup 'maven.modrinth' }
     }
+    // Modonomicon (the in-game guide engine) - published by klikli-dev to their
+    // own Cloudsmith maven. Scoped to the one group so it never shadows others.
+    maven {
+        name = 'Cloudsmith klikli-dev'
+        url = 'https://dl.cloudsmith.io/public/klikli-dev/mods/maven/'
+        content { includeGroup 'com.klikli_dev' }
+    }
 }
 
 dependencies {
@@ -129,6 +136,24 @@ dependencies {
     // Jade on 26.1 (NeoForge) - compileOnly only (run/mods drop-in at runtime,
     // same posture as 1.21.1). Modrinth gWlwZzoj = Jade 26.1.8+neoforge.
     compileOnly "maven.modrinth:jade:gWlwZzoj"
+
+    // Modonomicon (modid `modonomicon`) - the in-game guide engine. runtimeOnly
+    // ONLY, and NOT bundled in the published jar. Our guide (book id
+    // `productivefrogs:guide`) is pure datapack data + assets under
+    // data/productivefrogs/modonomicon/books/guide/ - there is no compile-time
+    // reference, so no compileOnly is needed. Book data lives at
+    // data/productivefrogs/modonomicon/books/guide/ (Modonomicon scans the fixed
+    // `modonomicon/books` + `modonomicon/multiblocks` folders under every datapack
+    // namespace - NOT a <ns>/<ns> double-namespace). We pull Modonomicon into the dev
+    // runtime purely so runClient renders the book for manual verification (the
+    // build + gameTest jobs are blind to client render, same as the 1.x Patchouli
+    // book). Soft-dep posture (docs/guidebook.md): the book is inert data if the
+    // engine is absent, live if present, and the craftable guide recipe is gated
+    // `mod_loaded: modonomicon`. Unlike Jade there is no run/mods drop-in to
+    // double-load against, so runtimeOnly is safe. { transitive = false } keeps
+    // Modonomicon's own deps (e.g. its config lib) out of our graph - it brings
+    // them itself at runtime. Cloudsmith `com.klikli_dev:modonomicon-<mc>-neoforge`.
+    runtimeOnly("com.klikli_dev:modonomicon-26.1.2-neoforge:2.1.0") { transitive = false }
 
     // Curios API (modid `curios`) - compileOnly ONLY, same posture as Jade.
     // Brewed Froglights (#162/#169) self-buff while worn in a Curios slot; the

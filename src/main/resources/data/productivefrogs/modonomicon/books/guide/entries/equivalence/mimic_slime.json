@@ -1,0 +1,14 @@
+{
+  "type": "modonomicon:content",
+  "id": "productivefrogs:equivalence/mimic_slime",
+  "category": "productivefrogs:equivalence",
+  "name": "book.productivefrogs.guide.equivalence.mimic_slime.name",
+  "icon": { "id": "productivefrogs:mimic_slime_bucket" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
+  "x": 2,
+  "y": 0
+}

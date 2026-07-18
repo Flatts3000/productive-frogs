@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:spotlight",
+  "id": "cleaver",
+  "sort_number": 0,
+  "item": "productivefrogs:froglight_cleaver",
+  "title": "book.productivefrogs.guide.optional_extras.froglight_cleaver.cleaver.title",
+  "text": "book.productivefrogs.guide.optional_extras.froglight_cleaver.cleaver.text"
+}

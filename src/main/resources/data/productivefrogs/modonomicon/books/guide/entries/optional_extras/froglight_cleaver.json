@@ -1,0 +1,14 @@
+{
+  "type": "modonomicon:content",
+  "id": "productivefrogs:optional_extras/froglight_cleaver",
+  "category": "productivefrogs:optional_extras",
+  "name": "book.productivefrogs.guide.optional_extras.froglight_cleaver.name",
+  "icon": { "id": "productivefrogs:froglight_cleaver" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
+  "x": 0,
+  "y": 0
+}

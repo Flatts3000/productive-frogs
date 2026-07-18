@@ -1,0 +1,14 @@
+{
+  "type": "modonomicon:content",
+  "id": "productivefrogs:boss_altars/apex_frogs",
+  "category": "productivefrogs:boss_altars",
+  "name": "book.productivefrogs.guide.boss_altars.apex_frogs.name",
+  "icon": { "id": "productivefrogs:dragon_frog_spawn_egg" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
+  "x": 0,
+  "y": 0
+}

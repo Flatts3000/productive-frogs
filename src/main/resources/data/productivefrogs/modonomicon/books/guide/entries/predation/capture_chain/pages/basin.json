@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:spotlight",
+  "id": "basin",
+  "sort_number": 1,
+  "item": "productivefrogs:mob_slurry_basin",
+  "title": "book.productivefrogs.guide.predation.capture_chain.basin.title",
+  "text": "book.productivefrogs.guide.predation.capture_chain.basin.text"
+}

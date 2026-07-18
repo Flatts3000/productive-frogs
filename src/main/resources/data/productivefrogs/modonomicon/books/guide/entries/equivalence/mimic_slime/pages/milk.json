@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:spotlight",
+  "id": "milk",
+  "sort_number": 1,
+  "item": "productivefrogs:mimic_slime_bucket",
+  "title": "book.productivefrogs.guide.equivalence.mimic_slime.milk.title",
+  "text": "book.productivefrogs.guide.equivalence.mimic_slime.milk.text"
+}

@@ -1,0 +1,14 @@
+{
+  "type": "modonomicon:content",
+  "id": "productivefrogs:slimes_and_milk/where_slimes_spawn",
+  "category": "productivefrogs:slimes_and_milk",
+  "name": "book.productivefrogs.guide.slimes_and_milk.where_slimes_spawn.name",
+  "icon": { "id": "minecraft:slime_ball" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
+  "x": 1,
+  "y": 0
+}

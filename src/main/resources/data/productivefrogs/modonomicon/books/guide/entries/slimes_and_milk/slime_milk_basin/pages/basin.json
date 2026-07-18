@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:spotlight",
+  "id": "basin",
+  "sort_number": 1,
+  "item": "productivefrogs:slime_milk_basin",
+  "title": "book.productivefrogs.guide.slimes_and_milk.slime_milk_basin.basin.title",
+  "text": "book.productivefrogs.guide.slimes_and_milk.slime_milk_basin.basin.text"
+}

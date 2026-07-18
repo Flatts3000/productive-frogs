@@ -1,0 +1,14 @@
+{
+  "type": "modonomicon:content",
+  "id": "productivefrogs:frogs/lily_pad_perch",
+  "category": "productivefrogs:frogs",
+  "name": "book.productivefrogs.guide.frogs.lily_pad_perch.name",
+  "icon": { "id": "productivefrogs:sweetslimed_lily_pad" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
+  "x": 3,
+  "y": 0
+}

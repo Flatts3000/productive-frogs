@@ -1,0 +1,9 @@
+{
+  "type": "modonomicon:multiblock",
+  "id": "build",
+  "sort_number": 0,
+  "multiblock_id": "productivefrogs:dragon_altar",
+  "multiblock_name": "",
+  "show_visualize_button": true,
+  "text": "book.productivefrogs.guide.boss_altars.dragon_altar.build.text"
+}

@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:text",
+  "id": "spawns",
+  "sort_number": 0,
+  "show_title_separator": true,
+  "title": "book.productivefrogs.guide.slimes_and_milk.where_slimes_spawn.spawns.title",
+  "text": "book.productivefrogs.guide.slimes_and_milk.where_slimes_spawn.spawns.text"
+}

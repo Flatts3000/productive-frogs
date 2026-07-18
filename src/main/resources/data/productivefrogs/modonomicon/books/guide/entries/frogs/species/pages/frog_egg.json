@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:spotlight",
+  "id": "frog_egg",
+  "sort_number": 1,
+  "item": "productivefrogs:frog_egg",
+  "title": "book.productivefrogs.guide.frogs.species.frog_egg.title",
+  "text": "book.productivefrogs.guide.frogs.species.frog_egg.text"
+}

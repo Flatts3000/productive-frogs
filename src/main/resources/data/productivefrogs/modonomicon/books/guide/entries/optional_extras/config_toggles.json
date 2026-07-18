@@ -1,0 +1,14 @@
+{
+  "type": "modonomicon:content",
+  "id": "productivefrogs:optional_extras/config_toggles",
+  "category": "productivefrogs:optional_extras",
+  "name": "book.productivefrogs.guide.optional_extras.config_toggles.name",
+  "icon": { "id": "minecraft:comparator" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
+  "x": 3,
+  "y": 0
+}

@@ -1,0 +1,14 @@
+{
+  "type": "modonomicon:content",
+  "id": "productivefrogs:getting_started/core_loop",
+  "category": "productivefrogs:getting_started",
+  "name": "book.productivefrogs.guide.getting_started.core_loop.name",
+  "icon": { "id": "minecraft:slime_ball" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
+  "x": 0,
+  "y": 0
+}

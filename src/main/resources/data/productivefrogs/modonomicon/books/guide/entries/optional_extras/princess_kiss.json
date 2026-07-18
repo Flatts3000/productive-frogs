@@ -1,0 +1,14 @@
+{
+  "type": "modonomicon:content",
+  "id": "productivefrogs:optional_extras/princess_kiss",
+  "category": "productivefrogs:optional_extras",
+  "name": "book.productivefrogs.guide.optional_extras.princess_kiss.name",
+  "icon": { "id": "productivefrogs:princess_kiss" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
+  "x": 2,
+  "y": 0
+}
