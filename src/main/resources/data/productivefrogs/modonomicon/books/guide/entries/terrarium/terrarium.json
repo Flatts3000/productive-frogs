@@ -4,6 +4,11 @@
   "category": "productivefrogs:terrarium",
   "name": "book.productivefrogs.guide.terrarium.terrarium.name",
   "icon": { "id": "productivefrogs:terrarium_controller" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
   "x": 0,
   "y": 0
 }
