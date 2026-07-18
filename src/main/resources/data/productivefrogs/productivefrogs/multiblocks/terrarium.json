@@ -1,0 +1,22 @@
+{
+  "type": "modonomicon:dense",
+  "pattern": [
+    ["WMMMMMW", "MMMMMMM", "MMMMMMM", "MMM0MMM", "MMMMMMM", "MMMMMMM", "WMMMMMW"],
+    ["WGGGGGW", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "WGGGGGW"],
+    ["WGGGGGW", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "WGGGGGW"],
+    ["WGGIGGW", "GAAAAAG", "GAAAAAG", "CAAAAAH", "GAAAAAG", "GAAAAAG", "WGGGGGW"],
+    ["WGGGGGW", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "WGGGGGW"],
+    ["WGGGGGW", "GPPPPPG", "GPPPPPG", "GPPPPPG", "GPPPPPG", "GPPPPPG", "WGGGGGW"]
+  ],
+  "mapping": {
+    "W": { "type": "modonomicon:block", "block": "minecraft:oak_planks" },
+    "G": { "type": "modonomicon:block", "block": "minecraft:glass" },
+    "M": { "type": "modonomicon:block", "block": "minecraft:mud" },
+    "0": { "type": "modonomicon:block", "block": "minecraft:mud" },
+    "A": { "type": "modonomicon:block", "block": "minecraft:air" },
+    "P": { "type": "modonomicon:blockstate", "block": "productivefrogs:sprinkler[facing=down]" },
+    "C": { "type": "modonomicon:blockstate", "block": "productivefrogs:terrarium_controller[facing=west]" },
+    "H": { "type": "modonomicon:blockstate", "block": "productivefrogs:hatch[facing=east]" },
+    "I": { "type": "modonomicon:blockstate", "block": "productivefrogs:incubator[facing=north]" }
+  }
+}

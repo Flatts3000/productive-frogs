@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "modonomicon" }
+  ],
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:slime_ball"
+  ],
+  "result": {
+    "id": "modonomicon:modonomicon",
+    "count": 1,
+    "components": {
+      "modonomicon:book_id": "productivefrogs:guide"
+    }
+  }
+}

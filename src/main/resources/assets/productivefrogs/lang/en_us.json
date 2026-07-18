@@ -509,5 +509,19 @@
   "entity.productivefrogs.resource_tadpole.warden": "Warden Apex Tadpole",
   "item.productivefrogs.warden_frog_spawn_egg": "Warden Apex Frog Spawn Egg",
   "item.productivefrogs.warden_tadpole_spawn_egg": "Warden Apex Tadpole Spawn Egg",
-  "item.productivefrogs.resource_tadpole_bucket.warden": "Bucket of Warden Apex Tadpole"
+  "item.productivefrogs.resource_tadpole_bucket.warden": "Bucket of Warden Apex Tadpole",
+
+  "book.productivefrogs.guide.name": "Productive Frogs",
+  "book.productivefrogs.guide.tooltip": "The in-game guide to Productive Frogs.",
+  "book.productivefrogs.guide.category.getting_started": "Getting Started",
+  "book.productivefrogs.guide.category.terrarium": "Terrarium",
+  "book.productivefrogs.guide.getting_started.core_loop.name": "The Core Loop",
+  "book.productivefrogs.guide.getting_started.core_loop.intro.title": "The Core Loop",
+  "book.productivefrogs.guide.getting_started.core_loop.intro.text": "Every resource here comes from one loop instead of a pickaxe. Each Resource Slime is tied to one resource. Its matching Frog eats the slime and drops a Froglight, and smelting that Froglight gives you the resource. Set the chain up once and it runs on its own.",
+  "book.productivefrogs.guide.getting_started.core_loop.loop.title": "Froglights",
+  "book.productivefrogs.guide.getting_started.core_loop.loop.text": "A Froglight is what a Frog drops when it eats its matching slime. Smelt it for a copy of the resource. To gather them without standing around, run the loop inside a Terrarium, or pin a Frog on a Sweetslimed Lily Pad so its drops always land in the same place.",
+  "book.productivefrogs.guide.terrarium.terrarium.name": "Building the Terrarium",
+  "book.productivefrogs.guide.terrarium.terrarium.intro.title": "The Terrarium",
+  "book.productivefrogs.guide.terrarium.terrarium.intro.text": "The Terrarium is a sealed multiblock that runs the whole loop on its own. Seal the shell, then pipe Slime Milk into the Controller. Sprinklers in the ceiling rain slimes down, your frogs eat them, and the Hatch collects the Froglights for you to pull out.",
+  "book.productivefrogs.guide.terrarium.terrarium.build.text": "The shell is 7 wide, 7 deep, and 6 tall around a 5 by 5 by 4 cavity. Any full block works, glass included so you can watch. Place the Controller and look at it: it lights up when the structure is valid. Sprinklers mount on the ceiling; the Incubator and Hatch sit on the walls."
 }

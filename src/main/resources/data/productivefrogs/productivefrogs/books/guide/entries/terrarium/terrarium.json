@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:content",
+  "category": "productivefrogs:terrarium",
+  "name": "book.productivefrogs.guide.terrarium.terrarium.name",
+  "icon": { "id": "productivefrogs:terrarium_controller" },
+  "x": 0,
+  "y": 0
+}

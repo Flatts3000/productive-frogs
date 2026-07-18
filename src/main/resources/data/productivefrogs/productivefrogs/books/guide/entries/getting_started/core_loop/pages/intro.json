@@ -1,0 +1,7 @@
+{
+  "type": "modonomicon:text",
+  "id": "intro",
+  "sort_number": 0,
+  "title": "book.productivefrogs.guide.getting_started.core_loop.intro.title",
+  "text": "book.productivefrogs.guide.getting_started.core_loop.intro.text"
+}

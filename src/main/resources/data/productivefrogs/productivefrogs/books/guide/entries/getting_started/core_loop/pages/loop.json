@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:spotlight",
+  "id": "loop",
+  "sort_number": 1,
+  "item": "productivefrogs:configurable_froglight",
+  "title": "book.productivefrogs.guide.getting_started.core_loop.loop.title",
+  "text": "book.productivefrogs.guide.getting_started.core_loop.loop.text"
+}

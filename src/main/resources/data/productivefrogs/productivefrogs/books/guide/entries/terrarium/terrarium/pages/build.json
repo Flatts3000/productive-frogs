@@ -1,0 +1,9 @@
+{
+  "type": "modonomicon:multiblock",
+  "id": "build",
+  "sort_number": 1,
+  "multiblock_id": "productivefrogs:terrarium",
+  "multiblock_name": "",
+  "show_visualize_button": true,
+  "text": "book.productivefrogs.guide.terrarium.terrarium.build.text"
+}
