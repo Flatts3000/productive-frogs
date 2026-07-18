@@ -88,9 +88,11 @@ seams. Each **eat cycle** (timed below), when productive (see Rules):
 Then apply the installed processing upgrade (Smelter/Melter) and route to the output. Spend one
 unit of the feedstock's budget per cycle.
 
-### Yield and timing (three inputs combine)
+### Yield and timing (rate = spawn rate + catalysts + upgrades)
 
-The frog's stats, the feedstock's catalysts, and the installed upgrades all feed the formula:
+The rate is built from the **feedstock's own spawn rate** (the base) **plus its catalysts plus
+the installed upgrades** - catalysts and upgrades are **both** in the calc, not one or the other -
+with the frog's stats layered in. All of these combine into the formula:
 
 - **Cycle time** = a base `MilkSpawnEconomy.intervalTicks(rapidLevel, ...)` (the feedstock's
   spawn cadence, 200-600 ticks, shortened by the **Rapid** catalyst), then further shortened by
