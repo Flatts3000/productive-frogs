@@ -1,12 +1,12 @@
 {
   "type": "modonomicon:dense",
   "pattern": [
-    ["WMMMMMW", "MMMMMMM", "MMMMMMM", "MMM0MMM", "MMMMMMM", "MMMMMMM", "WMMMMMW"],
-    ["WGGGGGW", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "WGGGGGW"],
+    ["WGGGGGW", "GPPPPPG", "GPPPPPG", "GPPPPPG", "GPPPPPG", "GPPPPPG", "WGGGGGW"],
     ["WGGGGGW", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "WGGGGGW"],
     ["WGGIGGW", "GAAAAAG", "GAAAAAG", "CAAAAAH", "GAAAAAG", "GAAAAAG", "WGGGGGW"],
     ["WGGGGGW", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "WGGGGGW"],
-    ["WGGGGGW", "GPPPPPG", "GPPPPPG", "GPPPPPG", "GPPPPPG", "GPPPPPG", "WGGGGGW"]
+    ["WGGGGGW", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "GAAAAAG", "WGGGGGW"],
+    ["WMMMMMW", "MMMMMMM", "MMMMMMM", "MMM0MMM", "MMMMMMM", "MMMMMMM", "WMMMMMW"]
   ],
   "mapping": {
     "W": { "type": "modonomicon:block", "block": "minecraft:oak_planks" },
