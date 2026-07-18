@@ -1,0 +1,14 @@
+{
+  "type": "modonomicon:content",
+  "id": "productivefrogs:appliances/virtual_terrarium",
+  "category": "productivefrogs:appliances",
+  "name": "book.productivefrogs.guide.appliances.virtual_terrarium.name",
+  "icon": { "id": "productivefrogs:virtual_terrarium" },
+  "background": {
+    "sprite": "modonomicon:modonomicon/themes/default/node/entry_backgrounds/square_gold",
+    "width": 26,
+    "height": 26
+  },
+  "x": 5,
+  "y": 0
+}

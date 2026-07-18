@@ -1,0 +1,4 @@
+{ "type": "minecraft:crafting_shaped", "category": "misc",
+  "pattern": ["GAG","A A","GAG"],
+  "key": { "G": "minecraft:tinted_glass", "A": "minecraft:amethyst_shard" },
+  "result": { "id": "productivefrogs:virtual_terrarium_dome", "count": 1 } }

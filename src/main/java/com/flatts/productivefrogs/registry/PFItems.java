@@ -525,20 +525,20 @@ public final class PFItems {
     );
 
     // Virtual Terrarium upgrade items (single-tier; stack in the upgrade slots).
-    public static final DeferredItem<Item> VT_UPGRADE_BOUNTY =
-        ITEMS.registerItem("vt_upgrade_bounty", props -> new Item(props));
-    public static final DeferredItem<Item> VT_UPGRADE_APPETITE =
-        ITEMS.registerItem("vt_upgrade_appetite", props -> new Item(props));
-    public static final DeferredItem<Item> VT_UPGRADE_SMELTER =
-        ITEMS.registerItem("vt_upgrade_smelter", props -> new Item(props));
-    public static final DeferredItem<Item> VT_UPGRADE_MELTER =
-        ITEMS.registerItem("vt_upgrade_melter", props -> new Item(props));
-    public static final DeferredItem<Item> VT_UPGRADE_CAPACITY =
-        ITEMS.registerItem("vt_upgrade_capacity", props -> new Item(props));
-    public static final DeferredItem<Item> VT_UPGRADE_EVERFLOW =
-        ITEMS.registerItem("vt_upgrade_everflow", props -> new Item(props));
-    public static final DeferredItem<Item> VT_UPGRADE_OVERCLOCK =
-        ITEMS.registerItem("vt_upgrade_overclock", props -> new Item(props));
+    public static final DeferredItem<com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem> VT_UPGRADE_BOUNTY =
+        ITEMS.registerItem("vt_upgrade_bounty", com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem::new);
+    public static final DeferredItem<com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem> VT_UPGRADE_APPETITE =
+        ITEMS.registerItem("vt_upgrade_appetite", com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem::new);
+    public static final DeferredItem<com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem> VT_UPGRADE_SMELTER =
+        ITEMS.registerItem("vt_upgrade_smelter", com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem::new);
+    public static final DeferredItem<com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem> VT_UPGRADE_MELTER =
+        ITEMS.registerItem("vt_upgrade_melter", com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem::new);
+    public static final DeferredItem<com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem> VT_UPGRADE_CAPACITY =
+        ITEMS.registerItem("vt_upgrade_capacity", com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem::new);
+    public static final DeferredItem<com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem> VT_UPGRADE_EVERFLOW =
+        ITEMS.registerItem("vt_upgrade_everflow", com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem::new);
+    public static final DeferredItem<com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem> VT_UPGRADE_OVERCLOCK =
+        ITEMS.registerItem("vt_upgrade_overclock", com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem::new);
 
     /**
      * Slime Churn BlockItem (#187) - places {@link PFBlocks#SLIME_CHURN}, the
