@@ -59,6 +59,17 @@ public class VirtualTerrariumInventory extends net.neoforged.neoforge.items.Item
         return remaining;
     }
 
+    /** Count of completely empty output slots (conservative backpressure for multi-drop loot). */
+    public int emptyOutputSlots() {
+        int free = 0;
+        for (int i = OUTPUT_START; i < SLOT_COUNT; i++) {
+            if (getStackInSlot(i).isEmpty()) {
+                free++;
+            }
+        }
+        return free;
+    }
+
     /** True when every output slot is full (production backpressure). */
     public boolean outputFull(ItemStack sample) {
         ItemStack probe = sample.copy();

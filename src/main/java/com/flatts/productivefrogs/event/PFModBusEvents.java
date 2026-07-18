@@ -217,7 +217,7 @@ public final class PFModBusEvents {
         event.registerBlockEntity(
             Capabilities.Fluid.BLOCK,
             PFBlockEntities.VIRTUAL_TERRARIUM.get(),
-            (be, side) -> be.feedstockResource()
+            (be, side) -> side == Direction.DOWN ? be.productFluidResource() : be.feedstockResource()
         );
 
         // Slime Churn (#187): bottom face = extract-only view over BOTH output
