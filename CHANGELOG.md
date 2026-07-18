@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+## v2.0.0-alpha.3 - 2026-07-18 - Field Guide
+
+### Added
+
+- **An in-game guide book.** New to the mod, or just want the details in one
+  place? Craft the guide from a book and a slime ball and it walks the whole
+  thing end to end: the frog-to-Froglight loop, the six species and breeding,
+  slimes and Slime Milk, hunting real mobs with predator frogs, every machine,
+  the Terrarium, the four boss altars (each with a rotatable 3D diagram of the
+  build), the Equivalence lane, and the optional extras. It reads through
+  [Modonomicon](https://www.curseforge.com/minecraft/mc-mods/modonomicon), so
+  install that to open it; without it the recipe simply doesn't appear, and
+  nothing else changes. Modpack authors can extend the book with their own
+  pages. (#318)
+
 ## v2.0.0-alpha.2 - 2026-07-09 - Closing the Hatch
 
 ### Fixed
