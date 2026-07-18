@@ -92,9 +92,10 @@ unit of the feedstock's budget per cycle.
 
 The frog's stats, the feedstock's catalysts, and the installed upgrades all feed the formula:
 
-- **Cycle time** = `FrogStats.appetiteCooldownTicks(effectiveAppetite, ...)`, where
-  `effectiveAppetite` = frog Appetite **+ Appetite upgrades**, further shortened by the
-  feedstock's **Rapid** (speed) catalyst level.
+- **Cycle time** = a base `MilkSpawnEconomy.intervalTicks(rapidLevel, ...)` (the feedstock's
+  spawn cadence, 200-600 ticks, shortened by the **Rapid** catalyst), then further shortened by
+  the frog's **effective Appetite** (Appetite stat + Appetite upgrades) and, when powered, the
+  **Overclock** (+50% speed, stacking to a cap).
 - **Count** = `batchQuantity(teemingLevel) x bountyDropCount(effectiveBounty)`, where
   `teemingLevel` = the feedstock's **Teeming** catalyst and `effectiveBounty` = frog Bounty
   **+ Bounty upgrades**. (For predators, Bounty also raises Looting via `bountyLootingLevel`.)
@@ -145,19 +146,19 @@ refuses both):
 | **Melter** | auto-melts each Froglight (Crucible logic) into its **molten fluid**; the item output routes to a **molten tank** (see Output) |
 
 Items with no smelting/melting result **pass through unprocessed**. Auto-processing **draws RF**
-(the one place the block needs power - a receive-only buffer, see decision 2): with no power
-buffered, processing pauses and the raw Froglights/loot pass through instead, and Jade says
-"needs power to smelt/melt". (Unpowered behavior - graceful raw pass-through vs a hard stall -
-is an open sub-decision; lead is pass-through.)
+(the one place the block needs power - a receive-only buffer, see decision 2): with the RF
+buffer empty, **production stalls** entirely until power returns, and Jade says "needs power to
+smelt/melt". Hard stall, not a raw pass-through - a processing upgrade means you want the
+processed form.
 
 **Economy upgrades** (from the milk model): **Capacity** raises the feedstock budget the tank
 holds; **Everflow** stops depletion.
 
 **Overclock upgrade (RF-powered):** while the energy buffer has power, the **whole cycle runs
 50% faster** - a flat block-wide boost stacking on top of the frog's Appetite and any Rapid
-catalyst. Unpowered, it is inert. This (with Smelter/Melter) is why the Processor carries an RF
-buffer. (Whether multiple Overclocks stack or +50% is a single flat cap is an open sub-decision;
-lead: single flat +50%.)
+catalyst. Unpowered, it is inert. This (with Smelter/Melter) is why the Processor carries an RF buffer.
+Multiple Overclocks **stack additively up to a cap** (each +50% while powered, to a ceiling set
+at the balance pass).
 
 The upgrade item family (names, textures, recipes, tiers) is an open sub-decision.
 
@@ -250,7 +251,9 @@ active output form (item grid / molten gauge / XP gauge).
     both be installed.
 12. **Catalysts factor.** Rapid/Teeming/Bountiful/Endless on the fed milk *or slurry* speed up /
     add count / extend budget / stop depletion, stacking with the stat upgrades.
-13. **No power.** Never asks for or accepts RF.
+13. **No power for the core loop.** The base frog-eating loop needs no power. Only the
+    Smelter/Melter/Overclock upgrades draw RF (receive-only); with one installed and the buffer
+    empty, the block stalls until powered.
 14. **Automation I/O.** DOWN outputs items (and the fluid tanks); pipes fill the feedstock tank
     and drain the product tanks; other faces don't output items.
 15. **Ergonomics.** Distinct inactive vs active Processor texture; the Dome renders the loaded
@@ -280,26 +283,29 @@ active output form (item grid / molten gauge / XP gauge).
   fakePlayer) -> drops` helper; plus a mob-XP -> points helper for the Liquid Experience payout.
 - `PFBlocks` / `PFItems` (two BlockItems + the upgrade items) / `PFBlockEntities` / `PFMenuTypes`
   / `PFCreativeTabs`; capabilities in `PFModBusEvents` (Fluid.BLOCK feedstock fill-only + product
-  tanks; Item.BLOCK DOWN output).
-- The **upgrade item family** (Bounty / Appetite / Smelter / Melter / Capacity / Everflow) - items,
+  tanks; Item.BLOCK DOWN output; **Energy.BLOCK receive-only** for the powered upgrades, advertised
+  only when a Smelter/Melter/Overclock is installed).
+- The **upgrade item family** (Bounty / Appetite / Smelter / Melter / Capacity / Everflow /
+  Overclock) - items,
   models, textures, recipes, and a `virtual_terrarium_upgrade` item tag for the slot filter.
 - Blockstates + models + textures (gen/ pipeline; the void-tier inactive/active Processor + the
   glass Dome); loot tables (Processor returns frog + feedstock + upgrades + banked product; Dome
   returns itself); `mineable/pickaxe`; lang (names + tooltips + Jade + idle reasons).
-- Void-tier crafting recipes (balance pass) + a `virtualTerrarium.enabled` config gate.
+- Void-tier crafting recipes (balance pass). No config flag - the feature is always available.
 - Jade provider (server-data, single-interface split per the Jade 26.1 rule).
 - Guide entry (Modonomicon), under the Terrarium or Appliances chapter.
 - GameTests per AC 18.
 
 ## Decisions to finalize (before build)
 
-1. **Upgrade item family** - names, textures, recipes (single-tier stacking is settled).
-2. **Unpowered Smelter/Melter behavior** - raw pass-through when the RF buffer is empty (lead)
-   vs a hard stall.
-3. **Cadence basis** - Appetite-cooldown (lead) vs feedstock spawn interval vs a blend.
-4. **Slot counts** - upgrade slots (lead 4-6), item-output slots (lead 9).
-5. **Void-tier recipes** - the actual ingredient lists for both blocks + the upgrade items.
-6. **Config gate** - ship `virtualTerrarium.enabled`? (Lead: yes, default on.)
+1. **Upgrade item family** - names, textures, recipes. The levers are set (Bounty, Appetite,
+   Smelter, Melter, Capacity, Everflow, Overclock); only the item design is open.
+2. **Slot counts** - upgrade slots (lead 4-6), item-output slots (lead 9).
+3. **Void-tier recipes** - the ingredient lists for both blocks + the upgrade items.
+4. **Balance figures** - RF/tick for each powered upgrade, the Overclock stacking cap, and the
+   base rate numbers.
 
-*Settled this round:* predator XP = real mob XP; loot-table-only gap accepted; Smelter/Melter
-draw RF; upgrades are single-tier.
+*Settled:* Resource + Midas + Predator (Apex out); predator XP = the mob's real reward;
+loot-table-only gap accepted; Smelter/Melter + Overclock draw RF (empty buffer = hard stall);
+base cadence = feedstock spawn interval; Overclock stacks to a cap; upgrades single-tier; no
+config flag (always available).
