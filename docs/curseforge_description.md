@@ -69,7 +69,7 @@ There is a tier past the everyday loop. Splash a potion onto a slime before a fr
 
 ## Learn as you play
 
-New to the mod? Craft the in-game guide book (a book plus a slime ball) for an illustrated walkthrough of the whole thing, with build diagrams for the Terrarium and each altar. It needs [Patchouli](https://www.curseforge.com/minecraft/mc-mods/patchouli) installed, and modpack authors can extend it with their own pages.
+New to the mod? Craft the in-game guide book (a book plus a slime ball) for an illustrated walkthrough of the whole thing, with rotatable 3D build diagrams for the Terrarium and each altar. It needs [Modonomicon](https://www.curseforge.com/minecraft/mc-mods/modonomicon) installed, and modpack authors can extend it with their own pages.
 
 ## Modpack-friendly
 
@@ -81,7 +81,7 @@ Full authoring guide: [docs on GitHub](https://github.com/Flatts3000/productive-
 
 * **[JEI](https://www.curseforge.com/minecraft/mc-mods/jei)**: Information pages on every Productive Frogs item explain the production role, who hunts what, and what smelts to what. Hover an item, press **U** or **R**.
 * **[Jade](https://www.curseforge.com/minecraft/mc-mods/jade)**: shows the species and variant in the in-world tooltip.
-* **[Patchouli](https://www.curseforge.com/minecraft/mc-mods/patchouli)**: adds the in-game guide book.
+* **[Modonomicon](https://www.curseforge.com/minecraft/mc-mods/modonomicon)**: adds the in-game guide book.
 
 They are all optional. The mod works fine without them; you just lose the contextual UI and the in-game guide.
 
