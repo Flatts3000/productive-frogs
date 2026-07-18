@@ -1,221 +1,286 @@
 # Virtual Terrarium (spec + acceptance criteria)
 
-> **Status: SPEC / not built.** A design contract for a new single-block "Virtual
-> Terrarium" that virtualizes one frog's slime-eating loop, with no spawned
-> entities. The physical multiblock Terrarium (`docs/terrarium.md`) stays exactly
-> as it is; this is an additive sibling, not a replacement.
+> **Status: SPEC / not built.** A design contract for a **two-block Virtual Terrarium**
+> that virtualizes one frog's eat loop with no spawned entities. The physical multiblock
+> Terrarium (`docs/terrarium.md`) is untouched; this is an additive sibling.
 
 ## Why
 
-Players expected the Terrarium to be a *virtual* single block - the way Productive
-Bees lets a hive process bees internally with upgrades, instead of a big box full
-of live entities. The physical Terrarium (build a sealed 7x6x7 shell, live frogs
-and slimes ticking and rendering inside) is the opposite of that. So: **keep the
-multiblock**, and add a compact, expensive single block that runs the same loop
-headlessly. One frog, fed milk, dropping Froglights, in a block you can tuck into a
-wall and pipe.
+Players expected the Terrarium to be a *virtual* block - the way Productive Bees processes
+bees internally with upgrades, instead of a sealed box full of live entities. So: **keep the
+multiblock**, and add a compact, expensive, sleek unit that runs the same loop headlessly -
+one frog, fed its feedstock, dropping product, in something you tuck into a wall and pipe.
 
 ## Locked decisions (maintainer, 2026-07-18)
 
-1. **A single block.** Not a multiblock. No structure to validate.
-2. **No power.** It runs passively off the Slime Milk you feed it. (Considered RF,
-   ruled out.)
-3. **Runs one frog at the normal per-frog rate.** A maxed physical Terrarium (up to
-   8 frogs) still out-produces a single Virtual Terrarium roughly 8:1, so both
-   blocks stay worth building - the Virtual trades throughput for zero build cost,
-   zero footprint, and no entity load.
-4. **Resource frogs and Midas frogs.** The six species run Slime Milk -> Froglights;
-   a Midas frog runs Mimic Milk -> Prismatic Froglights (gated by
-   `equivalenceEnabled`). Predators (eat mobs) and Apexes (run altars) are **out** -
-   they are not slime-eaters.
-5. **Void tier.** The recipe is gated at the top species (Void / End-tier) - very
-   expensive, a late-game convenience block. Exact recipe is a balance-pass TODO.
-6. **It accepts dedicated upgrade items** (Productive Bees style) - a new family of
-   upgrade items installed in upgrade slots, not consumed per batch. See Upgrades.
-7. **It shows its contents from the outside** - Jade required, and the loaded frog
-   renders in the block (see Visual feedback).
-8. **Full GUI** - a screen with the frog slot, milk gauge, upgrade slots, and output
-   grid (the Milker/Churn shape).
-9. **The loaded frog renders in the block** - a block-entity renderer draws the actual
-   frog, kind-tinted, plus a milk-color tint on the block.
+1. **Two blocks.** A **Processor** (bottom - the machine: GUI, tanks, upgrades, logic) and a
+   **Display Dome** (top - a glass terrarium dome that renders the frog, the slime, and
+   animations). Both crafted independently; **both required**; they **form** when the Dome
+   sits directly on the Processor and **unform** if either is broken. This is a trivial
+   two-block adjacency, not a validated multiblock like the physical Terrarium.
+2. **No power.** It runs passively off the feedstock you feed it. (RF considered, ruled out.)
+3. **One frog at the normal per-frog rate.** An un-upgraded frog on plain feedstock matches a
+   single physical-Terrarium frog; a maxed physical Terrarium (up to 8 frogs) still out-produces
+   one Virtual Terrarium, so both stay worth building. Upgrades and catalyst-buffed feedstock
+   compound from there.
+4. **A universal frog virtualizer** (one frog per unit), for the three *eating* kinds:
+   - **Resource** frog + **Slime Milk** -> Froglights.
+   - **Midas** frog + **Mimic Milk** -> Prismatic Froglights (gated by `equivalenceEnabled`).
+   - **Predator** frog + **Mob Slurry** -> the mob's player-credited loot + Liquid Experience.
+   - **Apex frogs stay out** - they run boss altars, not an eat loop.
+5. **Void tier.** Recipe gated at the top species (Void / End-tier). Very expensive, late-game.
+   Exact recipe is a balance-pass TODO.
+6. **Dedicated upgrade items** (Productive Bees style), installed in a vertical column of slots,
+   not consumed per cycle. See Upgrades.
+7. **Strong ergonomics:** two block textures (idle vs active), a GUI duration bar, the Dome
+   showing the live frog + slime + animations, and Jade for the details.
+
+## Structure
+
+- **Processor block** (bottom): the machine. Holds the frog slot, the feedstock tank, the
+  upgrade column, the outputs, and the eat-emulation `serverTick`. Void-tier textures, with a
+  distinct **inactive vs active** look.
+- **Display Dome** (top): a glass terrarium dome. A `BlockEntityRenderer` draws the **loaded
+  frog** (kind-tinted, the altar display-frog approach), a **slime** tinted to the feedstock's
+  variant, and idle/eat **animations**, with terrarium ambiance (plants, water shimmer). It is
+  cosmetic but **load-bearing**: the Processor only runs when a Dome is directly above it.
+- **Formation:** place the Processor, place the Dome on top -> formed. Breaking either unforms
+  it (production stops; contents stay in the Processor). No structure scan - a single
+  `getBlockState(pos.above())` check on the Processor, revalidated on neighbor change.
 
 ## How it works
 
 ### Inputs
 
-- **One frog, from a Frog Net.** Insert a filled Frog Net (`FrogNetItem`); the block
-  reads the stored frog's `FrogKind` and stats straight off the net stack's
-  `DataComponents.CUSTOM_DATA` (`FrogKind.readFromTag`, and `Appetite/Bounty/Reach`
-  keys) - **no entity is rebuilt or spawned.** The frog is extractable; breaking the
-  block returns the filled net. Only `Resource` and `Midas` kinds are accepted; any
-  other kind is refused on insert.
-- **An internal milk tank.** Fill-only, via `Capabilities.Fluid.BLOCK` (bucket by
-  hand or pipe). Holds **one variant at a time** and refuses a second until it drains
-  (mirrors `TerrariumControllerBlockEntity`'s single-variant FIFO). A Resource frog
-  wants **Slime Milk** (`SLIME_VARIANT`); a Midas frog wants **Mimic Milk**
-  (`SYNTHESIZED_ITEM`).
-- **Upgrade slots** - see Upgrades.
+- **One frog, from a Frog Net.** Insert a filled `FrogNetItem`; the Processor reads the stored
+  frog's `FrogKind` + stats straight off the net stack's `DataComponents.CUSTOM_DATA`
+  (`FrogKind.readFromTag`; `Appetite/Bounty/Reach` keys) - **no entity is rebuilt or spawned.**
+  Extractable; breaking the Processor returns the filled net (stats intact, the #210 rule).
+  Only `Resource`, `Midas`, and `Predator` kinds are accepted; Apex is refused on insert.
+- **A feedstock tank.** Fill-only, `Capabilities.Fluid.BLOCK`, one variant/kind at a time
+  (refuses a second until it drains, like the Terrarium Controller). The fluid must match the
+  frog: **Slime Milk** (`SLIME_VARIANT`) for Resource, **Mimic Milk** (`SYNTHESIZED_ITEM`) for
+  Midas, **Mob Slurry** (`SLURRIED_ENTITY`) for Predator.
+- **Upgrade column** - see Upgrades.
 
-### The virtual eat (emulated - there is no live slime or frog)
+### The virtual eat (emulated - there is no live slime, mob, or frog)
 
-There is **no existing headless production path** - every froglight route needs a
-live `ResourceFrog`. So the block emulates the eat, reusing the entity-free seams:
+No headless production path exists; the block emulates the eat per kind, reusing entity-free
+seams. Each **eat cycle** (timed below), when productive (see Rules):
 
-Each **eat event** (paced below), if the block is *productive* (see rules):
-1. Resolve the milk's variant + category (`variantId -> PFRegistries.variant(...).category()`).
-2. Produce `MilkSpawnEconomy.batchQuantity(quantityLevel)` slimes'-worth, and for each,
-   `FrogStats.bountyDropCount(storedBounty, bountyMaxDrops, statCap)` Froglights - i.e.
-   **froglights per event = batchQuantity x bountyDropCount**, exactly the physical
-   economy's two multipliers (Teeming = more slimes, Bounty = more drops per slime).
-3. Emit each via `FrogTongueDropHandler.buildFroglight(variantId, null)` (Resource) or
-   `MidasTongueDropHandler.buildPrismaticFroglight(itemId)` (Midas) into the output.
-4. Spend **one** unit of the milk's budget for the event (Quantity is free throughput,
-   matching the source: `decrementSpawns()` fires once per event, not per slime).
+- **Resource:** produce `batchQuantity(teemingLevel) x bountyDropCount(effectiveBounty)`
+  Froglights via `FrogTongueDropHandler.buildFroglight(variantId, null)`.
+- **Midas:** same, via `MidasTongueDropHandler.buildPrismaticFroglight(itemId)` (gated by
+  `equivalenceEnabled`).
+- **Predator:** roll the slurried mob's loot the **boss-altar way** -
+  `BossAltarHatchBlockEntity.rollLoot`-style: a transient `EntityType.create()` **phantom**
+  (never added to the world, then discarded) as `THIS_ENTITY`, `getDefaultLootTable()` rolled in
+  `LootContextParamSets.ENTITY` with `DAMAGE_SOURCE = playerAttack(fakePlayer)` +
+  `LAST_DAMAGE_PLAYER = fakePlayer`, the fake player holding a **Looting-N sword** where
+  `N = FrogStats.bountyLootingLevel(effectiveBounty, statCap)`. Plus **Liquid Experience** for
+  the mob's XP (see the caveat below).
 
-**Pace** = the frog's eat cadence, `FrogStats.appetiteCooldownTicks(storedAppetite, ...)`,
-shortened by the installed Rapid upgrade level (`MilkSpawnEconomy` speed reduction). This
-is what makes it "one frog at the normal rate" - the binding constraint on a real frog is
-how fast it eats.
+Then apply the installed processing upgrade (Smelter/Melter) and route to the output. Spend one
+unit of the feedstock's budget per cycle.
 
-### Rules it follows (the "it follows all the rules" requirement)
+### Yield and timing (three inputs combine)
 
-- **Category match.** A species frog only produces when the milk's category equals the
-  frog's `getCategory()` (`FrogKind.fallbackCategory()`); a Midas frog only on Mimic Milk.
-  Mismatch (e.g. Cave frog + Bog milk) -> idle, nothing produced.
-- **Bounty** scales the Froglight count per the shipped curve.
-- **Appetite** scales the cadence.
-- **Reach is ignored** - there is no targeting radius in a single virtual block. (Not
-  repurposed; a frog's Reach simply doesn't matter here. Noted so it isn't a surprise.)
-- **Milk depletes** (`spawnsRemaining`) unless the milk or an installed upgrade is Endless.
-- **Backpressure**: a full output inventory pauses production; nothing is voided
-  (mirrors the Hatch-full stop).
-- **Brewed Froglights are NOT produced.** The brewed effect is captured from a live
-  slime's active potion effects; the virtual loop has no slime to carry one, so a Virtual
-  Terrarium never makes Brewed Froglights. Documented limitation, not a bug. (A player who
-  wants Brewed Froglights uses the physical loop.)
-- **Midas** production is gated by `equivalenceEnabled`; off -> a loaded Midas frog idles.
+The frog's stats, the feedstock's catalysts, and the installed upgrades all feed the formula:
+
+- **Cycle time** = `FrogStats.appetiteCooldownTicks(effectiveAppetite, ...)`, where
+  `effectiveAppetite` = frog Appetite **+ Appetite upgrades**, further shortened by the
+  feedstock's **Rapid** (speed) catalyst level.
+- **Count** = `batchQuantity(teemingLevel) x bountyDropCount(effectiveBounty)`, where
+  `teemingLevel` = the feedstock's **Teeming** catalyst and `effectiveBounty` = frog Bounty
+  **+ Bounty upgrades**. (For predators, Bounty also raises Looting via `bountyLootingLevel`.)
+- **Budget** grows with the feedstock's **Bountiful** catalyst (and a Capacity upgrade); the
+  **Endless** catalyst (or an Everflow upgrade) stops depletion.
+
+Mob Slurry reuses the **same milk catalysts** (the "slurry catalyst" = `MilkCatalyst`
+COUNT/SPEED/QUANTITY/INFINITE, applied exactly as `AbstractBasinBlockEntity` already does), so
+there is no separate slurry-catalyst item.
+
+### Rules it follows
+
+- **Match gate.** Resource: the milk's category must equal the frog's `getCategory()`. Midas:
+  the feedstock must be Mimic Milk. Predator: the slurried mob must be valid prey for the loaded
+  predator (`PredatorPrey.predatorFor(registry, type) == frog.getKind()`). Mismatch -> idle.
+- **Bounty** scales count (and predator Looting); **Appetite** scales cycle time; **Reach does
+  nothing** in a single block (no Reach upgrade).
+- **Feedstock depletes** unless Endless.
+- **Backpressure:** a full output pauses production; nothing voided.
+- **Midas** gated by `equivalenceEnabled`; **Predator** gated by `predatorsEnabled` - a loaded
+  frog of a disabled kind idles.
+- **Brewed Froglights are NOT produced** (the effect is captured from a live slime's active
+  effects; the virtual loop has none). Documented limitation.
+- **Predator loot is loot-table only** (see caveat) - it does not reproduce hardcoded
+  `dropCustomDeathLoot` drops the open predator eat gets from the real death pipeline.
 
 ### Upgrades
 
-Upgrade slots (proposed **4**) accept a **new family of dedicated upgrade items** built
-for the Virtual Terrarium (Productive Bees style) - installed persistently, not consumed
-per batch, and returned when the block is broken or the upgrade pulled out. Each drives one
-lever of the eat loop through `MilkSpawnEconomy`/`FrogStats`; installing several of the same
-type stacks up to a cap:
+A **vertical column** of slots accepts a **new family of dedicated upgrade items** (Productive
+Bees style), installed persistently, returned on break. Three groups:
 
-| Upgrade | Effect | Cap |
-|---------|--------|-----|
-| Speed | shortens the eat cadence | speed level cap (default 4) |
-| Yield | more Froglights per event | quantity cap (default 3) |
-| Capacity | raises the milk-budget the tank holds | (new lever) |
-| Everflow | the tank never depletes | the Endless/infinite behavior |
+**Stat upgrades** stack on the frog's own stats in the formula (a good frog + good upgrades
+compound; each type stacks up to a cap):
 
-These are **distinct from the milk catalysts** (which tune placed milk sources): a Virtual
-Terrarium is tuned by its *installed upgrades*, and the fed milk provides only the variant
-and its base budget (any catalyst components on the milk are ignored for the block's own
-tuning). New items mean new textures + recipes to design and balance; tiering them (as
-Productive Bees does) is optional and deferred. Names/textures/recipes/tiers are an open
-sub-decision.
+| Upgrade | Effect |
+|---------|--------|
+| **Bounty** | adds to the frog's Bounty -> more product per cycle (and higher predator Looting) |
+| **Appetite** | adds to the frog's Appetite -> shorter cycle (the "speed" lever) |
 
-### Output
+**Processing upgrades** transform the item output, and are **mutually exclusive** (the block
+refuses both):
 
-An internal output inventory (proposed 9-18 slots) of Froglights (or Prismatic
-Froglights). Extractable/pipeable on the **DOWN** face via `Capabilities.Item.BLOCK`
-(PF's furnace-style side convention); other faces are milk intake.
+| Upgrade | Effect |
+|---------|--------|
+| **Smelter** | auto-smelts each Froglight/drop the instant it is made - the output holds the **smelted result** (iron Froglight -> iron ingot), via the item's vanilla smelting recipe |
+| **Melter** | auto-melts each Froglight (Crucible logic) into its **molten fluid**; the item output routes to a **molten tank** (see Output) |
+
+Items with no smelting/melting result **pass through unprocessed**. Auto-processing is free (no
+fuel/heat) - an ergonomic convenience, flagged as a balance point.
+
+**Economy upgrades** (from the milk model): **Capacity** raises the feedstock budget the tank
+holds; **Everflow** stops depletion.
+
+The upgrade item family (names, textures, recipes, tiers) is an open sub-decision.
+
+### Output (adaptive)
+
+The Processor routes each product to the right sink:
+
+- **Item output** - Froglights / Prismatic Froglights / mob loot, or their **smelted** form with
+  a Smelter. Extractable on the **DOWN** face (`Capabilities.Item.BLOCK`).
+- **Molten tank** - present when a **Melter** is installed; the Froglights' molten metal.
+  Extractable as fluid on DOWN (`Capabilities.Fluid.BLOCK`).
+- **Liquid Experience tank** - present whenever a **Predator** runs; the mob's XP as fluid
+  (`LiquidExperienceFluid`, 20 mB/point). Extractable as fluid.
+
+So the block has one feedstock in-tank plus, by role, an item output and up to two product tanks.
+Backpressure applies to whichever sink is in use. The GUI shows a **duration bar** (fills over
+the cycle, resets on yield), the frog slot, the feedstock gauge, the upgrade column, and the
+active output form (item grid / molten gauge / XP gauge).
 
 ### Visual feedback
 
-- **Jade (required):** loaded frog kind + stats, milk variant + remaining budget, output
-  fullness, and whether it is currently producing (and if idle, why - no frog / no milk /
-  category mismatch / output full). Server-data provider, the pattern we already use.
-- **Live model (required for v1):** a `BlockEntityRenderer` draws the **actual loaded
-  frog**, kind-tinted, in/on the block - the approach the altar display frogs
-  (Dragonsbane/Witherbane/...) already use - and the block/tank **tints to the milk's
-  variant color** (`Category.tintArgb()` / the variant color). Empty block shows no frog.
-  This is a real render task; budget for it in the build.
+- **Two Processor textures - inactive and active (required).** A clearly different look idle vs
+  producing, readable at a glance. Sleek, **Void-tier materials** (End / void-themed - dark,
+  glassy, purple).
+- **The Dome renders the live loop (required):** a `BlockEntityRenderer` on the Dome draws the
+  loaded frog (kind-tinted), a slime tinted to the feedstock variant, idle/eat animations, and
+  terrarium ambiance. Empty -> just the dome.
+- **Jade (required):** frog kind + stats, feedstock kind/variant + remaining, output fullness,
+  and the produce/idle reason (no dome / no frog / no feedstock / mismatch / output full).
 
 ## Reuse map (build on these, do not reinvent)
 
 | Need | Reuse |
 |------|-------|
-| Construct a Froglight from a variant | `FrogTongueDropHandler.buildFroglight(Identifier, StoredEffect)` |
-| Construct a Prismatic Froglight | `MidasTongueDropHandler.buildPrismaticFroglight(Identifier)` |
+| Froglight from a variant | `FrogTongueDropHandler.buildFroglight(Identifier, StoredEffect)` |
+| Prismatic Froglight | `MidasTongueDropHandler.buildPrismaticFroglight(Identifier)` |
+| **Entity-free mob-loot roll** | `BossAltarHatchBlockEntity.rollLoot(server, pos, phantomType, tableKey, keep)` - throwaway `EntityType.create()` phantom + `LootContextParamSets.ENTITY`; resolve table via `EntityType.getDefaultLootTable()` (Optional) |
+| Looting from Bounty | `FrogStats.bountyLootingLevel(bounty, cap)` (0..III) |
 | Drop count from Bounty | `FrogStats.bountyDropCount(bounty, maxDrops, cap)` |
-| Eat cadence from Appetite | `FrogStats.appetiteCooldownTicks(appetite, ...)` |
+| Cycle time from Appetite | `FrogStats.appetiteCooldownTicks(appetite, ...)` |
 | Interval/batch + catalyst math | `MilkSpawnEconomy.intervalTicks` / `batchQuantity` |
-| Milk stats (variant, catalyst levels, budget) | `MilkCharge.fromBucket/fromFluid` |
+| Feedstock stats (variant/mob, catalysts, budget) | `MilkCharge.fromBucket/fromFluid`; `MobSlurryBucketItem.entityOf` / `SLURRIED_ENTITY` |
+| Prey eligibility | `PredatorPrey.predatorFor(registry, EntityType)` |
+| XP -> Liquid Experience | `LiquidExperienceFluid.pointsToMb(points)` (20 mB/point) |
 | Frog kind/stats off a net stack | `EntityNetItem.isFilled`, `CUSTOM_DATA`, `FrogKind.readFromTag` |
-| Variant -> category | `PFRegistries.variant(...).category()` |
-| Block shape + capability wiring | Slime Milker (`SlimeMilkerBlock`/BE/Inventory/Menu/Screen); `PFModBusEvents.registerCapabilities`; `content/transfer/` adapters (`FluidTankResourceHandler`, `RestrictedItemResourceHandler`) |
-| Single-variant fill-only intake | `TerrariumControllerBlockEntity`'s hand-rolled fill-only `ResourceHandler` + `SnapshotJournal` |
+| Slurry catalysts = milk catalysts | `MilkCatalyst` + `AbstractBasinBlockEntity.applyCatalyst` |
+| Block + capability wiring | Slime Milker (`SlimeMilkerBlock`/BE/Inventory/Menu/Screen); `PFModBusEvents.registerCapabilities`; `content/transfer/` adapters; the Terrarium Controller's fill-only tank + `SnapshotJournal` |
+| Display-frog rendering | the altar display frogs (Dragonsbane/... BER) |
+
+### Predator-path caveats (documented, not bugs)
+
+- **Loot-table only.** `rollLoot` rolls the mob's loot table; it **misses code-side
+  `dropCustomDeathLoot`** drops (some mobs add drops in code, not the table). The open predator
+  eat gets these free via the real death pipeline; the virtual kill will not. Acceptable for a
+  convenience block; note it in the guide.
+- **XP must be derived.** Boss altars pay a *fixed config* XP; there is no helper for a mob's
+  real XP. Derive it (a mob-XP helper or a config default) for the Liquid Experience payout.
+- **Phantom sees default state.** Loot conditions reading live entity flags (on fire, in water)
+  see a freshly-created phantom, so a few state-keyed drops may differ from a real kill.
+- **No default table** -> that mob produces no loot (handle the empty `Optional`).
 
 ## Acceptance criteria
 
-1. **Load a frog.** Right-clicking (or GUI-inserting) a filled Frog Net holding a
-   Resource frog loads it; the block reports loaded; a non-Resource/non-Midas net is
-   refused with no loss.
-2. **Produce on match.** With a Resource frog loaded and matching-category Slime Milk in
-   the tank, Froglights of the milk's variant appear in the output on the eat cadence, no
-   power supplied.
-3. **Idle on mismatch.** A frog whose category differs from the milk variant (Cave frog +
-   Bog milk) produces nothing and Jade says "category mismatch."
-4. **Bounty scales count.** Froglights per event follow `FrogStats.bountyDropCount`
-   (default 1 at Bounty 1-4, 2 at 5-8, 3 at 9-10), times the quantity multiplier.
-5. **Appetite scales rate.** A higher-Appetite frog produces faster; a lower one slower.
-6. **Upgrades apply.** Installing a Speed upgrade shortens the cadence; Yield raises
-   per-event count; Capacity raises tank budget; Everflow stops depletion. Removing an
-   upgrade reverts the effect, and upgrades are returned on break.
-7. **Milk depletes.** Without Endless, the tank's budget falls with production and, when
-   empty, the block idles ("no milk"); with Endless it never empties.
-8. **Backpressure.** A full output inventory pauses production with nothing voided;
-   clearing it resumes.
-9. **Midas path.** A Midas frog + Mimic Milk yields Prismatic Froglights when
-   `equivalenceEnabled`; with equivalence off, a loaded Midas frog idles.
-10. **No power.** The block never asks for or accepts RF; it runs on milk alone.
-11. **Automation I/O.** The DOWN face outputs Froglights to a hopper/pipe; a fluid pipe
-    fills the tank; other faces do not output items.
-12. **Jade + render.** Jade shows frog kind, milk variant + remaining, output fullness,
-    and the produce/idle reason. The loaded frog renders in the block (kind-tinted) and the
-    block tints to the milk's variant color; an empty block shows no frog.
-13. **No loss on break.** Breaking the block drops the loaded frog as a filled Frog Net
-    (stats intact - the #210 whole-entity rule) and the remaining milk as bucket(s) or
-    voids nothing it can return; installed upgrades drop too.
-14. **Throughput parity.** One Virtual Terrarium's output rate is within tolerance of one
-    physical-Terrarium frog at equal stats + equal upgrades (the "normal per-frog rate"
-    ruling), and below a maxed multiblock's total.
-15. **GameTest lock.** A registry GameTest asserts: variant match -> correct-variant
-    Froglight; mismatch -> nothing; Bounty count curve; Endless non-depletion; output-full
-    backpressure. (Client visuals - tint, model, Jade - verified by a manual `runClient`
-    pass; GameTest is render-blind.)
+1. **Forms from two blocks.** A Processor with a Dome directly above forms the Virtual Terrarium;
+   without the Dome (or after it breaks) the Processor does not run and Jade says "no dome". Both
+   blocks are separately craftable.
+2. **Load a frog.** Inserting a filled Frog Net holding a Resource/Midas/Predator frog loads it;
+   an Apex net is refused with no loss.
+3. **Resource path.** Resource frog + matching-category Slime Milk -> variant Froglights in the
+   item output, no power, on the cycle cadence.
+4. **Midas path.** Midas frog + Mimic Milk -> Prismatic Froglights when `equivalenceEnabled`; off
+   -> idle.
+5. **Predator path.** Predator frog + Mob Slurry of a valid prey mob -> that mob's loot in the
+   item output (Looting scaled by Bounty) **plus** Liquid Experience in the XP tank. Invalid prey
+   for that predator -> idle.
+6. **Match gate.** Category mismatch (Cave frog + Bog milk), wrong feedstock for the kind, or a
+   mob the predator can't eat -> no production, Jade names the reason.
+7. **Bounty scales.** Product count follows `bountyDropCount`; predator Looting follows
+   `bountyLootingLevel` (0..III).
+8. **Appetite scales.** Higher Appetite -> shorter cycle.
+9. **Upgrades apply.** Bounty/Appetite upgrades stack on the frog's stats; Capacity raises budget;
+   Everflow stops depletion; removing one reverts it; all returned on break.
+10. **Smelter.** With a Smelter, the item output holds smelted results, never raw Froglights;
+    unsmeltable products pass through.
+11. **Melter.** With a Melter, molten output routes to a fluid tank (metal -> molten metal,
+    Water/Lava -> water/lava); unmeltable products pass through as items. Smelter + Melter cannot
+    both be installed.
+12. **Catalysts factor.** Rapid/Teeming/Bountiful/Endless on the fed milk *or slurry* speed up /
+    add count / extend budget / stop depletion, stacking with the stat upgrades.
+13. **No power.** Never asks for or accepts RF.
+14. **Automation I/O.** DOWN outputs items (and the fluid tanks); pipes fill the feedstock tank
+    and drain the product tanks; other faces don't output items.
+15. **Ergonomics.** Distinct inactive vs active Processor texture; the Dome renders the loaded
+    frog + a feedstock-tinted slime + animations; the GUI duration bar tracks the cycle; Jade
+    shows contents + reason.
+16. **No loss on break.** Breaking the Processor returns the frog (filled net, stats intact),
+    the feedstock, the upgrades, and any banked product; the Dome drops as itself.
+17. **Throughput parity.** One un-upgraded unit on plain feedstock is within tolerance of one
+    physical-Terrarium frog, and below a maxed multiblock's total.
+18. **GameTest lock.** Registry GameTests assert: forms only with the Dome; each path's match ->
+    correct product; mismatch -> nothing; Bounty count + Looting; Smelter/Melter output form +
+    mutual exclusion; Endless non-depletion; predator loot-table roll + Liquid Experience payout;
+    output-full backpressure. (Client visuals - textures, Dome render, Jade - verified by a manual
+    `runClient` pass; GameTest is render-blind.)
 
 ## Registration / wiring checklist (for the build PR)
 
-- `content/block/VirtualTerrariumBlock` (LIT/loaded-style state, wires the BE ticker) +
-  `content/block/entity/VirtualTerrariumBlockEntity` (`MenuProvider`; frog slot + fluid
-  tank + upgrade slots + output; `static serverTick` eat-emulation loop) +
-  `VirtualTerrariumInventory` + `content/menu/VirtualTerrariumMenu` +
-  `client/screen/VirtualTerrariumScreen`.
-- `PFBlocks` / `PFItems` (BlockItem + the new upgrade items) / `PFBlockEntities` /
-  `PFMenuTypes` / `PFCreativeTabs` (after the appliances).
-- The **upgrade item family** (Speed / Yield / Capacity / Everflow) - items, models,
-  textures, recipes, and a `virtual_terrarium_upgrade` item tag for the slot filter.
-- A **`BlockEntityRenderer`** drawing the loaded frog (kind-tinted; reuse the altar
-  display-frog rendering) + the milk-color tint; registered client-side.
-- Capabilities in `PFModBusEvents.registerCapabilities`: `Fluid.BLOCK` (fill-only tank),
-  `Item.BLOCK` (DOWN = output).
-- Blockstate + model + textures (gen/ pipeline); loot table (returns frog + milk +
-  upgrades); `mineable/pickaxe` tag; lang (name + tooltip + Jade + the idle reasons).
-- Void-tier crafting recipe (balance pass) + a `config_enabled` gate if we add
-  `virtualTerrarium.enabled`.
-- Jade provider (server-data), split per the Jade 26.1 single-interface rule.
-- Guide: an entry under the Terrarium or Appliances chapter (Modonomicon).
-- GameTests per AC 15.
+- **Processor:** `content/block/VirtualTerrariumProcessorBlock` (inactive/active state, formed
+  state, wires the BE ticker) + `.../entity/VirtualTerrariumBlockEntity` (`MenuProvider`; frog
+  slot + feedstock tank + upgrade column + item output + molten/XP tanks; `static serverTick`
+  eat-emulation + Dome-above check) + `VirtualTerrariumInventory` + `content/menu/...Menu` +
+  `client/screen/...Screen` (with the duration bar + adaptive output).
+- **Display Dome:** `content/block/VirtualTerrariumDomeBlock` (+ a light BE if the renderer needs
+  per-instance state) + the `BlockEntityRenderer` (loaded frog, feedstock-tinted slime,
+  animations; reuse the altar display-frog render).
+- **Shared helper:** extract/reuse `rollLoot` as an entity-free `(EntityType, tableKey, looting,
+  fakePlayer) -> drops` helper; plus a mob-XP -> points helper for the Liquid Experience payout.
+- `PFBlocks` / `PFItems` (two BlockItems + the upgrade items) / `PFBlockEntities` / `PFMenuTypes`
+  / `PFCreativeTabs`; capabilities in `PFModBusEvents` (Fluid.BLOCK feedstock fill-only + product
+  tanks; Item.BLOCK DOWN output).
+- The **upgrade item family** (Bounty / Appetite / Smelter / Melter / Capacity / Everflow) - items,
+  models, textures, recipes, and a `virtual_terrarium_upgrade` item tag for the slot filter.
+- Blockstates + models + textures (gen/ pipeline; the void-tier inactive/active Processor + the
+  glass Dome); loot tables (Processor returns frog + feedstock + upgrades + banked product; Dome
+  returns itself); `mineable/pickaxe`; lang (names + tooltips + Jade + idle reasons).
+- Void-tier crafting recipes (balance pass) + a `virtualTerrarium.enabled` config gate.
+- Jade provider (server-data, single-interface split per the Jade 26.1 rule).
+- Guide entry (Modonomicon), under the Terrarium or Appliances chapter.
+- GameTests per AC 18.
 
 ## Decisions to finalize (before build)
 
-1. **Upgrade item family** - names, textures, recipes, and whether they are tiered. The
-   four levers are set (Speed, Yield, Capacity, Everflow); only the item design is open.
-2. **Cadence basis** - Appetite-cooldown (lead) vs milk spawn interval vs a blend.
-3. **Slot counts** - upgrade slots (lead 4), output slots (lead 9).
-4. **Config gate** - ship a `virtualTerrarium.enabled` flag? (Lead: yes, default on.)
-5. **Void-tier recipe** - the actual ingredient list for the block (balance pass).
+1. **Upgrade item family** - names, textures, recipes, tiers. The levers are set (Bounty,
+   Appetite, Smelter, Melter, Capacity, Everflow); only the item design is open.
+2. **Predator XP payout** - derive from the mob's real XP (a helper) vs a config default per mob
+   / a flat value. And confirm the loot-table-only divergence (missing `dropCustomDeathLoot`) is
+   acceptable, or whether a short allowlist of code-side drops is worth adding.
+3. **Cadence basis** - Appetite-cooldown (lead) vs feedstock spawn interval vs a blend.
+4. **Slot counts** - upgrade slots (lead 4-6), item-output slots (lead 9).
+5. **Auto-process balance** - free Smelter/Melter (lead, for ergonomics) vs a small cost.
+6. **Void-tier recipes** - the actual ingredient lists for both blocks + the upgrade items.
+7. **Config gate** - ship `virtualTerrarium.enabled`? (Lead: yes, default on.)
