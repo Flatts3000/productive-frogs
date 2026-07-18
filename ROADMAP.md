@@ -178,7 +178,7 @@ The post-capstone transmutation lane - an opt-in, RF-powered equivalent-exchange
 Held until closer to release by maintainer ruling (2026-07-05), tracked in #317/#318:
 
 - **Cross-mod integrations** beyond JEI + Jade - wave-1 parity work (AllTheOres, Powah, Just Dire Things, Refined Storage, AE2, Curios, Apothic Enchanting) is complete and parked on `feat/crossmod-wave1` / `feat/curios-26.1`; wave 2 waits on partner-mod 26.1 ports.
-- **The in-game guide book** - Patchouli has no 26.1 build; engine survey done (Modonomicon leading candidate), content rewrite pending.
+- **The in-game guide book** - engine decided (Modonomicon `26.1.2-neoforge:2.1.0`, soft-dep); scope, chapter map, and voice specced in `docs/guidebook.md`. Content rewrite pending (skeleton proof-of-fit first, per #318).
 - Release-type promotion (alpha -> beta -> release) as the line soaks.
 
 > Automation (the Terrarium, appliance hopper I/O) already shipped in the **1.x** line - "V2 is just a name, not a rule." The former "v2 = automation" framing is retired. Remaining automation ideas (buffered auto-cycling Milker, auto-feeders, capacity/efficiency upgrades, FE / NeoForge Energy power compat) carry forward as **2.x** candidates layered on the 26.1 base.
