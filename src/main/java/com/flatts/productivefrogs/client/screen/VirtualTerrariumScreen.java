@@ -1,10 +1,14 @@
 package com.flatts.productivefrogs.client.screen;
 
+import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
+import com.flatts.productivefrogs.client.color.Tints;
 import com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity;
 import com.flatts.productivefrogs.content.menu.VirtualTerrariumMenu;
 import com.flatts.productivefrogs.content.multiblock.MilkCharge;
+import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFFluids;
+import com.flatts.productivefrogs.util.VariantNames;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -16,6 +20,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Client screen for the Virtual Terrarium Processor: a bespoke void-tier panel
@@ -103,6 +108,23 @@ public class VirtualTerrariumScreen extends PFContainerScreen<VirtualTerrariumMe
     }
 
     @Override
+    protected void extractLabels(GuiGraphicsExtractor gui, int mouseX, int mouseY) {
+        super.extractLabels(gui, mouseX, mouseY);
+        VirtualTerrariumBlockEntity.Status status = this.menu.getStatus();
+        if (status == VirtualTerrariumBlockEntity.Status.PRODUCING) {
+            return;
+        }
+        Component text = Component.translatable(
+            "productivefrogs.gui.vt.status." + status.name().toLowerCase(Locale.ROOT));
+        int color = switch (status) {
+            case MISMATCH -> 0xFFB0322A;      // red: the frog can't eat this feedstock
+            case NEEDS_POWER -> 0xFFB07A20;   // amber
+            default -> 0xFF707070;            // gray: just not set up yet
+        };
+        gui.text(this.font, text.getString(), 8, 74, color);
+    }
+
+    @Override
     protected void extractTooltip(GuiGraphicsExtractor gui, int mouseX, int mouseY) {
         super.extractTooltip(gui, mouseX, mouseY);
         int x = (this.width - this.imageWidth) / 2;
@@ -133,6 +155,13 @@ public class VirtualTerrariumScreen extends PFContainerScreen<VirtualTerrariumMe
     private int feedstockColor() {
         FluidStack fluid = feedstock();
         if (fluid.is(PFFluids.SLIME_MILK.get())) {
+            Identifier variant = fluid.get(PFDataComponents.SLIME_VARIANT.get());
+            if (variant != null && this.minecraft != null) {
+                int argb = Tints.variantColor(this.minecraft.level, variant);
+                if (argb != -1) {
+                    return argb;   // the actual per-variant Slime Milk tint
+                }
+            }
             return 0xFFB8E0C0;
         }
         if (fluid.is(PFFluids.MIMIC_MILK.get())) {
@@ -161,21 +190,39 @@ public class VirtualTerrariumScreen extends PFContainerScreen<VirtualTerrariumMe
             lines.add(Component.translatable("productivefrogs.gui.fluid_empty"));
             return lines;
         }
-        lines.add(fluid.getHoverName());
+        lines.add(feedstockName(fluid));   // variant-aware ("Iron Slime Milk")
         lines.add(Component.translatable("productivefrogs.gui.fluid_amount",
             this.menu.getFeedstockAmount(), VirtualTerrariumBlockEntity.FEEDSTOCK_CAPACITY)
             .withStyle(ChatFormatting.GRAY));
+        // The milk's stamped stats (matches the bucket / milk-source readout).
         MilkCharge charge = MilkCharge.fromFluid(fluid);
         if (charge.infinite()) {
-            lines.add(Component.translatable("productivefrogs.gui.vt.endless").withStyle(ChatFormatting.AQUA));
+            lines.add(Component.translatable("productivefrogs.jade.spawns_unlimited").withStyle(ChatFormatting.GRAY));
+        } else {
+            lines.add(Component.translatable("productivefrogs.jade.spawns_left",
+                charge.spawnsRemaining(), charge.capacity()).withStyle(ChatFormatting.GRAY));
         }
         if (charge.speed() > 0) {
-            lines.add(Component.translatable("productivefrogs.gui.vt.speed", charge.speed()).withStyle(ChatFormatting.AQUA));
+            lines.add(Component.translatable("productivefrogs.jade.catalyst_speed",
+                charge.speed(), PFConfig.catalystMaxSpeedLevel()).withStyle(ChatFormatting.GRAY));
         }
         if (charge.quantity() > 0) {
-            lines.add(Component.translatable("productivefrogs.gui.vt.quantity", charge.quantity()).withStyle(ChatFormatting.AQUA));
+            lines.add(Component.translatable("productivefrogs.jade.catalyst_quantity",
+                charge.quantity(), PFConfig.catalystMaxQuantityLevel()).withStyle(ChatFormatting.GRAY));
         }
         return lines;
+    }
+
+    /** Variant-aware feedstock name ("Iron Slime Milk"); falls back to the fluid's hover name. */
+    private static Component feedstockName(FluidStack fluid) {
+        if (fluid.is(PFFluids.SLIME_MILK.get())) {
+            Identifier variant = fluid.get(PFDataComponents.SLIME_VARIANT.get());
+            if (variant != null) {
+                return Component.translatable("item.productivefrogs.slime_milk_bucket.item",
+                    VariantNames.titleCase(variant));
+            }
+        }
+        return fluid.getHoverName();
     }
 
     private List<Component> productTooltip() {

@@ -61,8 +61,8 @@ public final class VirtualTerrariumTests {
             VirtualTerrariumTests::predatorProducesLootAndLiquidXp);
         PFGameTests.test("vt_smelter_yields_smelted_output", 40,
             VirtualTerrariumTests::smelterYieldsSmeltedOutput);
-        PFGameTests.test("vt_smelter_hard_stalls_without_rf", 40,
-            VirtualTerrariumTests::smelterHardStallsWithoutRf);
+        PFGameTests.test("vt_smelter_needs_no_rf", 40,
+            VirtualTerrariumTests::smelterNeedsNoRf);
         PFGameTests.test("vt_overclock_shortens_interval", 40,
             VirtualTerrariumTests::overclockShortensInterval);
         PFGameTests.test("vt_no_dome_does_not_run", 40,
@@ -75,8 +75,8 @@ public final class VirtualTerrariumTests {
         // Melter upgrade (the Smelter's molten-fluid sibling).
         PFGameTests.test("vt_melter_yields_molten_fluid", 40,
             VirtualTerrariumTests::melterYieldsMoltenFluid);
-        PFGameTests.test("vt_melter_hard_stalls_without_rf", 40,
-            VirtualTerrariumTests::melterHardStallsWithoutRf);
+        PFGameTests.test("vt_melter_needs_no_rf", 40,
+            VirtualTerrariumTests::melterNeedsNoRf);
         PFGameTests.test("vt_melter_not_charged_on_predator", 40,
             VirtualTerrariumTests::melterNotChargedOnPredator);
         // Stat-stacking upgrades.
@@ -86,6 +86,8 @@ public final class VirtualTerrariumTests {
             VirtualTerrariumTests::appetiteUpgradeShortensInterval);
         PFGameTests.test("vt_overclock_stacks_capped", 40,
             VirtualTerrariumTests::overclockStacksCapped);
+        PFGameTests.test("vt_overclock_no_power_holds_progress", 40,
+            VirtualTerrariumTests::overclockNoPowerHoldsProgress);
         // Backpressure + fluid refund.
         PFGameTests.test("vt_output_full_stalls_production", 40,
             VirtualTerrariumTests::outputFullStallsProduction);
@@ -201,21 +203,20 @@ public final class VirtualTerrariumTests {
         helper.succeed();
     }
 
-    /** Smelter upgrade with an empty RF buffer: a hard stall, no output at all. */
-    private static void smelterHardStallsWithoutRf(GameTestHelper helper) {
+    /** The Smelter draws no RF: it smelts with an empty energy buffer. */
+    private static void smelterNeedsNoRf(GameTestHelper helper) {
         VirtualTerrariumBlockEntity be = placeProcessor(helper, true);
         loadFrog(be, FrogKind.resource(Category.CAVE));
-        be.getInventory().setStackInSlot(VirtualTerrariumInventory.UPGRADE_START,
-            new ItemStack(PFItems.VT_UPGRADE_SMELTER.get()));
+        installUpgrade(be, 0, PFItems.VT_UPGRADE_SMELTER.get());
         be.getFeedstock().setFluid(slimeMilk(pf("copper"), 0));
-        // deliberately no fillEnergy: the Smelter's RF cost cannot be paid
+        // deliberately no fillEnergy: only Overclock costs RF, so the Smelter still runs
 
         runCycle(helper, be);
 
-        helper.assertTrue(firstOutput(be).isEmpty(),
-            "an unpowered Smelter must hard-stall (no output)");
-        helper.assertTrue(be.getFeedstock().getFluidAmount() == VirtualTerrariumBlockEntity.FEEDSTOCK_CAPACITY,
-            "a hard-stalled cycle must not consume feedstock");
+        ItemStack out = firstOutput(be);
+        helper.assertFalse(out.isEmpty(), "the Smelter must run without RF");
+        helper.assertTrue(out.is(Items.COPPER_INGOT),
+            "the Smelter must smelt the Copper Froglight to a copper ingot with no power, got " + out);
         helper.succeed();
     }
 
@@ -319,20 +320,19 @@ public final class VirtualTerrariumTests {
         helper.succeed();
     }
 
-    /** Melter with an empty RF buffer: hard stall - no molten, no output, no feedstock drain. */
-    private static void melterHardStallsWithoutRf(GameTestHelper helper) {
+    /** The Melter draws no RF: it melts with an empty energy buffer. */
+    private static void melterNeedsNoRf(GameTestHelper helper) {
         VirtualTerrariumBlockEntity be = placeProcessor(helper, true);
         loadFrog(be, FrogKind.resource(Category.CAVE));
         installUpgrade(be, 0, PFItems.VT_UPGRADE_MELTER.get());
         be.getFeedstock().setFluid(slimeMilk(pf("copper"), 0));
-        // deliberately no fillEnergy
+        // deliberately no fillEnergy: only Overclock costs RF, so the Melter still runs
 
         runCycle(helper, be);
 
-        helper.assertTrue(be.getMoltenTank().getFluidAmount() == 0, "an unpowered Melter must produce no molten");
-        helper.assertTrue(firstOutput(be).isEmpty(), "an unpowered Melter must produce no output");
-        helper.assertTrue(be.getFeedstock().getFluidAmount() == VirtualTerrariumBlockEntity.FEEDSTOCK_CAPACITY,
-            "a hard-stalled Melter cycle must not consume feedstock");
+        helper.assertTrue(be.getMoltenTank().getFluidAmount() > 0,
+            "the Melter must melt the Copper Froglight without RF");
+        helper.assertTrue(firstOutput(be).isEmpty(), "a melted Froglight must not land in the item output");
         helper.succeed();
     }
 
@@ -430,6 +430,24 @@ public final class VirtualTerrariumTests {
         helper.succeed();
     }
 
+    /** An unpaid Overclock holds progress at zero (not frozen at full) and produces nothing. */
+    private static void overclockNoPowerHoldsProgress(GameTestHelper helper) {
+        VirtualTerrariumBlockEntity be = placeProcessor(helper, true);
+        loadFrog(be, FrogKind.resource(Category.CAVE));
+        installUpgrade(be, 0, PFItems.VT_UPGRADE_OVERCLOCK.get());
+        be.getFeedstock().setFluid(slimeMilk(pf("copper"), 0));
+        // no fillEnergy: the Overclock cannot be paid
+
+        runCycle(helper, be);
+
+        helper.assertTrue(firstOutput(be).isEmpty(), "an unpaid Overclock must not produce");
+        helper.assertTrue(be.getDataAccess().get(VirtualTerrariumBlockEntity.DATA_PROGRESS) == 0,
+            "an unpaid Overclock must hold progress at zero, not freeze at full");
+        helper.assertTrue(be.getFeedstock().getFluidAmount() == VirtualTerrariumBlockEntity.FEEDSTOCK_CAPACITY,
+            "a power-stalled cycle must not consume feedstock");
+        helper.succeed();
+    }
+
     // -- backpressure + fluid refund --
 
     /** Every output slot jammed with a non-mergeable stack: production stalls, no feedstock consumed. */
@@ -493,10 +511,10 @@ public final class VirtualTerrariumTests {
         helper.assertTrue(be.status() == VirtualTerrariumBlockEntity.Status.PRODUCING,
             "matched feedstock -> PRODUCING, got " + be.status());
 
-        // A Smelter with an empty RF buffer -> needs power.
-        installUpgrade(be, 0, PFItems.VT_UPGRADE_SMELTER.get());
+        // An Overclock with an empty RF buffer -> needs power (the only upgrade that draws RF).
+        installUpgrade(be, 0, PFItems.VT_UPGRADE_OVERCLOCK.get());
         helper.assertTrue(be.status() == VirtualTerrariumBlockEntity.Status.NEEDS_POWER,
-            "powered upgrade + empty buffer -> NEEDS_POWER, got " + be.status());
+            "Overclock + empty buffer -> NEEDS_POWER, got " + be.status());
         helper.succeed();
     }
 

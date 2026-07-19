@@ -141,6 +141,13 @@ public class VirtualTerrariumMenu extends AbstractContainerMenu {
         return (hi << 16) | lo;
     }
 
+    /** The synced idle/error status, for the GUI status line. */
+    public VirtualTerrariumBlockEntity.Status getStatus() {
+        int ordinal = dataAccess.get(VirtualTerrariumBlockEntity.DATA_STATUS);
+        VirtualTerrariumBlockEntity.Status[] values = VirtualTerrariumBlockEntity.Status.values();
+        return ordinal >= 0 && ordinal < values.length ? values[ordinal] : VirtualTerrariumBlockEntity.Status.PRODUCING;
+    }
+
     /** The client-synced BlockEntity, or null - for the gauge fluid types + upgrade state. */
     public VirtualTerrariumBlockEntity blockEntity() {
         return blockEntity;

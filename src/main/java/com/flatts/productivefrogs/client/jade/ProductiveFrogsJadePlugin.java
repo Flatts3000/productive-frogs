@@ -584,8 +584,19 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 data.putString("Feed",
                     net.minecraft.core.registries.BuiltInRegistries.FLUID.getKey(fluid.getFluid()).toString());
                 data.putInt("FeedAmt", fluid.getAmount());
+                Identifier variant = fluid.get(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get());
+                if (variant != null) {
+                    data.putString("FeedVariant", variant.toString());
+                }
+                com.flatts.productivefrogs.content.multiblock.MilkCharge charge =
+                    com.flatts.productivefrogs.content.multiblock.MilkCharge.fromFluid(fluid);
+                data.putInt("FeedSpawns", charge.spawnsRemaining());
+                data.putInt("FeedCap", charge.capacity());
+                data.putInt("FeedSpeed", charge.speed());
+                data.putInt("FeedQty", charge.quantity());
+                data.putBoolean("FeedInfinite", charge.infinite());
             }
-            // RF is only a concept when a powered upgrade is installed.
+            // RF is only a concept when the Overclock upgrade is installed.
             if (be.hasPoweredUpgrade()) {
                 data.putBoolean("Powered", true);
                 data.putInt("RF", be.energyStorage().getEnergyStored());
@@ -605,14 +616,36 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                     "productivefrogs.jade.vt." + status.toLowerCase(java.util.Locale.ROOT)));
             }
             if (data.contains("FeedAmt")) {
-                Identifier id = Identifier.tryParse(data.getStringOr("Feed", ""));
-                net.minecraft.world.level.material.Fluid fluid = id == null ? null
-                    : net.minecraft.core.registries.BuiltInRegistries.FLUID.getOptional(id).orElse(null);
-                Component name = fluid == null ? Component.literal("?")
-                    : new net.neoforged.neoforge.fluids.FluidStack(fluid, 1).getHoverName();
+                Component name;
+                if (data.contains("FeedVariant")) {
+                    Identifier v = Identifier.tryParse(data.getStringOr("FeedVariant", ""));
+                    name = v == null ? Component.literal("?")
+                        : Component.translatable("item.productivefrogs.slime_milk_bucket.item",
+                            com.flatts.productivefrogs.util.VariantNames.titleCase(v));
+                } else {
+                    Identifier id = Identifier.tryParse(data.getStringOr("Feed", ""));
+                    net.minecraft.world.level.material.Fluid fluid = id == null ? null
+                        : net.minecraft.core.registries.BuiltInRegistries.FLUID.getOptional(id).orElse(null);
+                    name = fluid == null ? Component.literal("?")
+                        : new net.neoforged.neoforge.fluids.FluidStack(fluid, 1).getHoverName();
+                }
                 tooltip.add(Component.translatable("productivefrogs.jade.vt.feedstock",
                     name, data.getIntOr("FeedAmt", 0),
                     com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity.FEEDSTOCK_CAPACITY));
+                if (data.getBooleanOr("FeedInfinite", false)) {
+                    tooltip.add(Component.translatable("productivefrogs.jade.spawns_unlimited"));
+                } else {
+                    tooltip.add(Component.translatable("productivefrogs.jade.spawns_left",
+                        data.getIntOr("FeedSpawns", 0), data.getIntOr("FeedCap", 0)));
+                }
+                if (data.getIntOr("FeedSpeed", 0) > 0) {
+                    tooltip.add(Component.translatable("productivefrogs.jade.catalyst_speed",
+                        data.getIntOr("FeedSpeed", 0), com.flatts.productivefrogs.PFConfig.catalystMaxSpeedLevel()));
+                }
+                if (data.getIntOr("FeedQty", 0) > 0) {
+                    tooltip.add(Component.translatable("productivefrogs.jade.catalyst_quantity",
+                        data.getIntOr("FeedQty", 0), com.flatts.productivefrogs.PFConfig.catalystMaxQuantityLevel()));
+                }
             }
             if (data.getBooleanOr("Powered", false)) {
                 tooltip.add(Component.translatable("productivefrogs.jade.vt.rf",

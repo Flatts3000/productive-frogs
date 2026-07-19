@@ -18,12 +18,11 @@ one frog, fed its feedstock, dropping product, in something you tuck into a wall
    animations). Both crafted independently; **both required**; they **form** when the Dome
    sits directly on the Processor and **unform** if either is broken. This is a trivial
    two-block adjacency, not a validated multiblock like the physical Terrarium.
-2. **No power for the core loop; RF powers the opt-in upgrades.** The frog-eating
-   virtualization runs passively - no power. RF is drawn only by opt-in upgrades: the
-   **Smelter/Melter** (auto-processing) and the **Overclock** (a flat +50% speed). The
-   Processor gains a receive-only energy buffer (`Capabilities.Energy.BLOCK`, like the EE
-   lane's Alembic/Distiller), used *only* while a powered upgrade is installed. No such
-   upgrade -> no power needed at all.
+2. **No power for the core loop; only the Overclock draws RF.** The frog-eating virtualization
+   runs passively - no power. Smelter and Melter also run for free; **only the Overclock**
+   (a flat +50% speed) draws RF (maintainer, 2026-07-18). The Processor gains a receive-only
+   energy buffer (`Capabilities.Energy.BLOCK`, like the EE lane's Alembic/Distiller), used
+   *only* while an Overclock is installed. No Overclock -> no power needed at all.
 3. **One frog at the normal per-frog rate.** An un-upgraded frog on plain feedstock matches a
    single physical-Terrarium frog; a maxed physical Terrarium (up to 8 frogs) still out-produces
    one Virtual Terrarium, so both stay worth building. Upgrades and catalyst-buffed feedstock
@@ -151,11 +150,8 @@ refuses both):
 | **Smelter** | auto-smelts each Froglight/drop the instant it is made - the output holds the **smelted result** (iron Froglight -> iron ingot), via the item's vanilla smelting recipe |
 | **Melter** | auto-melts each Froglight (Crucible logic) into its **molten fluid**; the item output routes to a **molten tank** (see Output) |
 
-Items with no smelting/melting result **pass through unprocessed**. Auto-processing **draws RF**
-(the one place the block needs power - a receive-only buffer, see decision 2): with the RF
-buffer empty, **production stalls** entirely until power returns, and Jade says "needs power to
-smelt/melt". Hard stall, not a raw pass-through - a processing upgrade means you want the
-processed form.
+Items with no smelting/melting result **pass through unprocessed**. Smelter and Melter draw
+**no RF** - they run for free (the only upgrade that needs power is the Overclock, below).
 
 **Feedstock economy is not an upgrade** - it rides the feedstock's own catalysts (the milk
 model): a **Count/Bountiful** catalyst raises the milk's budget so a tankful lasts longer, and an
@@ -164,9 +160,10 @@ has no Capacity or Everflow upgrade.
 
 **Overclock upgrade (RF-powered):** while the energy buffer has power, the **whole cycle runs
 50% faster** - a flat block-wide boost stacking on top of the frog's Appetite and any Rapid
-catalyst. Unpowered, it is inert. This (with Smelter/Melter) is why the Processor carries an RF buffer.
-Multiple Overclocks **stack additively up to a cap** (each +50% while powered, to a ceiling set
-at the balance pass).
+catalyst. It is the **only** upgrade that draws RF - and the only reason the Processor carries an
+RF buffer. Unpowered with an Overclock installed, the block **hard-stalls at zero progress** (Jade
++ the GUI say "needs power"); pull the Overclock or supply RF to run. Multiple Overclocks **stack
+additively up to a cap** (each +50% while powered, to a ceiling set at the balance pass).
 
 The upgrade item family (names, textures, recipes, tiers) is an open sub-decision.
 
@@ -214,7 +211,7 @@ active output form (item grid / molten gauge / XP gauge).
 | Frog kind/stats off a net stack | `EntityNetItem.isFilled`, `CUSTOM_DATA`, `FrogKind.readFromTag` |
 | Slurry catalysts = milk catalysts | `MilkCatalyst` + `AbstractBasinBlockEntity.applyCatalyst` |
 | Block + capability wiring | Slime Milker (`SlimeMilkerBlock`/BE/Inventory/Menu/Screen); `PFModBusEvents.registerCapabilities`; `content/transfer/` adapters; the Terrarium Controller's fill-only tank + `SnapshotJournal` |
-| RF buffer for Smelter/Melter | `ReceiveOnlyEnergyHandler` + `Capabilities.Energy.BLOCK` (EE lane Alembic/Distiller) |
+| RF buffer for the Overclock | `ReceiveOnlyEnergyHandler` + `Capabilities.Energy.BLOCK` (EE lane Alembic/Distiller) |
 | Mob's real XP | `Entity.getExperienceReward` (per-entity) off the loot phantom, then `LiquidExperienceFluid.pointsToMb` |
 | Display-frog rendering | the altar display frogs (Dragonsbane/... BER) |
 
@@ -261,7 +258,7 @@ active output form (item grid / molten gauge / XP gauge).
 12. **Catalysts factor.** Rapid/Teeming/Bountiful/Endless on the fed milk *or slurry* speed up /
     add count / extend budget / stop depletion, stacking with the stat upgrades.
 13. **No power for the core loop.** The base frog-eating loop needs no power. Only the
-    Smelter/Melter/Overclock upgrades draw RF (receive-only); with one installed and the buffer
+    the Overclock upgrade draws RF (receive-only; Smelter/Melter are free); with one installed and the buffer
     empty, the block stalls until powered.
 14. **Automation I/O.** DOWN outputs items (and the fluid tanks); pipes fill the feedstock tank
     and drain the product tanks; other faces don't output items.

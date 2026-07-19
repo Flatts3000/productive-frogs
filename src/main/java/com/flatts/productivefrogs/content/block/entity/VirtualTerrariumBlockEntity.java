@@ -101,8 +101,7 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
 
     public static final int ENERGY_CAPACITY = 100_000;
     public static final int ENERGY_MAX_RECEIVE = 2_000;
-    private static final int SMELTER_RF_PER_CYCLE = 200;
-    private static final int MELTER_RF_PER_CYCLE = 200;
+    // Only the Overclock upgrade draws RF (the Smelter and Melter run for free).
     private static final int OVERCLOCK_RF_PER_CYCLE = 400;
     private static final int MAX_OVERCLOCK = 3;
 
@@ -113,7 +112,8 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
     // Energy (0..100k) overflows a 16-bit ContainerData slot, so it rides two shorts.
     public static final int DATA_ENERGY_LO = 4;
     public static final int DATA_ENERGY_HI = 5;
-    public static final int DATA_COUNT = 6;
+    public static final int DATA_STATUS = 6;   // Status.ordinal() - drives the GUI idle/error line
+    public static final int DATA_COUNT = 7;
 
     private static final GameProfile VT_PROFILE =
         new GameProfile(UUID.fromString("b0551a15-4a15-4a15-8a15-711711711711"), "[PF Virtual Terrarium]");
@@ -210,6 +210,7 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
                 case DATA_PRODUCT -> activeProductTank().getFluidAmount();
                 case DATA_ENERGY_LO -> energy.getEnergyStored() & 0xFFFF;
                 case DATA_ENERGY_HI -> (energy.getEnergyStored() >> 16) & 0xFFFF;
+                case DATA_STATUS -> status().ordinal();
                 default -> 0;
             };
         }
@@ -367,21 +368,14 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
         return Status.PRODUCING;
     }
 
-    /** True when a powered upgrade (Smelter / Melter / Overclock) is installed - the only case RF matters. */
+    /** True when the Overclock upgrade is installed - the only upgrade that draws RF. */
     public boolean hasPoweredUpgrade() {
-        return inventory.hasUpgrade(PFItems.VT_UPGRADE_SMELTER.get())
-            || inventory.hasUpgrade(PFItems.VT_UPGRADE_MELTER.get())
-            || inventory.hasUpgrade(PFItems.VT_UPGRADE_OVERCLOCK.get());
+        return inventory.hasUpgrade(PFItems.VT_UPGRADE_OVERCLOCK.get());
     }
 
     /** True when a powered upgrade is installed but the RF buffer can't pay this cycle. */
     private boolean powerStalled() {
-        FrogKind kind = loadedFrogKind();
-        if (kind == null) {
-            return false;
-        }
-        boolean froglightPath = kind instanceof FrogKind.Resource || kind instanceof FrogKind.Midas;
-        int cost = rfCostPerCycle(froglightPath);
+        int cost = rfCostPerCycle();
         return cost > 0 && energy.getEnergyStored() < cost;
     }
 
@@ -430,7 +424,9 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
         if (!(level instanceof ServerLevel serverLevel)) {
             return;
         }
-        if (!be.productive(serverLevel)) {
+        // Not runnable (no dome / frog / feedstock / mismatch) OR the Overclock can't be
+        // paid: hold at zero progress rather than filling the bar and freezing at full.
+        if (!be.productive(serverLevel) || be.powerStalled()) {
             be.resetProgress();
             setWorking(level, pos, state, false);
             return;
@@ -485,10 +481,9 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
 
     private void produce(ServerLevel level) {
         FrogKind kind = loadedFrogKind();
-        boolean froglightPath = kind instanceof FrogKind.Resource || kind instanceof FrogKind.Midas;
-        int rfCost = rfCostPerCycle(froglightPath);
+        int rfCost = rfCostPerCycle();
         if (rfCost > 0 && energy.getEnergyStored() < rfCost) {
-            return; // hard stall: a powered upgrade can't be paid
+            return; // hard stall: the Overclock upgrade can't be paid
         }
         FluidStack fluid = feedstock.getFluid();
         boolean produced;
@@ -687,18 +682,9 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
         return Math.max(25, (int) Math.round(FEEDSTOCK_PER_CYCLE * factor));
     }
 
-    private int rfCostPerCycle(boolean froglightPath) {
-        int cost = 0;
-        if (inventory.hasUpgrade(PFItems.VT_UPGRADE_SMELTER.get())) {
-            cost += SMELTER_RF_PER_CYCLE;
-        }
-        // The Melter only melts Froglights; it does nothing on the predator loot path,
-        // so don't charge its RF there.
-        if (froglightPath && inventory.hasUpgrade(PFItems.VT_UPGRADE_MELTER.get())) {
-            cost += MELTER_RF_PER_CYCLE;
-        }
-        cost += Math.min(MAX_OVERCLOCK, inventory.countUpgrade(PFItems.VT_UPGRADE_OVERCLOCK.get())) * OVERCLOCK_RF_PER_CYCLE;
-        return cost;
+    /** RF drawn per cycle - only the Overclock upgrade costs power (Smelter / Melter are free). */
+    private int rfCostPerCycle() {
+        return Math.min(MAX_OVERCLOCK, inventory.countUpgrade(PFItems.VT_UPGRADE_OVERCLOCK.get())) * OVERCLOCK_RF_PER_CYCLE;
     }
 
     private int computeInterval(ServerLevel level, FluidStack fluid) {
