@@ -103,6 +103,9 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
     // Only the Overclock upgrade draws RF (the Smelter and Melter run for free).
     private static final int OVERCLOCK_RF_PER_CYCLE = 400;
     private static final int MAX_OVERCLOCK = 3;
+    // Each Bounty upgrade adds +1 output (Froglight / smelted item / melted-fluid unit /
+    // predator Looting); capped so 3 upgrades give a base 1 -> 4 output.
+    private static final int MAX_BOUNTY_UPGRADE = 3;
 
     public static final int DATA_PROGRESS = 0;
     public static final int DATA_INTERVAL = 1;
@@ -550,7 +553,9 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
 
     /** Resource / Midas: one Froglight batch, optionally smelted or melted. Returns true if produced. */
     private boolean emitFroglight(ServerLevel level, ItemStack froglight, FluidStack fluid) {
-        int perSlime = FrogStats.bountyDropCount(effectiveBounty(), PFConfig.bountyMaxDrops(), PFConfig.statCap());
+        // The frog's own Bounty gives its drop count; each Bounty UPGRADE adds a flat +1 output.
+        int perSlime = FrogStats.bountyDropCount(effectiveBounty(), PFConfig.bountyMaxDrops(), PFConfig.statCap())
+            + bountyUpgradeCount();
         int total = Math.max(1, perSlime * MilkSpawnEconomy.batchQuantity(MilkCharge.fromFluid(fluid).quantity()));
         ItemStack single = froglight.copyWithCount(1);
 
@@ -593,7 +598,8 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
             return false;
         }
         List<ItemStack> drops = new ArrayList<>();
-        int xp = rollMobLoot(level, type, effectiveBounty(), drops);
+        // Predators: the frog's Bounty sets the base Looting; each Bounty upgrade adds +1 Looting.
+        int xp = rollMobLoot(level, type, effectiveBounty(), bountyUpgradeCount(), drops);
         if (inventory.hasUpgrade(PFItems.VT_UPGRADE_SMELTER.get())) {
             drops = smeltDrops(level, drops);
         }
@@ -647,7 +653,7 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
      * The boss-altar entity-free kill: a throwaway phantom as loot context, the mob's
      * default loot table rolled with a Looting-N fake-player attack. Returns the mob's XP.
      */
-    private int rollMobLoot(ServerLevel level, EntityType<?> type, int bounty, List<ItemStack> out) {
+    private int rollMobLoot(ServerLevel level, EntityType<?> type, int bounty, int bonusLooting, List<ItemStack> out) {
         Entity phantom = type.create(level, EntitySpawnReason.MOB_SUMMONED);
         if (phantom == null) {
             return 0;
@@ -656,7 +662,7 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
             phantom.snapTo(worldPosition.getX() + 0.5, worldPosition.getY(), worldPosition.getZ() + 0.5, 0.0F, 0.0F);
             FakePlayer killer = FakePlayerFactory.get(level, VT_PROFILE);
             killer.setPos(worldPosition.getX() + 0.5, worldPosition.getY(), worldPosition.getZ() + 0.5);
-            int looting = FrogStats.bountyLootingLevel(bounty, PFConfig.statCap());
+            int looting = FrogStats.bountyLootingLevel(bounty, PFConfig.statCap()) + Math.max(0, bonusLooting);
             ItemStack sword = new ItemStack(Items.NETHERITE_SWORD);
             if (looting > 0) {
                 Holder<Enchantment> loot = level.registryAccess()
@@ -736,9 +742,14 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
 
     // -- upgrade-tuned figures --
 
+    /** The frog's own Bounty stat (the upgrade is a separate flat bonus - it does NOT mirror the stat). */
     private int effectiveBounty() {
-        return Math.min(PFConfig.statCap(),
-            loadedStat("Bounty") + 2 * inventory.countUpgrade(PFItems.VT_UPGRADE_BOUNTY.get()));
+        return Math.min(PFConfig.statCap(), loadedStat("Bounty"));
+    }
+
+    /** Flat output bonus from Bounty upgrades: +1 output each, capped at MAX_BOUNTY_UPGRADE. */
+    private int bountyUpgradeCount() {
+        return Math.min(MAX_BOUNTY_UPGRADE, inventory.countUpgrade(PFItems.VT_UPGRADE_BOUNTY.get()));
     }
 
     private int effectiveAppetite() {

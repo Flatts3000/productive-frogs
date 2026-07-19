@@ -86,8 +86,8 @@ public final class VirtualTerrariumTests {
         PFGameTests.test("vt_melter_not_charged_on_predator", 40,
             VirtualTerrariumTests::melterNotChargedOnPredator);
         // Stat-stacking upgrades.
-        PFGameTests.test("vt_bounty_upgrade_raises_output_count", 40,
-            VirtualTerrariumTests::bountyUpgradeRaisesOutputCount);
+        PFGameTests.test("vt_bounty_upgrade_adds_flat_output", 40,
+            VirtualTerrariumTests::bountyUpgradeAddsFlatOutput);
         PFGameTests.test("vt_appetite_upgrade_shortens_interval", 40,
             VirtualTerrariumTests::appetiteUpgradeShortensInterval);
         PFGameTests.test("vt_overclock_stacks_capped", 40,
@@ -416,15 +416,15 @@ public final class VirtualTerrariumTests {
 
     // -- stat-stacking upgrades --
 
-    /** Bounty upgrades raise the Froglight count versus an un-upgraded Processor. */
-    private static void bountyUpgradeRaisesOutputCount(GameTestHelper helper) {
+    /** Each Bounty upgrade adds a flat +1 Froglight; capped at 3 (a base 1 -> 4x1 output). */
+    private static void bountyUpgradeAddsFlatOutput(GameTestHelper helper) {
         VirtualTerrariumBlockEntity plain = placeProcessorAt(helper, new BlockPos(1, 2, 1), true);
-        loadFrog(plain, FrogKind.resource(Category.CAVE));
+        loadFrog(plain, FrogKind.resource(Category.CAVE)); // min stats -> base 1 Froglight/eat
         plain.getFeedstock().setFluid(slimeMilk(pf("copper"), 0));
 
         VirtualTerrariumBlockEntity rich = placeProcessorAt(helper, new BlockPos(3, 2, 3), true);
         loadFrog(rich, FrogKind.resource(Category.CAVE));
-        fillUpgrades(rich, PFItems.VT_UPGRADE_BOUNTY.get());
+        fillUpgrades(rich, PFItems.VT_UPGRADE_BOUNTY.get()); // all 4 slots - the 4th is over the cap
         rich.getFeedstock().setFluid(slimeMilk(pf("copper"), 0));
 
         runCycleAt(helper, plain, new BlockPos(1, 2, 1));
@@ -432,9 +432,9 @@ public final class VirtualTerrariumTests {
 
         int plainCount = totalOutput(plain);
         int richCount = totalOutput(rich);
-        helper.assertTrue(plainCount >= 1, "plain source produced nothing");
-        helper.assertTrue(richCount > plainCount,
-            "Bounty upgrades must raise the Froglight count (rich=" + richCount + " vs plain=" + plainCount + ")");
+        helper.assertTrue(plainCount == 1, "a min-Bounty frog produces 1 Froglight/eat, got " + plainCount);
+        helper.assertTrue(richCount == plainCount + 3,
+            "Bounty upgrades add +1 each capped at 3 (expected " + (plainCount + 3) + ", got " + richCount + ")");
         helper.succeed();
     }
 
