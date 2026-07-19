@@ -174,6 +174,53 @@ public class VirtualTerrariumInventory extends net.neoforged.neoforge.items.Item
         return true;
     }
 
+    /**
+     * True when the output grid is completely jammed - every slot occupied AND at its
+     * limit. A cheap, item-agnostic backpressure gate the eat loop checks BEFORE any
+     * expensive roll (loot table / smelt / melt recipe) so a full output doesn't re-run
+     * that work every tick.
+     */
+    public boolean outputFull() {
+        for (int i = OUTPUT_START; i < UPGRADE_START; i++) {
+            ItemStack s = getStackInSlot(i);
+            if (s.isEmpty() || s.getCount() < Math.min(s.getMaxStackSize(), getSlotLimit(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Whether every drop in the list fits the output grid, accounting for merging into
+     * existing same-item stacks and empty slots consumed by earlier drops in the list.
+     * Merge-aware backpressure for the multi-item predator loot path.
+     */
+    public boolean canFitAll(java.util.List<ItemStack> drops) {
+        ItemStack[] sim = new ItemStack[OUTPUT_COUNT];
+        for (int i = 0; i < OUTPUT_COUNT; i++) {
+            sim[i] = getStackInSlot(OUTPUT_START + i).copy();
+        }
+        for (ItemStack drop : drops) {
+            int remaining = drop.getCount();
+            for (int i = 0; i < OUTPUT_COUNT && remaining > 0; i++) {
+                int slotMax = Math.min(drop.getMaxStackSize(), getSlotLimit(OUTPUT_START + i));
+                if (sim[i].isEmpty()) {
+                    int move = Math.min(remaining, slotMax);
+                    sim[i] = drop.copyWithCount(move);
+                    remaining -= move;
+                } else if (ItemStack.isSameItemSameComponents(sim[i], drop)) {
+                    int move = Math.min(remaining, Math.max(0, slotMax - sim[i].getCount()));
+                    sim[i].grow(move);
+                    remaining -= move;
+                }
+            }
+            if (remaining > 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     // -- 26.1 Capabilities.Item.BLOCK views (cached: one handler = one SnapshotJournal) --
 
     private ResourceHandler<ItemResource> outputResourceCached;

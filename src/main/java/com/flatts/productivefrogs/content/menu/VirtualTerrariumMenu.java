@@ -124,11 +124,6 @@ public class VirtualTerrariumMenu extends AbstractContainerMenu {
         return i > 0 ? i : 200;
     }
 
-    /** Buffered feedstock in mB (synced ContainerData), for the GUI fluid slot. */
-    public int getFeedstockAmount() {
-        return dataAccess.get(VirtualTerrariumBlockEntity.DATA_FEEDSTOCK);
-    }
-
     /** Buffered product fluid (molten or Liquid Experience) in mB, for the output tank gauge. */
     public int getProductAmount() {
         return dataAccess.get(VirtualTerrariumBlockEntity.DATA_PRODUCT);

@@ -110,4 +110,42 @@ class VirtualTerrariumInventoryTest {
         assertFalse(leftover.isEmpty(), "a full output row must return the overflow rather than void it");
         assertEquals(1, leftover.getCount());
     }
+
+    // -- item-agnostic backpressure gate (outputFull) --
+
+    @Test
+    void outputFullTrueOnlyWhenEverySlotAtMax() {
+        VirtualTerrariumInventory inv = inv();
+        assertFalse(inv.outputFull(), "a fresh grid is not full");
+        for (int i = 0; i < VirtualTerrariumInventory.OUTPUT_COUNT; i++) {
+            inv.setStackInSlot(VirtualTerrariumInventory.OUTPUT_START + i, new ItemStack(Items.GRAVEL, 1));
+        }
+        assertTrue(inv.outputFull(), "every slot at max (1 here) -> full");
+        inv.setStackInSlot(VirtualTerrariumInventory.OUTPUT_START, ItemStack.EMPTY);
+        assertFalse(inv.outputFull(), "one empty slot -> not full");
+    }
+
+    // -- merge-aware multi-drop fit (canFitAll) --
+
+    @Test
+    void canFitAllAccountsForEmptySlotsAndMultipleDrops() {
+        VirtualTerrariumInventory inv = inv();
+        // 6 empty slots, drops are max-stack-1 in the bare test context.
+        assertTrue(inv.canFitAll(java.util.List.of(one(), one(), one())), "3 drops fit 6 empty slots");
+        assertTrue(inv.canFitAll(java.util.List.of(one(), one(), one(), one(), one(), one())), "6 drops fill 6 slots");
+        assertFalse(inv.canFitAll(java.util.List.of(one(), one(), one(), one(), one(), one(), one())),
+            "7 max-stack-1 drops do not fit 6 slots");
+    }
+
+    @Test
+    void canFitAllRejectsNonMergeableWhenNoEmptySlot() {
+        VirtualTerrariumInventory inv = inv();
+        for (int i = 0; i < VirtualTerrariumInventory.OUTPUT_COUNT; i++) {
+            inv.setStackInSlot(VirtualTerrariumInventory.OUTPUT_START + i, new ItemStack(Items.GRAVEL, 1));
+        }
+        assertFalse(inv.canFitAll(java.util.List.of(one())),
+            "a cobblestone drop cannot fit a grid full of maxed gravel stacks");
+        inv.setStackInSlot(VirtualTerrariumInventory.OUTPUT_START, ItemStack.EMPTY);
+        assertTrue(inv.canFitAll(java.util.List.of(one())), "one empty slot accepts the drop");
+    }
 }

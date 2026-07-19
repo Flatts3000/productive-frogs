@@ -112,13 +112,12 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
 
     public static final int DATA_PROGRESS = 0;
     public static final int DATA_INTERVAL = 1;
-    public static final int DATA_FEEDSTOCK = 2;
-    public static final int DATA_PRODUCT = 3;
+    public static final int DATA_PRODUCT = 2;
     // Energy (0..100k) overflows a 16-bit ContainerData slot, so it rides two shorts.
-    public static final int DATA_ENERGY_LO = 4;
-    public static final int DATA_ENERGY_HI = 5;
-    public static final int DATA_STATUS = 6;   // Status.ordinal() - drives the GUI idle/error line
-    public static final int DATA_COUNT = 7;
+    public static final int DATA_ENERGY_LO = 3;
+    public static final int DATA_ENERGY_HI = 4;
+    public static final int DATA_STATUS = 5;   // Status.ordinal() - drives the GUI idle/error line
+    public static final int DATA_COUNT = 6;
 
     private static final GameProfile VT_PROFILE =
         new GameProfile(UUID.fromString("b0551a15-4a15-4a15-8a15-711711711711"), "[PF Virtual Terrarium]");
@@ -204,6 +203,9 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
 
     private int progress = 0;
     private int interval = 200;
+    // Last status computed by serverTick - reused by the synced DATA_STATUS slot so the
+    // (registry-touching) productive() check isn't recomputed per tick while a GUI is open.
+    private Status lastStatus = Status.NO_DOME;
 
     private final ContainerData dataAccess = new ContainerData() {
         @Override
@@ -211,11 +213,10 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
             return switch (index) {
                 case DATA_PROGRESS -> progress;
                 case DATA_INTERVAL -> interval;
-                case DATA_FEEDSTOCK -> feedstock.getFluidAmount();
                 case DATA_PRODUCT -> activeProductTank().getFluidAmount();
                 case DATA_ENERGY_LO -> energy.getEnergyStored() & 0xFFFF;
                 case DATA_ENERGY_HI -> (energy.getEnergyStored() >> 16) & 0xFFFF;
-                case DATA_STATUS -> status().ordinal();
+                case DATA_STATUS -> lastStatus.ordinal();   // cached by serverTick; no per-tick recompute
                 default -> 0;
             };
         }
@@ -472,9 +473,12 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
         if (!(level instanceof ServerLevel serverLevel)) {
             return;
         }
-        // Not runnable (no dome / frog / feedstock / mismatch) OR the Overclock can't be
-        // paid: hold at zero progress rather than filling the bar and freezing at full.
-        if (!be.productive(serverLevel) || be.powerStalled()) {
+        // One status() per tick (it subsumes productive() + powerStalled()); cache it so the
+        // synced DATA_STATUS slot reuses it instead of recomputing. Not PRODUCING (no dome /
+        // frog / feedstock / mismatch / needs-power) -> hold at zero progress.
+        Status status = be.status();
+        be.lastStatus = status;
+        if (status != Status.PRODUCING) {
             be.resetProgress();
             setWorking(level, pos, state, false);
             return;
@@ -556,13 +560,19 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
 
     /** Resource / Midas: one Froglight batch, optionally smelted or melted. Returns true if produced. */
     private boolean emitFroglight(ServerLevel level, ItemStack froglight, FluidStack fluid) {
+        boolean melter = inventory.hasUpgrade(PFItems.VT_UPGRADE_MELTER.get());
+        // Cheap backpressure gate BEFORE any recipe lookup, so a full output/tank does not
+        // re-run smelt/melt recipes every tick (progress stays pinned at interval until it clears).
+        if (melter ? moltenTank.getFluidAmount() >= MOLTEN_CAPACITY : inventory.outputFull()) {
+            return false;
+        }
         // The frog's own Bounty gives its drop count; each Bounty UPGRADE adds a flat +1 output.
         int perSlime = FrogStats.bountyDropCount(effectiveBounty(), PFConfig.bountyMaxDrops(), PFConfig.statCap())
             + bountyUpgradeCount();
         int total = Math.max(1, perSlime * MilkSpawnEconomy.batchQuantity(MilkCharge.fromFluid(fluid).quantity()));
         ItemStack single = froglight.copyWithCount(1);
 
-        if (inventory.hasUpgrade(PFItems.VT_UPGRADE_MELTER.get())) {
+        if (melter) {
             FluidStack molten = meltOne(level, single);
             if (!molten.isEmpty()) {
                 FluidStack batch = molten.copyWithAmount(molten.getAmount() * total);
@@ -600,13 +610,19 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
         if (type == null) {
             return false;
         }
+        // Cheap gate BEFORE the loot roll (which creates + discards a phantom mob): a fully
+        // jammed output must NOT spawn/roll a mob every tick.
+        if (inventory.outputFull()) {
+            return false;
+        }
         List<ItemStack> drops = new ArrayList<>();
         // Predators: the frog's Bounty sets the base Looting; each Bounty upgrade adds +1 Looting.
         int xp = rollMobLoot(level, type, effectiveBounty(), bountyUpgradeCount(), drops);
         if (inventory.hasUpgrade(PFItems.VT_UPGRADE_SMELTER.get())) {
             drops = smeltDrops(level, drops);
         }
-        if (drops.size() > inventory.emptyOutputSlots()) {
+        // Merge-aware fit: produces when drops merge into partial stacks, not only into empty slots.
+        if (!inventory.canFitAll(drops)) {
             return false; // nothing voided
         }
         for (ItemStack drop : drops) {
@@ -760,7 +776,7 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
         return Math.min(PFConfig.statCap(), loadedStat("Appetite"));
     }
 
-    /** Flat cycle-speed factor from Appetite upgrades: {@value #APPETITE_SPEED_FACTOR} per upgrade, capped at 3. */
+    /** Flat cycle-speed factor from Appetite upgrades: {@value #APPETITE_SPEED_FACTOR} per upgrade, capped at {@value #MAX_APPETITE_UPGRADE}. */
     private double appetiteUpgradeFactor() {
         int n = Math.min(MAX_APPETITE_UPGRADE, inventory.countUpgrade(PFItems.VT_UPGRADE_APPETITE.get()));
         return Math.pow(APPETITE_SPEED_FACTOR, n);
