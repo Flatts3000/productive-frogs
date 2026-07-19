@@ -4,6 +4,6 @@
     "top":    "productivefrogs:block/virtual_terrarium_top",
     "bottom": "productivefrogs:block/virtual_terrarium_bottom",
     "side":   "productivefrogs:block/virtual_terrarium_side",
-    "front":  "productivefrogs:block/virtual_terrarium_front"
+    "front":  "productivefrogs:block/virtual_terrarium_front_working"
   }
 }
