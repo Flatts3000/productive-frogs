@@ -270,8 +270,10 @@ active output form (item grid / molten gauge / XP gauge).
 15. **Ergonomics.** Distinct inactive vs active Processor texture; the Dome renders the loaded
     frog + a feedstock-tinted slime + animations; the GUI duration bar tracks the cycle; Jade
     shows contents + reason.
-16. **No loss on break.** Breaking the Processor returns the frog (filled net, stats intact),
-    the feedstock, the upgrades, and any banked product; the Dome drops as itself.
+16. **Break returns items, NOT fluids.** Breaking the Processor returns the frog (filled net,
+    stats intact) and the upgrades; the Dome drops as itself. Tank fluids (feedstock / XP / molten)
+    are **not** dropped as buckets - that would mint free buckets (bucket econ). Drain the feedstock
+    back into a bucket first (empty bucket -> the tank) if you want to keep it.
 17. **Throughput parity.** One un-upgraded unit on plain feedstock is within tolerance of one
     physical-Terrarium frog, and below a maxed multiblock's total.
 18. **GameTest lock.** Registry GameTests assert: forms only with the Dome; each path's match ->
@@ -300,7 +302,7 @@ active output form (item grid / molten gauge / XP gauge).
   models, textures, recipes, and a `virtual_terrarium_upgrade` item tag for the slot filter.
   (Feedstock economy is not an upgrade - it rides the milk's Count/Endless catalysts.)
 - Blockstates + models + textures (gen/ pipeline; the void-tier inactive/active Processor + the
-  glass Dome); loot tables (Processor returns frog + feedstock + upgrades + banked product; Dome
+  glass Dome); loot tables (Processor returns frog + upgrades - NOT tank fluids, bucket econ; Dome
   returns itself); `mineable/pickaxe`; lang (names + tooltips + Jade + idle reasons).
 - Void-tier crafting recipes (balance pass). No config flag - the feature is always available.
 - Jade provider (server-data, single-interface split per the Jade 26.1 rule).

@@ -604,8 +604,19 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             }
         }
 
+        // Run AFTER Jade's universal fluid/energy storage providers (priority 9999,
+        // ascending sort) so we can strip their generic bars - the feedstock is
+        // already named + counted by our own lines, and RF shows only when powered.
+        @Override
+        public int getDefaultPriority() {
+            return 10_001;
+        }
+
         @Override
         public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
+            // Drop the redundant "Slime Milk 1000mB" tank bar and the always-on energy bar.
+            tooltip.remove(JadeIds.UNIVERSAL_FLUID_STORAGE);
+            tooltip.remove(JadeIds.UNIVERSAL_ENERGY_STORAGE);
             CompoundTag data = accessor.getServerData();
             if (data == null) {
                 return;

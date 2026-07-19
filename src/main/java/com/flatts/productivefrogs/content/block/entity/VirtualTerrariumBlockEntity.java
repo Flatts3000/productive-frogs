@@ -853,24 +853,6 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
         }
     }
 
-    /** Refund the feedstock and banked Liquid Experience as buckets on break (nothing voided).
-     *  Molten metals are bucket-less by design, so the transient molten tank is not refunded. */
-    public void dropFluids(Level lvl, BlockPos pos) {
-        dropFluidAsBuckets(lvl, pos, feedstock.getFluid());
-        dropFluidAsBuckets(lvl, pos, xpTank.getFluid());
-    }
-
-    private static void dropFluidAsBuckets(Level lvl, BlockPos pos, FluidStack fluid) {
-        ItemStack bucket = bucketFor(fluid);
-        if (bucket.isEmpty()) {
-            return;
-        }
-        int buckets = fluid.getAmount() / net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME;
-        for (int i = 0; i < buckets; i++) {
-            net.minecraft.world.Containers.dropItemStack(lvl, pos.getX(), pos.getY(), pos.getZ(), bucket.copy());
-        }
-    }
-
     private static ItemStack bucketFor(FluidStack fluid) {
         if (fluid.isEmpty()) {
             return ItemStack.EMPTY;

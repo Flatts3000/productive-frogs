@@ -21,14 +21,10 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.fluids.FluidStack;
-
-import java.util.List;
 
 /**
  * In-world coverage for the Virtual Terrarium Processor (slices 1-5): the
@@ -94,11 +90,9 @@ public final class VirtualTerrariumTests {
             VirtualTerrariumTests::overclockStacksCapped);
         PFGameTests.test("vt_overclock_no_power_holds_progress", 40,
             VirtualTerrariumTests::overclockNoPowerHoldsProgress);
-        // Backpressure + fluid refund.
+        // Backpressure.
         PFGameTests.test("vt_output_full_stalls_production", 40,
             VirtualTerrariumTests::outputFullStallsProduction);
-        PFGameTests.test("vt_drop_fluids_refunds_buckets", 40,
-            VirtualTerrariumTests::dropFluidsRefundsBuckets);
         // Jade status / idle-reason readout.
         PFGameTests.test("vt_jade_status_reasons", 40,
             VirtualTerrariumTests::jadeStatusReasons);
@@ -525,23 +519,6 @@ public final class VirtualTerrariumTests {
         helper.succeed();
     }
 
-    /** On break, dropFluids refunds the buffered feedstock and Liquid Experience as buckets - nothing voided. */
-    private static void dropFluidsRefundsBuckets(GameTestHelper helper) {
-        VirtualTerrariumBlockEntity be = placeProcessor(helper, true);
-        be.getFeedstock().setFluid(slimeMilk(pf("copper"), 0));                     // 1000 mB -> 1 bucket
-        be.getXpTank().setFluid(new FluidStack(PFFluids.LIQUID_EXPERIENCE.get(), 3_000)); // -> 3 buckets
-
-        BlockPos abs = helper.absolutePos(PROCESSOR);
-        be.dropFluids(be.getLevel(), abs);
-
-        List<ItemEntity> items = be.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(abs).inflate(3.0));
-        long milk = items.stream().filter(e -> e.getItem().getItem()
-            instanceof com.flatts.productivefrogs.content.item.SlimeMilkBucketItem).count();
-        long xp = items.stream().filter(e -> e.getItem().is(PFItems.LIQUID_EXPERIENCE_BUCKET.get())).count();
-        helper.assertTrue(milk == 1, "expected 1 Slime Milk bucket refunded, got " + milk);
-        helper.assertTrue(xp == 3, "expected 3 Liquid Experience buckets refunded, got " + xp);
-        helper.succeed();
-    }
 
     // -- Jade status --
 
