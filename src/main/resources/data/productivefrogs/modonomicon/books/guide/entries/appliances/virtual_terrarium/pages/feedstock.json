@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:text",
+  "id": "feedstock",
+  "sort_number": 2,
+  "show_title_separator": true,
+  "title": "book.productivefrogs.guide.appliances.virtual_terrarium.feedstock.title",
+  "text": "book.productivefrogs.guide.appliances.virtual_terrarium.feedstock.text"
+}
