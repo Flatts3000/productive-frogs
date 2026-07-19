@@ -94,8 +94,9 @@ The rate is built from the **feedstock's own spawn rate** (the base) **plus its 
 the installed upgrades** - catalysts and upgrades are **both** in the calc, not one or the other -
 with the frog's stats layered in. All of these combine into the formula:
 
-- **Cycle time** = a base `MilkSpawnEconomy.intervalTicks(rapidLevel, ...)` (the feedstock's
-  spawn cadence, 200-600 ticks, shortened by the **Rapid** catalyst), then further shortened by
+- **Cycle time** = a **deterministic** base `MilkSpawnEconomy.intervalTicksDeterministic(rapidLevel)`
+  (the midpoint of the spawn-cadence range - NOT the random `intervalTicks`, so eat duration is
+  predictable and the speed levers are visible), shortened by the **Rapid** catalyst, then by
   the frog's **Appetite stat**, then a **flat -15% per Appetite upgrade** (decoupled from the
   stat, capped at 8), and, when powered, the **Overclock** (+50% speed, capped at 3).
 - **Count** = `batchQuantity(teemingLevel) x bountyDropCount(effectiveBounty)`, where

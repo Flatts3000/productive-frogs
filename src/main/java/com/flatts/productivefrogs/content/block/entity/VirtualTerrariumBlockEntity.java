@@ -698,7 +698,7 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
         // budget hits zero (nothing else in the pack consumes milk any sooner).
         spendOneSpawn();
         progress = 0;
-        interval = computeInterval(level, fluid);
+        interval = computeInterval(fluid);
         setChanged();
         syncToClient();
         setWorking(level, worldPosition, level.getBlockState(worldPosition), true);
@@ -771,8 +771,10 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
         return Math.min(MAX_OVERCLOCK, inventory.countUpgrade(PFItems.VT_UPGRADE_OVERCLOCK.get())) * OVERCLOCK_RF_PER_CYCLE;
     }
 
-    private int computeInterval(ServerLevel level, FluidStack fluid) {
-        int base = MilkSpawnEconomy.intervalTicks(MilkCharge.fromFluid(fluid).speed(), level.getRandom());
+    private int computeInterval(FluidStack fluid) {
+        // Deterministic base (NOT the random spawn interval) so the eat duration is
+        // predictable and the Appetite / Overclock effects are visible, not random noise.
+        int base = MilkSpawnEconomy.intervalTicksDeterministic(MilkCharge.fromFluid(fluid).speed());
         int span = Math.max(1, PFConfig.statCap() - FrogStats.STAT_MIN);
         double appetiteFactor = 1.0 - 0.5 * Math.max(0.0, Math.min(1.0,
             (effectiveAppetite() - FrogStats.STAT_MIN) / (double) span));
