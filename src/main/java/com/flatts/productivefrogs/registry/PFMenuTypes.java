@@ -38,6 +38,12 @@ public final class PFMenuTypes {
             () -> IMenuTypeExtension.create(SlimeMilkerMenu::new)
         );
 
+    public static final Supplier<MenuType<com.flatts.productivefrogs.content.menu.VirtualTerrariumMenu>> VIRTUAL_TERRARIUM =
+        MENU_TYPES.register(
+            "virtual_terrarium",
+            () -> IMenuTypeExtension.create(com.flatts.productivefrogs.content.menu.VirtualTerrariumMenu::new)
+        );
+
     public static final Supplier<MenuType<SlimeChurnMenu>> SLIME_CHURN =
         MENU_TYPES.register(
             "slime_churn",

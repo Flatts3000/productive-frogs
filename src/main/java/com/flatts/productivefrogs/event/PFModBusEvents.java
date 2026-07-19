@@ -205,6 +205,26 @@ public final class PFModBusEvents {
                 : be.getInventory().inputResource()
         );
 
+        // Virtual Terrarium: DOWN = extract-only output (Froglights); other faces
+        // insert/extract the frog slot. Fluid.BLOCK = fill-only feedstock intake.
+        event.registerBlockEntity(
+            Capabilities.Item.BLOCK,
+            PFBlockEntities.VIRTUAL_TERRARIUM.get(),
+            (be, side) -> side == Direction.DOWN
+                ? be.getInventory().outputResource()
+                : be.getInventory().frogResource()
+        );
+        event.registerBlockEntity(
+            Capabilities.Fluid.BLOCK,
+            PFBlockEntities.VIRTUAL_TERRARIUM.get(),
+            (be, side) -> side == Direction.DOWN ? be.productFluidResource() : be.feedstockResource()
+        );
+        event.registerBlockEntity(
+            Capabilities.Energy.BLOCK,
+            PFBlockEntities.VIRTUAL_TERRARIUM.get(),
+            (be, side) -> be.energyHandler()
+        );
+
         // Slime Churn (#187): bottom face = extract-only view over BOTH output
         // slots (slime buckets + spent containers); every other face = the
         // insert view over both input slots, routed by per-slot validity

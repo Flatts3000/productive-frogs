@@ -47,6 +47,11 @@ public final class PFItemTags {
         Registries.ITEM,
         Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "alembic/denied"));
 
+    /** Items accepted in the Virtual Terrarium's upgrade slots. */
+    public static final TagKey<Item> VIRTUAL_TERRARIUM_UPGRADE = TagKey.create(
+        Registries.ITEM,
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "virtual_terrarium_upgrade"));
+
     private static Map<Category, TagKey<Item>> buildSpawneryPrimers() {
         EnumMap<Category, TagKey<Item>> map = new EnumMap<>(Category.class);
         for (Category cat : Category.values()) {

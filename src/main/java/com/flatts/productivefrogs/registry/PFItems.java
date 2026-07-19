@@ -510,6 +510,32 @@ public final class PFItems {
         new Item.Properties()
     );
 
+    /** Virtual Terrarium Processor BlockItem (docs/virtual_terrarium.md). */
+    public static final DeferredItem<BlockItem> VIRTUAL_TERRARIUM = registerSimpleBlockItem(
+        "virtual_terrarium",
+        PFBlocks.VIRTUAL_TERRARIUM,
+        new Item.Properties()
+    );
+
+    /** Virtual Terrarium Display Dome BlockItem. */
+    public static final DeferredItem<BlockItem> VIRTUAL_TERRARIUM_DOME = registerSimpleBlockItem(
+        "virtual_terrarium_dome",
+        PFBlocks.VIRTUAL_TERRARIUM_DOME,
+        new Item.Properties()
+    );
+
+    // Virtual Terrarium upgrade items (single-tier; stack in the upgrade slots).
+    public static final DeferredItem<com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem> VT_UPGRADE_BOUNTY =
+        ITEMS.registerItem("vt_upgrade_bounty", com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem::new);
+    public static final DeferredItem<com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem> VT_UPGRADE_APPETITE =
+        ITEMS.registerItem("vt_upgrade_appetite", com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem::new);
+    public static final DeferredItem<com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem> VT_UPGRADE_SMELTER =
+        ITEMS.registerItem("vt_upgrade_smelter", com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem::new);
+    public static final DeferredItem<com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem> VT_UPGRADE_MELTER =
+        ITEMS.registerItem("vt_upgrade_melter", com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem::new);
+    public static final DeferredItem<com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem> VT_UPGRADE_OVERCLOCK =
+        ITEMS.registerItem("vt_upgrade_overclock", com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem::new);
+
     /**
      * Slime Churn BlockItem (#187) - places {@link PFBlocks#SLIME_CHURN}, the
      * Milker's inverse (milk bucket + empty buckets -> captured Slime Buckets

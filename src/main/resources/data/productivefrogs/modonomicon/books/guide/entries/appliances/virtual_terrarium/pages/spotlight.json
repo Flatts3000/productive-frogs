@@ -1,0 +1,8 @@
+{
+  "type": "modonomicon:spotlight",
+  "id": "spotlight",
+  "sort_number": 1,
+  "item": "productivefrogs:virtual_terrarium",
+  "title": "book.productivefrogs.guide.appliances.virtual_terrarium.spotlight.title",
+  "text": "book.productivefrogs.guide.appliances.virtual_terrarium.spotlight.text"
+}

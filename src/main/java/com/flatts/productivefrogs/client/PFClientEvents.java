@@ -124,6 +124,10 @@ public final class PFClientEvents {
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.CRUCIBLE.get(),
             com.flatts.productivefrogs.client.renderer.CrucibleRenderer::new);
+        // Virtual Terrarium: the loaded frog rendered inside the Display Dome above.
+        event.registerBlockEntityRenderer(
+            com.flatts.productivefrogs.registry.PFBlockEntities.VIRTUAL_TERRARIUM.get(),
+            com.flatts.productivefrogs.client.renderer.VirtualTerrariumFrogRenderer::new);
         // The two Basins (#281 Phase 3): the held charge rendered as a fluid
         // surface inside the half-block bowl, level tracking the remaining
         // budget. One renderer, both flavours. See client/renderer/BasinRenderer.
@@ -460,6 +464,8 @@ public final class PFClientEvents {
     @SubscribeEvent
     public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
         event.register(PFMenuTypes.SLIME_MILKER.get(), SlimeMilkerScreen::new);
+        event.register(PFMenuTypes.VIRTUAL_TERRARIUM.get(),
+            com.flatts.productivefrogs.client.screen.VirtualTerrariumScreen::new);
         event.register(PFMenuTypes.SLIME_CHURN.get(), SlimeChurnScreen::new);
         event.register(PFMenuTypes.SLURRY_PRESS.get(), SlurryPressScreen::new);
         event.register(PFMenuTypes.SPAWNERY.get(), SpawneryScreen::new);

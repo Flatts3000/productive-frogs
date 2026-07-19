@@ -1,0 +1,4 @@
+{ "type": "minecraft:crafting_shaped", "category": "misc",
+  "pattern": ["EAE","ATA","EAE"],
+  "key": { "E": "minecraft:ender_eye", "A": "minecraft:amethyst_block", "T": "productivefrogs:terrarium_controller" },
+  "result": { "id": "productivefrogs:virtual_terrarium", "count": 1 } }

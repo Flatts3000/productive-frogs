@@ -18,12 +18,11 @@ one frog, fed its feedstock, dropping product, in something you tuck into a wall
    animations). Both crafted independently; **both required**; they **form** when the Dome
    sits directly on the Processor and **unform** if either is broken. This is a trivial
    two-block adjacency, not a validated multiblock like the physical Terrarium.
-2. **No power for the core loop; RF powers the opt-in upgrades.** The frog-eating
-   virtualization runs passively - no power. RF is drawn only by opt-in upgrades: the
-   **Smelter/Melter** (auto-processing) and the **Overclock** (a flat +50% speed). The
-   Processor gains a receive-only energy buffer (`Capabilities.Energy.BLOCK`, like the EE
-   lane's Alembic/Distiller), used *only* while a powered upgrade is installed. No such
-   upgrade -> no power needed at all.
+2. **No power for the core loop; only the Overclock draws RF.** The frog-eating virtualization
+   runs passively - no power. Smelter and Melter also run for free; **only the Overclock**
+   (a flat +50% speed) draws RF (maintainer, 2026-07-18). The Processor gains a receive-only
+   energy buffer (`Capabilities.Energy.BLOCK`, like the EE lane's Alembic/Distiller), used
+   *only* while an Overclock is installed. No Overclock -> no power needed at all.
 3. **One frog at the normal per-frog rate.** An un-upgraded frog on plain feedstock matches a
    single physical-Terrarium frog; a maxed physical Terrarium (up to 8 frogs) still out-produces
    one Virtual Terrarium, so both stay worth building. Upgrades and catalyst-buffed feedstock
@@ -45,7 +44,8 @@ one frog, fed its feedstock, dropping product, in something you tuck into a wall
 - **Processor block** (bottom): the machine. Holds the frog slot, the feedstock tank, the
   upgrade column, the outputs, and the eat-emulation `serverTick`. Void-tier textures, with a
   distinct **inactive vs active** look.
-- **Display Dome** (top): a glass terrarium dome. A `BlockEntityRenderer` draws the **loaded
+- **Display Dome** (top): a glass terrarium dome - the block uses the **vanilla glass texture**
+  (`minecraft:block/glass`, `cutout`) directly, no bespoke PF texture. A `BlockEntityRenderer` draws the **loaded
   frog** (kind-tinted, the altar display-frog approach), a **slime** tinted to the feedstock's
   variant, and idle/eat **animations**, with terrarium ambiance (plants, water shimmer). It is
   cosmetic but **load-bearing**: the Processor only runs when a Dome is directly above it.
@@ -86,7 +86,7 @@ seams. Each **eat cycle** (timed below), when productive (see Rules):
   the mob's XP (see the caveat below).
 
 Then apply the installed processing upgrade (Smelter/Melter) and route to the output. Spend one
-unit of the feedstock's budget per cycle.
+**spawn** of the feedstock's budget per cycle (the liquid itself is untouched until the budget runs out).
 
 ### Yield and timing (rate = spawn rate + catalysts + upgrades)
 
@@ -94,15 +94,26 @@ The rate is built from the **feedstock's own spawn rate** (the base) **plus its 
 the installed upgrades** - catalysts and upgrades are **both** in the calc, not one or the other -
 with the frog's stats layered in. All of these combine into the formula:
 
-- **Cycle time** = a base `MilkSpawnEconomy.intervalTicks(rapidLevel, ...)` (the feedstock's
-  spawn cadence, 200-600 ticks, shortened by the **Rapid** catalyst), then further shortened by
-  the frog's **effective Appetite** (Appetite stat + Appetite upgrades) and, when powered, the
-  **Overclock** (+50% speed, stacking to a cap).
+- **Cycle time** = a **deterministic** base `MilkSpawnEconomy.intervalTicksDeterministic(rapidLevel)`
+  (the midpoint of the spawn-cadence range - NOT the random `intervalTicks`, so eat duration is
+  predictable and the speed levers are visible), shortened by the **Rapid** catalyst, then by
+  the frog's **Appetite stat**, then a **flat -15% per Appetite upgrade** (decoupled from the
+  stat, capped at 8), and, when powered, the **Overclock** (+50% speed, capped at 3).
 - **Count** = `batchQuantity(teemingLevel) x bountyDropCount(effectiveBounty)`, where
   `teemingLevel` = the feedstock's **Teeming** catalyst and `effectiveBounty` = frog Bounty
-  **+ Bounty upgrades**. (For predators, Bounty also raises Looting via `bountyLootingLevel`.)
-- **Budget** grows with the feedstock's **Bountiful** catalyst (and a Capacity upgrade); the
-  **Endless** catalyst (or an Everflow upgrade) stops depletion.
+  ; each **Bounty upgrade** then adds a **flat +1 output** (NOT the frog-stat band mechanic),
+  capped at 8, so a base-1 frog with 8 Bounty makes 9. For predators the frog's Bounty sets base
+  Looting (`bountyLootingLevel`) and each Bounty upgrade adds +1 Looting. **The machine enforces
+  per-upgrade caps at the slot** (`VirtualTerrariumInventory#upgradeCap`): 8 Bounty / 8 Appetite,
+  3 Overclock, and only **one** Smelter OR Melter (also mutually exclusive).
+- **Budget is spawns, not liquid.** Each eat spends **one spawn** of the loaded milk's budget
+  (exactly like a placed Slime Milk source - nothing in the pack consumes milk any sooner). The
+  1000mB **liquid never drains per eat**; the tank only empties once the spawn budget hits zero.
+  A **Count/Bountiful** catalyst raises that budget (more eats per bucket); the **Endless/Infinite**
+  catalyst makes it never deplete. The GUI fluid slot fills by spawns-remaining; the tooltip +
+  Jade show "spawns left: N/cap". These are read straight off the feedstock's `MilkCharge` -
+  the feedstock's own catalysts govern longevity, exactly like a placed source. There is **no
+  Capacity or Everflow upgrade** (the catalysts already in the milk do that job).
 
 Mob Slurry reuses the **same milk catalysts** (the "slurry catalyst" = `MilkCatalyst`
 COUNT/SPEED/QUANTITY/INFINITE, applied exactly as `AbstractBasinBlockEntity` already does), so
@@ -147,20 +158,20 @@ refuses both):
 | **Smelter** | auto-smelts each Froglight/drop the instant it is made - the output holds the **smelted result** (iron Froglight -> iron ingot), via the item's vanilla smelting recipe |
 | **Melter** | auto-melts each Froglight (Crucible logic) into its **molten fluid**; the item output routes to a **molten tank** (see Output) |
 
-Items with no smelting/melting result **pass through unprocessed**. Auto-processing **draws RF**
-(the one place the block needs power - a receive-only buffer, see decision 2): with the RF
-buffer empty, **production stalls** entirely until power returns, and Jade says "needs power to
-smelt/melt". Hard stall, not a raw pass-through - a processing upgrade means you want the
-processed form.
+Items with no smelting/melting result **pass through unprocessed**. Smelter and Melter draw
+**no RF** - they run for free (the only upgrade that needs power is the Overclock, below).
 
-**Economy upgrades** (from the milk model): **Capacity** raises the feedstock budget the tank
-holds; **Everflow** stops depletion.
+**Feedstock economy is not an upgrade** - it rides the feedstock's own catalysts (the milk
+model): a **Count/Bountiful** catalyst raises the milk's budget so a tankful lasts longer, and an
+**Endless/Infinite** catalyst stops depletion. Feed catalyzed milk to change longevity; the block
+has no Capacity or Everflow upgrade.
 
 **Overclock upgrade (RF-powered):** while the energy buffer has power, the **whole cycle runs
 50% faster** - a flat block-wide boost stacking on top of the frog's Appetite and any Rapid
-catalyst. Unpowered, it is inert. This (with Smelter/Melter) is why the Processor carries an RF buffer.
-Multiple Overclocks **stack additively up to a cap** (each +50% while powered, to a ceiling set
-at the balance pass).
+catalyst. It is the **only** upgrade that draws RF - and the only reason the Processor carries an
+RF buffer. Unpowered with an Overclock installed, the block **hard-stalls at zero progress** (Jade
++ the GUI say "needs power"); pull the Overclock or supply RF to run. Multiple Overclocks **stack
+additively up to a cap** (each +50% while powered, to a ceiling set at the balance pass).
 
 The upgrade item family (names, textures, recipes, tiers) is an open sub-decision.
 
@@ -208,7 +219,7 @@ active output form (item grid / molten gauge / XP gauge).
 | Frog kind/stats off a net stack | `EntityNetItem.isFilled`, `CUSTOM_DATA`, `FrogKind.readFromTag` |
 | Slurry catalysts = milk catalysts | `MilkCatalyst` + `AbstractBasinBlockEntity.applyCatalyst` |
 | Block + capability wiring | Slime Milker (`SlimeMilkerBlock`/BE/Inventory/Menu/Screen); `PFModBusEvents.registerCapabilities`; `content/transfer/` adapters; the Terrarium Controller's fill-only tank + `SnapshotJournal` |
-| RF buffer for Smelter/Melter | `ReceiveOnlyEnergyHandler` + `Capabilities.Energy.BLOCK` (EE lane Alembic/Distiller) |
+| RF buffer for the Overclock | `ReceiveOnlyEnergyHandler` + `Capabilities.Energy.BLOCK` (EE lane Alembic/Distiller) |
 | Mob's real XP | `Entity.getExperienceReward` (per-entity) off the loot phantom, then `LiquidExperienceFluid.pointsToMb` |
 | Display-frog rendering | the altar display frogs (Dragonsbane/... BER) |
 
@@ -244,8 +255,9 @@ active output form (item grid / molten gauge / XP gauge).
 7. **Bounty scales.** Product count follows `bountyDropCount`; predator Looting follows
    `bountyLootingLevel` (0..III).
 8. **Appetite scales.** Higher Appetite -> shorter cycle.
-9. **Upgrades apply.** Bounty/Appetite upgrades stack on the frog's stats; Capacity raises budget;
-   Everflow stops depletion; removing one reverts it; all returned on break.
+9. **Upgrades apply.** Bounty/Appetite upgrades stack on the frog's stats; removing one reverts
+   it; all returned on break. (Feedstock budget/depletion is not an upgrade - it comes from the
+   milk's own Count/Endless catalysts, step in "Rates".)
 10. **Smelter.** With a Smelter, the item output holds smelted results, never raw Froglights;
     unsmeltable products pass through.
 11. **Melter.** With a Melter, molten output routes to a fluid tank (metal -> molten metal,
@@ -254,15 +266,17 @@ active output form (item grid / molten gauge / XP gauge).
 12. **Catalysts factor.** Rapid/Teeming/Bountiful/Endless on the fed milk *or slurry* speed up /
     add count / extend budget / stop depletion, stacking with the stat upgrades.
 13. **No power for the core loop.** The base frog-eating loop needs no power. Only the
-    Smelter/Melter/Overclock upgrades draw RF (receive-only); with one installed and the buffer
+    the Overclock upgrade draws RF (receive-only; Smelter/Melter are free); with one installed and the buffer
     empty, the block stalls until powered.
 14. **Automation I/O.** DOWN outputs items (and the fluid tanks); pipes fill the feedstock tank
     and drain the product tanks; other faces don't output items.
 15. **Ergonomics.** Distinct inactive vs active Processor texture; the Dome renders the loaded
     frog + a feedstock-tinted slime + animations; the GUI duration bar tracks the cycle; Jade
     shows contents + reason.
-16. **No loss on break.** Breaking the Processor returns the frog (filled net, stats intact),
-    the feedstock, the upgrades, and any banked product; the Dome drops as itself.
+16. **Break returns items, NOT fluids.** Breaking the Processor returns the frog (filled net,
+    stats intact) and the upgrades; the Dome drops as itself. Tank fluids (feedstock / XP / molten)
+    are **not** dropped as buckets - that would mint free buckets (bucket econ). Drain the feedstock
+    back into a bucket first (empty bucket -> the tank) if you want to keep it.
 17. **Throughput parity.** One un-upgraded unit on plain feedstock is within tolerance of one
     physical-Terrarium frog, and below a maxed multiblock's total.
 18. **GameTest lock.** Registry GameTests assert: forms only with the Dome; each path's match ->
@@ -287,11 +301,11 @@ active output form (item grid / molten gauge / XP gauge).
   / `PFCreativeTabs`; capabilities in `PFModBusEvents` (Fluid.BLOCK feedstock fill-only + product
   tanks; Item.BLOCK DOWN output; **Energy.BLOCK receive-only** for the powered upgrades, advertised
   only when a Smelter/Melter/Overclock is installed).
-- The **upgrade item family** (Bounty / Appetite / Smelter / Melter / Capacity / Everflow /
-  Overclock) - items,
+- The **upgrade item family** (Bounty / Appetite / Smelter / Melter / Overclock) - items,
   models, textures, recipes, and a `virtual_terrarium_upgrade` item tag for the slot filter.
+  (Feedstock economy is not an upgrade - it rides the milk's Count/Endless catalysts.)
 - Blockstates + models + textures (gen/ pipeline; the void-tier inactive/active Processor + the
-  glass Dome); loot tables (Processor returns frog + feedstock + upgrades + banked product; Dome
+  glass Dome); loot tables (Processor returns frog + upgrades - NOT tank fluids, bucket econ; Dome
   returns itself); `mineable/pickaxe`; lang (names + tooltips + Jade + idle reasons).
 - Void-tier crafting recipes (balance pass). No config flag - the feature is always available.
 - Jade provider (server-data, single-interface split per the Jade 26.1 rule).
@@ -301,7 +315,8 @@ active output form (item grid / molten gauge / XP gauge).
 ## Decisions to finalize (before build)
 
 1. **Upgrade item family** - names, textures, recipes. The levers are set (Bounty, Appetite,
-   Smelter, Melter, Capacity, Everflow, Overclock); only the item design is open.
+   Smelter, Melter, Overclock); only the item design is open. (Feedstock economy is catalyst-
+   driven, not an upgrade.)
 2. **Slot counts** - upgrade slots (lead 4-6), item-output slots (lead 9).
 3. **Void-tier recipes** - the ingredient lists for both blocks + the upgrade items.
 4. **Balance figures** - RF/tick for each powered upgrade, the Overclock stacking cap, and the

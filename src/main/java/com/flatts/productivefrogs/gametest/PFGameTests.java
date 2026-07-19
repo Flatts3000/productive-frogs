@@ -95,6 +95,7 @@ public final class PFGameTests {
         PredationSupplyChainTests.register();
         TerrariumTests.register();
         EquivalenceLaneTests.register();
+        VirtualTerrariumTests.register();
 
         FUNCTIONS.register(modEventBus);
         modEventBus.addListener(PFGameTests::onRegisterGameTests);

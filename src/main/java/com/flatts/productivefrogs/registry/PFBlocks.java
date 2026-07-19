@@ -151,6 +151,30 @@ public final class PFBlocks {
      * cheap to break with hand, sturdy enough to feel "built". Sound type
      * METAL since the design is a mechanical press.
      */
+    /** Virtual Terrarium Processor - the single-block virtual frog loop (docs/virtual_terrarium.md). */
+    public static final DeferredBlock<com.flatts.productivefrogs.content.block.VirtualTerrariumProcessorBlock> VIRTUAL_TERRARIUM = registerBlock(
+        "virtual_terrarium",
+        com.flatts.productivefrogs.content.block.VirtualTerrariumProcessorBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_PURPLE)
+            .strength(3.5F, 6.0F)
+            .sound(SoundType.AMETHYST)
+            .requiresCorrectToolForDrops());
+
+    /** Virtual Terrarium Display Dome - the glass top block (docs/virtual_terrarium.md). */
+    public static final DeferredBlock<com.flatts.productivefrogs.content.block.VirtualTerrariumDomeBlock> VIRTUAL_TERRARIUM_DOME = registerBlock(
+        "virtual_terrarium_dome",
+        com.flatts.productivefrogs.content.block.VirtualTerrariumDomeBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_PURPLE)
+            .strength(1.5F)
+            .sound(SoundType.GLASS)
+            .noOcclusion()
+            .isValidSpawn((s, l, p, e) -> false)
+            .isRedstoneConductor((s, l, p) -> false)
+            .isSuffocating((s, l, p) -> false)
+            .isViewBlocking((s, l, p) -> false));
+
     public static final DeferredBlock<SlimeMilkerBlock> SLIME_MILKER = registerBlock(
         "slime_milker",
         SlimeMilkerBlock::new,
