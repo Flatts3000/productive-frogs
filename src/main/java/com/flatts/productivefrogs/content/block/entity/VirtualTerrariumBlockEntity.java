@@ -104,11 +104,11 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
     private static final int OVERCLOCK_RF_PER_CYCLE = 400;
     private static final int MAX_OVERCLOCK = 3;
     // Each Bounty upgrade adds +1 output (Froglight / smelted item / melted-fluid unit /
-    // predator Looting); capped so 3 upgrades give a base 1 -> 4 output.
-    private static final int MAX_BOUNTY_UPGRADE = 3;
-    // Each Appetite upgrade shortens the cycle by a flat 15% (multiplicative), capped at 3.
+    // predator Looting); capped at 8 (matches VirtualTerrariumInventory#upgradeCap).
+    private static final int MAX_BOUNTY_UPGRADE = 8;
+    // Each Appetite upgrade shortens the cycle by a flat 15% (multiplicative), capped at 8.
     private static final double APPETITE_SPEED_FACTOR = 0.85;
-    private static final int MAX_APPETITE_UPGRADE = 3;
+    private static final int MAX_APPETITE_UPGRADE = 8;
 
     public static final int DATA_PROGRESS = 0;
     public static final int DATA_INTERVAL = 1;

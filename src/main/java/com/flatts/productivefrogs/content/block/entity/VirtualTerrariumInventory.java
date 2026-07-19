@@ -56,9 +56,27 @@ public class VirtualTerrariumInventory extends net.neoforged.neoforge.items.Item
             if (stack.is(PFItems.VT_UPGRADE_MELTER.get()) && countUpgrade(PFItems.VT_UPGRADE_SMELTER.get()) > 0) {
                 return false;
             }
-            return true;
+            // Per-upgrade cap: reject once the machine already holds the max of this type.
+            return countUpgrade(stack.getItem()) < upgradeCap(stack.getItem());
         }
         return false;
+    }
+
+    /**
+     * Max total of a given upgrade the machine accepts: 8 Bounty / 8 Appetite, 3 Overclock,
+     * and only 1 Smelter OR Melter (they are also mutually exclusive).
+     */
+    public int upgradeCap(Item upgrade) {
+        if (upgrade == PFItems.VT_UPGRADE_BOUNTY.get() || upgrade == PFItems.VT_UPGRADE_APPETITE.get()) {
+            return 8;
+        }
+        if (upgrade == PFItems.VT_UPGRADE_OVERCLOCK.get()) {
+            return 3;
+        }
+        if (upgrade == PFItems.VT_UPGRADE_SMELTER.get() || upgrade == PFItems.VT_UPGRADE_MELTER.get()) {
+            return 1;
+        }
+        return 0;
     }
 
     /** Total installed count of an upgrade item across the upgrade slots. */

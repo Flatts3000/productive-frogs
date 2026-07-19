@@ -1,3 +1,11 @@
-{ "type": "minecraft:crafting_shapeless", "category": "misc",
-  "ingredients": [ "minecraft:amethyst_shard", "minecraft:sugar", "minecraft:sugar" ],
-  "result": { "id": "productivefrogs:vt_upgrade_appetite", "count": 1 } }
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["SUS", "UGU", "SUS"],
+  "key": {
+    "S": "minecraft:amethyst_shard",
+    "U": "minecraft:sugar",
+    "G": "minecraft:glowstone"
+  },
+  "result": { "id": "productivefrogs:vt_upgrade_appetite", "count": 1 }
+}

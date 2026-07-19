@@ -97,12 +97,14 @@ with the frog's stats layered in. All of these combine into the formula:
 - **Cycle time** = a base `MilkSpawnEconomy.intervalTicks(rapidLevel, ...)` (the feedstock's
   spawn cadence, 200-600 ticks, shortened by the **Rapid** catalyst), then further shortened by
   the frog's **Appetite stat**, then a **flat -15% per Appetite upgrade** (decoupled from the
-  stat, capped at 3), and, when powered, the **Overclock** (+50% speed, stacking to a cap).
+  stat, capped at 8), and, when powered, the **Overclock** (+50% speed, capped at 3).
 - **Count** = `batchQuantity(teemingLevel) x bountyDropCount(effectiveBounty)`, where
   `teemingLevel` = the feedstock's **Teeming** catalyst and `effectiveBounty` = frog Bounty
   ; each **Bounty upgrade** then adds a **flat +1 output** (NOT the frog-stat band mechanic),
-  capped at 3, so a base-1 frog with 3 Bounty upgrades makes 4. For predators the frog's Bounty
-  sets base Looting (`bountyLootingLevel`) and each Bounty upgrade adds +1 Looting.
+  capped at 8, so a base-1 frog with 8 Bounty makes 9. For predators the frog's Bounty sets base
+  Looting (`bountyLootingLevel`) and each Bounty upgrade adds +1 Looting. **The machine enforces
+  per-upgrade caps at the slot** (`VirtualTerrariumInventory#upgradeCap`): 8 Bounty / 8 Appetite,
+  3 Overclock, and only **one** Smelter OR Melter (also mutually exclusive).
 - **Budget is spawns, not liquid.** Each eat spends **one spawn** of the loaded milk's budget
   (exactly like a placed Slime Milk source - nothing in the pack consumes milk any sooner). The
   1000mB **liquid never drains per eat**; the tank only empties once the spawn budget hits zero.

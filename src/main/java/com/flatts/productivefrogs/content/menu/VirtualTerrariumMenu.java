@@ -71,7 +71,7 @@ public class VirtualTerrariumMenu extends AbstractContainerMenu {
                 });
             }
             for (int i = 0; i < VirtualTerrariumInventory.UPGRADE_COUNT; i++) {
-                addSlot(new SlotItemHandler(inv, VirtualTerrariumInventory.UPGRADE_START + i,
+                addSlot(new UpgradeSlot(inv, VirtualTerrariumInventory.UPGRADE_START + i,
                     UPGRADE_X, UPGRADE_START_Y + i * 18));
             }
         } else {
@@ -237,5 +237,40 @@ public class VirtualTerrariumMenu extends AbstractContainerMenu {
         Level level = playerInv.player.level();
         BlockEntity be = level.getBlockEntity(pos);
         return be instanceof VirtualTerrariumBlockEntity vt ? vt : null;
+    }
+
+    /**
+     * Upgrade slot that enforces the per-upgrade cross-slot cap. Vanilla place / shift-click
+     * limit an insert by {@code getMaxStackSize(stack)}, so capping it here (accounting for the
+     * same upgrade already in the OTHER slots) makes the machine accept only up to the cap;
+     * {@code mayPlace} -> {@code isItemValid} rejects entirely once at the cap.
+     */
+    private static class UpgradeSlot extends SlotItemHandler {
+        private final VirtualTerrariumInventory inv;
+
+        UpgradeSlot(VirtualTerrariumInventory inv, int index, int x, int y) {
+            super(inv, index, x, y);
+            this.inv = inv;
+        }
+
+        @Override
+        public int getMaxStackSize(ItemStack stack) {
+            if (stack.isEmpty()) {
+                return super.getMaxStackSize(stack);
+            }
+            int cap = inv.upgradeCap(stack.getItem());
+            if (cap <= 0) {
+                return 0;
+            }
+            int inThisSlot = getItem().is(stack.getItem()) ? getItem().getCount() : 0;
+            int others = inv.countUpgrade(stack.getItem()) - inThisSlot;
+            return Math.max(0, Math.min(cap - others, stack.getMaxStackSize()));
+        }
+
+        @Override
+        public int getMaxStackSize() {
+            ItemStack held = getItem();
+            return held.isEmpty() ? super.getMaxStackSize() : getMaxStackSize(held);
+        }
     }
 }

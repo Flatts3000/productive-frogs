@@ -418,7 +418,8 @@ public final class VirtualTerrariumTests {
 
         VirtualTerrariumBlockEntity rich = placeProcessorAt(helper, new BlockPos(3, 2, 3), true);
         loadFrog(rich, FrogKind.resource(Category.CAVE));
-        fillUpgrades(rich, PFItems.VT_UPGRADE_BOUNTY.get()); // all 4 slots - the 4th is over the cap
+        // 4 Bounty upgrades -> +4 (a base 1 -> 5 Froglights, which still fits the 6 output slots).
+        fillUpgrades(rich, PFItems.VT_UPGRADE_BOUNTY.get());
         rich.getFeedstock().setFluid(slimeMilk(pf("copper"), 0));
 
         runCycleAt(helper, plain, new BlockPos(1, 2, 1));
@@ -427,8 +428,8 @@ public final class VirtualTerrariumTests {
         int plainCount = totalOutput(plain);
         int richCount = totalOutput(rich);
         helper.assertTrue(plainCount == 1, "a min-Bounty frog produces 1 Froglight/eat, got " + plainCount);
-        helper.assertTrue(richCount == plainCount + 3,
-            "Bounty upgrades add +1 each capped at 3 (expected " + (plainCount + 3) + ", got " + richCount + ")");
+        helper.assertTrue(richCount == plainCount + 4,
+            "each Bounty upgrade adds +1 output (expected " + (plainCount + 4) + ", got " + richCount + ")");
         helper.succeed();
     }
 
@@ -572,6 +573,18 @@ public final class VirtualTerrariumTests {
         inv.setStackInSlot(u0, new ItemStack(PFItems.VT_UPGRADE_MELTER.get()));
         helper.assertFalse(inv.isItemValid(u1, new ItemStack(PFItems.VT_UPGRADE_SMELTER.get())),
             "a Smelter must not go in beside a Melter");
+
+        // Per-upgrade caps: a full Melter (cap 1) rejects a second; a full Bounty (cap 8) rejects a 9th.
+        helper.assertTrue(inv.upgradeCap(PFItems.VT_UPGRADE_MELTER.get()) == 1, "Melter cap is 1");
+        helper.assertFalse(inv.isItemValid(u1, new ItemStack(PFItems.VT_UPGRADE_MELTER.get())),
+            "a second Melter must be rejected (cap 1)");
+        inv.setStackInSlot(u0, new ItemStack(PFItems.VT_UPGRADE_BOUNTY.get(), 8));
+        helper.assertTrue(inv.upgradeCap(PFItems.VT_UPGRADE_BOUNTY.get()) == 8, "Bounty cap is 8");
+        helper.assertFalse(inv.isItemValid(u1, new ItemStack(PFItems.VT_UPGRADE_BOUNTY.get())),
+            "a 9th Bounty must be rejected (cap 8)");
+        inv.setStackInSlot(u0, new ItemStack(PFItems.VT_UPGRADE_BOUNTY.get(), 7));
+        helper.assertTrue(inv.isItemValid(u1, new ItemStack(PFItems.VT_UPGRADE_BOUNTY.get())),
+            "an 8th Bounty (under the cap) is accepted");
 
         helper.assertFalse(inv.isItemValid(VirtualTerrariumInventory.FROG_SLOT,
             new ItemStack(PFItems.FROG_NET.get())), "an empty Frog Net is not a loaded frog");
