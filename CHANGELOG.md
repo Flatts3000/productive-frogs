@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+## v2.0.0-alpha.4 - 2026-07-19 - Under Glass
+
+### Added
+
+- **The Virtual Terrarium - a frog's whole eat loop inside two blocks.** Craft
+  the Processor, set a glass Display Dome on top, drop a netted frog in, and
+  feed it what that frog eats: Slime Milk of its own species for a Resource
+  frog, Mimic Milk for a Midas, Mob Slurry for a Predator. It eats on its own
+  and drops the results out the bottom, with no live frogs or slimes on the
+  ground and no floor space taken. Like a placed milk source the feedstock is
+  spent per spawn, not by the liquid, so a bucket only empties once its spawns
+  run out, and Endless milk never does. A bucket fills and drains the tank both
+  ways, so a broken block never mints one. Four upgrade slots tune it: Bounty
+  adds an output per eat (up to eight), Appetite shortens the cycle (up to
+  eight), a Smelter or Melter turns Froglights straight into their smelted item
+  or a molten fluid out the bottom (one or the other), and an Overclock runs
+  the whole block faster off RF (up to three, and the only upgrade that needs
+  power). It reads out on Jade, and the in-game guide has a full entry. A
+  void-tier build, so it lands late. (#337)
+
 ## v2.0.0-alpha.3 - 2026-07-18 - Field Guide
 
 ### Added
