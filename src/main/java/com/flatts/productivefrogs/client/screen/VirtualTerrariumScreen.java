@@ -62,12 +62,17 @@ public class VirtualTerrariumScreen extends PFContainerScreen<VirtualTerrariumMe
         gui.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND, x, y, 0.0F, 0.0F, this.imageWidth, this.imageHeight,
                  BG_TEX_WIDTH, BG_TEX_HEIGHT);
 
-        // RF meter.
-        fillMeter(gui, x + RF_X, y + RF_Y, RF_W, RF_H,
-            this.menu.getEnergyStored(), VirtualTerrariumBlockEntity.ENERGY_CAPACITY, 0xFFC0402A);
-        // Feedstock fluid slot.
+        // RF meter - only shown when the block needs power (an Overclock is installed);
+        // otherwise paint the baked frame over with the panel colour so it disappears.
+        if (powered()) {
+            fillMeter(gui, x + RF_X, y + RF_Y, RF_W, RF_H,
+                this.menu.getEnergyStored(), VirtualTerrariumBlockEntity.ENERGY_CAPACITY, 0xFFC0402A);
+        } else {
+            gui.fill(x + RF_X - 1, y + RF_Y - 1, x + RF_X + RF_W + 1, y + RF_Y + RF_H + 1, 0xFFC6C6C6);
+        }
+        // Feedstock fluid slot - fills by the milk's SPAWN budget (the liquid stays until spent).
         fillMeter(gui, x + FEED_X, y + FEED_Y, FEED_SIZE, FEED_SIZE,
-            this.menu.getFeedstockAmount(), VirtualTerrariumBlockEntity.FEEDSTOCK_CAPACITY, feedstockColor());
+            feedstockSpawns(), feedstockSpawnCap(), feedstockColor());
         // Output product tank.
         fillMeter(gui, x + TANK_X, y + TANK_Y, TANK_W, TANK_H,
             this.menu.getProductAmount(), productCapacity(), productColor());
@@ -121,7 +126,7 @@ public class VirtualTerrariumScreen extends PFContainerScreen<VirtualTerrariumMe
             case NEEDS_POWER -> 0xFFB07A20;   // amber
             default -> 0xFF707070;            // gray: just not set up yet
         };
-        gui.text(this.font, text.getString(), 8, 74, color);
+        gui.text(this.font, text.getString(), 8, 74, color, false);   // no drop shadow on the hint/error line
     }
 
     @Override
@@ -132,7 +137,7 @@ public class VirtualTerrariumScreen extends PFContainerScreen<VirtualTerrariumMe
 
         if (inside(mouseX, mouseY, x + FEED_X, y + FEED_Y, FEED_SIZE, FEED_SIZE)) {
             gui.setComponentTooltipForNextFrame(this.font, feedstockTooltip(), mouseX, mouseY);
-        } else if (inside(mouseX, mouseY, x + RF_X, y + RF_Y, RF_W, RF_H)) {
+        } else if (powered() && inside(mouseX, mouseY, x + RF_X, y + RF_Y, RF_W, RF_H)) {
             gui.setComponentTooltipForNextFrame(this.font, List.of(
                 Component.translatable("productivefrogs.gui.energy_amount",
                     this.menu.getEnergyStored(), VirtualTerrariumBlockEntity.ENERGY_CAPACITY)), mouseX, mouseY);
@@ -150,6 +155,26 @@ public class VirtualTerrariumScreen extends PFContainerScreen<VirtualTerrariumMe
     private FluidStack feedstock() {
         VirtualTerrariumBlockEntity be = this.menu.blockEntity();
         return be == null ? FluidStack.EMPTY : be.getFeedstock().getFluid();
+    }
+
+    /** True when the block draws RF (an Overclock is installed) - the only time the RF meter shows. */
+    private boolean powered() {
+        VirtualTerrariumBlockEntity be = this.menu.blockEntity();
+        return be != null && be.hasPoweredUpgrade();
+    }
+
+    /** Feedstock fluid-slot fill value = spawns remaining (a full bar for an Endless charge). */
+    private int feedstockSpawns() {
+        VirtualTerrariumBlockEntity be = this.menu.blockEntity();
+        if (be == null) {
+            return 0;
+        }
+        return be.feedstockInfinite() ? be.feedstockSpawnsCapacity() : be.feedstockSpawnsRemaining();
+    }
+
+    private int feedstockSpawnCap() {
+        VirtualTerrariumBlockEntity be = this.menu.blockEntity();
+        return be == null ? 0 : be.feedstockSpawnsCapacity();
     }
 
     private int feedstockColor() {
@@ -191,10 +216,8 @@ public class VirtualTerrariumScreen extends PFContainerScreen<VirtualTerrariumMe
             return lines;
         }
         lines.add(feedstockName(fluid));   // variant-aware ("Iron Slime Milk")
-        lines.add(Component.translatable("productivefrogs.gui.fluid_amount",
-            this.menu.getFeedstockAmount(), VirtualTerrariumBlockEntity.FEEDSTOCK_CAPACITY)
-            .withStyle(ChatFormatting.GRAY));
-        // The milk's stamped stats (matches the bucket / milk-source readout).
+        // Spawn budget is what's spent (not the liquid), so show that + the catalysts -
+        // the same readout the bucket / milk source use.
         MilkCharge charge = MilkCharge.fromFluid(fluid);
         if (charge.infinite()) {
             lines.add(Component.translatable("productivefrogs.jade.spawns_unlimited").withStyle(ChatFormatting.GRAY));
@@ -213,13 +236,16 @@ public class VirtualTerrariumScreen extends PFContainerScreen<VirtualTerrariumMe
         return lines;
     }
 
-    /** Variant-aware feedstock name ("Iron Slime Milk"); falls back to the fluid's hover name. */
+    /**
+     * Variant-aware feedstock name ("Iron Slime Milk"), built as a literal exactly like
+     * the Basin / milk-source readouts (avoids depending on a bucket lang key); falls
+     * back to the fluid's hover name for Mimic Milk / Mob Slurry.
+     */
     private static Component feedstockName(FluidStack fluid) {
         if (fluid.is(PFFluids.SLIME_MILK.get())) {
             Identifier variant = fluid.get(PFDataComponents.SLIME_VARIANT.get());
             if (variant != null) {
-                return Component.translatable("item.productivefrogs.slime_milk_bucket.item",
-                    VariantNames.titleCase(variant));
+                return Component.literal(VariantNames.titleCase(variant) + " Slime Milk");
             }
         }
         return fluid.getHoverName();

@@ -67,11 +67,17 @@ public final class VirtualTerrariumTests {
             VirtualTerrariumTests::overclockShortensInterval);
         PFGameTests.test("vt_no_dome_does_not_run", 40,
             VirtualTerrariumTests::noDomeDoesNotRun);
-        // Catalyst-driven feedstock economy (replaces the retired Capacity/Everflow upgrades).
-        PFGameTests.test("vt_infinite_catalyst_no_drain", 40,
-            VirtualTerrariumTests::infiniteCatalystNoDrain);
-        PFGameTests.test("vt_capacity_catalyst_slows_drain", 40,
-            VirtualTerrariumTests::capacityCatalystSlowsDrain);
+        // Spawn-budget feedstock economy (milk consumed only when its spawns run out).
+        PFGameTests.test("vt_eat_spends_one_spawn", 40,
+            VirtualTerrariumTests::eatSpendsOneSpawnNotLiquid);
+        PFGameTests.test("vt_exhausting_spawns_empties_tank", 40,
+            VirtualTerrariumTests::exhaustingSpawnsEmptiesTank);
+        PFGameTests.test("vt_infinite_catalyst_never_depletes", 40,
+            VirtualTerrariumTests::infiniteCatalystNeverDepletes);
+        PFGameTests.test("vt_capacity_catalyst_raises_budget", 40,
+            VirtualTerrariumTests::capacityCatalystRaisesBudget);
+        PFGameTests.test("vt_bucket_drains_tank", 40,
+            VirtualTerrariumTests::bucketDrainsTank);
         // Melter upgrade (the Smelter's molten-fluid sibling).
         PFGameTests.test("vt_melter_yields_molten_fluid", 40,
             VirtualTerrariumTests::melterYieldsMoltenFluid);
@@ -175,8 +181,11 @@ public final class VirtualTerrariumTests {
 
             runCycle(helper, be);
 
-            helper.assertTrue(be.getFeedstock().getFluidAmount() < VirtualTerrariumBlockEntity.FEEDSTOCK_CAPACITY,
-                "the predator cycle must consume feedstock");
+            // Spawn budget is spent, not the liquid (which stays at 1000mB until exhausted).
+            helper.assertTrue(be.getFeedstock().getFluidAmount() == VirtualTerrariumBlockEntity.FEEDSTOCK_CAPACITY,
+                "the predator cycle must not drain the liquid");
+            helper.assertTrue(be.feedstockSpawnsRemaining() < be.feedstockSpawnsCapacity(),
+                "the predator cycle must spend one spawn");
             helper.assertTrue(be.getXpTank().getFluidAmount() > 0,
                 "a devoured mob must deposit Liquid Experience");
             helper.succeed();
@@ -262,24 +271,64 @@ public final class VirtualTerrariumTests {
         helper.succeed();
     }
 
-    // -- catalyst-driven feedstock economy --
+    // -- spawn-budget feedstock economy (milk consumed only when its spawns run out) --
 
-    /** Infinite (Endless) catalyst on the feedstock: the block still produces but never drains. */
-    private static void infiniteCatalystNoDrain(GameTestHelper helper) {
+    /** One eat spends one spawn and leaves the 1000mB liquid untouched. */
+    private static void eatSpendsOneSpawnNotLiquid(GameTestHelper helper) {
         VirtualTerrariumBlockEntity be = placeProcessor(helper, true);
         loadFrog(be, FrogKind.resource(Category.CAVE));
-        be.getFeedstock().setFluid(infiniteMilk(pf("copper")));
+        be.getFeedstock().setFluid(slimeMilk(pf("copper"), 0));
+        int cap = be.feedstockSpawnsCapacity();
 
         runCycle(helper, be);
 
-        helper.assertFalse(firstOutput(be).isEmpty(), "an Infinite-catalyst source must still produce");
+        helper.assertFalse(firstOutput(be).isEmpty(), "a matched frog must produce");
         helper.assertTrue(be.getFeedstock().getFluidAmount() == VirtualTerrariumBlockEntity.FEEDSTOCK_CAPACITY,
-            "the Infinite catalyst must stop depletion, left " + be.getFeedstock().getFluidAmount());
+            "the liquid must stay at 1000mB - only the spawn budget is spent");
+        helper.assertTrue(be.feedstockSpawnsRemaining() == cap - 1,
+            "exactly one spawn must be spent (cap=" + cap + ", left=" + be.feedstockSpawnsRemaining() + ")");
         helper.succeed();
     }
 
-    /** A high Count/Bountiful capacity drains proportionally LESS feedstock per cycle than plain milk. */
-    private static void capacityCatalystSlowsDrain(GameTestHelper helper) {
+    /** When the last spawn is spent, the milk is finally consumed - the tank empties. */
+    private static void exhaustingSpawnsEmptiesTank(GameTestHelper helper) {
+        VirtualTerrariumBlockEntity be = placeProcessor(helper, true);
+        loadFrog(be, FrogKind.resource(Category.CAVE));
+        // Speed 100 collapses the reschedule interval to its floor so each runCycle
+        // completes at least one eat (a speed-0 interval can exceed CYCLE_TICKS).
+        be.getFeedstock().setFluid(slimeMilk(pf("copper"), 100));
+        int cap = be.feedstockSpawnsCapacity();
+
+        for (int i = 0; i < cap; i++) {
+            runCycle(helper, be);
+        }
+
+        helper.assertTrue(be.getFeedstock().getFluid().isEmpty(),
+            "the tank must empty once every spawn is spent (cap=" + cap + ")");
+        helper.succeed();
+    }
+
+    /** Infinite (Endless) catalyst: the block produces forever and never spends a spawn. */
+    private static void infiniteCatalystNeverDepletes(GameTestHelper helper) {
+        VirtualTerrariumBlockEntity be = placeProcessor(helper, true);
+        loadFrog(be, FrogKind.resource(Category.CAVE));
+        be.getFeedstock().setFluid(infiniteMilk(pf("copper")));
+        int cap = be.feedstockSpawnsCapacity();
+
+        for (int i = 0; i < 3; i++) {
+            runCycle(helper, be);
+        }
+
+        helper.assertFalse(firstOutput(be).isEmpty(), "an Infinite-catalyst source must still produce");
+        helper.assertTrue(be.getFeedstock().getFluidAmount() == VirtualTerrariumBlockEntity.FEEDSTOCK_CAPACITY,
+            "Infinite feedstock must never empty");
+        helper.assertTrue(be.feedstockSpawnsRemaining() == cap,
+            "Infinite feedstock must never spend a spawn");
+        helper.succeed();
+    }
+
+    /** A Count/Bountiful capacity gives a LARGER spawn budget than plain milk (more eats per bucket). */
+    private static void capacityCatalystRaisesBudget(GameTestHelper helper) {
         VirtualTerrariumBlockEntity plain = placeProcessorAt(helper, new BlockPos(1, 2, 1), true);
         loadFrog(plain, FrogKind.resource(Category.CAVE));
         plain.getFeedstock().setFluid(slimeMilk(pf("copper"), 0));
@@ -288,16 +337,25 @@ public final class VirtualTerrariumTests {
         loadFrog(big, FrogKind.resource(Category.CAVE));
         big.getFeedstock().setFluid(capacityMilk(pf("copper"), 1_000));
 
-        runCycleAt(helper, plain, new BlockPos(1, 2, 1));
-        runCycleAt(helper, big, new BlockPos(3, 2, 3));
+        helper.assertTrue(big.feedstockSpawnsCapacity() > plain.feedstockSpawnsCapacity(),
+            "a Count/Bountiful capacity must raise the spawn budget (big=" + big.feedstockSpawnsCapacity()
+                + " vs plain=" + plain.feedstockSpawnsCapacity() + ")");
+        helper.succeed();
+    }
 
-        helper.assertFalse(firstOutput(plain).isEmpty(), "plain source must produce");
-        helper.assertFalse(firstOutput(big).isEmpty(), "high-capacity source must produce");
-        int plainLeft = plain.getFeedstock().getFluidAmount();
-        int bigLeft = big.getFeedstock().getFluidAmount();
-        helper.assertTrue(plainLeft < VirtualTerrariumBlockEntity.FEEDSTOCK_CAPACITY, "plain source must drain feedstock");
-        helper.assertTrue(bigLeft > plainLeft,
-            "a Count/Bountiful capacity must drain less per cycle (big=" + bigLeft + " vs plain=" + plainLeft + ")");
+    /** An empty bucket drains the loaded milk back out - variant + remaining spawns preserved, tank emptied. */
+    private static void bucketDrainsTank(GameTestHelper helper) {
+        VirtualTerrariumBlockEntity be = placeProcessor(helper, true);
+        be.getFeedstock().setFluid(slimeMilk(pf("copper"), 0));
+
+        ItemStack filled = be.drainToBucket();
+
+        helper.assertFalse(filled.isEmpty(), "draining must return a filled bucket");
+        helper.assertTrue(filled.getItem() instanceof com.flatts.productivefrogs.content.item.SlimeMilkBucketItem,
+            "the drained bucket must be a Slime Milk bucket, got " + filled);
+        Identifier variant = filled.get(PFDataComponents.SLIME_VARIANT.get());
+        helper.assertTrue(pf("copper").equals(variant), "the drained bucket must keep the variant, got " + variant);
+        helper.assertTrue(be.getFeedstock().getFluid().isEmpty(), "draining must empty the tank");
         helper.succeed();
     }
 

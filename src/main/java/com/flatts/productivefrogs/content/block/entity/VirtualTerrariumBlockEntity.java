@@ -97,7 +97,6 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
     public static final int FEEDSTOCK_CAPACITY = 1_000;
     public static final int XP_CAPACITY = 16_000;
     public static final int MOLTEN_CAPACITY = 8_000;
-    public static final int FEEDSTOCK_PER_CYCLE = 100;
 
     public static final int ENERGY_CAPACITY = 100_000;
     public static final int ENERGY_MAX_RECEIVE = 2_000;
@@ -287,10 +286,53 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
         if (fluid.isEmpty() || feedstock.fill(fluid, IFluidHandler.FluidAction.SIMULATE) < FEEDSTOCK_CAPACITY) {
             return ItemStack.EMPTY;
         }
+        // Stamp the spawn budget so the readout counts N/cap from the first tick.
+        MilkCharge charge = MilkCharge.fromFluid(fluid);
+        fluid.set(PFDataComponents.SPAWNS_REMAINING.get(), charge.spawnsRemaining());
+        fluid.set(PFDataComponents.MILK_CAPACITY.get(), charge.capacity());
         feedstock.fill(fluid, IFluidHandler.FluidAction.EXECUTE);
         setChanged();
         syncToClient();
         return new ItemStack(net.minecraft.world.item.Items.BUCKET);
+    }
+
+    /** True for an empty vanilla bucket (the drain-to-bucket key). */
+    public static boolean isEmptyBucket(ItemStack stack) {
+        return stack.getItem() == net.minecraft.world.item.Items.BUCKET;
+    }
+
+    /**
+     * Drain the loaded feedstock back into an empty bucket - a filled milk/slurry
+     * bucket carrying the same variant + remaining spawn budget. Returns the filled
+     * bucket, or EMPTY if the tank holds no bucketable feedstock. Empties the tank.
+     */
+    public ItemStack drainToBucket() {
+        FluidStack fluid = feedstock.getFluid();
+        if (fluid.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack bucket = bucketFor(fluid);
+        if (bucket.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        // Carry the remaining spawn budget + catalysts onto the bucket so a re-insert resumes.
+        copyComponentToItem(fluid, bucket, PFDataComponents.SPAWNS_REMAINING.get());
+        copyComponentToItem(fluid, bucket, PFDataComponents.MILK_CAPACITY.get());
+        copyComponentToItem(fluid, bucket, PFDataComponents.MILK_SPEED.get());
+        copyComponentToItem(fluid, bucket, PFDataComponents.MILK_QUANTITY.get());
+        copyComponentToItem(fluid, bucket, PFDataComponents.MILK_INFINITE.get());
+        feedstock.setFluid(FluidStack.EMPTY);
+        setChanged();
+        syncToClient();
+        return bucket;
+    }
+
+    private static <T> void copyComponentToItem(FluidStack from, ItemStack to,
+            net.minecraft.core.component.DataComponentType<T> type) {
+        T value = from.get(type);
+        if (value != null) {
+            to.set(type, value);
+        }
     }
 
     /** Build the 1000 mB feedstock FluidStack a bucket represents, copying its identity + catalyst components. */
@@ -356,7 +398,7 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
             return Status.NO_FROG;
         }
         FluidStack fluid = feedstock.getFluid();
-        if (fluid.isEmpty() || fluid.getAmount() < feedstockPerCycle(fluid)) {
+        if (fluid.isEmpty()) {
             return Status.NO_FEEDSTOCK;
         }
         if (!productive(sl)) {
@@ -450,7 +492,7 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
             return false;
         }
         FluidStack fluid = feedstock.getFluid();
-        if (fluid.isEmpty() || fluid.getAmount() < feedstockPerCycle(fluid)) {
+        if (fluid.isEmpty()) {
             return false;
         }
         if (kind instanceof FrogKind.Resource resource) {
@@ -642,14 +684,54 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
     }
 
     private void consumeAndReschedule(ServerLevel level, FluidStack fluid) {
-        int perCycle = feedstockPerCycle(fluid);
-        if (perCycle > 0) {
-            feedstock.drain(perCycle, IFluidHandler.FluidAction.EXECUTE);
-        }
+        // Spend one of the milk's spawns - exactly like a placed Slime Milk source.
+        // The liquid is NOT drained per eat; the tank only empties once the spawn
+        // budget hits zero (nothing else in the pack consumes milk any sooner).
+        spendOneSpawn();
         progress = 0;
         interval = computeInterval(level, fluid);
         setChanged();
+        syncToClient();
         setWorking(level, worldPosition, level.getBlockState(worldPosition), true);
+    }
+
+    /** Decrement the loaded feedstock's spawn budget; empty the tank when it runs out. */
+    private void spendOneSpawn() {
+        FluidStack fluid = feedstock.getFluid();
+        if (fluid.isEmpty()) {
+            return;
+        }
+        MilkCharge charge = MilkCharge.fromFluid(fluid);
+        if (charge.infinite()) {
+            return; // Endless catalyst: never depletes
+        }
+        int remaining = charge.spawnsRemaining() - 1;
+        if (remaining <= 0) {
+            feedstock.setFluid(FluidStack.EMPTY); // milk used up - now it is consumed
+            return;
+        }
+        FluidStack updated = fluid.copy();
+        updated.set(PFDataComponents.SPAWNS_REMAINING.get(), remaining);
+        updated.set(PFDataComponents.MILK_CAPACITY.get(), charge.capacity()); // fixed denominator for N/cap
+        feedstock.setFluid(updated);
+    }
+
+    /** Spawns remaining on the loaded feedstock (0 when empty). */
+    public int feedstockSpawnsRemaining() {
+        FluidStack fluid = feedstock.getFluid();
+        return fluid.isEmpty() ? 0 : MilkCharge.fromFluid(fluid).spawnsRemaining();
+    }
+
+    /** Spawn-budget capacity of the loaded feedstock (for the N/cap readout). */
+    public int feedstockSpawnsCapacity() {
+        FluidStack fluid = feedstock.getFluid();
+        return fluid.isEmpty() ? 0 : MilkCharge.fromFluid(fluid).capacity();
+    }
+
+    /** True when the loaded feedstock never depletes (Endless catalyst). */
+    public boolean feedstockInfinite() {
+        FluidStack fluid = feedstock.getFluid();
+        return !fluid.isEmpty() && MilkCharge.fromFluid(fluid).infinite();
     }
 
     // -- upgrade-tuned figures --
@@ -672,15 +754,6 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
      * stretches the tank proportionally. Mob Slurry / Mimic Milk carry no catalysts,
      * so they read the default drain.
      */
-    private int feedstockPerCycle(FluidStack fluid) {
-        MilkCharge charge = MilkCharge.fromFluid(fluid);
-        if (charge.infinite()) {
-            return 0;
-        }
-        int base = MilkSpawnEconomy.defaultSpawnCount();
-        double factor = base / (double) Math.max(base, charge.capacity());
-        return Math.max(25, (int) Math.round(FEEDSTOCK_PER_CYCLE * factor));
-    }
 
     /** RF drawn per cycle - only the Overclock upgrade costs power (Smelter / Melter are free). */
     private int rfCostPerCycle() {
@@ -702,6 +775,11 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
     private boolean hasDomeAbove(Level level) {
         return level.getBlockState(worldPosition.above())
             .is(com.flatts.productivefrogs.registry.PFBlocks.VIRTUAL_TERRARIUM_DOME.get());
+    }
+
+    /** Whether a Display Dome sits directly above (works client-side too - for the dome renderer). */
+    public boolean hasDome() {
+        return level != null && hasDomeAbove(level);
     }
 
     @org.jetbrains.annotations.Nullable

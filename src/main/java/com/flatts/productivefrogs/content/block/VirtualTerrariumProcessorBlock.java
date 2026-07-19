@@ -94,19 +94,22 @@ public class VirtualTerrariumProcessorBlock extends Block implements EntityBlock
             Player player, InteractionHand hand, BlockHitResult hit) {
         // A filled feedstock bucket fills the tank in place and returns the empty
         // bucket (never consumed); if the tank is already charged, fall through to the GUI.
-        if (VirtualTerrariumBlockEntity.isFeedstockBucket(stack)) {
+        if (VirtualTerrariumBlockEntity.isFeedstockBucket(stack)
+                || VirtualTerrariumBlockEntity.isEmptyBucket(stack)) {
             if (level.isClientSide()) {
                 return InteractionResult.SUCCESS;
             }
             if (level.getBlockEntity(pos) instanceof VirtualTerrariumBlockEntity be) {
-                ItemStack empty = be.fillFromBucket(stack);
-                if (!empty.isEmpty()) {
+                ItemStack swap = VirtualTerrariumBlockEntity.isEmptyBucket(stack)
+                    ? be.drainToBucket()          // empty bucket -> filled feedstock bucket
+                    : be.fillFromBucket(stack);    // filled bucket -> empty bucket + charged tank
+                if (!swap.isEmpty()) {
                     ItemStack held = player.getItemInHand(hand);
                     held.shrink(1);
                     if (held.isEmpty()) {
-                        player.setItemInHand(hand, empty);
-                    } else if (!player.getInventory().add(empty)) {
-                        player.drop(empty, false);
+                        player.setItemInHand(hand, swap);
+                    } else if (!player.getInventory().add(swap)) {
+                        player.drop(swap, false);
                     }
                     return InteractionResult.SUCCESS;
                 }

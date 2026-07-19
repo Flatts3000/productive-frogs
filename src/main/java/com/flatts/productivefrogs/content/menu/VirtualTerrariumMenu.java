@@ -164,18 +164,22 @@ public class VirtualTerrariumMenu extends AbstractContainerMenu {
             return false;
         }
         ItemStack carried = getCarried();
-        if (!VirtualTerrariumBlockEntity.isFeedstockBucket(carried)) {
+        ItemStack swap;
+        if (VirtualTerrariumBlockEntity.isEmptyBucket(carried)) {
+            swap = blockEntity.drainToBucket();          // empty bucket -> filled feedstock bucket
+        } else if (VirtualTerrariumBlockEntity.isFeedstockBucket(carried)) {
+            swap = blockEntity.fillFromBucket(carried);  // filled bucket -> empty bucket
+        } else {
             return false;
         }
-        ItemStack empty = blockEntity.fillFromBucket(carried);
-        if (empty.isEmpty()) {
+        if (swap.isEmpty()) {
             return false;
         }
         carried.shrink(1);
         if (carried.isEmpty()) {
-            setCarried(empty);
-        } else if (!player.getInventory().add(empty)) {
-            player.drop(empty, false);
+            setCarried(swap);
+        } else if (!player.getInventory().add(swap)) {
+            player.drop(swap, false);
         }
         return true;
     }

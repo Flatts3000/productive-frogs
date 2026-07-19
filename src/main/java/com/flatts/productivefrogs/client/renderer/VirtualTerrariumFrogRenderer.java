@@ -45,7 +45,8 @@ public class VirtualTerrariumFrogRenderer
             Vec3 cameraPosition, ModelFeatureRenderer.CrumblingOverlay breakProgress) {
         BlockEntityRenderer.super.extractRenderState(be, state, partialTick, cameraPosition, breakProgress);
         state.active = false;
-        if (be.getLevel() == null || be.getInventory().getFrog().isEmpty()) {
+        // No frog, or no Display Dome above -> render nothing (the dome IS the glass case).
+        if (be.getLevel() == null || be.getInventory().getFrog().isEmpty() || !be.hasDome()) {
             return;
         }
         if (phantom == null) {
@@ -56,7 +57,9 @@ public class VirtualTerrariumFrogRenderer
         }
         long time = be.getLevel().getGameTime();
         phantom.tickCount = (int) time;
-        float yaw = 180.0F;
+        // Face the frog toward the Processor's front (its horizontal FACING).
+        float yaw = be.getBlockState()
+            .getValue(com.flatts.productivefrogs.content.block.VirtualTerrariumProcessorBlock.FACING).toYRot();
         double wx = be.getBlockPos().getX() + 0.5;
         double wy = be.getBlockPos().getY() + DOME_Y;
         double wz = be.getBlockPos().getZ() + 0.5;

@@ -493,6 +493,7 @@
   "productivefrogs.jei.empty_slime_bucket.info": "Right-click a size-1 Resource Slime to capture it. The bucket records the slime's variant (or species, for category-only slimes) and can be released elsewhere or fed into the Slime Milker.",
   "productivefrogs.jei.empty_tadpole_bucket.info": "Right-click a Resource Tadpole to capture it. The bucket records the tadpole's species and can be released elsewhere — released tadpoles will continue maturing into a Resource Frog.",
   "item.productivefrogs.slime_milk_bucket": "Slime Milk Bucket",
+  "item.productivefrogs.slime_milk_bucket.item": "Bucket of %s Slime Milk",
   "block.productivefrogs.slime_milk_source": "Slime Milk",
   "fluid_type.productivefrogs.slime_milk": "Slime Milk",
   "item.productivefrogs.liquid_experience_bucket": "Bucket of Liquid Experience",

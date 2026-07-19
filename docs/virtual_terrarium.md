@@ -86,7 +86,7 @@ seams. Each **eat cycle** (timed below), when productive (see Rules):
   the mob's XP (see the caveat below).
 
 Then apply the installed processing upgrade (Smelter/Melter) and route to the output. Spend one
-unit of the feedstock's budget per cycle.
+**spawn** of the feedstock's budget per cycle (the liquid itself is untouched until the budget runs out).
 
 ### Yield and timing (rate = spawn rate + catalysts + upgrades)
 
@@ -101,9 +101,12 @@ with the frog's stats layered in. All of these combine into the formula:
 - **Count** = `batchQuantity(teemingLevel) x bountyDropCount(effectiveBounty)`, where
   `teemingLevel` = the feedstock's **Teeming** catalyst and `effectiveBounty` = frog Bounty
   **+ Bounty upgrades**. (For predators, Bounty also raises Looting via `bountyLootingLevel`.)
-- **Budget** grows with the feedstock's **Count/Bountiful** catalyst (a `capacity` above the
-  default drains proportionally less per cycle, so a tank lasts longer); the **Endless/Infinite**
-  catalyst stops depletion entirely. These are read straight off the feedstock's `MilkCharge` -
+- **Budget is spawns, not liquid.** Each eat spends **one spawn** of the loaded milk's budget
+  (exactly like a placed Slime Milk source - nothing in the pack consumes milk any sooner). The
+  1000mB **liquid never drains per eat**; the tank only empties once the spawn budget hits zero.
+  A **Count/Bountiful** catalyst raises that budget (more eats per bucket); the **Endless/Infinite**
+  catalyst makes it never deplete. The GUI fluid slot fills by spawns-remaining; the tooltip +
+  Jade show "spawns left: N/cap". These are read straight off the feedstock's `MilkCharge` -
   the feedstock's own catalysts govern longevity, exactly like a placed source. There is **no
   Capacity or Everflow upgrade** (the catalysts already in the milk do that job).
 

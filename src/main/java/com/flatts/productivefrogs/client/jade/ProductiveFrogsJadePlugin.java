@@ -620,8 +620,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 if (data.contains("FeedVariant")) {
                     Identifier v = Identifier.tryParse(data.getStringOr("FeedVariant", ""));
                     name = v == null ? Component.literal("?")
-                        : Component.translatable("item.productivefrogs.slime_milk_bucket.item",
-                            com.flatts.productivefrogs.util.VariantNames.titleCase(v));
+                        : Component.literal(
+                            com.flatts.productivefrogs.util.VariantNames.titleCase(v) + " Slime Milk");
                 } else {
                     Identifier id = Identifier.tryParse(data.getStringOr("Feed", ""));
                     net.minecraft.world.level.material.Fluid fluid = id == null ? null
@@ -629,9 +629,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                     name = fluid == null ? Component.literal("?")
                         : new net.neoforged.neoforge.fluids.FluidStack(fluid, 1).getHoverName();
                 }
-                tooltip.add(Component.translatable("productivefrogs.jade.vt.feedstock",
-                    name, data.getIntOr("FeedAmt", 0),
-                    com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity.FEEDSTOCK_CAPACITY));
+                // Spawn budget is the meaningful count (the liquid stays at 1000mB until spent).
+                tooltip.add(name);
                 if (data.getBooleanOr("FeedInfinite", false)) {
                     tooltip.add(Component.translatable("productivefrogs.jade.spawns_unlimited"));
                 } else {
