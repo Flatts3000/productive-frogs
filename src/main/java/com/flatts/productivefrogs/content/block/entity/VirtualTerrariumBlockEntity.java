@@ -106,6 +106,9 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
     // Each Bounty upgrade adds +1 output (Froglight / smelted item / melted-fluid unit /
     // predator Looting); capped so 3 upgrades give a base 1 -> 4 output.
     private static final int MAX_BOUNTY_UPGRADE = 3;
+    // Each Appetite upgrade shortens the cycle by a flat 15% (multiplicative), capped at 3.
+    private static final double APPETITE_SPEED_FACTOR = 0.85;
+    private static final int MAX_APPETITE_UPGRADE = 3;
 
     public static final int DATA_PROGRESS = 0;
     public static final int DATA_INTERVAL = 1;
@@ -752,19 +755,16 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
         return Math.min(MAX_BOUNTY_UPGRADE, inventory.countUpgrade(PFItems.VT_UPGRADE_BOUNTY.get()));
     }
 
+    /** The frog's own Appetite stat (the upgrade is a separate flat speed bonus - it does NOT mirror the stat). */
     private int effectiveAppetite() {
-        return Math.min(PFConfig.statCap(),
-            loadedStat("Appetite") + 2 * inventory.countUpgrade(PFItems.VT_UPGRADE_APPETITE.get()));
+        return Math.min(PFConfig.statCap(), loadedStat("Appetite"));
     }
 
-    /**
-     * Millibuckets of feedstock drained per eat cycle. Longevity is governed by the
-     * feedstock's OWN catalysts, exactly like a placed Slime Milk source - not by any
-     * dedicated upgrade: the INFINITE catalyst ({@link MilkCharge#infinite}) never
-     * depletes, and the COUNT catalyst (a {@code capacity} above the default budget)
-     * stretches the tank proportionally. Mob Slurry / Mimic Milk carry no catalysts,
-     * so they read the default drain.
-     */
+    /** Flat cycle-speed factor from Appetite upgrades: {@value #APPETITE_SPEED_FACTOR} per upgrade, capped at 3. */
+    private double appetiteUpgradeFactor() {
+        int n = Math.min(MAX_APPETITE_UPGRADE, inventory.countUpgrade(PFItems.VT_UPGRADE_APPETITE.get()));
+        return Math.pow(APPETITE_SPEED_FACTOR, n);
+    }
 
     /** RF drawn per cycle - only the Overclock upgrade costs power (Smelter / Melter are free). */
     private int rfCostPerCycle() {
@@ -777,6 +777,7 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
         double appetiteFactor = 1.0 - 0.5 * Math.max(0.0, Math.min(1.0,
             (effectiveAppetite() - FrogStats.STAT_MIN) / (double) span));
         double scaled = base * appetiteFactor
+            * appetiteUpgradeFactor()   // flat -15%/upgrade, decoupled from the frog stat
             * Math.pow(0.5, Math.min(MAX_OVERCLOCK, inventory.countUpgrade(PFItems.VT_UPGRADE_OVERCLOCK.get())));
         return Math.max(1, (int) Math.round(scaled));
     }

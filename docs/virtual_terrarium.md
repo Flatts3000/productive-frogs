@@ -96,8 +96,8 @@ with the frog's stats layered in. All of these combine into the formula:
 
 - **Cycle time** = a base `MilkSpawnEconomy.intervalTicks(rapidLevel, ...)` (the feedstock's
   spawn cadence, 200-600 ticks, shortened by the **Rapid** catalyst), then further shortened by
-  the frog's **effective Appetite** (Appetite stat + Appetite upgrades) and, when powered, the
-  **Overclock** (+50% speed, stacking to a cap).
+  the frog's **Appetite stat**, then a **flat -15% per Appetite upgrade** (decoupled from the
+  stat, capped at 3), and, when powered, the **Overclock** (+50% speed, stacking to a cap).
 - **Count** = `batchQuantity(teemingLevel) x bountyDropCount(effectiveBounty)`, where
   `teemingLevel` = the feedstock's **Teeming** catalyst and `effectiveBounty` = frog Bounty
   ; each **Bounty upgrade** then adds a **flat +1 output** (NOT the frog-stat band mechanic),
