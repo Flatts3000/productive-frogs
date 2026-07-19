@@ -64,6 +64,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "milk_source");
     private static final Identifier BASIN_UID =
         Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "basin");
+    private static final Identifier VIRTUAL_TERRARIUM_UID =
+        Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "virtual_terrarium");
 
     /** Shared client-tooltip instances (their server-data halves are the delegates below). */
     private static final PrimedEggStatsProvider PRIMED_EGG_STATS = new PrimedEggStatsProvider();
@@ -71,6 +73,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
     private static final MilkSourceProvider MILK_SOURCE = new MilkSourceProvider();
     private static final BasinProvider BASIN = new BasinProvider();
     private static final ApplianceProvider APPLIANCES = new ApplianceProvider();
+    private static final VirtualTerrariumProvider VIRTUAL_TERRARIUM = new VirtualTerrariumProvider();
 
     // Jade 26.1 (MC 1.21.6+) forbids a data provider from also implementing
     // IComponentProvider, so each provider's appendServerData registers through
@@ -100,6 +103,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         new DataDelegate<>(APPLIANCES.getUid(), APPLIANCES::appendServerData);
     private static final DataDelegate<BlockAccessor> BASIN_DATA =
         new DataDelegate<>(BASIN.getUid(), BASIN::appendServerData);
+    private static final DataDelegate<BlockAccessor> VIRTUAL_TERRARIUM_DATA =
+        new DataDelegate<>(VIRTUAL_TERRARIUM.getUid(), VIRTUAL_TERRARIUM::appendServerData);
 
     /**
      * Common (server-side) registration. The pending offspring stats on a laid
@@ -138,6 +143,10 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         // needed manual syncToClient discipline at every mutation site).
         registration.registerBlockDataProvider(APPLIANCES_DATA,
             com.flatts.productivefrogs.content.block.BossAltarHatchBlock.class);
+        // Virtual Terrarium: status (dome / frog / feedstock / match / power) and
+        // the RF buffer are server state, fetched per look.
+        registration.registerBlockDataProvider(VIRTUAL_TERRARIUM_DATA,
+            com.flatts.productivefrogs.content.block.VirtualTerrariumProcessorBlock.class);
     }
 
     @Override
@@ -171,6 +180,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         registration.registerEntityComponent(new FrogStatsProvider(), ResourceFrog.class);
         registration.registerBlockComponent(PRIMED_EGG_STATS, PrimedFrogEggBlock.class);
         registration.registerEntityComponent(TADPOLE_STATS, ResourceTadpole.class);
+        registration.registerBlockComponent(VIRTUAL_TERRARIUM,
+            com.flatts.productivefrogs.content.block.VirtualTerrariumProcessorBlock.class);
     }
 
     /** Provider for the Slime Milker + Spawnery appliances; branches on the BlockEntity. */
@@ -550,6 +561,68 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         @Override
         public Identifier getUid() {
             return MILK_SOURCE_UID;
+        }
+    }
+
+    /**
+     * Look-at readout for the Virtual Terrarium Processor: its status (why it is
+     * or isn't producing - the "no dome" reason among them), the buffered
+     * feedstock, and - ONLY when a powered upgrade (Smelter / Melter / Overclock)
+     * is installed - the RF buffer. On an unpowered block the RF line is hidden
+     * entirely, because the core eat loop needs no power.
+     */
+    private static final class VirtualTerrariumProvider implements IBlockComponentProvider {
+
+        public void appendServerData(CompoundTag data, BlockAccessor accessor) {
+            if (!(accessor.getBlockEntity()
+                    instanceof com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity be)) {
+                return;
+            }
+            data.putString("Status", be.status().name());
+            net.neoforged.neoforge.fluids.FluidStack fluid = be.getFeedstock().getFluid();
+            if (!fluid.isEmpty()) {
+                data.putString("Feed",
+                    net.minecraft.core.registries.BuiltInRegistries.FLUID.getKey(fluid.getFluid()).toString());
+                data.putInt("FeedAmt", fluid.getAmount());
+            }
+            // RF is only a concept when a powered upgrade is installed.
+            if (be.hasPoweredUpgrade()) {
+                data.putBoolean("Powered", true);
+                data.putInt("RF", be.energyStorage().getEnergyStored());
+                data.putInt("RFCap", be.energyStorage().getMaxEnergyStored());
+            }
+        }
+
+        @Override
+        public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
+            CompoundTag data = accessor.getServerData();
+            if (data == null) {
+                return;
+            }
+            String status = data.getStringOr("Status", "");
+            if (!status.isEmpty()) {
+                tooltip.add(Component.translatable(
+                    "productivefrogs.jade.vt." + status.toLowerCase(java.util.Locale.ROOT)));
+            }
+            if (data.contains("FeedAmt")) {
+                Identifier id = Identifier.tryParse(data.getStringOr("Feed", ""));
+                net.minecraft.world.level.material.Fluid fluid = id == null ? null
+                    : net.minecraft.core.registries.BuiltInRegistries.FLUID.getOptional(id).orElse(null);
+                Component name = fluid == null ? Component.literal("?")
+                    : new net.neoforged.neoforge.fluids.FluidStack(fluid, 1).getHoverName();
+                tooltip.add(Component.translatable("productivefrogs.jade.vt.feedstock",
+                    name, data.getIntOr("FeedAmt", 0),
+                    com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity.FEEDSTOCK_CAPACITY));
+            }
+            if (data.getBooleanOr("Powered", false)) {
+                tooltip.add(Component.translatable("productivefrogs.jade.vt.rf",
+                    data.getIntOr("RF", 0), data.getIntOr("RFCap", 0)));
+            }
+        }
+
+        @Override
+        public Identifier getUid() {
+            return VIRTUAL_TERRARIUM_UID;
         }
     }
 

@@ -533,10 +533,6 @@ public final class PFItems {
         ITEMS.registerItem("vt_upgrade_smelter", com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem::new);
     public static final DeferredItem<com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem> VT_UPGRADE_MELTER =
         ITEMS.registerItem("vt_upgrade_melter", com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem::new);
-    public static final DeferredItem<com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem> VT_UPGRADE_CAPACITY =
-        ITEMS.registerItem("vt_upgrade_capacity", com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem::new);
-    public static final DeferredItem<com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem> VT_UPGRADE_EVERFLOW =
-        ITEMS.registerItem("vt_upgrade_everflow", com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem::new);
     public static final DeferredItem<com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem> VT_UPGRADE_OVERCLOCK =
         ITEMS.registerItem("vt_upgrade_overclock", com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem::new);
 

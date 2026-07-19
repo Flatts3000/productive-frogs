@@ -1,3 +1,0 @@
-{ "type": "minecraft:crafting_shapeless", "category": "misc",
-  "ingredients": [ "minecraft:amethyst_shard", "minecraft:glass", "minecraft:glass" ],
-  "result": { "id": "productivefrogs:vt_upgrade_capacity", "count": 1 } }

@@ -26,18 +26,25 @@ import net.neoforged.neoforge.items.SlotItemHandler;
 public class VirtualTerrariumMenu extends AbstractContainerMenu {
 
     public static final int INVENTORY_X = 8;
-    public static final int INVENTORY_Y = 84;
-    public static final int HOTBAR_Y = 142;
+    public static final int INVENTORY_Y = 98;
+    public static final int HOTBAR_Y = 156;
 
     public static final int FROG_SLOT_X = 26;
-    public static final int FROG_SLOT_Y = 35;
-    public static final int OUTPUT_START_X = 62;
-    public static final int OUTPUT_Y = 35;
-    public static final int UPGRADE_X = 152;
-    public static final int UPGRADE_START_Y = 17;
+    public static final int FROG_SLOT_Y = 40;
+    // Output slots are a 3x2 grid (3 columns, 2 rows).
+    public static final int OUTPUT_START_X = 74;
+    public static final int OUTPUT_Y = 20;
+    public static final int OUTPUT_COLS = 3;
+    // Upgrade slots are a vertical column on the right.
+    public static final int UPGRADE_X = 150;
+    public static final int UPGRADE_START_Y = 18;
+
+    /** clickMenuButton id: fill the feedstock tank from the cursor-held bucket. */
+    public static final int FILL_FEEDSTOCK = 0;
 
     private final ContainerLevelAccess access;
     private final ContainerData dataAccess;
+    private final VirtualTerrariumBlockEntity blockEntity;
 
     public VirtualTerrariumMenu(int containerId, Inventory playerInv, RegistryFriendlyByteBuf buf) {
         this(containerId, playerInv, resolve(playerInv, buf.readBlockPos()),
@@ -49,13 +56,14 @@ public class VirtualTerrariumMenu extends AbstractContainerMenu {
         this.access = be == null ? ContainerLevelAccess.NULL
             : ContainerLevelAccess.create(be.getLevel(), be.getBlockPos());
         this.dataAccess = data;
+        this.blockEntity = be;
 
         if (be != null) {
             VirtualTerrariumInventory inv = be.getInventory();
             addSlot(new SlotItemHandler(inv, VirtualTerrariumInventory.FROG_SLOT, FROG_SLOT_X, FROG_SLOT_Y));
             for (int i = 0; i < VirtualTerrariumInventory.OUTPUT_COUNT; i++) {
                 addSlot(new SlotItemHandler(inv, VirtualTerrariumInventory.OUTPUT_START + i,
-                    OUTPUT_START_X + i * 18, OUTPUT_Y) {
+                    outputX(i), outputY(i)) {
                     @Override
                     public boolean mayPlace(ItemStack stack) {
                         return false;
@@ -70,7 +78,7 @@ public class VirtualTerrariumMenu extends AbstractContainerMenu {
             SimpleContainer dummy = new SimpleContainer(VirtualTerrariumInventory.SLOT_COUNT);
             addSlot(new Slot(dummy, VirtualTerrariumInventory.FROG_SLOT, FROG_SLOT_X, FROG_SLOT_Y));
             for (int i = 0; i < VirtualTerrariumInventory.OUTPUT_COUNT; i++) {
-                addSlot(new Slot(dummy, VirtualTerrariumInventory.OUTPUT_START + i, OUTPUT_START_X + i * 18, OUTPUT_Y) {
+                addSlot(new Slot(dummy, VirtualTerrariumInventory.OUTPUT_START + i, outputX(i), outputY(i)) {
                     @Override
                     public boolean mayPlace(ItemStack stack) {
                         return false;
@@ -99,6 +107,14 @@ public class VirtualTerrariumMenu extends AbstractContainerMenu {
         addDataSlots(dataAccess);
     }
 
+    private static int outputX(int i) {
+        return OUTPUT_START_X + (i % OUTPUT_COLS) * 18;
+    }
+
+    private static int outputY(int i) {
+        return OUTPUT_Y + (i / OUTPUT_COLS) * 18;
+    }
+
     public int getProgress() {
         return dataAccess.get(VirtualTerrariumBlockEntity.DATA_PROGRESS);
     }
@@ -106,6 +122,55 @@ public class VirtualTerrariumMenu extends AbstractContainerMenu {
     public int getInterval() {
         int i = dataAccess.get(VirtualTerrariumBlockEntity.DATA_INTERVAL);
         return i > 0 ? i : 200;
+    }
+
+    /** Buffered feedstock in mB (synced ContainerData), for the GUI fluid slot. */
+    public int getFeedstockAmount() {
+        return dataAccess.get(VirtualTerrariumBlockEntity.DATA_FEEDSTOCK);
+    }
+
+    /** Buffered product fluid (molten or Liquid Experience) in mB, for the output tank gauge. */
+    public int getProductAmount() {
+        return dataAccess.get(VirtualTerrariumBlockEntity.DATA_PRODUCT);
+    }
+
+    /** Stored RF, reassembled from the two synced ContainerData shorts, for the energy meter. */
+    public int getEnergyStored() {
+        int lo = dataAccess.get(VirtualTerrariumBlockEntity.DATA_ENERGY_LO) & 0xFFFF;
+        int hi = dataAccess.get(VirtualTerrariumBlockEntity.DATA_ENERGY_HI) & 0xFFFF;
+        return (hi << 16) | lo;
+    }
+
+    /** The client-synced BlockEntity, or null - for the gauge fluid types + upgrade state. */
+    public VirtualTerrariumBlockEntity blockEntity() {
+        return blockEntity;
+    }
+
+    /**
+     * Fill the feedstock tank from the cursor-held bucket (the in-GUI fluid-slot click).
+     * Server-authoritative; returns the empty bucket to the cursor. Mirrors the block's
+     * right-click fill.
+     */
+    @Override
+    public boolean clickMenuButton(Player player, int id) {
+        if (id != FILL_FEEDSTOCK || blockEntity == null) {
+            return false;
+        }
+        ItemStack carried = getCarried();
+        if (!VirtualTerrariumBlockEntity.isFeedstockBucket(carried)) {
+            return false;
+        }
+        ItemStack empty = blockEntity.fillFromBucket(carried);
+        if (empty.isEmpty()) {
+            return false;
+        }
+        carried.shrink(1);
+        if (carried.isEmpty()) {
+            setCarried(empty);
+        } else if (!player.getInventory().add(empty)) {
+            player.drop(empty, false);
+        }
+        return true;
     }
 
     @Override

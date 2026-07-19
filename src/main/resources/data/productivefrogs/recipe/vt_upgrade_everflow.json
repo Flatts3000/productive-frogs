@@ -1,3 +1,0 @@
-{ "type": "minecraft:crafting_shapeless", "category": "misc",
-  "ingredients": [ "minecraft:amethyst_shard", "minecraft:prismarine_crystals", "minecraft:nautilus_shell" ],
-  "result": { "id": "productivefrogs:vt_upgrade_everflow", "count": 1 } }
