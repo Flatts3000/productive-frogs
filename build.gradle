@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'net.neoforged.moddev' version '2.0.141'
+    id 'net.neoforged.moddev' version '2.0.142'
     // CurseForgeGradle: wraps the CurseForge Upload API so `./gradlew publishCurseForge`
     // pushes a new file to the project page. Read the API token from .env (gitignored),
     // env var, or gradle.properties. Task registered at the bottom of this file.
