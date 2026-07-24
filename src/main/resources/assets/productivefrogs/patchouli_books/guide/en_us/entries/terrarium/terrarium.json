@@ -10,7 +10,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "The shell is 7 wide, 7 deep, and 6 tall - any full block (glass works, so you can see in), or a block in the terrarium_shell tag like mud - around a 5x5x4 cavity. You can mix materials freely; the example below uses a mud floor, glass walls, and oak corner posts.$(br2)Each machine sits on a wall or the ceiling; see its own page in this chapter for where and how."
+      "text": "The shell is 7 wide, 7 deep, and 6 tall - any full block (glass works, so you can see in), or a block in the terrarium_shell tag like mud - around a 5x5x4 cavity. You can mix materials freely; the example below uses a mud floor, glass walls, and oak corner posts.$(br2)Each machine sits on a wall or the ceiling; its own page covers where it goes and how it works."
     },
     {
       "type": "patchouli:multiblock",

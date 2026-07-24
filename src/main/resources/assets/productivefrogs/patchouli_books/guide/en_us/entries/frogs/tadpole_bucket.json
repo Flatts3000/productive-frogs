@@ -1,0 +1,13 @@
+{
+  "name": "Tadpole Bucket",
+  "icon": "productivefrogs:resource_tadpole_bucket",
+  "category": "productivefrogs:frogs",
+  "sortnum": 45,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:resource_tadpole_bucket",
+      "text": "Right-click a Resource Tadpole with a water bucket to scoop it up, the way you would a fish or a vanilla tadpole. The bucket remembers the tadpole's species. Pour it back out and it keeps growing into a frog of that species. Handy for moving a tadpole you have bred without waiting for it to mature or leashing anything."
+    }
+  ]
+}

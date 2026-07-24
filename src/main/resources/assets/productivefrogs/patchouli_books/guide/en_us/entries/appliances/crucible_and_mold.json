@@ -12,7 +12,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "productivefrogs:casting_mold",
-      "text": "The Casting Mold sets molten metal into ingots or blocks. Stack a Mold on a Crucible to make a melt-and-cast tower, or feed it by pipe. Heat below, Crucible, Mold on top - that is the lane."
+      "text": "The Casting Mold sets molten metal back into a solid. Melt a metal Froglight - iron, copper, gold - in the Crucible, run the molten metal into a Mold, and it casts an ingot or a block. Other mods' molten metals work too, through the shared tags.$(br2)Stack a Mold right on a Crucible for a melt-and-cast tower, or feed it by pipe. Heat below, Crucible, Mold on top - that is the lane."
     }
   ]
 }

@@ -1,0 +1,16 @@
+{
+  "name": "Potion of Hopping",
+  "icon": "minecraft:potion",
+  "category": "productivefrogs:frogs",
+  "sortnum": 61,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Brew an awkward potion with Raw Frog Legs for a Potion of Hopping. While it is active, a jump throws you forward the way you are facing - a frog leap across the ground, where vanilla's Jump Boost only sends you straight up. It also shaves a few blocks off your fall, so leaping off a ledge does not hurt."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Glowstone upgrades it to Hopping II, which leaps further. Splash, lingering, and tipped-arrow versions come off the base potion as usual. Pair it with Slow Falling if you want to cover real distance off a big drop."
+    }
+  ]
+}
