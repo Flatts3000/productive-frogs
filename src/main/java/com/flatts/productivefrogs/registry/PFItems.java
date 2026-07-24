@@ -471,6 +471,16 @@ public final class PFItems {
     );
 
     /**
+     * Slime Milk Basin BlockItem - places {@link PFBlocks#SLIME_MILK_BASIN}, the
+     * container form of a Slime Milk source.
+     */
+    public static final DeferredItem<BlockItem> SLIME_MILK_BASIN = ITEMS.registerSimpleBlockItem(
+        "slime_milk_basin",
+        PFBlocks.SLIME_MILK_BASIN,
+        new Item.Properties()
+    );
+
+    /**
      * Casting Mold BlockItem (v1.12 wave 2) - places {@link PFBlocks#CASTING_MOLD},
      * the molten-to-ingot solidifier that completes the Crucible tower.
      */

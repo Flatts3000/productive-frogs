@@ -238,6 +238,17 @@ public final class PFModBusEvents {
             (be, side) -> be.itemHandler()
         );
 
+        // Slime Milk Basin: fill-only fluid intake for pipes - exactly one
+        // bucket while empty, the variant read off the fluid identity and the
+        // catalysts off its components. Drain is a no-op by design: the
+        // empty-bucket right-click is the hand drain, automation refills a
+        // Basin rather than siphoning one.
+        event.registerBlockEntity(
+            Capabilities.FluidHandler.BLOCK,
+            PFBlockEntities.SLIME_MILK_BASIN.get(),
+            (be, side) -> be.fluidHandler()
+        );
+
         // Casting Mold (v1.12 wave 2): fill-ONLY fluid tank (recipe-
         // validated, single-fluid - pipes and buckets pour molten in; drain
         // is a no-op, committed molten only leaves as a cast item) plus an

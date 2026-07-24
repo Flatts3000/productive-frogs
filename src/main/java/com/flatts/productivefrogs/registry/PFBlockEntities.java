@@ -13,6 +13,7 @@ import com.flatts.productivefrogs.content.block.entity.IncubatorBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.MimicMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.PrimedFrogEggBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeChurnBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.SlimeMilkBasinBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkerBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SpawneryBlockEntity;
@@ -126,6 +127,17 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "crucible",
             () -> BlockEntityType.Builder.of(CrucibleBlockEntity::new, PFBlocks.CRUCIBLE.get()).build(null)
+        );
+
+    /**
+     * BE type for the {@code slime_milk_basin} block - owns the held charge
+     * (variant, spawn budget, catalysts) and the spawn countdown. See
+     * {@link com.flatts.productivefrogs.content.block.entity.SlimeMilkBasinBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<SlimeMilkBasinBlockEntity>> SLIME_MILK_BASIN =
+        BLOCK_ENTITIES.register(
+            "slime_milk_basin",
+            () -> BlockEntityType.Builder.of(SlimeMilkBasinBlockEntity::new, PFBlocks.SLIME_MILK_BASIN.get()).build(null)
         );
 
     /**

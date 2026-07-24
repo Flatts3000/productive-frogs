@@ -80,6 +80,9 @@ public final class PFCreativeTabs {
                     if (!PFConfig.SPEC.isLoaded() || PFConfig.SLIME_CHURN_ENABLED.get()) {
                         output.accept(PFItems.SLIME_CHURN.get());
                     }
+                    // The Slime Milk Basin sits with the milk machinery: it is the
+                    // container form of a placed source, not a config-gated appliance.
+                    output.accept(PFItems.SLIME_MILK_BASIN.get());
                     // The Froglight Crucible + Casting Mold (v1.12) sit with
                     // the other appliances; each appears only when enabled (#196).
                     if (!PFConfig.SPEC.isLoaded() || PFConfig.CRUCIBLE_ENABLED.get()) {

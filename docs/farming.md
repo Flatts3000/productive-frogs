@@ -61,6 +61,29 @@ Each milk source block independently rolls a spawn tick:
 - **Spawned slime**: always size 1, matching the milk's variant. Vanilla milk spawns size-1 vanilla slimes; Iron Slime Milk spawns size-1 Iron Resource Slimes; etc.
 - **Spawn position**: scan the 26 surrounding blocks in the 3×3×3 cube around the source for any with a sturdy top face whose block-above is non-motion-blocking; the slime lands on top of the first match. Iteration order biases toward natural rim spawns (same-y cardinals → same-y diagonals → below plane → above plane), so a milk pool on solid ground produces horizontally-adjacent slimes by default. If no sturdy neighbour exists anywhere in the 3×3×3, the slime spawns inside the source block itself (the milk fluid is non-collision, so this fallback always succeeds - spawns never fail and never need to retry).
 
+## Slime Milk Basin (v1.25)
+
+The Basin is the **container form** of a milk source, backported from the 2.x line. It holds one bucket of any variant's Slime Milk inside the block and runs the same spawn economy - same interval, same catalysts, same budget. It is **additive**: the placed source above is unchanged and both are worth using.
+
+Where it differs from a placed source, and why:
+
+| | Placed source | Basin |
+|---|---|---|
+| When the budget runs out | drains to air | **empties and stays**, ready for the next bucket |
+| Refilling | place another bucket | bucket by hand, or **pipe it in place** |
+| Spawn placement order | horizontal, then below, then above | **horizontal, then above, then below** |
+| Catalysts | drop into the pool | drop into the bowl, **or right-click** |
+| In water | milk is a world fluid, so the two interact | **waterloggable**; the milk never becomes a world fluid, so it sits in a pool with no mixing and no washing away |
+| Boss-tier milk | spawns once the six-face altar is built | **refused outright** |
+
+The persistence is the point: a Basin is the block you pipe milk into and leave alone, where a placed source has to be re-placed every time it drains.
+
+**Spawn placement** walks the same 26 cells (the 3x3x3 minus the centre) but takes the first cell the slime actually *fits* in (collision-checked) rather than the first sturdy landing pad - so a waterlogged Basin spawns straight into the surrounding water. Horizontal-first keeps slimes beside the Basin, in reach of a frog at the same level, before stacking upward.
+
+**Boss milk is refused** because the Basin cannot reproduce the source's six-face catalyst altar gate, exactly like the Terrarium Controller (#184). Accepting it would turn the Basin into an altar bypass.
+
+Everything else is shared with the source and reuses the same code: the spawn interval and batch math (`MilkSpawnEconomy`), the catalyst set (Bountiful / Rapid / Teeming / Endless), the budget, the density cap, and slime creation itself (`SlimeMilkSourceBlock.createSlimeForVariant`), so the two can never drift apart.
+
 ## Depletion
 
 - **Configurable** (mod config `productivefrogs-common.toml`): `depletionEnabled` ON or OFF (default ON), `depletionCount` (default 16).

@@ -13,6 +13,7 @@ import com.flatts.productivefrogs.content.block.HatchBlock;
 import com.flatts.productivefrogs.content.block.IncubatorBlock;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
 import com.flatts.productivefrogs.content.block.SlimeChurnBlock;
+import com.flatts.productivefrogs.content.block.SlimeMilkBasinBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
 import com.flatts.productivefrogs.content.block.SpawneryBlock;
 import com.flatts.productivefrogs.content.block.SprinklerBlock;
@@ -127,6 +128,22 @@ public final class PFBlocks {
             .mapColor(MapColor.WOOD)
             .strength(0.5F)
             .sound(SoundType.WOOD)
+    );
+
+    /**
+     * The Slime Milk Basin - a waterloggable container that holds a bucket of any
+     * variant's Slime Milk and spawns its Resource Slimes around itself. Additive
+     * to the placeable milk source (both coexist); persists when it empties, takes
+     * a pipe fill in place, and refuses boss (altar-gated) milk.
+     */
+    public static final DeferredBlock<SlimeMilkBasinBlock> SLIME_MILK_BASIN = BLOCKS.registerBlock(
+        "slime_milk_basin",
+        SlimeMilkBasinBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_LIGHT_GREEN)
+            .strength(1.5F)
+            .sound(SoundType.STONE)
+            .noOcclusion()
     );
 
     /**
