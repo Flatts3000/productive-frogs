@@ -158,9 +158,17 @@ The in-game guide book and a new frog perch. A **Patchouli guide book** (#243) -
 
 Two contained, repeatable boss farms. The **End Dragon Altar** (#249) is built on the End exit portal: ring it with End Crystal Receptacles and reinforced froglights under a Dragon Egg capstone, drop an end crystal into each receptacle, and a replica dragon rises and is devoured by **Dragonsbane**, a display frog at the altar's heart - the loot (Dragon Breath Froglight, renewable Dragon Egg Froglight, the Princess's Kiss, XP) lands in the hatch, with no real dragon, boss bar, or portal regrowth. The **Wither Altar** (#247) does the same for the Wither: a soul-forged arena of Reinforced Soul Sand and Blaze Rod Froglights loaded with the full vanilla summon, a replica Wither that charges exactly like a real spawn until **Witherbane** devours it, out comes a Nether Star Froglight (smelts back to a star) and XP - no boss bar, no exploding blocks. Both are boss-tier, gated behind the boss config (`boss.dragon_altar` / `boss.wither_altar`).
 
-### Unreleased (merged to `main`): the Equivalence lane (#253)
+### v1.23.0 (shipped 2026-06-29): The Midas Touch
 
-The post-capstone transmutation lane - an opt-in, RF-powered equivalent-exchange engine for **off-roster** items (anything with no Resource Slime variant). Alembic (item + bucket + power -> Mimic Slime Bucket) -> Milker -> Mimic Milk -> Mimic Slimes -> **Midas** (a Kiss-primed frog that eats only Mimic Slimes) -> Prismatic Froglight -> Distiller (+ power) -> the original item, with duplication along the loop the player balances via milk catalysts and breeding. Machines need a Nether Star to craft (endgame-gated); the whole lane is **off by default** (`equivalence.enabled`) and wholly inert when disabled. Merged via PR #258; ships dark in the next release. Design: `docs/equivalence_lane.md`.
+The Equivalence lane (#253) - the post-capstone transmutation engine for **off-roster** items (anything with no Resource Slime variant). Alembic (item + bucket + power -> Mimic Slime Bucket) -> Milker -> Mimic Milk -> Mimic Slimes -> **Midas** (a Kiss-primed frog that eats only Mimic Slimes) -> Prismatic Froglight -> Distiller (+ power) -> the original item, with duplication along the loop the player balances via milk catalysts and breeding. Machines need a Nether Star to craft; **off by default** (`equivalence.enabled`) and wholly inert when disabled. Design: `docs/equivalence_lane.md`.
+
+### v1.24.x (shipped 2026-06-29 to 2026-07-09): Flip the Switch onward
+
+Sprinkler redstone on/off control (#263/#264), the Terrarium Hatch rename, tadpole suffocation + Sweetslime-feed fixes (#276/#277), underwater-breathing parity (#286), the 2.x bucket + Slime Milk art backport (v1.24.6), and the Hatch shift-click dupe + dispenser-pickup fixes (v1.24.7).
+
+### v1.25.0 (shipped 2026-07-24): Second Helpings
+
+A one-time reopening of the frozen line for three features carried back from the 2.x line: the **Slime Milk Basin** (#342) - a milk source that persists when it empties, so you pipe it and leave it; the **Virtual Terrarium** (#341) - one frog's whole eat loop in two blocks, void-tier, with upgrade slots; and a **guidebook pass** (#343) - new entries for both, plus Frog Legs, the Potion of Hopping, the Froglight Cleaver, and the Tadpole Bucket. The predator/Apex path stays out (it needs 26.1's predation). Back to hotfix-only after this.
 
 ---
 
