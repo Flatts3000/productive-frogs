@@ -411,9 +411,14 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             // is generic where a per-variant source block's already says it.
             if (state.getBlock() instanceof com.flatts.productivefrogs.content.block.SlimeMilkBasinBlock) {
                 if (accessor.getBlockEntity()
-                        instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkBasinBlockEntity basin
-                        && basin.getContainedVariant() != null) {
+                        instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkBasinBlockEntity basin) {
                     data.putBoolean("MilkSource", true);
+                    if (basin.getContainedVariant() == null) {
+                        // An empty Basin says so, rather than reading as a plain
+                        // block with no tooltip at all.
+                        data.putBoolean("BasinEmpty", true);
+                        return;
+                    }
                     data.putString("BasinVariant", basin.getContainedVariant().toString());
                     if (basin.getSpeedLevel() > 0) {
                         data.putInt("Speed", basin.getSpeedLevel());
@@ -494,6 +499,10 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                     : Component.literal(data.getString("MimicItem"));
                 tooltip.replace(JadeIds.CORE_OBJECT_NAME,
                     Component.translatable("block.productivefrogs.mimic_slime_milk.item", itemName));
+            }
+            if (data.getBoolean("BasinEmpty")) {
+                tooltip.add(Component.translatable("productivefrogs.jade.basin_empty"));
+                return;
             }
             // The Basin's own name is generic, so name what it is holding. Same
             // title-cased fallback the milk bucket and the Sprinkler line use.

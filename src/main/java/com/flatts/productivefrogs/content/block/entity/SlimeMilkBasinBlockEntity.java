@@ -350,11 +350,9 @@ public class SlimeMilkBasinBlockEntity extends BlockEntity {
         }
         be.resetInterval();
         be.setChanged();
-        // No client sync per spawn event: this line has no Basin renderer, so
-        // nothing on the client reads the draining budget (Jade pulls it as
-        // server data on its own interval). Syncing here would be a packet per
-        // interval per Basin per nearby player for no visible change. Charging
-        // and emptying still sync - those change the Basin's identity.
+        // Sync the drained budget so BasinRenderer's fluid surface drops with it.
+        // One packet per spawn EVENT (the interval cadence), never per tick.
+        be.syncToClients();
     }
 
     /**
@@ -536,17 +534,21 @@ public class SlimeMilkBasinBlockEntity extends BlockEntity {
     }
 
     /**
-     * Sync the held variant only - what the client needs to tell a charged Basin
-     * from an empty one. The budget deliberately stays server-side: this line has
-     * no Basin renderer to draw a falling fluid level, and Jade reads the counts
-     * as server data on its own interval. (If a renderer is ever added, the
-     * budget goes here and the spawn loop syncs again.)
+     * Sync the held variant and the budget: {@code BasinRenderer} draws the held
+     * fluid's surface at a height proportional to remaining/capacity, so the
+     * client needs both to show a Basin draining. (Jade reads the same numbers
+     * as server data on its own interval; this is for the in-world render.)
      */
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider lookup) {
         CompoundTag tag = super.getUpdateTag(lookup);
         if (containedVariant != null) {
             tag.putString("Contained", containedVariant.toString());
+            tag.putInt("SpawnsRemaining", spawnsRemaining);
+            tag.putInt("SpawnsCapacity", spawnsCapacity);
+            if (infinite) {
+                tag.putBoolean("Infinite", true);
+            }
         }
         return tag;
     }

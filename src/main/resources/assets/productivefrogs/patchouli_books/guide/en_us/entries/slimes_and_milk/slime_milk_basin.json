@@ -1,0 +1,21 @@
+{
+  "name": "Slime Milk Basin",
+  "icon": "productivefrogs:slime_milk_basin",
+  "category": "productivefrogs:slimes_and_milk",
+  "sortnum": 110,
+  "pages": [
+    {
+      "type": "patchouli:crafting",
+      "recipe": "productivefrogs:slime_milk_basin",
+      "text": "The Basin holds a bucket of Slime Milk inside the block and spawns that resource's slimes around it, on the same timer and the same budget as a placed source."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The difference is what happens when it runs dry. A placed source drains away and you have to put down another bucket. A Basin just goes empty and stays, so you can run a pipe into one and never touch it again.$(br2)Right-click with milk to fill it, with an empty bucket to take the milk back out. Catalysts work as they do on a pool: drop one in, or right-click with it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "It is waterloggable, and the milk never becomes a world fluid, so you can put a Basin straight into a pool with no mixing and slimes will spawn into the water.$(br2)Slimes appear beside the Basin before above it, so a frog standing at the same level can reach them.$(br2)Two things to know: breaking a Basin loses the milk inside, so drain it first, and boss milk is refused - that still needs its altar."
+    }
+  ]
+}

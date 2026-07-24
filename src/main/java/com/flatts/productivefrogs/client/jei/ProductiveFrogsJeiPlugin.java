@@ -659,6 +659,12 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             VanillaTypes.ITEM_STACK,
             Component.translatable("productivefrogs.jei.empty_tadpole_bucket.info"));
 
+        // Slime Milk Basin - the container form of a placed milk source.
+        reg.addIngredientInfo(
+            new ItemStack(PFBlocks.SLIME_MILK_BASIN.get().asItem()),
+            VanillaTypes.ITEM_STACK,
+            Component.translatable("productivefrogs.jei.slime_milk_basin.info"));
+
         // Slime Milk catalysts - each only when its own flag is enabled (#201).
         // The accessors AND the catalysts master, so an off master drops all four
         // and an individual flag drops just its own info page (a page for a hidden
