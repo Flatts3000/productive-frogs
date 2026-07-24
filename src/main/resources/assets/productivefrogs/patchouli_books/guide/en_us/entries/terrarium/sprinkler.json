@@ -8,6 +8,10 @@
       "type": "patchouli:spotlight",
       "item": "productivefrogs:sprinkler",
       "text": "Goes in the ceiling, facing down. Fed by the Controller, a Sprinkler rains its milk's slimes into the cavity for the frogs to eat. Line the ceiling with more of them for more throughput; one with no milk just sits idle."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A redstone signal pauses a Sprinkler - power it off to stop production, cut the signal to start again. Its held milk and remaining spawns freeze until it resumes. Each Sprinkler reads only its own signal, so wire a comparator off a full output chest to throttle the whole box, or flip one by hand to stage which resources run."
     }
   ]
 }

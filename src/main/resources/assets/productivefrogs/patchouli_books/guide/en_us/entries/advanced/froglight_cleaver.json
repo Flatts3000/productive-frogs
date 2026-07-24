@@ -1,0 +1,17 @@
+{
+  "name": "Froglight Cleaver",
+  "icon": "productivefrogs:froglight_cleaver",
+  "category": "productivefrogs:advanced",
+  "sortnum": 300,
+  "pages": [
+    {
+      "type": "patchouli:crafting",
+      "recipe": "productivefrogs:froglight_cleaver",
+      "text": "The Cleaver is the hands-on version of the frog loop: kill a size-1 Resource Slime with it and it drops that slime's Froglight, the same one a frog would make from eating it. Looting drops more. Bigger slimes still split instead, so cut them down to size 1 first."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "It is a step above netherite - harder-hitting and fire-proof - and takes the usual sword enchants. The recipe needs boss Froglights, so you only get it once you are already running altars. By then the frog loop is long since built, so swinging for Froglights by hand is just a faster option, not a shortcut around it."
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "Frog Legs",
+  "icon": "productivefrogs:cooked_frog_legs",
+  "category": "productivefrogs:frogs",
+  "sortnum": 60,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:raw_frog_legs",
+      "text": "Killing a frog drops 1-2 Raw Frog Legs, more with Looting. Any frog does it, vanilla or yours. Cook them in a furnace, smoker, or campfire, or kill a frog while it is on fire and it drops them already Cooked. Raw is chicken-tier food; cooked fills more."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "productivefrogs:frog_legs_soup",
+      "text": "Cooked Frog Legs, a bowl, and a red and a brown mushroom make Frog Legs Soup - a bigger meal that stacks to one, like any stew. On a skyblock where animals are scarce, your frogs are also your meat."
+    }
+  ]
+}
