@@ -7,7 +7,7 @@
 | Branch | Role | MC / NeoForge | Mod version |
 |---|---|---|---|
 | `main` | Active development | 26.1 / 26.1.x | `2.x` |
-| `mc-1.21.1` | Frozen maintenance, hotfix-only | 1.21.1 / 21.1.x | `1.24.x` |
+| `mc-1.21.1` | Frozen maintenance, hotfix-only | 1.21.1 / 21.1.x | `1.25.x` |
 
 - `mc-1.21.1` is **protected to parity with `main`**: required `build` + `gameTest` status checks (strict), resolved review conversations, no force pushes, no deletion. All changes go via PR.
 - There is **no shared mutable state** between the lines: `gradle.properties`, `CHANGELOG.md`, `build.gradle`, and `ci.yml` are per-branch. Never merge branches across the lines.
@@ -21,19 +21,19 @@
 
 When in doubt, fix it on `main` only and leave this line alone.
 
-### Exception: the v1.25.0 backport set (maintainer decision, 2026-07-23)
+### The v1.25.0 backport set (shipped 2026-07-24) - the one-time reopening, now spent
 
-The line is reopened **once**, for three **named** backports from the 2.x line and nothing else:
+The line was reopened **once**, by maintainer decision (2026-07-23), for three **named** backports from the 2.x line and nothing else:
 
-| Work | Epic |
-|---|---|
-| Slime Milk Basin | #342 |
-| Virtual Terrarium | #341 |
-| Guidebook coverage audit + voice rewrite | #343 |
+| Work | Epic | PR |
+|---|---|---|
+| Slime Milk Basin | #342 | #344 |
+| Virtual Terrarium | #341 | #345 |
+| Guidebook coverage audit + new entries | #343 | #346 |
 
-The posture is **frozen except for those three**. Anything not on that list still follows the rules above: it lands on `main` only. When the set ships as **v1.25.0** the line returns to hotfix-only (`1.25.x` patches) and this section stays as the record of why a `1.25` exists at all.
+All three shipped in **v1.25.0 "Second Helpings"** (#347). Because they are features they could not ship as a `1.24.x` patch, hence the minor bump. **The reopening is now spent: the line is back to hotfix-only** (`1.25.x` patches). This section stays as the record of why a `1.25` line exists at all - do not read it as license for further feature work, which still lands on `main` only.
 
-Because these are features, they cannot ship as a `1.24.x` patch - hence the minor bump. The forward-flow rule is unaffected: these features already exist on `main`, so nothing here flows forward. Only **fixes** ever cross, and only old -> new.
+The forward-flow rule was unaffected: these features already existed on `main`, so nothing flowed forward. Only **fixes** ever cross, and only old -> new.
 
 ## Hotfix procedure
 
@@ -42,13 +42,13 @@ Because these are features, they cannot ship as a `1.24.x` patch - hence the min
 3. **Open a PR with base `mc-1.21.1`** (`gh pr create --base mc-1.21.1 ...`). CI runs `build` + `gameTest` on the 1.21.1 toolchain (Java 21) automatically; both are required to merge, and review conversations must be resolved.
 4. Squash-merge. The fix is now on the line but unreleased; batching several fixes into one release is fine.
 
-## Release procedure (v1.24.x patch)
+## Release procedure (v1.25.x patch)
 
-From the `mc-1.21.1` branch, mirroring the standard release runbook:
+From the `mc-1.21.1` branch, mirroring the standard release runbook (most recent: v1.25.0, 2026-07-24):
 
-1. Bump `mod_version` in `gradle.properties` (patch bump: `1.24.4` -> `1.24.5`).
+1. Bump `mod_version` in `gradle.properties` (patch bump: `1.25.0` -> `1.25.1`).
 2. Add a `## v<mod_version>` section to `CHANGELOG.md` (the CurseForge changelog body is extracted by matching that heading).
-3. Land the release commit via PR (`chore(release): v1.24.x - <name>`), then tag: `git tag v1.24.x && git push origin v1.24.x`.
+3. Land the release commit via PR (`chore(release): v1.25.x - <name>`), then tag: `git tag v1.25.x && git push origin v1.25.x`.
 4. Publish: `./gradlew publishCurseForge` from this branch. Its `build.gradle` already targets game version `1.21.1` and names the jar `productivefrogs-1.21.1-<version>.jar`; no flags needed. Reads `CURSEFORGE_API_KEY` from `.env`.
 
 ## Forward flow (old -> new only)

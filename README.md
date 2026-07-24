@@ -2,7 +2,7 @@
 
 A content mod for **Minecraft 1.21.1 / NeoForge 21.1.230**. The latest release is whatever sits at the top of the [CHANGELOG](CHANGELOG.md).
 
-> **This is the frozen 1.x maintenance line** (versions `1.24.x`) - the one the **Sky Frogs** modpack runs, marked stable on CurseForge. It receives bug fixes only; active development (Productive Frogs 2.x, Minecraft 26.1: predator frogs, boss altars) lives on [`main`](https://github.com/Flatts3000/productive-frogs/tree/main). Maintenance rules: [docs/maintenance_1_21_1.md](./docs/maintenance_1_21_1.md).
+> **This is the frozen 1.x maintenance line** (versions `1.25.x`) - the one the **Sky Frogs** modpack runs, marked stable on CurseForge. It takes bug fixes only, with one spent exception: v1.25.0 carried three features back from the 2.x line. Active development (Productive Frogs 2.x, Minecraft 26.1: predator frogs, boss altars) lives on [`main`](https://github.com/Flatts3000/productive-frogs/tree/main). Maintenance rules: [docs/maintenance_1_21_1.md](./docs/maintenance_1_21_1.md).
 
 **Download:** [CurseForge](https://www.curseforge.com/minecraft/mc-mods/productive-frogs) (pick the **1.21.1** file) | [GitHub Releases](https://github.com/Flatts3000/productive-frogs/releases) (mirror)
 
@@ -71,8 +71,11 @@ For sustained production, feed an Iron Slime to a Slime Milker → Iron Slime Mi
 
 ## Status
 
-**Latest release: v1.24.6 "Fresh Coat"** - the sharper bucket and Slime Milk
-art from the 2.x line, backported. The full 1.x design is live and complete:
+**Latest release: v1.25.0 "Second Helpings"** - three features carried back
+from the 2.x line: the Slime Milk Basin (a pipe-and-leave milk source), the
+Virtual Terrarium (one frog's eat loop in two blocks), and a guidebook pass
+(new entries for both, plus Frog Legs, Hopping, the Froglight Cleaver, and the
+Tadpole Bucket). The full 1.x design is live and complete:
 the six-species production loop, the data-driven variant roster, cross-mod
 variant pools and crush yields, the Spawnery, frog stat breeding, Slime Milk
 catalysts and per-variant automatable milk, the Froglight Crucible + Casting
@@ -82,7 +85,8 @@ fairy-tale items, the config suite, the in-game Patchouli guide book, the
 Equivalence lane, and the Wither + Ender Dragon boss altars (replica boss
 farms paying Froglights - this line's boss endgame; the 2.x predator/Apex
 frog system does not exist here).
-This line is **feature-complete and frozen**: from here it takes fixes only.
+This line is **frozen**: it took a one-time set of three 2.x backports in
+v1.25.0 (see below), and from here it takes fixes only.
 
 | Version line | Scope | Status |
 |---|---|---|
@@ -110,7 +114,8 @@ This line is **feature-complete and frozen**: from here it takes fixes only.
 | v1.21 | In-game Patchouli guide book; Sweetslimed Lily Pad frog perch; blend-then-climb breeding | ✅ shipped |
 | v1.22 | "Apex Predators": the Wither + End Dragon boss altars (replica boss farms paying Froglights) | ✅ shipped |
 | v1.23 | The Equivalence lane (opt-in transmutation, Midas) | ✅ shipped |
-| v1.24 | Sprinkler redstone control, naming + tadpole fixes, the 2.x art backport | ✅ shipped (current) |
+| v1.24 | Sprinkler redstone control, naming + tadpole fixes, the 2.x art backport | ✅ shipped |
+| v1.25 | "Second Helpings": the Slime Milk Basin, the Virtual Terrarium, and a guidebook pass - a one-time set of 2.x backports | ✅ shipped (current) |
 | 2.x | The mob-drop redesign on Minecraft 26.1 - predator frogs, four boss altars, Liquid Experience | 🚀 lives on [`main`](https://github.com/Flatts3000/productive-frogs/tree/main) |
 
 Full roadmap (player-facing): [`ROADMAP.md`](./ROADMAP.md). Engineering scope rationale: [`docs/versioning.md`](./docs/versioning.md).
