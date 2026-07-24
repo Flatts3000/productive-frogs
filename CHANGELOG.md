@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## v1.25.0 - 2026-07-24 - Second Helpings
+
+Three features carried back from the 2.x line, which had moved on to Minecraft
+26.1 as a standalone mod. The 1.21.1 line stays frozen otherwise.
+
 ### Added
 
 - **The Virtual Terrarium - one frog's whole eat loop inside two blocks.** Craft
@@ -35,6 +40,11 @@
   milk inside it, so drain it back into a bucket first if you want to keep the
   budget and catalysts. The placed source is untouched; this is a second way to
   spawn slimes, not a replacement.
+- **The in-game guide covers the new blocks, and four things it had been
+  missing.** New entries for the Virtual Terrarium and the Slime Milk Basin, plus
+  Frog Legs, the Potion of Hopping, the Froglight Cleaver, and the Tadpole Bucket -
+  all of which the book had left out. The Sprinkler entry now covers its redstone
+  switch, and the Casting Mold page says which Froglights melt and cast back.
 
 ## v1.24.7 - 2026-07-09 - Closing the Hatch
 
