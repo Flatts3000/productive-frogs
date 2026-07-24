@@ -7389,6 +7389,47 @@ public final class PFGameTests {
         helper.succeed();
     }
 
+    /**
+     * The catalyst DROP-IN path (a dropper feeding a Basin, or a player tossing one
+     * in), which is parity with dropping a catalyst into a source pool.
+     *
+     * <p>Worth its own test because the dispatch differs from the source's: a milk
+     * source is a non-collision fluid an item sinks into, while the Basin is a
+     * solid half-block an item rests on top of. The item's box still overlaps the
+     * Basin's cell so vanilla calls {@code entityInside} either way - but that is
+     * exactly the kind of thing that silently stops working.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void slimeMilkBasinConsumesACatalystDroppedIntoIt(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeBasin(helper, pos);
+        if (be == null) {
+            return;
+        }
+        be.charge(variantId("iron"), 5, 5, 0, 0, false);
+
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(pos);
+        net.minecraft.world.entity.item.ItemEntity dropped =
+            new net.minecraft.world.entity.item.ItemEntity(level,
+                abs.getX() + 0.5, abs.getY() + 1.0, abs.getZ() + 0.5,
+                new ItemStack(PFItems.SPEED_CATALYST.get()));
+        dropped.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        level.addFreshEntity(dropped);
+
+        helper.succeedWhen(() -> {
+            if (be.getSpeedLevel() != 1) {
+                helper.fail("a Rapid catalyst dropped into a charged Basin must be consumed; speed="
+                    + be.getSpeedLevel());
+                return;
+            }
+            if (dropped.isAlive() && !dropped.getItem().isEmpty()) {
+                helper.fail("the consumed catalyst item should be gone, still holding "
+                    + dropped.getItem());
+            }
+        });
+    }
+
     private static final com.mojang.authlib.GameProfile BASIN_TEST_PROFILE =
         new com.mojang.authlib.GameProfile(
             java.util.UUID.nameUUIDFromBytes("pf_basin_hand".getBytes(java.nio.charset.StandardCharsets.UTF_8)),

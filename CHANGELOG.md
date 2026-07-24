@@ -16,8 +16,10 @@
   pool, by dropping them in or by right-click. Slimes prefer to appear beside the
   Basin rather than above it, so a frog at the same level can reach them. Boss-tier
   milk is refused - the Basin cannot build the six-face catalyst altar the source
-  needs, so it will not be an altar bypass. The placed source is untouched; this
-  is a second way to spawn slimes, not a replacement.
+  needs, so it will not be an altar bypass. Note that breaking a Basin loses the
+  milk inside it, so drain it back into a bucket first if you want to keep the
+  budget and catalysts. The placed source is untouched; this is a second way to
+  spawn slimes, not a replacement.
 
 ## v1.24.7 - 2026-07-09 - Closing the Hatch
 

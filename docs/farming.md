@@ -82,6 +82,8 @@ The persistence is the point: a Basin is the block you pipe milk into and leave 
 
 **Boss milk is refused** because the Basin cannot reproduce the source's six-face catalyst altar gate, exactly like the Terrarium Controller (#184). Accepting it would turn the Basin into an altar bypass.
 
+**Breaking a charged Basin loses the milk it holds**, along with its remaining budget and any catalysts. Drain it back into a bucket first. This is deliberate: a Basin can be filled by pipe with milk that was never a bucket, so dropping its contents as a bucket on break would mint bucket items out of piped fluid. Same ruling as the 2.x line's tank blocks.
+
 Everything else is shared with the source and reuses the same code: the spawn interval and batch math (`MilkSpawnEconomy`), the catalyst set (Bountiful / Rapid / Teeming / Endless), the budget, the density cap, and slime creation itself (`SlimeMilkSourceBlock.createSlimeForVariant`), so the two can never drift apart.
 
 ## Depletion

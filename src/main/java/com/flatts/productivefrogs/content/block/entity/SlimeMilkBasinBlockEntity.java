@@ -350,7 +350,11 @@ public class SlimeMilkBasinBlockEntity extends BlockEntity {
         }
         be.resetInterval();
         be.setChanged();
-        be.syncToClients();
+        // No client sync per spawn event: this line has no Basin renderer, so
+        // nothing on the client reads the draining budget (Jade pulls it as
+        // server data on its own interval). Syncing here would be a packet per
+        // interval per Basin per nearby player for no visible change. Charging
+        // and emptying still sync - those change the Basin's identity.
     }
 
     /**
@@ -532,20 +536,17 @@ public class SlimeMilkBasinBlockEntity extends BlockEntity {
     }
 
     /**
-     * Sync the held variant and the budget so the client can tell a charged Basin
-     * from an empty one at a glance (and so Jade's name line has something to
-     * read even before its server-data round-trip lands).
+     * Sync the held variant only - what the client needs to tell a charged Basin
+     * from an empty one. The budget deliberately stays server-side: this line has
+     * no Basin renderer to draw a falling fluid level, and Jade reads the counts
+     * as server data on its own interval. (If a renderer is ever added, the
+     * budget goes here and the spawn loop syncs again.)
      */
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider lookup) {
         CompoundTag tag = super.getUpdateTag(lookup);
         if (containedVariant != null) {
             tag.putString("Contained", containedVariant.toString());
-            tag.putInt("SpawnsRemaining", spawnsRemaining);
-            tag.putInt("SpawnsCapacity", spawnsCapacity);
-            if (infinite) {
-                tag.putBoolean("Infinite", true);
-            }
         }
         return tag;
     }
