@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.content.block.VirtualTerrariumProcessorBlock;
 import com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
@@ -58,12 +59,18 @@ public class VirtualTerrariumFrogRenderer implements BlockEntityRenderer<Virtual
         phantom.yHeadRot = yaw;
         phantom.yHeadRotO = yaw;
 
+        // The BER's packedLight is sampled at the Processor's own cell, but the
+        // Processor is a full opaque block, so that light is 0 and the frog renders
+        // pitch black. The frog actually sits one block up inside the glass Dome,
+        // which propagates light - sample there so the frog is lit by its surroundings.
+        int light = LevelRenderer.getLightColor(be.getLevel(), be.getBlockPos().above());
+
         EntityRenderDispatcher dispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
         pose.pushPose();
         pose.translate(0.5, DOME_Y, 0.5);
         pose.scale(SCALE, SCALE, SCALE);
         dispatcher.setRenderShadow(false);
-        dispatcher.render(phantom, 0.0, 0.0, 0.0, yaw, partialTick, pose, buffers, packedLight);
+        dispatcher.render(phantom, 0.0, 0.0, 0.0, yaw, partialTick, pose, buffers, light);
         dispatcher.setRenderShadow(true);
         pose.popPose();
     }
