@@ -10,6 +10,7 @@ import com.flatts.productivefrogs.content.menu.SlimeChurnMenu;
 import com.flatts.productivefrogs.content.menu.SlimeMilkerMenu;
 import com.flatts.productivefrogs.content.menu.SpawneryMenu;
 import com.flatts.productivefrogs.content.menu.TerrariumControllerMenu;
+import com.flatts.productivefrogs.content.menu.VirtualTerrariumMenu;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
@@ -83,6 +84,12 @@ public final class PFMenuTypes {
         MENU_TYPES.register(
             "terrarium_controller",
             () -> IMenuTypeExtension.create(TerrariumControllerMenu::new)
+        );
+
+    public static final Supplier<MenuType<VirtualTerrariumMenu>> VIRTUAL_TERRARIUM =
+        MENU_TYPES.register(
+            "virtual_terrarium",
+            () -> IMenuTypeExtension.create(VirtualTerrariumMenu::new)
         );
 
     private PFMenuTypes() {

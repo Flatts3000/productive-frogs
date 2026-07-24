@@ -1,0 +1,1 @@
+{ "parent": "minecraft:item/generated", "textures": { "layer0": "productivefrogs:item/vt_upgrade_smelter" } }

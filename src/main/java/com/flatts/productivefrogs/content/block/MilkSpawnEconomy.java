@@ -39,6 +39,26 @@ public final class MilkSpawnEconomy {
     }
 
     /**
+     * The DETERMINISTIC eat-cycle base: the midpoint of the {@code [min, max]}
+     * spawn interval after the Speed reduction, with no random jitter. The
+     * Virtual Terrarium uses this instead of {@link #intervalTicks} so its cycle
+     * duration is predictable and the Appetite / Overclock levers read as visible
+     * speed changes rather than random noise. Same reduction + floor math as
+     * {@link #intervalTicks}, just the midpoint instead of a random pick.
+     */
+    public static int intervalTicksDeterministic(int speedLevel) {
+        int min = PFConfig.MIN_SPAWN_INTERVAL_TICKS.get();
+        int max = PFConfig.MAX_SPAWN_INTERVAL_TICKS.get();
+        if (speedLevel > 0) {
+            double factor = Math.max(0.0, 1.0 - speedLevel * PFConfig.catalystSpeedReductionPerLevel());
+            int floor = PFConfig.catalystMinIntervalFloorTicks();
+            min = Math.max(floor, (int) Math.round(min * factor));
+            max = Math.max(floor, (int) Math.round(max * factor));
+        }
+        return Math.max(1, (min + max) / 2);
+    }
+
+    /**
      * Slimes produced per spawn event: {@code 1 + quantityLevel} (Quantity
      * catalyst), clamped to the config max. The spawn budget is decremented
      * once per <b>event</b>, not per slime, so Quantity is strictly additive

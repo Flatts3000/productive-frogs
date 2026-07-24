@@ -62,12 +62,15 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "tadpole_stats");
     private static final ResourceLocation MILK_SOURCE_UID =
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "milk_source");
+    private static final ResourceLocation VIRTUAL_TERRARIUM_UID =
+        ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "virtual_terrarium");
 
     /** Shared instances: each is both the client tooltip and the server-data fetcher. */
     private static final PrimedEggStatsProvider PRIMED_EGG_STATS = new PrimedEggStatsProvider();
     private static final TadpoleStatsProvider TADPOLE_STATS = new TadpoleStatsProvider();
     private static final MilkSourceProvider MILK_SOURCE = new MilkSourceProvider();
     private static final ApplianceProvider APPLIANCES = new ApplianceProvider();
+    private static final VirtualTerrariumProvider VIRTUAL_TERRARIUM = new VirtualTerrariumProvider();
 
     /**
      * Common (server-side) registration. The pending offspring stats on a laid
@@ -97,6 +100,10 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
             com.flatts.productivefrogs.content.block.IncubatorBlock.class);
         registration.registerBlockDataProvider(APPLIANCES,
             com.flatts.productivefrogs.content.block.HatchBlock.class);
+        // The Virtual Terrarium changes state fast (per eat), so its readout is
+        // fetched from the server BE each Jade refresh.
+        registration.registerBlockDataProvider(VIRTUAL_TERRARIUM,
+            com.flatts.productivefrogs.content.block.VirtualTerrariumProcessorBlock.class);
     }
 
     @Override
@@ -129,6 +136,8 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         // the same provider (and the same UID, so no extra Jade config key).
         registration.registerBlockComponent(MILK_SOURCE,
             com.flatts.productivefrogs.content.block.SlimeMilkBasinBlock.class);
+        registration.registerBlockComponent(VIRTUAL_TERRARIUM,
+            com.flatts.productivefrogs.content.block.VirtualTerrariumProcessorBlock.class);
         registration.registerEntityComponent(new FrogStatsProvider(), ResourceFrog.class);
         registration.registerBlockComponent(PRIMED_EGG_STATS, PrimedFrogEggBlock.class);
         registration.registerEntityComponent(TADPOLE_STATS, ResourceTadpole.class);
@@ -697,6 +706,67 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         @Override
         public ResourceLocation getUid() {
             return TADPOLE_STATS_UID;
+        }
+    }
+
+    /**
+     * Virtual Terrarium readout: the idle/error status (why it is or isn't
+     * running), and when charged the feedstock's spawns-left plus the powered-buffer
+     * energy. Read from the server BE each Jade refresh, like the other Terrarium
+     * machines (a client-BE read can stick on a stale count).
+     */
+    private static final class VirtualTerrariumProvider
+            implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
+
+        @Override
+        public void appendServerData(CompoundTag data, BlockAccessor accessor) {
+            if (!(accessor.getBlockEntity()
+                    instanceof com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity vt)) {
+                return;
+            }
+            data.putBoolean("VT", true);
+            data.putInt("Status", vt.status().ordinal());
+            if (!vt.getFeedstock().getFluid().isEmpty()) {
+                data.putBoolean("Charged", true);
+                data.putBoolean("Infinite", vt.feedstockInfinite());
+                data.putInt("Remaining", vt.feedstockSpawnsRemaining());
+                data.putInt("Cap", vt.feedstockSpawnsCapacity());
+            }
+            if (vt.hasPoweredUpgrade()) {
+                data.putInt("Energy", vt.energyStorage().getEnergyStored());
+                data.putInt("EnergyCap",
+                    com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity.ENERGY_CAPACITY);
+            }
+        }
+
+        @Override
+        public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
+            CompoundTag data = accessor.getServerData();
+            if (data == null || !data.getBoolean("VT")) {
+                return;
+            }
+            var values = com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity.Status.values();
+            int ordinal = data.getInt("Status");
+            var status = ordinal >= 0 && ordinal < values.length ? values[ordinal] : values[values.length - 1];
+            tooltip.add(Component.translatable(
+                "productivefrogs.gui.vt.status." + status.name().toLowerCase(java.util.Locale.ROOT)));
+            if (data.getBoolean("Charged")) {
+                if (data.getBoolean("Infinite")) {
+                    tooltip.add(Component.translatable("productivefrogs.jade.spawns_unlimited"));
+                } else {
+                    tooltip.add(Component.translatable("productivefrogs.jade.spawns_left",
+                        data.getInt("Remaining"), data.getInt("Cap")));
+                }
+            }
+            if (data.contains("Energy")) {
+                tooltip.add(Component.translatable("productivefrogs.gui.energy_amount",
+                    data.getInt("Energy"), data.getInt("EnergyCap")));
+            }
+        }
+
+        @Override
+        public ResourceLocation getUid() {
+            return VIRTUAL_TERRARIUM_UID;
         }
     }
 }

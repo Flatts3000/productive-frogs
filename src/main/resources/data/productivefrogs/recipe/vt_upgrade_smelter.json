@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "productivefrogs",
+  "pattern": ["SBS", "BFB", "SBS"],
+  "key": {
+    "S": { "item": "minecraft:amethyst_shard" },
+    "B": { "item": "minecraft:blaze_powder" },
+    "F": { "item": "minecraft:blast_furnace" }
+  },
+  "result": { "id": "productivefrogs:vt_upgrade_smelter", "count": 1 }
+}

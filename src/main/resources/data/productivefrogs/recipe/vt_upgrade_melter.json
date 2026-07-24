@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "productivefrogs",
+  "pattern": ["SCS", "CMC", "SCS"],
+  "key": {
+    "S": { "item": "minecraft:amethyst_shard" },
+    "C": { "item": "minecraft:magma_cream" },
+    "M": { "item": "minecraft:magma_block" }
+  },
+  "result": { "id": "productivefrogs:vt_upgrade_melter", "count": 1 }
+}

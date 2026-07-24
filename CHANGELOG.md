@@ -4,6 +4,21 @@
 
 ### Added
 
+- **The Virtual Terrarium - one frog's whole eat loop inside two blocks.** Craft
+  the Processor and a glass Display Dome, set the Dome on the Processor to form it,
+  drop a netted frog in, and feed it its milk: Slime Milk of its own species for a
+  Resource frog, Mimic Milk for a Midas. It eats on its own and drops the results
+  out the bottom, with no live frogs or slimes on the ground and no floor space
+  taken. The milk is spent by spawns, not by the liquid, so a bucket only empties
+  once its spawns run out, and Endless milk never does. A bucket fills and drains
+  the tank both ways, so a broken block never mints one. Four upgrade slots tune
+  it: Bounty adds an output per eat (up to eight), Appetite shortens the cycle (up
+  to eight), a Smelter or Melter turns Froglights straight into their smelted item
+  or a molten fluid out the bottom (one or the other), and an Overclock runs the
+  whole block faster off RF (up to three, and the only upgrade that needs power).
+  It reads out on Jade and has a full guide entry. One frog runs at the normal
+  rate, so a full Terrarium still out-produces it; what you get is a hands-off,
+  hidden build with no upkeep. A void-tier build, so it lands late.
 - **The Slime Milk Basin - a milk source you can pipe and leave alone.** Pour
   any variant's Slime Milk into the Basin and it spawns that variant's Resource
   Slimes around itself, on the same interval and the same budget a placed source

@@ -5,6 +5,7 @@ import com.flatts.productivefrogs.content.item.ConfigurableFroglightItem;
 import com.flatts.productivefrogs.content.item.FrogEggItem;
 import com.flatts.productivefrogs.content.item.FrogNetItem;
 import com.flatts.productivefrogs.content.item.MilkCatalyst;
+import com.flatts.productivefrogs.content.item.VirtualTerrariumUpgradeItem;
 import com.flatts.productivefrogs.content.item.MilkCatalystItem;
 import com.flatts.productivefrogs.content.item.MimicMilkBucketItem;
 import com.flatts.productivefrogs.content.item.MimicSlimeBucketItem;
@@ -479,6 +480,33 @@ public final class PFItems {
         PFBlocks.SLIME_MILK_BASIN,
         new Item.Properties()
     );
+
+    /** Virtual Terrarium Processor BlockItem - places {@link PFBlocks#VIRTUAL_TERRARIUM}. */
+    public static final DeferredItem<BlockItem> VIRTUAL_TERRARIUM = ITEMS.registerSimpleBlockItem(
+        "virtual_terrarium",
+        PFBlocks.VIRTUAL_TERRARIUM,
+        new Item.Properties()
+    );
+
+    /** Virtual Terrarium Display Dome BlockItem - places {@link PFBlocks#VIRTUAL_TERRARIUM_DOME}. */
+    public static final DeferredItem<BlockItem> VIRTUAL_TERRARIUM_DOME = ITEMS.registerSimpleBlockItem(
+        "virtual_terrarium_dome",
+        PFBlocks.VIRTUAL_TERRARIUM_DOME,
+        new Item.Properties()
+    );
+
+    // Virtual Terrarium upgrades - single-tier items installed in the Processor's
+    // upgrade column; each states its effect in a one-line tooltip.
+    public static final DeferredItem<VirtualTerrariumUpgradeItem> VT_UPGRADE_BOUNTY = ITEMS.registerItem(
+        "vt_upgrade_bounty", VirtualTerrariumUpgradeItem::new, new Item.Properties());
+    public static final DeferredItem<VirtualTerrariumUpgradeItem> VT_UPGRADE_APPETITE = ITEMS.registerItem(
+        "vt_upgrade_appetite", VirtualTerrariumUpgradeItem::new, new Item.Properties());
+    public static final DeferredItem<VirtualTerrariumUpgradeItem> VT_UPGRADE_SMELTER = ITEMS.registerItem(
+        "vt_upgrade_smelter", VirtualTerrariumUpgradeItem::new, new Item.Properties());
+    public static final DeferredItem<VirtualTerrariumUpgradeItem> VT_UPGRADE_MELTER = ITEMS.registerItem(
+        "vt_upgrade_melter", VirtualTerrariumUpgradeItem::new, new Item.Properties());
+    public static final DeferredItem<VirtualTerrariumUpgradeItem> VT_UPGRADE_OVERCLOCK = ITEMS.registerItem(
+        "vt_upgrade_overclock", VirtualTerrariumUpgradeItem::new, new Item.Properties());
 
     /**
      * Casting Mold BlockItem (v1.12 wave 2) - places {@link PFBlocks#CASTING_MOLD},
