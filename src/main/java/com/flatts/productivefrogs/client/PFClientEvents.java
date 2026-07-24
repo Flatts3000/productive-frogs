@@ -118,6 +118,11 @@ public final class PFClientEvents {
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.SLIME_MILK_BASIN.get(),
             com.flatts.productivefrogs.client.renderer.BasinRenderer::new);
+        // Virtual Terrarium: the loaded frog rendered up inside the Display Dome.
+        // See client/renderer/VirtualTerrariumFrogRenderer.
+        event.registerBlockEntityRenderer(
+            com.flatts.productivefrogs.registry.PFBlockEntities.VIRTUAL_TERRARIUM.get(),
+            com.flatts.productivefrogs.client.renderer.VirtualTerrariumFrogRenderer::new);
         // End Crystal Receptacle (#249): the floating vanilla end-crystal model on
         // top when filled. See client/renderer/EndCrystalReceptacleRenderer.
         event.registerBlockEntityRenderer(
@@ -477,6 +482,7 @@ public final class PFClientEvents {
         event.register(PFMenuTypes.HATCH.get(), com.flatts.productivefrogs.client.screen.HatchScreen::new);
         event.register(PFMenuTypes.INCUBATOR.get(), com.flatts.productivefrogs.client.screen.IncubatorScreen::new);
         event.register(PFMenuTypes.TERRARIUM_CONTROLLER.get(), com.flatts.productivefrogs.client.screen.TerrariumControllerScreen::new);
+        event.register(PFMenuTypes.VIRTUAL_TERRARIUM.get(), com.flatts.productivefrogs.client.screen.VirtualTerrariumScreen::new);
     }
 
     /**

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "productivefrogs",
+  "pattern": ["SES", "EBE", "SES"],
+  "key": {
+    "S": { "item": "minecraft:amethyst_shard" },
+    "E": { "item": "minecraft:emerald" },
+    "B": { "item": "minecraft:emerald_block" }
+  },
+  "result": { "id": "productivefrogs:vt_upgrade_bounty", "count": 1 }
+}

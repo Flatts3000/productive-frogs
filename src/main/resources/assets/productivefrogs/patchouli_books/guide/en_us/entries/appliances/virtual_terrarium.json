@@ -1,0 +1,30 @@
+{
+  "name": "The Virtual Terrarium",
+  "icon": "productivefrogs:virtual_terrarium",
+  "category": "productivefrogs:appliances",
+  "sortnum": 210,
+  "pages": [
+    {
+      "type": "patchouli:crafting",
+      "recipe": "productivefrogs:virtual_terrarium",
+      "text": "The Virtual Terrarium runs one frog's whole eat loop inside two blocks, with no live slimes or frogs on the ground. Craft the Processor and the glass Display Dome on their own, then set the Dome directly on the Processor to form it. Break either and it stops."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "productivefrogs:virtual_terrarium_dome",
+      "text": "One frog runs at the normal rate, so a fully built Terrarium still out-produces one Processor. What you get instead is no floor space and no upkeep: you can wall it away out of sight. It is a void-tier build, so it comes late.$(br2)Look at the Processor with Jade to read what it is doing, or why it has gone idle."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Drop a netted frog into the frog slot and give it what that frog eats: Slime Milk of its own species for a Resource frog, Mimic Milk for a Midas. The wrong pairing just sits idle.$(br2)The tank holds one bucket. Fill it by right-clicking with a full bucket or piping milk in, and pull it back out with an empty bucket. The bucket always returns, so a broken block never mints one. Breaking the Processor drops the frog and the upgrades but not the milk, so drain it first."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The milk is spent by spawns, not by the liquid, exactly like a placed source: each eat uses one spawn, and the bucket only empties once they run out. Endless milk never runs down. Whatever the frog makes drops out the bottom."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Four upgrade slots. Bounty adds one more output per eat, up to eight. Appetite cuts the cycle time 15% each, up to eight. A Smelter turns every Froglight straight into its smelted item; a Melter turns it into molten fluid out the bottom instead, and you can run only one of the two.$(br2)Those four are free. Overclock is the only upgrade that draws power: each runs the whole block 50% faster off RF, up to three, and with an empty buffer it just stalls. The frog's own bred Appetite and Bounty still count on top of all this."
+    }
+  ]
+}

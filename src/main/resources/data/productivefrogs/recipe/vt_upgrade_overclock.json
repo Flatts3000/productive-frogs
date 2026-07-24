@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "productivefrogs",
+  "pattern": ["SQS", "QRQ", "SQS"],
+  "key": {
+    "S": { "item": "minecraft:amethyst_shard" },
+    "Q": { "item": "minecraft:quartz" },
+    "R": { "item": "minecraft:redstone_block" }
+  },
+  "result": { "id": "productivefrogs:vt_upgrade_overclock", "count": 1 }
+}

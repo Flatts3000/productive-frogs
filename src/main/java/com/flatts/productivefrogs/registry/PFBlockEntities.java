@@ -20,6 +20,7 @@ import com.flatts.productivefrogs.content.block.entity.SpawneryBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SprinklerBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.SweetslimedLilyPadBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.TerrariumControllerBlockEntity;
+import com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.WitherAltarHatchBlockEntity;
 import com.flatts.productivefrogs.content.block.entity.WitherSummonReceptacleBlockEntity;
 import java.util.function.Supplier;
@@ -127,6 +128,17 @@ public final class PFBlockEntities {
         BLOCK_ENTITIES.register(
             "crucible",
             () -> BlockEntityType.Builder.of(CrucibleBlockEntity::new, PFBlocks.CRUCIBLE.get()).build(null)
+        );
+
+    /**
+     * BE type for the {@code virtual_terrarium} Processor - owns the frog slot,
+     * feedstock tank, upgrade column, molten tank, RF buffer, and the eat loop.
+     * See {@link VirtualTerrariumBlockEntity}.
+     */
+    public static final Supplier<BlockEntityType<VirtualTerrariumBlockEntity>> VIRTUAL_TERRARIUM =
+        BLOCK_ENTITIES.register(
+            "virtual_terrarium",
+            () -> BlockEntityType.Builder.of(VirtualTerrariumBlockEntity::new, PFBlocks.VIRTUAL_TERRARIUM.get()).build(null)
         );
 
     /**

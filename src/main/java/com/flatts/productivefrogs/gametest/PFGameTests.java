@@ -7435,6 +7435,442 @@ public final class PFGameTests {
             java.util.UUID.nameUUIDFromBytes("pf_basin_hand".getBytes(java.nio.charset.StandardCharsets.UTF_8)),
             "pf_basin_hand");
 
+    // ---- Virtual Terrarium ------------------------------------------------
+
+    /** Place a Processor + Dome and return the Processor BE (failing the test if absent). */
+    @org.jetbrains.annotations.Nullable
+    private static com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity placeVirtualTerrarium(
+            GameTestHelper helper, BlockPos pos) {
+        helper.setBlock(pos, PFBlocks.VIRTUAL_TERRARIUM.get());
+        helper.setBlock(pos.above(), PFBlocks.VIRTUAL_TERRARIUM_DOME.get());
+        if (helper.getLevel().getBlockEntity(helper.absolutePos(pos))
+                instanceof com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity be) {
+            return be;
+        }
+        helper.fail("Virtual Terrarium Processor has no BlockEntity at " + pos);
+        return null;
+    }
+
+    /** Build a filled Frog Net holding a Resource frog of the given category and stats. */
+    private static ItemStack cagedFrog(GameTestHelper helper, Category category, int appetite, int bounty, boolean midas) {
+        ResourceFrog frog = PFEntities.RESOURCE_FROG.get().create(helper.getLevel());
+        frog.setCategory(category);
+        frog.setStats(appetite, bounty, 1);
+        frog.setMidas(midas);
+        ItemStack net = new ItemStack(PFItems.FROG_NET.get());
+        com.flatts.productivefrogs.content.item.FrogNetItem.captureEntity(frog, net);
+        frog.discard();
+        return net;
+    }
+
+    private static void loadFrog(com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity be, ItemStack net) {
+        be.getInventory().setStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.VirtualTerrariumInventory.FROG_SLOT, net);
+    }
+
+    private static void loadUpgrade(com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity be,
+            int slotOffset, net.minecraft.world.item.Item upgrade) {
+        be.getInventory().setStackInSlot(
+            com.flatts.productivefrogs.content.block.entity.VirtualTerrariumInventory.UPGRADE_START + slotOffset,
+            new ItemStack(upgrade));
+    }
+
+    private static ItemStack ironMilkBucket(boolean infinite) {
+        ItemStack bucket = new ItemStack(PFVariantMilk.bucket(variantId("iron")));
+        if (infinite) {
+            bucket.set(com.flatts.productivefrogs.registry.PFDataComponents.MILK_INFINITE.get(), true);
+        }
+        return bucket;
+    }
+
+    /** Arm the cycle and run one server tick, so a set-up Virtual Terrarium eats now. */
+    private static void tickVirtualTerrarium(GameTestHelper helper, BlockPos pos,
+            com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity be) {
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(pos);
+        be.forceReadyToFire();
+        com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity
+            .serverTick(level, abs, level.getBlockState(abs), be);
+    }
+
+    /** Total item count across the output slots. */
+    private static int vtOutputCount(com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity be) {
+        var inv = be.getInventory();
+        int total = 0;
+        for (int i = com.flatts.productivefrogs.content.block.entity.VirtualTerrariumInventory.OUTPUT_START;
+                i < com.flatts.productivefrogs.content.block.entity.VirtualTerrariumInventory.UPGRADE_START; i++) {
+            total += inv.getStackInSlot(i).getCount();
+        }
+        return total;
+    }
+
+    @org.jetbrains.annotations.Nullable
+    private static ItemStack vtFirstOutput(com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity be) {
+        var inv = be.getInventory();
+        for (int i = com.flatts.productivefrogs.content.block.entity.VirtualTerrariumInventory.OUTPUT_START;
+                i < com.flatts.productivefrogs.content.block.entity.VirtualTerrariumInventory.UPGRADE_START; i++) {
+            if (!inv.getStackInSlot(i).isEmpty()) {
+                return inv.getStackInSlot(i);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The two-block form gate: without a Dome the Processor reports NO_DOME and
+     * produces nothing; adding the Dome lets the loaded, fed frog eat.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void virtualTerrariumNeedsADomeToRun(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        // Place the Processor only (no Dome yet).
+        helper.setBlock(pos, PFBlocks.VIRTUAL_TERRARIUM.get());
+        if (!(helper.getLevel().getBlockEntity(helper.absolutePos(pos))
+                instanceof com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity be)) {
+            helper.fail("no Processor BE");
+            return;
+        }
+        loadFrog(be, cagedFrog(helper, Category.CAVE, 1, 1, false));
+        be.fillFromBucket(ironMilkBucket(false));
+
+        if (be.status() != com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity.Status.NO_DOME) {
+            helper.fail("without a Dome the status must be NO_DOME, was " + be.status());
+            return;
+        }
+        tickVirtualTerrarium(helper, pos, be);
+        if (vtOutputCount(be) != 0) {
+            helper.fail("a domeless Processor must not produce");
+            return;
+        }
+        // Now add the Dome: it should run.
+        helper.setBlock(pos.above(), PFBlocks.VIRTUAL_TERRARIUM_DOME.get());
+        tickVirtualTerrarium(helper, pos, be);
+        if (vtOutputCount(be) <= 0) {
+            helper.fail("with a Dome, a loaded and fed Processor must produce");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Resource path: a species frog eating its own Slime Milk makes that variant's
+     * Froglight, and one spawn of the milk's budget is spent.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void virtualTerrariumResourcePathMakesVariantFroglights(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeVirtualTerrarium(helper, pos);
+        if (be == null) {
+            return;
+        }
+        loadFrog(be, cagedFrog(helper, Category.CAVE, 1, 1, false)); // iron is a CAVE variant
+        be.fillFromBucket(ironMilkBucket(false));
+        int before = be.feedstockSpawnsRemaining();
+
+        tickVirtualTerrarium(helper, pos, be);
+
+        ItemStack out = vtFirstOutput(be);
+        if (out == null || !out.is(PFItems.CONFIGURABLE_FROGLIGHT.get())) {
+            helper.fail("Resource path must output a Configurable Froglight, got " + out);
+            return;
+        }
+        ResourceLocation stamped = out.get(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get());
+        if (!variantId("iron").equals(stamped)) {
+            helper.fail("the Froglight must carry the iron variant, got " + stamped);
+            return;
+        }
+        if (be.feedstockSpawnsRemaining() != before - 1) {
+            helper.fail("one eat must spend exactly one spawn; " + before + " -> " + be.feedstockSpawnsRemaining());
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Midas path: a Midas frog eating Mimic Milk makes a Prismatic Froglight carrying
+     * the synthesized item. Gated on the equivalence lane being enabled.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void virtualTerrariumMidasPathMakesPrismaticFroglights(GameTestHelper helper) {
+        Boolean eeOrig = com.flatts.productivefrogs.PFConfig.equivalenceEnabledOverride;
+        com.flatts.productivefrogs.PFConfig.equivalenceEnabledOverride = Boolean.TRUE;
+        try {
+            BlockPos pos = new BlockPos(2, 2, 2);
+            var be = placeVirtualTerrarium(helper, pos);
+            if (be == null) {
+                return;
+            }
+            loadFrog(be, cagedFrog(helper, Category.CAVE, 1, 1, true)); // Midas flag set
+            ResourceLocation synth = ResourceLocation.withDefaultNamespace("diamond");
+            be.fillFromBucket(com.flatts.productivefrogs.content.item.MimicMilkBucketItem.forItem(synth));
+
+            tickVirtualTerrarium(helper, pos, be);
+
+            ItemStack out = vtFirstOutput(be);
+            if (out == null || !out.is(PFItems.CONFIGURABLE_FROGLIGHT.get())) {
+                helper.fail("Midas path must output a Prismatic Froglight, got " + out);
+                return;
+            }
+            ResourceLocation stamped = out.get(com.flatts.productivefrogs.registry.PFDataComponents.SYNTHESIZED_ITEM.get());
+            if (!synth.equals(stamped)) {
+                helper.fail("the Prismatic Froglight must carry the synthesized item, got " + stamped);
+                return;
+            }
+            helper.succeed();
+        } finally {
+            com.flatts.productivefrogs.PFConfig.equivalenceEnabledOverride = eeOrig;
+        }
+    }
+
+    /** A frog fed milk it can't eat (wrong species) idles on MISMATCH and produces nothing. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void virtualTerrariumIdlesOnAMismatch(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeVirtualTerrarium(helper, pos);
+        if (be == null) {
+            return;
+        }
+        loadFrog(be, cagedFrog(helper, Category.GEODE, 1, 1, false)); // GEODE frog...
+        be.fillFromBucket(ironMilkBucket(false));                     // ...fed CAVE (iron) milk
+
+        if (be.status() != com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity.Status.MISMATCH) {
+            helper.fail("a wrong-species pairing must read MISMATCH, was " + be.status());
+            return;
+        }
+        tickVirtualTerrarium(helper, pos, be);
+        if (vtOutputCount(be) != 0) {
+            helper.fail("a mismatched frog must not produce");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** Each Bounty upgrade adds a flat +1 output, so an upgraded unit out-produces a bare one per cycle. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void virtualTerrariumBountyUpgradeAddsOutput(GameTestHelper helper) {
+        BlockPos bare = new BlockPos(1, 2, 1);
+        BlockPos boosted = new BlockPos(3, 2, 3);
+        var beBare = placeVirtualTerrarium(helper, bare);
+        var beBoosted = placeVirtualTerrarium(helper, boosted);
+        if (beBare == null || beBoosted == null) {
+            return;
+        }
+        loadFrog(beBare, cagedFrog(helper, Category.CAVE, 1, 1, false));
+        beBare.fillFromBucket(ironMilkBucket(false));
+        loadFrog(beBoosted, cagedFrog(helper, Category.CAVE, 1, 1, false));
+        loadUpgrade(beBoosted, 0, PFItems.VT_UPGRADE_BOUNTY.get());
+        beBoosted.fillFromBucket(ironMilkBucket(false));
+
+        tickVirtualTerrarium(helper, bare, beBare);
+        tickVirtualTerrarium(helper, boosted, beBoosted);
+
+        int bareCount = vtOutputCount(beBare);
+        int boostedCount = vtOutputCount(beBoosted);
+        if (boostedCount <= bareCount) {
+            helper.fail("a Bounty upgrade must raise the per-cycle output: bare=" + bareCount
+                + " boosted=" + boostedCount);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** With a Smelter, the output is the smelted item (iron ingot), never the raw Froglight. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void virtualTerrariumSmelterOutputsSmeltedItem(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeVirtualTerrarium(helper, pos);
+        if (be == null) {
+            return;
+        }
+        loadFrog(be, cagedFrog(helper, Category.CAVE, 1, 1, false));
+        loadUpgrade(be, 0, PFItems.VT_UPGRADE_SMELTER.get());
+        be.fillFromBucket(ironMilkBucket(false));
+
+        tickVirtualTerrarium(helper, pos, be);
+
+        ItemStack out = vtFirstOutput(be);
+        if (out == null || !out.is(net.minecraft.world.item.Items.IRON_INGOT)) {
+            helper.fail("a Smelter must output the smelted item (iron ingot), got " + out);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** With a Melter, the product routes to the molten tank and the item output stays empty. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void virtualTerrariumMelterFillsMoltenTankNotOutput(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeVirtualTerrarium(helper, pos);
+        if (be == null) {
+            return;
+        }
+        loadFrog(be, cagedFrog(helper, Category.CAVE, 1, 1, false));
+        loadUpgrade(be, 0, PFItems.VT_UPGRADE_MELTER.get());
+        be.fillFromBucket(ironMilkBucket(false));
+
+        tickVirtualTerrarium(helper, pos, be);
+
+        if (be.getMoltenTank().getFluidAmount() <= 0) {
+            helper.fail("a Melter must fill the molten tank");
+            return;
+        }
+        if (vtOutputCount(be) != 0) {
+            helper.fail("a Melter routes to fluid, so the item output must stay empty");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** Smelter and Melter are mutually exclusive: with one installed, the slot refuses the other. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 20)
+    public static void virtualTerrariumRefusesSmelterAndMelterTogether(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeVirtualTerrarium(helper, pos);
+        if (be == null) {
+            return;
+        }
+        var inv = be.getInventory();
+        loadUpgrade(be, 0, PFItems.VT_UPGRADE_SMELTER.get());
+        boolean melterValid = inv.isItemValid(
+            com.flatts.productivefrogs.content.block.entity.VirtualTerrariumInventory.UPGRADE_START + 1,
+            new ItemStack(PFItems.VT_UPGRADE_MELTER.get()));
+        if (melterValid) {
+            helper.fail("a Melter must be refused while a Smelter is installed");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** Endless (infinite) feedstock is never depleted: producing does not spend a spawn. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void virtualTerrariumEndlessFeedstockDoesNotDeplete(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeVirtualTerrarium(helper, pos);
+        if (be == null) {
+            return;
+        }
+        loadFrog(be, cagedFrog(helper, Category.CAVE, 1, 1, false));
+        be.fillFromBucket(ironMilkBucket(true)); // Endless
+        int before = be.feedstockSpawnsRemaining();
+
+        tickVirtualTerrarium(helper, pos, be);
+
+        if (vtOutputCount(be) <= 0) {
+            helper.fail("an Endless-fed unit must still produce");
+            return;
+        }
+        if (!be.feedstockInfinite() || be.feedstockSpawnsRemaining() != before) {
+            helper.fail("Endless feedstock must not deplete; " + before + " -> " + be.feedstockSpawnsRemaining());
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Breaking the Processor returns the frog and upgrades as items but NOT the tank
+     * fluid (dropping it as a bucket would mint one from fluid that was never a bucket).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void virtualTerrariumBreakReturnsItemsNotFluids(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeVirtualTerrarium(helper, pos);
+        if (be == null) {
+            return;
+        }
+        loadFrog(be, cagedFrog(helper, Category.CAVE, 1, 1, false));
+        loadUpgrade(be, 0, PFItems.VT_UPGRADE_BOUNTY.get());
+        be.fillFromBucket(ironMilkBucket(false));
+
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(pos);
+        var fakePlayer = net.neoforged.neoforge.common.util.FakePlayerFactory.get(level, BASIN_TEST_PROFILE);
+        PFBlocks.VIRTUAL_TERRARIUM.get().playerWillDestroy(level, abs, level.getBlockState(abs), fakePlayer);
+
+        java.util.List<net.minecraft.world.entity.item.ItemEntity> drops =
+            level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+                new net.minecraft.world.phys.AABB(abs).inflate(3.0));
+        boolean gotNet = false;
+        boolean gotUpgrade = false;
+        boolean gotMilk = false;
+        for (var e : drops) {
+            ItemStack s = e.getItem();
+            if (s.getItem() instanceof com.flatts.productivefrogs.content.item.FrogNetItem) {
+                gotNet = true;
+            } else if (s.is(PFItems.VT_UPGRADE_BOUNTY.get())) {
+                gotUpgrade = true;
+            } else if (s.getItem() instanceof com.flatts.productivefrogs.content.item.SlimeMilkBucketItem) {
+                gotMilk = true;
+            }
+        }
+        if (!gotNet || !gotUpgrade) {
+            helper.fail("break must drop the frog net and the upgrade (net=" + gotNet + " upgrade=" + gotUpgrade + ")");
+            return;
+        }
+        if (gotMilk) {
+            helper.fail("break must NOT mint a milk bucket from the tank fluid");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** The Overclock is the only powered upgrade: installed with an empty buffer, the block stalls. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void virtualTerrariumOverclockStallsWithoutPower(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeVirtualTerrarium(helper, pos);
+        if (be == null) {
+            return;
+        }
+        loadFrog(be, cagedFrog(helper, Category.CAVE, 1, 1, false));
+        loadUpgrade(be, 0, PFItems.VT_UPGRADE_OVERCLOCK.get());
+        be.fillFromBucket(ironMilkBucket(false));
+
+        if (be.status() != com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity.Status.NEEDS_POWER) {
+            helper.fail("an Overclock with an empty buffer must read NEEDS_POWER, was " + be.status());
+            return;
+        }
+        tickVirtualTerrarium(helper, pos, be);
+        if (vtOutputCount(be) != 0) {
+            helper.fail("a power-stalled block must not produce");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** Automation: a pipe fills the feedstock (one bucket), and the DOWN item view extracts the product. */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void virtualTerrariumPipeFillAndOutputExtract(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeVirtualTerrarium(helper, pos);
+        if (be == null) {
+            return;
+        }
+        loadFrog(be, cagedFrog(helper, Category.CAVE, 1, 1, false));
+
+        // Pipe-fill the feedstock: exactly one bucket of iron milk.
+        var ironFluid = PFVariantMilk.sourceFluid(variantId("iron"));
+        int filled = be.feedstockHandler().fill(
+            new net.neoforged.neoforge.fluids.FluidStack(ironFluid, 2000),
+            net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+        if (filled != VirtualTerrariumConstantsFeedstock() || be.getFeedstock().getFluid().isEmpty()) {
+            helper.fail("a pipe must charge the feedstock with one bucket, accepted " + filled);
+            return;
+        }
+        tickVirtualTerrarium(helper, pos, be);
+
+        // Extract the produced Froglight through the DOWN item view.
+        ItemStack pulled = be.outputView().extractItem(0, 64, false);
+        if (pulled.isEmpty() || !pulled.is(PFItems.CONFIGURABLE_FROGLIGHT.get())) {
+            helper.fail("the DOWN item view must extract the produced Froglight, got " + pulled);
+            return;
+        }
+        helper.succeed();
+    }
+
+    private static int VirtualTerrariumConstantsFeedstock() {
+        return com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity.FEEDSTOCK_CAPACITY;
+    }
+
     /**
      * The hand path end to end: a milk bucket right-clicked onto an empty Basin
      * pours in and hands back an empty bucket, and an empty bucket right-clicked

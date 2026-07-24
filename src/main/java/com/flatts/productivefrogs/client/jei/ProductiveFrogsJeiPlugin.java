@@ -665,6 +665,12 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
             VanillaTypes.ITEM_STACK,
             Component.translatable("productivefrogs.jei.slime_milk_basin.info"));
 
+        // Virtual Terrarium - one frog's eat loop inside two blocks.
+        reg.addIngredientInfo(
+            new ItemStack(PFBlocks.VIRTUAL_TERRARIUM.get().asItem()),
+            VanillaTypes.ITEM_STACK,
+            Component.translatable("productivefrogs.jei.virtual_terrarium.info"));
+
         // Slime Milk catalysts - each only when its own flag is enabled (#201).
         // The accessors AND the catalysts master, so an off master drops all four
         // and an individual flag drops just its own info page (a page for a hidden

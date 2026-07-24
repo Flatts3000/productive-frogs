@@ -83,6 +83,14 @@ public final class PFCreativeTabs {
                     // The Slime Milk Basin sits with the milk machinery: it is the
                     // container form of a placed source, not a config-gated appliance.
                     output.accept(PFItems.SLIME_MILK_BASIN.get());
+                    // The Virtual Terrarium: the two blocks, then the upgrade family.
+                    output.accept(PFItems.VIRTUAL_TERRARIUM.get());
+                    output.accept(PFItems.VIRTUAL_TERRARIUM_DOME.get());
+                    output.accept(PFItems.VT_UPGRADE_BOUNTY.get());
+                    output.accept(PFItems.VT_UPGRADE_APPETITE.get());
+                    output.accept(PFItems.VT_UPGRADE_SMELTER.get());
+                    output.accept(PFItems.VT_UPGRADE_MELTER.get());
+                    output.accept(PFItems.VT_UPGRADE_OVERCLOCK.get());
                     // The Froglight Crucible + Casting Mold (v1.12) sit with
                     // the other appliances; each appears only when enabled (#196).
                     if (!PFConfig.SPEC.isLoaded() || PFConfig.CRUCIBLE_ENABLED.get()) {

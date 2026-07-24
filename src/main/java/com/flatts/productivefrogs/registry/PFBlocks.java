@@ -19,6 +19,8 @@ import com.flatts.productivefrogs.content.block.SpawneryBlock;
 import com.flatts.productivefrogs.content.block.SprinklerBlock;
 import com.flatts.productivefrogs.content.block.SweetslimedLilyPadBlock;
 import com.flatts.productivefrogs.content.block.TerrariumControllerBlock;
+import com.flatts.productivefrogs.content.block.VirtualTerrariumDomeBlock;
+import com.flatts.productivefrogs.content.block.VirtualTerrariumProcessorBlock;
 import com.flatts.productivefrogs.content.block.WitherAltarHatchBlock;
 import com.flatts.productivefrogs.content.block.WitherSummonReceptacleBlock;
 import com.flatts.productivefrogs.data.Category;
@@ -128,6 +130,39 @@ public final class PFBlocks {
             .mapColor(MapColor.WOOD)
             .strength(0.5F)
             .sound(SoundType.WOOD)
+    );
+
+    /**
+     * The Virtual Terrarium Processor - the bottom, working block that runs one
+     * frog's eat loop headlessly. Void-tier; forms with a Display Dome on top.
+     * {@link VirtualTerrariumProcessorBlock#WORKING} drives the idle/active swap.
+     */
+    public static final DeferredBlock<VirtualTerrariumProcessorBlock> VIRTUAL_TERRARIUM = BLOCKS.registerBlock(
+        "virtual_terrarium",
+        VirtualTerrariumProcessorBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_PURPLE)
+            .strength(3.5F)
+            .sound(SoundType.METAL)
+            .requiresCorrectToolForDrops()
+    );
+
+    /**
+     * The Virtual Terrarium Display Dome - the glass top block. Cosmetic but
+     * load-bearing: the Processor only runs while a Dome sits directly above it.
+     */
+    public static final DeferredBlock<VirtualTerrariumDomeBlock> VIRTUAL_TERRARIUM_DOME = BLOCKS.registerBlock(
+        "virtual_terrarium_dome",
+        VirtualTerrariumDomeBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.NONE)
+            .strength(0.4F)
+            .sound(SoundType.GLASS)
+            .noOcclusion()
+            .isValidSpawn((s, l, p, e) -> false)
+            .isRedstoneConductor((s, l, p) -> false)
+            .isSuffocating((s, l, p) -> false)
+            .isViewBlocking((s, l, p) -> false)
     );
 
     /**

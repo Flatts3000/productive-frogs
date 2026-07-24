@@ -238,6 +238,25 @@ public final class PFModBusEvents {
             (be, side) -> be.itemHandler()
         );
 
+        // Virtual Terrarium: DOWN pulls the output items (Froglights / smelted)
+        // and drains the molten tank; other faces load/retrieve the frog and
+        // fill the feedstock tank. The receive-only RF buffer powers the Overclock.
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            PFBlockEntities.VIRTUAL_TERRARIUM.get(),
+            (be, side) -> side == Direction.DOWN ? be.outputView() : be.frogView()
+        );
+        event.registerBlockEntity(
+            Capabilities.FluidHandler.BLOCK,
+            PFBlockEntities.VIRTUAL_TERRARIUM.get(),
+            (be, side) -> side == Direction.DOWN ? be.moltenHandler() : be.feedstockHandler()
+        );
+        event.registerBlockEntity(
+            Capabilities.EnergyStorage.BLOCK,
+            PFBlockEntities.VIRTUAL_TERRARIUM.get(),
+            (be, side) -> be.energyStorage()
+        );
+
         // Slime Milk Basin: fill-only fluid intake for pipes - exactly one
         // bucket while empty, the variant read off the fluid identity and the
         // catalysts off its components. Drain is a no-op by design: the
