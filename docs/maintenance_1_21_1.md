@@ -21,6 +21,20 @@
 
 When in doubt, fix it on `main` only and leave this line alone.
 
+### Exception: the v1.25.0 backport set (maintainer decision, 2026-07-23)
+
+The line is reopened **once**, for three **named** backports from the 2.x line and nothing else:
+
+| Work | Epic |
+|---|---|
+| Slime Milk Basin | #342 |
+| Virtual Terrarium | #341 |
+| Guidebook coverage audit + voice rewrite | #343 |
+
+The posture is **frozen except for those three**. Anything not on that list still follows the rules above: it lands on `main` only. When the set ships as **v1.25.0** the line returns to hotfix-only (`1.25.x` patches) and this section stays as the record of why a `1.25` exists at all.
+
+Because these are features, they cannot ship as a `1.24.x` patch - hence the minor bump. The forward-flow rule is unaffected: these features already exist on `main`, so nothing here flows forward. Only **fixes** ever cross, and only old -> new.
+
 ## Hotfix procedure
 
 1. **Branch off `mc-1.21.1`** (never off `main`): `git checkout -b fix/<slug> origin/mc-1.21.1`.

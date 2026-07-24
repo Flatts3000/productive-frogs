@@ -125,6 +125,10 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         registration.registerBlockComponent(MILK_SOURCE, SlimeMilkSourceBlock.class);
         registration.registerBlockComponent(MILK_SOURCE,
             com.flatts.productivefrogs.content.block.MimicMilkSourceBlock.class);
+        // The Basin holds the same charge a source does, so it reads out through
+        // the same provider (and the same UID, so no extra Jade config key).
+        registration.registerBlockComponent(MILK_SOURCE,
+            com.flatts.productivefrogs.content.block.SlimeMilkBasinBlock.class);
         registration.registerEntityComponent(new FrogStatsProvider(), ResourceFrog.class);
         registration.registerBlockComponent(PRIMED_EGG_STATS, PrimedFrogEggBlock.class);
         registration.registerEntityComponent(TADPOLE_STATS, ResourceTadpole.class);
@@ -402,6 +406,39 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 }
                 return;
             }
+            // Slime Milk Basin: the container form of a source. Same charge, same
+            // lines - plus the held variant's name, because a Basin's block name
+            // is generic where a per-variant source block's already says it.
+            if (state.getBlock() instanceof com.flatts.productivefrogs.content.block.SlimeMilkBasinBlock) {
+                if (accessor.getBlockEntity()
+                        instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkBasinBlockEntity basin) {
+                    data.putBoolean("MilkSource", true);
+                    if (basin.getContainedVariant() == null) {
+                        // An empty Basin says so, rather than reading as a plain
+                        // block with no tooltip at all.
+                        data.putBoolean("BasinEmpty", true);
+                        return;
+                    }
+                    data.putString("BasinVariant", basin.getContainedVariant().toString());
+                    if (basin.getSpeedLevel() > 0) {
+                        data.putInt("Speed", basin.getSpeedLevel());
+                        data.putInt("SpeedMax", PFConfig.catalystMaxSpeedLevel());
+                    }
+                    if (basin.getQuantityLevel() > 0) {
+                        data.putInt("Quantity", basin.getQuantityLevel());
+                        data.putInt("QuantityMax", PFConfig.catalystMaxQuantityLevel());
+                    }
+                    boolean unlimited = basin.isInfinite()
+                        || (PFConfig.SPEC.isLoaded() && !PFConfig.DEPLETION_ENABLED.get());
+                    if (unlimited) {
+                        data.putBoolean("Unlimited", true);
+                    } else {
+                        data.putInt("SpawnsRemaining", basin.getSpawnsRemaining());
+                        data.putInt("SpawnsCap", basin.getSpawnsCapacity());
+                    }
+                }
+                return;
+            }
             if (!(state.getBlock() instanceof SlimeMilkSourceBlock)) {
                 return;
             }
@@ -462,6 +499,21 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                     : Component.literal(data.getString("MimicItem"));
                 tooltip.replace(JadeIds.CORE_OBJECT_NAME,
                     Component.translatable("block.productivefrogs.mimic_slime_milk.item", itemName));
+            }
+            if (data.getBoolean("BasinEmpty")) {
+                tooltip.add(Component.translatable("productivefrogs.jade.basin_empty"));
+                return;
+            }
+            // The Basin's own name is generic, so name what it is holding. Same
+            // title-cased fallback the milk bucket and the Sprinkler line use.
+            if (data.contains("BasinVariant")) {
+                ResourceLocation held = ResourceLocation.tryParse(data.getString("BasinVariant"));
+                if (held != null) {
+                    tooltip.add(Component.translatable("productivefrogs.jade.basin_milk",
+                        Component.translatableWithFallback(
+                            "block.productivefrogs." + held.getPath() + "_slime_milk",
+                            com.flatts.productivefrogs.util.VariantNames.titleCase(held) + " Slime Milk")));
+                }
             }
             if (data.contains("AltarFaces")) {
                 tooltip.add(Component.translatable("productivefrogs.jade.altar", data.getInt("AltarFaces"), 6));

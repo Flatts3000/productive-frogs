@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+### Added
+
+- **The Slime Milk Basin - a milk source you can pipe and leave alone.** Pour
+  any variant's Slime Milk into the Basin and it spawns that variant's Resource
+  Slimes around itself, on the same interval and the same budget a placed source
+  runs. The difference is what happens when it runs dry: a placed source drains
+  away and has to be re-placed, where the Basin just empties and sits there
+  waiting for the next bucket - so you can run a pipe into one and never touch it
+  again. It is waterloggable and holds the milk inside the block, so you can drop
+  it straight into a pool without the milk and the water interacting, and slimes
+  spawn into the surrounding water. Catalysts work on it exactly as they do on a
+  pool, by dropping them in or by right-click. Slimes prefer to appear beside the
+  Basin rather than above it, so a frog at the same level can reach them. Boss-tier
+  milk is refused - the Basin cannot build the six-face catalyst altar the source
+  needs, so it will not be an altar bypass. Note that breaking a Basin loses the
+  milk inside it, so drain it back into a bucket first if you want to keep the
+  budget and catalysts. The placed source is untouched; this is a second way to
+  spawn slimes, not a replacement.
+
 ## v1.24.7 - 2026-07-09 - Closing the Hatch
 
 ### Fixed

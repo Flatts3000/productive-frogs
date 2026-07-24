@@ -112,6 +112,12 @@ public final class PFClientEvents {
         event.registerBlockEntityRenderer(
             com.flatts.productivefrogs.registry.PFBlockEntities.CRUCIBLE.get(),
             com.flatts.productivefrogs.client.renderer.CrucibleRenderer::new);
+        // Slime Milk Basin: the held milk's surface inside the bowl, at a height
+        // proportional to the remaining spawn budget, tinted by the variant's own
+        // fluid. See client/renderer/BasinRenderer.
+        event.registerBlockEntityRenderer(
+            com.flatts.productivefrogs.registry.PFBlockEntities.SLIME_MILK_BASIN.get(),
+            com.flatts.productivefrogs.client.renderer.BasinRenderer::new);
         // End Crystal Receptacle (#249): the floating vanilla end-crystal model on
         // top when filled. See client/renderer/EndCrystalReceptacleRenderer.
         event.registerBlockEntityRenderer(

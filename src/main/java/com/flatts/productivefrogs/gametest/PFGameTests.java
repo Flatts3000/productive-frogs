@@ -7048,4 +7048,497 @@ public final class PFGameTests {
         }
         return total;
     }
+
+    // ---- Slime Milk Basin -------------------------------------------------
+
+    private static ResourceLocation variantId(String path) {
+        return ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, path);
+    }
+
+    /** Place a Basin and return its BlockEntity (failing the test if it is absent). */
+    @org.jetbrains.annotations.Nullable
+    private static com.flatts.productivefrogs.content.block.entity.SlimeMilkBasinBlockEntity placeBasin(
+            GameTestHelper helper, BlockPos pos) {
+        helper.setBlock(pos, PFBlocks.SLIME_MILK_BASIN.get());
+        if (helper.getLevel().getBlockEntity(helper.absolutePos(pos))
+                instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkBasinBlockEntity be) {
+            return be;
+        }
+        helper.fail("Slime Milk Basin has no BlockEntity at " + pos);
+        return null;
+    }
+
+    /** Arm the countdown and run one server tick, so the Basin fires a spawn event now. */
+    private static void fireBasin(GameTestHelper helper, BlockPos pos,
+            com.flatts.productivefrogs.content.block.entity.SlimeMilkBasinBlockEntity be) {
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(pos);
+        be.forceReadyToFire();
+        com.flatts.productivefrogs.content.block.entity.SlimeMilkBasinBlockEntity
+            .serverTick(level, abs, level.getBlockState(abs), be);
+    }
+
+    /**
+     * A charged Basin spawns its variant's Resource Slime on a spawn event and
+     * spends exactly one budget doing it - the economy the placed source runs,
+     * reached through the container form.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkBasinSpawnsItsVariantAndSpendsOneBudget(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeBasin(helper, pos);
+        if (be == null) {
+            return;
+        }
+        Boolean depOrig = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride;
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = true;
+        try {
+            be.charge(variantId("iron"), 5, 5, 0, 0, false);
+            fireBasin(helper, pos, be);
+
+            List<ResourceSlime> slimes = helper.getEntities(PFEntities.RESOURCE_SLIME.get());
+            if (slimes.size() != 1) {
+                helper.fail("expected exactly 1 ResourceSlime from the Basin, got " + slimes.size());
+                return;
+            }
+            if (!variantId("iron").equals(slimes.get(0).getVariantId())) {
+                helper.fail("Basin spawned variant " + slimes.get(0).getVariantId() + ", expected iron");
+                return;
+            }
+            if (slimes.get(0).getSize() != 1) {
+                helper.fail("Basin spawned size " + slimes.get(0).getSize() + ", expected 1");
+                return;
+            }
+            if (be.getSpawnsRemaining() != 4) {
+                helper.fail("one spawn event must spend exactly one budget; expected 4 left, got "
+                    + be.getSpawnsRemaining());
+                return;
+            }
+            helper.succeed();
+        } finally {
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = depOrig;
+        }
+    }
+
+    /**
+     * Placement order: horizontal neighbours before the layer above, so a spawn
+     * lands beside the Basin where a frog at the same level can reach it. Every
+     * one of the 26 cells is free here, so only the ordering decides.
+     *
+     * <p>Position is read in the same tick as the spawn - gravity has not run yet,
+     * so the Y assertion is stable.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkBasinPrefersAHorizontalNeighbourOverTheLayerAbove(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeBasin(helper, pos);
+        if (be == null) {
+            return;
+        }
+        be.charge(variantId("iron"), 5, 5, 0, 0, false);
+        fireBasin(helper, pos, be);
+
+        List<ResourceSlime> slimes = helper.getEntities(PFEntities.RESOURCE_SLIME.get());
+        if (slimes.size() != 1) {
+            helper.fail("expected exactly 1 ResourceSlime, got " + slimes.size());
+            return;
+        }
+        BlockPos abs = helper.absolutePos(pos);
+        int sy = net.minecraft.util.Mth.floor(slimes.get(0).getY());
+        if (sy != abs.getY()) {
+            helper.fail("Basin must spawn horizontally before going up: slime at y=" + sy
+                + ", Basin at y=" + abs.getY());
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Waterlogged and still working: the held milk never becomes a world fluid, so
+     * the Basin coexists with the pool it sits in (no mixing, no washing away) and
+     * spawns straight into the surrounding water.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkBasinWorksWaterloggedAndSpawnsIntoTheWater(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+            helper.setBlock(pos.relative(dir), Blocks.WATER);
+        }
+        helper.setBlock(pos, PFBlocks.SLIME_MILK_BASIN.get().defaultBlockState()
+            .setValue(com.flatts.productivefrogs.content.block.SlimeMilkBasinBlock.WATERLOGGED, Boolean.TRUE));
+        if (!(helper.getLevel().getBlockEntity(helper.absolutePos(pos))
+                instanceof com.flatts.productivefrogs.content.block.entity.SlimeMilkBasinBlockEntity be)) {
+            helper.fail("waterlogged Basin has no BlockEntity");
+            return;
+        }
+        be.charge(variantId("iron"), 5, 5, 0, 0, false);
+        fireBasin(helper, pos, be);
+
+        if (helper.getEntities(PFEntities.RESOURCE_SLIME.get()).size() != 1) {
+            helper.fail("a waterlogged Basin must still spawn into the surrounding water");
+            return;
+        }
+        BlockState state = helper.getBlockState(pos);
+        if (!state.getValue(com.flatts.productivefrogs.content.block.SlimeMilkBasinBlock.WATERLOGGED)) {
+            helper.fail("the Basin lost its waterlogged state - the held milk must never mix with the pool");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Density cap: an over-crowded Basin pauses WITHOUT spending budget, so an
+     * Endless or Rapid Basin can't outrun the frogs eating from it. Uses
+     * {@code spawnCapOverride=2} so the test needs 2 slimes, not the default 30.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkBasinPausesWithoutSpendingWhenAreaIsCrowded(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeBasin(helper, pos);
+        if (be == null) {
+            return;
+        }
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(pos);
+        Boolean depOrig = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride;
+        Integer capOrig = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.spawnCapOverride;
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = true;
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.spawnCapOverride = 2;
+        try {
+            be.charge(variantId("iron"), 5, 5, 0, 0, false);
+            for (int i = 0; i < 2; i++) {
+                var slime = PFEntities.RESOURCE_SLIME.get().create(level);
+                if (slime == null) {
+                    helper.fail("could not create ResourceSlime for the Basin cap test");
+                    return;
+                }
+                slime.setVariant(variantId("iron"));
+                slime.setSize(1, true);
+                slime.moveTo(abs.getX() + 0.5, abs.getY(), abs.getZ() + 0.5, 0F, 0F);
+                level.addFreshEntity(slime);
+            }
+            fireBasin(helper, pos, be);
+
+            if (be.getSpawnsRemaining() != 5) {
+                helper.fail("a capped Basin must not spend budget while paused; expected 5 left, got "
+                    + be.getSpawnsRemaining());
+                return;
+            }
+            int count = helper.getEntities(PFEntities.RESOURCE_SLIME.get()).size();
+            if (count != 2) {
+                helper.fail("a capped Basin must not spawn beyond the cap; expected 2 slimes, got " + count);
+                return;
+            }
+            helper.succeed();
+        } finally {
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = depOrig;
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.spawnCapOverride = capOrig;
+        }
+    }
+
+    /**
+     * The Basin's defining difference from a placed source: a spent source drains
+     * to air, a spent Basin empties and STAYS, ready for the next bucket.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkBasinEmptiesButPersistsWhenDepleted(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeBasin(helper, pos);
+        if (be == null) {
+            return;
+        }
+        Boolean depOrig = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride;
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = true;
+        try {
+            be.charge(variantId("iron"), 1, 1, 0, 0, false);
+            fireBasin(helper, pos, be);
+
+            helper.assertBlockPresent(PFBlocks.SLIME_MILK_BASIN.get(), pos);
+            if (be.isCharged()) {
+                helper.fail("a depleted Basin must empty; it still reports a charge of "
+                    + be.getContainedVariant());
+                return;
+            }
+            helper.succeed();
+        } finally {
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.depletionEnabledOverride = depOrig;
+        }
+    }
+
+    /**
+     * The bucket round-trip: draining a charged Basin mints that variant's milk
+     * bucket carrying the remaining budget and every applied catalyst, and pouring
+     * it back restores the same charge. Nothing is lost either way.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkBasinRoundTripsBudgetAndCatalystsThroughABucket(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeBasin(helper, pos);
+        if (be == null) {
+            return;
+        }
+        be.charge(variantId("iron"), 7, 12, 2, 1, true);
+        ItemStack drained = be.drainToBucket();
+
+        if (!drained.is(PFVariantMilk.bucket(variantId("iron")))) {
+            helper.fail("drain must mint the iron Slime Milk bucket, got " + drained);
+            return;
+        }
+        if (be.isCharged()) {
+            helper.fail("drain must empty the Basin");
+            return;
+        }
+        Integer remaining = drained.get(
+            com.flatts.productivefrogs.registry.PFDataComponents.SPAWNS_REMAINING.get());
+        Integer capacity = drained.get(
+            com.flatts.productivefrogs.registry.PFDataComponents.MILK_CAPACITY.get());
+        Integer speed = drained.get(com.flatts.productivefrogs.registry.PFDataComponents.MILK_SPEED.get());
+        Integer quantity = drained.get(com.flatts.productivefrogs.registry.PFDataComponents.MILK_QUANTITY.get());
+        Boolean infinite = drained.get(com.flatts.productivefrogs.registry.PFDataComponents.MILK_INFINITE.get());
+        if (remaining == null || remaining != 7 || capacity == null || capacity != 12
+                || speed == null || speed != 2 || quantity == null || quantity != 1
+                || !Boolean.TRUE.equals(infinite)) {
+            helper.fail("drained bucket lost state: remaining=" + remaining + " capacity=" + capacity
+                + " speed=" + speed + " quantity=" + quantity + " infinite=" + infinite);
+            return;
+        }
+
+        // Pour it back: the same charge comes home.
+        be.chargeFromBucket(variantId("iron"), drained);
+        if (be.getSpawnsRemaining() != 7 || be.getSpawnsCapacity() != 12
+                || be.getSpeedLevel() != 2 || be.getQuantityLevel() != 1 || !be.isInfinite()) {
+            helper.fail("re-pour lost state: remaining=" + be.getSpawnsRemaining()
+                + " capacity=" + be.getSpawnsCapacity() + " speed=" + be.getSpeedLevel()
+                + " quantity=" + be.getQuantityLevel() + " infinite=" + be.isInfinite());
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Catalysts apply to a Basin exactly as they do to a source pool, and a maxed
+     * one is refused so the caller leaves the item rather than eating it.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkBasinAppliesCatalystsAndRefusesAMaxedOne(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeBasin(helper, pos);
+        if (be == null) {
+            return;
+        }
+        be.charge(variantId("iron"), 5, 5, 0, 0, false);
+
+        if (!be.applyCatalyst(com.flatts.productivefrogs.content.item.MilkCatalyst.QUANTITY)
+                || be.getQuantityLevel() != 1) {
+            helper.fail("a Quantity catalyst must raise the Basin's quantity level to 1, got "
+                + be.getQuantityLevel());
+            return;
+        }
+        if (!be.applyCatalyst(com.flatts.productivefrogs.content.item.MilkCatalyst.INFINITE)
+                || !be.isInfinite()) {
+            helper.fail("an Endless catalyst must make the Basin infinite");
+            return;
+        }
+        if (be.applyCatalyst(com.flatts.productivefrogs.content.item.MilkCatalyst.INFINITE)) {
+            helper.fail("a second Endless catalyst is redundant and must be refused, not consumed");
+            return;
+        }
+        // An uncharged Basin has nothing to buff.
+        be.drainToBucket();
+        if (be.applyCatalyst(com.flatts.productivefrogs.content.item.MilkCatalyst.SPEED)) {
+            helper.fail("an empty Basin must refuse catalysts");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Boss-tier ({@code spawn_catalyst}) milk is refused outright. The Basin cannot
+     * reproduce the source's six-face catalyst altar gate, so accepting it would
+     * make the Basin an altar bypass (#184) - the same ruling, and the same seam,
+     * as the Terrarium Controller.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkBasinRefusesBossMilk(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeBasin(helper, pos);
+        if (be == null) {
+            return;
+        }
+        ServerLevel level = helper.getLevel();
+        if (!be.acceptsVariant(level, variantId("iron"))) {
+            helper.fail("test setup: an ordinary variant must be accepted");
+            return;
+        }
+        if (be.acceptsVariant(level, variantId("nether_star"))) {
+            helper.fail("boss (altar-gated) milk must be refused - the Basin can't gate it");
+            return;
+        }
+        // And the pipe path refuses it too, not just the hand path.
+        var bossFluid = PFVariantMilk.sourceFluid(variantId("nether_star"));
+        if (bossFluid != null) {
+            int filled = be.fluidHandler().fill(
+                new net.neoforged.neoforge.fluids.FluidStack(bossFluid, 1000),
+                net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+            if (filled != 0 || be.isCharged()) {
+                helper.fail("a pipe must not be able to push boss milk into a Basin (accepted "
+                    + filled + " mB)");
+                return;
+            }
+        }
+        helper.succeed();
+    }
+
+    /**
+     * The catalyst DROP-IN path (a dropper feeding a Basin, or a player tossing one
+     * in), which is parity with dropping a catalyst into a source pool.
+     *
+     * <p>Worth its own test because the dispatch differs from the source's: a milk
+     * source is a non-collision fluid an item sinks into, while the Basin is a
+     * solid half-block an item rests on top of. The item's box still overlaps the
+     * Basin's cell so vanilla calls {@code entityInside} either way - but that is
+     * exactly the kind of thing that silently stops working.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void slimeMilkBasinConsumesACatalystDroppedIntoIt(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeBasin(helper, pos);
+        if (be == null) {
+            return;
+        }
+        be.charge(variantId("iron"), 5, 5, 0, 0, false);
+
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(pos);
+        net.minecraft.world.entity.item.ItemEntity dropped =
+            new net.minecraft.world.entity.item.ItemEntity(level,
+                abs.getX() + 0.5, abs.getY() + 1.0, abs.getZ() + 0.5,
+                new ItemStack(PFItems.SPEED_CATALYST.get()));
+        dropped.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        level.addFreshEntity(dropped);
+
+        helper.succeedWhen(() -> {
+            if (be.getSpeedLevel() != 1) {
+                helper.fail("a Rapid catalyst dropped into a charged Basin must be consumed; speed="
+                    + be.getSpeedLevel());
+                return;
+            }
+            if (dropped.isAlive() && !dropped.getItem().isEmpty()) {
+                helper.fail("the consumed catalyst item should be gone, still holding "
+                    + dropped.getItem());
+            }
+        });
+    }
+
+    private static final com.mojang.authlib.GameProfile BASIN_TEST_PROFILE =
+        new com.mojang.authlib.GameProfile(
+            java.util.UUID.nameUUIDFromBytes("pf_basin_hand".getBytes(java.nio.charset.StandardCharsets.UTF_8)),
+            "pf_basin_hand");
+
+    /**
+     * The hand path end to end: a milk bucket right-clicked onto an empty Basin
+     * pours in and hands back an empty bucket, and an empty bucket right-clicked
+     * onto a charged one drains it and hands back the filled bucket. This is the
+     * interaction a player actually performs, above the BE-level round-trip test.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkBasinPoursAndDrainsByHand(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeBasin(helper, pos);
+        if (be == null) {
+            return;
+        }
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(pos);
+        var player = net.neoforged.neoforge.common.util.FakePlayerFactory.get(level, BASIN_TEST_PROFILE);
+        player.getInventory().clearContent();
+
+        net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(
+            net.minecraft.world.phys.Vec3.atCenterOf(abs), net.minecraft.core.Direction.UP, abs, false);
+
+        // Pour a full milk bucket in.
+        ItemStack milk = new ItemStack(PFVariantMilk.bucket(variantId("iron")));
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, milk);
+        level.getBlockState(abs).useItemOn(
+            player.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND),
+            level, player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
+
+        if (!variantId("iron").equals(be.getContainedVariant())) {
+            helper.fail("right-clicking a milk bucket must charge the Basin, held "
+                + be.getContainedVariant());
+            return;
+        }
+        ItemStack held = player.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (!held.is(Items.BUCKET)) {
+            helper.fail("pouring must hand back an empty bucket, got " + held);
+            return;
+        }
+
+        // Drain it back out with that same empty bucket.
+        level.getBlockState(abs).useItemOn(
+            player.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND),
+            level, player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
+
+        if (be.isCharged()) {
+            helper.fail("right-clicking an empty bucket must drain the Basin");
+            return;
+        }
+        boolean gotMilkBack = false;
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            if (player.getInventory().getItem(i).is(PFVariantMilk.bucket(variantId("iron")))) {
+                gotMilkBack = true;
+                break;
+            }
+        }
+        if (!gotMilkBack) {
+            helper.fail("draining must hand back the iron Slime Milk bucket");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Pipe fill: exactly one bucket of any per-variant milk while empty, with the
+     * variant read off the FLUID identity (v1.8) and the budget and catalysts off
+     * its components. A charged Basin takes no more until it drains.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkBasinAcceptsExactlyOneBucketFromAPipe(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 2, 2);
+        var be = placeBasin(helper, pos);
+        if (be == null) {
+            return;
+        }
+        var ironFluid = PFVariantMilk.sourceFluid(variantId("iron"));
+        if (ironFluid == null) {
+            helper.fail("test setup: iron has no registered milk fluid");
+            return;
+        }
+        var handler = be.fluidHandler();
+        net.neoforged.neoforge.fluids.FluidStack stack =
+            new net.neoforged.neoforge.fluids.FluidStack(ironFluid, 2000);
+        stack.set(com.flatts.productivefrogs.registry.PFDataComponents.MILK_SPEED.get(), 3);
+
+        int filled = handler.fill(stack,
+            net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+        if (filled != 1000) {
+            helper.fail("a Basin holds exactly one bucket; fill accepted " + filled + " mB");
+            return;
+        }
+        if (!variantId("iron").equals(be.getContainedVariant())) {
+            helper.fail("piped fill must read the variant off the fluid, got " + be.getContainedVariant());
+            return;
+        }
+        if (be.getSpeedLevel() != 3) {
+            helper.fail("piped fill must carry the catalysts on the fluid; speed=" + be.getSpeedLevel());
+            return;
+        }
+        int second = handler.fill(stack,
+            net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+        if (second != 0) {
+            helper.fail("a charged Basin must refuse a second fill until it drains, accepted " + second);
+            return;
+        }
+        helper.succeed();
+    }
 }
