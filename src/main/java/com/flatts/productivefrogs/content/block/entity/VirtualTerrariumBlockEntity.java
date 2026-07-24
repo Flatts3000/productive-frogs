@@ -428,7 +428,10 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
                 MilkCharge charge = MilkCharge.fromFluid(one);
                 one.set(PFDataComponents.SPAWNS_REMAINING.get(), charge.spawnsRemaining());
                 one.set(PFDataComponents.MILK_CAPACITY.get(), charge.capacity());
+                // setFluid (unlike fill) does NOT fire onContentsChanged, so mark the
+                // BE dirty here or a pipe-filled-but-idle block loses the milk on reload.
                 feedstock.setFluid(one);
+                setChanged();
                 syncToClient();
             }
             return FEEDSTOCK_CAPACITY;
