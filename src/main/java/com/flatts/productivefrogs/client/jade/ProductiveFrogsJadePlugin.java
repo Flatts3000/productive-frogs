@@ -2,8 +2,6 @@ package com.flatts.productivefrogs.client.jade;
 
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.ProductiveFrogs;
-import com.flatts.productivefrogs.data.SlimeVariant;
-import com.flatts.productivefrogs.registry.PFRegistries;
 import com.flatts.productivefrogs.content.block.PrimedFrogEggBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock;
 import com.flatts.productivefrogs.content.block.SlimeMilkerBlock;
@@ -598,19 +596,11 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         if (near >= SlimeMilkSourceBlock.effectiveSpawnCap()) {
             data.putInt("CrowdCount", near);
             data.putInt("CrowdCap", SlimeMilkSourceBlock.effectiveSpawnCap());
-            // Name the species being counted: the cap is per-species (one frog eats
-            // the whole category), so a Diamond source is capped by ALL Geode slimes,
-            // not just diamonds. Naming it stops the "why is diamond blocked when I
-            // barely have any?" confusion. Absent for a sentinel source (any-slime count).
-            SlimeVariant variant = PFRegistries.variant(sl.registryAccess(), variantId);
-            if (variant != null) {
-                data.putString("CrowdSpecies", capitalize(variant.category().getSerializedName()));
-            }
+            // Name the exact variant being counted - the cap is per-variant, so a
+            // Diamond source is bounded by nearby diamond slimes only. Naming it
+            // makes "N/cap" unambiguous (title-cased, the milk-readout convention).
+            data.putString("CrowdType", com.flatts.productivefrogs.util.VariantNames.titleCase(variantId));
         }
-    }
-
-    private static String capitalize(String s) {
-        return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
     /** Render the crowded-pause line if {@link #appendCrowded} recorded one. */
@@ -618,14 +608,9 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         if (!data.contains("CrowdCount")) {
             return;
         }
-        int count = data.getIntOr("CrowdCount", 0);
-        int cap = data.getIntOr("CrowdCap", 0);
-        if (data.contains("CrowdSpecies")) {
-            tooltip.add(Component.translatable("productivefrogs.jade.paused_crowded",
-                count, cap, data.getStringOr("CrowdSpecies", "")));
-        } else {
-            tooltip.add(Component.translatable("productivefrogs.jade.paused_crowded_generic", count, cap));
-        }
+        tooltip.add(Component.translatable("productivefrogs.jade.paused_crowded",
+            data.getIntOr("CrowdCount", 0), data.getIntOr("CrowdCap", 0),
+            data.getStringOr("CrowdType", "")));
     }
 
     /**

@@ -247,13 +247,14 @@ public final class PFConfig {
 
         MAX_NEARBY_SLIMES = builder
             .comment(
-                "Max Resource Slimes of the source's own species allowed within spawnCapRadius",
+                "Max Resource Slimes of the source's own variant allowed within spawnCapRadius",
                 "before the source pauses spawning. Default 30. The source resumes once frogs",
                 "(or anything) bring the count back below this. A paused source does NOT spend",
                 "its remaining-spawn budget, so a finite source isn't wasted waiting for room.",
-                "Counts only Productive Frogs slimes of the matching species, not vanilla slimes.",
-                "Note: the cap is per-species-per-area, so a single-species farm (the usual case)",
-                "is held at this many; a pen mixing several species can hold this many of each."
+                "Counts only Productive Frogs slimes of the exact same variant, not vanilla slimes",
+                "and not other variants (even of the same species).",
+                "Note: the cap is per-variant-per-area, so a Diamond source is bounded by nearby",
+                "diamond slimes only; packing different resources side by side no longer shares a cap."
             )
             .defineInRange("maxNearbySlimes", DEFAULT_MAX_NEARBY_SLIMES, 1, 4096);
 

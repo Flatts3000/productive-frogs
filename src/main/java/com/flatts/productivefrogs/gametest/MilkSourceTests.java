@@ -393,6 +393,18 @@ final class MilkSourceTests {
                 helper.fail("2 < cap 3 must not read as crowded");
                 return;
             }
+            // Per-variant, not per-category: a copper slime (also Cave category) must
+            // NOT count toward the iron source. This is the whole point of the change.
+            Identifier copper = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
+            var cu = PFEntities.RESOURCE_SLIME.get().create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
+            cu.setVariant(copper);
+            cu.setSize(1, true);
+            cu.snapTo(abs.getX() + 0.5, abs.getY(), abs.getZ() + 0.5, 0F, 0F);
+            level.addFreshEntity(cu);
+            if (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.nearbyCount(level, abs, iron) != 2) {
+                helper.fail("a copper slime must NOT count toward an iron source (per-variant), still expected 2");
+                return;
+            }
             // A third pushes it to the cap: count 3, now crowded - the readout fires here.
             var third = PFEntities.RESOURCE_SLIME.get()
                 .create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
