@@ -2923,6 +2923,59 @@ public final class PFGameTests {
         }
     }
 
+    /**
+     * The numerator the "paused: N/cap nearby" Jade readout is built on:
+     * {@code nearbyCount} counts same-species Resource Slimes in the cap radius and
+     * crosses {@code effectiveSpawnCap} exactly when {@code isAreaCrowded} flips.
+     * The tooltip line itself is client-only (runClient pass).
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void slimeMilkSourceNearbyCountMatchesCrowdCap(GameTestHelper helper) {
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+        ServerLevel level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(sourcePos);
+        net.minecraft.resources.ResourceLocation iron =
+            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+
+        Integer capOrig = com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.spawnCapOverride;
+        com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.spawnCapOverride = 3;
+        try {
+            if (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.effectiveSpawnCap() != 3) {
+                helper.fail("effectiveSpawnCap must reflect the override (3)");
+                return;
+            }
+            if (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.nearbyCount(level, abs, iron) != 0) {
+                helper.fail("expected 0 nearby slimes in an empty area");
+                return;
+            }
+            for (int i = 0; i < 2; i++) {
+                var slime = PFEntities.RESOURCE_SLIME.get().create(level);
+                slime.setVariant(iron);
+                slime.setSize(1, true);
+                slime.moveTo(abs.getX() + 0.5, abs.getY(), abs.getZ() + 0.5, 0F, 0F);
+                level.addFreshEntity(slime);
+            }
+            if (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.nearbyCount(level, abs, iron) != 2
+                    || com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.isAreaCrowded(level, abs, iron)) {
+                helper.fail("2 < cap 3 must read count 2 and not crowded");
+                return;
+            }
+            var third = PFEntities.RESOURCE_SLIME.get().create(level);
+            third.setVariant(iron);
+            third.setSize(1, true);
+            third.moveTo(abs.getX() + 0.5, abs.getY(), abs.getZ() + 0.5, 0F, 0F);
+            level.addFreshEntity(third);
+            if (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.nearbyCount(level, abs, iron) != 3
+                    || !com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.isAreaCrowded(level, abs, iron)) {
+                helper.fail("3 >= cap 3 must read count 3 and crowded");
+                return;
+            }
+            helper.succeed();
+        } finally {
+            com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.spawnCapOverride = capOrig;
+        }
+    }
+
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void slimeMilkSourceDecrementsSpawnsRemainingEachSpawn(GameTestHelper helper) {
         BlockPos sourcePos = new BlockPos(2, 2, 2);

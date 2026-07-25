@@ -316,14 +316,27 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * same rule - a second copy of this count would be free to drift.
      */
     public static boolean isAreaCrowded(ServerLevel level, BlockPos pos, ResourceLocation variantId) {
+        return nearbyCount(level, pos, variantId) >= effectiveSpawnCap();
+    }
+
+    /**
+     * Same-species Resource Slimes within {@link PFConfig#spawnCapRadius()} of the
+     * source - the numerator of the density cap. Exposed so the look-at readout can
+     * show "N / cap nearby" and explain a paused source (players otherwise can't
+     * tell a crowded pause from any other reason nothing is spawning).
+     */
+    public static int nearbyCount(ServerLevel level, BlockPos pos, ResourceLocation variantId) {
         Category category = categoryForVariant(level, variantId);
         net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(pos).inflate(PFConfig.spawnCapRadius());
-        java.util.List<ResourceSlime> nearby = level.getEntitiesOfClass(
+        return level.getEntitiesOfClass(
             ResourceSlime.class, box,
-            category == null ? slime -> true : slime -> slime.getCategory() == category);
+            category == null ? slime -> true : slime -> slime.getCategory() == category).size();
+    }
+
+    /** The active nearby-slime cap: the test override when set, else the configured {@code maxNearbySlimes}. */
+    public static int effectiveSpawnCap() {
         Integer capOverride = spawnCapOverride;
-        int cap = capOverride != null ? capOverride : PFConfig.maxNearbySlimes();
-        return nearby.size() >= cap;
+        return capOverride != null ? capOverride : PFConfig.maxNearbySlimes();
     }
 
     /** Resolve a variant from the registry, or null (registry absent / unknown id). */
