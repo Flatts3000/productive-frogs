@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **The Wither Altar is craftable again.** Two of its parts shared a crafting
+  recipe with another item, and only one of each pair was ever reachable at the
+  table: the Wither Altar Hatch lost out to the End Dragon Altar Hatch (both were
+  obsidian + a chest), and the Withered Star lost out to the Nether Star Catalyst
+  (both were obsidian around a Nether Star). Both Wither Altar pieces were simply
+  uncraftable in survival. The Wither Altar Hatch is now obsidian and soul sand
+  around a chest, and the Withered Star is a Nether Star wrapped in soul sand, so
+  each is distinct and buildable. The End Dragon Altar Hatch and the Nether Star
+  Catalyst are unchanged.
+
 ## v1.25.1 - 2026-07-25 - Elbow Room
 
 ### Changed

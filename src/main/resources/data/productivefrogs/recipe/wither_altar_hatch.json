@@ -6,12 +6,13 @@
   "category": "building",
   "group": "productivefrogs",
   "pattern": [
-    "OOO",
-    "OCO",
-    "OOO"
+    "OSO",
+    "SCS",
+    "OSO"
   ],
   "key": {
     "O": { "item": "minecraft:obsidian" },
+    "S": { "item": "minecraft:soul_sand" },
     "C": { "item": "minecraft:chest" }
   },
   "result": { "id": "productivefrogs:wither_altar_hatch", "count": 1 }

@@ -6,12 +6,12 @@
   "category": "building",
   "group": "productivefrogs",
   "pattern": [
-    "OOO",
-    "ONO",
-    "OOO"
+    "SSS",
+    "SNS",
+    "SSS"
   ],
   "key": {
-    "O": { "item": "minecraft:obsidian" },
+    "S": { "item": "minecraft:soul_sand" },
     "N": { "item": "minecraft:nether_star" }
   },
   "result": { "id": "productivefrogs:withered_star", "count": 1 }
