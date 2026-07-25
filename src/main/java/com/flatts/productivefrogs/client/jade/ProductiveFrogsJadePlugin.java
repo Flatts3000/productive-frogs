@@ -581,15 +581,20 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         if (near >= SlimeMilkSourceBlock.effectiveSpawnCap()) {
             data.putInt("CrowdCount", near);
             data.putInt("CrowdCap", SlimeMilkSourceBlock.effectiveSpawnCap());
+            // Name the exact variant being counted - the cap is per-variant, so a
+            // Diamond source is bounded by nearby diamond slimes only. Title-cased,
+            // the milk-readout convention.
+            data.putString("CrowdType", com.flatts.productivefrogs.util.VariantNames.titleCase(variantId));
         }
     }
 
     /** Render the crowded-pause line if {@link #appendCrowded} recorded one. */
     private static void appendCrowdedLine(ITooltip tooltip, CompoundTag data) {
-        if (data.contains("CrowdCount")) {
-            tooltip.add(Component.translatable("productivefrogs.jade.paused_crowded",
-                data.getInt("CrowdCount"), data.getInt("CrowdCap")));
+        if (!data.contains("CrowdCount")) {
+            return;
         }
+        tooltip.add(Component.translatable("productivefrogs.jade.paused_crowded",
+            data.getInt("CrowdCount"), data.getInt("CrowdCap"), data.getString("CrowdType")));
     }
 
     // ---- shared stat-readout helpers (used by all three stat providers) ----

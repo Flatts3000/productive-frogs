@@ -326,11 +326,10 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * tell a crowded pause from any other reason nothing is spawning).
      */
     public static int nearbyCount(ServerLevel level, BlockPos pos, ResourceLocation variantId) {
-        Category category = categoryForVariant(level, variantId);
         net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(pos).inflate(PFConfig.spawnCapRadius());
         return level.getEntitiesOfClass(
             ResourceSlime.class, box,
-            category == null ? slime -> true : slime -> slime.getCategory() == category).size();
+            slime -> variantId.equals(slime.getVariantId())).size();
     }
 
     /** The active nearby-slime cap: the test override when set, else the configured {@code maxNearbySlimes}. */
@@ -344,12 +343,6 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
     private static SlimeVariant variantFor(net.minecraft.world.level.Level level, ResourceLocation variantId) {
         var registry = level.registryAccess().registry(PFRegistries.SLIME_VARIANT).orElse(null);
         return registry == null ? null : registry.get(variantId);
-    }
-
-    @Nullable
-    private static Category categoryForVariant(ServerLevel level, ResourceLocation variantId) {
-        SlimeVariant variant = variantFor(level, variantId);
-        return variant == null ? null : variant.category();
     }
 
     /**

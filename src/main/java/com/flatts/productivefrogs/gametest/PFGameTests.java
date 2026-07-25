@@ -2960,6 +2960,19 @@ public final class PFGameTests {
                 helper.fail("2 < cap 3 must read count 2 and not crowded");
                 return;
             }
+            // Per-variant, not per-category: a copper slime (also Cave category) must
+            // NOT count toward the iron source. This is the whole point of the change.
+            net.minecraft.resources.ResourceLocation copper =
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "copper");
+            var cu = PFEntities.RESOURCE_SLIME.get().create(level);
+            cu.setVariant(copper);
+            cu.setSize(1, true);
+            cu.moveTo(abs.getX() + 0.5, abs.getY(), abs.getZ() + 0.5, 0F, 0F);
+            level.addFreshEntity(cu);
+            if (com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock.nearbyCount(level, abs, iron) != 2) {
+                helper.fail("a copper slime must NOT count toward an iron source (per-variant), still expected 2");
+                return;
+            }
             var third = PFEntities.RESOURCE_SLIME.get().create(level);
             third.setVariant(iron);
             third.setSize(1, true);
