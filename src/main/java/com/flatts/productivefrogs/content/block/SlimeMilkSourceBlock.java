@@ -117,6 +117,14 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
     public static volatile Integer spawnCapOverride = null;
 
     /**
+     * Test-only override for {@link PFConfig#spawnCapRadius()} so a GameTest can
+     * exercise the radius boundary inside a small structure. Volatile, like the
+     * other overrides.
+     */
+    @Nullable
+    public static volatile Integer spawnCapRadiusOverride = null;
+
+    /**
      * The variant this block produces, baked in at registration (per-variant
      * fluids, v1.8). Authoritative over the BE's mirror, so a source placed by a
      * tank/pipe mod that never wrote the BE (e.g. JDT's raw {@code setBlock})
@@ -316,14 +324,28 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * same rule - a second copy of this count would be free to drift.
      */
     public static boolean isAreaCrowded(ServerLevel level, BlockPos pos, ResourceLocation variantId) {
-        Category category = categoryForVariant(level, variantId);
-        net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(pos).inflate(PFConfig.spawnCapRadius());
-        java.util.List<ResourceSlime> nearby = level.getEntitiesOfClass(
+        return nearbyCount(level, pos, variantId) >= effectiveSpawnCap();
+    }
+
+    /**
+     * Same-species Resource Slimes within {@link PFConfig#spawnCapRadius()} of the
+     * source - the numerator of the density cap. Exposed so the look-at readout can
+     * show "N / cap nearby" and explain a paused source (players otherwise can't
+     * tell a crowded pause from any other reason nothing is spawning).
+     */
+    public static int nearbyCount(ServerLevel level, BlockPos pos, ResourceLocation variantId) {
+        Integer radiusOverride = spawnCapRadiusOverride;
+        double radius = radiusOverride != null ? radiusOverride : PFConfig.spawnCapRadius();
+        net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(pos).inflate(radius);
+        return level.getEntitiesOfClass(
             ResourceSlime.class, box,
-            category == null ? slime -> true : slime -> slime.getCategory() == category);
+            slime -> variantId.equals(slime.getVariantId())).size();
+    }
+
+    /** The active nearby-slime cap: the test override when set, else the configured {@code maxNearbySlimes}. */
+    public static int effectiveSpawnCap() {
         Integer capOverride = spawnCapOverride;
-        int cap = capOverride != null ? capOverride : PFConfig.maxNearbySlimes();
-        return nearby.size() >= cap;
+        return capOverride != null ? capOverride : PFConfig.maxNearbySlimes();
     }
 
     /** Resolve a variant from the registry, or null (registry absent / unknown id). */
@@ -331,12 +353,6 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
     private static SlimeVariant variantFor(net.minecraft.world.level.Level level, ResourceLocation variantId) {
         var registry = level.registryAccess().registry(PFRegistries.SLIME_VARIANT).orElse(null);
         return registry == null ? null : registry.get(variantId);
-    }
-
-    @Nullable
-    private static Category categoryForVariant(ServerLevel level, ResourceLocation variantId) {
-        SlimeVariant variant = variantFor(level, variantId);
-        return variant == null ? null : variant.category();
     }
 
     /**

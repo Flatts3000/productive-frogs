@@ -682,6 +682,7 @@
   "productivefrogs.jade.wither_altar.ready": "Wither Altar: ready",
   "productivefrogs.jade.wither_altar.incomplete": "Wither Altar: %s",
   "productivefrogs.jade.spawns_unlimited": "Slime spawns: unlimited",
+  "productivefrogs.jade.paused_crowded": "Paused: %1$s / %2$s %3$s slimes nearby (too crowded)",
   "productivefrogs.jade.catalyst_speed": "Speed catalyst: %1$s/%2$s",
   "productivefrogs.jade.catalyst_quantity": "Quantity catalyst: %1$s/%2$s",
   "productivefrogs.jade.progress": "Working: %1$s%%",

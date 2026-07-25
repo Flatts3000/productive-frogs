@@ -15,6 +15,7 @@ import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.animal.frog.Tadpole;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -429,6 +430,9 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                         return;
                     }
                     data.putString("BasinVariant", basin.getContainedVariant().toString());
+                    // Paused-because-crowded, same as the source (the Basin's
+                    // crowded check delegates to SlimeMilkSourceBlock.isAreaCrowded).
+                    appendCrowded(data, accessor, basin.getContainedVariant());
                     if (basin.getSpeedLevel() > 0) {
                         data.putInt("Speed", basin.getSpeedLevel());
                         data.putInt("SpeedMax", PFConfig.catalystMaxSpeedLevel());
@@ -457,6 +461,11 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 return;
             }
             data.putBoolean("MilkSource", true);
+            // Paused-because-crowded: the density cap silently stops spawns (the #1
+            // "why isn't my milk working" confusion). Computed live server-side so a
+            // stalled source explains itself; written before the Unlimited return so
+            // an Endless source (the stalling case) still shows it.
+            appendCrowded(data, accessor, be.getVariantId());
             // Boss-tier altar (#184): N/6 catalyst faces, so an incomplete shell
             // is debuggable. Written before the Unlimited early-return below so it
             // shows even on an infinite (Endless-catalyst) boss source.
@@ -533,6 +542,7 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
                 tooltip.add(Component.translatable("productivefrogs.jade.spawns_left",
                     data.getInt("SpawnsRemaining"), data.getInt("SpawnsCap")));
             }
+            appendCrowdedLine(tooltip, data);
             if (data.contains("Speed")) {
                 tooltip.add(Component.translatable("productivefrogs.jade.catalyst_speed",
                     data.getInt("Speed"), data.getInt("SpeedMax")));
@@ -547,6 +557,44 @@ public final class ProductiveFrogsJadePlugin implements IWailaPlugin {
         public ResourceLocation getUid() {
             return MILK_SOURCE_UID;
         }
+    }
+
+    /**
+     * Shared crowded-pause detection for the milk source and the Slime Milk Basin.
+     * When the spawn cap is on and this source's own species already fills the cap
+     * radius, record the count so the tooltip can say "paused: N/cap nearby" - a
+     * crowded source pauses without spending budget, so nothing else tells the
+     * player why it stopped.
+     *
+     * <p>TPS: the one bounded {@code getEntitiesOfClass} scan runs ONLY here, in
+     * appendServerData - Jade calls it server-side for the single block the player
+     * looks at, throttled to its refresh interval, never in the block tick. Same
+     * per-look path as the spawns-left readout, so it also updates live; no cache,
+     * no per-tick cost.
+     */
+    private static void appendCrowded(CompoundTag data, BlockAccessor accessor, ResourceLocation variantId) {
+        if (variantId == null || !PFConfig.spawnCapEnabled()
+                || !(accessor.getLevel() instanceof ServerLevel sl)) {
+            return;
+        }
+        int near = SlimeMilkSourceBlock.nearbyCount(sl, accessor.getPosition(), variantId);
+        if (near >= SlimeMilkSourceBlock.effectiveSpawnCap()) {
+            data.putInt("CrowdCount", near);
+            data.putInt("CrowdCap", SlimeMilkSourceBlock.effectiveSpawnCap());
+            // Name the exact variant being counted - the cap is per-variant, so a
+            // Diamond source is bounded by nearby diamond slimes only. Title-cased,
+            // the milk-readout convention.
+            data.putString("CrowdType", com.flatts.productivefrogs.util.VariantNames.titleCase(variantId));
+        }
+    }
+
+    /** Render the crowded-pause line if {@link #appendCrowded} recorded one. */
+    private static void appendCrowdedLine(ITooltip tooltip, CompoundTag data) {
+        if (!data.contains("CrowdCount")) {
+            return;
+        }
+        tooltip.add(Component.translatable("productivefrogs.jade.paused_crowded",
+            data.getInt("CrowdCount"), data.getInt("CrowdCap"), data.getString("CrowdType")));
     }
 
     // ---- shared stat-readout helpers (used by all three stat providers) ----
