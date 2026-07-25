@@ -66,10 +66,19 @@ class RecipeConflictTest {
         }
     }
 
+    /** One recipe's input signature, its result, its file name, and its mod-load gating. */
+    private record Entry(String file, String result, java.util.Set<String> requiresMods,
+                         java.util.Set<String> forbidsMods) {
+        /** Two recipes can be active at once unless one requires a mod the other forbids. */
+        boolean canCoexistWith(Entry o) {
+            return java.util.Collections.disjoint(requiresMods, o.forbidsMods)
+                && java.util.Collections.disjoint(o.requiresMods, forbidsMods);
+        }
+    }
+
     @Test
     void noTwoRecipesShareAnIndistinguishableInput() {
-        // signature -> list of "file -> result" entries that produce it.
-        Map<String, List<String>> bySignature = new LinkedHashMap<>();
+        Map<String, List<Entry>> bySignature = new LinkedHashMap<>();
         for (Path file : recipeFiles()) {
             JsonObject recipe = parse(file);
             if (!recipe.has("type")) {
@@ -79,19 +88,50 @@ class RecipeConflictTest {
             if (signature == null) {
                 continue; // not a grid/furnace recipe we can collide (custom PF types)
             }
+            java.util.Set<String> requires = new java.util.HashSet<>();
+            java.util.Set<String> forbids = new java.util.HashSet<>();
+            collectModConditions(recipe, requires, forbids);
             bySignature.computeIfAbsent(signature, k -> new ArrayList<>())
-                .add(file.getFileName() + " -> " + resultOf(recipe));
+                .add(new Entry(file.getFileName().toString(), resultOf(recipe), requires, forbids));
         }
 
+        // A collision is only real if two same-signature recipes can be active together;
+        // recipes gated on exclusive mods (ae2 vs "refinedstorage and not ae2") never are.
         List<String> conflicts = new ArrayList<>();
-        for (Map.Entry<String, List<String>> e : bySignature.entrySet()) {
-            if (e.getValue().size() > 1) {
-                conflicts.add(String.join("  ==  ", e.getValue()));
+        for (List<Entry> group : bySignature.values()) {
+            for (int i = 0; i < group.size(); i++) {
+                for (int j = i + 1; j < group.size(); j++) {
+                    Entry a = group.get(i);
+                    Entry b = group.get(j);
+                    if (a.canCoexistWith(b)) {
+                        conflicts.add(a.file() + " -> " + a.result() + "  ==  " + b.file() + " -> " + b.result());
+                    }
+                }
             }
         }
         assertTrue(conflicts.isEmpty(), () ->
             "Recipes with an indistinguishable input (only one is craftable; the rest are dead):\n  "
                 + String.join("\n  ", conflicts));
+    }
+
+    /** Pull {@code mod_loaded} (requires) and {@code not mod_loaded} (forbids) out of a recipe's conditions. */
+    private static void collectModConditions(JsonObject recipe, java.util.Set<String> requires,
+                                             java.util.Set<String> forbids) {
+        if (!recipe.has("neoforge:conditions")) {
+            return;
+        }
+        for (JsonElement condEl : recipe.getAsJsonArray("neoforge:conditions")) {
+            JsonObject cond = condEl.getAsJsonObject();
+            String type = cond.has("type") ? cond.get("type").getAsString() : "";
+            if ("neoforge:mod_loaded".equals(type)) {
+                requires.add(cond.get("modid").getAsString());
+            } else if ("neoforge:not".equals(type) && cond.has("value")) {
+                JsonObject inner = cond.getAsJsonObject("value");
+                if ("neoforge:mod_loaded".equals(inner.get("type").getAsString())) {
+                    forbids.add(inner.get("modid").getAsString());
+                }
+            }
+        }
     }
 
     /** A signature two recipes share iff the grid / furnace can't tell their inputs apart, or null if not applicable. */
