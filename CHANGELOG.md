@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## v1.25.1 - 2026-07-25 - Elbow Room
+
+### Changed
+
+- **A Slime Milk source now tells you when it has stopped because it is
+  crowded, and only its own resource counts toward that limit.** A source
+  pauses when too many of its slimes are already nearby (so it can't flood a
+  world faster than frogs eat), but until now it stopped silently - the most
+  common "why isn't my milk spawning?" question. Look at a source (or a Slime
+  Milk Basin) with Jade and a paused one now reads "Paused: 30 / 30 Diamond
+  slimes nearby." And the limit now counts only the source's own resource, not
+  its whole species: a Diamond source is held back by nearby diamond slimes
+  alone, so packing different resources of one species side by side no longer
+  makes them fight over a single shared limit. The limit and its config
+  (`maxNearbySlimes`, default 30) are unchanged; it just counts per-resource
+  now and says so.
+
 ## v1.25.0 - 2026-07-24 - Second Helpings
 
 Three features carried back from the 2.x line, which had moved on to Minecraft
