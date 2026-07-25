@@ -5,7 +5,6 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.block.entity.SlimeMilkSourceBlockEntity;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.item.MilkCatalyst;
-import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.SlimeVariant;
 import com.flatts.productivefrogs.registry.PFBlocks;
 import com.flatts.productivefrogs.registry.PFDataComponents;
@@ -113,6 +112,14 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      */
     @Nullable
     public static volatile Integer spawnCapOverride = null;
+
+    /**
+     * Test-only override for {@link PFConfig#spawnCapRadius()} so a GameTest can
+     * exercise the radius boundary inside a small structure. Volatile, like the
+     * other overrides.
+     */
+    @Nullable
+    public static volatile Integer spawnCapRadiusOverride = null;
 
     public SlimeMilkSourceBlock(FlowingFluid fluid, Properties properties) {
         super(fluid, properties);
@@ -223,35 +230,35 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
 
     /**
      * True when at least {@link PFConfig#maxNearbySlimes()} Resource Slimes of this
-     * source's own species are already within {@link PFConfig#spawnCapRadius()} of
-     * it. Counts only PF {@link ResourceSlime}s of the matching {@link Category}
-     * (vanilla slimes don't count); if the variant's category can't be resolved
-     * (e.g. a sentinel source), counts any ResourceSlime so the cap still bounds it.
-     * Public since Phase 3: the Slime Milk Basin shares this exact check.
+     * source's own <b>variant</b> are already within {@link PFConfig#spawnCapRadius()}
+     * of it. Public since Phase 3: the Slime Milk Basin shares this exact check.
      */
     public static boolean isAreaCrowded(ServerLevel level, BlockPos pos, Identifier variantId) {
-        Category category = categoryForVariant(level, variantId);
-        net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(pos).inflate(PFConfig.spawnCapRadius());
-        java.util.List<ResourceSlime> nearby = level.getEntitiesOfClass(
+        return nearbyCount(level, pos, variantId) >= effectiveSpawnCap();
+    }
+
+    /**
+     * Same-<b>variant</b> Resource Slimes within {@link PFConfig#spawnCapRadius()} of
+     * the source - the numerator of the density cap, and the count the look-at readout
+     * shows to explain a paused source. Counts by exact variant (a Diamond source is
+     * bounded by nearby diamond slimes only, not by other Geode variants), so packing
+     * different resources of one species side by side no longer makes them compete for
+     * a shared cap. Vanilla slimes and other variants don't count.
+     */
+    public static int nearbyCount(ServerLevel level, BlockPos pos, Identifier variantId) {
+        Integer radiusOverride = spawnCapRadiusOverride;
+        double radius = radiusOverride != null ? radiusOverride : PFConfig.spawnCapRadius();
+        net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(pos).inflate(radius);
+        return level.getEntitiesOfClass(
             ResourceSlime.class, box,
-            category == null ? slime -> true : slime -> slime.getCategory() == category);
+            slime -> variantId.equals(slime.getVariantId())).size();
+    }
+
+    /** The active nearby-slime cap: the test override when set, else the configured {@code maxNearbySlimes}. */
+    public static int effectiveSpawnCap() {
         Integer capOverride = spawnCapOverride;
-        int cap = capOverride != null ? capOverride : PFConfig.maxNearbySlimes();
-        return nearby.size() >= cap;
+        return capOverride != null ? capOverride : PFConfig.maxNearbySlimes();
     }
-
-    /** Resolve a variant from the registry, or null (registry absent / unknown id). */
-    @Nullable
-    private static SlimeVariant variantFor(net.minecraft.world.level.Level level, Identifier variantId) {
-        return PFRegistries.variant(level.registryAccess(), variantId);
-    }
-
-    @Nullable
-    private static Category categoryForVariant(ServerLevel level, Identifier variantId) {
-        SlimeVariant variant = variantFor(level, variantId);
-        return variant == null ? null : variant.category();
-    }
-
 
     private static boolean depletionEnabled() {
         Boolean override = depletionEnabledOverride;
