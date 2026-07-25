@@ -113,6 +113,14 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
     @Nullable
     public static volatile Integer spawnCapOverride = null;
 
+    /**
+     * Test-only override for {@link PFConfig#spawnCapRadius()} so a GameTest can
+     * exercise the radius boundary inside a small structure. Volatile, like the
+     * other overrides.
+     */
+    @Nullable
+    public static volatile Integer spawnCapRadiusOverride = null;
+
     public SlimeMilkSourceBlock(FlowingFluid fluid, Properties properties) {
         super(fluid, properties);
     }
@@ -238,7 +246,9 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * a shared cap. Vanilla slimes and other variants don't count.
      */
     public static int nearbyCount(ServerLevel level, BlockPos pos, Identifier variantId) {
-        net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(pos).inflate(PFConfig.spawnCapRadius());
+        Integer radiusOverride = spawnCapRadiusOverride;
+        double radius = radiusOverride != null ? radiusOverride : PFConfig.spawnCapRadius();
+        net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(pos).inflate(radius);
         return level.getEntitiesOfClass(
             ResourceSlime.class, box,
             slime -> variantId.equals(slime.getVariantId())).size();
