@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## v1.25.2 - 2026-07-25 - Soul Forge
+
 ### Fixed
 
 - **The Wither Altar is craftable again.** Two of its parts shared a crafting
