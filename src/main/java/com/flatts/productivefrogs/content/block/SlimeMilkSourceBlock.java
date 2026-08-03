@@ -12,6 +12,8 @@ import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFRegistries;
 import com.flatts.productivefrogs.util.PFDebug;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -87,18 +89,31 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
         ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "magma");
 
     /**
-     * Offsets to the 26 neighbours, ordered to prefer natural "rim" spawn spots:
-     * same-y plane (cardinals then diagonals), then below plane, then above.
+     * Candidate spawn CELLS around a source, grouped into preference tiers and
+     * matching the Slime Milk Basin's ordering ({@code SlimeMilkBasinBlockEntity}):
+     * the horizontal ring first (cardinals then diagonals), then the plane below,
+     * then the plane above. Horizontal-first keeps slimes beside the pool, where a
+     * frog standing in it can reach them, before stacking vertically.
+     *
+     * <p>These are the cells the slime is placed IN. Before v1.25.3 the source
+     * instead scanned for a neighbour with a sturdy top face and spawned in the
+     * cell <i>above</i> it, which in any walled pen selected the wall and put every
+     * slime on top of it - outside the enclosure, unreachable by the frogs inside
+     * (#362 / #363).
      */
-    private static final int[][] NEIGHBOUR_OFFSETS = {
-        {1, 0, 0}, {-1, 0, 0}, {0, 0, 1}, {0, 0, -1},
-        {1, 0, 1}, {1, 0, -1}, {-1, 0, 1}, {-1, 0, -1},
-        {1, -1, 0}, {-1, -1, 0}, {0, -1, 1}, {0, -1, -1},
-        {0, -1, 0},
-        {1, -1, 1}, {1, -1, -1}, {-1, -1, 1}, {-1, -1, -1},
-        {1, 1, 0}, {-1, 1, 0}, {0, 1, 1}, {0, 1, -1},
-        {0, 1, 0},
-        {1, 1, 1}, {1, 1, -1}, {-1, 1, 1}, {-1, 1, -1},
+    private static final int[][][] SPAWN_CELL_TIERS = {
+        {
+            {1, 0, 0}, {-1, 0, 0}, {0, 0, 1}, {0, 0, -1},
+            {1, 0, 1}, {1, 0, -1}, {-1, 0, 1}, {-1, 0, -1},
+        },
+        {
+            {0, -1, 0}, {1, -1, 0}, {-1, -1, 0}, {0, -1, 1}, {0, -1, -1},
+            {1, -1, 1}, {1, -1, -1}, {-1, -1, 1}, {-1, -1, -1},
+        },
+        {
+            {0, 1, 0}, {1, 1, 0}, {-1, 1, 0}, {0, 1, 1}, {0, 1, -1},
+            {1, 1, 1}, {1, 1, -1}, {-1, 1, 1}, {-1, 1, -1},
+        },
     };
 
     /**
@@ -421,25 +436,27 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
         level.scheduleTick(pos, level.getBlockState(pos).getBlock(), delay);
     }
 
-    /** Spawn one slime; returns false (no spawn) when {@code avoidSourceCell} and no free neighbour exists. */
+    /** Spawn one slime; returns false (no spawn) when no cell the slime actually fits in exists. */
     private boolean spawn(ServerLevel level, BlockPos pos, RandomSource random, ResourceLocation variantId,
                           boolean avoidSourceCell) {
-        BlockPos spawnPos = chooseSpawnPos(level, pos, avoidSourceCell);
-        if (spawnPos == null) {
-            // Altar-gated boss source with no free neighbour cell: refuse to spawn
-            // inside the (enclosed) milk source block. The caller pauses without
-            // spending the spawn budget.
-            PFDebug.logOnce(PFDebug.Area.MILK_SOURCE, "noroom#" + pos, () -> String.format(
-                "source @%s: no free cell for %s, skipped (would spawn inside the milk source block)", pos, variantId));
-            return false;
-        }
         Slime slime = createSlimeForVariant(level, variantId);
         if (slime == null) {
             PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
                 "source @%s: slime create failed for variant=%s (skip)", pos, variantId));
             return false;
         }
+        // Size first: the fit test below measures the slime's real bounding box.
         slime.setSize(1, true);
+        BlockPos spawnPos = chooseSpawnCell(level, pos, slime, avoidSourceCell, random);
+        if (spawnPos == null) {
+            // Nothing the slime fits in - a sealed altar source, or a pool whose
+            // surroundings are already packed. The caller pauses WITHOUT spending
+            // the spawn budget and retries on the next scheduled tick.
+            slime.discard();
+            PFDebug.logOnce(PFDebug.Area.MILK_SOURCE, "noroom#" + pos, () -> String.format(
+                "source @%s: no free cell for %s, skipped", pos, variantId));
+            return false;
+        }
         slime.moveTo(spawnPos.getX() + 0.5,
                      spawnPos.getY(),
                      spawnPos.getZ() + 0.5,
@@ -448,7 +465,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
         level.addFreshEntity(slime);
         PFDebug.log(PFDebug.Area.MILK_SOURCE, () -> String.format(
             "source @%s: spawned %s slime at %s (%s)", pos, variantId, spawnPos,
-            spawnPos.equals(pos) ? "inside-fluid fallback" : "on neighbour"));
+            spawnPos.equals(pos) ? "inside-fluid fallback" : "beside source"));
         return true;
     }
 
@@ -639,10 +656,29 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
     }
 
     /**
-     * Pick spawn slot: first 3x3x3 neighbour whose top face is sturdy and whose
-     * block-above is non-motion-blocking. Otherwise fall back to the source's own
+     * Pick the cell to place {@code slime} in: walk {@link #SPAWN_CELL_TIERS} in
+     * preference order and, within the first tier that has any cell the slime
+     * actually fits in, choose one <b>at random</b>. Falls back to the source's own
      * (no-collision milk) cell - <b>except</b> when {@code avoidSourceCell} is set,
      * in which case return {@code null} to skip the spawn entirely.
+     *
+     * <p>Two properties this has to keep, both regression-tested:
+     * <ul>
+     *   <li><b>Beside, not on top of the wall.</b> These offsets address the spawn
+     *       cell directly. The pre-v1.25.3 version looked for a neighbour with a
+     *       sturdy top face and spawned in the cell above it, so in a walled pen it
+     *       picked the wall and dropped every slime outside the enclosure, out of
+     *       reach of the frogs the pen was built for (#362 / #363).</li>
+     *   <li><b>Scattered, not stacked.</b> The old scan returned the FIRST match in
+     *       a fixed order, so a given source poured every slime it ever made into
+     *       one cell. Random choice within the tier spreads them around the rim.</li>
+     * </ul>
+     *
+     * <p>Fit is {@link ServerLevel#noCollision(Entity)} against the sized slime - the
+     * same test the Slime Milk Basin uses - so a water cell counts as free but a
+     * cell the slime's body would clip into does not. Note this rejects blocks, not
+     * other slimes: mobs don't hard-collide, so it is the random choice above, not
+     * this check, that stops a source piling its whole output into one cell.
      *
      * <p>{@code avoidSourceCell} is true for an altar-gated boss source: its milk
      * source block is sealed inside the 6-face catalyst altar, so the source-cell
@@ -651,22 +687,46 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * milk the slime can sit in). See docs/boss_catalyst_altar.md.
      */
     @Nullable
-    private static BlockPos chooseSpawnPos(ServerLevel level, BlockPos source, boolean avoidSourceCell) {
-        for (int[] off : NEIGHBOUR_OFFSETS) {
-            BlockPos neighbour = source.offset(off[0], off[1], off[2]);
-            BlockPos above = neighbour.above();
-            // For an altar-gated boss source, never land in the source's own cell.
-            // This guards not just the fallback below but the block directly beneath
-            // the source, whose .above() IS the source cell - otherwise the slime
-            // would still spawn inside the sealed milk source block via that neighbour.
-            if (avoidSourceCell && above.equals(source)) {
-                continue;
+    private static BlockPos chooseSpawnCell(ServerLevel level, BlockPos source, Slime slime,
+                                            boolean avoidSourceCell, RandomSource random) {
+        List<BlockPos> fitting = new ArrayList<>();
+        for (int[][] tier : SPAWN_CELL_TIERS) {
+            fitting.clear();
+            for (int[] off : tier) {
+                BlockPos cell = source.offset(off[0], off[1], off[2]);
+                if (avoidSourceCell && cell.equals(source)) {
+                    continue;
+                }
+                if (fits(level, slime, cell)) {
+                    fitting.add(cell);
+                }
             }
-            if (level.getBlockState(neighbour).isFaceSturdy(level, neighbour, Direction.UP)
-                && !level.getBlockState(above).blocksMotion()) {
-                return above;
+            if (!fitting.isEmpty()) {
+                return fitting.get(random.nextInt(fitting.size()));
             }
         }
+        // Last resort: the source's own (no-collision milk) cell, unconditionally -
+        // the long-standing fallback. Skipped for a sealed altar source, whose own
+        // cell is the one place a slime must never land.
         return avoidSourceCell ? null : source;
+    }
+
+    /**
+     * True when {@code slime} can be placed at {@code cell}: the cell doesn't block
+     * motion, the slime's body doesn't clip anything there, and there is something
+     * to rest on - a motion-blocking block below, or fluid in the cell itself
+     * (slimes sit in milk and water fine). The support test matters because a milk
+     * pool commonly overhangs open air, and a slime dropped into it would fall out
+     * of the build entirely.
+     */
+    private static boolean fits(ServerLevel level, Slime slime, BlockPos cell) {
+        if (level.getBlockState(cell).blocksMotion()) {
+            return false;
+        }
+        if (!level.getBlockState(cell.below()).blocksMotion() && level.getFluidState(cell).isEmpty()) {
+            return false;
+        }
+        slime.moveTo(cell.getX() + 0.5, cell.getY(), cell.getZ() + 0.5, slime.getYRot(), slime.getXRot());
+        return level.noCollision(slime);
     }
 }

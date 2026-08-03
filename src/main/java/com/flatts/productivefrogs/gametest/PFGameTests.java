@@ -8131,4 +8131,175 @@ public final class PFGameTests {
         }
         helper.succeed();
     }
+
+    // ---------------------------------------------------------------------
+    // Milk pen crowding (#362 / #363)
+    // ---------------------------------------------------------------------
+
+    /**
+     * A milk source in a walled pen spawns its slimes INSIDE the pen, not on top of
+     * the wall (#362 / #363).
+     *
+     * <p>The pre-v1.25.3 placement looked for a neighbour with a sturdy top face and
+     * spawned in the cell above it. In a walled pen the wall is the first such
+     * neighbour, so every slime landed on top of it - outside the enclosure and out
+     * of reach of the frogs the pen was built for. Pins that the chosen cell is
+     * never above the source's own level when the ring beside it is open.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void milkSourceSpawnsInsideAWalledPenNotOnTopOfTheWall(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        // A pen floor with the source pushed up against one wall - the ordinary
+        // "pool in the corner" build, and the layout the old picker got wrong.
+        for (int x = 1; x <= 3; x++) {
+            for (int z = 1; z <= 3; z++) {
+                helper.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
+            }
+        }
+        helper.setBlock(new BlockPos(3, 2, 2), Blocks.STONE);
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+        helper.setBlock(sourcePos, PFVariantMilk.block(variantId("iron")));
+        BlockPos absSource = helper.absolutePos(sourcePos);
+
+        for (int i = 0; i < 6; i++) {
+            BlockState state = level.getBlockState(absSource);
+            state.tick(level, absSource, level.getRandom());
+        }
+
+        java.util.List<ResourceSlime> slimes = level.getEntitiesOfClass(ResourceSlime.class,
+            new net.minecraft.world.phys.AABB(absSource).inflate(10));
+        if (slimes.isEmpty()) {
+            helper.fail("the source should have spawned at least one slime");
+            return;
+        }
+        for (ResourceSlime slime : slimes) {
+            int dy = slime.blockPosition().getY() - absSource.getY();
+            if (dy > 0) {
+                helper.fail("slime spawned " + dy + " block(s) above the source - that is on top of"
+                    + " the pen wall, outside the enclosure (#362)");
+                return;
+            }
+        }
+        helper.succeed();
+    }
+
+    /**
+     * A milk source scatters its slimes around the rim instead of pouring every one
+     * into a single cell (#362 / #363).
+     *
+     * <p>The old placement returned the FIRST matching neighbour in a fixed order,
+     * so a given source was perfectly deterministic: 30 slimes, one cell. Slimes are
+     * not hard-colliding, so nothing separated them on spawn.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void milkSourceScattersSlimesAcrossCells(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        for (int x = 1; x <= 3; x++) {
+            for (int z = 1; z <= 3; z++) {
+                helper.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
+            }
+        }
+        BlockPos sourcePos = new BlockPos(2, 2, 2);
+        helper.setBlock(sourcePos, PFVariantMilk.block(variantId("iron")));
+        BlockPos absSource = helper.absolutePos(sourcePos);
+
+        for (int i = 0; i < 12; i++) {
+            BlockState state = level.getBlockState(absSource);
+            state.tick(level, absSource, level.getRandom());
+        }
+
+        java.util.Set<BlockPos> cells = new java.util.HashSet<>();
+        for (ResourceSlime slime : level.getEntitiesOfClass(ResourceSlime.class,
+                new net.minecraft.world.phys.AABB(absSource).inflate(10))) {
+            cells.add(slime.blockPosition());
+        }
+        if (cells.size() < 2) {
+            helper.fail("an open pool must spread its slimes over more than one cell,"
+                + " got them all in " + cells);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Slime Milk is safe to stand in - the reported "milk counts as a solid and
+     * suffocates anything inside it" (#363) cannot happen and must stay impossible.
+     *
+     * <p>Suffocation needs {@code blocksMotion() && isCollisionShapeFullBlock()}
+     * (vanilla's default {@code isSuffocating} predicate), and milk is declared
+     * {@code noCollission()}; drowning needs {@code canDrown(true)} on the fluid
+     * type, and milk declares false. This pins both by parking a frog inside a milk
+     * cell and asserting it takes no damage at all.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void frogStandingInMilkTakesNoSuffocationOrDrowningDamage(GameTestHelper helper) {
+        BlockPos milkPos = new BlockPos(2, 2, 2);
+        helper.setBlock(milkPos, PFVariantMilk.block(variantId("iron")));
+        // Milk overhead too, so the frog's eye position is inside the fluid.
+        helper.setBlock(new BlockPos(2, 3, 2), PFVariantMilk.block(variantId("iron")));
+
+        com.flatts.productivefrogs.content.entity.ResourceFrog frog =
+            helper.spawn(PFEntities.RESOURCE_FROG.get(), milkPos);
+        frog.setCategory(Category.CAVE);
+        float startHealth = frog.getHealth();
+
+        helper.runAfterDelay(120L, () -> {
+            if (!frog.isAlive()) {
+                helper.fail("a frog standing in Slime Milk must not die (#363)");
+                return;
+            }
+            if (frog.getHealth() < startHealth) {
+                helper.fail("a frog standing in Slime Milk must take no damage (#363); health "
+                    + startHealth + " -> " + frog.getHealth());
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /**
+     * Pins the source-versus-flowing rule behind #364: an empty bucket scoops a milk
+     * SOURCE and returns a filled bucket, but returns nothing for the flowing milk
+     * that spread off it. That is vanilla {@code LiquidBlock#pickupBlock}, which
+     * gates on {@code LEVEL == 0}, and it is why a dispenser aimed at the middle of a
+     * pool ejects its bucket instead of scooping - the pool looks uniform but only
+     * the one source cell is scoopable.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 200)
+    public static void onlyTheMilkSourceCellIsScoopableNotTheFlowingMilk(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos sourcePos = new BlockPos(1, 2, 2);
+        helper.setBlock(sourcePos, PFVariantMilk.block(variantId("iron")));
+        BlockPos flowPos = new BlockPos(2, 2, 2);
+
+        helper.runAfterDelay(40L, () -> {
+            BlockPos absFlow = helper.absolutePos(flowPos);
+            BlockState flowState = level.getBlockState(absFlow);
+            if (!(flowState.getBlock()
+                    instanceof com.flatts.productivefrogs.content.block.SlimeMilkSourceBlock)) {
+                helper.fail("expected milk to have spread to " + flowPos + ", found " + flowState.getBlock());
+                return;
+            }
+            if (level.getFluidState(absFlow).isSource()) {
+                helper.fail("the probe cell must be FLOWING milk, not a second source");
+                return;
+            }
+            ItemStack flowPickup = ((net.minecraft.world.level.block.BucketPickup) flowState.getBlock())
+                .pickupBlock(null, level, absFlow, flowState);
+            if (!flowPickup.isEmpty()) {
+                helper.fail("flowing milk must not be scoopable, got " + flowPickup);
+                return;
+            }
+
+            BlockPos absSource = helper.absolutePos(sourcePos);
+            BlockState srcState = level.getBlockState(absSource);
+            ItemStack srcPickup = ((net.minecraft.world.level.block.BucketPickup) srcState.getBlock())
+                .pickupBlock(null, level, absSource, srcState);
+            if (srcPickup.isEmpty()) {
+                helper.fail("the milk SOURCE cell must be scoopable, got an empty stack");
+                return;
+            }
+            helper.succeed();
+        });
+    }
 }
