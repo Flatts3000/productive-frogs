@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Slimes now appear in the pen with your frogs instead of on top of its wall.**
+  A Slime Milk source looked for something solid next to it and put the slime on
+  top of that block. In any pen where a wall, a corner, or a raised rim sits right
+  beside the milk, the solid thing it found was the wall - so every slime landed
+  outside the enclosure, out of reach of the frogs standing in the pool, and free
+  to hop away or fall off the edge. Slimes now appear in an open cell beside the
+  milk, at the pool's own level, and only go above it when there is nowhere else
+  they fit. (#363)
+- **A source no longer piles its whole output into one square.** The spot a source
+  picked was completely fixed, so every slime it ever produced stacked in the same
+  cell. Slimes now spread around the rim of the pool. They also will not be placed
+  hanging over open air any more, so a pool built out over a drop stops feeding
+  slimes to the void. (#363)
+
 ## v1.25.2 - 2026-07-25 - Soul Forge
 
 ### Fixed
