@@ -8140,7 +8140,7 @@ public final class PFGameTests {
      * A milk source in a walled pen spawns its slimes INSIDE the pen, not on top of
      * the wall (#362 / #363).
      *
-     * <p>The pre-v1.25.3 placement looked for a neighbour with a sturdy top face and
+     * <p>The previous placement looked for a neighbour with a sturdy top face and
      * spawned in the cell above it. In a walled pen the wall is the first such
      * neighbour, so every slime landed on top of it - outside the enclosure and out
      * of reach of the frogs the pen was built for. Pins that the chosen cell is
@@ -8166,8 +8166,9 @@ public final class PFGameTests {
             state.tick(level, absSource, level.getRandom());
         }
 
-        java.util.List<ResourceSlime> slimes = level.getEntitiesOfClass(ResourceSlime.class,
-            new net.minecraft.world.phys.AABB(absSource).inflate(10));
+        // Plot-scoped: a level-wide query would also see slimes from the milk tests
+        // running in neighbouring plots.
+        List<ResourceSlime> slimes = helper.getEntities(PFEntities.RESOURCE_SLIME.get());
         if (slimes.isEmpty()) {
             helper.fail("the source should have spawned at least one slime");
             return;
@@ -8209,8 +8210,8 @@ public final class PFGameTests {
         }
 
         java.util.Set<BlockPos> cells = new java.util.HashSet<>();
-        for (ResourceSlime slime : level.getEntitiesOfClass(ResourceSlime.class,
-                new net.minecraft.world.phys.AABB(absSource).inflate(10))) {
+        // Plot-scoped, for the same reason as the walled-pen test above.
+        for (ResourceSlime slime : helper.getEntities(PFEntities.RESOURCE_SLIME.get())) {
             cells.add(slime.blockPosition());
         }
         if (cells.size() < 2) {

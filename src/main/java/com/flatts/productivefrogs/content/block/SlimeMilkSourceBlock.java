@@ -95,7 +95,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * then the plane above. Horizontal-first keeps slimes beside the pool, where a
      * frog standing in it can reach them, before stacking vertically.
      *
-     * <p>These are the cells the slime is placed IN. Before v1.25.3 the source
+     * <p>These are the cells the slime is placed IN. Until #362 / #363 the source
      * instead scanned for a neighbour with a sturdy top face and spawned in the
      * cell <i>above</i> it, which in any walled pen selected the wall and put every
      * slime on top of it - outside the enclosure, unreachable by the frogs inside
@@ -665,7 +665,7 @@ public class SlimeMilkSourceBlock extends LiquidBlock implements EntityBlock, Li
      * <p>Two properties this has to keep, both regression-tested:
      * <ul>
      *   <li><b>Beside, not on top of the wall.</b> These offsets address the spawn
-     *       cell directly. The pre-v1.25.3 version looked for a neighbour with a
+     *       cell directly. The previous version looked for a neighbour with a
      *       sturdy top face and spawned in the cell above it, so in a walled pen it
      *       picked the wall and dropped every slime outside the enclosure, out of
      *       reach of the frogs the pen was built for (#362 / #363).</li>
