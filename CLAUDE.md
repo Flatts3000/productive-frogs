@@ -186,3 +186,39 @@ A cross-cutting, opt-in debug logger (`PFDebug`) spans all layers (lifecycle, re
 ## Scope Discipline (V1 vs V2)
 
 **"V2 is just a name, not a rule"** (maintainer ruling 2026-06-08): the V1/V2 split is a loose label for *eras of work*, not a gate that blocks a feature from a release. The mod stays on the **1.x version line for the foreseeable future** - automation, multiblocks, and the Terrarium ship as 1.x minors, NOT a 2.0.0. Originally V1 meant "playable foundation + appliance blocks" (hand-operated single-block stations) and automation (power, multiblocks, terrariums) was deferred to a V2 that wouldn't land in a V1.x branch; that gate is now relaxed. The **Terrarium** (the flagship multiblock, issue #185 / `docs/terrarium.md`) shipped in v1.16.0. Use `docs/versioning.md` and `ROADMAP.md` for context, but do not refuse or defer work for being "V2 scope."
+
+## Driving a running game from outside (gamebridge / devbridge)
+
+`gamebridge` is a CLI in `../mc-pack-toolkit/gamebridge` that talks to a **running** instance, so
+something placed in the world can be **verified** rather than eyeballed in a screenshot.
+
+```bash
+pip install -e F:/minecraft-repos/mc-pack-toolkit/gamebridge
+
+# RCON, against ./gradlew runServer. Needs no mod: set enable-rcon + rcon.password in
+# run/server.properties. Chunks unload with nobody standing in them, so forceload first or every
+# probe answers "That position is not loaded" and otherwise looks like it worked.
+gamebridge wait
+gamebridge cmd "forceload add -16 -16 48 48"
+gamebridge check "block 6 125 0 minecraft:stone"      # exits non-zero when it fails
+
+# devbridge, for the two things RCON structurally cannot do: a SINGLEPLAYER world (whose integrated
+# server listens on nothing) and a SCREENSHOT (which a dedicated server has no framebuffer for).
+gamebridge --devbridge 25580 cmd "time set noon"
+gamebridge --devbridge 25580 shot my_scene
+```
+
+**devbridge is a separate dev-only mod at `F:\devbridge`.** Drop its jar in `run/mods/` and add to the
+client run:
+
+```groovy
+systemProperty 'devbridge.port', '25580'
+// Optional, boots straight into a world. NOTE: `--args` on the Gradle task does NOT do this -
+// moddev takes it as a main class and the launch dies before Minecraft starts.
+programArguments.addAll '--quickPlaySingleplayer', 'My World'
+```
+
+**This mod is on NeoForge 21.1.230, and the devbridge jar is built against 26.1.2.76.** Different, so the jar will NOT load here - rebuild devbridge against 21.1.230 first (change `neoforge_version` in its `gradle.properties`). `gamebridge` is plain Python and does not care about either.
+
+**Never ship it.** It binds loopback only and is inert without the system property, but it executes
+arbitrary commands and is not a dependency of anything released.
