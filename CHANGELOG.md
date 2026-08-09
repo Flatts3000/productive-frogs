@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## v1.25.4 - 2026-08-09 - Second Opinion
+
 ### Fixed
 
 - **Iron Furnaces takes Froglights again.** Some players found that no
