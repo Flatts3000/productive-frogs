@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## v1.25.3 - 2026-08-09 - Sorting It Out
+
 ### Fixed
 
 - **Iron Furnaces no longer turns one Froglight variant into another.** With
