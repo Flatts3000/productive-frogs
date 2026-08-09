@@ -121,6 +121,58 @@ Three guards, because patching someone else's code deserves them:
 Furnaces, for an operator who wants the original or is testing an upstream
 fix.
 
+## How it is tested
+
+Four layers, because a mixin can be wrong in four unrelated ways.
+
+**The behaviour we want** (`FactoryAutoSplitTest`, 9 tests). The reported
+scenario and its mirror, single-variant balancing, plain items, per-tier slot
+ranges, and refusal of out-of-range arguments.
+
+**The behaviour we must not change** (`FactoryAutoSplitDifferentialTest`, 8
+tests). `UpstreamAutoSplitReference` is Iron Furnaces 4.3.2's `split`,
+`fillEmptySlots` and `getSplitCounts` transcribed verbatim into the test
+source. One test asserts that the reference *still reproduces the bug*, which
+is what keeps the transcription honest. The rest run both algorithms over the
+same 400 randomised furnace states per tier range and assert they agree
+exactly for componentless items and for single-variant furnaces. That is the
+evidence behind the claim that a furnace full of iron ore behaves as it always
+did; without it, that claim is just a comment.
+
+The same fixture asserts the invariants that hold where there is no upstream
+behaviour worth matching: per-variant totals conserved, no slot over its stack
+limit, non-Froglight components respected, and convergence to a fixed point
+rather than oscillation.
+
+**The plumbing** (`MixinWiringTest`, 6 tests). Renaming the mixin class,
+moving it out of the declared package, renaming the plugin, or dropping the
+`[[mixins]]` line from `neoforge.mods.toml` each leaves a green build and an
+unpatched furnace. These catch all four. (Note the mixin class is checked as a
+compiled resource, not with `Class.forName`: Mixin marks mixin classes invalid
+for ordinary classloading.)
+
+**That the patch reaches the real class**
+(`PFGameTests.ironFurnacesAutoSplitPreservesFroglightVariants`). Everything
+above passes just as happily when the mixin never applies. This one places a
+real `ironfurnaces:iron_furnace`, loads two Froglight variants into its factory
+input slots, invokes Iron Furnaces' own `split` reflectively on the
+mixin-transformed block entity, and asserts the rare variant did not multiply.
+It is environment-driven like the cross-mod variant test: with Iron Furnaces
+absent it passes without asserting, and it logs that it did.
+
+Verified 2026-08-09 against the pinned `4.3.2` jar in `run/mods`:
+
+- `./gradlew test` - 23 tests, green.
+- `./gradlew runGameTestServer` - 197/197, with
+  `Applied the data-component fix ...` in the log and no skip line.
+- **Negative control.** With `compat.ironFurnacesAutoSplitFix = false` and
+  nothing else changed, the GameTest fails: *"auto-split multiplied the rare
+  Froglight variant: expected 1, got 11"*. The in-world defect is real, the
+  test detects it, and the patch is what stops it.
+
+Re-run that negative control after any change to the mixin. A patch test that
+cannot fail is not a test.
+
 ## Maintenance
 
 **On any Iron Furnaces version bump, re-verify.** The injector failing open
