@@ -49,7 +49,7 @@ From the `mc-1.21.1` branch, mirroring the standard release runbook (most recent
 1. Bump `mod_version` in `gradle.properties` (patch bump: `1.25.0` -> `1.25.1`).
 2. Add a `## v<mod_version>` section to `CHANGELOG.md` (the CurseForge changelog body is extracted by matching that heading).
 3. Land the release commit via PR (`chore(release): v1.25.x - <name>`), then tag: `git tag v1.25.x && git push origin v1.25.x`.
-4. Publish: `./gradlew publishCurseForge` from this branch. Its `build.gradle` already targets game version `1.21.1` and names the jar `productivefrogs-1.21.1-<version>.jar`; no flags needed. Reads `CURSEFORGE_API_KEY` from `.env`.
+4. Publish: `./gradlew publishCurseForge` from this branch. Its `build.gradle` already targets game version `1.21.1` and names the jar `productivefrogs-<version>.jar`; no flags needed. Reads `CURSEFORGE_API_KEY` from `.env`.
 
 ## Forward flow (old -> new only)
 
