@@ -65,6 +65,10 @@ CURSEFORGE_TARGETS = {
     405593: "AllTheOres (dust + smelt-back fallback; real modid `alltheores`)",
     248020: "Flux Networks (flux_dust variant, #145)",
     1002348: "Just Dire Things (ferricore/blazegold/celestigem/eclipsealloy variants, #188)",
+    # Not a variant provider. This one is the target of the only mixin the mod
+    # ships: without it, ironFurnacesAutoSplitPreservesFroglightVariants passes
+    # without asserting anything. See docs/ironfurnaces_autosplit_fix.md.
+    237664: "Iron Furnaces (target of the auto-split data-component patch)",
 }
 CF_API = "https://www.curseforge.com/api/v1"
 # The CF website API rejects non-browser User-Agents at the load balancer.

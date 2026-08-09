@@ -73,6 +73,11 @@ public final class PFConfig {
     public static final ModConfigSpec.IntValue STATS_REACH_RADIUS_MAX;
     public static final ModConfigSpec.BooleanValue FROGS_PERSISTENT;
 
+    // Cross-mod defensive patch (compat.*). Froglights are one item id plus a
+    // slime_variant component, which trips inventory code that compares items by
+    // id alone; this is the switch for the Iron Furnaces case.
+    public static final ModConfigSpec.BooleanValue IRON_FURNACES_AUTOSPLIT_FIX;
+
     // Master switch for the whole frog stat-breeding layer (#202). When off,
     // Sweetslime is uncraftable + no longer a breeding food, every frog behaves at
     // the baseline (stat 1) regardless of its stored stats (which are frozen, not
@@ -825,6 +830,24 @@ public final class PFConfig {
             .defineInRange("xpReward", DEFAULT_WITHER_ALTAR_XP_REWARD, 0, 100000);
 
         builder.pop();
+
+        builder.pop();
+
+        builder.push("compat");
+
+        IRON_FURNACES_AUTOSPLIT_FIX = builder
+            .comment(
+                "Fix Iron Furnaces' factory auto-split so it stops mixing up Froglight variants.",
+                "Iron Furnaces balances a factory furnace's input slots by pooling every slot holding",
+                "\"the same item\", and it decides that on the item id alone. Every Froglight variant shares",
+                "one id and carries its variant in a data component, so a furnace holding 64 of one variant",
+                "and 1 of another averages them into 32 and 33: a free transmuter. Any single-id-plus-component",
+                "item from any mod is corrupted the same way; Froglights are just the common case.",
+                "Reported upstream as Qelifern/IronFurnaces#229, a 1.21 data-component regression of their #147.",
+                "Has no effect unless Iron Furnaces is installed. Turn this off to hand the behaviour back to",
+                "Iron Furnaces, e.g. once they ship their own fix."
+            )
+            .define("ironFurnacesAutoSplitFix", true);
 
         builder.pop();
 

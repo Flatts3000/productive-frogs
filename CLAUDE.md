@@ -47,7 +47,7 @@ Three lookups matter:
 - `findByPrimerItem(registry, itemId)` - exact `primer_item`-only match (legacy callers / tests).
 - `pickWeighted(registry, category, random)` - weighted random pick within a category, used by `SlimeSplitDiscoveryHandler` on a split that converts without a specific primer.
 
-Adding a resource = **one JSON, no Java**. Cross-mod variants gate behind `neoforge:conditions → mod_loaded` and key off the NeoForge `c:` common tags via `primer_tag` (e.g. `primer_tag: c:ingots/tin`), so one entry covers every mod that provides that tag. There is intentionally **no `compat/` Java package** and no hard `compileOnly` mod deps - compat is JSON. Scripts under `scripts/` template the cross-mod and v1.1 variant JSONs. See `docs/cross_mod_compat.md`.
+Adding a resource = **one JSON, no Java**. Cross-mod variants gate behind `neoforge:conditions → mod_loaded` and key off the NeoForge `c:` common tags via `primer_tag` (e.g. `primer_tag: c:ingots/tin`), so one entry covers every mod that provides that tag. Cross-mod *content* is intentionally JSON: no Java, and no hard `compileOnly` mod deps. The one Java thing under `compat/` is defensive rather than content - a mixin that stops Iron Furnaces corrupting our component items (`docs/ironfurnaces_autosplit_fix.md`). Patching another mod needs that bar: their bug, our item, unreachable from JSON. Scripts under `scripts/` template the cross-mod and v1.1 variant JSONs. See `docs/cross_mod_compat.md`.
 
 ### Two parallel category surfaces: Frog Egg item vs Primed Frog Egg blocks
 
@@ -181,7 +181,7 @@ A cross-cutting, opt-in debug logger (`PFDebug`) spans all layers (lifecycle, re
 - **Recipes never hardcode a wood species** - where a recipe wants planks, use the `#minecraft:planks` tag, not `oak_planks` (maintainer ruling 2026-06-07; the Milker/Spawnery/Churn all follow it). Same instinct for other material families when a vanilla tag exists.
 - **Docs filenames are snake_case** (`categories_and_tiers.md`). Design changes update the relevant `docs/*.md` in the same PR.
 - **Line endings:** `.gitattributes` forces LF for `.java`/`.gradle`/`.json`/`.md`/`.yml`, CRLF for `.bat`/`.cmd`. Don't fight it.
-- **No hard mod dependencies.** Cross-mod *content* (resource variants) uses `c:` common tags + `neoforge:conditions → mod_loaded` - no `compat/` Java package, use a JSON condition instead. API-level soft-deps that genuinely need Java (JEI, Jade, Curios) live under `client/` or `integration/` as `compileOnly` and load only when the mod is present (see "Soft-dep integrations" above).
+- **No hard mod dependencies.** Cross-mod *content* (resource variants) uses `c:` common tags + `neoforge:conditions → mod_loaded` - never a Java `compat/` class, use a JSON condition instead. The single exception is a defensive mixin under `compat/`, gated on the target mod being loaded and on a config key, for the case where another mod's bug corrupts our component items (`docs/ironfurnaces_autosplit_fix.md`). Content still never qualifies. API-level soft-deps that genuinely need Java (JEI, Jade, Curios) live under `client/` or `integration/` as `compileOnly` and load only when the mod is present (see "Soft-dep integrations" above).
 
 ## Scope Discipline (V1 vs V2)
 

@@ -8303,4 +8303,112 @@ public final class PFGameTests {
             helper.succeed();
         });
     }
+
+    /**
+     * End-to-end proof that the Iron Furnaces auto-split patch actually takes
+     * effect, run against the real, mixin-transformed
+     * {@code BlockIronFurnaceTileBase} rather than against our own copy of the
+     * algorithm.
+     *
+     * <p>The unit tests pin what {@code FactoryAutoSplit} computes. Only this
+     * one can tell you whether the mixin reached the class at all: a mixin that
+     * silently fails to apply leaves every unit test green and every furnace
+     * broken. It loads a real furnace block entity with two Froglight variants,
+     * invokes Iron Furnaces' own {@code split}, and asserts the rare variant
+     * did not multiply.
+     *
+     * <p>Environment-driven, like
+     * {@link #crossModVariantPresenceMatchesModLoadedConditions}: Iron Furnaces
+     * is not a dependency, so when it is absent this passes without asserting
+     * anything. Put the jar in {@code run/mods} (scripts/fetch_dev_mods.py) to
+     * make it meaningful.
+     *
+     * <p>Reflection on purpose. {@code split} is Iron Furnaces' method, and
+     * naming its class at compile time would be exactly the hard dependency the
+     * mod does not take.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void ironFurnacesAutoSplitPreservesFroglightVariants(GameTestHelper helper) {
+        java.util.Optional<net.minecraft.world.level.block.Block> furnaceBlock =
+            BuiltInRegistries.BLOCK.getOptional(
+                ResourceLocation.fromNamespaceAndPath("ironfurnaces", "iron_furnace"));
+        if (furnaceBlock.isEmpty()) {
+            ProductiveFrogs.LOGGER.info(
+                "Iron Furnaces absent - skipping the auto-split patch GameTest. "
+                    + "Drop the jar in run/mods to actually exercise it.");
+            helper.succeed();
+            return;
+        }
+
+        BlockPos pos = new BlockPos(1, 1, 1);
+        helper.setBlock(pos, furnaceBlock.get().defaultBlockState());
+        net.minecraft.world.level.block.entity.BlockEntity be =
+            helper.getLevel().getBlockEntity(helper.absolutePos(pos));
+        if (!(be instanceof net.minecraft.world.Container furnace)) {
+            helper.fail("ironfurnaces:iron_furnace has no Container block entity; "
+                + "the patch's assumptions about that class no longer hold");
+            return;
+        }
+
+        // BlockIronFurnaceTileBase.FACTORY_INPUT
+        final int[] factoryInput = {7, 8, 9, 10, 11, 12};
+        if (furnace.getContainerSize() <= factoryInput[factoryInput.length - 1]) {
+            helper.fail("furnace inventory is only " + furnace.getContainerSize()
+                + " slots; the factory input slots the patch targets do not exist");
+            return;
+        }
+
+        ResourceLocation common = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        ResourceLocation rare = ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "diamond");
+        furnace.setItem(factoryInput[0], froglightOfVariant(common, 64));
+        furnace.setItem(factoryInput[1], froglightOfVariant(rare, 1));
+
+        try {
+            java.lang.reflect.Method split =
+                be.getClass().getMethod("split", boolean.class, int.class, int.class);
+            split.invoke(be, true, 0, factoryInput.length);
+        } catch (NoSuchMethodException e) {
+            helper.fail("Iron Furnaces no longer exposes split(boolean,int,int) - the mixin target "
+                + "has moved and the patch is silently dead. See docs/ironfurnaces_autosplit_fix.md");
+            return;
+        } catch (ReflectiveOperationException e) {
+            helper.fail("invoking Iron Furnaces' split failed: " + e.getCause());
+            return;
+        }
+
+        int rareCount = 0;
+        int commonCount = 0;
+        for (int slot : factoryInput) {
+            ItemStack stack = furnace.getItem(slot);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            ResourceLocation variant = stack.get(
+                com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get());
+            if (rare.equals(variant)) {
+                rareCount += stack.getCount();
+            } else if (common.equals(variant)) {
+                commonCount += stack.getCount();
+            }
+        }
+
+        if (rareCount != 1) {
+            helper.fail("auto-split multiplied the rare Froglight variant: expected 1, got " + rareCount
+                + ". The mixin is not applying - check the log for the "
+                + "'Applied the data-component fix' line. See docs/ironfurnaces_autosplit_fix.md");
+            return;
+        }
+        if (commonCount != 64) {
+            helper.fail("auto-split consumed the common Froglight variant: expected 64, got " + commonCount);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** A Froglight stamped with {@code variant}, for the Iron Furnaces auto-split test. */
+    private static ItemStack froglightOfVariant(ResourceLocation variant, int count) {
+        ItemStack stack = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get(), count);
+        stack.set(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get(), variant);
+        return stack;
+    }
 }

@@ -4,6 +4,20 @@
 
 ### Fixed
 
+- **Iron Furnaces no longer turns one Froglight variant into another.** With
+  **auto-split** switched on, a factory Iron Furnace levelled its input slots by
+  treating every Froglight as the same item, because it compared them by item id
+  and every variant shares one. It then averaged the counts across slots that each
+  kept their own variant, so a furnace holding 64 of one Froglight and 1 of another
+  came out holding 32 and 33. The count never changed, so nothing looked wrong;
+  what changed was which variant you owned, unattended, in your favour or against
+  it. Anything that stores its identity in a data component was affected the same
+  way, not just Froglights. This is Iron Furnaces' bug, reported to them as
+  [#229](https://github.com/Qelifern/IronFurnaces/issues/229) and still open, so
+  the fix ships here instead: slots are now grouped by variant as well as by item.
+  A furnace holding one variant behaves exactly as it always did. Only active when
+  Iron Furnaces is installed; `compat.ironFurnacesAutoSplitFix` turns it off.
+  ([ironfurnaces_autosplit_fix.md](docs/ironfurnaces_autosplit_fix.md))
 - **Slimes now appear in the pen with your frogs instead of on top of its wall.**
   A Slime Milk source looked for something solid next to it and put the slime on
   top of that block. In any pen where a wall, a corner, or a raised rim sits right
