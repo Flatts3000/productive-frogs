@@ -128,7 +128,7 @@ With Mekanism, Immersive Engineering, or EnderIO installed, a metal Froglight cr
 
 ## 7. The drop-in guarantee
 
-Every cross-mod hook is gated by `neoforge:conditions -> mod_loaded` and keys off `c:` common tags. There is no hard mod dependency, and no Java behind any of it: a variant or recipe for an absent mod silently does not load. (One Java `compat/` class exists, and it is not content - a mixin fixing an Iron Furnaces bug that corrupts Froglight variants, applied only when that mod is present. See `docs/ironfurnaces_autosplit_fix.md`.) The same jar is safe to drop into any pack; nothing crashes when a referenced mod is missing.
+Every cross-mod hook is gated by `neoforge:conditions -> mod_loaded` and keys off `c:` common tags. There is no hard mod dependency, and no Java behind any of it: a variant or recipe for an absent mod silently does not load. (One Java `compat/` class exists, and it is not content - a mixin fixing an Iron Furnaces bug that corrupts Froglight variants, applied only when that mod is present. See `docs/ironfurnaces_component_fixes.md`.) The same jar is safe to drop into any pack; nothing crashes when a referenced mod is missing.
 
 ## See also
 

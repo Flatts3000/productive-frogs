@@ -1,4 +1,20 @@
-# Iron Furnaces auto-split: the data-component fix
+# Iron Furnaces: the data-component fixes
+
+Two bugs, one cause: Iron Furnaces treats item identity as item id, and every
+Froglight variant shares one id. They present completely differently - one
+silently swaps your variants, the other refuses to let any Froglight into a
+furnace at all - and each needed finding separately.
+
+| | Symptom | Method | Config |
+|---|---|---|---|
+| 1 | Auto-split converts one variant into another | `split` | `compat.ironFurnacesAutoSplitFix` |
+| 2 | No Froglight can be inserted at all until restart | `hasRecipe` | `compat.ironFurnacesRecipeCacheFix` |
+
+Both on by default, both inert without Iron Furnaces installed.
+
+---
+
+# 1. Auto-split converts variants
 
 **Status:** shipped, on by default, `compat.ironFurnacesAutoSplitFix`.
 **Applies to:** Iron Furnaces `4.3.2` on 1.21.1 (the current and only 1.21.1 build).
@@ -140,7 +156,75 @@ Three guards, because patching someone else's code deserves them:
 Furnaces, for an operator who wants the original or is testing an upstream
 fix.
 
-## How it is tested
+---
+
+# 2. No Froglight can be inserted at all
+
+**Status:** shipped, on by default, `compat.ironFurnacesRecipeCacheFix`.
+**Downstream:** the single most-reported Sky Frogs problem. Three CurseForge
+reporters in July 2026 alone (user_qqgd4audept0i3qy, Larronos,
+user_w647p447peuez0hl), and 28 Discord messages from 17 people over the pack's
+first two months.
+
+## The defect
+
+Iron Furnaces decides whether a stack may enter a furnace with:
+
+```java
+public boolean hasRecipe(ItemStack stack) {
+    Item item = stack.getItem();
+    return ModSetup.HAS_RECIPE.computeIfAbsent(item, value ->
+        this.recipeCheckSmelting.getRecipeFor(new SingleRecipeInput(stack), this.level).isPresent());
+}
+```
+
+`ModSetup.HAS_RECIPE` is `Map<Item, Boolean>` - a static cache, keyed by item
+alone, living for the whole process. `computeIfAbsent` means the **first stack
+of a given item ever tested decides the answer for every later stack of that
+item**, for the rest of the session.
+
+Froglight smelting recipes match on the `slime_variant` component, so
+smeltability is a property of the component, not the item. A Froglight carrying
+no variant has no recipe. Test one in a furnace once - from the creative tab,
+or one produced by a mod that drops the component when it copies a block, which
+Building Gadgets' Copy-Paste Gadget does - and `false` is cached against the
+Froglight item. From that moment **no Froglight of any variant can be put into
+any Iron Furnace**, by hand or by pipe.
+
+That is the whole report: the furnace silently refuses perfectly good
+Froglights, only Iron Furnaces furnaces are affected while the vanilla one
+works, and **restarting the game fixes it**, because the cache is static and
+dies with the process. It looks random because it depends entirely on which
+Froglight that session's furnace happened to see first.
+
+## The fix
+
+Stacks carrying data components skip the shared cache and ask the recipe
+manager directly. Stacks that do not - nearly everything, and every case the
+cache was built for - take Iron Furnaces' original cached path untouched, so
+the optimisation survives and plain items behave exactly as before.
+
+No cache of our own, deliberately: Iron Furnaces already calls `getRecipeFor`
+uncached every tick in `getRecipeNonCached`, so an uncached lookup on the
+insertion path costs no more than the mod already spends, and a component-keyed
+cache would need eviction to avoid growing without bound.
+
+## How it is verified
+
+`PFGameTests.ironFurnacesAcceptsFroglightsAfterACacheMiss` reproduces the
+poisoning sequence against the real furnace: clear the static caches, ask about
+a variant-less Froglight so upstream caches `false`, then ask about a real
+variant and require it to be accepted.
+
+Negative control, 2026-08-09: with `compat.ironFurnacesRecipeCacheFix = false`
+and nothing else changed, that test fails with *"the furnace refused a
+smeltable Iron Froglight after a variant-less one was tested"*. The bug is
+real, reproduces in-world exactly as players describe, and the patch is what
+stops it.
+
+---
+
+# Testing, for both fixes
 
 Four layers, because a mixin can be wrong in four unrelated ways.
 
