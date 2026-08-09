@@ -58,8 +58,15 @@ The `mod_loaded`-gated recipes ([v1_3_crush_recipes.md](./v1_3_crush_recipes.md)
 
 Matching is per-variant via the `neoforge:components` ingredient - there is **no** `crushable` item tag (every variant is the same `configurable_froglight` item distinguished only by component, so a tag can't select metals).
 
-### 🔵 No `compat/` Java package - deliberate
+### 🔵 Cross-mod *content* is JSON only - deliberate
 Cross-mod integration ships exclusively as JSON datapacks gated by `neoforge:conditions → mod_loaded`. Variants for modded resources (e.g. Mythic Metals) similarly ship as JSON `SlimeVariant` entries with `mod_loaded` conditions. See `docs/architecture.md` for the schema.
+
+The `compat/` Java package holds exactly one thing, and it is not content: a mixin that fixes an Iron Furnaces bug which converts Froglight variants into each other (see below). Adding content there is still wrong.
+
+### 🟢 Iron Furnaces auto-split converted Froglight variants (patched here, unfixed upstream)
+A factory-augmented Iron Furnace with **auto-split** on pooled every input slot holding "the same item" and averaged the counts, deciding "the same item" on the item id alone. Every Froglight variant is one id plus a `slime_variant` component, so a furnace holding 64 of one variant and 1 of another came out holding 32 and 33 - a silent, unattended, 1:1 converter from the cheapest Froglight to the most expensive. Any single-id-plus-component item from any mod is corrupted the same way.
+
+Upstream is [Qelifern/IronFurnaces#229](https://github.com/Qelifern/IronFurnaces/issues/229), a 1.21 data-component regression of their own [#147](https://github.com/Qelifern/IronFurnaces/issues/147) (fixed for 1.19.2 NBT in 2023). It is open, unanswered, and the repository's last commit predates the report, so we patch it: **[ironfurnaces_autosplit_fix.md](./ironfurnaces_autosplit_fix.md)**. On by default, `compat.ironFurnacesAutoSplitFix`, no effect without the mod. **Re-verify on any Iron Furnaces bump** - the injector fails open on purpose, so a broken patch is silent.
 
 ### 🔵 Building Gadgets Copy-Paste loses the Froglight variant (upstream limitation)
 Copying placed Resource Froglights with Building Gadgets' **Copy-Paste Gadget** and pasting them elsewhere produces untinted (plain-looking) Froglights - the variant is dropped. Cause is upstream: the Copy-Paste Gadget [does not copy block-entity / tile data](https://github.com/Direwolf20-MC/BuildingGadgets/issues/660), only the blockstate. A Resource Froglight stores its variant in its BlockEntity (the blockstate carries only the pillar `axis`), so the paste rebuilds the block with an empty BE. This is the same limitation that strips Mekanism machine configs, IE multiblock data, and pipe I/O settings, not something specific to this mod.

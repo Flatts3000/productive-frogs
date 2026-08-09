@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.flatts.productivefrogs.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "com.flatts.productivefrogs.compat.PFMixinPlugin",
+  "mixins": [
+    "BlockIronFurnaceTileBaseMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}
