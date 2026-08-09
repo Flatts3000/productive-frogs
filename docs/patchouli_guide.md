@@ -1,5 +1,13 @@
 # Patchouli Guide Book
 
+> **This describes the 1.x line's book, not this branch's.** Productive Frogs 2.x
+> ships its guide on **Modonomicon** - see [guidebook.md](./guidebook.md), which is
+> the contract for pack authors on `main`. Patchouli is the engine on the frozen
+> `mc-1.21.1` line only, and this file is a read-only copy of that line's contract
+> kept here so `guidebook.md`'s references resolve. The maintained copy lives on
+> `mc-1.21.1`; edit it there. Content below reflects the 1.x book, including the
+> per-catalyst altar chapters that 2.0 retired.
+
 > The in-game guide book Productive Frogs ships (issue #243). Stable book id
 > **`productivefrogs:guide`**. Built to be **extended by modpacks** - this doc is the
 > contract for pack authors.

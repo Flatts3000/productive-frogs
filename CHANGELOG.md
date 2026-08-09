@@ -2,6 +2,32 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **A Slime Milk source now tells you when it has stopped because it is
+  crowded.** A source pauses when too many of its own slimes are already
+  nearby, so it can't flood a world faster than frogs eat it - but until now
+  it stopped silently, which is the most common "why isn't my milk spawning?"
+  question. Look at a source or a Slime Milk Basin with Jade and a paused one
+  now reads "Paused: 30 / 30 Diamond slimes nearby (too crowded)", counting
+  only that source's own resource. The limit itself is unchanged and still configurable
+  (`maxNearbySlimes`, `spawnCapRadius`); this only makes it visible. An
+  Endless source shows it too, which is exactly the case that looks broken.
+  (#349)
+
+### Internal
+
+- **The build now fails if two recipes are indistinguishable at the crafting
+  table.** When two recipes share a shape and inputs the grid can't tell
+  apart, the recipe manager only ever reaches one of them and the other is
+  simply uncraftable - invisible to JEI, which lists both, and invisible to a
+  playtest unless somebody happens to try the losing one. This shipped once on
+  the 1.21.1 line, where the Wither and End Dragon altar hatches were both
+  obsidian and a chest. A new test compares every recipe against the set the
+  grid actually resolves among, folds in the shaped horizontal mirror, and
+  keeps component-stamped ingredients distinct. No conflicts on this line.
+  (#352)
+
 ## v2.0.0-alpha.4 - 2026-07-19 - Under Glass
 
 ### Added
