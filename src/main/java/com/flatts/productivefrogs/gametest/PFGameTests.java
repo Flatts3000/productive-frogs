@@ -8350,8 +8350,27 @@ public final class PFGameTests {
             return;
         }
 
-        // BlockIronFurnaceTileBase.FACTORY_INPUT
-        final int[] factoryInput = {7, 8, 9, 10, 11, 12};
+        // Read from the class rather than assumed. Hardcoding {7,8,9,10,11,12}
+        // would make this test pass vacuously if Iron Furnaces ever renumbered
+        // its factory inputs: the Froglights would go into slots split() no
+        // longer looks at, split() would return immediately with every real
+        // input empty, and reading the same slots back would find them
+        // untouched - green, with the patch doing nothing. This is the only
+        // test that can catch the mixin failing to apply, so it must not be
+        // able to pass for the wrong reason.
+        final int[] factoryInput;
+        try {
+            factoryInput = (int[]) be.getClass().getField("FACTORY_INPUT").get(null);
+        } catch (ReflectiveOperationException | ClassCastException e) {
+            helper.fail("Iron Furnaces no longer exposes FACTORY_INPUT as a public static int[] - the "
+                + "mixin shadows that field, so it is not applying. See docs/ironfurnaces_autosplit_fix.md");
+            return;
+        }
+        if (factoryInput == null || factoryInput.length < 2) {
+            helper.fail("Iron Furnaces' FACTORY_INPUT is " + java.util.Arrays.toString(factoryInput)
+                + "; this test needs at least two factory input slots");
+            return;
+        }
         if (furnace.getContainerSize() <= factoryInput[factoryInput.length - 1]) {
             helper.fail("furnace inventory is only " + furnace.getContainerSize()
                 + " slots; the factory input slots the patch targets do not exist");
