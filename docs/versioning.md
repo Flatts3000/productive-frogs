@@ -25,7 +25,7 @@ Targets MC 1.21.1 / NeoForge 21.1.230 / Java 21. Sky Frogs (the modpack PF was b
 - **Configurable Froglight** (single block stamped with `slime_variant` data component; species Froglight blocks were dropped in v1.0)
 - **Smelting recipes** (per variant) - every variant smelts to its base resource via vanilla furnace
 - **JEI Information pages** - dynamically generated from the SlimeVariant + ParentSpecies datapack registries
-- **Cross-mod compat** via JSON for variant pools - `mod_loaded` neoforge conditions, no Java for content (the one Java `compat/` class is a defensive mixin, `docs/ironfurnaces_autosplit_fix.md`)
+- **Cross-mod compat** via JSON for variant pools - `mod_loaded` neoforge conditions, no Java for content (the one Java `compat/` class is a defensive mixin, `docs/ironfurnaces_component_fixes.md`)
 
 **The V1 rule of thumb:** if vanilla has a single-block appliance equivalent (furnace, brewing stand, composter, cauldron) that's V1 scope. If we'd be adding power, pipes, or multiblocks, that's V2.
 

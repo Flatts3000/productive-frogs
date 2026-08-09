@@ -8363,7 +8363,7 @@ public final class PFGameTests {
             factoryInput = (int[]) be.getClass().getField("FACTORY_INPUT").get(null);
         } catch (ReflectiveOperationException | ClassCastException e) {
             helper.fail("Iron Furnaces no longer exposes FACTORY_INPUT as a public static int[] - the "
-                + "mixin shadows that field, so it is not applying. See docs/ironfurnaces_autosplit_fix.md");
+                + "mixin shadows that field, so it is not applying. See docs/ironfurnaces_component_fixes.md");
             return;
         }
         if (factoryInput == null || factoryInput.length < 2) {
@@ -8388,7 +8388,7 @@ public final class PFGameTests {
             split.invoke(be, true, 0, factoryInput.length);
         } catch (NoSuchMethodException e) {
             helper.fail("Iron Furnaces no longer exposes split(boolean,int,int) - the mixin target "
-                + "has moved and the patch is silently dead. See docs/ironfurnaces_autosplit_fix.md");
+                + "has moved and the patch is silently dead. See docs/ironfurnaces_component_fixes.md");
             return;
         } catch (ReflectiveOperationException e) {
             helper.fail("invoking Iron Furnaces' split failed: " + e.getCause());
@@ -8414,7 +8414,7 @@ public final class PFGameTests {
         if (rareCount != 1) {
             helper.fail("auto-split multiplied the rare Froglight variant: expected 1, got " + rareCount
                 + ". The mixin is not applying - check the log for the "
-                + "'Applied the data-component fix' line. See docs/ironfurnaces_autosplit_fix.md");
+                + "'Applied the data-component fix' line. See docs/ironfurnaces_component_fixes.md");
             return;
         }
         if (commonCount != 64) {
@@ -8429,5 +8429,97 @@ public final class PFGameTests {
         ItemStack stack = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get(), count);
         stack.set(com.flatts.productivefrogs.registry.PFDataComponents.SLIME_VARIANT.get(), variant);
         return stack;
+    }
+
+    /**
+     * The insertion bug, end to end: a Froglight carrying no variant must not
+     * be able to lock every other Froglight out of the furnace.
+     *
+     * <p>Iron Furnaces caches smeltability in a static {@code Map<Item, Boolean>}.
+     * This test reproduces the poisoning sequence exactly - clear the cache, ask
+     * about a variant-less Froglight (no recipe, so upstream caches {@code false}
+     * against the Froglight item), then ask about a real variant. Unpatched, the
+     * second answer comes back from the poisoned cache and the furnace refuses a
+     * perfectly smeltable Froglight, which is the "it just won't take them, and
+     * restarting fixes it" report.
+     *
+     * <p>Environment-driven: passes without asserting when Iron Furnaces is
+     * absent, and says so.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void ironFurnacesAcceptsFroglightsAfterACacheMiss(GameTestHelper helper) {
+        java.util.Optional<net.minecraft.world.level.block.Block> furnaceBlock =
+            BuiltInRegistries.BLOCK.getOptional(
+                ResourceLocation.fromNamespaceAndPath("ironfurnaces", "iron_furnace"));
+        if (furnaceBlock.isEmpty()) {
+            ProductiveFrogs.LOGGER.info(
+                "Iron Furnaces absent - skipping the recipe-cache patch GameTest.");
+            helper.succeed();
+            return;
+        }
+
+        BlockPos pos = new BlockPos(1, 1, 1);
+        helper.setBlock(pos, furnaceBlock.get().defaultBlockState());
+        net.minecraft.world.level.block.entity.BlockEntity be =
+            helper.getLevel().getBlockEntity(helper.absolutePos(pos));
+        if (be == null) {
+            helper.fail("ironfurnaces:iron_furnace produced no block entity");
+            return;
+        }
+
+        // The shared cache is static and process-wide, so another test (or an
+        // earlier run in this same server) could already hold an entry for the
+        // Froglight item. Clear it so the sequence below is the only thing under test.
+        if (!productivefrogs$clearIronFurnacesRecipeCache(helper)) {
+            return;
+        }
+
+        java.lang.reflect.Method hasRecipe;
+        try {
+            hasRecipe = be.getClass().getMethod("hasRecipe", ItemStack.class);
+        } catch (NoSuchMethodException e) {
+            helper.fail("Iron Furnaces no longer exposes hasRecipe(ItemStack) - the mixin target has moved "
+                + "and the patch is silently dead. See docs/ironfurnaces_component_fixes.md");
+            return;
+        }
+
+        try {
+            // A Froglight with no variant component. It genuinely has no smelting
+            // recipe, so upstream caches false against the Froglight ITEM here.
+            ItemStack bare = new ItemStack(PFItems.CONFIGURABLE_FROGLIGHT.get());
+            hasRecipe.invoke(be, bare);
+
+            // A real variant, which does have a smelting recipe and must be accepted.
+            ItemStack real = froglightOfVariant(
+                ResourceLocation.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron"), 1);
+            boolean accepted = (Boolean) hasRecipe.invoke(be, real);
+
+            if (!accepted) {
+                helper.fail("the furnace refused a smeltable Iron Froglight after a variant-less one was tested: "
+                    + "Iron Furnaces' item-keyed recipe cache is poisoned and the patch is not applying. "
+                    + "This is the 'furnace won't take my Froglights, restart fixes it' bug.");
+                return;
+            }
+        } catch (ReflectiveOperationException e) {
+            helper.fail("invoking Iron Furnaces' hasRecipe failed: " + e.getCause());
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** Empties Iron Furnaces' static smeltability cache. False (and fails the test) if its shape changed. */
+    private static boolean productivefrogs$clearIronFurnacesRecipeCache(GameTestHelper helper) {
+        try {
+            Class<?> modSetup = Class.forName("ironfurnaces.init.ModSetup");
+            for (String field : new String[] {"HAS_RECIPE", "HAS_RECIPE_SMOKING", "HAS_RECIPE_BLASTING"}) {
+                Object map = modSetup.getField(field).get(null);
+                ((java.util.Map<?, ?>) map).clear();
+            }
+            return true;
+        } catch (ReflectiveOperationException | ClassCastException e) {
+            helper.fail("Iron Furnaces' ModSetup recipe caches are no longer the public static Maps this patch "
+                + "assumes (" + e + "); re-check docs/ironfurnaces_component_fixes.md");
+            return false;
+        }
     }
 }

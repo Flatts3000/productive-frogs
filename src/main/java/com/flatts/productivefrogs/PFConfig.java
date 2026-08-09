@@ -77,6 +77,7 @@ public final class PFConfig {
     // slime_variant component, which trips inventory code that compares items by
     // id alone; this is the switch for the Iron Furnaces case.
     public static final ModConfigSpec.BooleanValue IRON_FURNACES_AUTOSPLIT_FIX;
+    public static final ModConfigSpec.BooleanValue IRON_FURNACES_RECIPE_CACHE_FIX;
 
     // Master switch for the whole frog stat-breeding layer (#202). When off,
     // Sweetslime is uncraftable + no longer a breeding food, every frog behaves at
@@ -848,6 +849,21 @@ public final class PFConfig {
                 "Iron Furnaces, e.g. once they ship their own fix."
             )
             .define("ironFurnacesAutoSplitFix", true);
+
+        IRON_FURNACES_RECIPE_CACHE_FIX = builder
+            .comment(
+                "Fix Iron Furnaces refusing to accept Froglights into any furnace at all.",
+                "Iron Furnaces caches \"can this item be smelted?\" in a static Map<Item, Boolean> that lives for the",
+                "whole session, so the first stack of an item ever tested decides the answer for every later stack.",
+                "Every Froglight variant is one item and their smelting recipes match on a data component, so a single",
+                "Froglight carrying no variant - from the creative tab, or from a mod that drops the component when it",
+                "copies a block - has no recipe, caches false against the Froglight item, and locks every variant out of",
+                "every Iron Furnace until the game restarts. That is the \"the furnace won't take my Froglights\" report",
+                "and the restart that fixes it. With this on, stacks carrying components skip the cache and ask directly;",
+                "everything else keeps Iron Furnaces' original cached path.",
+                "Has no effect unless Iron Furnaces is installed."
+            )
+            .define("ironFurnacesRecipeCacheFix", true);
 
         builder.pop();
 

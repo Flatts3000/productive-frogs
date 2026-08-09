@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Iron Furnaces takes Froglights again.** Some players found that no
+  Froglight would go into an Iron Furnace at all - not by hand, not by pipe,
+  while a vanilla furnace took them fine - and that restarting the game fixed it
+  until, eventually, it came back. Iron Furnaces remembers whether an item can
+  be smelted in a list keyed by the item, and every Froglight variant is the
+  same item, so the first Froglight a furnace ever saw decided the answer for
+  all of them until the game closed. A Froglight with no variant on it, the kind
+  you get from the creative tab or from a Copy-Paste Gadget, has nothing to
+  smelt into, and one of those was enough to lock out every other Froglight for
+  the rest of the session. Froglights are now asked about individually. This is
+  Iron Furnaces' bug, and the fix ships here because their tracker has not
+  moved. ([ironfurnaces_component_fixes.md](docs/ironfurnaces_component_fixes.md))
+
 ## v1.25.3 - 2026-08-09 - Sorting It Out
 
 ### Fixed
@@ -19,7 +34,7 @@
   the fix ships here instead: slots are now grouped by variant as well as by item.
   A furnace holding one variant behaves exactly as it always did. Only active when
   Iron Furnaces is installed; `compat.ironFurnacesAutoSplitFix` turns it off.
-  ([ironfurnaces_autosplit_fix.md](docs/ironfurnaces_autosplit_fix.md))
+  ([ironfurnaces_component_fixes.md](docs/ironfurnaces_component_fixes.md))
 - **Slimes now appear in the pen with your frogs instead of on top of its wall.**
   A Slime Milk source looked for something solid next to it and put the slime on
   top of that block. In any pen where a wall, a corner, or a raised rim sits right

@@ -100,7 +100,7 @@ class MixinWiringTest {
             listed |= "BlockIronFurnaceTileBaseMixin".equals(entry.getAsString());
         }
         assertTrue(listed, "the Iron Furnaces patch is no longer wired up. If that is deliberate, "
-            + "delete docs/ironfurnaces_autosplit_fix.md, the config key and these tests too");
+            + "delete docs/ironfurnaces_component_fixes.md, the config key and these tests too");
     }
 
     @Test
@@ -181,7 +181,7 @@ class MixinWiringTest {
     void theConfigStaysNonRequiredSoFailuresAreNotFatal() throws IOException {
         assertFalse(config().get("required").getAsBoolean(),
             "a required mixin config turns any resolution failure into a crash for every player; "
-                + "see docs/ironfurnaces_autosplit_fix.md, which promises the opposite");
+                + "see docs/ironfurnaces_component_fixes.md, which promises the opposite");
         assertEquals(0, config().getAsJsonObject("injectors").get("defaultRequire").getAsInt());
     }
 }

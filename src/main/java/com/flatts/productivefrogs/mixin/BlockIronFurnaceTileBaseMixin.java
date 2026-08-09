@@ -2,13 +2,19 @@ package com.flatts.productivefrogs.mixin;
 
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.compat.ironfurnaces.FactoryAutoSplit;
+import com.flatts.productivefrogs.compat.ironfurnaces.RecipeCacheFix;
 import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.AbstractCookingRecipe;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Replaces Iron Furnaces' component-blind factory auto-split with the
@@ -51,6 +57,10 @@ public abstract class BlockIronFurnaceTileBaseMixin {
     @Final
     public static int[] FACTORY_INPUT;
 
+    /** The furnace's current mode. Vanilla type, public field, so shadowing costs no Iron Furnaces surface. */
+    @Shadow
+    public RecipeType<? extends AbstractCookingRecipe> recipeType;
+
     @Inject(method = "split(ZII)V", at = @At("HEAD"), cancellable = true, require = 0)
     private void productivefrogs$componentAwareAutoSplit(boolean fullCheck, int start, int size, CallbackInfo ci) {
         if (!PFConfig.IRON_FURNACES_AUTOSPLIT_FIX.get()) {
@@ -58,5 +68,28 @@ public abstract class BlockIronFurnaceTileBaseMixin {
         }
         FactoryAutoSplit.split((Container) (Object) this, FACTORY_INPUT, fullCheck, start, size);
         ci.cancel();
+    }
+
+    /**
+     * Answers "can this be smelted?" without consulting Iron Furnaces'
+     * {@code Map<Item, Boolean>} cache, for stacks whose smeltability depends on
+     * their components rather than their id.
+     *
+     * <p>Only component-carrying stacks are intercepted. Everything else falls
+     * through to the original cached path, so the optimisation the cache exists
+     * for is preserved and plain items are untouched.
+     *
+     * <p>Without this, one variant-less Froglight tested in a furnace caches
+     * {@code false} against the Froglight item and locks every variant out of
+     * every Iron Furnace for the rest of the session. See
+     * {@link RecipeCacheFix} for the full account.
+     */
+    @Inject(method = "hasRecipe(Lnet/minecraft/world/item/ItemStack;)Z",
+            at = @At("HEAD"), cancellable = true, require = 0)
+    private void productivefrogs$componentAwareHasRecipe(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
+        if (!PFConfig.IRON_FURNACES_RECIPE_CACHE_FIX.get() || !RecipeCacheFix.needsComponentAwareCheck(stack)) {
+            return;
+        }
+        cir.setReturnValue(RecipeCacheFix.hasRecipe(((BlockEntity) (Object) this).getLevel(), recipeType, stack));
     }
 }
