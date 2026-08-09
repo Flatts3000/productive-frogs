@@ -33,11 +33,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * declines to apply the mixin at all when {@code ironfurnaces} is not loaded,
  * and {@code compat.ironFurnacesAutoSplitFix} lets an operator hand the
  * behaviour back to Iron Furnaces if it ever ships its own fix before we drop
- * this. The injector is non-required: should a future Iron Furnaces reshape
- * {@code split}, the patch quietly stops applying instead of crashing the
- * game, which is the right failure direction for a courtesy patch on someone
- * else's code. That trade means a version bump on their side must be
- * re-verified here rather than assumed.
+ * this. Neither the injector ({@code require = 0}) nor the mixin config
+ * ({@code "required": false}) is fatal on failure, and both matter:
+ * {@code require} covers only the {@code @Inject}, while the {@code @Shadow}
+ * below is resolved at apply time and would crash a required config. Should a
+ * future Iron Furnaces reshape {@code split} or rename {@code FACTORY_INPUT},
+ * the patch quietly stops applying instead of taking the game down, which is
+ * the right failure direction for a courtesy patch on someone else's code.
+ * That trade means a version bump on their side must be re-verified here
+ * rather than assumed.
  */
 @Mixin(targets = "ironfurnaces.tileentity.furnaces.BlockIronFurnaceTileBase", remap = false)
 public abstract class BlockIronFurnaceTileBaseMixin {

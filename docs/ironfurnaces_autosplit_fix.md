@@ -83,8 +83,16 @@ recipe, tag or config that reaches it. Specifically:
 `ItemStack.isSameItemSameComponents`. The empty-slot seeding and the
 averaging maths are reproduced exactly, including which slots absorb the
 remainder, so **a furnace holding one item type behaves identically to
-unpatched Iron Furnaces**. Mixed-component furnaces balance each group within
-itself and never across.
+unpatched Iron Furnaces**.
+
+The safety property for mixed furnaces is that counts never move *across*
+groups: a variant's total is untouchable. It is not that every group gets
+balanced. Like upstream, one call balances a single group, the one the last
+occupied slot belongs to, so a furnace holding Cave Froglights in slots 7 to
+10 and one Nether Star Froglight in slot 12 balances only the Nether Star and
+leaves the Cave slots uneven until smelting shifts which slot is last. That is
+upstream's ordering, deliberately kept, and it is why the differential tests
+for plain items pass at all.
 
 `mixin/BlockIronFurnaceTileBaseMixin` injects at the head of `split`,
 delegates, and cancels. That substitutes the whole behaviour rather than
@@ -105,10 +113,21 @@ Three guards, because patching someone else's code deserves them:
 2. **`PFMixinPlugin` declines to apply the mixin** unless `ironfurnaces` is
    in the loading mod list. Without this, Mixin fails to resolve the target
    class and takes the game down for every player who does not have the mod.
-3. **The injector is non-required** (`require = 0`). If a future Iron
-   Furnaces reshapes `split`, the patch quietly stops applying instead of
-   crashing. That is the right failure direction for a courtesy patch, and it
-   is why `PFMixinPlugin.postApply` logs a line when the patch *does* apply:
+   The gate is an explicit mixin-to-modid map and **refuses anything not in
+   it**, so a future compat mixin added to the json without a gate entry costs
+   a missing patch and a warning line rather than a crash for everyone lacking
+   its target mod.
+3. **Nothing about the patch is required.** Both the injector
+   (`require = 0`) and the mixin config itself (`"required": false`) are
+   non-fatal. Both are needed: `require` only governs the `@Inject`, while the
+   `@Shadow` of `FACTORY_INPUT` is resolved when the mixin is applied, and on a
+   *required* config that failure is fatal. With only the injector relaxed, a
+   future Iron Furnaces renaming that field would crash every player who has
+   both mods - the precise opposite of the guarantee this section claims.
+   Pinned by `MixinWiringTest.theConfigStaysNonRequiredSoFailuresAreNotFatal`.
+
+   Failing open means failing silently, which is why `PFMixinPlugin.postApply`
+   logs a line when the patch *does* apply:
 
    ```
    [productivefrogs]: Applied the data-component fix to Iron Furnaces factory
