@@ -14,6 +14,7 @@ import com.flatts.productivefrogs.client.color.SprinklerBlockTint;
 import com.flatts.productivefrogs.client.color.SynthesizedItemTint;
 import com.flatts.productivefrogs.client.color.Tints;
 import com.flatts.productivefrogs.client.color.VariantColorTint;
+import com.flatts.productivefrogs.client.model.VariantBlockStateModel;
 import com.flatts.productivefrogs.client.renderer.ParentSlimeRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceFrogRenderer;
 import com.flatts.productivefrogs.client.renderer.ResourceSlimeRenderer;
@@ -50,6 +51,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterBlockStateModels;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterFluidModelsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
@@ -275,6 +277,22 @@ public final class PFClientEvents {
         event.register(id("slurried_entity"), com.flatts.productivefrogs.client.color.SlurriedEntityTint.CODEC);
         event.register(id("resource_slime_egg"), ResourceSlimeEggTint.CODEC);
         event.register(id("category_color"), CategoryColorTint.CODEC);
+    }
+
+    /**
+     * Block state models that pick their geometry from a block entity rather than
+     * from blockstate properties.
+     *
+     * <p>Needed because a tint is a multiply and can only ever produce a flat
+     * color, so a variant shipping its own baked art (Rainbow) has to swap the
+     * MODEL. The variant lives in the block entity, which a blockstate file cannot
+     * see, so {@code VariantBlockStateModel} bridges the two through model data.
+     * Which variants get their own model is decided in the blockstate JSON, not
+     * here.
+     */
+    @SubscribeEvent
+    public static void onRegisterBlockStateModels(RegisterBlockStateModels event) {
+        event.registerModel(VariantBlockStateModel.ID, VariantBlockStateModel.Unbaked.CODEC);
     }
 
     private static Identifier id(String path) {

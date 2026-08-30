@@ -12,7 +12,8 @@
   Froglight, so the deep colors aren't a worse deal, they just come out in
   bigger batches: one Froglight makes eight dye, two make sixteen, three make
   twenty-four. JEI lists all sixteen shapes, so there is nothing to memorize.
-  (#375)
+  The Rainbow Slime and its Froglight both actually look like rainbows, in your
+  hand and placed in the world. (#375)
 
 ### Changed
 

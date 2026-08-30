@@ -17,11 +17,14 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
+import net.neoforged.neoforge.model.data.ModelData;
+import net.neoforged.neoforge.model.data.ModelProperty;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,6 +48,23 @@ import org.jetbrains.annotations.Nullable;
  * so the variant survives the round-trip.
  */
 public class ConfigurableFroglightBlockEntity extends BlockEntity {
+
+    /**
+     * Publishes {@link #variantId} to the block renderer.
+     *
+     * <p>Most variants render one shared model tinted by their
+     * {@code primary_color}, and a tint is a multiply, so it can only ever produce
+     * a flat color. A variant that ships its own baked art (Rainbow) has to render
+     * a different MODEL, not a different tint - and a blockstate file can only map
+     * blockstate properties, which never see a block entity. Model data is the
+     * bridge: {@code VariantBlockStateModel} reads this on the meshing thread and
+     * picks the child model for it.
+     *
+     * <p>Anything that changes the variant must follow with
+     * {@code requestModelDataUpdate()} or the chunk keeps its old geometry until
+     * something else forces a re-mesh.
+     */
+    public static final ModelProperty<Identifier> VARIANT_MODEL_PROPERTY = new ModelProperty<>();
 
     /**
      * Variant identifier (e.g. {@code productivefrogs:iron}), or {@code null}
@@ -192,6 +212,40 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
     }
 
     /**
+     * Republish the variant to the renderer AND force the section to re-mesh.
+     *
+     * <p>Both halves are needed and the second is easy to miss. Refreshing model
+     * data updates what {@code VariantBlockStateModel} would read, but a
+     * block-entity data packet does not dirty the chunk section on its own, so the
+     * block keeps the geometry it was last meshed with until something unrelated
+     * happens to rebuild that section. Observed directly: a {@code /data merge
+     * block} that set Variant to rainbow left the block rendering as lapis until a
+     * neighbouring block was placed, at which point it snapped to rainbow.
+     *
+     * <p>Both calls are no-ops off the client, and the null-level guard covers
+     * deserialization, where this runs before the block entity has a level.
+     */
+    private void refreshModel() {
+        requestModelDataUpdate();
+        Level level = this.level;
+        if (level != null && level.isClientSide()) {
+            level.setBlocksDirty(this.worldPosition, Blocks.AIR.defaultBlockState(), getBlockState());
+        }
+    }
+
+    /**
+     * Hand the renderer this block's variant. Called on the client thread only.
+     * A null variant yields {@link ModelData#EMPTY}, which the model reads as
+     * "render the shared tinted froglight".
+     */
+    @Override
+    public ModelData getModelData() {
+        return variantId == null
+            ? ModelData.EMPTY
+            : ModelData.builder().with(VARIANT_MODEL_PROPERTY, variantId).build();
+    }
+
+    /**
      * Set the variant + mark the BE for save + push a block-update so the
      * client receives the new tint via {@link #getUpdatePacket}. Callers must
      * be on the server — client-side mutations would be overwritten by the
@@ -206,6 +260,7 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
         if (this.level != null) {
             this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);
         }
+        refreshModel();
     }
 
     /**
@@ -277,6 +332,9 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
         String synthesized = input.getStringOr("SynthesizedItem", "");
         synthesizedItem = synthesized.isEmpty() ? null : Identifier.tryParse(synthesized);
         readEffect(input);
+        // On the client this is the sync path - getUpdateTag and getUpdatePacket
+        // both land here - so it is where a variant change has to become visible.
+        refreshModel();
     }
 
     /**
