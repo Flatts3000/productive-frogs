@@ -67,7 +67,14 @@ white is the blank single, the pale and mixed colors are two, the saturated
 colors are three.
 
 `RainbowDyeRecipeTest` pins both halves of that: all sixteen colors present,
-and `count == froglights * 8` in every file. Change a pattern's Froglight count
+and `count == froglights * 8` in every file.
+
+**Discoverability caveat.** PF ships no recipe-unlock advancements anywhere, so
+**none** of these shapes appears in the vanilla recipe book - it only ever lists
+recipes a `minecraft:recipe` advancement reward has unlocked. JEI is therefore
+the only in-game listing today. That matters more here than for the rest of the
+mod: every other PF recipe has a shape a player can reason about, whereas these
+sixteen are arbitrary by construction. Change a pattern's Froglight count
 without changing its yield and the build fails.
 
 ## Files
@@ -130,8 +137,8 @@ dedicated server never loads models.
 The item form selects its model on the `slime_variant` component
 (`assets/productivefrogs/items/configurable_froglight.json`, a
 `minecraft:select` on `minecraft:component`), so the Rainbow Froglight is
-genuinely rainbow in the inventory, in hand, in JEI and the recipe book, as a
-dropped item, and in an item frame. The other 39 variants fall through to the
+genuinely rainbow in the inventory, in hand, in JEI, as a dropped item, and in
+an item frame. The other 39 variants fall through to the
 tinted model unchanged.
 
 **The placed block is still flat-tinted.** A blockstate maps only *blockstate

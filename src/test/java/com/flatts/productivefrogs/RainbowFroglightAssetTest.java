@@ -80,8 +80,15 @@ class RainbowFroglightAssetTest {
     void rainbowModelIsUntintedAndItsTexturesExist() {
         Path blockModel = ASSETS.resolve("models/block/rainbow_froglight.json");
         assertTrue(Files.exists(blockModel), "missing " + blockModel.getFileName());
-        assertTrue(Files.exists(ASSETS.resolve("models/item/rainbow_froglight.json")),
-            "missing the item model that parents the block model");
+
+        // The item model is the middle link: the item definition names it, and it
+        // is the only thing pointing at the untinted block model. Typo its parent
+        // to block/resource_froglight and every Rainbow Froglight silently renders
+        // as a magenta-tinted ochre one, with the rest of this test still green.
+        Path itemModel = ASSETS.resolve("models/item/rainbow_froglight.json");
+        assertTrue(Files.exists(itemModel), "missing the item model that parents the block model");
+        assertEquals(NS + ":block/rainbow_froglight", parse(itemModel).get("parent").getAsString(),
+            "the rainbow item model must parent the UNTINTED rainbow block model");
 
         JsonObject model = parse(blockModel);
 

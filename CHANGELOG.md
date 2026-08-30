@@ -11,8 +11,8 @@
   row is red, and so on through all sixteen. Every shape is worth the same per
   Froglight, so the deep colors aren't a worse deal, they just come out in
   bigger batches: one Froglight makes eight dye, two make sixteen, three make
-  twenty-four. The recipe book and JEI list every shape, so there is nothing to
-  memorize. (#375)
+  twenty-four. JEI lists all sixteen shapes, so there is nothing to memorize.
+  (#375)
 
 ### Changed
 

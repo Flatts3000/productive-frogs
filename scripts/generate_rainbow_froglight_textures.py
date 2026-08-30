@@ -11,15 +11,16 @@ So the rainbow variant gets real textures instead, and its models carry no
 
 Method: take vanilla's ochre froglight side/top sprites and keep their VALUE
 channel exactly (that is where the froglight's cell-and-glow structure lives),
-then replace HUE by pixel position and lift saturation to a floor so pale cells
-still take the color. The result reads as the same material as every other
+then replace HUE by pixel position and SHIFT saturation (never floor it - see
+SAT_BASE below; a floor erases the material). The result reads as the same material as every other
 Froglight in the mod, just spectrum-swept rather than single-hue.
 
   * side  - hue sweeps top-to-bottom, so a placed block reads as a vertical
             rainbow band and a stacked column repeats it cleanly.
-  * top   - hue sweeps along the diagonal, matching the Rainbow Slime's inner
-            cube (`generate_rainbow_slime_texture.py`) so the two read as one
-            material.
+  * top   - hue sweeps along the diagonal. Note the Rainbow Slime's inner cube
+            is NOT diagonal: at 6x6 a diagonal read as colored noise in-client,
+            so it uses horizontal bands. A 16x16 face has room for the smoother
+            sweep.
 
 Also writes a zoomed side-by-side preview to `gen/` for eyeballing without
 launching the client.
