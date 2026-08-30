@@ -24,15 +24,15 @@ import org.junit.jupiter.params.provider.MethodSource;
  *
  * <p>A Rainbow Froglight is one item stack - every one is a
  * {@code configurable_froglight} stamped with the {@code rainbow} variant - so the
- * grid arrangement is the only thing that picks the colour. That makes the set
+ * grid arrangement is the only thing that picks the color. That makes the set
  * fragile in two ways {@link RecipeConflictTest} does not cover:
  *
  * <ol>
- *   <li>A deleted or misnamed file leaves a dye colour unobtainable, and nothing
+ *   <li>A deleted or misnamed file leaves a dye color unobtainable, and nothing
  *       else notices - there is no "all sixteen" invariant anywhere else.</li>
  *   <li>The set's fairness rests on every recipe paying the same
  *       {@code DYE_PER_FROGLIGHT}. Edit a pattern to add or drop a Froglight
- *       without touching {@code count} and one colour silently becomes the
+ *       without touching {@code count} and one color silently becomes the
  *       best (or worst) deal in the mod.</li>
  * </ol>
  *
@@ -47,8 +47,8 @@ class RainbowDyeRecipeTest {
 
     private static final String VARIANT = "productivefrogs:rainbow";
 
-    /** Vanilla's sixteen dye colours, in {@code DyeColor} order. */
-    private static final List<String> DYE_COLOURS = List.of(
+    /** Vanilla's sixteen dye colors, in {@code DyeColor} order. */
+    private static final List<String> DYE_COLORS = List.of(
         "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray",
         "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black");
 
@@ -64,39 +64,39 @@ class RainbowDyeRecipeTest {
         }
     }
 
-    static Stream<String> dyeColours() {
-        return DYE_COLOURS.stream();
+    static Stream<String> dyeColors() {
+        return DYE_COLORS.stream();
     }
 
     @ParameterizedTest(name = "{0}")
-    @MethodSource("dyeColours")
-    void everyDyeColourHasARainbowFroglightRecipe(String colour) {
-        Path file = RECIPE_DIR.resolve("rainbow_froglight_to_" + colour + "_dye.json");
+    @MethodSource("dyeColors")
+    void everyDyeColorHasARainbowFroglightRecipe(String color) {
+        Path file = RECIPE_DIR.resolve("rainbow_froglight_to_" + color + "_dye.json");
         assertTrue(Files.exists(file), () ->
-            colour + " dye has no Rainbow Froglight recipe (" + file.getFileName()
-                + "). Without it that colour is unobtainable from the rainbow lane; "
+            color + " dye has no Rainbow Froglight recipe (" + file.getFileName()
+                + "). Without it that color is unobtainable from the rainbow lane; "
                 + "regenerate with scripts/generate_rainbow_dye_recipes.py.");
 
         JsonObject recipe = parse(file);
         assertEquals("minecraft:crafting_shaped", recipe.get("type").getAsString(),
-            colour + ": must be shaped - the arrangement is what picks the colour, "
+            color + ": must be shaped - the arrangement is what picks the color, "
                 + "so a shapeless recipe here collides with all fifteen others");
-        assertEquals("minecraft:" + colour + "_dye",
-            recipe.getAsJsonObject("result").get("id").getAsString(), colour + ": result");
+        assertEquals("minecraft:" + color + "_dye",
+            recipe.getAsJsonObject("result").get("id").getAsString(), color + ": result");
 
         // Exactly one ingredient, and it is the rainbow-stamped Froglight.
         JsonObject key = recipe.getAsJsonObject("key");
-        assertEquals(1, key.size(), colour + ": the pattern takes one ingredient only");
+        assertEquals(1, key.size(), color + ": the pattern takes one ingredient only");
         JsonObject ingredient = key.getAsJsonObject("X");
         assertEquals(VARIANT,
             ingredient.getAsJsonObject("components").get("productivefrogs:slime_variant").getAsString(),
-            colour + ": ingredient must be the rainbow-stamped Froglight");
+            color + ": ingredient must be the rainbow-stamped Froglight");
     }
 
     @ParameterizedTest(name = "{0}")
-    @MethodSource("dyeColours")
-    void yieldIsUniformPerFroglight(String colour) {
-        JsonObject recipe = parse(RECIPE_DIR.resolve("rainbow_froglight_to_" + colour + "_dye.json"));
+    @MethodSource("dyeColors")
+    void yieldIsUniformPerFroglight(String color) {
+        JsonObject recipe = parse(RECIPE_DIR.resolve("rainbow_froglight_to_" + color + "_dye.json"));
         int froglights = 0;
         for (JsonElement row : recipe.getAsJsonArray("pattern")) {
             froglights += row.getAsString().length() - row.getAsString().replace("X", "").length();
@@ -104,22 +104,22 @@ class RainbowDyeRecipeTest {
         final int used = froglights;
         int expected = used * DYE_PER_FROGLIGHT;
         assertEquals(expected, recipe.getAsJsonObject("result").get("count").getAsInt(),
-            () -> colour + ": " + used + " Froglight(s) must yield " + expected + " dye ("
-                + DYE_PER_FROGLIGHT + " each). Every colour pays the same rate, so no pattern "
+            () -> color + ": " + used + " Froglight(s) must yield " + expected + " dye ("
+                + DYE_PER_FROGLIGHT + " each). Every color pays the same rate, so no pattern "
                 + "is a better deal than another - change the pattern and the count together.");
     }
 
     /** The patterns must stay inside a crafting grid. */
     @Test
     void everyPatternFitsTheGrid() {
-        for (String colour : DYE_COLOURS) {
-            JsonArray pattern = parse(RECIPE_DIR.resolve("rainbow_froglight_to_" + colour + "_dye.json"))
+        for (String color : DYE_COLORS) {
+            JsonArray pattern = parse(RECIPE_DIR.resolve("rainbow_froglight_to_" + color + "_dye.json"))
                 .getAsJsonArray("pattern");
-            assertTrue(pattern.size() <= 3, colour + ": pattern is taller than 3 rows");
+            assertTrue(pattern.size() <= 3, color + ": pattern is taller than 3 rows");
             for (JsonElement row : pattern) {
                 assertEquals(pattern.get(0).getAsString().length(), row.getAsString().length(),
-                    colour + ": shaped pattern rows must all be the same length");
-                assertTrue(row.getAsString().length() <= 3, colour + ": pattern is wider than 3 columns");
+                    color + ": shaped pattern rows must all be the same length");
+                assertTrue(row.getAsString().length() <= 3, color + ": pattern is wider than 3 columns");
             }
         }
     }

@@ -3,12 +3,12 @@
 
 A Rainbow Froglight is one item stack: every one of them is
 `productivefrogs:configurable_froglight` stamped with the `rainbow` slime
-variant. So the *arrangement* in the grid is what picks the colour - sixteen
+variant. So the *arrangement* in the grid is what picks the color - sixteen
 shaped recipes over the same ingredient, one per vanilla dye. This is the only
 way one stack reaches sixteen outputs; a shapeless recipe would see sixteen
 identical inputs and only ever resolve the first.
 
-Yield is a flat DYE_PER_FROGLIGHT for every recipe, so no colour is a better
+Yield is a flat DYE_PER_FROGLIGHT for every recipe, so no color is a better
 deal than another - a one-Froglight pattern just mints a smaller batch than a
 three-Froglight one. Tune that one constant to rebalance the whole set.
 
@@ -30,8 +30,8 @@ RECIPE_DIR = os.path.join(ROOT, "src/main/resources/data/productivefrogs/recipe"
 VARIANT = "productivefrogs:rainbow"
 DYE_PER_FROGLIGHT = 8
 
-# colour -> pattern rows. Grouped by cost: the blank white is one Froglight, the
-# pale/mixed colours two, the deep saturated colours three.
+# color -> pattern rows. Grouped by cost: the blank white is one Froglight, the
+# pale/mixed colors two, the deep saturated colors three.
 PATTERNS = {
     # 1 Froglight
     "white":      ["X"],
@@ -102,20 +102,20 @@ def signature(pattern):
 
 def main() -> None:
     seen = {}
-    for colour, pattern in PATTERNS.items():
+    for color, pattern in PATTERNS.items():
         if len(set(len(r) for r in pattern)) != 1:
-            raise SystemExit(f"{colour}: pattern rows must all be the same length: {pattern}")
+            raise SystemExit(f"{color}: pattern rows must all be the same length: {pattern}")
         sig = signature(pattern)
         if sig in seen:
             raise SystemExit(
-                f"{colour} and {seen[sig]} are the same recipe to the crafting grid "
+                f"{color} and {seen[sig]} are the same recipe to the crafting grid "
                 f"(signature {sig!r}) - one of them would be uncraftable. Change a pattern.")
-        seen[sig] = colour
+        seen[sig] = color
 
     if len(PATTERNS) != 16:
-        raise SystemExit(f"expected 16 dye colours, got {len(PATTERNS)}")
+        raise SystemExit(f"expected 16 dye colors, got {len(PATTERNS)}")
 
-    for colour, pattern in PATTERNS.items():
+    for color, pattern in PATTERNS.items():
         count = sum(row.count("X") for row in pattern) * DYE_PER_FROGLIGHT
         recipe = {
             "type": "minecraft:crafting_shaped",
@@ -129,9 +129,9 @@ def main() -> None:
                     "components": {"productivefrogs:slime_variant": VARIANT},
                 }
             },
-            "result": {"id": f"minecraft:{colour}_dye", "count": count},
+            "result": {"id": f"minecraft:{color}_dye", "count": count},
         }
-        path = os.path.join(RECIPE_DIR, f"rainbow_froglight_to_{colour}_dye.json")
+        path = os.path.join(RECIPE_DIR, f"rainbow_froglight_to_{color}_dye.json")
         with open(path, "w", encoding="utf-8", newline="\n") as fh:
             json.dump(recipe, fh, indent=2)
             fh.write("\n")
