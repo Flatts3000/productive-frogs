@@ -54,22 +54,26 @@ public final class ResourceTadpoleBucketItem extends MobBucketItem {
     @Nullable
     public static Category readCategory(ItemStack stack) {
         CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
-        if (data == null) {
-            return null;
+        if (data != null) {
+            CompoundTag tag = data.copyTag();
+            if (tag.contains("Category", net.minecraft.nbt.Tag.TAG_STRING)) {
+                String name = tag.getString("Category");
+                if (name != null && !name.isEmpty()) {
+                    try {
+                        return Category.valueOf(name);
+                    } catch (IllegalArgumentException ignored) {
+                        // fall through to the component
+                    }
+                }
+            }
         }
-        CompoundTag tag = data.copyTag();
-        if (!tag.contains("Category", net.minecraft.nbt.Tag.TAG_STRING)) {
-            return null;
-        }
-        String name = tag.getString("Category");
-        if (name == null || name.isEmpty()) {
-            return null;
-        }
-        try {
-            return Category.valueOf(name);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
+        // Fall back to the flat component (#385), so the two identity carriers are
+        // self-healing in both directions. Once contained_category is the advertised
+        // identity key, a bucket can arrive with only that - from /give, a quest
+        // reward, or a pack recipe built off the component - and without this it
+        // would pass every component filter while still reading as an empty bucket
+        // for its name and tint.
+        return stack.get(PFDataComponents.CONTAINED_CATEGORY.get());
     }
 
     /**

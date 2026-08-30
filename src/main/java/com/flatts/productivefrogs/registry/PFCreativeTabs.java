@@ -284,6 +284,10 @@ public final class PFCreativeTabs {
      */
     private static ItemStack makeCategoryTadpoleBucket(Category category) {
         ItemStack stack = new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
+        // Must match ResourceTadpole#saveToBucketTag: a creative bucket and a
+        // scooped one are the same item to a component filter only if both stamp
+        // this (#385).
+        stack.set(PFDataComponents.CONTAINED_CATEGORY.get(), category);
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
             tag.putString("Category", category.name());
         });

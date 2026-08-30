@@ -461,6 +461,48 @@ public final class PFGameTests {
         helper.succeed();
     }
 
+    /**
+     * A SCOOPED Resource Tadpole Bucket and a CREATIVE one carry the same identity
+     * (#385) - the same defect #357 fixed for the slime bucket.
+     *
+     * <p>They cannot be fully component-equal: the scoop path writes vanilla live
+     * entity state through {@code super.saveToBucketTag}, and a BRED tadpole also
+     * carries its pending Appetite / Bounty / Reach in the same tag. Those are
+     * payload. What must match is the flat {@code contained_category} component
+     * both producers stamp, because that is what a component filter compares.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void scoopedAndCreativeTadpoleBucketsShareACategoryComponent(GameTestHelper helper) {
+        Category cat = Category.GEODE;
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos.below(), Blocks.WATER);
+
+        ResourceTadpole source = helper.spawn(PFEntities.RESOURCE_TADPOLE.get(), pos);
+        source.setCategory(cat);
+        ItemStack scooped = new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
+        source.saveToBucketTag(scooped);
+
+        Category scoopedCat = scooped.get(PFDataComponents.CONTAINED_CATEGORY.get());
+        if (scoopedCat != cat) {
+            helper.fail("a scooped Resource Tadpole Bucket carries contained_category "
+                + scoopedCat + ", expected " + cat + "; component filters cannot tell it "
+                + "from a creative-tab bucket");
+            return;
+        }
+
+        // A bucket carrying ONLY the component still resolves, so the two carriers
+        // stay self-healing (the same hole reviewed out of #357).
+        ItemStack componentOnly = new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
+        componentOnly.set(PFDataComponents.CONTAINED_CATEGORY.get(), cat);
+        if (ResourceTadpoleBucketItem.readCategory(componentOnly) != cat) {
+            helper.fail("a bucket carrying only contained_category read back "
+                + ResourceTadpoleBucketItem.readCategory(componentOnly)
+                + "; it would name and tint itself as an empty bucket");
+            return;
+        }
+        helper.succeed();
+    }
+
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void tadpoleBucketRoundTripPreservesCategory(GameTestHelper helper) {
         Category cat = Category.INFERNAL;
