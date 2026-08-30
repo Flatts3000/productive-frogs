@@ -92,11 +92,23 @@ sprite multiplied by `primary_color`, and a multiply can only ever produce a
 flat color - which is exactly the one thing "rainbow" must not be.
 
 **The slime** (`generate_rainbow_slime_texture.py`) gets a hue sweep painted
-across the six inner-cube faces. The variant therefore ships **no
-`inner_block`**: rainbow has no vanilla block for the generic baker
-(`generate_resource_slime_textures.py`) to downscale. Only the outer shell is
-multiplied by `primary_color` at render time, so the baked hues come through
-true.
+across the six inner-cube faces, as **six horizontal bands**. The variant
+therefore ships **no `inner_block`**: rainbow has no vanilla block for the
+generic baker (`generate_resource_slime_textures.py`) to downscale.
+
+Two things about that were got wrong first and corrected against a running
+client, so don't re-derive them from the code:
+
+1. **A diagonal sweep reads as noise.** The first bake swept hue along the face
+   diagonal, which puts eleven hue steps across six pixels. At entity scale that
+   is coloured static, not a rainbow. Six horizontal bands read cleanly and
+   match the vertical sweep on the Froglight's side texture.
+2. **The baked hues do NOT come through true.** Only the outer shell is
+   multiplied by `primary_color`, which is easy to misread as "the inner cube is
+   untinted, so it renders as authored". It is untinted, but it is *seen
+   through* the translucent shell, so the shell's color multiplies it optically
+   anyway. Behind the magenta shell the bands are barely legible; behind a
+   near-white shell they are unmistakable.
 
 **The Froglight** (`generate_rainbow_froglight_textures.py`) gets its own
 `rainbow_froglight_side` / `_top` sprites, derived from vanilla's ochre
@@ -135,3 +147,20 @@ separate decision rather than bolted on here.
 A blockstate boolean would be the cheap alternative and is **not** recommended:
 it only works while rainbow is the sole special case, and it is the ad-hoc flag
 pattern this codebase has already refactored away from once (see `FrogKind`).
+
+### Why `primary_color` is currently a compromise
+
+The placed Froglight and the slime shell read the same `primary_color`, and
+rainbow wants opposite things from it:
+
+| `primary_color` | Slime | Placed Froglight |
+|---|---|---|
+| magenta (shipped) | magenta, bands barely legible | distinctly magenta |
+| near-white | unmistakable rainbow bands | indistinguishable from a vanilla ochre Froglight |
+
+Both were confirmed in a running client. The shipped value is magenta, because a
+Froglight that looks exactly like vanilla's is the worse of the two failures.
+Solving the placed block removes the conflict entirely - once the block renders
+its own baked texture it stops consulting `primary_color`, which frees that
+field to go pale for the slime. That is the main argument for doing the dynamic
+model rather than living with the compromise.
