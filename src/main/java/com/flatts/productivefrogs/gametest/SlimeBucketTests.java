@@ -35,6 +35,8 @@ final class SlimeBucketTests {
         PFGameTests.test("slime_bucket_dispenser_releases_slime_no_water", 60, SlimeBucketTests::slimeBucketDispenserReleasesSlimeNoWater);
         PFGameTests.test("scooped_and_crafted_slime_buckets_share_a_variant_component", 100,
             SlimeBucketTests::scoopedAndCraftedSlimeBucketsShareAVariantComponent);
+        PFGameTests.test("slime_bucket_variant_resolves_from_component_alone", 40,
+            SlimeBucketTests::slimeBucketVariantResolvesFromComponentAlone);
     }
 
     /**
@@ -77,6 +79,31 @@ final class SlimeBucketTests {
         if (!scoopedVariant.equals(craftedVariant)) {
             helper.fail("scooped bucket is " + scoopedVariant + " but crafted is " + craftedVariant
                 + "; the two production paths disagree on the item's identity");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * A bucket carrying ONLY the {@code slime_variant} component still resolves its
+     * variant (#357 review).
+     *
+     * <p>Once that component is advertised as the identity key, buckets will arrive
+     * with only it - from {@code /give}, a quest reward, or a pack recipe built off
+     * the component. Before the reader fell back to it, such a bucket passed every
+     * component filter while the Milker fail-closed on it, feeding a frog fell
+     * through to vanilla, and it rendered and named itself a plain Slime Bucket.
+     */
+    private static void slimeBucketVariantResolvesFromComponentAlone(GameTestHelper helper) {
+        Identifier variantId = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        ItemStack componentOnly = new ItemStack(PFItems.SLIME_BUCKET.get());
+        componentOnly.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
+
+        Identifier read = ResourceTadpoleBucketItem.readVariant(componentOnly);
+        if (!variantId.equals(read)) {
+            helper.fail("a bucket carrying only the slime_variant component read back "
+                + read + "; it would be treated as an unstamped bucket by the Milker, "
+                + "frog feeding, the tint and the name");
             return;
         }
         helper.succeed();
