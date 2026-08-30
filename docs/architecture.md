@@ -121,11 +121,12 @@ Fields, decoded by `SlimeVariant.CODEC`:
 | `primer_item` | one of `primer_item`/`primer_tag` | exact item id that primes this variant (vanilla / first-party items) |
 | `primer_tag` | one of `primer_item`/`primer_tag` | item tag whose members each prime this variant (cross-mod, e.g. `c:ingots/tin`) |
 | `category` | yes | parent category: `bog` / `cave` / `geode` / `tide` / `infernal` / `void` |
-| `primary_color` | yes | outer-shell tint, 24-bit RGB int in `[0, 0xFFFFFF]` |
+| `primary_color` | yes | outer-shell tint (unless `untinted_shell`), plus every surface with no bespoke art - milk bucket, slime bucket, spawn egg, Sprinkler, Crucible, Basin, Terrarium readout, dust particles. 24-bit RGB int in `[0, 0xFFFFFF]` |
 | `secondary_color` | yes | secondary tint, same range |
 | `weight` | no (default 1) | relative weight in the random discovery pool |
 | `inner_block` | no | vanilla block id whose texture is baked inside the translucent slime |
 | `spawn_entity` | no | EntityType a Slime Milk source spawns instead of the default `ResourceSlime` |
+| `untinted_shell` | no (default false) | the variant's own entity texture is authored in full colour, so the slime shell is NOT multiplied by `primary_color`. Only meaningful alongside a shipped `<variant>_resource_slime.png`; ignored when the variant falls back to the category cube. Affects the slime shell only - every other surface still tints |
 
 The codec rejects a variant declaring neither `primer_item` nor `primer_tag` at
 datapack load (it could never be primed, yet would still enter the discovery

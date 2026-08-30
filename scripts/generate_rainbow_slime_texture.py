@@ -7,7 +7,7 @@ Every other variant gets its inner cube from a vanilla block texture via
 `inner_block` and this script paints the inner cube instead: a hue sweep across
 all six 6x6 inner faces.
 
-BOTH cubes are painted, and the variant sets `untinted: true` so the renderer
+BOTH cubes are painted, and the variant sets `untinted_shell: true` so the renderer
 skips the shell tint entirely. That matters: the shell is normally multiplied by
 `primary_color`, a multiply can only ever produce one flat hue, and the inner
 cube is SEEN THROUGH the translucent shell - so a tinted shell would wash both

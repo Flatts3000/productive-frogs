@@ -51,7 +51,7 @@ Vanilla textures stay as the base. With color-multiply tinting, the result is "v
 
 ## Per-Variant Color in JSON
 
-The `primary_color` and `secondary_color` fields on each `slime_variant` JSON drive all rendering tint for that variant. Both are packed 24-bit RGB integers (`0xRRGGBB`, range `0`..`0xFFFFFF`), not `[r, g, b]` triples. `category` is a bare species name (`cave`, not `productivefrogs:metallic`). A primer (`primer_item` or `primer_tag`) is required; there is no `display_name`, `color_rgb`, `core_color_rgb`, or `loot_table` field. A real entry (`data/productivefrogs/productivefrogs/slime_variant/iron.json`):
+The `primary_color` and `secondary_color` fields on each `slime_variant` JSON drive rendering tint for that variant (except the slime shell of a variant that sets `untinted_shell` - see below). Both are packed 24-bit RGB integers (`0xRRGGBB`, range `0`..`0xFFFFFF`), not `[r, g, b]` triples. `category` is a bare species name (`cave`, not `productivefrogs:metallic`). A primer (`primer_item` or `primer_tag`) is required; there is no `display_name`, `color_rgb`, `core_color_rgb`, or `loot_table` field. A real entry (`data/productivefrogs/productivefrogs/slime_variant/iron.json`):
 
 ```json
 {
@@ -93,11 +93,11 @@ Same flow applies to:
 
 ### Slime body textures (per-variant, baked)
 
-Resource Slimes are NOT a single shared body texture tinted at render. Each variant has its own pre-baked PNG (`scripts/generate_resource_slime_textures.py` bakes the `inner_block` into the body), and each parent species has a fallback texture. The outer shell is still tint-multiplied by `primary_color` on top of the baked texture.
+Resource Slimes are NOT a single shared body texture tinted at render. Each variant has its own pre-baked PNG (`scripts/generate_resource_slime_textures.py` bakes the `inner_block` into the body), and each parent species has a fallback texture. The outer shell is tint-multiplied by `primary_color` on top of the baked texture - **unless** the variant sets `untinted_shell`, which skips that multiply so a texture authored in full colour renders as painted. A multiply can only ever produce one flat hue, so multi-hued art (the Rainbow Slime) has to opt out; the flag is ignored when the variant ships no texture of its own and falls back to the category cube, so that path keeps its tint.
 
 | File | Purpose |
 |---|---|
-| `textures/entity/slime/<variant>_resource_slime.png` | Per-variant baked Resource Slime body (e.g. `iron_resource_slime.png`); inner block baked in, shell tinted |
+| `textures/entity/slime/<variant>_resource_slime.png` | Per-variant baked Resource Slime body (e.g. `iron_resource_slime.png`); inner block baked in, shell tinted unless the variant sets `untinted_shell` |
 | `textures/entity/slime/<species>_slime.png` | Per-species fallback body (`cave_slime.png`, `geode_slime.png`, `bog_slime.png`, `tide_slime.png`, `infernal_slime.png`, `void_slime.png`) |
 
 ### Shared fluid / bucket textures (tintable)

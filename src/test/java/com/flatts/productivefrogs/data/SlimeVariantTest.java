@@ -101,29 +101,29 @@ class SlimeVariantTest {
     }
 
     /**
-     * {@code untinted} opts a variant out of having its slime shell multiplied by
+     * {@code untinted_shell} opts a variant out of having its slime shell multiplied by
      * {@code primary_color}, which is what lets a variant ship full-colour art
      * (Rainbow) instead of greyscale-plus-tint. It must survive the round trip, and
      * it must default to false so the other 39 variants keep tinting.
      */
     @Test
-    void codecRoundTripsUntintedAndDefaultsToTinted() {
+    void codecRoundTripsUntintedShellAndDefaultsToTinted() {
         SlimeVariant tinted = new SlimeVariant(
             Optional.of(Identifier.parse("minecraft:iron_ingot")), Optional.empty(),
             Category.CAVE, 0xAAAAAA, 0xBBBBBB, 1, Optional.empty(), Optional.empty());
-        assertFalse(tinted.untinted(), "a variant that says nothing must stay tinted");
+        assertFalse(tinted.untintedShell(), "a variant that says nothing must stay tinted");
 
-        SlimeVariant untinted = new SlimeVariant(
+        SlimeVariant untintedShell = new SlimeVariant(
             Optional.of(Identifier.parse("minecraft:red_dye")), Optional.empty(),
             Category.BOG, 0xC354CD, 0x169C9C, 1, Optional.empty(), Optional.empty(), true);
-        JsonElement encoded = SlimeVariant.CODEC.encodeStart(JsonOps.INSTANCE, untinted)
+        JsonElement encoded = SlimeVariant.CODEC.encodeStart(JsonOps.INSTANCE, untintedShell)
             .result()
             .orElseThrow();
         SlimeVariant decoded = SlimeVariant.CODEC.parse(JsonOps.INSTANCE, encoded)
             .result()
             .orElseThrow();
-        assertTrue(decoded.untinted(), "untinted must survive the round trip");
-        assertEquals(untinted, decoded);
+        assertTrue(decoded.untintedShell(), "untinted_shell must survive the round trip");
+        assertEquals(untintedShell, decoded);
     }
 
     @Test

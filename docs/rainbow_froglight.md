@@ -107,7 +107,7 @@ which is why that baker lists it under SKIPPED rather than MISSING.
 It also sets **`untinted: true`**, and that flag is load-bearing. The shell is
 normally multiplied by `primary_color`; a multiply can only ever produce one flat
 hue, and because the inner cube is *seen through* the translucent shell, a tinted
-shell washes the whole slime toward that hue no matter what is baked. `untinted`
+shell washes the whole slime toward that hue no matter what is baked. `untinted_shell`
 makes `ResourceSlimeRenderer#resolveShellTint` return `-1`, the no-tint sentinel
 the outer layer passes straight through, so the art renders as painted.
 
@@ -121,7 +121,8 @@ client, so don't re-derive them from the code:
    diagonal, which puts eleven hue steps across six pixels. At entity scale that
    is coloured static, not a rainbow. Horizontal bands read cleanly, and the shell
    and inner cube sweep the same direction so they reinforce rather than clash.
-   The two caps still sweep diagonally, having no up-down to run along.
+   The shell's two caps sweep diagonally instead, having no up-down to run along;
+   the inner cube's caps stay banded with the rest of that cube.
 2. **The inner cube has to be DRAWN, not recoloured.** The base texture
    (`bog_resource_slime.png`) is fully transparent in that region, so a
    recolour-in-place leaves it black. The shell is the opposite case: it is a flat
@@ -192,7 +193,7 @@ because a dedicated server never loads models.
 ### What `primary_color` is for now
 
 Neither the placed Froglight nor the slime shell consults it any more - the
-Froglight renders its own model and the slime opts out with `untinted` - so it is
+Froglight renders its own model and the slime opts out with `untinted_shell` - so it is
 free to be vivid again, and is back to `0xC354CD`.
 
 It still drives every surface that has no bespoke art: the Slime Milk bucket

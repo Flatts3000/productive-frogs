@@ -84,11 +84,11 @@ public record SlimeVariant(
     int weight,
     Optional<Identifier> innerBlock,
     Optional<Identifier> spawnEntity,
-    boolean untinted
+    boolean untintedShell
 ) {
 
     /**
-     * Pre-{@code untinted} arity, defaulting to tinted. Kept so the many places
+     * Pre-{@code untinted_shell} arity, defaulting to tinted. Kept so the many places
      * that build a variant in tests and GameTests do not all have to spell out a
      * flag they do not care about.
      */
@@ -142,7 +142,7 @@ public record SlimeVariant(
             // flat colour - so a variant whose art is itself multi-hued (rainbow)
             // has to opt out or the multiply washes it toward one hue. Default
             // false: every other variant is greyscale-plus-tint.
-            Codec.BOOL.optionalFieldOf("untinted", false).forGetter(SlimeVariant::untinted),
+            Codec.BOOL.optionalFieldOf("untinted_shell", false).forGetter(SlimeVariant::untintedShell),
             // RETIRED knob (2.0/Phase 5): spawn_catalyst gated the boss milk
             // sources behind the catalyst altars, which the boss altars replaced.
             // Record codecs silently ignore unknown keys, so without this a 1.x
@@ -153,10 +153,10 @@ public record SlimeVariant(
             // converted to a DataResult failure in requirePrimer below.
             Codec.BOOL.optionalFieldOf("spawn_catalyst", false).forGetter(v -> false)
         ).apply(instance, (primerItem, primerTag, category, primaryColor, secondaryColor,
-                weight, innerBlock, spawnEntity, untinted, spawnCatalyst) ->
+                weight, innerBlock, spawnEntity, untintedShell, spawnCatalyst) ->
             new SlimeVariant(primerItem, primerTag, category, primaryColor, secondaryColor,
                 spawnCatalyst ? RETIRED_SPAWN_CATALYST_SENTINEL : weight, innerBlock, spawnEntity,
-                untinted))
+                untintedShell))
     ).comapFlatMap(SlimeVariant::requirePrimer, Function.<SlimeVariant>identity());
 
 
