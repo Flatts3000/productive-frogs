@@ -126,21 +126,28 @@ public final class VariantBlockStateModel {
         }
 
         /**
-         * The geometry cache key. Overriding this is mandatory once
-         * {@link #collectParts} varies by position: the default returns null,
-         * meaning "not implemented", and the renderer would reuse one position's
-         * quads at another.
+         * The geometry cache key, delegated to whichever child was selected.
          *
-         * <p>The key pairs the variant with {@code this}, and both halves are
-         * load-bearing. The variant alone would collide across the three axis
-         * blockstates, which are separate {@code Baked} instances whose children
-         * carry different rotations - identical keys but different geometry, so a
-         * vertical Froglight would render a neighbour's horizontal quads.
+         * <p>Overriding this at all is mandatory once {@link #collectParts} varies
+         * by position: the default returns null, meaning "not implemented", and the
+         * renderer would reuse one position's quads at another.
+         *
+         * <p>Delegating rather than inventing a key matters because children decode
+         * with {@code BlockStateModel.Unbaked.CODEC}, which accepts three shapes -
+         * a single variant, a WEIGHTED LIST, and a nested custom model. A weighted
+         * list's geometry varies per position (its own key is drawn through
+         * {@code random}), so a key of our own that depended only on the variant
+         * would claim stability the child does not have, and every position sharing
+         * that variant would render one position's quads. Delegation is also what
+         * the interface javadoc prescribes for a model that forwards to one other.
+         *
+         * <p>This cannot collide across the three axis entries either: each is a
+         * separate baked child instance, and {@code SingleVariant} keys on itself.
          */
         @Override
         public Object createGeometryKey(BlockAndTintGetter level, BlockPos pos, BlockState state,
                                         RandomSource random) {
-            return new GeometryKey(this, variantAt(level, pos));
+            return modelAt(level, pos).createGeometryKey(level, pos, state, random);
         }
 
         @Override
@@ -173,10 +180,6 @@ public final class VariantBlockStateModel {
         @Override
         public int materialFlags() {
             return fallback.materialFlags();
-        }
-
-        /** Identity of {@code owner} is intended - one instance per blockstate entry. */
-        private record GeometryKey(Baked owner, @Nullable Identifier variant) {
         }
     }
 }

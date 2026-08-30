@@ -327,14 +327,24 @@ public class ConfigurableFroglightBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
+        Identifier previousVariant = variantId;
+        Identifier previousSynthesized = synthesizedItem;
         String variant = input.getStringOr("Variant", "");
         variantId = variant.isEmpty() ? null : Identifier.tryParse(variant);
         String synthesized = input.getStringOr("SynthesizedItem", "");
         synthesizedItem = synthesized.isEmpty() ? null : Identifier.tryParse(synthesized);
         readEffect(input);
-        // On the client this is the sync path - getUpdateTag and getUpdatePacket
-        // both land here - so it is where a variant change has to become visible.
-        refreshModel();
+        // On the client this is the sync path - getUpdateTag and getUpdatePacket both
+        // land here - so it is where an appearance change has to become visible.
+        // Gate it on the two fields that actually drive the look: the variant picks
+        // the model, the synthesized item drives the tint, and both are baked into
+        // the chunk mesh. A StoredEffect toggle only moves particles, and a Brewed
+        // Froglight is meant to be toggled repeatedly, so re-meshing its 3x3x3
+        // neighbourhood for byte-identical geometry every time would be pure waste.
+        if (!java.util.Objects.equals(previousVariant, variantId)
+            || !java.util.Objects.equals(previousSynthesized, synthesizedItem)) {
+            refreshModel();
+        }
     }
 
     /**

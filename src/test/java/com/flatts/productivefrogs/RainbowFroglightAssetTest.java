@@ -115,9 +115,9 @@ class RainbowFroglightAssetTest {
     /**
      * The placed block picks its model from the block entity's variant, through
      * {@code VariantBlockStateModel}. Three things in that JSON are silent if wrong:
-     * the dispatch type (a typo falls back to vanilla's single-variant codec and the
-     * whole file still loads, rendering every Froglight tinted), the model paths, and
-     * the ROTATION - the fallback and the per-variant model within one axis entry must
+     * the dispatch type (NeoForge's dispatch falls back to the vanilla codec only when
+     * the key is ABSENT, so a typo'd type is a hard decode error that drops the whole
+     * blockstate), the model paths, and the ROTATION - the fallback and the per-variant model within one axis entry must
      * carry identical rotation, or a rainbow Froglight placed sideways renders with
      * the upright model's quads.
      */

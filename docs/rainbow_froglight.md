@@ -178,10 +178,17 @@ because a dedicated server never loads models.
    old state to force the comparison, which is why that argument looks wrong and
    is not.
 
-### `primary_color` is no longer overloaded
+### `primary_color` after the model change
 
-It used to tint both the slime shell and the placed Froglight, and rainbow wanted
-opposite values: saturated enough for a distinct Froglight, pale enough for the
-slime's baked bands to read. Now that the block renders its own texture it stops
-consulting the tint entirely, so the field is free to serve the slime alone. It
-is `0xF4F0FA`, and the bands read cleanly.
+The placed Froglight no longer consults it, which removes the sharpest half of the
+old conflict: the field no longer has to be saturated enough to keep the block
+distinct. It is **not** slime-only though - it still feeds the Slime Milk bucket
+(`VariantColorTint`), the slime bucket and spawn egg, the Sprinkler, the Crucible
+and Basin renderers, and the Terrarium readout.
+
+That constrains how pale it can go. It is `0xE6D2FF`, a pale lilac: light enough
+for the slime's baked bands to read through the translucent shell, and clearly
+distinct from `0xF0F0E0`, the cream `VariantColorTint` returns when a variant
+**cannot be resolved**. An earlier near-white value sat close enough to that
+fallback that a Rainbow Slime Milk bucket would have been indistinguishable from a
+broken one.
