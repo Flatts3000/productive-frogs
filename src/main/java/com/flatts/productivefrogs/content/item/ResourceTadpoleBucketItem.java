@@ -58,10 +58,22 @@ public final class ResourceTadpoleBucketItem extends MobBucketItem {
     @Nullable
     public static com.flatts.productivefrogs.data.FrogKind readKind(ItemStack stack) {
         CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
-        if (data == null) {
-            return null;
+        if (data != null) {
+            com.flatts.productivefrogs.data.FrogKind fromTag =
+                com.flatts.productivefrogs.data.FrogKind.readFromTag(data.copyTag()).orElse(null);
+            if (fromTag != null) {
+                return fromTag;
+            }
         }
-        return com.flatts.productivefrogs.data.FrogKind.readFromTag(data.copyTag()).orElse(null);
+        // Fall back to the flat component (#385), so the two identity carriers are
+        // self-healing in both directions. Once contained_kind is the advertised
+        // identity key, a bucket can arrive with only that - from /give, a quest
+        // reward, or a pack recipe built off the component - and without this it
+        // would pass every component filter while still naming and tinting itself
+        // as an empty bucket. byId returns null for an id this build does not
+        // know, which is the same "unknown" answer the tag path gives.
+        String kindId = stack.get(PFDataComponents.CONTAINED_KIND.get());
+        return kindId == null ? null : com.flatts.productivefrogs.data.FrogKind.byId(kindId);
     }
 
     /**
