@@ -14,6 +14,7 @@ import com.flatts.productivefrogs.registry.PFRegistries;
 import com.flatts.productivefrogs.event.SlimeInfusionHandler;
 import com.flatts.productivefrogs.event.SlimeSplitDiscoveryHandler;
 import com.flatts.productivefrogs.registry.PFBlocks;
+import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFFluidTypes;
 import com.flatts.productivefrogs.registry.PFItems;
@@ -387,6 +388,79 @@ public final class PFGameTests {
      * PR #22's slime-bucket strengthening — the tadpole bucket now has the
      * same coverage shape.
      */
+    /**
+     * A SCOOPED Slime in a Bucket and a CRAFTED one carry the same identity (#357).
+     *
+     * <p>They are not, and cannot be, fully component-equal: the scoop path runs
+     * vanilla's {@code Bucketable.saveDefaultDataToBucketTag} first, which writes
+     * live entity state (Health, plus NoAI / Silent / CustomName when set) into
+     * {@code BUCKET_ENTITY_DATA}. That is the right home for entity state. What
+     * must match is the flat {@code slime_variant} component both paths stamp -
+     * the same key a Froglight carries - because that is what a component filter
+     * compares. Without it, six Sky Frogs quest tasks could be completed by
+     * crafting a bucket but not by scooping a slime, and no pack-side matching
+     * mode fixed it: FTB's STRICT mode is exact equality and its FUZZY mode still
+     * compares whole components, while the difference sat NESTED inside
+     * {@code bucket_entity_data}.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
+    public static void scoopedAndCraftedSlimeBucketsShareAVariantComponent(GameTestHelper helper) {
+        ResourceLocation variantId = ResourceLocation.fromNamespaceAndPath(
+            ProductiveFrogs.MOD_ID, "iron");
+        ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(2, 2, 2));
+        source.setCategory(Category.CAVE);
+        source.setVariant(variantId);
+
+        ItemStack scooped = new ItemStack(PFItems.SLIME_BUCKET.get());
+        source.saveToBucketTag(scooped);
+        ItemStack crafted = PFItems.variantSlimeBucket(variantId, Category.CAVE);
+
+        ResourceLocation scoopedVariant = scooped.get(PFDataComponents.SLIME_VARIANT.get());
+        ResourceLocation craftedVariant = crafted.get(PFDataComponents.SLIME_VARIANT.get());
+        if (scoopedVariant == null) {
+            helper.fail("a scooped Slime in a Bucket carries no slime_variant component; "
+                + "component filters cannot tell it from any other variant");
+            return;
+        }
+        if (craftedVariant == null) {
+            helper.fail("a crafted Slime in a Bucket carries no slime_variant component");
+            return;
+        }
+        if (!scoopedVariant.equals(craftedVariant)) {
+            helper.fail("scooped bucket is " + scoopedVariant + " but crafted is " + craftedVariant
+                + "; the two production paths disagree on the item's identity");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * A bucket carrying ONLY the {@code slime_variant} component still resolves its
+     * variant (#357 review).
+     *
+     * <p>Once that component is advertised as the identity key, buckets will arrive
+     * with only it - from {@code /give}, a quest reward, or a pack recipe built off
+     * the component. Before the reader fell back to it, such a bucket passed every
+     * component filter while the Milker fail-closed on it, feeding a frog fell
+     * through to vanilla, and it rendered and named itself a plain Slime Bucket.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 40)
+    public static void slimeBucketVariantResolvesFromComponentAlone(GameTestHelper helper) {
+        ResourceLocation variantId = ResourceLocation.fromNamespaceAndPath(
+            ProductiveFrogs.MOD_ID, "iron");
+        ItemStack componentOnly = new ItemStack(PFItems.SLIME_BUCKET.get());
+        componentOnly.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
+
+        ResourceLocation read = ResourceTadpoleBucketItem.readVariant(componentOnly);
+        if (!variantId.equals(read)) {
+            helper.fail("a bucket carrying only the slime_variant component read back "
+                + read + "; it would be treated as an unstamped bucket by the Milker, "
+                + "frog feeding, the tint and the name");
+            return;
+        }
+        helper.succeed();
+    }
+
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void tadpoleBucketRoundTripPreservesCategory(GameTestHelper helper) {
         Category cat = Category.INFERNAL;
