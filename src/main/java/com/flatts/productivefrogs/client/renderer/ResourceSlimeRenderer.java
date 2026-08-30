@@ -106,17 +106,13 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
             Identifier variantId = rs.variantId;
             Category cat = rs.category;
             if (variantId != null) {
-                Identifier variantTex = VARIANT_TEXTURES.computeIfAbsent(variantId.getPath(), path ->
-                    Identifier.fromNamespaceAndPath(
-                        ProductiveFrogs.MOD_ID,
-                        "textures/entity/slime/" + path + "_resource_slime.png"));
                 // A built-in variant ships this texture; a datapack-added variant
                 // typically does not. Fall back to the category cube when the
                 // per-variant texture is absent (the shell still tints by
-                // primary_color), so a config-only variant never shows the
-                // missing-texture checkerboard.
-                if (textureExists(variantTex)) {
-                    return variantTex;
+                // primary_color - see resolveShellTint), so a config-only variant
+                // never shows the missing-texture checkerboard.
+                if (hasVariantTexture(variantId)) {
+                    return variantTexture(variantId);
                 }
             }
             if (cat != null) {
@@ -133,6 +129,19 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
      */
     static int resolveShellTint(ResourceSlime resource) {
         SlimeVariant variant = resource.getVariant();
+        // Only honour the opt-out when the variant's OWN texture actually resolved.
+        // resolveTexture falls back to the greyscale category cube when a variant
+        // ships no art - a datapack setting the flag before shipping its PNG, or
+        // shipping it misnamed - and skipping the tint there would render a
+        // colourless grey blob, strictly worse than the tinted fallback that path
+        // exists to provide.
+        if (variant != null && variant.untintedShell() && hasVariantTexture(resource.getVariantId())) {
+            // -1 is the no-tint sentinel the outer layer passes straight through as
+            // the model body colour. The variant's own texture is already in full
+            // colour; multiplying it by a single primary_color would flatten it
+            // toward that one hue, which is exactly what a rainbow must not do.
+            return -1;
+        }
         if (variant != null) {
             return ARGB.color(255,
                 (variant.primaryColor() >> 16) & 0xFF,
@@ -141,6 +150,19 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
         }
         Category cat = resource.getCategory();
         return cat != null ? cat.shellTintArgb() : -1;
+    }
+
+    /** The per-variant texture id, cached; not a claim that it exists. */
+    private static Identifier variantTexture(Identifier variantId) {
+        return VARIANT_TEXTURES.computeIfAbsent(variantId.getPath(), path ->
+            Identifier.fromNamespaceAndPath(
+                ProductiveFrogs.MOD_ID,
+                "textures/entity/slime/" + path + "_resource_slime.png"));
+    }
+
+    /** Whether this variant ships its own body texture rather than using the category cube. */
+    private static boolean hasVariantTexture(@Nullable Identifier variantId) {
+        return variantId != null && textureExists(variantTexture(variantId));
     }
 
     // Cached resource-existence check (one lookup per variant texture). Render

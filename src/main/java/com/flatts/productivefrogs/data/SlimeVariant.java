@@ -83,8 +83,21 @@ public record SlimeVariant(
     int secondaryColor,
     int weight,
     Optional<Identifier> innerBlock,
-    Optional<Identifier> spawnEntity
+    Optional<Identifier> spawnEntity,
+    boolean untintedShell
 ) {
+
+    /**
+     * Pre-{@code untinted_shell} arity, defaulting to tinted. Kept so the many places
+     * that build a variant in tests and GameTests do not all have to spell out a
+     * flag they do not care about.
+     */
+    public SlimeVariant(Optional<Identifier> primerItem, Optional<TagKey<Item>> primerTag,
+                        Category category, int primaryColor, int secondaryColor, int weight,
+                        Optional<Identifier> innerBlock, Optional<Identifier> spawnEntity) {
+        this(primerItem, primerTag, category, primaryColor, secondaryColor, weight,
+            innerBlock, spawnEntity, false);
+    }
 
     /**
      * Codec used by the datapack registry for both JSON loading and client
@@ -123,6 +136,13 @@ public record SlimeVariant(
             Codec.intRange(0, Integer.MAX_VALUE).optionalFieldOf("weight", 1).forGetter(SlimeVariant::weight),
             Identifier.CODEC.optionalFieldOf("inner_block").forGetter(SlimeVariant::innerBlock),
             Identifier.CODEC.optionalFieldOf("spawn_entity").forGetter(SlimeVariant::spawnEntity),
+            // Set when the variant's ENTITY textures are authored in full colour
+            // rather than as greyscale to be tinted. The shell is normally
+            // multiplied by primary_color, and a multiply can only ever produce a
+            // flat colour - so a variant whose art is itself multi-hued (rainbow)
+            // has to opt out or the multiply washes it toward one hue. Default
+            // false: every other variant is greyscale-plus-tint.
+            Codec.BOOL.optionalFieldOf("untinted_shell", false).forGetter(SlimeVariant::untintedShell),
             // RETIRED knob (2.0/Phase 5): spawn_catalyst gated the boss milk
             // sources behind the catalyst altars, which the boss altars replaced.
             // Record codecs silently ignore unknown keys, so without this a 1.x
@@ -133,9 +153,10 @@ public record SlimeVariant(
             // converted to a DataResult failure in requirePrimer below.
             Codec.BOOL.optionalFieldOf("spawn_catalyst", false).forGetter(v -> false)
         ).apply(instance, (primerItem, primerTag, category, primaryColor, secondaryColor,
-                weight, innerBlock, spawnEntity, spawnCatalyst) ->
+                weight, innerBlock, spawnEntity, untintedShell, spawnCatalyst) ->
             new SlimeVariant(primerItem, primerTag, category, primaryColor, secondaryColor,
-                spawnCatalyst ? RETIRED_SPAWN_CATALYST_SENTINEL : weight, innerBlock, spawnEntity))
+                spawnCatalyst ? RETIRED_SPAWN_CATALYST_SENTINEL : weight, innerBlock, spawnEntity,
+                untintedShell))
     ).comapFlatMap(SlimeVariant::requirePrimer, Function.<SlimeVariant>identity());
 
 

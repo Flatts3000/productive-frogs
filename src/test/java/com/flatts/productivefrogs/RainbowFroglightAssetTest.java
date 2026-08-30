@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import java.awt.image.BufferedImage;
 import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -13,6 +14,9 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
+import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -150,6 +154,76 @@ class RainbowFroglightAssetTest {
                         + "otherwise the two render at different orientations");
             }
         }
+    }
+
+    /**
+     * The Rainbow Slime's entity texture is authored in full colour, on both the
+     * translucent shell and the inner cube. That only renders as painted while the
+     * variant declares {@code untinted_shell}: without it the shell is multiplied by
+     * {@code primary_color}, and since the inner cube is seen THROUGH that shell,
+     * one flat hue washes over the whole slime. Nothing else catches that - the
+     * texture and the flag live in different files and neither is validated against
+     * the other.
+     */
+    @Test
+    void rainbowVariantOptsOutOfShellTinting() {
+        Path variant = resourcesRoot()
+            .resolve("data/" + NS + "/" + NS + "/slime_variant/rainbow.json");
+        assertTrue(Files.exists(variant), "missing " + variant.getFileName());
+        JsonObject json = parse(variant);
+        assertTrue(json.has("untinted_shell") && json.get("untinted_shell").getAsBoolean(),
+            "rainbow ships full-colour entity art, so it must set \"untinted_shell\": true - "
+                + "otherwise primary_color multiplies over it and the rainbow flattens");
+
+        Path texture = resourcesRoot().resolve(
+            "assets/" + NS + "/textures/entity/slime/rainbow_resource_slime.png");
+        assertTrue(Files.exists(texture), () ->
+            "no baked entity texture at " + texture
+                + " - run scripts/generate_rainbow_slime_texture.py");
+
+        // Existence is not enough. With untinted_shell set, primary_color no longer
+        // multiplies over this texture, so if the bake ever goes stale or greyscale
+        // - someone edits the bake base or the script and forgets to re-run it - the
+        // Rainbow Slime ships as a flat grey blob and every test still passes,
+        // because the only thing that was giving it colour is now switched off.
+        BufferedImage img;
+        try {
+            img = ImageIO.read(texture.toFile());
+        } catch (IOException e) {
+            throw new UncheckedIOException("could not read " + texture, e);
+        }
+        assertMultiHued(img, "outer shell", 0, 8, 32, 16);
+        for (int[] face : new int[][] {{6, 16}, {12, 16}, {0, 22}, {6, 22}, {12, 22}, {18, 22}}) {
+            assertMultiHued(img, "inner cube face at " + face[0] + "," + face[1],
+                face[0], face[1], face[0] + 6, face[1] + 6);
+        }
+    }
+
+    /** A baked region must be in colour and carry several distinct hues, not one flat tone. */
+    private static void assertMultiHued(BufferedImage img, String what,
+                                        int minX, int minY, int maxX, int maxY) {
+        Set<Integer> colours = new HashSet<>();
+        boolean anyChromatic = false;
+        for (int y = minY; y < maxY; y++) {
+            for (int x = minX; x < maxX; x++) {
+                int argb = img.getRGB(x, y);
+                if ((argb >>> 24) == 0) {
+                    continue;
+                }
+                colours.add(argb & 0xFFFFFF);
+                int r = (argb >> 16) & 0xFF;
+                int g = (argb >> 8) & 0xFF;
+                int b = argb & 0xFF;
+                anyChromatic |= r != g || g != b;
+            }
+        }
+        assertTrue(anyChromatic, () ->
+            what + " is greyscale - the bake is stale or was never run "
+                + "(scripts/generate_rainbow_slime_texture.py), and untinted_shell means "
+                + "nothing will colour it at render time");
+        assertTrue(colours.size() >= 4, () ->
+            what + " has only " + colours.size() + " distinct colour(s); a rainbow sweep "
+                + "should carry several");
     }
 
     private static JsonObject parse(Path file) {

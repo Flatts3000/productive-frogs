@@ -98,24 +98,36 @@ mod's normal mechanism cannot express them. Every other variant is one shared
 sprite multiplied by `primary_color`, and a multiply can only ever produce a
 flat color - which is exactly the one thing "rainbow" must not be.
 
-**The slime** (`generate_rainbow_slime_texture.py`) gets a hue sweep painted
-across the six inner-cube faces, as **six horizontal bands**. The variant
-therefore ships **no `inner_block`**: rainbow has no vanilla block for the
-generic baker (`generate_resource_slime_textures.py`) to downscale.
+**The slime** (`generate_rainbow_slime_texture.py`) has **both** of its cubes
+painted: the translucent outer shell in eight hue bands, and the inner cube in
+six. The variant therefore ships **no `inner_block`** - rainbow has no vanilla
+block for the generic baker (`generate_resource_slime_textures.py`) to downscale,
+which is why that baker lists it under SKIPPED rather than MISSING.
 
-Two things about that were got wrong first and corrected against a running
+It also sets **`untinted: true`**, and that flag is load-bearing. The shell is
+normally multiplied by `primary_color`; a multiply can only ever produce one flat
+hue, and because the inner cube is *seen through* the translucent shell, a tinted
+shell washes the whole slime toward that hue no matter what is baked. `untinted_shell`
+makes `ResourceSlimeRenderer#resolveShellTint` return `-1`, the no-tint sentinel
+the outer layer passes straight through, so the art renders as painted.
+
+The flag is data-driven and defaults to false, so any future variant shipping
+full-colour entity art opts in with one JSON key and no Java.
+
+Two things about the bake were got wrong first and corrected against a running
 client, so don't re-derive them from the code:
 
 1. **A diagonal sweep reads as noise.** The first bake swept hue along the face
    diagonal, which puts eleven hue steps across six pixels. At entity scale that
-   is coloured static, not a rainbow. Six horizontal bands read cleanly and
-   match the vertical sweep on the Froglight's side texture.
-2. **The baked hues do NOT come through true.** Only the outer shell is
-   multiplied by `primary_color`, which is easy to misread as "the inner cube is
-   untinted, so it renders as authored". It is untinted, but it is *seen
-   through* the translucent shell, so the shell's color multiplies it optically
-   anyway. Behind the magenta shell the bands are barely legible; behind a
-   near-white shell they are unmistakable.
+   is coloured static, not a rainbow. Horizontal bands read cleanly, and the shell
+   and inner cube sweep the same direction so they reinforce rather than clash.
+   The shell's two caps sweep diagonally instead, having no up-down to run along;
+   the inner cube's caps stay banded with the rest of that cube.
+2. **The inner cube has to be DRAWN, not recoloured.** The base texture
+   (`bog_resource_slime.png`) is fully transparent in that region, so a
+   recolour-in-place leaves it black. The shell is the opposite case: it is a flat
+   grey at alpha 180 with no shading, and its alpha must be preserved or the slime
+   stops being translucent.
 
 **The Froglight** (`generate_rainbow_froglight_textures.py`) gets its own
 `rainbow_froglight_side` / `_top` sprites, derived from vanilla's ochre
@@ -178,17 +190,16 @@ because a dedicated server never loads models.
    old state to force the comparison, which is why that argument looks wrong and
    is not.
 
-### `primary_color` after the model change
+### What `primary_color` is for now
 
-The placed Froglight no longer consults it, which removes the sharpest half of the
-old conflict: the field no longer has to be saturated enough to keep the block
-distinct. It is **not** slime-only though - it still feeds the Slime Milk bucket
+Neither the placed Froglight nor the slime shell consults it any more - the
+Froglight renders its own model and the slime opts out with `untinted_shell` - so it is
+free to be vivid again, and is back to `0xC354CD`.
+
+It still drives every surface that has no bespoke art: the Slime Milk bucket
 (`VariantColorTint`), the slime bucket and spawn egg, the Sprinkler, the Crucible
-and Basin renderers, and the Terrarium readout.
-
-That constrains how pale it can go. It is `0xE6D2FF`, a pale lilac: light enough
-for the slime's baked bands to read through the translucent shell, and clearly
-distinct from `0xF0F0E0`, the cream `VariantColorTint` returns when a variant
-**cannot be resolved**. An earlier near-white value sat close enough to that
-fallback that a Rainbow Slime Milk bucket would have been indistinguishable from a
-broken one.
+and Basin renderers, the Terrarium readout, and the slime's dust particles. A
+saturated value is what those want. Verified in-client that a Rainbow Slime Milk
+bucket is now plainly distinct from the cream `0xF0F0E0` that `VariantColorTint`
+returns when a variant **cannot be resolved** - an earlier near-white value sat
+close enough to that fallback to be mistaken for a broken bucket.

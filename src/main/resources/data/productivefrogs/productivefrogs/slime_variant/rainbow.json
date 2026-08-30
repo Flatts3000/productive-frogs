@@ -1,6 +1,7 @@
 {
   "primer_tag": "c:dyes",
   "category": "bog",
-  "primary_color": 15127295,
-  "secondary_color": 1481884
+  "primary_color": 12801229,
+  "secondary_color": 1481884,
+  "untinted_shell": true
 }

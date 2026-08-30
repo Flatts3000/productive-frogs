@@ -55,7 +55,10 @@ A "variant" is one resource a frog can farm. Adding one is **a single JSON, no J
 data/<ns>/productivefrogs/slime_variant/<name>.json
 ```
 
-Fields: `primer_item` (exact item id) and/or `primer_tag` (item tag - one entry covers every mod that provides that tag), `category` (one of `cave`/`geode`/`bog`/`tide`/`infernal`/`void`), `primary_color`, `secondary_color`, `weight`, optional `inner_block` (the block shown inside the slime) and `spawn_entity`. A variant must declare at least one of `primer_item` / `primer_tag`. The smelt-back resource lives in the variant's generated smelting recipe, not on the variant.
+Fields: `primer_item` (exact item id) and/or `primer_tag` (item tag - one entry covers every mod that provides that tag), `category` (one of `cave`/`geode`/`bog`/`tide`/`infernal`/`void`), `primary_color`, `secondary_color`, `weight`, optional `inner_block` (the block shown inside the slime), `spawn_entity`, and
+`untinted_shell` (set it only if you ship your own full-colour
+`<variant>_resource_slime.png`; it stops the slime shell being multiplied by
+`primary_color`, which is what lets multi-hued art survive). A variant must declare at least one of `primer_item` / `primer_tag`. The smelt-back resource lives in the variant's generated smelting recipe, not on the variant.
 
 Gate a modded variant so it only loads when its mod is present:
 
