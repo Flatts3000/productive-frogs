@@ -2,6 +2,7 @@ package com.flatts.productivefrogs.content.entity;
 
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.SlimeVariant;
+import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFItems;
 import com.flatts.productivefrogs.registry.PFRegistries;
 import net.minecraft.advancements.CriteriaTriggers;
@@ -365,6 +366,17 @@ public class ResourceSlime extends Slime implements Bucketable {
         Bucketable.saveDefaultDataToBucketTag(this, stack);
         Category category = getCategory();
         Identifier variantId = getVariantId();
+        if (variantId != null) {
+            // Flat identity component, the same key a Froglight carries (#357).
+            // BUCKET_ENTITY_DATA cannot serve as one: the vanilla helper above
+            // writes live entity state (Health, and NoAI / Silent / CustomName
+            // when set) into it, so a SCOOPED bucket and a crafted one are never
+            // component-equal even for the same variant. Anything comparing
+            // component maps - quest tasks, filters, pipes, auto-crafting - then
+            // treats them as different items. Entity state stays in the tag where
+            // it belongs; identity moves out to here.
+            stack.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
+        }
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
             tag.putString("Category", category.name());
             if (variantId != null) {

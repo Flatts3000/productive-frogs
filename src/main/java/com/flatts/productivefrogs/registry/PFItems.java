@@ -818,6 +818,9 @@ public final class PFItems {
      */
     public static ItemStack variantSlimeBucket(Identifier variantId, Category category) {
         ItemStack stack = new ItemStack(SLIME_BUCKET.get());
+        // Must match ResourceSlime#saveToBucketTag: a crafted bucket and a scooped
+        // one are the same item to a component filter only if both stamp this (#357).
+        stack.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
             tag.putString("Category", category.name());
             tag.putString("Variant", variantId.toString());
