@@ -8,8 +8,11 @@ Every other variant gets its inner cube from a vanilla block texture via
 all six 6x6 inner faces.
 
 Only the OUTER shell is multiplied by the variant's `primary_color` at render
-time (`ResourceSlimeOuterLayer`); the inner cube renders as authored, so the
-baked hues come through true rather than tinted flat.
+time (`ResourceSlimeOuterLayer`), but that does NOT mean these hues render true:
+the inner cube is untinted yet is SEEN THROUGH the translucent shell, so the
+shell's color multiplies it optically anyway. Behind a saturated shell the bands
+wash out. See the Art note in `docs/rainbow_froglight.md` - confirmed in a
+running client, do not re-derive it from the render code.
 
 Base is `bog_resource_slime.png` - the parent species' texture, which is the
 grey shell with an empty (transparent) inner cube.

@@ -67,7 +67,12 @@ white is the blank single, the pale and mixed colors are two, the saturated
 colors are three.
 
 `RainbowDyeRecipeTest` pins both halves of that: all sixteen colors present,
-and `count == froglights * 8` in every file. Change a pattern's Froglight count
+and `count == froglights * 8` in every file.
+
+**Discoverability caveat.** PF ships no recipe-unlock advancements anywhere, so
+**none** of these shapes appears in the vanilla recipe book - it only ever lists
+recipes a `minecraft:recipe` advancement reward has unlocked. JEI is therefore
+the only in-game listing today. Change a pattern's Froglight count
 without changing its yield and the build fails.
 
 ## Files
@@ -86,12 +91,22 @@ fails at your terminal instead of in CI.
 
 ## Art note
 
-The Rainbow Slime's inner cube is a baked hue sweep
+The Rainbow Slime's inner cube is a baked hue sweep of **six horizontal bands**
 (`generate_rainbow_slime_texture.py`), not a vanilla block texture, so the
 `rainbow` variant deliberately ships **no `inner_block`** - the generic baker
-`generate_resource_slime_textures.py` has nothing to point it at. Only the outer
-shell is multiplied by `primary_color` at render time, so the baked hues come
-through true.
+`generate_resource_slime_textures.py` has nothing to point it at.
+
+Two things about that were got wrong first and corrected against a running 26.1
+client (the render path is the same on both lines), so don't re-derive them from
+the code:
+
+1. **A diagonal sweep reads as noise.** Eleven hue steps across six pixels is
+   colored static at entity scale. Horizontal bands read cleanly.
+2. **The baked hues do NOT come through true.** Only the outer shell is
+   multiplied by `primary_color`, which is easy to misread as "the inner cube is
+   untinted, so it renders as authored". It is untinted, but it is *seen through*
+   the translucent shell, so the shell's color multiplies it optically anyway.
+   Behind the shipped magenta the bands are legible but muted.
 
 The **Froglight** itself is still the shared greyscale texture tinted flat by
 `primary_color` (magenta), because a placed Froglight's color comes from a
