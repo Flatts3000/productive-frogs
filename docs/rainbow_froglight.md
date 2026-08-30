@@ -86,14 +86,52 @@ fails at your terminal instead of in CI.
 
 ## Art note
 
-The Rainbow Slime's inner cube is a baked hue sweep
-(`generate_rainbow_slime_texture.py`), not a vanilla block texture, so the
-`rainbow` variant deliberately ships **no `inner_block`** - the generic baker
-`generate_resource_slime_textures.py` has nothing to point it at. Only the outer
-shell is multiplied by `primary_color` at render time, so the baked hues come
-through true.
+Both of the Rainbow variant's looks are **baked procedurally**, because the
+mod's normal mechanism cannot express them. Every other variant is one shared
+sprite multiplied by `primary_color`, and a multiply can only ever produce a
+flat color - which is exactly the one thing "rainbow" must not be.
 
-The **Froglight** itself is still the shared greyscale texture tinted flat by
-`primary_color` (magenta), because a placed Froglight's color comes from a
-block tint and a block model cannot vary per-face from a component. Bespoke
-rainbow Froglight art is a follow-up, not a blocker.
+**The slime** (`generate_rainbow_slime_texture.py`) gets a hue sweep painted
+across the six inner-cube faces. The variant therefore ships **no
+`inner_block`**: rainbow has no vanilla block for the generic baker
+(`generate_resource_slime_textures.py`) to downscale. Only the outer shell is
+multiplied by `primary_color` at render time, so the baked hues come through
+true.
+
+**The Froglight** (`generate_rainbow_froglight_textures.py`) gets its own
+`rainbow_froglight_side` / `_top` sprites, derived from vanilla's ochre
+froglight art: each pixel keeps its **value**, takes a hue from its position,
+and has its **saturation shifted rather than floored**. That last detail
+matters - the froglight's cell-and-glow structure lives almost entirely in
+saturation (measured on vanilla's sprites: S sd 0.156 against V sd 0.051), so
+clamping saturation to a floor erases the material and leaves a plain gradient.
+Shifting keeps the variance, and the result reads as the same material as every
+other Froglight, just spectrum-swept.
+
+Because those hues are baked, the rainbow models carry **no `tintindex`** at
+all. `RainbowFroglightAssetTest` pins that, along with the model paths and the
+existence of every sprite they name - none of which GameTest can see, since a
+dedicated server never loads models.
+
+### Where it renders, and the one place it does not
+
+The item form selects its model on the `slime_variant` component
+(`assets/productivefrogs/items/configurable_froglight.json`, a
+`minecraft:select` on `minecraft:component`), so the Rainbow Froglight is
+genuinely rainbow in the inventory, in hand, in JEI and the recipe book, as a
+dropped item, and in an item frame. The other 39 variants fall through to the
+tinted model unchanged.
+
+**The placed block is still flat-tinted.** A blockstate maps only *blockstate
+properties* to models, and the variant lives in the block entity, so the
+blockstate cannot pick the rainbow model. Fixing it needs a dynamic model:
+NeoForge 26.1 exposes the hook (`BlockStateModelExtension.collectParts` with a
+level and pos, reading `IBlockGetterExtension#getModelData`), so the shape is a
+`ModelProperty` on `ConfigurableFroglightBlockEntity` plus a custom
+`BlockStateModel` that swaps parts on it. That is a rendering-architecture
+change to a block shared by every variant, so it is deliberately left as a
+separate decision rather than bolted on here.
+
+A blockstate boolean would be the cheap alternative and is **not** recommended:
+it only works while rainbow is the sole special case, and it is the ad-hoc flag
+pattern this codebase has already refactored away from once (see `FrogKind`).
