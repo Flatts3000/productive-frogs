@@ -35,14 +35,15 @@ writes nothing at all, so it never produces a diff you have to squint at. Pass
 suitable as a CI gate for "someone changed an inner_block and forgot to re-bake".
 
 The vanilla jar is chosen by the MC version inside its own `version.json`, not by
-its filename, and the extraction cache is keyed by that jar. Both matter: the two
-MC lines share a temp directory and their build dirs can hold each other's jars,
-so name matching and a shared cache each let one line silently bake from the
-other's art.
+its filename, and the extraction cache records which jar it came from and is
+rebuilt when that changes. Both matter: the two MC lines share a temp directory
+and their build dirs can hold each other's jars, so name matching and a
+reused-on-sight cache each let one line silently bake from the other's art.
 """
 
 import json
 import os
+import shutil
 import sys
 import tempfile
 import zipfile
@@ -59,15 +60,37 @@ SLIME_TEX_DIR = os.path.join(
     "textures", "entity", "slime",
 )
 ARTIFACTS = os.path.join(REPO, "build", "moddev", "artifacts")
-# Any vanilla jar has this; used to tell an assets jar from a sources or coremods jar.
+# Present in every jar that carries vanilla assets. NOT a way to tell an assets
+# jar from a sources jar - the sources jar ships assets too - so it only filters
+# out jars with no assets at all. Choosing between the qualifying ones is
+# jar_rank's job.
 SENTINEL = "assets/minecraft/textures/block/stone.png"
-# Extraction cache, keyed by the JAR IT CAME FROM. It used to be one shared
-# `mc-extra` directory reused whenever it already existed, which silently broke
-# two ways at once: the two MC lines share a temp dir, so whichever ran first
-# decided what the other one baked from, and a stale cache outlived the jar it
-# came from forever. Keying by jar makes a wrong-version cache unreachable
-# instead of merely unlikely.
-EXTRACT_ROOT = os.path.join(tempfile.gettempdir(), "pf-mc-assets")
+# Several jars in one artifacts dir can carry the same MC version's assets (on
+# 26.1: merged 45MB, plain 35MB, sources 20MB). Without an explicit order the
+# winner falls out of alphabetical sort, so a future moddev artifact name could
+# silently change which jar gets extracted. Rank by role, then smallest first -
+# the resources-only jar is both the right one and the cheapest to unpack, and
+# the sources jar is a last resort since it is mostly Java.
+def jar_rank(jar):
+    name = os.path.basename(jar)
+    if "client-extra" in name:
+        role = 0
+    elif "-sources" in name:
+        role = 2
+    else:
+        role = 1
+    return (role, os.path.getsize(jar))
+# The extraction directory is a SHARED CONTRACT: generate_molten_textures.py,
+# generate_virtual_terrarium_gui.py and four .ps1 generators all read this exact
+# path and tell the user to run this script to populate it. So the path stays put
+# and the staleness is fixed with a marker instead: the jar it came from is
+# recorded, and a directory from a different jar is re-extracted rather than
+# reused. That is what stops the two MC lines - which share a temp dir - from
+# deciding what the other one bakes from.
+MC_EXTRACT = os.path.join(tempfile.gettempdir(), "mc-extra")
+# Written last, so an extraction killed part-way leaves no marker and is redone
+# rather than cached forever. Matters more since the 26.1 jar is 36k files.
+EXTRACT_MARKER = os.path.join(MC_EXTRACT, ".pf-source-jar")
 
 # Six inner-cube face rectangles (x0, y0) top-left, each 6x6.
 FACE_ORIGINS = [(6, 16), (12, 16), (0, 22), (6, 22), (12, 22), (18, 22)]
@@ -126,13 +149,14 @@ def find_assets_jar():
     for jar in sorted(glob.glob(os.path.join(ARTIFACTS, "*.jar"))):
         version = jar_minecraft_version(jar)
         if version:
-            found.setdefault(version, jar)
+            found.setdefault(version, []).append(jar)
     if not found:
         sys.exit("No vanilla assets jar under build/moddev/artifacts. Run a gradle task first.")
     if want in found:
-        return found[want]
-    available = ", ".join(f"{v} ({os.path.basename(j)})" for v, j in sorted(found.items()))
-    sys.exit(os.linesep.join([
+        return sorted(found[want], key=jar_rank)[0]
+    available = ", ".join(
+        f"{v} ({os.path.basename(js[0])})" for v, js in sorted(found.items()))
+    sys.exit("\n".join([
         f"No vanilla assets jar for minecraft_version={want}. Found: {available}.",
         "Run a gradle task on THIS checkout first; baking from another version's",
         "art is silent and wrong.",
@@ -140,17 +164,37 @@ def find_assets_jar():
 
 
 def ensure_assets():
-    """Extract the chosen jar (once per jar) and return its block-texture dir."""
+    """Extract the chosen jar into the shared cache and return its block dir.
+
+    Re-extracts whenever the cache came from a different jar, or from an
+    extraction that did not finish. The old code reused the directory on nothing
+    more than its existence, which is how one MC line ended up baking from the
+    other's art and how a torn extraction would have been cached indefinitely.
+    """
     jar = find_assets_jar()
-    extract_dir = os.path.join(EXTRACT_ROOT, os.path.basename(jar))
-    block_dir = os.path.join(extract_dir, "assets", "minecraft", "textures", "block")
-    if not os.path.isdir(block_dir):
-        os.makedirs(extract_dir, exist_ok=True)
-        print(f"extracting {os.path.basename(jar)} -> {extract_dir}")
-        with zipfile.ZipFile(jar) as z:
-            z.extractall(extract_dir)
-    else:
-        print(f"vanilla assets: {os.path.basename(jar)} (cached)")
+    name = os.path.basename(jar)
+    block_dir = os.path.join(MC_EXTRACT, "assets", "minecraft", "textures", "block")
+
+    current = None
+    if os.path.isfile(EXTRACT_MARKER):
+        with open(EXTRACT_MARKER, encoding="utf-8") as fh:
+            current = fh.read().strip()
+    if current == name and os.path.isdir(block_dir):
+        print(f"vanilla assets: {name} (cached)")
+        return block_dir
+
+    if os.path.isdir(MC_EXTRACT):
+        why = "incomplete" if current is None else f"came from {current}"
+        print(f"discarding {MC_EXTRACT} ({why})")
+        shutil.rmtree(MC_EXTRACT)
+    os.makedirs(MC_EXTRACT, exist_ok=True)
+    print(f"extracting {name} -> {MC_EXTRACT}")
+    with zipfile.ZipFile(jar) as z:
+        z.extractall(MC_EXTRACT)
+    # Written LAST: a run killed mid-extract leaves no marker, so the next run
+    # discards the partial tree instead of baking from it.
+    with open(EXTRACT_MARKER, "w", encoding="utf-8") as fh:
+        fh.write(name)
     return block_dir
 
 
@@ -222,12 +266,20 @@ def main():
     # art is current, that is a usable CI gate: it catches a variant whose
     # inner_block changed without the texture being re-baked, which is otherwise
     # invisible until someone looks at the slime in-game.
-    check_only = "--check" in sys.argv[1:]
+    args = sys.argv[1:]
+    unknown = [a for a in args if a != "--check"]
+    if unknown:
+        # Silently ignoring these meant a typo'd CI invocation ("--dry-run", "-n")
+        # performed a real write over 38 committed textures and exited 0 - the
+        # exact opposite of what the caller asked for.
+        sys.exit(f"unknown argument(s): {' '.join(unknown)} (only --check is supported)")
+    check_only = "--check" in args
     block_dir = ensure_assets()
     template = load_outer_template()
     made = 0
     unchanged = 0
     missing = []
+    unresolved = []
     bespoke = []
     for jf in sorted(glob.glob(os.path.join(VARIANT_JSON_DIR, "*.json"))):
         variant = os.path.splitext(os.path.basename(jf))[0]
@@ -241,7 +293,7 @@ def main():
             continue
         tile, used = find_block_texture(block_dir, inner)
         if tile is None:
-            missing.append(f"{variant} -> {inner} (texture not found)")
+            unresolved.append(f"{variant} -> {inner}")
             continue
         out = template.copy()
         for ox, oy in FACE_ORIGINS:
@@ -263,8 +315,18 @@ def main():
         print("MISSING (left to category fallback):")
         for m in missing:
             print(f"  - {m}")
-    # Non-zero under --check means the committed art is stale, so this can gate CI.
-    return 1 if (check_only and made) else 0
+    if unresolved:
+        # Distinct from MISSING above, and always an error: the variant DID name an
+        # inner_block and no texture could be found for it, so any previously baked
+        # PNG is now stale and still committed. Lumping these in with the legitimate
+        # no-inner_block fallbacks is how a mistyped block id stays green forever.
+        print("UNRESOLVED inner_block (no vanilla texture found - the committed "
+              "texture is now stale):")
+        for u in unresolved:
+            print(f"  - {u}")
+    # An unresolved inner_block is wrong in either mode. Staleness is only an
+    # error under --check, since a normal run is what fixes it.
+    return 1 if (unresolved or (check_only and made)) else 0
 
 
 if __name__ == "__main__":
