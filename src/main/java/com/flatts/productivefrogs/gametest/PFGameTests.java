@@ -434,6 +434,33 @@ public final class PFGameTests {
         helper.succeed();
     }
 
+    /**
+     * A bucket carrying ONLY the {@code slime_variant} component still resolves its
+     * variant (#357 review).
+     *
+     * <p>Once that component is advertised as the identity key, buckets will arrive
+     * with only it - from {@code /give}, a quest reward, or a pack recipe built off
+     * the component. Before the reader fell back to it, such a bucket passed every
+     * component filter while the Milker fail-closed on it, feeding a frog fell
+     * through to vanilla, and it rendered and named itself a plain Slime Bucket.
+     */
+    @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 40)
+    public static void slimeBucketVariantResolvesFromComponentAlone(GameTestHelper helper) {
+        ResourceLocation variantId = ResourceLocation.fromNamespaceAndPath(
+            ProductiveFrogs.MOD_ID, "iron");
+        ItemStack componentOnly = new ItemStack(PFItems.SLIME_BUCKET.get());
+        componentOnly.set(PFDataComponents.SLIME_VARIANT.get(), variantId);
+
+        ResourceLocation read = ResourceTadpoleBucketItem.readVariant(componentOnly);
+        if (!variantId.equals(read)) {
+            helper.fail("a bucket carrying only the slime_variant component read back "
+                + read + "; it would be treated as an unstamped bucket by the Milker, "
+                + "frog feeding, the tint and the name");
+            return;
+        }
+        helper.succeed();
+    }
+
     @GameTest(templateNamespace = ProductiveFrogs.MOD_ID, template = "empty_5x5x5", timeoutTicks = 100)
     public static void tadpoleBucketRoundTripPreservesCategory(GameTestHelper helper) {
         Category cat = Category.INFERNAL;

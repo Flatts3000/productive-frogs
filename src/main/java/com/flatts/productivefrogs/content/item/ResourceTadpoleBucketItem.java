@@ -1,6 +1,7 @@
 package com.flatts.productivefrogs.content.item;
 
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.registry.PFDataComponents;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -84,17 +85,23 @@ public final class ResourceTadpoleBucketItem extends MobBucketItem {
     @Nullable
     public static ResourceLocation readVariant(ItemStack stack) {
         CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
-        if (data == null) {
-            return null;
+        if (data != null) {
+            CompoundTag tag = data.copyTag();
+            if (tag.contains("Variant", net.minecraft.nbt.Tag.TAG_STRING)) {
+                String raw = tag.getString("Variant");
+                if (raw != null && !raw.isEmpty()) {
+                    return ResourceLocation.tryParse(raw);
+                }
+            }
         }
-        CompoundTag tag = data.copyTag();
-        if (!tag.contains("Variant", net.minecraft.nbt.Tag.TAG_STRING)) {
-            return null;
-        }
-        String raw = tag.getString("Variant");
-        if (raw == null || raw.isEmpty()) {
-            return null;
-        }
-        return ResourceLocation.tryParse(raw);
+        // Fall back to the flat component (#357). A slime bucket now carries its
+        // variant in BOTH places, and this keeps the two carriers self-healing:
+        // once slime_variant is the advertised identity key, a bucket can arrive
+        // with only that - from /give, a quest reward, or a pack recipe built off
+        // the component - and without this it would pass every component filter
+        // while the Milker fail-closed on it, feeding a frog fell through to
+        // vanilla, and it rendered and named itself as a plain Slime Bucket.
+        // Harmless for tadpole buckets, which never carry the component.
+        return stack.get(PFDataComponents.SLIME_VARIANT.get());
     }
 }
