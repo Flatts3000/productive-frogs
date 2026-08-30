@@ -152,6 +152,32 @@ class RainbowFroglightAssetTest {
         }
     }
 
+    /**
+     * The Rainbow Slime's entity texture is authored in full colour, on both the
+     * translucent shell and the inner cube. That only renders as painted while the
+     * variant declares {@code untinted}: without it the shell is multiplied by
+     * {@code primary_color}, and since the inner cube is seen THROUGH that shell,
+     * one flat hue washes over the whole slime. Nothing else catches that - the
+     * texture and the flag live in different files and neither is validated against
+     * the other.
+     */
+    @Test
+    void rainbowVariantOptsOutOfShellTinting() {
+        Path variant = resourcesRoot()
+            .resolve("data/" + NS + "/" + NS + "/slime_variant/rainbow.json");
+        assertTrue(Files.exists(variant), "missing " + variant.getFileName());
+        JsonObject json = parse(variant);
+        assertTrue(json.has("untinted") && json.get("untinted").getAsBoolean(),
+            "rainbow ships full-colour entity art, so it must set \"untinted\": true - "
+                + "otherwise primary_color multiplies over it and the rainbow flattens");
+
+        Path texture = resourcesRoot().resolve(
+            "assets/" + NS + "/textures/entity/slime/rainbow_resource_slime.png");
+        assertTrue(Files.exists(texture), () ->
+            "no baked entity texture at " + texture
+                + " - run scripts/generate_rainbow_slime_texture.py");
+    }
+
     private static JsonObject parse(Path file) {
         try {
             return JsonParser.parseString(Files.readString(file)).getAsJsonObject();

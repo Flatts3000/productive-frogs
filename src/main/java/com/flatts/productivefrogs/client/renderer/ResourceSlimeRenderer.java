@@ -133,6 +133,13 @@ public class ResourceSlimeRenderer extends SlimeRenderer {
      */
     static int resolveShellTint(ResourceSlime resource) {
         SlimeVariant variant = resource.getVariant();
+        if (variant != null && variant.untinted()) {
+            // -1 is the no-tint sentinel the outer layer passes straight through as
+            // the model body colour. The variant's own texture is already in full
+            // colour; multiplying it by a single primary_color would flatten it
+            // toward that one hue, which is exactly what a rainbow must not do.
+            return -1;
+        }
         if (variant != null) {
             return ARGB.color(255,
                 (variant.primaryColor() >> 16) & 0xFF,
