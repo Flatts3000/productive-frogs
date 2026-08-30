@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Sixteen dyes out of one Froglight.** Show any dye to a slime and it becomes
+  a Rainbow Slime. A Bog Frog that eats one drops a Rainbow Froglight, and the
+  shape you lay Rainbow Froglights out in on a crafting table picks which dye
+  you get - one on its own is white, two side by side is light gray, three in a
+  row is red, and so on through all sixteen. Every shape is worth the same per
+  Froglight, so the deep colors aren't a worse deal, they just come out in
+  bigger batches: one Froglight makes eight dye, two make sixteen, three make
+  twenty-four. The recipe book and JEI list every shape, so there is nothing to
+  memorize. (#376)
+
 ## v1.25.4 - 2026-08-09 - Second Opinion
 
 ### Fixed
