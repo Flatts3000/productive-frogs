@@ -1,16 +1,43 @@
 {
   "variants": {
     "axis=y": {
-      "model": "productivefrogs:block/resource_froglight"
+      "type": "productivefrogs:variant_model",
+      "fallback": {
+        "model": "productivefrogs:block/resource_froglight"
+      },
+      "variants": {
+        "productivefrogs:rainbow": {
+          "model": "productivefrogs:block/rainbow_froglight"
+        }
+      }
     },
     "axis=z": {
-      "model": "productivefrogs:block/resource_froglight",
-      "x": 90
+      "type": "productivefrogs:variant_model",
+      "fallback": {
+        "model": "productivefrogs:block/resource_froglight",
+        "x": 90
+      },
+      "variants": {
+        "productivefrogs:rainbow": {
+          "model": "productivefrogs:block/rainbow_froglight",
+          "x": 90
+        }
+      }
     },
     "axis=x": {
-      "model": "productivefrogs:block/resource_froglight",
-      "x": 90,
-      "y": 90
+      "type": "productivefrogs:variant_model",
+      "fallback": {
+        "model": "productivefrogs:block/resource_froglight",
+        "x": 90,
+        "y": 90
+      },
+      "variants": {
+        "productivefrogs:rainbow": {
+          "model": "productivefrogs:block/rainbow_froglight",
+          "x": 90,
+          "y": 90
+        }
+      }
     }
   }
 }

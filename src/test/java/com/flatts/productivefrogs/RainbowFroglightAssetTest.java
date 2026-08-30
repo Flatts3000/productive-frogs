@@ -112,6 +112,46 @@ class RainbowFroglightAssetTest {
         }
     }
 
+    /**
+     * The placed block picks its model from the block entity's variant, through
+     * {@code VariantBlockStateModel}. Three things in that JSON are silent if wrong:
+     * the dispatch type (NeoForge's dispatch falls back to the vanilla codec only when
+     * the key is ABSENT, so a typo'd type is a hard decode error that drops the whole
+     * blockstate), the model paths, and the ROTATION - the fallback and the per-variant model within one axis entry must
+     * carry identical rotation, or a rainbow Froglight placed sideways renders with
+     * the upright model's quads.
+     */
+    @Test
+    void froglightBlockstateDispatchesOnTheVariantWithMatchingRotations() {
+        JsonObject variants = parse(ASSETS.resolve("blockstates/configurable_froglight.json"))
+            .getAsJsonObject("variants");
+        assertEquals(3, variants.size(), "one entry per axis");
+
+        for (String axis : variants.keySet()) {
+            JsonObject entry = variants.getAsJsonObject(axis);
+            assertEquals(NS + ":variant_model", entry.get("type").getAsString(),
+                axis + ": must dispatch through the variant-aware model, or the block "
+                    + "cannot see the block entity at all");
+
+            JsonObject fallback = entry.getAsJsonObject("fallback");
+            assertEquals(NS + ":block/resource_froglight", fallback.get("model").getAsString(),
+                axis + ": fallback keeps the shared tinted model for the other variants");
+
+            JsonObject perVariant = entry.getAsJsonObject("variants");
+            assertTrue(perVariant.has(NS + ":rainbow"), axis + ": no rainbow entry");
+            JsonObject rainbow = perVariant.getAsJsonObject(NS + ":rainbow");
+            assertEquals(NS + ":block/rainbow_froglight", rainbow.get("model").getAsString(),
+                axis + ": rainbow model path");
+
+            for (String rot : new String[] {"x", "y", "uvlock"}) {
+                assertEquals(fallback.has(rot) ? fallback.get(rot).toString() : "<absent>",
+                    rainbow.has(rot) ? rainbow.get(rot).toString() : "<absent>",
+                    axis + ": '" + rot + "' must match between fallback and rainbow, "
+                        + "otherwise the two render at different orientations");
+            }
+        }
+    }
+
     private static JsonObject parse(Path file) {
         try {
             return JsonParser.parseString(Files.readString(file)).getAsJsonObject();

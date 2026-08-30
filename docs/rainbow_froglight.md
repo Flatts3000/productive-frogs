@@ -132,42 +132,63 @@ all. `RainbowFroglightAssetTest` pins that, along with the model paths and the
 existence of every sprite they name - none of which GameTest can see, since a
 dedicated server never loads models.
 
-### Where it renders, and the one place it does not
+### Where it renders
 
-The item form selects its model on the `slime_variant` component
-(`assets/productivefrogs/items/configurable_froglight.json`, a
-`minecraft:select` on `minecraft:component`), so the Rainbow Froglight is
-genuinely rainbow in the inventory, in hand, in JEI, as a dropped item, and in
-an item frame. The other 39 variants fall through to the
-tinted model unchanged.
+Both surfaces render the baked art, by two different mechanisms, because items
+and blocks pick models in completely different ways.
 
-**The placed block is still flat-tinted.** A blockstate maps only *blockstate
-properties* to models, and the variant lives in the block entity, so the
-blockstate cannot pick the rainbow model. Fixing it needs a dynamic model:
-NeoForge 26.1 exposes the hook (`BlockStateModelExtension.collectParts` with a
-level and pos, reading `IBlockGetterExtension#getModelData`), so the shape is a
-`ModelProperty` on `ConfigurableFroglightBlockEntity` plus a custom
-`BlockStateModel` that swaps parts on it. That is a rendering-architecture
-change to a block shared by every variant, so it is deliberately left as a
-separate decision rather than bolted on here.
+**The item** selects its model on the `slime_variant` component
+(`assets/productivefrogs/items/configurable_froglight.json`, a `minecraft:select`
+on `minecraft:component`), so it is rainbow in the inventory, in hand, in JEI, as
+a dropped item, and in an item frame.
 
-A blockstate boolean would be the cheap alternative and is **not** recommended:
-it only works while rainbow is the sole special case, and it is the ad-hoc flag
-pattern this codebase has already refactored away from once (see `FrogKind`).
+**The placed block** cannot do that: a blockstate file maps only blockstate
+properties, and the variant lives in the block entity. It goes through
+`VariantBlockStateModel` instead, a `CustomUnbakedBlockStateModel` registered in
+`RegisterBlockStateModels` and referenced from
+`blockstates/configurable_froglight.json`. The block entity publishes its variant
+as NeoForge model data; the model reads that on the meshing thread and forwards
+to the matching child model. The other 39 variants fall through to the shared
+tinted model, unchanged.
 
-### Why `primary_color` is currently a compromise
+The variant-to-model map lives in the blockstate JSON, **not** in Java, so a
+future variant shipping its own art is one JSON entry and no code.
 
-The placed Froglight and the slime shell read the same `primary_color`, and
-rainbow wants opposite things from it:
+### Three things that are silent when wrong
 
-| `primary_color` | Slime | Placed Froglight |
-|---|---|---|
-| magenta (shipped) | magenta, bands barely legible | distinctly magenta |
-| near-white | unmistakable rainbow bands | indistinguishable from a vanilla ochre Froglight |
+All three were found by driving a running client; none is reachable by GameTest,
+because a dedicated server never loads models.
 
-Both were confirmed in a running client. The shipped value is magenta, because a
-Froglight that looks exactly like vanilla's is the worse of the two failures.
-Solving the placed block removes the conflict entirely - once the block renders
-its own baked texture it stops consulting `primary_color`, which frees that
-field to go pale for the slime. That is the main argument for doing the dynamic
-model rather than living with the compromise.
+1. **`createGeometryKey` must be overridden, and must not return null.** The
+   default null means "not implemented" and the renderer reuses one position's
+   quads at another. The key also has to include the model instance, not just the
+   variant: the three axis entries are separate baked models whose children carry
+   different rotations, so keying on the variant alone would make a vertical
+   Froglight render a neighbour's horizontal quads.
+2. **Refreshing model data does not re-render anything.**
+   `requestModelDataUpdate()` only queues the position; the data is picked up
+   lazily when a section is next meshed. A block-entity data packet does not dirty
+   the section on its own, so without an explicit dirty the block keeps the
+   geometry it was last meshed with.
+3. **`setBlocksDirty(pos, state, state)` is a no-op.** `ModelManager.requiresRender`
+   returns false immediately when the two states are identical, so the obvious call
+   does nothing at all. Observed directly: a `/data merge block` setting Variant to
+   rainbow left the block rendering as lapis until an unrelated neighbouring block
+   was placed. `ConfigurableFroglightBlockEntity#refreshModel` passes `AIR` as the
+   old state to force the comparison, which is why that argument looks wrong and
+   is not.
+
+### `primary_color` after the model change
+
+The placed Froglight no longer consults it, which removes the sharpest half of the
+old conflict: the field no longer has to be saturated enough to keep the block
+distinct. It is **not** slime-only though - it still feeds the Slime Milk bucket
+(`VariantColorTint`), the slime bucket and spawn egg, the Sprinkler, the Crucible
+and Basin renderers, and the Terrarium readout.
+
+That constrains how pale it can go. It is `0xE6D2FF`, a pale lilac: light enough
+for the slime's baked bands to read through the translucent shell, and clearly
+distinct from `0xF0F0E0`, the cream `VariantColorTint` returns when a variant
+**cannot be resolved**. An earlier near-white value sat close enough to that
+fallback that a Rainbow Slime Milk bucket would have been indistinguishable from a
+broken one.
