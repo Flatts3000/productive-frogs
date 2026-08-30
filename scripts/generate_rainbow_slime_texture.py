@@ -37,9 +37,12 @@ def main() -> None:
     for fx, fy in FACES:
         for dy in range(SIZE):
             for dx in range(SIZE):
-                # Sweep hue along the face diagonal so every face reads as a
-                # full rainbow rather than a flat band.
-                hue = ((dx + dy) / (2 * (SIZE - 1))) % 1.0
+                # Sweep hue by ROW, not along the diagonal. A diagonal puts 11
+                # hue steps across 6 pixels, which reads as coloured noise at
+                # entity scale rather than as a rainbow (confirmed in-client);
+                # six horizontal bands read cleanly and match the vertical sweep
+                # on the Froglight's side texture.
+                hue = (dy / SIZE) % 1.0
                 r, g, b = colorsys.hsv_to_rgb(hue, 0.85, 0.95)
                 img.putpixel((fx + dx, fy + dy),
                              (int(r * 255), int(g * 255), int(b * 255), 255))
