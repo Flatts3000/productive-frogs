@@ -4,6 +4,7 @@ import com.flatts.productivefrogs.ProductiveFrogs;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.BlockPos;
@@ -32,6 +33,53 @@ final class SlimeBucketTests {
         PFGameTests.test("slime_bucket_round_trip_preserves_variant", 100, SlimeBucketTests::slimeBucketRoundTripPreservesVariant);
         PFGameTests.test("slime_bucket_release_has_no_water_and_is_size_one", 40, SlimeBucketTests::slimeBucketReleaseHasNoWaterAndIsSizeOne);
         PFGameTests.test("slime_bucket_dispenser_releases_slime_no_water", 60, SlimeBucketTests::slimeBucketDispenserReleasesSlimeNoWater);
+        PFGameTests.test("scooped_and_crafted_slime_buckets_share_a_variant_component", 100,
+            SlimeBucketTests::scoopedAndCraftedSlimeBucketsShareAVariantComponent);
+    }
+
+    /**
+     * A SCOOPED Slime in a Bucket and a CRAFTED one carry the same identity (#357).
+     *
+     * <p>They are not, and cannot be, fully component-equal: the scoop path runs
+     * vanilla's {@code Bucketable.saveDefaultDataToBucketTag} first, which writes
+     * live entity state (Health, plus NoAI / Silent / CustomName when set) into
+     * {@code BUCKET_ENTITY_DATA}. That is the right home for entity state. What
+     * must match is the flat {@code slime_variant} component both paths stamp -
+     * the same key a Froglight carries - because that is what a component filter
+     * compares. Without it, six downstream quest tasks could be completed by
+     * crafting a bucket but not by scooping a slime, and no pack-side matching
+     * mode fixed it: FTB's STRICT mode is exact equality and its FUZZY mode still
+     * compares whole components, while the difference sat NESTED inside
+     * {@code bucket_entity_data}.
+     */
+    private static void scoopedAndCraftedSlimeBucketsShareAVariantComponent(GameTestHelper helper) {
+        Identifier variantId = Identifier.fromNamespaceAndPath(ProductiveFrogs.MOD_ID, "iron");
+        ResourceSlime source = helper.spawn(PFEntities.RESOURCE_SLIME.get(), new BlockPos(2, 2, 2));
+        source.setSize(1, true);
+        source.setCategory(Category.CAVE);
+        source.setVariant(variantId);
+
+        ItemStack scooped = new ItemStack(PFItems.SLIME_BUCKET.get());
+        source.saveToBucketTag(scooped);
+        ItemStack crafted = PFItems.variantSlimeBucket(variantId, Category.CAVE);
+
+        Identifier scoopedVariant = scooped.get(PFDataComponents.SLIME_VARIANT.get());
+        Identifier craftedVariant = crafted.get(PFDataComponents.SLIME_VARIANT.get());
+        if (scoopedVariant == null) {
+            helper.fail("a scooped Slime in a Bucket carries no slime_variant component; "
+                + "component filters cannot tell it from any other variant");
+            return;
+        }
+        if (craftedVariant == null) {
+            helper.fail("a crafted Slime in a Bucket carries no slime_variant component");
+            return;
+        }
+        if (!scoopedVariant.equals(craftedVariant)) {
+            helper.fail("scooped bucket is " + scoopedVariant + " but crafted is " + craftedVariant
+                + "; the two production paths disagree on the item's identity");
+            return;
+        }
+        helper.succeed();
     }
 
     /**
