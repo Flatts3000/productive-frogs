@@ -138,7 +138,7 @@ class RecipeConflictTest {
     private static String signatureOf(JsonObject recipe) {
         String type = recipe.get("type").getAsString();
         return switch (type) {
-            case "minecraft:crafting_shaped" -> "shaped|" + shapedSignature(recipe);
+            case "minecraft:crafting_shaped" -> shapedSignature(recipe);
             case "minecraft:crafting_shapeless" -> "shapeless|" + shapelessSignature(recipe);
             // Each cooking type is its own manager, so key the signature by type.
             case "minecraft:smelting", "minecraft:blasting", "minecraft:smoking",
@@ -147,7 +147,18 @@ class RecipeConflictTest {
         };
     }
 
-    /** Trimmed grid of per-cell ingredient tokens, folded to the min of itself and its horizontal mirror. */
+    /**
+     * Trimmed grid of per-cell ingredient tokens, folded to the min of itself and its
+     * horizontal mirror.
+     *
+     * <p>Returns its own namespace prefix rather than taking one, because a shaped
+     * recipe that trims to a SINGLE cell is indistinguishable from a one-ingredient
+     * shapeless recipe: both match one item sitting anywhere in the grid, and the
+     * recipe manager resolves only one of them. Keeping shaped and shapeless in
+     * separate namespaces is right for every other size and wrong for this one, so a
+     * 1x1 shaped recipe is signed as shapeless (the Rainbow Froglight white-dye
+     * recipe is the first 1x1 in the tree, which is what made this load-bearing).
+     */
     private static String shapedSignature(JsonObject recipe) {
         JsonArray patternArr = recipe.getAsJsonArray("pattern");
         List<String> rows = new ArrayList<>();
@@ -165,9 +176,15 @@ class RecipeConflictTest {
                 grid[r][c] = ch == ' ' || !key.has(String.valueOf(ch)) ? "" : canon(key.get(String.valueOf(ch)));
             }
         }
-        String normal = serializeGrid(trim(grid));
+        String[][] trimmed = trim(grid);
+        if (trimmed.length == 1 && trimmed[0].length == 1) {
+            // One cell: the grid cannot tell this from a one-ingredient shapeless
+            // recipe, so sign it the way shapelessSignature would.
+            return "shapeless|" + trimmed[0][0];
+        }
+        String normal = serializeGrid(trimmed);
         String mirror = serializeGrid(trim(mirror(grid)));
-        return normal.compareTo(mirror) <= 0 ? normal : mirror;
+        return "shaped|" + (normal.compareTo(mirror) <= 0 ? normal : mirror);
     }
 
     /** Sorted multiset of the ingredient tokens (order-independent, like the crafting table). */

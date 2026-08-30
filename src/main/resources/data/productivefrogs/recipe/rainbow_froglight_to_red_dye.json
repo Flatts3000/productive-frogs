@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "productivefrogs_rainbow_dye",
+  "pattern": [
+    "XXX"
+  ],
+  "key": {
+    "X": {
+      "type": "neoforge:components",
+      "items": [
+        "productivefrogs:configurable_froglight"
+      ],
+      "components": {
+        "productivefrogs:slime_variant": "productivefrogs:rainbow"
+      }
+    }
+  },
+  "result": {
+    "id": "minecraft:red_dye",
+    "count": 24
+  }
+}

@@ -152,6 +152,7 @@
   "item.productivefrogs.slime_bucket.moss": "Bucket of Moss Slime",
   "item.productivefrogs.slime_bucket.mud": "Bucket of Mud Slime",
   "item.productivefrogs.slime_bucket.mycelium": "Bucket of Mycelium Slime",
+  "item.productivefrogs.slime_bucket.rainbow": "Bucket of Rainbow Slime",
   "item.productivefrogs.slime_bucket.plastic": "Bucket of Plastic Slime",
   "item.productivefrogs.slime_bucket.advanced_processor": "Bucket of Advanced Processor Slime",
   "item.productivefrogs.slime_bucket.basic_processor": "Bucket of Basic Processor Slime",
@@ -323,6 +324,7 @@
   "block.productivefrogs.configurable_froglight.moss": "Moss Froglight",
   "block.productivefrogs.configurable_froglight.mud": "Mud Froglight",
   "block.productivefrogs.configurable_froglight.mycelium": "Mycelium Froglight",
+  "block.productivefrogs.configurable_froglight.rainbow": "Rainbow Froglight",
   "block.productivefrogs.configurable_froglight.plastic": "Plastic Froglight",
   "block.productivefrogs.configurable_froglight.advanced_processor": "Advanced Processor Froglight",
   "block.productivefrogs.configurable_froglight.basic_processor": "Basic Processor Froglight",
@@ -440,6 +442,7 @@
   "item.productivefrogs.resource_slime_spawn_egg.moss": "Moss Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.mud": "Mud Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.mycelium": "Mycelium Slime Spawn Egg",
+  "item.productivefrogs.resource_slime_spawn_egg.rainbow": "Rainbow Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.plastic": "Plastic Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.advanced_processor": "Advanced Processor Slime Spawn Egg",
   "item.productivefrogs.resource_slime_spawn_egg.basic_processor": "Basic Processor Slime Spawn Egg",
@@ -588,6 +591,7 @@
   "entity.productivefrogs.resource_slime.moss": "Moss Slime",
   "entity.productivefrogs.resource_slime.mud": "Mud Slime",
   "entity.productivefrogs.resource_slime.mycelium": "Mycelium Slime",
+  "entity.productivefrogs.resource_slime.rainbow": "Rainbow Slime",
   "entity.productivefrogs.resource_slime.plastic": "Plastic Slime",
   "entity.productivefrogs.resource_slime.advanced_processor": "Advanced Processor Slime",
   "entity.productivefrogs.resource_slime.basic_processor": "Basic Processor Slime",
@@ -1011,5 +1015,8 @@
   "fluid_type.productivefrogs.voidflame_slime_milk": "Voidflame Slime Milk",
   "item.productivefrogs.experience_slime_milk_bucket": "Bucket of Experience Slime Milk",
   "block.productivefrogs.experience_slime_milk": "Experience Slime Milk",
-  "fluid_type.productivefrogs.experience_slime_milk": "Experience Slime Milk"
+  "fluid_type.productivefrogs.experience_slime_milk": "Experience Slime Milk",
+  "item.productivefrogs.rainbow_slime_milk_bucket": "Bucket of Rainbow Slime Milk",
+  "block.productivefrogs.rainbow_slime_milk": "Rainbow Slime Milk",
+  "fluid_type.productivefrogs.rainbow_slime_milk": "Rainbow Slime Milk"
 }

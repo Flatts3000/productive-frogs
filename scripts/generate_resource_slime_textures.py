@@ -117,17 +117,28 @@ def load_outer_template():
     sys.exit("No category slime texture to use as outer-shell template.")
 
 
+# Variants whose slime texture is baked by a DEDICATED script instead of from an
+# `inner_block`. They deliberately ship no `inner_block`, so this baker skips them -
+# without this list they show up under MISSING, and "fixing" that by adding an
+# `inner_block` would silently overwrite their bespoke art on the next run.
+BESPOKE = {"rainbow": "generate_rainbow_slime_texture.py"}
+
+
 def main():
     ensure_assets()
     template = load_outer_template()
     made = 0
     missing = []
+    bespoke = []
     for jf in sorted(glob.glob(os.path.join(VARIANT_JSON_DIR, "*.json"))):
         variant = os.path.splitext(os.path.basename(jf))[0]
         data = json.load(open(jf, encoding="utf-8"))
         inner = data.get("inner_block")
         if not inner:
-            missing.append(f"{variant} (no inner_block)")
+            if variant in BESPOKE:
+                bespoke.append(f"{variant} <- {BESPOKE[variant]}")
+            else:
+                missing.append(f"{variant} (no inner_block)")
             continue
         tile, used = find_block_texture(inner)
         if tile is None:
@@ -140,6 +151,10 @@ def main():
         made += 1
         print(f"{variant:20s} <- {used}")
     print(f"\nwrote {made} per-variant slime textures")
+    if bespoke:
+        print("SKIPPED (bespoke texture, baked by its own script - do NOT add an inner_block):")
+        for b in bespoke:
+            print(f"  - {b}")
     if missing:
         print("MISSING (left to category fallback):")
         for m in missing:
