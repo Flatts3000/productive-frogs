@@ -813,7 +813,8 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
     }
 
     @org.jetbrains.annotations.Nullable
-    private FrogKind loadedFrogKind() {
+    /** The kind of frog loaded in the Processor, or null when empty. Read by the dome renderer (#382). */
+    public FrogKind loadedFrogKind() {
         ItemStack frog = inventory.getFrog();
         CustomData data = frog.get(DataComponents.CUSTOM_DATA);
         return data == null ? null : FrogKind.readFromTag(data.copyTag()).orElse(null);
