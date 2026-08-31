@@ -3,6 +3,7 @@ package com.flatts.productivefrogs.content.entity;
 import com.flatts.productivefrogs.PFConfig;
 import com.flatts.productivefrogs.data.Category;
 import com.flatts.productivefrogs.data.FrogKind;
+import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.component.DataComponents;
@@ -274,6 +275,12 @@ public class ResourceTadpole extends Tadpole {
     public void saveToBucketTag(ItemStack stack) {
         super.saveToBucketTag(stack);
         FrogKind kind = getKind();
+        // Flat identity component (#385), the same shape the slime bucket got in
+        // #357. BUCKET_ENTITY_DATA cannot be the identity: super.saveToBucketTag
+        // writes vanilla live entity state into it, and the bred stats below ride
+        // there too, so a SCOOPED bucket never matches a creative/JEI one for the
+        // same kind. Stats stay in the tag as payload; identity moves out to here.
+        stack.set(PFDataComponents.CONTAINED_KIND.get(), kind.id());
         CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
             tag.putString("Kind", kind.id());
             // Carry the inherited (pending) breeding stats through the bucket the

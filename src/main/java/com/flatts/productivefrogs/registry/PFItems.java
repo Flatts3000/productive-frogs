@@ -816,6 +816,28 @@ public final class PFItems {
      * names; shared by the creative tab and the JEI plugin so all display stacks
      * stay consistent with real captured buckets.
      */
+    /**
+     * A Resource Tadpole Bucket for {@code category} without a live entity - what
+     * the creative tab and JEI show.
+     *
+     * <p>Lives here beside {@link #variantSlimeBucket} rather than in
+     * {@code PFCreativeTabs} where it started: the two are the same kind of thing
+     * (the crafted counterpart to a scooped bucket), and being private over there
+     * meant the producer half of #385 had no test coverage at all - deleting its
+     * component stamp reintroduced the divergence with CI still green.
+     */
+    public static ItemStack categoryTadpoleBucket(Category category) {
+        ItemStack stack = new ItemStack(RESOURCE_TADPOLE_BUCKET.get());
+        String kindId = com.flatts.productivefrogs.data.FrogKind.resource(category).id();
+        // Must match ResourceTadpole#saveToBucketTag: a creative bucket and a
+        // scooped one are the same item to a component filter only if both stamp
+        // this (#385).
+        stack.set(PFDataComponents.CONTAINED_KIND.get(), kindId);
+        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack,
+            tag -> tag.putString("Kind", kindId));
+        return stack;
+    }
+
     public static ItemStack variantSlimeBucket(Identifier variantId, Category category) {
         ItemStack stack = new ItemStack(SLIME_BUCKET.get());
         // Must match ResourceSlime#saveToBucketTag: a crafted bucket and a scooped

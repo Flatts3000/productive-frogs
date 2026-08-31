@@ -62,6 +62,34 @@ public final class PFDataComponents {
     );
 
     /**
+     * The {@link com.flatts.productivefrogs.data.FrogKind} id a Resource Tadpole
+     * Bucket contains, e.g. {@code "resource/bog"}, {@code "midas"},
+     * {@code "predator/prowler"} (#385).
+     *
+     * <p>Why a flat component rather than reading {@code BUCKET_ENTITY_DATA}: that
+     * tag also holds live entity state and, for a bred tadpole, its pending
+     * Appetite / Bounty / Reach, so a scooped bucket and a creative one are never
+     * component-equal. This is the key a filter, pipe, quest task or auto-crafter
+     * compares - the same split #357 established for the slime bucket, with entity
+     * state left in the tag as payload.
+     *
+     * <p>Stored as the id STRING rather than a typed FrogKind: the kind set is
+     * open (predator and apex kinds are added by extending the sealed hierarchy),
+     * {@code FrogKind.byId} returns null for an id this build does not know, and a
+     * component codec that hard-fails on foreign data would make an otherwise
+     * readable bucket undecodable. Matching a flat string is also exactly what a
+     * pack filter does - {@link #CONTAINED_CATEGORY} is typed because Category is
+     * a closed enum.
+     */
+    public static final Supplier<DataComponentType<String>> CONTAINED_KIND = COMPONENTS.register(
+        "contained_kind",
+        () -> DataComponentType.<String>builder()
+            .persistent(Codec.STRING)
+            .networkSynchronized(ByteBufCodecs.STRING_UTF8)
+            .build()
+    );
+
+    /**
      * Item id carried by the Equivalence lane's synthesized content (#253) - the Mimic
      * Slime, its bucket/milk, and the Prismatic Froglight. Unlike {@link #SLIME_VARIANT}
      * (a registered variant id), this stores an arbitrary item id with no variant; the

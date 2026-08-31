@@ -5,7 +5,9 @@ import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceTadpole;
 import com.flatts.productivefrogs.content.item.ResourceTadpoleBucketItem;
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.data.FrogKind;
 import com.flatts.productivefrogs.registry.PFBlocks;
+import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFItems;
 import java.util.List;
@@ -34,6 +36,8 @@ final class EggTadpoleFrogTests {
 
     static void register() {
         PFGameTests.test("primed_egg_breaks_when_water_removed", 100, EggTadpoleFrogTests::primedEggBreaksWhenWaterRemoved);
+        PFGameTests.test("scooped_and_creative_tadpole_buckets_share_a_kind_component", 100,
+            EggTadpoleFrogTests::scoopedAndCreativeTadpoleBucketsShareAKindComponent);
         PFGameTests.test("primed_egg_hatches_into_matching_category_tadpoles", 100, EggTadpoleFrogTests::primedEggHatchesIntoMatchingCategoryTadpoles);
         PFGameTests.test("tadpole_ages_up_into_resource_frog_of_same_category", 100, EggTadpoleFrogTests::tadpoleAgesUpIntoResourceFrogOfSameCategory);
         PFGameTests.test("tadpole_accepts_sweetslime_to_speed_growth", 100, EggTadpoleFrogTests::tadpoleAcceptsSweetslimeToSpeedGrowth);
@@ -352,5 +356,74 @@ final class EggTadpoleFrogTests {
                     + frog.getAppetite() + "/" + frog.getBounty() + "/" + frog.getReach());
             }
         });
+    }
+
+    /**
+     * A SCOOPED Resource Tadpole Bucket and a CREATIVE one carry the same identity
+     * (#385) - the same defect #357 fixed for the slime bucket.
+     *
+     * <p>They cannot be fully component-equal: the scoop path writes vanilla live
+     * entity state through {@code super.saveToBucketTag}, and a BRED tadpole also
+     * carries its pending Appetite / Bounty / Reach in the same tag. Those are
+     * payload. What must match is the flat {@code contained_kind} component both
+     * producers stamp, because that is what a component filter compares. Kind, not
+     * category: a Predator and a Resource tadpole can share a fallback category, so
+     * category is not identity on this line.
+     */
+    private static void scoopedAndCreativeTadpoleBucketsShareAKindComponent(GameTestHelper helper) {
+        FrogKind kind = FrogKind.resource(Category.GEODE);
+        BlockPos pos = new BlockPos(2, 2, 2);
+        helper.setBlock(pos.below(), Blocks.WATER);
+
+        ResourceTadpole source = helper.spawn(PFEntities.RESOURCE_TADPOLE.get(), pos);
+        source.setKind(kind);
+        ItemStack scooped = new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
+        source.saveToBucketTag(scooped);
+
+        // 1. Both PRODUCERS agree. The creative half is the one that had no
+        //    coverage: its factory used to be private, so deleting its stamp
+        //    reintroduced the divergence with CI green.
+        String scoopedKind = scooped.get(PFDataComponents.CONTAINED_KIND.get());
+        String creativeKind = PFItems.categoryTadpoleBucket(Category.GEODE)
+            .get(PFDataComponents.CONTAINED_KIND.get());
+        if (!kind.id().equals(scoopedKind) || !kind.id().equals(creativeKind)) {
+            helper.fail("producers disagree on contained_kind: scooped=" + scoopedKind
+                + " creative=" + creativeKind + " expected=" + kind.id()
+                + "; component filters cannot tell the two buckets apart");
+            return;
+        }
+
+        // 2. A bucket carrying ONLY the component still READS as that kind.
+        ItemStack componentOnly = new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
+        componentOnly.set(PFDataComponents.CONTAINED_KIND.get(), kind.id());
+        if (ResourceTadpoleBucketItem.readKind(componentOnly) != kind) {
+            helper.fail("a bucket carrying only contained_kind read back "
+                + ResourceTadpoleBucketItem.readKind(componentOnly)
+                + "; it would name and tint itself as an empty bucket");
+            return;
+        }
+
+        // 3. ...and RELEASES that kind. Reading it back is not enough: the spawn
+        //    path sees only BUCKET_ENTITY_DATA, so before checkExtraContent folded
+        //    the component in, such a bucket displayed as GEODE and released a
+        //    default BOG tadpole - silent identity loss on the path that matters.
+        BlockPos releaseAt = new BlockPos(4, 2, 2);
+        helper.setBlock(releaseAt.below(), Blocks.WATER);
+        ((ResourceTadpoleBucketItem) PFItems.RESOURCE_TADPOLE_BUCKET.get())
+            .checkExtraContent(null, helper.getLevel(), componentOnly, helper.absolutePos(releaseAt));
+        ResourceTadpole released = helper.getEntities(PFEntities.RESOURCE_TADPOLE.get()).stream()
+            .filter(t -> t != source)
+            .findFirst()
+            .orElse(null);
+        if (released == null) {
+            helper.fail("releasing a component-only bucket spawned no tadpole");
+            return;
+        }
+        if (released.getKind() != kind) {
+            helper.fail("a component-only bucket displayed as " + kind.id()
+                + " but released a " + released.getKind().id() + " tadpole");
+            return;
+        }
+        helper.succeed();
     }
 }

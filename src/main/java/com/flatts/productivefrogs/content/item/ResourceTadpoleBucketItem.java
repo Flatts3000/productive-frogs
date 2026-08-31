@@ -55,13 +55,53 @@ public final class ResourceTadpoleBucketItem extends MobBucketItem {
      * the legacy {@code "Category"}(+{@code "Midas"}) fallback that slime buckets
      * and pre-Kind data still use. Returns {@code null} for an empty bucket.
      */
+    /**
+     * Fold {@code contained_kind} into {@code BUCKET_ENTITY_DATA} before vanilla
+     * spawns the tadpole.
+     *
+     * <p>{@code MobBucketItem#spawn} is private and hands {@code loadFromBucketTag}
+     * nothing but the tag, so without this a bucket carrying only the component -
+     * the {@code /give}, quest-reward or pack-recipe case the component exists to
+     * serve - would name itself, tint itself and satisfy a filter as one kind, then
+     * release a DEFAULT tadpole. Silent identity loss on the path that matters
+     * most, and worse than the divergence #385 set out to fix. The component is
+     * only a display key until the release path agrees with it.
+     */
+    @Override
+    public void checkExtraContent(@Nullable net.minecraft.world.entity.LivingEntity user,
+                                  net.minecraft.world.level.Level level, ItemStack stack,
+                                  net.minecraft.core.BlockPos pos) {
+        String kindId = stack.get(PFDataComponents.CONTAINED_KIND.get());
+        if (kindId != null) {
+            CustomData existing = stack.get(DataComponents.BUCKET_ENTITY_DATA);
+            boolean tagHasKind = existing != null && existing.copyTag().contains("Kind");
+            if (!tagHasKind) {
+                CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack,
+                    tag -> tag.putString("Kind", kindId));
+            }
+        }
+        super.checkExtraContent(user, level, stack, pos);
+    }
+
     @Nullable
     public static com.flatts.productivefrogs.data.FrogKind readKind(ItemStack stack) {
         CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
-        if (data == null) {
-            return null;
+        if (data != null) {
+            com.flatts.productivefrogs.data.FrogKind fromTag =
+                com.flatts.productivefrogs.data.FrogKind.readFromTag(data.copyTag()).orElse(null);
+            if (fromTag != null) {
+                return fromTag;
+            }
         }
-        return com.flatts.productivefrogs.data.FrogKind.readFromTag(data.copyTag()).orElse(null);
+        // Fall back to the flat component (#385), so the two identity carriers are
+        // self-healing in both directions. Once contained_kind is the advertised
+        // identity key, a bucket can arrive with only that - from /give, a quest
+        // reward, or a pack recipe built off the component - and without this it
+        // would pass every component filter while still naming and tinting itself
+        // as an empty bucket. byId returns null for an id this build does not
+        // know, which is the same "unknown" answer the tag path gives.
+        String kindId = stack.get(PFDataComponents.CONTAINED_KIND.get());
+        return kindId == null ? null : com.flatts.productivefrogs.data.FrogKind.byId(kindId);
     }
 
     /**
