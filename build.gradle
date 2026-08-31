@@ -153,7 +153,7 @@ dependencies {
     // double-load against, so runtimeOnly is safe. { transitive = false } keeps
     // Modonomicon's own deps (e.g. its config lib) out of our graph - it brings
     // them itself at runtime. Cloudsmith `com.klikli_dev:modonomicon-<mc>-neoforge`.
-    runtimeOnly("com.klikli_dev:modonomicon-26.1.2-neoforge:2.1.0") { transitive = false }
+    runtimeOnly("com.klikli_dev:modonomicon-26.1.2-neoforge:2.2.0") { transitive = false }
 
     // Curios API (modid `curios`) - compileOnly ONLY, same posture as Jade.
     // Brewed Froglights (#162/#169) self-buff while worn in a Curios slot; the
