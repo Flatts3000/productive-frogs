@@ -261,16 +261,27 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
      */
     private static String bucketSubtypeKey(ItemStack stack) {
         CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
-        if (data == null) {
-            return "";
-        }
-        CompoundTag tag = data.copyTag();
+        CompoundTag tag = data == null ? new CompoundTag() : data.copyTag();
         // Kind-aware (#281): tadpole buckets write "Kind"; slime buckets and
         // legacy data write "Category"(+"Midas") - FrogKind.readFromTag resolves
         // both dialects to one canonical id so every stack keys consistently.
         String kind = com.flatts.productivefrogs.data.FrogKind.readFromTag(tag)
             .map(com.flatts.productivefrogs.data.FrogKind::id).orElse("");
-        return kind + "|" + tag.getStringOr("Variant", "");
+        String variant = tag.getStringOr("Variant", "");
+        // Fall back to the flat components (#357 / #385). Without this a bucket
+        // carrying only its component keys as "|" and collapses onto the EMPTY
+        // bucket row, so pressing U/R on it shows the empty-bucket info page while
+        // its name and tint say otherwise - the readers already honour the
+        // component, so JEI has to as well or the surfaces disagree.
+        if (kind.isEmpty()) {
+            String kindId = stack.get(PFDataComponents.CONTAINED_KIND.get());
+            kind = kindId == null ? "" : kindId;
+        }
+        if (variant.isEmpty()) {
+            Identifier variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+            variant = variantId == null ? "" : variantId.toString();
+        }
+        return kind + "|" + variant;
     }
 
     @Override

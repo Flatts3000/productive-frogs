@@ -53,6 +53,14 @@ public final class PFDataComponents {
      * data lives in the datapack registry; this component stores the lookup
      * key only.
      */
+    public static final Supplier<DataComponentType<Identifier>> SLIME_VARIANT = COMPONENTS.register(
+        "slime_variant",
+        () -> DataComponentType.<Identifier>builder()
+            .persistent(Identifier.CODEC)
+            .networkSynchronized(Identifier.STREAM_CODEC)
+            .build()
+    );
+
     /**
      * The {@link com.flatts.productivefrogs.data.FrogKind} id a Resource Tadpole
      * Bucket contains, e.g. {@code "resource/bog"}, {@code "midas"},
@@ -76,16 +84,8 @@ public final class PFDataComponents {
     public static final Supplier<DataComponentType<String>> CONTAINED_KIND = COMPONENTS.register(
         "contained_kind",
         () -> DataComponentType.<String>builder()
-            .persistent(com.mojang.serialization.Codec.STRING)
-            .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8)
-            .build()
-    );
-
-    public static final Supplier<DataComponentType<Identifier>> SLIME_VARIANT = COMPONENTS.register(
-        "slime_variant",
-        () -> DataComponentType.<Identifier>builder()
-            .persistent(Identifier.CODEC)
-            .networkSynchronized(Identifier.STREAM_CODEC)
+            .persistent(Codec.STRING)
+            .networkSynchronized(ByteBufCodecs.STRING_UTF8)
             .build()
     );
 

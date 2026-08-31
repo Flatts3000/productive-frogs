@@ -120,7 +120,7 @@ public final class PFCreativeTabs {
                     // category (the JEI subtype keys off BUCKET_ENTITY_DATA).
                     output.accept(PFItems.RESOURCE_TADPOLE_BUCKET.get());
                     for (Category cat : Category.values()) {
-                        output.accept(makeCategoryTadpoleBucket(cat));
+                        output.accept(PFItems.categoryTadpoleBucket(cat));
                     }
 
                     // ---------------- 3. Slimes in buckets ----------------
@@ -323,20 +323,6 @@ public final class PFCreativeTabs {
      * Category (no variant); the dynamic display name in
      * {@code ResourceTadpoleBucketItem.getName} reads this tag too.
      */
-    private static ItemStack makeCategoryTadpoleBucket(Category category) {
-        ItemStack stack = new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
-        // Must match ResourceTadpole#saveToBucketTag: a creative bucket and a
-        // scooped one are the same item to a component filter only if both stamp
-        // this (#385).
-        stack.set(PFDataComponents.CONTAINED_KIND.get(),
-            com.flatts.productivefrogs.data.FrogKind.resource(category).id());
-        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
-            // Same "Kind" dialect ResourceTadpole.saveToBucketTag writes, so the
-            // creative stack and a real scooped bucket are one JEI subtype.
-            tag.putString("Kind", com.flatts.productivefrogs.data.FrogKind.resource(category).id());
-        });
-        return stack;
-    }
 
     private PFCreativeTabs() {
         // utility class

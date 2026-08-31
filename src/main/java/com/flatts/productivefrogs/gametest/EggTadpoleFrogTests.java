@@ -380,22 +380,48 @@ final class EggTadpoleFrogTests {
         ItemStack scooped = new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
         source.saveToBucketTag(scooped);
 
+        // 1. Both PRODUCERS agree. The creative half is the one that had no
+        //    coverage: its factory used to be private, so deleting its stamp
+        //    reintroduced the divergence with CI green.
         String scoopedKind = scooped.get(PFDataComponents.CONTAINED_KIND.get());
-        if (!kind.id().equals(scoopedKind)) {
-            helper.fail("a scooped Resource Tadpole Bucket carries contained_kind "
-                + scoopedKind + ", expected " + kind.id() + "; component filters cannot "
-                + "tell it from a creative-tab bucket");
+        String creativeKind = PFItems.categoryTadpoleBucket(Category.GEODE)
+            .get(PFDataComponents.CONTAINED_KIND.get());
+        if (!kind.id().equals(scoopedKind) || !kind.id().equals(creativeKind)) {
+            helper.fail("producers disagree on contained_kind: scooped=" + scoopedKind
+                + " creative=" + creativeKind + " expected=" + kind.id()
+                + "; component filters cannot tell the two buckets apart");
             return;
         }
 
-        // A bucket carrying ONLY the component still resolves, so the two carriers
-        // stay self-healing (the same hole reviewed out of #357).
+        // 2. A bucket carrying ONLY the component still READS as that kind.
         ItemStack componentOnly = new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
         componentOnly.set(PFDataComponents.CONTAINED_KIND.get(), kind.id());
         if (ResourceTadpoleBucketItem.readKind(componentOnly) != kind) {
             helper.fail("a bucket carrying only contained_kind read back "
                 + ResourceTadpoleBucketItem.readKind(componentOnly)
                 + "; it would name and tint itself as an empty bucket");
+            return;
+        }
+
+        // 3. ...and RELEASES that kind. Reading it back is not enough: the spawn
+        //    path sees only BUCKET_ENTITY_DATA, so before checkExtraContent folded
+        //    the component in, such a bucket displayed as GEODE and released a
+        //    default BOG tadpole - silent identity loss on the path that matters.
+        BlockPos releaseAt = new BlockPos(4, 2, 2);
+        helper.setBlock(releaseAt.below(), Blocks.WATER);
+        ((ResourceTadpoleBucketItem) PFItems.RESOURCE_TADPOLE_BUCKET.get())
+            .checkExtraContent(null, helper.getLevel(), componentOnly, helper.absolutePos(releaseAt));
+        ResourceTadpole released = helper.getEntities(PFEntities.RESOURCE_TADPOLE.get()).stream()
+            .filter(t -> t != source)
+            .findFirst()
+            .orElse(null);
+        if (released == null) {
+            helper.fail("releasing a component-only bucket spawned no tadpole");
+            return;
+        }
+        if (released.getKind() != kind) {
+            helper.fail("a component-only bucket displayed as " + kind.id()
+                + " but released a " + released.getKind().id() + " tadpole");
             return;
         }
         helper.succeed();
