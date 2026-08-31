@@ -2,7 +2,17 @@
 
 ## [Unreleased]
 
+## v1.26.0 - 2026-08-30 - Sixteen Shades
+
 ### Added
+
+- **The Virtual Terrarium's dome now tells you what it is doing.** The frog
+  inside the Display Dome is drawn in its own species colour instead of a plain
+  vanilla frog, so you can tell a Bog frog from an Infernal one at a glance
+  without opening the machine. While it is actually producing, a small slime
+  appears beside it in the colour of whatever it is currently eating. Idle, the
+  slime is gone. The frog always shows what it IS and the slime shows what it is
+  making, so a window on a hidden machine is now a status readout. (#389, #390)
 
 - **Sixteen dyes out of one Froglight.** Show any dye to a slime and it becomes
   a Rainbow Slime. A Bog Frog that eats one drops a Rainbow Froglight, and the
@@ -13,6 +23,33 @@
   bigger batches: one Froglight makes eight dye, two make sixteen, three make
   twenty-four. JEI lists all sixteen shapes, so there is nothing to memorize.
   (#376)
+
+### Fixed
+
+- **A slime you scooped into a bucket is now the same item as one you crafted.**
+  They carried different hidden data, so anything that compares items exactly -
+  quest tasks, item filters, pipes, auto-crafting - treated them as two different
+  things. Six Sky Frogs quests could be completed by crafting a bucket but not by
+  bucketing a slime, and no pack setting could fix it. Both now carry the same
+  variant marker, and nothing a bucket used to remember is lost. Existing buckets
+  keep working. (#357, #383)
+
+- **The same fix for the Resource Tadpole Bucket.** A scooped tadpole bucket and
+  one from the creative tab were likewise different items, and a bred tadpole
+  differed again because its inherited stats ride along in the bucket. Nobody had
+  hit it yet, but it was the same trap. (#385, #387)
+
+### Internal
+
+- **The slime texture baker no longer reads the wrong Minecraft version's art,
+  and no longer rewrites every file on every run.** It picked whichever vanilla
+  jar it found first and re-saved every texture each run with byte-different but
+  pixel-identical PNGs. Since it is a documented manual step for every new
+  variant, that meant contributors were told to run it and then wave away a wall
+  of meaningless diffs - exactly where a genuinely wrong bake would hide. It now
+  picks the jar by the version inside it, keeps its cache keyed to that jar so
+  the two Minecraft lines cannot poison each other, writes only when pixels
+  actually change, and has a `--check` mode. (#377, #381)
 
 ## v1.25.4 - 2026-08-09 - Second Opinion
 
