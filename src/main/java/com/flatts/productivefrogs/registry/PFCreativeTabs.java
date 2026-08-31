@@ -54,7 +54,7 @@ public final class PFCreativeTabs {
                     // off that component).
                     output.accept(PFItems.RESOURCE_TADPOLE_BUCKET.get());
                     for (Category cat : Category.values()) {
-                        output.accept(makeCategoryTadpoleBucket(cat));
+                        output.accept(PFItems.categoryTadpoleBucket(cat));
                     }
                     // Default empty Slime Bucket, then one stamped per variant.
                     // Variant stamping mirrors what ResourceSlime.saveToBucketTag
@@ -282,13 +282,6 @@ public final class PFCreativeTabs {
      * Category (no variant); the dynamic display name in
      * {@code ResourceTadpoleBucketItem.getName} reads this tag too.
      */
-    private static ItemStack makeCategoryTadpoleBucket(Category category) {
-        ItemStack stack = new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
-        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, tag -> {
-            tag.putString("Category", category.name());
-        });
-        return stack;
-    }
 
     private PFCreativeTabs() {
         // utility class
