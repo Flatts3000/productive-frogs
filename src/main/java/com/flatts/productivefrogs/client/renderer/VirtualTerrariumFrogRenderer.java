@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Two colours are in play and they are not the same thing. The loaded frog stores
  * its <b>category</b> - what the frog IS, always known. The <b>variant</b> (iron,
- * diamond, ...) comes from the Slime Milk feedstock - what it is currently PRODUCING,
+ * diamond, ...) comes from the Slime Milk feedstock - what it is currently
  * PRODUCING. The <b>frog</b> is always its own species colour; the <b>slime</b>
  * beside it appears only while the machine works and carries the feedstock variant.
  * Two elements, two pieces of information, no redundancy.
@@ -72,12 +72,8 @@ public class VirtualTerrariumFrogRenderer implements BlockEntityRenderer<Virtual
         if (be.getLevel() == null || be.getInventory().getFrog().isEmpty() || !be.hasDome()) {
             return;
         }
-        // A MIDAS frog has no category at all - loadedCategory() returns null for it -
-        // so bailing on null made the dome render nothing for a loaded Midas frog,
-        // where it used to always draw one. Only an unreadable slot should bail.
-        boolean midas = be.loadedIsMidas();
         Category category = be.loadedCategory();
-        if (category == null && !midas) {
+        if (category == null) {
             return;
         }
         if (frogPhantom == null) {
@@ -86,10 +82,8 @@ public class VirtualTerrariumFrogRenderer implements BlockEntityRenderer<Virtual
         if (frogPhantom == null) {
             return;
         }
-        // Midas overrides the tint outright, so the category is unused in that case;
-        // BOG is an inert placeholder, not a claim about the frog.
-        frogPhantom.setCategory(category != null ? category : Category.BOG);
-        frogPhantom.setMidas(midas);
+        frogPhantom.setCategory(category);
+        frogPhantom.setMidas(be.loadedIsMidas());
         // The frog is ALWAYS its own species colour. It briefly switched to the
         // feedstock variant while working, which was wrong twice over: the slime
         // beside it already shows what is being produced, so the variant was
@@ -130,7 +124,7 @@ public class VirtualTerrariumFrogRenderer implements BlockEntityRenderer<Virtual
             if (slimePhantom != null) {
                 slimePhantom.setSize(1, false);
                 slimePhantom.setVariant(variantId);
-                slimePhantom.setCategory(category != null ? category : Category.BOG);
+                slimePhantom.setCategory(category);
                 aim(slimePhantom, (int) time, yaw);
                 pose.pushPose();
                 pose.translate(SLIME_X, SLIME_Y, SLIME_Z);
