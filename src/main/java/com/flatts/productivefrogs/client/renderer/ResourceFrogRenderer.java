@@ -27,6 +27,14 @@ public class ResourceFrogRenderer extends FrogRenderer {
             this::getTextureLocation,
             entity -> {
                 if (entity instanceof ResourceFrog rf) {
+                    // A display phantom may ask to be drawn in a colour that is not
+                    // its own identity - the Display Dome tints by the feedstock
+                    // variant rather than the frog's species (#382). Never set on a
+                    // real frog.
+                    Integer override = rf.getDisplayTintOverride();
+                    if (override != null) {
+                        return override;
+                    }
                     // Midas (#253) renders gold, overriding its sentinel category tint.
                     return rf.isMidas() ? 0xFFFFD700 : (0xFF000000 | rf.getCategory().tintRgb());
                 }

@@ -745,7 +745,8 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
      * string via {@code saveWithoutId} - the pre-FrogKind model.
      */
     @Nullable
-    private Category loadedCategory() {
+    /** The category of the frog loaded in the Processor, or null when empty. Read by the dome renderer (#382). */
+    public Category loadedCategory() {
         CompoundTag tag = loadedFrogTag();
         if (tag == null || !tag.contains("Category", Tag.TAG_STRING)) {
             return null;
@@ -758,7 +759,8 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
     }
 
     /** Whether the loaded frog is a Midas frog (the {@code "Midas"} flag on its saved NBT). */
-    private boolean loadedIsMidas() {
+    /** Whether the loaded frog is a Midas frog. Read by the dome renderer (#382). */
+    public boolean loadedIsMidas() {
         CompoundTag tag = loadedFrogTag();
         return tag != null && tag.getBoolean("Midas");
     }
