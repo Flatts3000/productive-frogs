@@ -186,31 +186,6 @@ public class ResourceFrog extends Frog {
         return Category.fromOrdinalOrDefault(this.entityData.get(DATA_CATEGORY));
     }
 
-    /**
-     * Client-side render tint override, or null to use the normal category/Midas
-     * colour. NEVER saved, synced or read by game logic - it exists so a display
-     * phantom can be drawn in a colour that is not its own identity, which is what
-     * the Virtual Terrarium's Display Dome needs to tint its frog by the FEEDSTOCK
-     * variant rather than by the frog's species (#382).
-     *
-     * <p>26.1 does this by overwriting the extracted render state instead; this
-     * line has no render states and {@code ResourceFrogRenderer}'s tint layer reads
-     * the colour straight off the entity, so the override has to live here.
-     */
-    @org.jetbrains.annotations.Nullable
-    private transient Integer displayTintOverride;
-
-    /** @see #displayTintOverride */
-    public void setDisplayTintOverride(@org.jetbrains.annotations.Nullable Integer argb) {
-        this.displayTintOverride = argb;
-    }
-
-    /** @see #displayTintOverride */
-    @org.jetbrains.annotations.Nullable
-    public Integer getDisplayTintOverride() {
-        return displayTintOverride;
-    }
-
     public void setCategory(Category category) {
         this.entityData.set(DATA_CATEGORY, category.ordinal());
     }

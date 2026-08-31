@@ -762,10 +762,16 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
     }
 
     /**
-     * The loaded frog's Category, or null when it has none (a Midas frog, or an
-     * empty slot). On 1.21.1 a netted frog stores its species as a {@code "Category"}
+     * The loaded frog's Category, or null only when the slot is empty or its NBT is
+     * unreadable. On 1.21.1 a netted frog stores its species as a {@code "Category"}
      * string via {@code saveWithoutId} - the pre-FrogKind model. Read by the dome
      * renderer (#382).
+     *
+     * <p>This previously said "or null when it has none (a Midas frog, ...)", which
+     * is wrong and cost a round trip: {@code ResourceFrog#addAdditionalSaveData}
+     * writes {@code "Category"} UNCONDITIONALLY and only adds {@code "Midas"} on top
+     * of it, so a Midas frog carries a real category like any other. There is no
+     * Midas sentinel - {@link Category} has exactly the six species.
      */
     @Nullable
     public Category loadedCategory() {
