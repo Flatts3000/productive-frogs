@@ -263,11 +263,23 @@ public final class ProductiveFrogsJeiPlugin implements IModPlugin {
      */
     private static String bucketSubtypeKey(ItemStack stack) {
         CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
-        if (data == null) {
-            return "";
+        CompoundTag tag = data == null ? new CompoundTag() : data.copyTag();
+        String category = tag.getString("Category");
+        String variant = tag.getString("Variant");
+        // Fall back to the flat components (#357 / #385). Without this a bucket
+        // carrying only its component keys as "|" and collapses onto the EMPTY
+        // bucket row, so pressing U/R on it shows the empty-bucket info page while
+        // its name and tint say otherwise - the readers already honour the
+        // component, so JEI has to as well or the surfaces disagree.
+        if (category == null || category.isEmpty()) {
+            Category c = stack.get(PFDataComponents.CONTAINED_CATEGORY.get());
+            category = c == null ? "" : c.name();
         }
-        CompoundTag tag = data.copyTag();
-        return tag.getString("Category") + "|" + tag.getString("Variant");
+        if (variant == null || variant.isEmpty()) {
+            ResourceLocation v = stack.get(PFDataComponents.SLIME_VARIANT.get());
+            variant = v == null ? "" : v.toString();
+        }
+        return category + "|" + variant;
     }
 
     @Override

@@ -482,22 +482,48 @@ public final class PFGameTests {
         ItemStack scooped = new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
         source.saveToBucketTag(scooped);
 
+        // 1. Both PRODUCERS agree. The creative half is the one that had no
+        //    coverage: its factory used to be private, so deleting its stamp
+        //    reintroduced the divergence with CI green.
         Category scoopedCat = scooped.get(PFDataComponents.CONTAINED_CATEGORY.get());
-        if (scoopedCat != cat) {
-            helper.fail("a scooped Resource Tadpole Bucket carries contained_category "
-                + scoopedCat + ", expected " + cat + "; component filters cannot tell it "
-                + "from a creative-tab bucket");
+        Category creativeCat = PFItems.categoryTadpoleBucket(cat)
+            .get(PFDataComponents.CONTAINED_CATEGORY.get());
+        if (scoopedCat != cat || creativeCat != cat) {
+            helper.fail("producers disagree on contained_category: scooped=" + scoopedCat
+                + " creative=" + creativeCat + " expected=" + cat
+                + "; component filters cannot tell the two buckets apart");
             return;
         }
 
-        // A bucket carrying ONLY the component still resolves, so the two carriers
-        // stay self-healing (the same hole reviewed out of #357).
+        // 2. A bucket carrying ONLY the component still READS as that category.
         ItemStack componentOnly = new ItemStack(PFItems.RESOURCE_TADPOLE_BUCKET.get());
         componentOnly.set(PFDataComponents.CONTAINED_CATEGORY.get(), cat);
         if (ResourceTadpoleBucketItem.readCategory(componentOnly) != cat) {
             helper.fail("a bucket carrying only contained_category read back "
                 + ResourceTadpoleBucketItem.readCategory(componentOnly)
                 + "; it would name and tint itself as an empty bucket");
+            return;
+        }
+
+        // 3. ...and RELEASES that category. Reading it back is not enough: the
+        //    spawn path sees only BUCKET_ENTITY_DATA, so before checkExtraContent
+        //    folded the component in, such a bucket displayed as GEODE and released
+        //    a default tadpole - silent identity loss on the path that matters.
+        BlockPos releaseAt = new BlockPos(4, 2, 2);
+        helper.setBlock(releaseAt.below(), Blocks.WATER);
+        ((ResourceTadpoleBucketItem) PFItems.RESOURCE_TADPOLE_BUCKET.get())
+            .checkExtraContent(null, helper.getLevel(), componentOnly, helper.absolutePos(releaseAt));
+        ResourceTadpole released = helper.getEntities(PFEntities.RESOURCE_TADPOLE.get()).stream()
+            .filter(t -> t != source)
+            .findFirst()
+            .orElse(null);
+        if (released == null) {
+            helper.fail("releasing a component-only bucket spawned no tadpole");
+            return;
+        }
+        if (released.getCategory() != cat) {
+            helper.fail("a component-only bucket displayed as " + cat
+                + " but released a " + released.getCategory() + " tadpole");
             return;
         }
         helper.succeed();

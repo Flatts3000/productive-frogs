@@ -1,6 +1,9 @@
 package com.flatts.productivefrogs.content.item;
 
 import com.flatts.productivefrogs.data.Category;
+import com.flatts.productivefrogs.registry.PFDataComponents;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
 import com.flatts.productivefrogs.registry.PFItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.dispenser.BlockSource;
@@ -61,6 +64,29 @@ import org.jetbrains.annotations.Nullable;
  * {@link ResourceTadpoleBucketItem} already does for tadpole buckets.
  */
 public final class SlimeBucketItem extends MobBucketItem {
+
+    /**
+     * Fold {@code slime_variant} into {@code BUCKET_ENTITY_DATA} before vanilla
+     * spawns the slime. #357 gave the bucket a flat component and the reader falls
+     * back to it, but the spawn path sees only the tag - so a component-only bucket
+     * named and tinted itself as one variant and released a variant-less slime.
+     * Found while reviewing the same fix for the tadpole bucket (#385).
+     */
+    @Override
+    public void checkExtraContent(@Nullable net.minecraft.world.entity.player.Player player,
+                                  Level level, ItemStack stack, BlockPos pos) {
+        ResourceLocation variantId = stack.get(PFDataComponents.SLIME_VARIANT.get());
+        if (variantId != null) {
+            CustomData existing = stack.get(DataComponents.BUCKET_ENTITY_DATA);
+            boolean tagHasVariant = existing != null
+                && existing.copyTag().contains("Variant", net.minecraft.nbt.Tag.TAG_STRING);
+            if (!tagHasVariant) {
+                CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack,
+                    tag -> tag.putString("Variant", variantId.toString()));
+            }
+        }
+        super.checkExtraContent(player, level, stack, pos);
+    }
 
     public SlimeBucketItem(EntityType<? extends Mob> type, Fluid fluid,
                            SoundEvent emptySound, Properties properties) {

@@ -52,6 +52,34 @@ public final class ResourceTadpoleBucketItem extends MobBucketItem {
      * data, corrupted save, etc.).
      */
     @Nullable
+    /**
+     * Fold {@code contained_category} into {@code BUCKET_ENTITY_DATA} before vanilla
+     * spawns the tadpole.
+     *
+     * <p>{@code MobBucketItem#spawn} hands {@code loadFromBucketTag} nothing but the
+     * tag, so without this a bucket carrying only the component - the {@code /give},
+     * quest-reward or pack-recipe case the component exists to serve - would name
+     * itself, tint itself and satisfy a filter as one category, then release a
+     * DEFAULT tadpole. Silent identity loss on the path that matters most, and
+     * worse than the divergence #385 set out to fix.
+     */
+    @Override
+    public void checkExtraContent(@Nullable net.minecraft.world.entity.player.Player player,
+                                  net.minecraft.world.level.Level level, ItemStack stack,
+                                  net.minecraft.core.BlockPos pos) {
+        Category category = stack.get(PFDataComponents.CONTAINED_CATEGORY.get());
+        if (category != null) {
+            CustomData existing = stack.get(DataComponents.BUCKET_ENTITY_DATA);
+            boolean tagHasCategory = existing != null
+                && existing.copyTag().contains("Category", net.minecraft.nbt.Tag.TAG_STRING);
+            if (!tagHasCategory) {
+                CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack,
+                    tag -> tag.putString("Category", category.name()));
+            }
+        }
+        super.checkExtraContent(player, level, stack, pos);
+    }
+
     public static Category readCategory(ItemStack stack) {
         CustomData data = stack.get(DataComponents.BUCKET_ENTITY_DATA);
         if (data != null) {
