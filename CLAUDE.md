@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Productive Frogs is a Minecraft content mod targeting **NeoForge 26.1.2.76 on Minecraft 26.1.2, Java 25** (toolchain `JavaLanguageVersion.of(25)`; on this machine set `JAVA_HOME="C:/Program Files/Java/jdk-25"` for every gradlew invocation). It is **NeoForge-only - no Fabric port, ever**, so use NeoForge APIs directly (no Architectury layer, no multi-loader abstractions). The mod is **standalone** - it was decoupled from the Sky Frogs modpack when it left 1.21.1. The **1.21.1 line is frozen** on branch `mc-1.21.1` (hotfix-only, versions `1.24.x`; see `docs/maintenance_1_21_1.md` on that branch). `main` is the active **2.x / 26.1** line.
+Productive Frogs is a Minecraft content mod targeting **NeoForge 26.1.2.76 on Minecraft 26.1.2, Java 25** (toolchain `JavaLanguageVersion.of(25)`; on this machine set `JAVA_HOME="C:/Program Files/Java/jdk-25"` for every gradlew invocation). It is **NeoForge-only - no Fabric port, ever**, so use NeoForge APIs directly (no Architectury layer, no multi-loader abstractions). The mod is **standalone** - it was decoupled from the Sky Frogs modpack when it left 1.21.1. The **1.21.1 line is maintenance-only** on branch `mc-1.21.1` (versions `1.26.x`; see `docs/maintenance_1_21_1.md` on that branch). Hotfixes by default, but it is not sealed: features do land there when the maintainer explicitly asks for them, which is why it went `1.24.x` -> `1.25.x` -> `1.26.0`. Do not start feature work there on your own. `main` is the active **2.x / 26.1** line.
 
-**2.0 is the mob-drop redesign line** (`mod_version=2.0.0-alpha.1`). Its defining feature is the **predation system** (epic #281, `docs/predator_frogs.md`): all mob drops now come from a frog eating the mob - bred Predator Frogs eat vanilla mobs in the world for player-credited loot, and Apex Frogs arm the four **boss altars** (Wither / Dragon / Warden / Elder Guardian) that pay raw boss drops. The 21 mob-derived slime variants and the v1.14 catalyst-altar mechanism are retired. The 26.1 port itself was a deliberate **re-implementation, not a 1:1 migration**: `docs/port_mc_26_1.md` is the phase plan and `docs/port_mc_26_1_reimplementation.md` records the R-numbered redesign decisions (R-1 single-fluid milk, R-3 transactional transfer, R-6 registry GameTests, ...). Read those plus `docs/architecture.md` and `ROADMAP.md` before non-trivial design changes; they encode decisions already litigated. Do NOT re-enumerate the 1.x release history - it lives on the `mc-1.21.1` branch's docs.
+**2.0 is the mob-drop redesign line** (`mod_version=2.0.0-alpha.5`; check `gradle.properties` rather than trusting this number). Its defining feature is the **predation system** (epic #281, `docs/predator_frogs.md`): all mob drops now come from a frog eating the mob - bred Predator Frogs eat vanilla mobs in the world for player-credited loot, and Apex Frogs arm the four **boss altars** (Wither / Dragon / Warden / Elder Guardian) that pay raw boss drops. The 21 mob-derived slime variants and the v1.14 catalyst-altar mechanism are retired. The 26.1 port itself was a deliberate **re-implementation, not a 1:1 migration**: `docs/port_mc_26_1.md` is the phase plan and `docs/port_mc_26_1_reimplementation.md` records the R-numbered redesign decisions (R-1 single-fluid milk, R-3 transactional transfer, R-6 registry GameTests, ...). Read those plus `docs/architecture.md` and `ROADMAP.md` before non-trivial design changes; they encode decisions already litigated. Do NOT re-enumerate the 1.x release history - it lives on the `mc-1.21.1` branch's docs.
 
 ## Common Commands
 
@@ -21,7 +21,7 @@ Use the Gradle wrapper (`./gradlew` on bash, `.\gradlew.bat` on PowerShell), wit
 
 **Run a single test:** JUnit - `./gradlew test --tests '*SlimeVariantTest'`. A single in-world GameTest - launch `runClient`, then `/test run productivefrogs:<test_name>`.
 
-`build/` and `run/` are git-ignored; safe to nuke. Versions are pinned in `gradle.properties` (`minecraft_version=26.1.2`, `neoforge_version=26.1.2.76`, `mod_version`). Dev runs use the `net.neoforged.moddev` 2.0.141 plugin. Artifact names carry the MC version (`productivefrogs-26.1.2-2.0.0-alpha.1.jar`) so the two lines' jars are unmistakable.
+`build/` and `run/` are git-ignored; safe to nuke. Versions are pinned in `gradle.properties` (`minecraft_version=26.1.2`, `neoforge_version=26.1.2.76`, `mod_version`). Dev runs use the `net.neoforged.moddev` 2.0.141 plugin. Artifact names carry the MC version (`productivefrogs-26.1.2-<mod_version>.jar`) so the two lines' jars are unmistakable.
 
 ## Architecture (the parts that aren't obvious from a single file)
 
@@ -134,16 +134,21 @@ Opt-in debug logger spanning all layers: `lifecycle, registry, config, infusion,
 ## Scope Discipline (the two lines)
 
 - **`main` = the 2.x / 26.1 active line.** All feature work lands here. 2.0.0's release gate is the predation system (#281 - delivered; release packaging in progress), not partner mods.
-- **`mc-1.21.1` = the frozen 1.x line** (versions `1.24.x`, hotfix-only, `docs/maintenance_1_21_1.md` there). **Never merge across the lines.** A bug present in both gets fixed on `mc-1.21.1` and **cherry-picked forward** to `main` (fixes flow old -> new only). One CurseForge project (1552728), two game versions; per-branch `gradle.properties`/`CHANGELOG.md`/CI.
-- **Cross-mod integrations and the guidebook are held until closer to release** (maintainer ruling 2026-07-05). They return as additive 2.x minors; do not resurrect the parked branches or add partner-mod content without an explicit go-ahead. 26.1 is a fresh save target - no cross-version world migration is promised.
+- **`mc-1.21.1` = the 1.x maintenance line** (versions `1.26.x`, `docs/maintenance_1_21_1.md` there). **Never merge across the lines.** Work present in both starts on `mc-1.21.1` and flows old -> new only - but in practice it is **re-implemented on `main`, not cherry-picked**: the lines have diverged far enough (`Identifier` vs `ResourceLocation`, render states vs none, one component-carrying milk fluid vs per-variant fluids, registry GameTests vs the annotation form) that a patch almost never applies. Expect two PRs, one per line. One CurseForge project (1552728), two game versions; per-branch `gradle.properties`/`CHANGELOG.md`/CI.
+- **Cross-mod integrations are held until closer to release** (maintainer ruling 2026-07-05). They return as additive 2.x minors; do not resurrect the parked branches or add partner-mod content without an explicit go-ahead. (The guidebook was held alongside them and has since SHIPPED, in v2.0.0-alpha.3 "Field Guide".) 26.1 is a fresh save target - no cross-version world migration is promised.
 
 ## Driving a running game from outside (gamebridge / devbridge)
 
-`gamebridge` is a CLI in `../mc-pack-toolkit/gamebridge` that talks to a **running** instance, so
+`gamebridge` is a CLI that talks to a **running** instance, so
 something placed in the world can be **verified** rather than eyeballed in a screenshot.
 
+It now lives WITH devbridge at `F:\devbridge\gamebridge` (it used to be in
+`mc-pack-toolkit`, and that stale path is why an import can look broken). It is not
+on PATH: invoke the module, and put options BEFORE the verb - `--devbridge`,
+`--player` and `--timeout` belong to the tool, not the verb.
+
 ```bash
-pip install -e F:/minecraft-repos/mc-pack-toolkit/gamebridge
+python -c "import sys;from gamebridge import cli;sys.argv=['gamebridge']+sys.argv[1:];cli.main()" --devbridge 8609 ping
 
 # RCON, against ./gradlew runServer. Needs no mod: set enable-rcon + rcon.password in
 # run/server.properties. Chunks unload with nobody standing in them, so forceload first or every
@@ -168,7 +173,7 @@ systemProperty 'devbridge.port', '25580'
 programArguments.addAll '--quickPlaySingleplayer', 'My World'
 ```
 
-**This mod is on NeoForge 26.1.2.76, and the devbridge jar is built against 26.1.2.76.** Same version, so the jar works as-is.
+**This mod is on NeoForge 26.1.2.76, and the devbridge jar is built against 26.1.2.76.** Same version, so the jar works as-is on `main`. **There is no 1.21.1-compatible build**, so the `mc-1.21.1` line cannot be driven this way at all - anything visual on that line has to be checked by hand, and a claim of "verified" there means a human looked.
 
 **Never ship it.** It binds loopback only and is inert without the system property, but it executes
 arbitrary commands and is not a dependency of anything released.

@@ -173,12 +173,20 @@ The post-capstone transmutation lane - an opt-in, RF-powered equivalent-exchange
 1. **The 26.1 platform re-implementation** - the whole 1.x feature set forward-ported to 26.1 as a standalone mod (decoupled from Sky Frogs, which stays on 1.21.1). Port record: [docs/port_mc_26_1.md](./docs/port_mc_26_1.md) + [docs/port_mc_26_1_reimplementation.md](./docs/port_mc_26_1_reimplementation.md).
 2. **Mob predation** (epic #281, delivered in full) - all mob drops come from a frog eating the mob: the **Predator / Apex frog tier** bred from the six species, the **Ender Net + Slurry Press + Basin** supply chain (no enclosure blocks - Basin-spawned teleport-disable + frog abilities handle the hard classes), **Liquid Experience** (XP as a `c:experience` fluid), and the **four boss altars** (Wither / Ender Dragon / Warden / Elder Guardian) armed by bred Apex frogs and paying raw boss drops. The 21 mob-derived slime variants and the v1.14 catalyst-altar mechanism retired. Design record: [docs/predator_frogs.md](./docs/predator_frogs.md).
 
+### Since alpha.1
+
+The 2.0 line has kept shipping; alpha.1 is not the current state.
+
+- **v2.0.0-alpha.2** / **alpha.3 "Field Guide"** - the in-game guide book.
+- **v2.0.0-alpha.4 "Under Glass"** - the Virtual Terrarium: a frog's whole eat loop inside two blocks.
+- **v2.0.0-alpha.5 "True Colours"** - the sixteen-dye Rainbow Froglight lane, plus the rendering work that lets a variant ship full-colour art instead of a greyscale texture multiplied by one tint (a block-entity driven block model, and an `untinted_shell` opt-out for the slime). Also the Virtual Terrarium's Display Dome becoming a status readout, and the bucket identity fixes (#357, #385).
+
 ### Toward 2.0.0 stable
 
 Held until closer to release by maintainer ruling (2026-07-05), tracked in #317/#318:
 
 - **Cross-mod integrations** beyond JEI + Jade - wave-1 parity work (AllTheOres, Powah, Just Dire Things, Refined Storage, AE2, Curios, Apothic Enchanting) is complete and parked on `feat/crossmod-wave1` / `feat/curios-26.1`; wave 2 waits on partner-mod 26.1 ports.
-- **The in-game guide book** - DELIVERED (#336, closes #318): built on Modonomicon (soft-dep), 10 chapters / 40 entries, altar diagrams generated from the structure NBTs. Specced in `docs/guidebook.md`; unreleased on `main`, ships in the next release.
+- **The in-game guide book** - DELIVERED and SHIPPED in v2.0.0-alpha.3 "Field Guide" (#336, closes #318): built on Modonomicon (soft-dep), 10 chapters / 40 entries, altar diagrams generated from the structure NBTs. Specced in `docs/guidebook.md`.
 - Release-type promotion (alpha -> beta -> release) as the line soaks.
 
 > Automation (the Terrarium, appliance hopper I/O) already shipped in the **1.x** line - "V2 is just a name, not a rule." The former "v2 = automation" framing is retired. Remaining automation ideas (buffered auto-cycling Milker, auto-feeders, capacity/efficiency upgrades, FE / NeoForge Energy power compat) carry forward as **2.x** candidates layered on the 26.1 base.
