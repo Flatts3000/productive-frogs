@@ -32,19 +32,19 @@ import org.jetbrains.annotations.Nullable;
  * <p>Two colours are in play and they are not the same thing. The loaded frog stores
  * its <b>category</b> - what the frog IS, always known. The <b>variant</b> (iron,
  * diamond, ...) comes from the Slime Milk feedstock - what it is currently PRODUCING,
- * PRODUCING. The dome shows the species normally and switches to the variant only
- * <b>while the machine is actually working</b>, so it agrees with the GUI's feedstock
- * meter when running and never paints a frog a colour it cannot produce. That gate
- * matters: an Infernal frog with lapis milk is JAMMED, and tinting it lapis would
- * hide the species at the one moment the player needs it. The override rides on the
- * phantom via {@code ResourceFrog#setDisplayTintOverride}; the 26.1 line does the
- * same thing by overwriting the extracted render state, which this line does not have.
+ * PRODUCING. The <b>frog</b> is always its own species colour; the <b>slime</b>
+ * beside it appears only while the machine works and carries the feedstock variant.
+ * Two elements, two pieces of information, no redundancy.
  *
- * <p>A small slime appears beside the frog while the machine works, tinted by the
- * variant when there is one and by the frog's species otherwise - so it fires for
- * Mimic Milk and Mob Slurry runs too, not only Slime Milk. That turns the dome into a
- * status readout at a glance, which is most of the value of a window on an otherwise
- * hidden machine.
+ * <p>The frog briefly took the variant tint while working instead, and that was
+ * wrong: it made the frog redundant with the slime and hid the one thing only the
+ * dome can tell you, since the frog itself is out of sight in a slot. A Bog frog fed
+ * rainbow milk rendered magenta and stopped looking like a Bog frog.
+ *
+ * <p>The slime falls back to the frog's species colour when the feedstock names no
+ * variant, so it fires for Mimic Milk and Mob Slurry runs too, not only Slime Milk.
+ * That turns the dome into a status readout at a glance, which is most of the value
+ * of a window on an otherwise hidden machine.
  */
 public class VirtualTerrariumFrogRenderer implements BlockEntityRenderer<VirtualTerrariumBlockEntity> {
 
@@ -72,8 +72,12 @@ public class VirtualTerrariumFrogRenderer implements BlockEntityRenderer<Virtual
         if (be.getLevel() == null || be.getInventory().getFrog().isEmpty() || !be.hasDome()) {
             return;
         }
+        // A MIDAS frog has no category at all - loadedCategory() returns null for it -
+        // so bailing on null made the dome render nothing for a loaded Midas frog,
+        // where it used to always draw one. Only an unreadable slot should bail.
+        boolean midas = be.loadedIsMidas();
         Category category = be.loadedCategory();
-        if (category == null) {
+        if (category == null && !midas) {
             return;
         }
         if (frogPhantom == null) {
@@ -82,18 +86,17 @@ public class VirtualTerrariumFrogRenderer implements BlockEntityRenderer<Virtual
         if (frogPhantom == null) {
             return;
         }
-        frogPhantom.setCategory(category);
-        frogPhantom.setMidas(be.loadedIsMidas());
-        // The variant tint means "currently producing THIS", so it is gated on the
-        // machine actually working - not merely on the tank holding milk. Ungated it
-        // lied in exactly the case a player needs the truth: an Infernal frog with
-        // lapis milk is JAMMED (productive() requires the variant's category to match
-        // the frog), and the dome would paint it lapis blue while nothing happened.
-        // The frog's species is the one piece of state the dome uniquely exposes -
-        // the frog itself is hidden in a slot.
+        // Midas overrides the tint outright, so the category is unused in that case;
+        // BOG is an inert placeholder, not a claim about the frog.
+        frogPhantom.setCategory(category != null ? category : Category.BOG);
+        frogPhantom.setMidas(midas);
+        // The frog is ALWAYS its own species colour. It briefly switched to the
+        // feedstock variant while working, which was wrong twice over: the slime
+        // beside it already shows what is being produced, so the variant was
+        // redundant, and it hid the one thing only the dome can tell you - a Bog
+        // frog fed rainbow milk rendered magenta and stopped looking like a Bog
+        // frog. Species on the frog, production on the slime.
         boolean working = be.getBlockState().getValue(VirtualTerrariumProcessorBlock.WORKING);
-        ResourceLocation variantId = working ? feedstockVariant(be) : null;
-        frogPhantom.setDisplayTintOverride(variantId == null ? null : variantTint(variantId));
 
         long time = be.getLevel().getGameTime();
         // Face the frog toward the Processor's front (its horizontal FACING).
@@ -120,13 +123,14 @@ public class VirtualTerrariumFrogRenderer implements BlockEntityRenderer<Virtual
         // "status at a glance" promise silently dead for both. Tinted by the variant
         // when there is one, else by the frog's own species.
         if (working) {
+            ResourceLocation variantId = feedstockVariant(be);
             if (slimePhantom == null) {
                 slimePhantom = PFEntities.RESOURCE_SLIME.get().create(be.getLevel());
             }
             if (slimePhantom != null) {
                 slimePhantom.setSize(1, false);
                 slimePhantom.setVariant(variantId);
-                slimePhantom.setCategory(category);
+                slimePhantom.setCategory(category != null ? category : Category.BOG);
                 aim(slimePhantom, (int) time, yaw);
                 pose.pushPose();
                 pose.translate(SLIME_X, SLIME_Y, SLIME_Z);
@@ -160,23 +164,6 @@ public class VirtualTerrariumFrogRenderer implements BlockEntityRenderer<Virtual
         }
         // v1.8 per-variant fluids: identity IS the variant on this line.
         return PFVariantMilk.variantOf(fluid.getFluid());
-    }
-
-    /**
-     * Opaque ARGB for a variant's primary colour, or null when it cannot be resolved
-     * (a datapack variant this client has no entry for). Same lookup the GUI's
-     * feedstock meter uses, so the dome and the screen cannot disagree.
-     */
-    @Nullable
-    private static Integer variantTint(ResourceLocation variantId) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) {
-            return null;
-        }
-        var registry = mc.level.registryAccess()
-            .registry(com.flatts.productivefrogs.registry.PFRegistries.SLIME_VARIANT).orElse(null);
-        com.flatts.productivefrogs.data.SlimeVariant v = registry == null ? null : registry.get(variantId);
-        return v == null ? null : (0xFF000000 | (v.primaryColor() & 0xFFFFFF));
     }
 
     /** Keep the dome contents visible even when the Processor block is off-screen behind the dome. */
