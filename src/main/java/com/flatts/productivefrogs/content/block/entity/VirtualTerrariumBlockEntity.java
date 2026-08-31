@@ -812,11 +812,27 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
         return level != null && hasDomeAbove(level);
     }
 
+    /**
+     * The kind of frog loaded in the Processor, or null when empty. Read by the dome
+     * renderer (#382), which calls it once per frame per visible machine.
+     *
+     * <p>Cached against the slot stack because resolving it is not cheap: the frog
+     * slot holds an {@code EntityNetItem} whose CUSTOM_DATA is the WHOLE entity
+     * (attributes, brain memories, bred stats - the #210 contract), and
+     * {@code CustomData#copyTag} deep-copies all of it. Uncached that was a
+     * per-frame allocation hotspot with several terrariums in view. Identity
+     * comparison is the right test: the handler hands back the same stack object
+     * until the slot is actually replaced.
+     */
     @org.jetbrains.annotations.Nullable
-    private FrogKind loadedFrogKind() {
+    public FrogKind loadedFrogKind() {
         ItemStack frog = inventory.getFrog();
-        CustomData data = frog.get(DataComponents.CUSTOM_DATA);
-        return data == null ? null : FrogKind.readFromTag(data.copyTag()).orElse(null);
+        if (frog != cachedFrogStack) {
+            cachedFrogStack = frog;
+            CustomData data = frog.get(DataComponents.CUSTOM_DATA);
+            cachedFrogKind = data == null ? null : FrogKind.readFromTag(data.copyTag()).orElse(null);
+        }
+        return cachedFrogKind;
     }
 
     private int loadedStat(String key) {
@@ -911,6 +927,12 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
     }
 
     // -- serialization --
+
+    /** @see #loadedFrogKind() */
+    private ItemStack cachedFrogStack = ItemStack.EMPTY;
+    /** @see #loadedFrogKind() */
+    @org.jetbrains.annotations.Nullable
+    private FrogKind cachedFrogKind;
 
     @Override
     protected void saveAdditional(ValueOutput output) {
