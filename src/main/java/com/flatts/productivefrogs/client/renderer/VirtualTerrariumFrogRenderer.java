@@ -1,6 +1,5 @@
 package com.flatts.productivefrogs.client.renderer;
 
-import com.flatts.productivefrogs.client.color.Tints;
 import com.flatts.productivefrogs.content.block.entity.VirtualTerrariumBlockEntity;
 import com.flatts.productivefrogs.content.entity.ResourceFrog;
 import com.flatts.productivefrogs.content.entity.ResourceSlime;
@@ -43,13 +42,18 @@ import org.jetbrains.annotations.Nullable;
  * <p>Two colours are in play and they are not the same thing. The loaded frog
  * stores its <b>kind</b> - what the frog IS, always known. The <b>variant</b>
  * (iron, diamond, ...) comes from the Slime Milk feedstock - what it is currently
- * PRODUCING, known only while the tank has milk. This renderer prefers the
- * variant, so the dome and the GUI's feedstock meter agree, and falls back to the
- * kind tint when the tank runs dry so an idle frog is never colourless.
+ * PRODUCING. The dome shows the kind normally and switches to the variant only
+ * <b>while the machine is actually working</b>, so it agrees with the GUI's
+ * feedstock meter when running and never paints a frog a colour it cannot produce.
+ * That gate matters: an Infernal frog with lapis milk is JAMMED, and tinting it
+ * lapis would hide the species at the one moment the player needs it, since the
+ * frog itself is out of sight in a slot.
  *
- * <p>A small tinted slime appears beside the frog only while the machine is
- * actually working, which turns the dome into a status readout at a glance -
- * most of the value of a window on an otherwise hidden machine.
+ * <p>A small slime appears beside the frog while the machine works, tinted by the
+ * variant when there is one and by the frog's kind otherwise - so it fires for
+ * Mimic Milk and Mob Slurry runs too, not only Slime Milk. That turns the dome
+ * into a status readout at a glance, which is most of the value of a window on an
+ * otherwise hidden machine.
  */
 public class VirtualTerrariumFrogRenderer
         implements BlockEntityRenderer<VirtualTerrariumBlockEntity, VirtualTerrariumFrogRenderer.DomeRenderState> {
@@ -106,27 +110,35 @@ public class VirtualTerrariumFrogRenderer
         BlockPos pos = be.getBlockPos();
         placePhantom(frog, pos.getX() + 0.5, pos.getY() + DOME_Y, pos.getZ() + 0.5, yaw);
 
+        // The variant tint means "currently producing THIS", so it is gated on the
+        // machine actually working - not merely on the tank holding milk. Ungated it
+        // lied in exactly the case a player needs the truth: an Infernal frog with
+        // lapis milk is JAMMED (productive() requires the variant's category to match
+        // the frog), and the dome would paint it lapis blue while nothing happened.
+        // The frog's species is the one piece of state the dome uniquely exposes -
+        // the frog itself is hidden in a slot - so it must not be overwritten by a
+        // feedstock the frog cannot eat.
+        boolean working = be.getBlockState()
+            .getValue(com.flatts.productivefrogs.content.block.VirtualTerrariumProcessorBlock.WORKING);
+        Identifier variantId = working ? feedstockVariant(be) : null;
+
         EntityRenderState replica = dispatcher.extractEntity(frog, partialTick);
-        replica.shadowRadius = 0.0F;
-        // Prefer the feedstock variant's colour over the kind tint, so the dome and
-        // the GUI's feedstock meter agree on what the machine is producing. The
-        // kind tint the renderer already applied stays as the dry-tank fallback.
-        Identifier variantId = feedstockVariant(be);
+        suppressShadow(replica);
         if (variantId != null && replica instanceof ResourceFrogRenderState frogState) {
-            int argb = Tints.variantColor(clientLevel(), variantId);
-            if (argb != -1) {
+            Integer argb = variantTint(variantId);
+            if (argb != null) {
                 frogState.tint = argb;
             }
         }
         state.replica = replica;
         state.active = true;
 
-        // The working indicator. Only while actually producing, and only when the
-        // feedstock names a variant - a tinted slime with nothing to tint by would
-        // just be a grey blob.
-        if (!be.getBlockState()
-                .getValue(com.flatts.productivefrogs.content.block.VirtualTerrariumProcessorBlock.WORKING)
-                || variantId == null) {
+        // The working indicator. Shown for EVERY feedstock the machine can run on,
+        // not just Slime Milk - a Midas frog on Mimic Milk and a Predator on Mob
+        // Slurry are working just as much, and gating on a slime variant left the
+        // "status at a glance" promise silently dead for both. Tinted by the variant
+        // when there is one, else by the frog's own kind.
+        if (!working) {
             return;
         }
         if (slimePhantom == null) {
@@ -137,11 +149,27 @@ public class VirtualTerrariumFrogRenderer
         }
         slime.setSize(1, false);
         slime.setVariant(variantId);
+        slime.setCategory(kind.fallbackCategory());
         slime.tickCount = (int) time;
         placePhantom(slime, pos.getX() + SLIME_X, pos.getY() + SLIME_Y, pos.getZ() + SLIME_Z, yaw);
         EntityRenderState slimeState = dispatcher.extractEntity(slime, partialTick);
-        slimeState.shadowRadius = 0.0F;
+        suppressShadow(slimeState);
         state.slime = slimeState;
+    }
+
+    /**
+     * Actually suppress a phantom's shadow.
+     *
+     * <p>Setting {@code shadowRadius = 0} does NOT: {@code finalizeRenderState}
+     * populates {@code shadowPieces} during extraction, before this runs, and the
+     * dispatcher only checks whether that list is empty. A zero radius then feeds
+     * {@code -x/2/radius} in the shadow renderer, i.e. infinite/NaN UVs on a quad
+     * that is still drawn. Clearing the list is the real suppression, and a phantom
+     * sitting directly above the full-block Processor always collects a piece.
+     */
+    private static void suppressShadow(EntityRenderState state) {
+        state.shadowRadius = 0.0F;
+        state.shadowPieces.clear();
     }
 
     /** Park a phantom at a world position with no interpolation, so it never smears. */
@@ -168,9 +196,25 @@ public class VirtualTerrariumFrogRenderer
         return fluid.get(PFDataComponents.SLIME_VARIANT.get());
     }
 
+    /**
+     * Opaque ARGB for a variant's primary colour, or null when it cannot be resolved.
+     *
+     * <p>Resolves the variant directly rather than going through
+     * {@code Tints.variantColor}, whose {@code -1} "unresolved" sentinel is
+     * indistinguishable from opaque white - a datapack variant with
+     * {@code primary_color: 16777215} would silently never tint. No shipped variant
+     * hits that today, which is exactly why it would be missed.
+     */
     @Nullable
-    private static ClientLevel clientLevel() {
-        return net.minecraft.client.Minecraft.getInstance().level;
+    private static Integer variantTint(Identifier variantId) {
+        ClientLevel level = net.minecraft.client.Minecraft.getInstance().level;
+        if (level == null) {
+            return null;
+        }
+        var registry = com.flatts.productivefrogs.registry.PFRegistries.variants(level.registryAccess());
+        com.flatts.productivefrogs.data.SlimeVariant v =
+            com.flatts.productivefrogs.registry.PFRegistries.variant(registry, variantId);
+        return v == null ? null : (0xFF000000 | (v.primaryColor() & 0xFFFFFF));
     }
 
     @Override
