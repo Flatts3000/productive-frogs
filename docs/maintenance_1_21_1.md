@@ -7,7 +7,7 @@
 | Branch | Role | MC / NeoForge | Mod version |
 |---|---|---|---|
 | `main` | Active development | 26.1 / 26.1.x | `2.x` |
-| `mc-1.21.1` | Frozen maintenance, hotfix-only | 1.21.1 / 21.1.x | `1.25.x` |
+| `mc-1.21.1` | Maintenance; hotfix-first, reopened by name | 1.21.1 / 21.1.x | `1.26.x` |
 
 - `mc-1.21.1` is **protected to parity with `main`**: required `build` + `gameTest` status checks (strict), resolved review conversations, no force pushes, no deletion. All changes go via PR.
 - There is **no shared mutable state** between the lines: `gradle.properties`, `CHANGELOG.md`, `build.gradle`, and `ci.yml` are per-branch. Never merge branches across the lines.
@@ -31,7 +31,18 @@ The line was reopened **once**, by maintainer decision (2026-07-23), for three *
 | Virtual Terrarium | #341 | #345 |
 | Guidebook coverage audit + new entries | #343 | #346 |
 
-All three shipped in **v1.25.0 "Second Helpings"** (#347). Because they are features they could not ship as a `1.24.x` patch, hence the minor bump. **The reopening is now spent: the line is back to hotfix-only** (`1.25.x` patches). This section stays as the record of why a `1.25` line exists at all - do not read it as license for further feature work, which still lands on `main` only.
+All three shipped in **v1.25.0 "Second Helpings"** (#347). Because they are features they could not ship as a `1.24.x` patch, hence the minor bump.
+
+The line was then reopened a **second** time (2026-08-30), again by explicit maintainer request, for two more:
+
+| Work | Issue | PR |
+|---|---|---|
+| Rainbow Froglight - sixteen dyes from one Froglight | #375 | #376 |
+| Virtual Terrarium dome readout (species-tinted frog + working slime) | #382 | #389, #390 |
+
+Both shipped in **v1.26.0 "Sixteen Shades"**. Same reasoning, same minor bump. Note the rainbow **art** did not come with it - the Froglight on this line is still flat-tinted, and only the slime carries the baked bands, which is why 26.1's matching release is called "True Colours" and this one is not.
+
+**Read the pattern, not a licence.** Twice now the line has been reopened for *named* work, and closed again after. Default is still hotfix-only, and feature work still lands on `main` unless the maintainer asks for it here by name. Do not start feature work on this branch on your own.
 
 The forward-flow rule was unaffected: these features already existed on `main`, so nothing flowed forward. Only **fixes** ever cross, and only old -> new.
 
@@ -42,18 +53,22 @@ The forward-flow rule was unaffected: these features already existed on `main`, 
 3. **Open a PR with base `mc-1.21.1`** (`gh pr create --base mc-1.21.1 ...`). CI runs `build` + `gameTest` on the 1.21.1 toolchain (Java 21) automatically; both are required to merge, and review conversations must be resolved.
 4. Squash-merge. The fix is now on the line but unreleased; batching several fixes into one release is fine.
 
-## Release procedure (v1.25.x patch)
+## Release procedure
 
-From the `mc-1.21.1` branch, mirroring the standard release runbook (most recent: v1.25.0, 2026-07-24):
+From the `mc-1.21.1` branch, mirroring the standard release runbook (most recent: v1.26.0, 2026-08-30):
 
-1. Bump `mod_version` in `gradle.properties` (patch bump: `1.25.0` -> `1.25.1`).
+1. Bump `mod_version` in `gradle.properties` - patch for a hotfix batch (`1.26.0` -> `1.26.1`), minor when the line has been reopened for named features (`1.25.x` -> `1.26.0`).
 2. Add a `## v<mod_version>` section to `CHANGELOG.md` (the CurseForge changelog body is extracted by matching that heading).
-3. Land the release commit via PR (`chore(release): v1.25.x - <name>`), then tag: `git tag v1.25.x && git push origin v1.25.x`.
+3. Land the release commit (`chore(release): v<ver> - <name>`), then tag: `git tag -a v<ver> && git push origin v<ver>`. The owner can push release commits straight to the protected branch via admin bypass; a PR is not required for the version bump.
 4. Publish: `./gradlew publishCurseForge` from this branch. Its `build.gradle` already targets game version `1.21.1` and names the jar `productivefrogs-<version>.jar`; no flags needed. Reads `CURSEFORGE_API_KEY` from `.env`.
 
 ## Forward flow (old -> new only)
 
 After a hotfix lands here, **check whether the bug exists on 26.1** and port it forward to `main` if so. Fixes flow `mc-1.21.1` -> `main`, never the reverse.
+
+"Port" means **re-implement**, not cherry-pick. The lines have diverged far enough that a patch almost never applies: `ResourceLocation` vs `Identifier`, no render states vs render states, per-variant milk fluids vs one component-carrying fluid, `@GameTest` annotations vs the registry form. Expect two PRs for one bug, one per line.
+
+Also note this line **cannot be driven by devbridge** - the only jar is built against 26.1.2.76 - so anything visual here is verified by a human looking at it, or not verified at all. Say which.
 
 - Do not expect a clean cherry-pick: the lines diverged heavily (Identifier rename, ValueInput/ValueOutput I/O, transfer API, single-fluid milk). **Re-implement against the 26.1 APIs** and re-check whether vanilla 26.1 already fixed the bug upstream before porting a workaround (precedent: #276 was NOT ported because vanilla's `fudgePositionAfterSizeChange` supersedes it, while #277 was re-implemented; #282 -> #283 was re-applied with 26.1-side adjustments).
 - Reference the original issue/PR number in the forward commit so the pairing is traceable.
