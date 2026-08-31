@@ -8,7 +8,6 @@ import com.flatts.productivefrogs.registry.PFDataComponents;
 import com.flatts.productivefrogs.registry.PFEntities;
 import com.flatts.productivefrogs.registry.PFFluids;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -39,21 +38,21 @@ import org.jetbrains.annotations.Nullable;
  * using PF's own entity gets the kind tint for free instead of needing a bespoke
  * tinted render path.
  *
- * <p>Two colours are in play and they are not the same thing. The loaded frog
- * stores its <b>kind</b> - what the frog IS, always known. The <b>variant</b>
- * (iron, diamond, ...) comes from the Slime Milk feedstock - what it is currently
- * PRODUCING. The dome shows the kind normally and switches to the variant only
- * <b>while the machine is actually working</b>, so it agrees with the GUI's
- * feedstock meter when running and never paints a frog a colour it cannot produce.
- * That gate matters: an Infernal frog with lapis milk is JAMMED, and tinting it
- * lapis would hide the species at the one moment the player needs it, since the
- * frog itself is out of sight in a slot.
+ * <p>Two things are shown and they answer different questions. The <b>frog</b> is
+ * always its own kind's colour - what the frog IS. The <b>slime</b> beside it
+ * appears only while the machine is working and carries the feedstock variant -
+ * what it is currently PRODUCING. Two elements, two pieces of information, no
+ * redundancy.
  *
- * <p>A small slime appears beside the frog while the machine works, tinted by the
- * variant when there is one and by the frog's kind otherwise - so it fires for
- * Mimic Milk and Mob Slurry runs too, not only Slime Milk. That turns the dome
- * into a status readout at a glance, which is most of the value of a window on an
- * otherwise hidden machine.
+ * <p>The frog briefly took the variant tint while working instead, and that was
+ * wrong: it made the frog redundant with the slime, and it hid the one thing only
+ * the dome can tell you, since the frog itself is out of sight in a slot. A Bog
+ * frog fed rainbow milk rendered magenta and stopped looking like a Bog frog.
+ *
+ * <p>The slime falls back to the frog's kind colour when the feedstock names no
+ * variant, so it fires for Mimic Milk and Mob Slurry runs too, not only Slime
+ * Milk. That turns the dome into a status readout at a glance, which is most of
+ * the value of a window on an otherwise hidden machine.
  */
 public class VirtualTerrariumFrogRenderer
         implements BlockEntityRenderer<VirtualTerrariumBlockEntity, VirtualTerrariumFrogRenderer.DomeRenderState> {
@@ -110,26 +109,18 @@ public class VirtualTerrariumFrogRenderer
         BlockPos pos = be.getBlockPos();
         placePhantom(frog, pos.getX() + 0.5, pos.getY() + DOME_Y, pos.getZ() + 0.5, yaw);
 
-        // The variant tint means "currently producing THIS", so it is gated on the
-        // machine actually working - not merely on the tank holding milk. Ungated it
-        // lied in exactly the case a player needs the truth: an Infernal frog with
-        // lapis milk is JAMMED (productive() requires the variant's category to match
-        // the frog), and the dome would paint it lapis blue while nothing happened.
-        // The frog's species is the one piece of state the dome uniquely exposes -
-        // the frog itself is hidden in a slot - so it must not be overwritten by a
-        // feedstock the frog cannot eat.
+        // The frog is ALWAYS its own kind's colour. It used to switch to the
+        // feedstock variant while working, which was wrong twice over: the slime
+        // beside it already shows what is being produced, so the variant was
+        // redundant, and it hid the one thing only the dome can tell you - a Bog
+        // frog fed rainbow milk rendered magenta and stopped looking like a Bog
+        // frog. Species on the frog, production on the slime; two elements, two
+        // pieces of information.
         boolean working = be.getBlockState()
             .getValue(com.flatts.productivefrogs.content.block.VirtualTerrariumProcessorBlock.WORKING);
-        Identifier variantId = working ? feedstockVariant(be) : null;
 
         EntityRenderState replica = dispatcher.extractEntity(frog, partialTick);
         suppressShadow(replica);
-        if (variantId != null && replica instanceof ResourceFrogRenderState frogState) {
-            Integer argb = variantTint(variantId);
-            if (argb != null) {
-                frogState.tint = argb;
-            }
-        }
         state.replica = replica;
         state.active = true;
 
@@ -141,6 +132,7 @@ public class VirtualTerrariumFrogRenderer
         if (!working) {
             return;
         }
+        Identifier variantId = feedstockVariant(be);
         if (slimePhantom == null) {
             slimePhantom = PFEntities.RESOURCE_SLIME.get().create(be.getLevel(), EntitySpawnReason.MOB_SUMMONED);
         }
@@ -194,27 +186,6 @@ public class VirtualTerrariumFrogRenderer
             return null;
         }
         return fluid.get(PFDataComponents.SLIME_VARIANT.get());
-    }
-
-    /**
-     * Opaque ARGB for a variant's primary colour, or null when it cannot be resolved.
-     *
-     * <p>Resolves the variant directly rather than going through
-     * {@code Tints.variantColor}, whose {@code -1} "unresolved" sentinel is
-     * indistinguishable from opaque white - a datapack variant with
-     * {@code primary_color: 16777215} would silently never tint. No shipped variant
-     * hits that today, which is exactly why it would be missed.
-     */
-    @Nullable
-    private static Integer variantTint(Identifier variantId) {
-        ClientLevel level = net.minecraft.client.Minecraft.getInstance().level;
-        if (level == null) {
-            return null;
-        }
-        var registry = com.flatts.productivefrogs.registry.PFRegistries.variants(level.registryAccess());
-        com.flatts.productivefrogs.data.SlimeVariant v =
-            com.flatts.productivefrogs.registry.PFRegistries.variant(registry, variantId);
-        return v == null ? null : (0xFF000000 | (v.primaryColor() & 0xFFFFFF));
     }
 
     @Override
