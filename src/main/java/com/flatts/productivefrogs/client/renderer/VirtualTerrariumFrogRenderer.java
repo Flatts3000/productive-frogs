@@ -32,15 +32,19 @@ import org.jetbrains.annotations.Nullable;
  * <p>Two colours are in play and they are not the same thing. The loaded frog stores
  * its <b>category</b> - what the frog IS, always known. The <b>variant</b> (iron,
  * diamond, ...) comes from the Slime Milk feedstock - what it is currently PRODUCING,
- * known only while the tank has milk. This renderer prefers the variant, so the dome
- * and the GUI's feedstock meter agree, and falls back to the species tint when the
- * tank runs dry so an idle frog is never colourless. The override rides on the
+ * PRODUCING. The dome shows the species normally and switches to the variant only
+ * <b>while the machine is actually working</b>, so it agrees with the GUI's feedstock
+ * meter when running and never paints a frog a colour it cannot produce. That gate
+ * matters: an Infernal frog with lapis milk is JAMMED, and tinting it lapis would
+ * hide the species at the one moment the player needs it. The override rides on the
  * phantom via {@code ResourceFrog#setDisplayTintOverride}; the 26.1 line does the
  * same thing by overwriting the extracted render state, which this line does not have.
  *
- * <p>A small tinted slime appears beside the frog only while the machine is actually
- * working, which turns the dome into a status readout at a glance - most of the value
- * of a window on an otherwise hidden machine.
+ * <p>A small slime appears beside the frog while the machine works, tinted by the
+ * variant when there is one and by the frog's species otherwise - so it fires for
+ * Mimic Milk and Mob Slurry runs too, not only Slime Milk. That turns the dome into a
+ * status readout at a glance, which is most of the value of a window on an otherwise
+ * hidden machine.
  */
 public class VirtualTerrariumFrogRenderer implements BlockEntityRenderer<VirtualTerrariumBlockEntity> {
 
@@ -80,9 +84,15 @@ public class VirtualTerrariumFrogRenderer implements BlockEntityRenderer<Virtual
         }
         frogPhantom.setCategory(category);
         frogPhantom.setMidas(be.loadedIsMidas());
-        // Prefer the feedstock variant's colour over the species tint, so the dome
-        // and the GUI's feedstock meter agree on what the machine is producing.
-        ResourceLocation variantId = feedstockVariant(be);
+        // The variant tint means "currently producing THIS", so it is gated on the
+        // machine actually working - not merely on the tank holding milk. Ungated it
+        // lied in exactly the case a player needs the truth: an Infernal frog with
+        // lapis milk is JAMMED (productive() requires the variant's category to match
+        // the frog), and the dome would paint it lapis blue while nothing happened.
+        // The frog's species is the one piece of state the dome uniquely exposes -
+        // the frog itself is hidden in a slot.
+        boolean working = be.getBlockState().getValue(VirtualTerrariumProcessorBlock.WORKING);
+        ResourceLocation variantId = working ? feedstockVariant(be) : null;
         frogPhantom.setDisplayTintOverride(variantId == null ? null : variantTint(variantId));
 
         long time = be.getLevel().getGameTime();
@@ -104,16 +114,19 @@ public class VirtualTerrariumFrogRenderer implements BlockEntityRenderer<Virtual
         dispatcher.render(frogPhantom, 0.0, 0.0, 0.0, yaw, partialTick, pose, buffers, light);
         pose.popPose();
 
-        // The working indicator. Only while actually producing, and only when the
-        // feedstock names a variant - a tinted slime with nothing to tint by would
-        // just be a grey blob.
-        if (variantId != null && be.getBlockState().getValue(VirtualTerrariumProcessorBlock.WORKING)) {
+        // The working indicator. Shown for EVERY feedstock the machine can run on,
+        // not just Slime Milk - a Midas frog on Mimic Milk and a Predator on Mob
+        // Slurry are working just as much, and gating on a slime variant left the
+        // "status at a glance" promise silently dead for both. Tinted by the variant
+        // when there is one, else by the frog's own species.
+        if (working) {
             if (slimePhantom == null) {
                 slimePhantom = PFEntities.RESOURCE_SLIME.get().create(be.getLevel());
             }
             if (slimePhantom != null) {
                 slimePhantom.setSize(1, false);
                 slimePhantom.setVariant(variantId);
+                slimePhantom.setCategory(category);
                 aim(slimePhantom, (int) time, yaw);
                 pose.pushPose();
                 pose.translate(SLIME_X, SLIME_Y, SLIME_Z);
