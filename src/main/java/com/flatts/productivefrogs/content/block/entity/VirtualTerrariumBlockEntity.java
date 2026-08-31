@@ -733,19 +733,42 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
     }
 
     @Nullable
+    /** @see #loadedFrogTag() */
+    private ItemStack cachedFrogStack = ItemStack.EMPTY;
+    /** @see #loadedFrogTag() */
+    @Nullable
+    private CompoundTag cachedFrogTag;
+
+    /**
+     * The captured frog's saved NBT, or null when the slot is empty.
+     *
+     * <p>Cached against the slot stack because it is not cheap: the frog slot holds
+     * an {@code EntityNetItem} whose CUSTOM_DATA is the WHOLE entity (attributes,
+     * brain memories, bred stats - the #210 contract) and {@code CustomData#copyTag}
+     * deep-copies all of it. Both accessors below call this, and the dome renderer
+     * (#382) asks once per frame per visible machine, so uncached it was two full
+     * deep copies a frame. Identity comparison is the right test: the handler hands
+     * back the same stack object until the slot is actually replaced.
+     */
+    @Nullable
     private CompoundTag loadedFrogTag() {
         ItemStack frog = inventory.getFrog();
-        CustomData data = frog.get(DataComponents.CUSTOM_DATA);
-        return data == null ? null : data.copyTag();
+        if (frog != cachedFrogStack) {
+            cachedFrogStack = frog;
+            CustomData data = frog.get(DataComponents.CUSTOM_DATA);
+            cachedFrogTag = data == null ? null : data.copyTag();
+        }
+        return cachedFrogTag;
     }
 
     /**
      * The loaded frog's Category, or null when it has none (a Midas frog, or an
      * empty slot). On 1.21.1 a netted frog stores its species as a {@code "Category"}
-     * string via {@code saveWithoutId} - the pre-FrogKind model.
+     * string via {@code saveWithoutId} - the pre-FrogKind model. Read by the dome
+     * renderer (#382).
      */
     @Nullable
-    private Category loadedCategory() {
+    public Category loadedCategory() {
         CompoundTag tag = loadedFrogTag();
         if (tag == null || !tag.contains("Category", Tag.TAG_STRING)) {
             return null;
@@ -758,7 +781,8 @@ public class VirtualTerrariumBlockEntity extends BlockEntity implements MenuProv
     }
 
     /** Whether the loaded frog is a Midas frog (the {@code "Midas"} flag on its saved NBT). */
-    private boolean loadedIsMidas() {
+    /** Whether the loaded frog is a Midas frog. Read by the dome renderer (#382). */
+    public boolean loadedIsMidas() {
         CompoundTag tag = loadedFrogTag();
         return tag != null && tag.getBoolean("Midas");
     }
